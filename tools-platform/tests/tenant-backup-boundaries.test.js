@@ -20,7 +20,10 @@ test.after(() => {
 
 test('tenant backup excludes operational history, temporary imports, and sibling tenants', () => {
     const target = backupRepo.DATA_TARGETS.find(item => item.id === 'primary_data');
-    for (const name of ['backups', 'tmp', 'quarantine', 'runtime', 'images', 'slide-library', 'tenants']) {
+    for (const name of [
+        'backups', 'tmp', 'quarantine', 'runtime', 'images', 'slide-library', 'tenants',
+        'chat-history.db', 'chat-history.db-wal', 'chat-history.db-shm'
+    ]) {
         assert.equal(target.excludeTopLevel.includes(name), true, `${name} should be excluded`);
     }
 });

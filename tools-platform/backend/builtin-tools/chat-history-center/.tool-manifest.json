@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "tool": {
+    "slug": "chat-history-center",
+    "name": "聊天记录中心",
+    "nameEn": "Chat History Center",
+    "icon": "💬",
+    "description": "租户共享的企业聊天记录导入、检索、收藏与人员活跃度分析工具。",
+    "descriptionEn": "Tenant-shared chat import, search, favorites, and participant analytics.",
+    "tags": ["聊天记录", "搜索", "统计"],
+    "href": "/tools/chat-history-center",
+    "filePath": "/custom-tools/chat-history-center/index.html",
+    "publicAccess": false,
+    "createdAt": "2026-09-01T00:00:00.000Z",
+    "updatedAt": "2026-09-01T00:00:00.000Z"
+  },
+  "history": null
+}

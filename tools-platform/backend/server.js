@@ -60,6 +60,7 @@ const aiRoutes = require('./routes/ai');
 const storageRoutes = require('./routes/storage');
 const frtRoutes = require('./routes/frt');
 const prauditRoutes = require('./routes/praudit');
+const chatHistoryRoutes = require('./routes/chat-history');
 const customToolsRoutes = require('./routes/custom-tools');
 const f12LicensePublicRoutes = require('./routes/f12-license-public');
 const desktopLicenseLocal = require('./routes/desktop-license-local');
@@ -328,6 +329,7 @@ app.use('/api', (req, res, next) => {
     if (req.path.startsWith('/surveys')) return next(); // 调查模板和提交由模块内部控制权限
     if (req.method === 'POST' && req.path === '/db/config/monthly_report_titles') return next(); // 登录用户可编辑月报中英文标题，路由内继续校验数据
     if (/^\/custom-tools\/[^/]+\/(?:state(?:\/restore)?|history(?:\/[^/]+)?)$/.test(req.path)) return next(); // 登录用户可维护自定义工具业务数据
+    if (/^\/chat-history\/(?:settings|conversations\/[^/]+\/(?:read|pin)|favorites\/[^/]+)$/.test(req.path)) return next(); // 聊天数据租户共享，普通用户只能维护个人状态
     if (req.method === 'DELETE' && /^\/slide-design\/assets\/[^/]+$/.test(req.path)) return next(); // 素材上传者或管理员可删除，路由内校验归属
     if (req.method === 'POST' && req.path === '/uiv/run-uivision-macro') return next(); // 只生成临时 runner，不修改业务数据
     if (req.method === 'POST' && req.path === '/platform-metrics/open') return next(); // 登录用户记录工具打开量
@@ -347,6 +349,7 @@ app.use('/api/storage', storageRoutes); // 存储迁移状态 API
 app.use('/api/db-explorer', require('./routes/db-explorer')); // 数据库浏览 API
 app.use('/api/frt', frtRoutes); // FRT 历史快照 API
 app.use('/api/praudit', prauditRoutes); // PR审计配置 API
+app.use('/api/chat-history', chatHistoryRoutes); // 租户隔离的聊天记录中心
 app.use('/api/custom-tools', customToolsRoutes); // 自定义 HTML 工具注册 API
 app.use('/api/slide-design', slideDesignRoutes); // 胶片设计项目与 PPT 素材库
 app.use('/api/surveys', surveysRoutes); // 可配置调查模板与提交记录 API

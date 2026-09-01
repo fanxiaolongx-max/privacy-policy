@@ -381,6 +381,7 @@ flowchart TD
 - **默认租户零迁移**：升级后原 `tools.db`、`report.db`、附件和配置仍留在原路径，直接作为 `default` 租户使用，不搬动、不重命名现有业务数据。
 - **新租户结构初始化**：新租户先在临时目录中复制当前数据库的表结构，不复制任何业务行；所有数据库都成功后才原子切换为正式目录，失败不会留下半初始化状态。
 - **完整业务隔离**：脚本仓库、SLA 规则、报表/月报快照、需求广场、导航与 AI 配置、告警、问卷、自定义工具、图片/PPT 素材、知识库以及首次导入选择都使用当前租户目录。
+- **聊天记录租户共享**：聊天正文保存在当前租户的 `chat-history.db`，会话内容对租户成员共享；已读、置顶、收藏和“我的工号”按平台账号分开保存。导入、重导和删除只允许管理员操作。
 - **浏览器状态隔离**：切换租户时会保存当前租户的业务 `localStorage` 快照并恢复目标租户快照，同时清空临时 `sessionStorage`；登录凭据和语言偏好保持全局，退出账号时会清除所有租户浏览器快照。
 - **账号属于全局控制面**：账号、登录 Session、租户清单及桌面/F12 License 不随租户切换。当前版本所有已登录账号都可切换到所有启用租户，只有管理员可以增删改租户。
 - **两步删除与归档管理**：先执行“归档”，租户立即停止显示和访问，相关 Session 自动回到默认租户，但数据目录完整保留。已归档租户会持续显示在管理页的“已归档租户”区，可随时恢复启用。
@@ -395,6 +396,7 @@ flowchart TD
 | 主库 | 原路径 `data/tools.db` | `data/tenants/acme/tools.db` |
 | 报表库 | 原路径 `report.db`（或部署配置路径） | `data/tenants/acme/report.db` |
 | 需求/知识库 | 原路径 `data/requirements.db`、`data/ai-knowledge.db` | `data/tenants/acme/requirements.db`、`ai-knowledge.db` |
+| 聊天记录 | `data/chat-history.db` | `data/tenants/acme/chat-history.db` |
 | 文件数据 | 原有 `custom-tools/`、`images/`、`slide-library/` 等 | `data/tenants/acme/` 下的同名独立目录 |
 
 > 新租户是“空白初始化状态”，不会自动复制默认租户的脚本、规则和历史数据。需要快速上手时，可在该租户首次引导中选择导入仓库自带的 43 个脚本和全量指标规则，或稍后进入“全局设置 → 初始化”启动开箱即用模式。
@@ -738,7 +740,7 @@ flowchart TD
 - **跨租户确认**：租户 ID 不同会先安全停止，前端使用平台自定义弹窗同时展示“当前目标租户（名称 + ID）”和“备份来源租户（名称 + ID）”。只有管理员点击“确认强制恢复”后才携带 `forceCrossTenant` 重新发起恢复。
 - **自动备份调度**：`globalBackupRepo.startAutoBackupScheduler()` 会遍历启用租户，为每个租户建立独立定时器；过期清理仅删除该租户的自动备份。
 - **租户级容量上限**：可在 **全局设置 → 备份恢复 → 定时备份** 设置当前租户备份 ZIP 的总容量上限，默认 `10 GB`，支持 `0.1 GB` 起的小数。保存设置、服务启动以及每次生成备份后都会检查容量；超限时按修改时间从旧到新清理所有类型的旧备份，保护本次新包并至少保留一个最新恢复点。若最新单包本身超过上限，界面会明确显示仍然超限。
-- **轻量包排除项**：`images/`、`slide-library/`、内部 `backups/`、`tmp/`、`quarantine/`、租户运行状态和机器级 License 文件不进入 ZIP，恢复时保留目标服务器现有副本。这样可避免把历史备份再次装进新备份，也不会因未清理的胶片导入临时文件让日常包异常膨胀；该功能不等同于整机文件镜像。
+- **轻量包排除项**：`images/`、`slide-library/`、内部 `backups/`、`tmp/`、`quarantine/`、租户运行状态、`chat-history.db` 及其 WAL/SHM 边车文件和机器级 License 文件不进入 ZIP，恢复时保留目标服务器现有副本。这样可避免把历史备份再次装进新备份，也不会因未清理的胶片导入临时文件让日常包异常膨胀；该功能不等同于整机文件镜像。
 - **目标租户双重校验**：恢复请求会显式携带页面显示的目标租户 ID，后端再与鉴权 Session 中的租户 ID 比较，并使用该 ID 重新建立恢复上下文。页面与 Session 不一致时返回 `409 ACTIVE_TENANT_CHANGED`，不会查找备份、关闭数据库或改写任何租户。
 
 #### 如何备份全部租户
@@ -850,6 +852,7 @@ flowchart TD
 | `/api/db` | `db.js` | 需登录 (写需Admin) | 报表看板计算、客户群得分、月报指标读取与配置存储 |
 | `/api/external/metrics`| `external-metrics.js` | 需登录/Token | 面向移动端 (iOS/KMP) 和外部系统的只读指标 OpenAPI |
 | `/api/praudit` | `praudit.js` | 需登录 (写需Admin) | PR 进展审计规则配置、抽查数据校验与 PDF 报告生成 |
+| `/api/chat-history` | `chat-history.js` | 需登录（导入/删除需 Admin） | 递归 TXT 导入、会话浏览、全文检索、个人收藏/已读状态及人员统计 |
 | `/api/frt` | `frt.js` | 需登录 (写需Admin) | FRT 动态核算规则配置与 KPI 历史快照计算 |
 | `/api/requirements` | `requirements.js` | 需登录 | 需求广场提议发布、流转状态变更与评论日志 |
 | `/api/slide-design` | `slide-design.js` | 需登录 | PPTX 胶片拆解、缩略图渲染、分类重组、标签复用与重组打包导出 |
@@ -1160,6 +1163,7 @@ flowchart LR
 | `logs/YYYY-MM-DD/out.log` / `error.log` | Log 文本 | 记录本地后台运行流水与异常报错堆栈，支持托盘右键一键打开分析。 | 无影响，日志按日自动归档。 |
 | `logs/runtime-status.json` | JSON | 实时运行时快照（进程 PID、本地服务端口 3030、心跳状态）。 | 由主进程定时刷新写入。 |
 | `data/tools.db` | SQLite 数据库 | **全局控制面及默认租户兼容库**。账号、Session、租户清单保存在这里；升级前已有的导航、AI 配置、脚本、SLA 规则和自定义工具注册表继续作为默认租户数据原地使用。 | **极高**。丢失将影响登录、租户清单及默认租户业务。 |
+| `data/chat-history.db` / `data/tenants/<tenant-id>/chat-history.db` | SQLite 数据库 | 租户共享的 TXT 聊天消息、全文索引、人员统计及用户个人状态。 | 丢失将需重新导入 TXT；该库不进入平台全局备份。 |
 | `data/tenants/<tenant-id>/` | 独立租户目录 | 新租户的 `tools.db`、`report.db`、`requirements.db`、`ai-knowledge.db`、附件、自定义工具、备份和临时文件；目录之间不共享业务数据。 | 仅影响对应租户；归档租户时目录会保留。 |
 | `data/report.db` | SQLite 数据库 | **报表看板与月报分析库**。包含历史月度快照、指标合控计算结果、各维度健康度计分、短板排名明细。 | **极高**。丢失将失去所有历史月报与数据看板记录。 |
 | `data/requirements.db` | SQLite 数据库 | **需求广场流转库**。包含专项治理需求提单、流转进度与反馈工单。 | **高**。丢失将清空需求广场数据。 |

@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>聊天记录中心</title>
+    <link rel="stylesheet" href="./chat-viewer.css?v=20260901-9">
+</head>
+<body>
+<div id="toast" class="toast" role="status"></div>
+<div id="loading" class="loading" hidden><div class="spinner"></div><strong id="loadingText">正在处理…</strong></div>
+
+<header class="app-header">
+    <div class="brand"><span class="brand-icon">💬</span><div><h1>聊天记录中心</h1><small id="tenantHint">租户共享数据 · 个人状态独立</small></div></div>
+    <nav class="top-tabs" aria-label="主导航">
+        <button class="top-tab active" data-view="chat">会话</button>
+        <button class="top-tab" data-view="search">搜索</button>
+        <button class="top-tab" data-view="analytics">数据洞察</button>
+        <button class="top-tab admin-only" data-view="manage" hidden>数据管理</button>
+    </nav>
+    <div class="header-actions">
+        <button id="settingsButton" class="btn">我的工号</button>
+        <button id="importButton" class="btn btn-primary admin-only" hidden>选择聊天目录</button>
+    </div>
+</header>
+
+<main>
+    <section id="view-chat" class="view active chat-view">
+        <aside class="conversation-pane">
+            <div class="pane-tools">
+                <input id="conversationQuery" class="control" placeholder="搜索会话名称或路径">
+                <div class="filter-row">
+                    <select id="conversationType" class="control compact">
+                        <option value="">全部类型</option><option value="single">单聊</option><option value="group">群组</option><option value="discussion">讨论组</option><option value="other">其他</option>
+                    </select>
+                    <button id="unreadFilter" class="chip">未读</button><button id="pinnedFilter" class="chip">置顶</button>
+                </div>
+            </div>
+            <div id="conversationList" class="conversation-list"></div>
+            <button id="loadMoreConversations" class="load-more" hidden>加载更多会话</button>
+        </aside>
+
+        <section class="message-pane">
+            <div id="chatEmpty" class="empty-state">
+                <span>💬</span>
+                <h2>选择一个会话</h2>
+                <p>在左侧打开聊天，或由管理员导入 TXT 记录。</p>
+                <div class="empty-actions admin-only" hidden>
+                    <button id="emptyImportTestData" class="btn btn-primary">⚡ 一键导入测试聊天数据</button>
+                    <button id="emptyImportDirectory" class="btn">选择聊天目录</button>
+                </div>
+            </div>
+            <div id="chatWorkspace" class="chat-workspace" hidden>
+                <div id="searchReturnBanner" class="search-return-banner" hidden>
+                    <div class="search-return-info">
+                        <span class="search-return-icon">🔍</span>
+                        <span id="searchReturnText">正在查看搜索匹配消息</span>
+                    </div>
+                    <div class="search-return-actions">
+                        <button id="returnToSearchButton" class="btn btn-small btn-primary" type="button">← 返回搜索结果</button>
+                        <button id="dismissSearchBanner" class="icon-btn-small" type="button" title="关闭提示">×</button>
+                    </div>
+                </div>
+                <div class="chat-head">
+                    <button id="mobileBackToConversations" class="icon-btn mobile-back-btn" type="button" title="返回会话列表" hidden>←</button>
+                    <div class="avatar" id="chatAvatar">?</div>
+                    <div class="chat-title"><strong id="chatName"></strong><span id="chatMeta"></span></div>
+                    <button id="chatBackToSearch" class="btn btn-small" type="button" hidden>← 返回搜索</button>
+                    <button id="toggleChatSearchBtn" class="icon-btn" type="button" title="在当前会话中搜索">🔍</button>
+                    <button id="pinButton" class="icon-btn" type="button" title="置顶">📌</button>
+                    <button id="detailButton" class="icon-btn" type="button" title="会话详情">ⓘ</button>
+                </div>
+                <div id="chatSearchbar" class="chat-searchbar">
+                    <div class="search-input-box">
+                        <span class="search-icon">🔍</span>
+                        <input id="chatSearch" class="chat-search-input" placeholder="在当前会话中搜索消息… (按 Enter 查找)">
+                        <button id="clearChatInputBtn" class="clear-input-icon" type="button" title="清空" hidden>×</button>
+                    </div>
+                    <button id="chatSearchButton" class="btn btn-primary btn-small search-submit-btn" type="button">搜索</button>
+                    <div id="chatHitNav" class="hit-nav" hidden>
+                        <button id="chatHitPrev" class="icon-btn-small" type="button" title="上一条 (↑)">▲</button>
+                        <span id="chatHitCount" class="hit-count">0 / 0</span>
+                        <button id="chatHitNext" class="icon-btn-small" type="button" title="下一条 (↓)">▼</button>
+                    </div>
+                    <button id="clearChatSearch" class="btn btn-small btn-text" type="button" hidden>退出搜索</button>
+                </div>
+                <div id="messageScroller" class="message-scroller">
+                    <button id="loadOlderMessages" class="load-older" hidden>↑ 加载更早记录</button>
+                    <div id="messageList"></div>
+                </div>
+            </div>
+        </section>
+
+        <aside id="detailPane" class="detail-pane" hidden>
+            <div class="detail-head"><strong>会话详情</strong><button id="closeDetail" class="icon-btn">×</button></div>
+            <div id="detailContent"></div>
+        </aside>
+    </section>
+
+    <section id="view-search" class="view search-view">
+        <div class="page-title"><div><h2>全局搜索</h2><p>按内容、发送人、会话类型和日期精确筛选。</p></div><button id="exportSearch" class="btn" disabled>导出当前结果</button></div>
+        <form id="searchForm" class="search-card">
+            <label><span>关键词</span><input id="searchKeyword" class="control" placeholder="消息内容"></label>
+            <label><span>发送人</span><input id="searchSender" class="control" placeholder="姓名或工号"></label>
+            <label><span>会话类型</span><select id="searchType" class="control"><option value="">全部</option><option value="single">单聊</option><option value="group">群组</option><option value="discussion">讨论组</option><option value="other">其他</option></select></label>
+            <label><span>消息方向</span><select id="searchDirection" class="control"><option value="">全部</option><option value="mine">我发送</option><option value="others">他人发送</option></select></label>
+            <label><span>开始日期</span><input id="searchFrom" type="date" class="control"></label>
+            <label><span>结束日期</span><input id="searchTo" type="date" class="control"></label>
+            <label class="favorite-check"><input id="searchFavorites" type="checkbox"><span>仅收藏</span></label>
+            <button class="btn btn-primary" type="submit">搜索</button>
+        </form>
+        <div class="result-head"><strong id="searchSummary">请输入条件搜索</strong><span id="searchEngine"></span></div>
+        <div id="searchResults" class="search-results"></div>
+        <div class="pager"><button id="searchPrev" class="btn" disabled>上一页</button><span id="searchPage">1 / 1</span><button id="searchNext" class="btn" disabled>下一页</button></div>
+    </section>
+
+    <section id="view-analytics" class="view analytics-view">
+        <div class="page-title"><div><h2>数据洞察</h2><p>会话规模、识别质量、时段分布、工号映射库与参与者统计。</p></div><button id="refreshStats" class="btn">刷新统计</button></div>
+        <div id="kpiGrid" class="kpi-grid"></div>
+        <div class="analytics-grid">
+            <article class="card"><div class="card-head"><strong>月度消息趋势</strong></div><div id="monthChart" class="bar-chart"></div></article>
+            <article class="card"><div class="card-head"><strong>24 小时活跃分布</strong></div><div id="hourChart" class="hour-chart"></div></article>
+            <article class="card"><div class="card-head"><strong>会话类型</strong></div><div id="typeStats" class="type-stats"></div></article>
+        </div>
+
+        <article id="directoryCard" class="card directory-card">
+            <div class="card-head">
+                <div class="head-title"><strong>工号与姓名自动映射库</strong><small id="directoryMeta">（导入时自动学习并持久化存储）</small></div>
+                <div class="head-tools">
+                    <input id="directoryQuery" class="control" placeholder="搜索工号、姓名或别名…">
+                    <button id="exportDirectoryBtn" class="btn btn-small" type="button">导出映射表</button>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>工号 (Sender ID)</th>
+                            <th>映射姓名</th>
+                            <th>别名 / 曾用名</th>
+                            <th>关联会话</th>
+                            <th>发信量</th>
+                            <th>首次活跃</th>
+                            <th>最近活跃</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="directoryTable"></tbody>
+                </table>
+            </div>
+        </article>
+
+        <article class="card people-card"><div class="card-head"><strong>每个人的对话统计</strong><input id="peopleQuery" class="control" placeholder="搜索姓名或工号"></div><div class="table-wrap"><table><thead><tr><th>人员</th><th>消息</th><th>会话</th><th>活跃天</th><th>平均长度</th><th>估算响应</th><th>最近活跃</th></tr></thead><tbody id="peopleTable"></tbody></table></div><p class="footnote">响应时间基于 12 小时内相邻发送人切换推算，群聊中不代表精确回复关系。</p></article>
+    </section>
+
+    <section id="view-manage" class="view manage-view">
+        <div class="page-title">
+            <div><h2>数据管理</h2><p>只有管理员可导入、更新、清空测试数据或删除租户共享聊天数据。</p></div>
+            <div class="page-actions">
+                <button id="clearTestDataBtn" class="btn btn-danger-soft" title="仅清空一键导入的测试聊天数据，真实导入数据不受任何影响">🗑️ 清空测试数据</button>
+                <button id="manageTestDataButton" class="btn">⚡ 一键导入测试数据</button>
+                <button id="manageImportButton" class="btn btn-primary">选择聊天目录</button>
+            </div>
+        </div>
+        <div id="importPanel" class="import-panel" hidden><div class="progress-track"><i id="importProgress"></i></div><div class="progress-meta"><strong id="importStage"></strong><span id="importCount"></span></div><div id="importLog" class="import-log"></div></div>
+        <article class="card"><div class="card-head"><strong>已导入数据源</strong><button id="refreshSources" class="btn btn-small">刷新</button></div><div id="sourceList" class="source-list"></div></article>
+    </section>
+</main>
+
+<input id="directoryInput" type="file" accept=".txt,text/plain" webkitdirectory multiple hidden>
+<input id="filesInput" type="file" accept=".txt,text/plain" multiple hidden>
+
+<dialog id="settingsDialog"><form method="dialog"><div class="dialog-head"><strong>我的聊天工号</strong><button value="cancel" class="icon-btn">×</button></div><div class="dialog-body"><p>用于识别哪些消息是“我”发送的，只影响当前平台账号。</p><input id="mySenderId" class="control" placeholder="例如：f84300033"></div><div class="dialog-foot"><button value="cancel" class="btn">取消</button><button id="saveSettings" value="default" class="btn btn-primary">保存</button></div></form></dialog>
+
+<dialog id="unidentifiedDialog" class="modal-dialog-large">
+    <div class="dialog-head">
+        <strong>未识别工号 / 格式异常消息排查</strong>
+        <button id="closeUnidentifiedDialog" class="icon-btn" type="button">×</button>
+    </div>
+    <div class="dialog-body">
+        <p class="dialog-tip">以下消息在导入时未识别出工号（可能原因为：文本未包含括号工号、系统通知或格式不规则）。</p>
+        <div class="table-wrap modal-table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>所属会话</th>
+                        <th>发送人 / 昵称</th>
+                        <th>异常诊断</th>
+                        <th>发送时间</th>
+                        <th>消息内容摘要</th>
+                    </tr>
+                </thead>
+                <tbody id="unidentifiedTable"></tbody>
+            </table>
+        </div>
+    </div>
+    <div class="dialog-foot">
+        <button id="closeUnidentifiedBtn" class="btn" type="button">关闭</button>
+    </div>
+</dialog>
+
+<dialog id="editPersonDialog">
+    <form id="editPersonForm">
+        <div class="dialog-head">
+            <strong>编辑人员映射</strong>
+            <button id="closeEditPersonDialog" class="icon-btn" type="button">×</button>
+        </div>
+        <div class="dialog-body">
+            <label class="form-row">
+                <span>工号</span>
+                <input id="editSenderId" class="control" readonly disabled>
+            </label>
+            <label class="form-row" style="margin-top:10px;">
+                <span>映射姓名</span>
+                <input id="editSenderName" class="control" required placeholder="例如：张三">
+            </label>
+            <label class="form-row" style="margin-top:10px;">
+                <span>别名 / 曾用名备注</span>
+                <input id="editAliasNames" class="control" placeholder="多个别名以 / 分隔">
+            </label>
+            <label class="favorite-check" style="margin-top:12px;">
+                <input id="editSyncMessages" type="checkbox" checked>
+                <span>同步更新历史消息中该工号的发送人姓名</span>
+            </label>
+        </div>
+        <div class="dialog-foot">
+            <button id="cancelEditPersonBtn" class="btn" type="button">取消</button>
+            <button id="saveEditPersonBtn" class="btn btn-primary" type="submit">保存映射</button>
+        </div>
+    </form>
+</dialog>
+
+<dialog id="importDialog">
+    <div class="dialog-head"><strong>导入聊天记录</strong><button id="closeImportDialog" class="icon-btn">×</button></div>
+    <div class="dialog-body import-options">
+        <button id="chooseDirectory" class="import-choice"><span>🗂️</span><strong>选择根目录</strong><small>递归读取单聊、群组、讨论组及其子目录</small></button>
+        <button id="chooseFiles" class="import-choice"><span>📄</span><strong>批量选择 TXT</strong><small>当前浏览器不支持目录选择时使用</small></button>
+        <button id="chooseTestData" class="import-choice test-data-choice"><span>⚡</span><strong>一键导入测试数据</strong><small>覆盖单聊/群聊/讨论组/代码/大批量全场景</small></button>
+    </div>
+</dialog>
+
+<script src="/js/shared/api.js"></script>
+<script src="/js/shared/xlsx.full.min.js"></script>
+<script src="./chat-test-data.js?v=20260901-4"></script>
+<script src="./chat-viewer.js?v=20260901-10"></script>
+</body>
+</html>

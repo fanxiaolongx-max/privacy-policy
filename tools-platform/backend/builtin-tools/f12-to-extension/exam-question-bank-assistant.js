@@ -35,7 +35,18 @@ const I18N = {
         backupBankCount: n => `${n} 个题库`,
         importBackupConfirm: (banks, questions) => `即将导入 ${banks} 个题库，共 ${questions} 题。同名题库会被覆盖，是否继续？`,
         importBackupSuccess: (banks, questions) => `📤 多题库导入成功：${banks} 个题库，共 ${questions} 题。`,
-        importInvalid: '导入失败：不是有效的本脚本JSON题库文件。', localDataBroken: '⚠️ 当前题库缓存损坏，已安全切换为空题库；原缓存未被覆盖。'
+        importInvalid: '导入失败：不是有效的本脚本JSON题库文件。', localDataBroken: '⚠️ 当前题库缓存损坏，已安全切换为空题库；原缓存未被覆盖。',
+        storageManager: '💾 题库存储管理', storagePaused: '存储已满，任务暂停', storageTitle: '⚠️ 题库存储容量不足',
+        storageIntro: '已暂停抓取/答题并回滚本次未保存修改。请选择一个或多个题库先导出，确认备份后可清理释放空间。',
+        storageManageIntro: '查看当前网站来源下的题库存储占用；可选择一个或多个题库导出、清理，或清除自动扫描出的安全冗余。',
+        storageUsage: '题库占用', storageOtherUsage: '网站其他数据', storageAvailable: '估算可用', storageQuotaNote: '按 localStorage 约 5 MiB/网站来源估算；实际配额由浏览器决定。',
+        storageCurrent: '当前', storageQuestions: n => `${n} 题`, storageRedundant: bytes => `可安全清理 ${bytes}`,
+        storageNoRedundant: '未发现可安全清理的冗余数据', storageSelect: '选择题库', storageExport: '导出所选',
+        storageExportClean: '导出并清理所选', storageScan: '扫描冗余', storageCleanRedundant: '清理所选冗余', storageClose: '关闭',
+        storageNeedSelect: '请至少选择一个题库。', storageCleanConfirm: names => `将先下载备份，然后从本网站清理以下题库：\n${names}\n\n请确认浏览器已允许下载。是否继续？`,
+        storageCleaned: (count, freed, available) => `已清理 ${count} 个题库，释放约 ${freed}；当前估算可用 ${available}。`,
+        storageRedundantCleaned: (count, freed, available) => `已清理 ${count} 个题库中的安全冗余，释放约 ${freed}；当前估算可用 ${available}。`,
+        storageQuotaError: '⚠️ 浏览器题库存储空间不足，任务已暂停。请导出并清理不再使用的题库。'
     },
     en: {
         defaultExam: 'Default Exam', title: '🚀 Question Bank & Answer Assistant (Shuffle-proof)', closeTitle: 'Close / Minimize',
@@ -62,7 +73,18 @@ const I18N = {
         backupBankCount: n => `${n} question bank(s)`,
         importBackupConfirm: (banks, questions) => `Import ${banks} question bank(s), ${questions} questions total? Banks with the same name will be replaced.`,
         importBackupSuccess: (banks, questions) => `📤 Multi-bank import successful: ${banks} bank(s), ${questions} questions.`,
-        importInvalid: 'Import failed: this is not a valid question-bank JSON file.', localDataBroken: '⚠️ The current local cache is corrupted. Switched safely to an empty bank without overwriting the original cache.'
+        importInvalid: 'Import failed: this is not a valid question-bank JSON file.', localDataBroken: '⚠️ The current local cache is corrupted. Switched safely to an empty bank without overwriting the original cache.',
+        storageManager: '💾 Storage manager', storagePaused: 'Storage full; task paused', storageTitle: '⚠️ Question-bank storage is full',
+        storageIntro: 'Scraping/answering has been paused and the unsaved change was rolled back. Export one or more banks, then remove confirmed backups to free space.',
+        storageManageIntro: 'Review question-bank usage for this site origin. Select one or more banks to export or remove, or clean safely detected redundancy.',
+        storageUsage: 'Question banks', storageOtherUsage: 'Other site data', storageAvailable: 'Estimated free', storageQuotaNote: 'Estimated against about 5 MiB of localStorage per site origin; the browser controls the actual quota.',
+        storageCurrent: 'Current', storageQuestions: n => `${n} questions`, storageRedundant: bytes => `${bytes} safely reclaimable`,
+        storageNoRedundant: 'No safely removable redundant data found', storageSelect: 'Select banks', storageExport: 'Export selected',
+        storageExportClean: 'Export & remove selected', storageScan: 'Scan redundancy', storageCleanRedundant: 'Clean selected redundancy', storageClose: 'Close',
+        storageNeedSelect: 'Select at least one question bank.', storageCleanConfirm: names => `A backup download will start, then these banks will be removed from this site:\n${names}\n\nMake sure downloads are allowed. Continue?`,
+        storageCleaned: (count, freed, available) => `Removed ${count} bank(s), freed about ${freed}; estimated free space is now ${available}.`,
+        storageRedundantCleaned: (count, freed, available) => `Cleaned safe redundancy in ${count} bank(s), freed about ${freed}; estimated free space is now ${available}.`,
+        storageQuotaError: '⚠️ Browser storage for question banks is full. The task was paused. Export and remove banks you no longer need.'
     }
 };
 const t = (key, ...args) => {
@@ -635,12 +657,34 @@ style.innerHTML = `
     #bank-transfer-cancel { color: #475569; background: #e2e8f0; }
     #bank-transfer-confirm { color: #fff; background: #2563eb; }
     #bank-transfer-confirm:disabled { cursor: not-allowed; opacity: .45; }
+    #bank-storage-dialog { display: none; position: fixed; inset: 0; z-index: 1000003; align-items: center; justify-content: center; padding: 16px; background: rgba(15, 23, 42, .68); font-family: sans-serif; }
+    .bank-storage-panel { width: min(720px, calc(100vw - 32px)); max-height: min(760px, calc(100vh - 32px)); display: flex; flex-direction: column; overflow: hidden; border-radius: 12px; background: #fff; box-shadow: 0 18px 55px rgba(0,0,0,.4); }
+    .bank-storage-header { padding: 16px 18px; color: #fff; background: #991b1b; font-size: 17px; font-weight: bold; }
+    .bank-storage-intro { padding: 12px 18px; color: #7f1d1d; background: #fef2f2; border-bottom: 1px solid #fecaca; font-size: 13px; line-height: 1.55; }
+    #bank-storage-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 12px 18px; background: #f8fafc; }
+    .bank-storage-stat { padding: 9px 10px; border: 1px solid #e2e8f0; border-radius: 8px; color: #64748b; font-size: 11px; background: #fff; }
+    .bank-storage-stat strong { display: block; margin-top: 3px; color: #0f172a; font-size: 16px; }
+    .bank-storage-note { padding: 0 18px 10px; color: #64748b; background: #f8fafc; font-size: 11px; }
+    .bank-storage-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 18px; border-block: 1px solid #e2e8f0; }
+    #bank-storage-list { min-height: 100px; overflow: auto; padding: 8px 18px; }
+    .bank-storage-item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; margin: 6px 0; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; }
+    .bank-storage-item strong { overflow-wrap: anywhere; color: #0f172a; }
+    .bank-storage-meta { text-align: right; color: #64748b; font-size: 11px; line-height: 1.45; }
+    .bank-storage-redundant { color: #b45309; }
+    #bank-storage-result { min-height: 18px; padding: 0 18px 8px; color: #047857; font-size: 12px; }
+    .bank-storage-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; padding: 12px 18px; border-top: 1px solid #e2e8f0; background: #f8fafc; }
+    .bank-storage-actions button, .bank-storage-toolbar button { padding: 8px 12px; border: 0; border-radius: 7px; cursor: pointer; font-weight: bold; }
+    #bank-storage-export { color: #fff; background: #2563eb; } #bank-storage-export-clean { color: #fff; background: #dc2626; }
+    #bank-storage-scan, #bank-storage-clean-redundant { color: #fff; background: #d97706; } #bank-storage-close { color: #475569; background: #e2e8f0; }
     @media (max-width: 640px) {
         #scraper-data-modal { top: 8px; left: 8px; width: calc(100vw - 16px); height: calc(100vh - 16px); min-width: 0; min-height: 0; resize: none; }
         #modal-info { align-items: stretch; flex-direction: column; gap: 8px; }
         #modal-search-input { width: 100%; }
         #modal-stats { padding: 8px; gap: 6px; }
         .bank-stat-card { min-width: calc(50% - 3px); flex: 1; }
+        #bank-storage-summary { grid-template-columns: 1fr; }
+        .bank-storage-item { grid-template-columns: auto minmax(0, 1fr); }
+        .bank-storage-meta { grid-column: 2; text-align: left; }
     }
 `;
 document.head.appendChild(style);
@@ -680,6 +724,7 @@ widget.innerHTML = `
         </div>
         <div class="btn-group">
             <button class="scraper-btn scraper-btn-warning" id="btn-view">${t('view')}</button>
+            <button class="scraper-btn" style="background:#475569;" id="btn-storage">${t('storageManager')}</button>
         </div>
         <div class="btn-group">
             <button class="scraper-btn scraper-btn-success" id="btn-export">${t('exportJson')}</button>
@@ -717,6 +762,29 @@ bankTransferDialog.innerHTML = `
         </div>
     </div>`;
 document.body.appendChild(bankTransferDialog);
+
+const bankStorageDialog = document.createElement('div');
+bankStorageDialog.id = 'bank-storage-dialog';
+bankStorageDialog.innerHTML = `
+    <div class="bank-storage-panel" role="dialog" aria-modal="true" aria-labelledby="bank-storage-title">
+        <div class="bank-storage-header" id="bank-storage-title"></div>
+        <div class="bank-storage-intro" id="bank-storage-intro"></div>
+        <div id="bank-storage-summary"></div>
+        <div class="bank-storage-note" id="bank-storage-note"></div>
+        <div class="bank-storage-toolbar">
+            <label><input type="checkbox" id="bank-storage-select-all"> <span id="bank-storage-select-label"></span></label>
+            <button id="bank-storage-scan"></button>
+        </div>
+        <div id="bank-storage-list"></div>
+        <div id="bank-storage-result"></div>
+        <div class="bank-storage-actions">
+            <button id="bank-storage-close"></button>
+            <button id="bank-storage-clean-redundant"></button>
+            <button id="bank-storage-export"></button>
+            <button id="bank-storage-export-clean"></button>
+        </div>
+    </div>`;
+document.body.appendChild(bankStorageDialog);
 
 const header = document.getElementById('scraper-header');
 let isDragging = false, startX, startY, initialX, initialY;
@@ -770,7 +838,7 @@ window.addEventListener('resize', () => {
 });
 
 const dialogOverlay = document.getElementById('scraper-close-dialog'); const chkRemember = document.getElementById('chk-remember');
-function executeCloseAction(action) { if(action === 'minimize') { widget.style.display = 'none'; modal.style.display = 'none'; bankTransferDialog.style.display = 'none'; minIcon.style.display = 'flex'; } else if(action === 'quit') { window.removeEventListener('message', handleExtensionPopupMessage); widget.remove(); modal.remove(); bankTransferDialog.remove(); minIcon.remove(); style.remove(); } }
+function executeCloseAction(action) { if(action === 'minimize') { widget.style.display = 'none'; modal.style.display = 'none'; bankTransferDialog.style.display = 'none'; bankStorageDialog.style.display = 'none'; minIcon.style.display = 'flex'; } else if(action === 'quit') { window.removeEventListener('message', handleExtensionPopupMessage); widget.remove(); modal.remove(); bankTransferDialog.remove(); bankStorageDialog.remove(); minIcon.remove(); style.remove(); } }
 function handleExtensionPopupMessage(event) {
     if (event.source !== window || event.data?.source !== 'EXTENSION_POPUP') return;
     if (event.data.action === 'START') {
@@ -793,6 +861,82 @@ let isRunning = false; let scrapedData = [];
 const logEl = document.getElementById('scraper-log'); const totalEl = document.getElementById('stat-total'); const statusEl = document.getElementById('stat-status');
 const examNameInput = document.getElementById('scraper-exam-name'); const datalist = document.getElementById('exam-name-list'); const tbody = document.getElementById('exam-table-body');
 const getStorageKey = () => `ScraperData_${examNameInput.value.trim()}`;
+const QUESTION_BANK_STORAGE_PREFIX = 'ScraperData_';
+const CONSERVATIVE_LOCAL_STORAGE_QUOTA_BYTES = 5 * 1024 * 1024;
+let storageScanCache = new Map();
+
+const estimateStorageBytes = value => String(value || '').length * 2;
+const formatStorageBytes = bytes => {
+    const value = Math.max(0, Number(bytes) || 0);
+    if (value < 1024) return `${Math.round(value)} B`;
+    if (value < 1024 * 1024) return `${(value / 1024).toFixed(value < 10 * 1024 ? 1 : 0)} KiB`;
+    return `${(value / 1024 / 1024).toFixed(2)} MiB`;
+};
+const isStorageQuotaError = error => Boolean(error && (
+    error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED' || error.code === 22 || error.code === 1014
+));
+
+function restoreCurrentBankFromStorage(storageKey) {
+    if (storageKey !== getStorageKey()) return;
+    try {
+        const restored = JSON.parse(localStorage.getItem(storageKey) || '[]');
+        scrapedData = Array.isArray(restored) ? restored : [];
+    } catch (_) {
+        scrapedData = [];
+    }
+    totalEl.innerText = scrapedData.length;
+}
+
+function pauseForStorageQuota(storageKey, error) {
+    isRunning = false;
+    restoreCurrentBankFromStorage(storageKey);
+    document.getElementById('btn-start').disabled = false;
+    document.getElementById('btn-auto-answer').disabled = false;
+    document.getElementById('btn-stop').disabled = true;
+    examNameInput.disabled = false;
+    setStatus('storagePaused', '#dc2626');
+    logMsg(t('storageQuotaError'), 'warn');
+    console.warn('[Exam Scraper] Question-bank storage quota reached:', error);
+    setTimeout(() => openBankStorageManager(t('storageQuotaError')), 0);
+}
+
+function persistQuestionBank(storageKey = getStorageKey(), questions = scrapedData, options = {}) {
+    try {
+        localStorage.setItem(storageKey, JSON.stringify(questions));
+        storageScanCache.delete(storageKey);
+        return true;
+    } catch (error) {
+        if (isStorageQuotaError(error)) {
+            if (options.pauseOnQuota !== false) pauseForStorageQuota(storageKey, error);
+            return false;
+        }
+        console.warn('[Exam Scraper] Failed to save question bank:', error);
+        if (options.pauseOnError !== false) {
+            isRunning = false;
+            restoreCurrentBankFromStorage(storageKey);
+        }
+        return false;
+    }
+}
+
+function persistQuestionBanksAtomically(entries) {
+    const originals = new Map(entries.map(entry => [entry.storageKey, localStorage.getItem(entry.storageKey)]));
+    try {
+        entries.forEach(entry => localStorage.setItem(entry.storageKey, JSON.stringify(entry.questions)));
+        entries.forEach(entry => storageScanCache.delete(entry.storageKey));
+        return true;
+    } catch (error) {
+        entries.forEach(entry => localStorage.removeItem(entry.storageKey));
+        originals.forEach((value, storageKey) => {
+            if (value !== null) {
+                try { localStorage.setItem(storageKey, value); } catch (restoreError) { console.error('[Exam Scraper] Failed to restore imported bank:', restoreError); }
+            }
+        });
+        if (isStorageQuotaError(error)) pauseForStorageQuota(getStorageKey(), error);
+        else console.warn('[Exam Scraper] Failed to import question banks:', error);
+        return false;
+    }
+}
 
 const mapSavedAnswersToOptions = (savedAnswers, currentOptions) => {
     const mappedAnswers = [];
@@ -876,6 +1020,7 @@ function applyLanguage() {
     document.getElementById('btn-auto-answer').innerText = t('autoAnswer');
     document.getElementById('btn-stop').innerText = t('stop');
     document.getElementById('btn-view').innerText = t('view');
+    document.getElementById('btn-storage').innerText = t('storageManager');
     document.getElementById('btn-export').innerText = t('exportJson');
     document.getElementById('btn-import').innerText = t('importJson');
     document.getElementById('btn-clear').innerText = t('clear');
@@ -891,6 +1036,12 @@ function applyLanguage() {
     document.getElementById('bank-transfer-cancel').innerText = t('cancelTransfer');
     document.getElementById('bank-transfer-confirm').innerText = t('exportSelected');
     if (modal.style.display === 'flex') renderTable();
+    if (bankStorageDialog.style.display === 'flex') {
+        const selectedKeys = getSelectedStorageKeys();
+        applyBankStorageLanguage(currentStatusKey === 'storagePaused');
+        document.getElementById('bank-storage-title').innerText = currentStatusKey === 'storagePaused' ? t('storageTitle') : t('storageManager');
+        renderBankStorageManager('', selectedKeys);
+    }
 }
 document.getElementById('scraper-lang').onclick = e => {
     e.stopPropagation();
@@ -962,7 +1113,7 @@ function loadLocalData() {
                 repairedLearningCount++;
             }
         });
-        if (hasModified) localStorage.setItem(key, JSON.stringify(scrapedData));
+        if (hasModified && !persistQuestionBank(key, scrapedData)) return;
         if (repairedLearningCount > 0) {
             logMsg(currentLang === 'zh'
                 ? `🧹 [题库修复] 已清理 ${repairedLearningCount} 道题中不属于当前选项版本的旧答案/错误组合`
@@ -1115,7 +1266,7 @@ tbody.addEventListener('change', (e) => {
         }
         if (q.正确答案.length > 0) q.猜测答案 = [];
 
-        localStorage.setItem(getStorageKey(), JSON.stringify(scrapedData));
+        if (!persistQuestionBank()) renderTable();
         renderBankStats();
     }
 });
@@ -1397,14 +1548,17 @@ document.getElementById('btn-start').onclick = async () => {
                     logMsg(currentLang === 'zh' ? `[更新次数] ${typeName} 第${questionNumber}题` : `[Count updated] ${typeLabel(typeName)} question ${questionNumber}`);
                 }
 
-                localStorage.setItem(getStorageKey(), JSON.stringify(scrapedData));
+                if (!persistQuestionBank()) break;
                 totalEl.innerText = scrapedData.length;
             }
             qIndex++;
         }
     }
-    isRunning = false; document.getElementById('btn-start').disabled = false; document.getElementById('btn-auto-answer').disabled = false; document.getElementById('btn-stop').disabled = true; examNameInput.disabled = false; setStatus('stopped', '#ef4444'); refreshExamList();
-    logMsg(currentLang === 'zh' ? `--- 🏁 任务结束 (新增:${newCount}题 | 收录答案:${autoAnswerCount}题 | 排雷学习:${learnedCount}次) ---` : `--- 🏁 Finished (new: ${newCount} | answers learned: ${autoAnswerCount} | eliminations learned: ${learnedCount}) ---`, 'info');
+    isRunning = false; document.getElementById('btn-start').disabled = false; document.getElementById('btn-auto-answer').disabled = false; document.getElementById('btn-stop').disabled = true; examNameInput.disabled = false; refreshExamList();
+    if (currentStatusKey !== 'storagePaused') {
+        setStatus('stopped', '#ef4444');
+        logMsg(currentLang === 'zh' ? `--- 🏁 任务结束 (新增:${newCount}题 | 收录答案:${autoAnswerCount}题 | 排雷学习:${learnedCount}次) ---` : `--- 🏁 Finished (new: ${newCount} | answers learned: ${autoAnswerCount} | eliminations learned: ${learnedCount}) ---`, 'info');
+    }
 };
 
 // --- 🤖 自动答题功能（🌟 文本匹配核心 - 完美免疫选项乱序） ---
@@ -1421,7 +1575,7 @@ async function guessByType(typeName, qIndex, optionEls, currentOptionsCleaned, e
             const selection = await applyAnswerSelection(suggestedAnswers);
             if (selection.success) {
                 existingQ.猜测采用次数 = Math.max(0, Number(existingQ.猜测采用次数) || 0) + 1;
-                localStorage.setItem(getStorageKey(), JSON.stringify(scrapedData));
+                if (!persistQuestionBank()) return false;
                 logMsg(currentLang === 'zh'
                     ? `💡 [采用疑似答案] ${typeName} 第${qIndex}题 -> ${describeAnswers(suggestedAnswers, currentOptionsCleaned)}（尚未证实，下次继续作为建议）`
                     : `💡 [Suggested answer reused] ${typeLabel(typeName)} question ${qIndex}: ${describeAnswers(suggestedAnswers, currentOptionsCleaned)} (unconfirmed; kept as the next suggestion).`, 'guess');
@@ -1476,7 +1630,7 @@ async function guessByType(typeName, qIndex, optionEls, currentOptionsCleaned, e
             return false;
         }
         if (existingQ && saveGuessSuggestion(existingQ, [currentOptionsCleaned[guessIdx]])) {
-            localStorage.setItem(getStorageKey(), JSON.stringify(scrapedData));
+            if (!persistQuestionBank()) return false;
             logMsg(currentLang === 'zh'
                 ? `📝 [记录疑似答案] ${typeName} 第${qIndex}题 -> ${describeAnswers(existingQ.猜测答案, currentOptionsCleaned)}（等待后续复盘验证）`
                 : `📝 [Suggested answer saved] ${typeLabel(typeName)} question ${qIndex}: ${describeAnswers(existingQ.猜测答案, currentOptionsCleaned)} (awaiting later review).`, 'guess');
@@ -1530,7 +1684,7 @@ async function guessByType(typeName, qIndex, optionEls, currentOptionsCleaned, e
             return false;
         }
         if (existingQ && saveGuessSuggestion(existingQ, chosenComboIndices.map(idx => currentOptionsCleaned[idx]))) {
-            localStorage.setItem(getStorageKey(), JSON.stringify(scrapedData));
+            if (!persistQuestionBank()) return false;
             logMsg(currentLang === 'zh'
                 ? `📝 [记录疑似答案] ${typeName} 第${qIndex}题 -> ${describeAnswers(existingQ.猜测答案, currentOptionsCleaned)}（等待后续复盘验证）`
                 : `📝 [Suggested answer saved] ${typeLabel(typeName)} question ${qIndex}: ${describeAnswers(existingQ.猜测答案, currentOptionsCleaned)} (awaiting later review).`, 'guess');
@@ -1628,7 +1782,7 @@ document.getElementById('btn-auto-answer').onclick = async () => {
                     if ((typeName === '单选题' || typeName === '判断题') && (existingQ.正确答案 || []).length > 1) {
                         existingQ.正确答案 = [];
                     }
-                    localStorage.setItem(getStorageKey(), JSON.stringify(scrapedData));
+                    if (!persistQuestionBank()) break;
                     logMsg(currentLang === 'zh'
                         ? `🧹 [修复历史题型] 第${questionNumber}题：${previousType} -> ${typeName}`
                         : `🧹 [Question type repaired] Question ${questionNumber}: ${typeLabel(previousType)} -> ${typeLabel(typeName)}.`, 'warn');
@@ -1653,7 +1807,7 @@ document.getElementById('btn-auto-answer').onclick = async () => {
                     错误组合: []
                 };
                 scrapedData.push(existingQ);
-                localStorage.setItem(getStorageKey(), JSON.stringify(scrapedData));
+                if (!persistQuestionBank()) break;
                 totalEl.innerText = scrapedData.length;
                 logMsg(currentLang === 'zh'
                     ? `🆕 [答题录入新题] ${typeName} 第${questionNumber}题：已建立题库记录，等待保存疑似答案`
@@ -1680,7 +1834,7 @@ document.getElementById('btn-auto-answer').onclick = async () => {
                         existingQ.错误答案 = [];
                         existingQ.明确错误答案 = currentOptionsCleaned.filter(option => !answerNorms.has(normalizeForCompare(option)));
                     }
-                    localStorage.setItem(getStorageKey(), JSON.stringify(scrapedData));
+                    if (!persistQuestionBank()) break;
                     crossBankCount++;
                     logMsg(currentLang === 'zh'
                         ? `🔗 [跨题库命中] ${typeName} 第${questionNumber}题：从 ${crossBankMatch.bankNames.join('、')} 找到一致答案 -> ${describeAnswers(crossBankAnswers, currentOptionsCleaned)}（已补入当前题库）`
@@ -1738,8 +1892,11 @@ document.getElementById('btn-auto-answer').onclick = async () => {
         }
     }
 
-    isRunning = false; document.getElementById('btn-start').disabled = false; document.getElementById('btn-auto-answer').disabled = false; document.getElementById('btn-stop').disabled = true; examNameInput.disabled = false; setStatus('stopped', '#ef4444');
-    logMsg(currentLang === 'zh' ? `--- 🏁 答题结束 (题库作答: ${answeredCount}, 跨库补全: ${crossBankCount}, 技巧蒙猜: ${guessCount}, 跳过: ${missedCount}) ---` : `--- 🏁 Answering finished (bank answers: ${answeredCount}, cross-bank fills: ${crossBankCount}, guessed: ${guessCount}, skipped: ${missedCount}) ---`, 'info');
+    isRunning = false; document.getElementById('btn-start').disabled = false; document.getElementById('btn-auto-answer').disabled = false; document.getElementById('btn-stop').disabled = true; examNameInput.disabled = false;
+    if (currentStatusKey !== 'storagePaused') {
+        setStatus('stopped', '#ef4444');
+        logMsg(currentLang === 'zh' ? `--- 🏁 答题结束 (题库作答: ${answeredCount}, 跨库补全: ${crossBankCount}, 技巧蒙猜: ${guessCount}, 跳过: ${missedCount}) ---` : `--- 🏁 Answering finished (bank answers: ${answeredCount}, cross-bank fills: ${crossBankCount}, guessed: ${guessCount}, skipped: ${missedCount}) ---`, 'info');
+    }
 };
 
 document.getElementById('btn-stop').onclick = () => { isRunning = false; logMsg(t('forceStop')); };
@@ -1858,6 +2015,180 @@ const downloadQuestionBankBackup = (banks) => {
     setTimeout(() => URL.revokeObjectURL(url), 0);
 };
 
+const compactQuestionBankSafely = questions => {
+    let compacted = JSON.parse(JSON.stringify(questions));
+    let removedEntries = 0;
+    const cleanAnswers = (values, options) => {
+        const mapping = mapSavedAnswersToOptions(Array.isArray(values) ? values : [], options);
+        removedEntries += (Array.isArray(values) ? values.length : 0) - mapping.mappedAnswers.length;
+        return mapping.mappedAnswers;
+    };
+
+    compacted.forEach(question => {
+        const options = Array.isArray(question.选项) ? question.选项.map(value => String(value)) : [];
+        question.选项 = options;
+        question.正确答案 = cleanAnswers(question.正确答案, options);
+        question.猜测答案 = question.正确答案.length ? [] : cleanAnswers(question.猜测答案, options);
+        question.错误答案 = cleanAnswers(question.错误答案, options);
+        question.明确错误答案 = cleanAnswers(question.明确错误答案, options);
+
+        const correctNorms = new Set(question.正确答案.map(normalizeForCompare));
+        const removeCorrect = values => values.filter(value => {
+            const keep = !correctNorms.has(normalizeForCompare(value));
+            if (!keep) removedEntries++;
+            return keep;
+        });
+        question.错误答案 = removeCorrect(question.错误答案);
+        question.明确错误答案 = removeCorrect(question.明确错误答案);
+
+        const comboKeys = new Set();
+        const correctKey = getNormComboStr(question.正确答案);
+        const sourceCombos = Array.isArray(question.错误组合) ? question.错误组合 : [];
+        question.错误组合 = sourceCombos.reduce((result, combo) => {
+            const cleaned = cleanAnswers(combo, options)
+                .sort((a, b) => normalizeForCompare(a).localeCompare(normalizeForCompare(b)));
+            const key = getNormComboStr(cleaned);
+            if (!key || key === correctKey || comboKeys.has(key)) {
+                removedEntries++;
+                return result;
+            }
+            comboKeys.add(key);
+            result.push(cleaned);
+            return result;
+        }, []);
+
+        if (question.题型 === '多选题') {
+            question.错误答案 = [];
+            question.明确错误答案 = question.正确答案.length
+                ? options.filter(option => !correctNorms.has(normalizeForCompare(option)))
+                : [];
+        }
+    });
+
+    // 仅合并除 ID、题号、出现次数外完全一致的重复记录，避免把答案冲突的同题版本误合并。
+    const exactRecords = new Map();
+    const uniqueQuestions = [];
+    compacted.forEach(question => {
+        const comparable = { ...question };
+        delete comparable.id;
+        delete comparable.题号;
+        delete comparable.出现次数;
+        const exactKey = `${getQuestionVariantKey(question.题型, question.题目, question.选项)}\u0000${JSON.stringify(comparable)}`;
+        const existing = exactRecords.get(exactKey);
+        if (!existing) {
+            exactRecords.set(exactKey, question);
+            uniqueQuestions.push(question);
+            return;
+        }
+        existing.出现次数 = Math.max(0, Number(existing.出现次数) || 0) + Math.max(0, Number(question.出现次数) || 0);
+        removedEntries++;
+    });
+    compacted = uniqueQuestions;
+
+    const beforeBytes = estimateStorageBytes(JSON.stringify(questions));
+    const serialized = JSON.stringify(compacted);
+    const afterBytes = estimateStorageBytes(serialized);
+    return { questions: compacted, serialized, beforeBytes, afterBytes, reclaimedBytes: Math.max(0, beforeBytes - afterBytes), removedEntries };
+};
+
+const calculateLocalStorageUsage = () => {
+    let totalBytes = 0;
+    let bankBytes = 0;
+    for (let index = 0; index < localStorage.length; index++) {
+        const key = localStorage.key(index) || '';
+        const value = localStorage.getItem(key) || '';
+        const bytes = estimateStorageBytes(key) + estimateStorageBytes(value);
+        totalBytes += bytes;
+        if (key.startsWith(QUESTION_BANK_STORAGE_PREFIX)) bankBytes += bytes;
+    }
+    return {
+        totalBytes,
+        bankBytes,
+        otherBytes: Math.max(0, totalBytes - bankBytes),
+        availableBytes: Math.max(0, CONSERVATIVE_LOCAL_STORAGE_QUOTA_BYTES - totalBytes)
+    };
+};
+
+const getSelectedStorageKeys = () => [...document.querySelectorAll('.bank-storage-check:checked')]
+    .map(checkbox => checkbox.dataset.storageKey)
+    .filter(Boolean);
+
+const syncBankStorageSelection = () => {
+    const checkboxes = [...document.querySelectorAll('.bank-storage-check')];
+    const selectedCount = checkboxes.filter(checkbox => checkbox.checked).length;
+    const selectAll = document.getElementById('bank-storage-select-all');
+    selectAll.checked = checkboxes.length > 0 && selectedCount === checkboxes.length;
+    selectAll.indeterminate = selectedCount > 0 && selectedCount < checkboxes.length;
+    document.getElementById('bank-storage-export').disabled = selectedCount === 0;
+    document.getElementById('bank-storage-export-clean').disabled = selectedCount === 0;
+    document.getElementById('bank-storage-clean-redundant').disabled = selectedCount === 0;
+};
+
+function renderBankStorageManager(message = '', selectedKeys = []) {
+    const selected = new Set(selectedKeys);
+    const banks = listStoredQuestionBanks();
+    const usage = calculateLocalStorageUsage();
+    document.getElementById('bank-storage-summary').innerHTML = `
+        <div class="bank-storage-stat">${t('storageUsage')}<strong>${formatStorageBytes(usage.bankBytes)}</strong></div>
+        <div class="bank-storage-stat">${t('storageOtherUsage')}<strong>${formatStorageBytes(usage.otherBytes)}</strong></div>
+        <div class="bank-storage-stat">${t('storageAvailable')}<strong>${formatStorageBytes(usage.availableBytes)}</strong></div>`;
+    document.getElementById('bank-storage-note').innerText = t('storageQuotaNote');
+    document.getElementById('bank-storage-result').innerText = message;
+    const list = document.getElementById('bank-storage-list');
+    list.innerHTML = '';
+    banks.forEach(bank => {
+        const scan = storageScanCache.get(bank.storageKey);
+        const item = document.createElement('label');
+        item.className = 'bank-storage-item';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'bank-storage-check';
+        checkbox.dataset.storageKey = bank.storageKey;
+        checkbox.checked = selected.has(bank.storageKey);
+        const name = document.createElement('strong');
+        name.innerText = `${bank.name}${bank.storageKey === getStorageKey() ? ` · ${t('storageCurrent')}` : ''}`;
+        const meta = document.createElement('div');
+        meta.className = 'bank-storage-meta';
+        const size = estimateStorageBytes(bank.storageKey) + estimateStorageBytes(localStorage.getItem(bank.storageKey) || '');
+        const scanText = scan && scan.reclaimedBytes > 0
+            ? `<div class="bank-storage-redundant">${t('storageRedundant', formatStorageBytes(scan.reclaimedBytes))}</div>`
+            : (scan ? `<div>${t('storageNoRedundant')}</div>` : '');
+        meta.innerHTML = `<div>${t('storageQuestions', bank.questions.length)} · ${formatStorageBytes(size)}</div>${scanText}`;
+        item.append(checkbox, name, meta);
+        list.appendChild(item);
+    });
+    syncBankStorageSelection();
+}
+
+function applyBankStorageLanguage(isQuotaWarning = false) {
+    document.getElementById('bank-storage-intro').innerText = t(isQuotaWarning ? 'storageIntro' : 'storageManageIntro');
+    document.getElementById('bank-storage-select-label').innerText = t('storageSelect');
+    document.getElementById('bank-storage-scan').innerText = t('storageScan');
+    document.getElementById('bank-storage-clean-redundant').innerText = t('storageCleanRedundant');
+    document.getElementById('bank-storage-export').innerText = t('storageExport');
+    document.getElementById('bank-storage-export-clean').innerText = t('storageExportClean');
+    document.getElementById('bank-storage-close').innerText = t('storageClose');
+}
+
+function scanAllStoredQuestionBanks() {
+    storageScanCache = new Map();
+    listStoredQuestionBanks().forEach(bank => {
+        storageScanCache.set(bank.storageKey, compactQuestionBankSafely(bank.questions));
+    });
+    return [...storageScanCache.values()].reduce((sum, scan) => sum + scan.reclaimedBytes, 0);
+}
+
+function openBankStorageManager(reason = '') {
+    applyBankStorageLanguage(Boolean(reason));
+    document.getElementById('bank-storage-title').innerText = reason ? t('storageTitle') : t('storageManager');
+    bankStorageDialog.style.display = 'flex';
+    const reclaimableBytes = scanAllStoredQuestionBanks();
+    const scanMessage = reclaimableBytes > 0
+        ? t('storageRedundant', formatStorageBytes(reclaimableBytes))
+        : t('storageNoRedundant');
+    renderBankStorageManager(reason || scanMessage);
+}
+
 const syncBankTransferSelection = () => {
     const checkboxes = [...document.querySelectorAll('.bank-transfer-check')];
     const selectedCount = checkboxes.filter(checkbox => checkbox.checked).length;
@@ -1918,6 +2249,80 @@ document.getElementById('bank-transfer-confirm').onclick = () => {
         ? `📥 [题库备份] 已导出 ${selectedBanks.length} 个题库，共 ${selectedBanks.reduce((sum, bank) => sum + bank.questions.length, 0)} 题`
         : `📥 [Question-bank backup] Exported ${selectedBanks.length} bank(s), ${selectedBanks.reduce((sum, bank) => sum + bank.questions.length, 0)} questions.`, 'success');
 };
+
+document.getElementById('btn-storage').onclick = () => openBankStorageManager();
+document.getElementById('bank-storage-close').onclick = () => { bankStorageDialog.style.display = 'none'; };
+bankStorageDialog.addEventListener('click', event => { if (event.target === bankStorageDialog) bankStorageDialog.style.display = 'none'; });
+document.getElementById('bank-storage-list').addEventListener('change', syncBankStorageSelection);
+document.getElementById('bank-storage-select-all').addEventListener('change', event => {
+    document.querySelectorAll('.bank-storage-check').forEach(checkbox => { checkbox.checked = event.target.checked; });
+    syncBankStorageSelection();
+});
+document.getElementById('bank-storage-scan').onclick = () => {
+    const selectedKeys = getSelectedStorageKeys();
+    const totalReclaimed = scanAllStoredQuestionBanks();
+    const message = totalReclaimed > 0
+        ? t('storageRedundant', formatStorageBytes(totalReclaimed))
+        : t('storageNoRedundant');
+    renderBankStorageManager(message, selectedKeys);
+};
+document.getElementById('bank-storage-export').onclick = () => {
+    const selectedKeys = getSelectedStorageKeys();
+    if (!selectedKeys.length) { alert(t('storageNeedSelect')); return; }
+    const bankMap = new Map(listStoredQuestionBanks().map(bank => [bank.storageKey, bank]));
+    const selectedBanks = selectedKeys.map(key => bankMap.get(key)).filter(Boolean);
+    if (!selectedBanks.length) { alert(t('noData')); return; }
+    downloadQuestionBankBackup(selectedBanks);
+    renderBankStorageManager(currentLang === 'zh'
+        ? `已导出 ${selectedBanks.length} 个题库，请确认下载文件后再清理。`
+        : `Exported ${selectedBanks.length} bank(s). Confirm the download before removing them.`, selectedKeys);
+};
+document.getElementById('bank-storage-export-clean').onclick = () => {
+    const selectedKeys = getSelectedStorageKeys();
+    if (!selectedKeys.length) { alert(t('storageNeedSelect')); return; }
+    const bankMap = new Map(listStoredQuestionBanks().map(bank => [bank.storageKey, bank]));
+    const selectedBanks = selectedKeys.map(key => bankMap.get(key)).filter(Boolean);
+    if (!selectedBanks.length) { alert(t('noData')); return; }
+    if (!confirm(t('storageCleanConfirm', selectedBanks.map(bank => `• ${bank.name}`).join('\n')))) return;
+    const before = calculateLocalStorageUsage();
+    downloadQuestionBankBackup(selectedBanks);
+    selectedBanks.forEach(bank => {
+        localStorage.removeItem(bank.storageKey);
+        storageScanCache.delete(bank.storageKey);
+    });
+    if (selectedKeys.includes(getStorageKey())) loadLocalData();
+    refreshExamList();
+    const after = calculateLocalStorageUsage();
+    const freed = Math.max(0, before.totalBytes - after.totalBytes);
+    const message = t('storageCleaned', selectedBanks.length, formatStorageBytes(freed), formatStorageBytes(after.availableBytes));
+    renderBankStorageManager(message);
+    logMsg(`🧹 ${message}`, 'success');
+};
+document.getElementById('bank-storage-clean-redundant').onclick = () => {
+    const selectedKeys = getSelectedStorageKeys();
+    if (!selectedKeys.length) { alert(t('storageNeedSelect')); return; }
+    const bankMap = new Map(listStoredQuestionBanks().map(bank => [bank.storageKey, bank]));
+    const before = calculateLocalStorageUsage();
+    let cleanedCount = 0;
+    for (const storageKey of selectedKeys) {
+        const bank = bankMap.get(storageKey);
+        if (!bank) continue;
+        const scan = compactQuestionBankSafely(bank.questions);
+        storageScanCache.set(storageKey, scan);
+        if (scan.reclaimedBytes <= 0) continue;
+        if (!persistQuestionBank(storageKey, scan.questions)) return;
+        cleanedCount++;
+    }
+    if (selectedKeys.includes(getStorageKey())) loadLocalData();
+    const after = calculateLocalStorageUsage();
+    const freed = Math.max(0, before.totalBytes - after.totalBytes);
+    const message = cleanedCount
+        ? t('storageRedundantCleaned', cleanedCount, formatStorageBytes(freed), formatStorageBytes(after.availableBytes))
+        : t('storageNoRedundant');
+    renderBankStorageManager(message, selectedKeys);
+    logMsg(`🧹 ${message}`, cleanedCount ? 'success' : 'info');
+};
+
 const importFileInput = document.getElementById('scraper-import-file');
 document.getElementById('btn-import').onclick = () => {
     importFileInput.value = '';
@@ -1946,9 +2351,11 @@ importFileInput.onchange = async () => {
             const totalQuestions = normalizedBanks.reduce((sum, bank) => sum + bank.questions.length, 0);
             const bankList = normalizedBanks.map(bank => `• ${bank.name} (${bank.questions.length})`).join('\n');
             if (!confirm(`${t('importBackupConfirm', normalizedBanks.length, totalQuestions)}\n\n${bankList}`)) return;
-            normalizedBanks.forEach(bank => {
-                localStorage.setItem(`ScraperData_${bank.name}`, JSON.stringify(bank.questions));
-            });
+            const importEntries = normalizedBanks.map(bank => ({
+                storageKey: `${QUESTION_BANK_STORAGE_PREFIX}${bank.name}`,
+                questions: bank.questions
+            }));
+            if (!persistQuestionBanksAtomically(importEntries)) return;
             loadLocalData();
             refreshExamList();
             const successMessage = t('importBackupSuccess', normalizedBanks.length, totalQuestions);
@@ -1958,7 +2365,7 @@ importFileInput.onchange = async () => {
             if (!examNameInput.value.trim()) { alert(t('needName')); return; }
             const normalized = normalizeImportedQuestionArray(imported);
             if (!confirm(t('importConfirm', examNameInput.value.trim()))) return;
-            localStorage.setItem(getStorageKey(), JSON.stringify(normalized));
+            if (!persistQuestionBank(getStorageKey(), normalized)) return;
             loadLocalData();
             refreshExamList();
             logMsg(t('importSuccess', normalized.length), 'success');

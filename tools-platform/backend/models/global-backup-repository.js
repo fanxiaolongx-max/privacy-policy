@@ -35,6 +35,9 @@ const schedulerRunning = new Set();
 
 const REPORT_OWNED_FILES = ['report.db', 'report.db-wal', 'report.db-shm'];
 const PRIMARY_SQLITE_SIDECARS = ['tools.db-wal', 'tools.db-shm'];
+// Chat history is intentionally managed outside the platform-wide backup lifecycle.
+// Preserve the live tenant copy during restore and never include it in backup archives.
+const CHAT_HISTORY_FILES = ['chat-history.db', 'chat-history.db-wal', 'chat-history.db-shm'];
 const CONTROL_PLANE_TABLES = ['auth_users', 'tenants', 'user_tenants', 'auth_sessions'];
 // `tenants` is a sibling workspace collection when operating on the legacy
 // default tenant. A backup/restore for one tenant must never absorb or replace it.
@@ -55,6 +58,7 @@ function getPrimaryPreservedNames() {
     return [
         ...PRIMARY_PRESERVED_DIRS,
         ...PRIMARY_OPERATIONAL_DIRS,
+        ...CHAT_HISTORY_FILES,
         ...(getTenantId() === DEFAULT_TENANT_ID ? DEFAULT_MACHINE_FILES : [])
     ];
 }
