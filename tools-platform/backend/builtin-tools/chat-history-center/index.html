@@ -163,7 +163,31 @@
             </div>
         </div>
         <div id="importPanel" class="import-panel" hidden><div class="progress-track"><i id="importProgress"></i></div><div class="progress-meta"><strong id="importStage"></strong><span id="importCount"></span></div><div id="importLog" class="import-log"></div></div>
-        <article class="card"><div class="card-head"><strong>已导入数据源</strong><button id="refreshSources" class="btn btn-small">刷新</button></div><div id="sourceList" class="source-list"></div></article>
+        <article class="card source-card">
+            <div class="card-head">
+                <div class="head-title">
+                    <strong>已导入数据源</strong>
+                    <small id="sourceTotalMeta">共 0 个数据源</small>
+                </div>
+                <div class="head-tools source-tools">
+                    <input id="sourceQuery" class="control" placeholder="搜索会话名称或文件路径…">
+                    <select id="sourceType" class="control compact">
+                        <option value="">全部类型</option>
+                        <option value="single">单聊</option>
+                        <option value="group">群组</option>
+                        <option value="discussion">讨论组</option>
+                        <option value="other">其他</option>
+                    </select>
+                    <button id="refreshSources" class="btn btn-small" type="button">刷新</button>
+                </div>
+            </div>
+            <div id="sourceList" class="source-list"></div>
+            <div id="sourcePager" class="pager" style="margin-top:14px;">
+                <button id="sourcePrev" class="btn" disabled>上一页</button>
+                <span id="sourcePage">1 / 1</span>
+                <button id="sourceNext" class="btn" disabled>下一页</button>
+            </div>
+        </article>
     </section>
 </main>
 

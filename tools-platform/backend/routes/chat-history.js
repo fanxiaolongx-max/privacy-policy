@@ -106,8 +106,8 @@ router.put('/directory/:senderId', requireAdmin, asyncRoute(async (req, res) => 
     res.json(await repo.updatePersonDirectory(req.params.senderId, req.body || {}));
 }));
 
-router.get('/sources', requireAdmin, asyncRoute(async (_req, res) => {
-    res.json(await repo.listSources());
+router.get('/sources', requireAdmin, asyncRoute(async (req, res) => {
+    res.json(await repo.listSources(req.query || {}));
 }));
 
 router.post('/sources/clear-test-data', requireAdmin, asyncRoute(async (_req, res) => {

@@ -134,6 +134,18 @@ test('chat history imports, searches, preserves personal state and isolates tena
     // Real conversations remain intact
     assert.equal((await repo.listConversations('alice')).items.some(c => c.display_name === '张三'), true);
 
+    // Test paginated listSources
+    const sourcesPaged = await repo.listSources({ limit: 1, page: 1 });
+    assert.equal(sourcesPaged.total, 2);
+    assert.equal(sourcesPaged.totalPages, 2);
+    assert.equal(sourcesPaged.items.length, 1);
+    const sourcesSearch = await repo.listSources({ q: '张三' });
+    assert.equal(sourcesSearch.total, 1);
+    assert.equal(sourcesSearch.items[0].display_name, '张三');
+    const sourcesType = await repo.listSources({ type: 'group' });
+    assert.equal(sourcesType.total, 1);
+    assert.equal(sourcesType.items[0].conversation_type, 'group');
+
     const people = await repo.getPeopleStats('alice');
     assert.deepEqual(people.items.map(item => item.sender_id).filter(Boolean).sort(), ['my001', 'wang001', 'zhang001']);
 

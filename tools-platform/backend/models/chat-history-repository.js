@@ -579,11 +579,12 @@ async function markRead(userId, conversationId) {
     await ensureReady();
     const conversation = await get('SELECT last_message_time FROM chat_conversations WHERE id=?', [conversationId]);
     if (!conversation) return null;
+    const readTime = conversation.last_message_time || new Date().toISOString();
     const now = new Date().toISOString();
     await run(`INSERT INTO chat_user_states(user_id,conversation_id,pinned,last_read_time,updated_at)
         VALUES(?,?,0,?,?) ON CONFLICT(user_id,conversation_id) DO UPDATE SET
-        last_read_time=excluded.last_read_time,updated_at=excluded.updated_at`, [userId, conversationId, conversation.last_message_time, now]);
-    return { lastReadTime: conversation.last_message_time };
+        last_read_time=excluded.last_read_time,updated_at=excluded.updated_at`, [userId, conversationId, readTime, now]);
+    return { lastReadTime: readTime };
 }
 
 async function setPinned(userId, conversationId, pinned) {
@@ -736,12 +737,47 @@ async function getPeopleStats(userId, options = {}) {
     return { items, approximateResponseTime: true, mySenderId: settings.my_sender_id || '' };
 }
 
-async function listSources() {
+async function listSources(options = {}) {
     await ensureReady();
-    return all(`SELECT s.id,s.relative_path,s.source_hash,s.file_size,s.modified_at,s.imported_at,s.message_count,
+    const q = String(options.q || '').trim();
+    const type = String(options.type || '').trim();
+    const limit = parsePositiveInt(options.limit, 20, 500);
+    const page = Math.max(1, Number.parseInt(options.page, 10) || 1);
+    const offset = (page - 1) * limit;
+
+    const conditions = [];
+    const params = [];
+
+    if (q) {
+        conditions.push('(s.relative_path LIKE ? OR c.display_name LIKE ?)');
+        params.push(`%${q}%`, `%${q}%`);
+    }
+    if (['single', 'group', 'discussion', 'other'].includes(type)) {
+        conditions.push('c.conversation_type=?');
+        params.push(type);
+    }
+
+    const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+    const items = await all(`SELECT s.id,s.relative_path,s.source_hash,s.file_size,s.modified_at,s.imported_at,s.message_count,
         c.id AS conversation_id,c.display_name,c.conversation_type
         FROM chat_sources s LEFT JOIN chat_conversations c ON c.source_id=s.id
-        ORDER BY s.relative_path`);
+        ${where}
+        ORDER BY s.imported_at DESC, s.id DESC
+        LIMIT ? OFFSET ?`, [...params, limit, offset]);
+
+    const countRow = await get(`SELECT COUNT(*) AS total FROM chat_sources s
+        LEFT JOIN chat_conversations c ON c.source_id=s.id
+        ${where}`, params);
+    const total = Number(countRow && countRow.total || 0);
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+
+    return {
+        items,
+        total,
+        page,
+        limit,
+        totalPages
+    };
 }
 
 async function deleteSource(sourceId) {

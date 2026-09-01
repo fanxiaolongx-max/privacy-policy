@@ -23,11 +23,11 @@ test('chat test data generator covers all code scenarios and imports cleanly', a
     await repo.saveUserSettings('test_user', { mySenderId });
 
     const dataset = chatTestData.generateTestDataset(mySenderId);
-    assert.equal(dataset.length, 6, 'Should generate 6 distinct scenario files');
+    assert.equal(dataset.length, 60, 'Should generate 60 distinct scenario files');
 
     const importedResults = [];
     for (const item of dataset) {
-        const tempPath = path.join(sandbox, path.basename(item.relativePath));
+        const tempPath = path.join(sandbox, `${Date.now()}_${Math.random().toString(36).slice(2)}_${path.basename(item.relativePath)}`);
         fs.writeFileSync(tempPath, item.content, 'utf8');
         const res = await repo.importTxtFile({
             filePath: tempPath,
@@ -38,7 +38,7 @@ test('chat test data generator covers all code scenarios and imports cleanly', a
         importedResults.push(res);
     }
 
-    assert.equal(importedResults.length, 6);
+    assert.equal(importedResults.length, 60);
     assert.equal(importedResults.every(item => !item.skipped), true);
 
     // Verify conversation classifications
@@ -48,12 +48,18 @@ test('chat test data generator covers all code scenarios and imports cleanly', a
     assert.ok(types.includes('discussion'), 'Must include discussion chat');
     assert.ok(types.includes('other'), 'Must include other category');
 
-    // Verify conversations listing
+    // Verify conversations listing and pagination
     const conversations = await repo.listConversations('test_user', { limit: 20 });
-    assert.equal(conversations.total, 6);
+    assert.equal(conversations.total, 60);
+    assert.equal(conversations.items.length, 20);
+
+    const nextConversations = await repo.listConversations('test_user', { limit: 20, offset: 20 });
+    assert.equal(nextConversations.items.length, 20);
+    assert.notEqual(conversations.items[0].id, nextConversations.items[0].id);
 
     // Verify large group conversation pagination (microservice group has 90+ messages)
-    const archGroup = conversations.items.find(c => c.display_name === '微服务核心架构攻坚群');
+    const archGroup = conversations.items.find(c => c.display_name === '微服务核心架构攻坚群')
+        || (await repo.listConversations('test_user', { limit: 100 })).items.find(c => c.display_name === '微服务核心架构攻坚群');
     assert.ok(archGroup, 'Microservice group must exist');
     assert.ok(archGroup.message_count >= 80, `Message count should exceed 80 (got ${archGroup.message_count})`);
 
@@ -81,14 +87,14 @@ test('chat test data generator covers all code scenarios and imports cleanly', a
 
     // Verify overview stats
     const overview = await repo.getOverviewStats('test_user');
-    assert.equal(overview.summary.conversation_count, 6);
-    assert.ok(overview.summary.message_count > 100);
+    assert.equal(overview.summary.conversation_count, 60);
+    assert.ok(overview.summary.message_count > 200);
     assert.ok(overview.months.length >= 4, 'Should span at least 4 months for trend chart');
     assert.ok(overview.hours.length >= 8, 'Should cover multiple hours for heatmap');
 
     // Verify people stats
     const people = await repo.getPeopleStats('test_user');
-    assert.ok(people.items.length >= 6, 'Should have at least 6 distinct participants');
+    assert.ok(people.items.length >= 20, 'Should have at least 20 distinct participants');
     const mePerson = people.items.find(p => p.is_me === 1);
     assert.ok(mePerson, 'Should identify current user in people stats');
 });

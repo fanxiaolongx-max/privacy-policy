@@ -18,13 +18,17 @@
         searchTotal: 0,
         searchRows: [],
         searchParams: null,
-        conversationCache: new Map()
+        conversationCache: new Map(),
+        sourcePage: 1,
+        sourceTotal: 0,
+        sourceTotalPages: 1
     };
     const $ = id => document.getElementById(id);
     const typeLabels = { single: '单聊', group: '群组', discussion: '讨论组', other: '其他' };
     let toastTimer;
     let conversationDebounce;
     let peopleDebounce;
+    let sourceDebounce;
     let preloadRunning = false;
 
     function showToast(message, error = false) {
@@ -42,6 +46,13 @@
 
     function formatNumber(value) {
         return Number(value || 0).toLocaleString('zh-CN');
+    }
+
+    function formatBytes(bytes) {
+        if (!bytes || bytes <= 0) return '0 B';
+        if (bytes < 1024) return `${bytes} B`;
+        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+        return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
     }
 
     function escapeHtml(text) {
@@ -135,8 +146,7 @@
     async function fetchConversationData(id, focusId = null) {
         const [conversation, messages] = await Promise.all([
             API.get(`/api/chat-history/conversations/${encodeURIComponent(id)}`),
-            API.get(`/api/chat-history/conversations/${encodeURIComponent(id)}/messages?${focusId ? `around=${focusId}` : 'limit=80'}`),
-            API.put(`/api/chat-history/conversations/${encodeURIComponent(id)}/read`, {}).catch(() => ({}))
+            API.get(`/api/chat-history/conversations/${encodeURIComponent(id)}/messages?${focusId ? `around=${focusId}` : 'limit=80'}`)
         ]);
         const payload = {
             conversation,
@@ -186,6 +196,7 @@
         state.conversations.forEach(item => {
             const button = document.createElement('button');
             button.className = `conversation-item${state.activeConversation && state.activeConversation.id === item.id ? ' active' : ''}`;
+            button.dataset.id = item.id;
             button.type = 'button';
             const avatar = document.createElement('span');
             avatar.className = 'conv-avatar';
@@ -226,7 +237,11 @@
             });
             host.append(button);
         });
-        $('loadMoreConversations').hidden = state.conversations.length >= state.conversationTotal;
+        const hasMoreConvs = state.conversations.length < state.conversationTotal;
+        $('loadMoreConversations').hidden = !hasMoreConvs;
+        if (hasMoreConvs) {
+            $('loadMoreConversations').textContent = `加载更多会话 (${state.conversations.length} / ${state.conversationTotal})`;
+        }
         preloadConversations(state.conversations);
     }
 
@@ -245,9 +260,13 @@
         $('loadOlderMessages').hidden = !hasMore;
         renderMessages(state.messages, fromSearch && state.lastSearch ? state.lastSearch.keyword : '', focusId);
         renderConversationDetail(conversation);
-        document.querySelectorAll('.conversation-item').forEach((el, index) => {
-            const item = state.conversations[index];
-            el.classList.toggle('active', item && item.id === id);
+        document.querySelectorAll('.conversation-item').forEach(el => {
+            const isTarget = el.dataset.id === id;
+            el.classList.toggle('active', isTarget);
+            if (isTarget) {
+                const badge = el.querySelector('.badge');
+                if (badge) badge.remove();
+            }
         });
 
         if (updateScroll) {
@@ -291,11 +310,23 @@
         const convSummary = state.conversations.find(c => c.id === id);
         if (convSummary) {
             state.activeConversation = { ...convSummary };
-            document.querySelectorAll('.conversation-item').forEach((el, index) => {
-                const item = state.conversations[index];
-                el.classList.toggle('active', item && item.id === id);
-            });
+            if (Number(convSummary.unread_count) > 0) {
+                convSummary.unread_count = 0;
+            }
         }
+
+        // Immediately remove unread badge and highlight active item in sidebar
+        document.querySelectorAll('.conversation-item').forEach(el => {
+            const isTarget = el.dataset.id === id;
+            el.classList.toggle('active', isTarget);
+            if (isTarget) {
+                const badge = el.querySelector('.badge');
+                if (badge) badge.remove();
+            }
+        });
+
+        // Fire mark-as-read to backend API
+        API.put(`/api/chat-history/conversations/${encodeURIComponent(id)}/read`, {}).catch(() => {});
 
         const cached = !focusId ? state.conversationCache.get(id) : null;
         if (cached) {
@@ -935,7 +966,7 @@
             state.activeConversation = null;
             $('chatEmpty').hidden = false;
             $('chatWorkspace').hidden = true;
-            await Promise.all([loadSources(), loadConversations(true)]);
+            await Promise.all([loadSources(1), loadConversations(true)]);
             if (state.activeTab === 'analytics') loadStats();
         } catch (error) {
             showToast(error.message, true);
@@ -944,29 +975,69 @@
         }
     }
 
-    async function loadSources() {
+    async function loadSources(page = 1) {
         if (!state.user || state.user.role !== 'admin') return;
         try {
-            const sources = await API.get('/api/chat-history/sources');
+            state.sourcePage = page;
+            const q = $('sourceQuery') ? $('sourceQuery').value.trim() : '';
+            const type = $('sourceType') ? $('sourceType').value : '';
+            const data = await API.get(`/api/chat-history/sources?${queryString({ q, type, page, limit: 20 })}`);
+            const sources = Array.isArray(data) ? data : (data.items || []);
+            state.sourceTotal = data.total !== undefined ? data.total : sources.length;
+            state.sourceTotalPages = data.totalPages || Math.max(1, Math.ceil(state.sourceTotal / 20));
+
+            if ($('sourceTotalMeta')) {
+                $('sourceTotalMeta').textContent = `共 ${formatNumber(state.sourceTotal)} 个数据源${q ? '（搜索结果）' : ''}`;
+            }
+            if ($('sourcePage')) {
+                $('sourcePage').textContent = `${state.sourcePage} / ${state.sourceTotalPages}`;
+            }
+            if ($('sourcePrev')) $('sourcePrev').disabled = state.sourcePage <= 1;
+            if ($('sourceNext')) $('sourceNext').disabled = state.sourcePage >= state.sourceTotalPages;
+
             const host = $('sourceList');
             host.replaceChildren();
             if (!sources.length) {
                 const empty = document.createElement('div');
                 empty.className = 'empty-state';
-                empty.innerHTML = '<span>🗂️</span><h2>尚未导入数据</h2>';
+                empty.innerHTML = `<span>🗂️</span><h2>${q ? '没有匹配的数据源' : '尚未导入数据'}</h2><p>${q ? '尝试更改搜索关键词或类型筛选。' : '点击右上角导入 TXT 记录或测试数据。'}</p>`;
                 host.append(empty);
+                return;
             }
             sources.forEach(source => {
                 const row = document.createElement('div');
                 row.className = 'source-item';
+                
                 const info = document.createElement('div');
+                info.className = 'source-info';
+
+                const headLine = document.createElement('div');
+                headLine.className = 'source-headline';
+                
+                const typeBadge = document.createElement('span');
+                typeBadge.className = `type-badge type-${source.conversation_type || 'other'}`;
+                typeBadge.textContent = typeLabels[source.conversation_type] || '其他';
+
                 const name = document.createElement('strong');
+                name.className = 'source-name';
                 name.textContent = source.display_name || source.relative_path;
+
+                const countBadge = document.createElement('span');
+                countBadge.className = 'source-count-badge';
+                countBadge.textContent = `${formatNumber(source.message_count)} 条消息`;
+
+                headLine.append(typeBadge, name, countBadge);
+
                 const meta = document.createElement('small');
-                meta.textContent = `${source.relative_path} · ${typeLabels[source.conversation_type] || '其他'} · ${formatNumber(source.message_count)} 条 · ${source.imported_at}`;
-                info.append(name, meta);
+                meta.className = 'source-meta';
+                const sizeStr = formatBytes(source.file_size);
+                meta.textContent = `${source.relative_path} · 大小: ${sizeStr} · 导入时间: ${source.imported_at ? source.imported_at.replace('T', ' ').slice(0, 19) : '-'}`;
+
+                info.append(headLine, meta);
+
                 const remove = document.createElement('button');
                 remove.className = 'danger-btn';
+                remove.type = 'button';
                 remove.textContent = '删除';
                 remove.addEventListener('click', async () => {
                     const confirmation = window.prompt(`删除后该会话及所有消息将从当前租户消失。\n请输入会话名称“${source.display_name}”确认：`);
@@ -975,7 +1046,7 @@
                         await API.delete(`/api/chat-history/sources/${encodeURIComponent(source.id)}`);
                         showToast('数据源已删除');
                         state.conversationCache.delete(source.conversation_id);
-                        await Promise.all([loadSources(), loadConversations(true)]);
+                        await Promise.all([loadSources(state.sourcePage), loadConversations(true)]);
                     } catch (error) { showToast(error.message, true); }
                 });
                 row.append(info, remove);
@@ -1135,7 +1206,18 @@
     $('emptyImportDirectory')?.addEventListener('click', openImportDialog);
     $('directoryInput')?.addEventListener('change', event => importFiles(event.target.files));
     $('filesInput')?.addEventListener('change', event => importFiles(event.target.files));
-    $('refreshSources')?.addEventListener('click', loadSources);
+    $('sourceQuery')?.addEventListener('input', () => {
+        clearTimeout(sourceDebounce);
+        sourceDebounce = setTimeout(() => loadSources(1), 250);
+    });
+    $('sourceType')?.addEventListener('change', () => loadSources(1));
+    $('sourcePrev')?.addEventListener('click', () => {
+        if (state.sourcePage > 1) loadSources(state.sourcePage - 1);
+    });
+    $('sourceNext')?.addEventListener('click', () => {
+        if (state.sourcePage < state.sourceTotalPages) loadSources(state.sourcePage + 1);
+    });
+    $('refreshSources')?.addEventListener('click', () => loadSources(state.sourcePage));
     let scrollMemoryTimer;
     $('messageScroller').addEventListener('scroll', () => {
         if (!state.activeConversation || !$('chatHitNav').hidden) return;
