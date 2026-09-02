@@ -51,12 +51,33 @@ function normalizeRelativePath(value) {
 }
 
 function classifyConversation(relativePath) {
-    const parts = relativePath.split('/');
-    const normalized = parts.map(item => cleanInline(item).toLowerCase());
-    if (normalized.some(item => item === '单聊' || item === 'single' || item === 'direct')) return 'single';
-    if (normalized.some(item => item === '群组' || item === '群聊' || item === 'group' || item === 'groups')) return 'group';
-    if (normalized.some(item => item === '讨论组' || item === 'discussion' || item === 'discussions')) return 'discussion';
+    const parts = String(relativePath || '').replace(/\\/g, '/').split('/');
+    const directories = parts.slice(0, -1).map(item => cleanInline(item).toLowerCase());
+    if (directories.some(item => ['联系人', '单聊', 'contact', 'contacts', 'single', 'direct'].includes(item))) return 'single';
+    if (directories.some(item => ['固定群', '群组', '群聊', 'group', 'groups'].includes(item))) return 'group';
+    if (directories.some(item => ['讨论组', 'discussion', 'discussions'].includes(item))) return 'discussion';
     return 'other';
+}
+
+async function reclassifyStoredConversations() {
+    const rows = await all(`SELECT c.id,c.conversation_type,s.relative_path
+        FROM chat_conversations c JOIN chat_sources s ON s.id=c.source_id`);
+    const updates = rows
+        .map(row => ({ id: row.id, type: classifyConversation(row.relative_path), previousType: row.conversation_type }))
+        .filter(row => row.type !== row.previousType);
+    if (!updates.length) return 0;
+
+    await run('BEGIN IMMEDIATE');
+    try {
+        for (const item of updates) {
+            await run('UPDATE chat_conversations SET conversation_type=? WHERE id=?', [item.type, item.id]);
+        }
+        await run('COMMIT');
+        return updates.length;
+    } catch (error) {
+        await run('ROLLBACK').catch(() => {});
+        throw error;
+    }
 }
 
 function displayNameFromPath(relativePath) {
@@ -147,6 +168,7 @@ async function ensureReady() {
             await run('CREATE INDEX IF NOT EXISTS idx_chat_messages_time ON chat_messages(message_time, id)');
             await run('CREATE INDEX IF NOT EXISTS idx_chat_conversations_type_time ON chat_conversations(conversation_type, last_message_time)');
             await run('CREATE INDEX IF NOT EXISTS idx_chat_person_directory_name ON chat_person_directory(sender_name)');
+            await reclassifyStoredConversations();
             let ftsAvailable = true;
             try {
                 const row = await get("SELECT sql FROM sqlite_master WHERE type='table' AND name='chat_messages_fts'");
@@ -840,6 +862,11 @@ async function deleteAllSources() {
     }
 }
 
+async function syncConversationTypes() {
+    await ensureReady();
+    return reclassifyStoredConversations();
+}
+
 module.exports = {
     DB_FILENAME,
     classifyConversation,
@@ -865,6 +892,7 @@ module.exports = {
     searchMessages,
     setFavorite,
     setPinned,
+    syncConversationTypes,
     syncPersonDirectory,
     updatePersonDirectory
 };

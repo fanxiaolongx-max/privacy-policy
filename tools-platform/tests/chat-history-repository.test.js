@@ -26,7 +26,9 @@ test('chat parser recognizes exported headers and nested conversation categories
     });
     assert.equal(repo.parseHeader('这是正文'), null);
     assert.equal(repo.classifyConversation('聊天记录/单聊/华北/张三.txt'), 'single');
+    assert.equal(repo.classifyConversation('HistoryRecord（文字）/联系人/高驰(g00365464).txt'), 'single');
     assert.equal(repo.classifyConversation('聊天记录/群组/项目群.txt'), 'group');
+    assert.equal(repo.classifyConversation('HistoryRecord（文字）/固定群/项目交付群(123456).txt'), 'group');
     assert.equal(repo.classifyConversation('聊天记录/讨论组/故障讨论.txt'), 'discussion');
     assert.equal(repo.normalizeRelativePath('../聊天记录/单聊/张三.txt'), '聊天记录/单聊/张三.txt');
 });
@@ -55,6 +57,14 @@ test('chat history imports, searches, preserves personal state and isolates tena
     assert.equal(imported.messageCount, 3);
     assert.equal(imported.conversationType, 'single');
     assert.equal(fs.existsSync(path.join(getDataDir(), 'chat-history.db')), true);
+
+    await new Promise((resolve, reject) => tenantPool.getConnection(repo.DB_FILENAME).run(
+        'UPDATE chat_conversations SET conversation_type=? WHERE id=?',
+        ['other', imported.conversationId],
+        error => error ? reject(error) : resolve()
+    ));
+    assert.equal(await repo.syncConversationTypes(), 1);
+    assert.equal((await repo.getConversation(imported.conversationId, 'alice')).conversation_type, 'single');
 
     await repo.saveUserSettings('alice', { mySenderId: 'my001' });
     const conversations = await repo.listConversations('alice');
