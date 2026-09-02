@@ -137,12 +137,68 @@ test('chat history imports, searches, preserves personal state and isolates tena
     assert.equal(overviewAfterUnident.summary.unidentified_messages, 1);
     assert.equal(overviewAfterUnident.summary.identified_messages, 5);
 
+    // Test group conversation stats
+    const groupStats = await repo.getGroupStats();
+    assert.equal(groupStats.items.length >= 1, true);
+    const alertGroup = groupStats.items.find(g => g.display_name === '报警通知');
+    assert.ok(alertGroup);
+    assert.equal(alertGroup.conversation_type, 'group');
+    assert.equal(alertGroup.message_count, 2);
+    assert.equal(alertGroup.sender_count, 2);
+    assert.equal(alertGroup.top_speaker_name, '王工');
+    assert.equal(alertGroup.top_speaker_count, 1);
+
+    // Test group detailed operational analysis
+    const groupAnalysis = await repo.getGroupDetailedAnalysis(alertGroup.conversation_id);
+    assert.ok(groupAnalysis);
+    assert.equal(groupAnalysis.conversation.display_name, '报警通知');
+    assert.equal(groupAnalysis.overview.total_messages, 2);
+    assert.equal(groupAnalysis.overview.sender_count, 2);
+    assert.ok(groupAnalysis.diagnosis.summary.length > 0);
+    assert.equal(groupAnalysis.hourly_distribution.length, 24);
+    assert.equal(groupAnalysis.members.length, 2);
+    assert.ok(groupAnalysis.members[0].persona_role);
+    assert.equal(groupAnalysis.conversation.persona_style, 'operations');
+
+    const savedPersonaStyle = await repo.saveGroupPersonaStyle(alertGroup.conversation_id, 'nature');
+    assert.equal(savedPersonaStyle.personaStyle, 'nature');
+    assert.equal((await repo.getGroupDetailedAnalysis(alertGroup.conversation_id)).conversation.persona_style, 'nature');
+    assert.equal((await repo.saveGroupPersonaStyle(alertGroup.conversation_id, 'pets')).personaStyle, 'pets');
+    assert.equal((await repo.saveGroupPersonaStyle(alertGroup.conversation_id, 'dessert')).personaStyle, 'dessert');
+    await repo.saveGroupPersonaStyle(alertGroup.conversation_id, 'nature');
+    await assert.rejects(
+        repo.saveGroupPersonaStyle(alertGroup.conversation_id, 'unknown-style'),
+        /不支持的运营角色画像风格/
+    );
+    assert.equal(await repo.saveGroupPersonaStyle(imported.conversationId, 'team'), null);
+
     // Test data isolation & cleanup test
     const testDataPath = writeChat('test_data.txt', '测试小李(test001) 2026-08-05 10:00:00\n这是模拟测试消息');
     await repo.importTxtFile({ filePath: testDataPath, relativePath: '测试数据/01-架构组/模拟.txt' });
-    assert.equal((await repo.listConversations('alice')).total, 3);
+    const markedTestPath = writeChat('marked_test.txt', '测试陈工(marked001) 2026-08-05 11:00:00\n显式标记的测试消息');
+    await repo.importTxtFile({
+        filePath: markedTestPath,
+        relativePath: '聊天记录/单聊/显式标记测试.txt',
+        dataKind: 'test'
+    });
+    const legacyTestPath = writeChat('legacy_test.txt', '赵运维(zhao_ops) 2026-08-28 14:15:00\n【P1 告警】网关服务 504 Gateway Timeout 比例突增至 12%');
+    await repo.importTxtFile({
+        filePath: legacyTestPath,
+        relativePath: '聊天记录/讨论组/线上生产事故排查紧急讨论组.txt'
+    });
+    const sameNameRealPath = writeChat('same_name_real.txt', '王经理(real001) 2026-08-06 09:00:00\n这是同名的真实会话，不包含测试数据特征');
+    await repo.importTxtFile({
+        filePath: sameNameRealPath,
+        relativePath: '聊天记录/单聊/产品设计部/王经理-产品总监.txt'
+    });
+    assert.equal((await repo.listConversations('alice')).total, 6);
     const deleteTestResult = await repo.deleteTestDataSources();
-    assert.equal(deleteTestResult.deletedCount, 1);
+    assert.equal(deleteTestResult.deletedCount, 3);
+    assert.equal(deleteTestResult.sources.includes('聊天记录/讨论组/线上生产事故排查紧急讨论组.txt'), true);
+    assert.equal((await repo.listConversations('alice')).total, 3);
+    const retainedSameNameSource = (await repo.listSources({ q: '王经理-产品总监' })).items[0];
+    assert.ok(retainedSameNameSource, '仅名称命中旧测试清单时不应误删真实会话');
+    await repo.deleteSource(retainedSameNameSource.id);
     assert.equal((await repo.listConversations('alice')).total, 2);
     // Real conversations remain intact
     assert.equal((await repo.listConversations('alice')).items.some(c => c.display_name === '张三'), true);
@@ -165,8 +221,12 @@ test('chat history imports, searches, preserves personal state and isolates tena
     await runWithTenant('tenant-b', async () => {
         assert.equal((await repo.listConversations('alice')).total, 0);
         const groupPath = writeChat('group.txt', '李四(li001) 2026-08-04 12:00:00\n群消息');
-        await repo.importTxtFile({ filePath: groupPath, relativePath: '聊天记录/群组/交付群.txt' });
+        const tenantGroup = await repo.importTxtFile({ filePath: groupPath, relativePath: '聊天记录/群组/交付群.txt' });
         assert.equal((await repo.listConversations('alice')).items[0].conversation_type, 'group');
+        assert.equal((await repo.getGroupDetailedAnalysis(tenantGroup.conversationId)).conversation.persona_style, 'operations');
+        await repo.saveGroupPersonaStyle(tenantGroup.conversationId, 'team');
+        assert.equal((await repo.getGroupDetailedAnalysis(tenantGroup.conversationId)).conversation.persona_style, 'team');
+        assert.equal(await repo.saveGroupPersonaStyle(alertGroup.conversation_id, 'energy'), null);
         assert.equal(fs.existsSync(path.join(getDataDir(), 'chat-history.db')), true);
     });
 
@@ -205,5 +265,6 @@ test('chat history imports, searches, preserves personal state and isolates tena
     });
 
     assert.equal((await repo.listConversations('alice')).total, 2);
+    assert.equal((await repo.getGroupDetailedAnalysis(alertGroup.conversation_id)).conversation.persona_style, 'nature');
     assert.equal((await repo.listParserExclusionRules()).some(rule => rule.name === '自定义脚本标记'), false);
 });

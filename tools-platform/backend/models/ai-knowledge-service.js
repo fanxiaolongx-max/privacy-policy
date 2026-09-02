@@ -550,6 +550,25 @@ function listAssetFiles(rootDir, relativeDir = '', output = []) {
     return output;
 }
 
+function collapseToolAssetFiles(files) {
+    const visibleFiles = [];
+    const mp3Files = [];
+    for (const file of files || []) {
+        if (path.posix.extname(String(file.path || '')).toLowerCase() === '.mp3') mp3Files.push(file);
+        else visibleFiles.push(file);
+    }
+    return {
+        visibleFiles,
+        collapsedGroups: mp3Files.length ? [{
+            extension: '.mp3',
+            files: mp3Files,
+            fileCount: mp3Files.length,
+            bytes: mp3Files.reduce((sum, file) => sum + (Number(file.bytes) || 0), 0),
+            mtimeMs: mp3Files.reduce((latest, file) => Math.max(latest, Number(file.mtimeMs) || 0), 0)
+        }] : []
+    };
+}
+
 function queryDatabaseSchema(filePath) {
     return new Promise(resolve => {
         const handle = new sqlite3.Database(filePath, sqlite3.OPEN_READONLY, error => {
@@ -639,6 +658,7 @@ async function buildAssetGraph(contentByDocument, documentSet) {
         const toolDir = path.join(customToolsRepo.CUSTOM_TOOLS_DIR, tool.slug);
         const manifest = readJsonFile(path.join(toolDir, customToolsRepo.TOOL_MANIFEST_FILE));
         const files = listAssetFiles(toolDir).filter(item => item.path !== customToolsRepo.TOOL_MANIFEST_FILE);
+        const assetPlan = collapseToolAssetFiles(files);
         nodes.push({
             id: toolId, type: 'tool', label: tool.name || tool.slug, labelEn: tool.nameEn || tool.name || tool.slug,
             slug: tool.slug, group: builtIn ? 'builtin-tools' : 'custom-tools', builtIn,
@@ -648,20 +668,51 @@ async function buildAssetGraph(contentByDocument, documentSet) {
         });
         addEdge(categoryId, toolId, 'contains');
         const fileSet = new Set(files.map(file => file.path));
-        for (const file of files) {
-            assetFileCount += 1;
+        const fileNodeIds = new Map();
+        assetFileCount += files.length;
+        for (const file of assetPlan.visibleFiles) {
             const fileId = `tool-file:${builtIn ? 'builtin' : 'custom'}:${tool.slug}:${file.path}`;
+            fileNodeIds.set(file.path, fileId);
             nodes.push({
                 id: fileId, type: 'assetFile', label: path.posix.basename(file.path), path: `backend/data/custom-tools/${tool.slug}/${file.path}`,
                 relativePath: file.path, toolId, toolSlug: tool.slug, group: builtIn ? 'builtin-tools' : 'custom-tools',
                 bytes: file.bytes, mtimeMs: file.mtimeMs, extension: path.posix.extname(file.path).toLowerCase(), size: 4.4
             });
             addEdge(toolId, fileId, 'contains');
+        }
+        for (const group of assetPlan.collapsedGroups) {
+            const extensionName = group.extension.replace('.', '').toUpperCase();
+            const fileId = `tool-file:${builtIn ? 'builtin' : 'custom'}:${tool.slug}:__collapsed__/${extensionName.toLowerCase()}`;
+            group.files.forEach(file => fileNodeIds.set(file.path, fileId));
+            nodes.push({
+                id: fileId,
+                type: 'assetFile',
+                label: `${extensionName} 音频资源（${group.fileCount} 个）`,
+                labelEn: `${extensionName} Audio Assets (${group.fileCount})`,
+                description: `已折叠 ${group.fileCount} 个 ${extensionName} 文件，避免大量音频节点和连线拖慢图谱。`,
+                descriptionEn: `${group.fileCount} ${extensionName} files are collapsed to keep the graph responsive.`,
+                path: `backend/data/custom-tools/${tool.slug}/**/*${group.extension}`,
+                relativePath: `**/*${group.extension}`,
+                toolId,
+                toolSlug: tool.slug,
+                group: builtIn ? 'builtin-tools' : 'custom-tools',
+                bytes: group.bytes,
+                mtimeMs: group.mtimeMs,
+                extension: group.extension,
+                fileCount: group.fileCount,
+                aggregated: true,
+                size: 5.2 + Math.min(5, Math.log2(group.fileCount + 1))
+            });
+            addEdge(toolId, fileId, 'contains');
+        }
+        for (const file of assetPlan.visibleFiles) {
+            const fileId = fileNodeIds.get(file.path);
             if (file.bytes <= MAX_FILE_BYTES && /\.(?:html?|js|css|json|md|txt)$/i.test(file.path)) {
                 let content = '';
                 try { content = fs.readFileSync(file.absolutePath, 'utf8'); } catch (_error) {}
                 for (const target of extractRelativeAssetReferences(file.path, content, fileSet)) {
-                    addEdge(fileId, `tool-file:${builtIn ? 'builtin' : 'custom'}:${tool.slug}:${target}`, 'depends');
+                    const targetId = fileNodeIds.get(target);
+                    if (targetId) addEdge(fileId, targetId, 'depends');
                 }
             }
         }
@@ -902,5 +953,6 @@ module.exports = {
     formatResultsForPrompt,
     extractSearchTerms,
     chunkDocument,
+    collapseToolAssetFiles,
     closeDatabase
 };

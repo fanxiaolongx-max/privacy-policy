@@ -6,6 +6,15 @@ const tenantPool = require('./tenant-sqlite-pool');
 
 const DB_FILENAME = 'chat-history.db';
 const PARSER_VERSION = 2;
+const GROUP_PERSONA_STYLES = new Set(['operations', 'team', 'pets', 'dessert', 'energy', 'nature']);
+const LEGACY_TEST_SOURCE_SIGNATURES = [
+    ['聊天记录/单聊/技术研发部/李工-后端开发.txt', '%Release Tag v1.0.193%'],
+    ['聊天记录/单聊/产品设计部/王经理-产品总监.txt', '%合规自查与上线排期表%'],
+    ['聊天记录/群组/移动端隐私政策合规专项群.txt', '%privacy.example.com/compliance/app-policy-v2.1.pdf%'],
+    ['聊天记录/群组/微服务核心架构攻坚群.txt', '%Grafana 大盘%'],
+    ['聊天记录/讨论组/线上生产事故排查紧急讨论组.txt', '%504 Gateway Timeout%'],
+    ['聊天记录/历史归档/2026年Q2技术方案研讨纪要.txt', '%tenant-sqlite-pool%']
+];
 const HEADER_WITH_ID_RE = /^(.+?)[([（]([^()（）[\]]+)[)\]）]\s+(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})$/;
 const HEADER_WITHOUT_ID_RE = /^(.+?)\s+(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})$/;
 const DEFAULT_PARSER_EXCLUSION_RULES = [
@@ -123,6 +132,7 @@ async function ensureReady() {
                 message_count INTEGER NOT NULL DEFAULT 0
             )`);
             await ensureColumn('chat_sources', 'parser_signature', "TEXT NOT NULL DEFAULT ''");
+            await ensureColumn('chat_sources', 'data_kind', "TEXT NOT NULL DEFAULT 'imported'");
             await run(`CREATE TABLE IF NOT EXISTS chat_conversations (
                 id TEXT PRIMARY KEY,
                 source_id TEXT NOT NULL UNIQUE,
@@ -160,6 +170,12 @@ async function ensureReady() {
                 last_read_time TEXT,
                 updated_at TEXT NOT NULL,
                 PRIMARY KEY(user_id, conversation_id),
+                FOREIGN KEY(conversation_id) REFERENCES chat_conversations(id) ON DELETE CASCADE
+            )`);
+            await run(`CREATE TABLE IF NOT EXISTS chat_group_preferences (
+                conversation_id TEXT PRIMARY KEY,
+                persona_style TEXT NOT NULL DEFAULT 'operations',
+                updated_at TEXT NOT NULL,
                 FOREIGN KEY(conversation_id) REFERENCES chat_conversations(id) ON DELETE CASCADE
             )`);
             await run(`CREATE TABLE IF NOT EXISTS chat_favorites (
@@ -388,6 +404,7 @@ async function importTxtFile(input) {
     const exclusionRules = await listParserExclusionRules({ includeDisabled: false });
     const currentParserSignature = parserSignature(exclusionRules);
     const relativePath = normalizeRelativePath(input.relativePath || input.originalName);
+    const dataKind = input.dataKind === 'test' || /^(?:测试数据|test_data)\//i.test(relativePath) ? 'test' : 'imported';
     const stat = fs.statSync(input.filePath);
     const sourceHash = await new Promise((resolve, reject) => {
         const hash = crypto.createHash('sha256');
@@ -396,8 +413,11 @@ async function importTxtFile(input) {
         stream.on('error', reject);
         stream.on('end', () => resolve(hash.digest('hex')));
     });
-    const existing = await get('SELECT id,source_hash,parser_signature FROM chat_sources WHERE relative_path=?', [relativePath]);
+    const existing = await get('SELECT id,source_hash,parser_signature,data_kind FROM chat_sources WHERE relative_path=?', [relativePath]);
     if (existing && existing.source_hash === sourceHash && existing.parser_signature === currentParserSignature) {
+        if (existing.data_kind !== dataKind) {
+            await run('UPDATE chat_sources SET data_kind=? WHERE id=?', [dataKind, existing.id]);
+        }
         const conversation = await get('SELECT id,message_count FROM chat_conversations WHERE source_id=?', [existing.id]);
         return { relativePath, skipped: true, conversationId: conversation && conversation.id, messageCount: Number(conversation && conversation.message_count || 0) };
     }
@@ -415,21 +435,23 @@ async function importTxtFile(input) {
 
         await run('BEGIN IMMEDIATE');
         try {
-            await run(`INSERT INTO chat_sources(id,relative_path,source_hash,file_size,modified_at,imported_at,message_count,parser_signature)
-                VALUES(?,?,?,?,?,?,0,?)
+            await run(`INSERT INTO chat_sources(id,relative_path,source_hash,file_size,modified_at,imported_at,message_count,parser_signature,data_kind)
+                VALUES(?,?,?,?,?,?,0,?,?)
                 ON CONFLICT(relative_path) DO UPDATE SET
                     source_hash=excluded.source_hash,
                     file_size=excluded.file_size,
                     modified_at=excluded.modified_at,
                     imported_at=excluded.imported_at,
-                    parser_signature=excluded.parser_signature`, [
+                    parser_signature=excluded.parser_signature,
+                    data_kind=excluded.data_kind`, [
                 sourceId,
                 relativePath,
                 sourceHash,
                 stat.size,
                 Number(input.modifiedAt || stat.mtimeMs || 0),
                 now,
-                currentParserSignature
+                currentParserSignature,
+                dataKind
             ]);
             await run(`INSERT INTO chat_conversations(
                 id,source_id,display_name,conversation_type,updated_at
@@ -888,6 +910,289 @@ async function getPeopleStats(userId, options = {}) {
     return { items, approximateResponseTime: true, mySenderId: settings.my_sender_id || '' };
 }
 
+async function getGroupStats(options = {}) {
+    await ensureReady();
+    const limit = parsePositiveInt(options.limit, 100, 5000);
+    const q = String(options.q || '').trim();
+    const type = String(options.type || '').trim();
+
+    const conditions = ["c.conversation_type IN ('group', 'discussion')"];
+    const params = [];
+
+    if (q) {
+        conditions.push('(c.display_name LIKE ? OR c.id LIKE ? OR c.id IN (SELECT conversation_id FROM chat_messages WHERE sender_name LIKE ? OR sender_id LIKE ?))');
+        params.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`);
+    }
+    if (['group', 'discussion'].includes(type)) {
+        conditions.push('c.conversation_type = ?');
+        params.push(type);
+    }
+
+    const where = `WHERE ${conditions.join(' AND ')}`;
+
+    const items = await all(`WITH top_speakers AS (
+        SELECT conversation_id, sender_name, sender_id, COUNT(*) AS speaker_msg_count,
+            ROW_NUMBER() OVER (PARTITION BY conversation_id ORDER BY COUNT(*) DESC, MAX(message_time) DESC) AS rn
+        FROM chat_messages
+        GROUP BY conversation_id, sender_id, sender_name
+    )
+    SELECT
+        c.id AS conversation_id,
+        c.display_name,
+        c.conversation_type,
+        COUNT(m.id) AS message_count,
+        COUNT(DISTINCT m.sender_id) AS sender_count,
+        COUNT(DISTINCT substr(m.message_time, 1, 10)) AS active_days,
+        ROUND(AVG(length(m.content)), 1) AS average_length,
+        MIN(m.message_time) AS first_message_time,
+        MAX(m.message_time) AS last_message_time,
+        ts.sender_name AS top_speaker_name,
+        ts.sender_id AS top_speaker_id,
+        ts.speaker_msg_count AS top_speaker_count
+    FROM chat_conversations c
+    JOIN chat_messages m ON m.conversation_id = c.id
+    LEFT JOIN top_speakers ts ON ts.conversation_id = c.id AND ts.rn = 1
+    ${where}
+    GROUP BY c.id, c.display_name, c.conversation_type
+    ORDER BY message_count DESC, last_message_time DESC
+    LIMIT ?`, [...params, limit]);
+
+    return { items };
+}
+
+async function getGroupDetailedAnalysis(conversationId, options = {}) {
+    await ensureReady();
+    const id = String(conversationId || '').trim();
+    if (!id) throw new Error('会话 ID 不能为空');
+
+    const conversation = await get(`SELECT c.id, c.display_name, c.conversation_type, s.relative_path, s.file_size, s.imported_at
+        FROM chat_conversations c
+        LEFT JOIN chat_sources s ON s.id = c.source_id
+        WHERE c.id = ?`, [id]);
+
+    if (!conversation) {
+        throw new Error('未找到该群组或讨论组记录');
+    }
+    if (!['group', 'discussion'].includes(conversation.conversation_type)) {
+        throw new Error('该会话不是群组或讨论组');
+    }
+
+    const groupPreference = await get(
+        'SELECT persona_style,updated_at FROM chat_group_preferences WHERE conversation_id=?',
+        [id]
+    );
+
+    const summary = await get(`SELECT
+        COUNT(*) AS total_messages,
+        COUNT(DISTINCT sender_id) AS sender_count,
+        COUNT(DISTINCT substr(message_time, 1, 10)) AS active_days,
+        ROUND(AVG(length(content)), 1) AS average_length,
+        MIN(message_time) AS first_message_time,
+        MAX(message_time) AS last_message_time
+    FROM chat_messages
+    WHERE conversation_id = ?`, [id]);
+
+    const totalMessages = Number(summary.total_messages || 0);
+    const senderCount = Number(summary.sender_count || 0);
+    const activeDays = Number(summary.active_days || 0);
+    const avgLength = Number(summary.average_length || 0);
+
+    // 1. Response time per member & overall
+    const responseRows = await all(`WITH ordered AS (
+        SELECT sender_id, sender_name, message_time, id,
+            LAG(sender_id) OVER (ORDER BY message_time, id) AS prev_sender_id,
+            LAG(message_time) OVER (ORDER BY message_time, id) AS prev_time
+        FROM chat_messages
+        WHERE conversation_id = ?
+    ), responses AS (
+        SELECT sender_id, sender_name,
+            (julianday(message_time) - julianday(prev_time)) * 1440.0 AS diff_minutes
+        FROM ordered
+        WHERE prev_time IS NOT NULL AND sender_id <> prev_sender_id
+            AND (julianday(message_time) - julianday(prev_time)) * 1440.0 BETWEEN 0 AND 720
+    )
+    SELECT sender_id, sender_name,
+        ROUND(AVG(diff_minutes), 1) AS avg_response_minutes,
+        COUNT(*) AS response_count
+    FROM responses
+    GROUP BY sender_id, sender_name`, [id]);
+
+    const responseMap = new Map();
+    let totalWeightedResponse = 0;
+    let totalResponses = 0;
+    responseRows.forEach(row => {
+        responseMap.set(`${row.sender_id}:::${row.sender_name}`, Number(row.avg_response_minutes || 0));
+        totalWeightedResponse += Number(row.avg_response_minutes || 0) * Number(row.response_count || 0);
+        totalResponses += Number(row.response_count || 0);
+    });
+    const overallAvgResponse = totalResponses > 0 ? Math.round((totalWeightedResponse / totalResponses) * 10) / 10 : null;
+
+    // 2. 24 hours distribution
+    const hourRows = await all(`SELECT
+        CAST(strftime('%H', message_time) AS INTEGER) AS hour,
+        COUNT(*) AS count
+    FROM chat_messages
+    WHERE conversation_id = ?
+    GROUP BY hour
+    ORDER BY hour`, [id]);
+
+    const hourlyDistribution = Array.from({ length: 24 }, (_, i) => ({ hour: i, count: 0 }));
+    hourRows.forEach(row => {
+        if (row.hour >= 0 && row.hour < 24) {
+            hourlyDistribution[row.hour].count = Number(row.count || 0);
+        }
+    });
+
+    // 3. Member list
+    const memberRows = await all(`SELECT
+        sender_name,
+        sender_id,
+        COUNT(*) AS message_count,
+        COUNT(DISTINCT substr(message_time, 1, 10)) AS active_days,
+        ROUND(AVG(length(content)), 1) AS average_length,
+        MIN(message_time) AS first_message_time,
+        MAX(message_time) AS last_message_time
+    FROM chat_messages
+    WHERE conversation_id = ?
+    GROUP BY sender_id, sender_name
+    ORDER BY message_count DESC, last_message_time DESC`, [id]);
+
+    // Compute day span
+    const firstTime = summary.first_message_time ? new Date(summary.first_message_time) : null;
+    const lastTime = summary.last_message_time ? new Date(summary.last_message_time) : null;
+    let daySpan = 1;
+    if (firstTime && lastTime && !isNaN(firstTime.getTime()) && !isNaN(lastTime.getTime())) {
+        daySpan = Math.max(1, Math.round((lastTime.getTime() - firstTime.getTime()) / (86400 * 1000)) + 1);
+    }
+
+    const avgDailyMessages = activeDays > 0 ? Math.round((totalMessages / activeDays) * 10) / 10 : 0;
+    const avgMemberMessages = senderCount > 0 ? Math.round((totalMessages / senderCount) * 10) / 10 : 0;
+    const activityDensity = daySpan > 0 ? Math.min(100, Math.round((activeDays / daySpan) * 100)) : 100;
+
+    // Top 2 concentration
+    let top2Count = 0;
+    memberRows.slice(0, 2).forEach(m => { top2Count += Number(m.message_count || 0); });
+    const top2Concentration = totalMessages > 0 ? Math.round((top2Count / totalMessages) * 1000) / 10 : 0;
+
+    // Build members with persona & metrics
+    const members = memberRows.map((m, idx) => {
+        const msgCount = Number(m.message_count || 0);
+        const mActiveDays = Number(m.active_days || 1);
+        const pct = totalMessages > 0 ? Math.round((msgCount / totalMessages) * 1000) / 10 : 0;
+        const key = `${m.sender_id}:::${m.sender_name}`;
+        const avgResp = responseMap.has(key) ? responseMap.get(key) : null;
+        const dailyFreq = mActiveDays > 0 ? Math.round((msgCount / mActiveDays) * 10) / 10 : msgCount;
+
+        let personaRole = '🌱 边缘发言';
+        let roleLevel = 'low';
+        if (idx === 0 && pct >= 25) {
+            personaRole = '👑 核心领袖';
+            roleLevel = 'core';
+        } else if (pct >= 15 || idx < 2) {
+            personaRole = '🔥 积极中坚';
+            roleLevel = 'active';
+        } else if (msgCount >= 5 || pct >= 5) {
+            personaRole = '💬 常规参与';
+            roleLevel = 'regular';
+        }
+
+        return {
+            sender_id: m.sender_id,
+            sender_name: m.sender_name,
+            message_count: msgCount,
+            message_percent: pct,
+            active_days: mActiveDays,
+            daily_frequency: dailyFreq,
+            average_length: Number(m.average_length || 0),
+            average_response_minutes: avgResp,
+            first_message_time: m.first_message_time,
+            last_message_time: m.last_message_time,
+            persona_role: personaRole,
+            role_level: roleLevel
+        };
+    });
+
+    // Operational Diagnosis
+    let structureType = '全员均衡型（去中心化共创）';
+    if (top2Concentration >= 60) {
+        structureType = '核心驱动型（少数骨干牵引）';
+    } else if (top2Concentration >= 40) {
+        structureType = '中坚主导型（多核心互动）';
+    }
+
+    let cadenceType = '异步消息型（回复时延>30分）';
+    if (overallAvgResponse !== null) {
+        if (overallAvgResponse <= 5) cadenceType = '极速敏捷协同（响应均值≤5分）';
+        else if (overallAvgResponse <= 30) cadenceType = '高效跟进讨论（响应均值5~30分）';
+    }
+
+    let styleType = '常规交流型（平均字符25~50字）';
+    if (avgLength >= 50) styleType = '深度长文研讨型（平均字符≥50字）';
+    else if (avgLength < 25) styleType = '短讯碎片快确认（平均字符<25字）';
+
+    const topSpeakerName = members.length ? members[0].sender_name : '无';
+    const topSpeakerPct = members.length ? members[0].message_percent : 0;
+
+    const operationalSummary = `该社群存续跨度约 ${daySpan} 天，累计发生 ${activeDays} 个活跃交流日（活跃密度 ${activityDensity}%）。社群呈现【${structureType}】，头部发言者 ${topSpeakerName} 贡献了全群 ${topSpeakerPct}% 的消息。群内人均发信量为 ${avgMemberMessages} 条，平均单条发信长度 ${avgLength} 字符（属于【${styleType}】）。沟通互动响应均值约 ${overallAvgResponse !== null ? `${overallAvgResponse} 分钟` : '暂无数据'}（体现【${cadenceType}】），整体协同态势健康。`;
+
+    return {
+        conversation: {
+            id: conversation.id,
+            display_name: conversation.display_name,
+            conversation_type: conversation.conversation_type,
+            relative_path: conversation.relative_path,
+            file_size: conversation.file_size,
+            imported_at: conversation.imported_at,
+            persona_style: GROUP_PERSONA_STYLES.has(groupPreference && groupPreference.persona_style)
+                ? groupPreference.persona_style
+                : 'operations',
+            persona_style_updated_at: groupPreference ? groupPreference.updated_at : null
+        },
+        overview: {
+            total_messages: totalMessages,
+            sender_count: senderCount,
+            active_days: activeDays,
+            average_length: avgLength,
+            day_span: daySpan,
+            activity_density: activityDensity,
+            avg_daily_messages: avgDailyMessages,
+            avg_member_messages: avgMemberMessages,
+            overall_avg_response: overallAvgResponse,
+            top2_concentration: top2Concentration,
+            first_message_time: summary.first_message_time,
+            last_message_time: summary.last_message_time
+        },
+        diagnosis: {
+            structure: structureType,
+            cadence: cadenceType,
+            style: styleType,
+            summary: operationalSummary
+        },
+        hourly_distribution: hourlyDistribution,
+        members
+    };
+}
+
+async function saveGroupPersonaStyle(conversationId, personaStyle) {
+    await ensureReady();
+    const id = String(conversationId || '').trim();
+    const style = String(personaStyle || '').trim();
+    if (!GROUP_PERSONA_STYLES.has(style)) throw new Error('不支持的运营角色画像风格');
+
+    const conversation = await get(
+        `SELECT id FROM chat_conversations
+        WHERE id=? AND conversation_type IN ('group','discussion')`,
+        [id]
+    );
+    if (!conversation) return null;
+
+    const now = new Date().toISOString();
+    await run(`INSERT INTO chat_group_preferences(conversation_id,persona_style,updated_at)
+        VALUES(?,?,?) ON CONFLICT(conversation_id) DO UPDATE SET
+        persona_style=excluded.persona_style,updated_at=excluded.updated_at`, [id, style, now]);
+    return { conversationId: id, personaStyle: style, updatedAt: now };
+}
+
 async function listSources(options = {}) {
     await ensureReady();
     const q = String(options.q || '').trim();
@@ -952,9 +1257,17 @@ async function deleteSource(sourceId) {
 
 async function deleteTestDataSources() {
     await ensureReady();
+    const legacyConditions = LEGACY_TEST_SOURCE_SIGNATURES.map(() => `(s.relative_path=? AND EXISTS (
+        SELECT 1 FROM chat_messages marker
+        WHERE marker.conversation_id=c.id AND marker.content LIKE ?
+    ))`);
+    const legacyParams = LEGACY_TEST_SOURCE_SIGNATURES.flat();
     const testSources = await all(`SELECT s.id, s.relative_path, c.id AS conversation_id
         FROM chat_sources s LEFT JOIN chat_conversations c ON c.source_id=s.id
-        WHERE s.relative_path LIKE '测试数据/%' OR s.relative_path LIKE 'test_data/%'`);
+        WHERE s.data_kind='test'
+            OR s.relative_path LIKE '测试数据/%'
+            OR s.relative_path LIKE 'test_data/%'
+            OR ${legacyConditions.join('\n            OR ')}`, legacyParams);
     if (!testSources.length) return { deletedCount: 0, sources: [] };
 
     await run('BEGIN IMMEDIATE');
@@ -1006,6 +1319,8 @@ module.exports = {
     deleteTestDataSources,
     ensureReady,
     getConversation,
+    getGroupDetailedAnalysis,
+    getGroupStats,
     getOverviewStats,
     getPeopleStats,
     getUnidentifiedMessages,
@@ -1022,6 +1337,7 @@ module.exports = {
     normalizeRelativePath,
     parseHeader,
     saveUserSettings,
+    saveGroupPersonaStyle,
     searchMessages,
     setFavorite,
     setPinned,

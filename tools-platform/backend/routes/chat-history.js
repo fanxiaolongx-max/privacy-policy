@@ -94,6 +94,20 @@ router.get('/stats/people', asyncRoute(async (req, res) => {
     res.json(await repo.getPeopleStats(currentUser(req), req.query || {}));
 }));
 
+router.get('/stats/groups', asyncRoute(async (req, res) => {
+    res.json(await repo.getGroupStats(req.query || {}));
+}));
+
+router.get('/stats/groups/:id/analysis', asyncRoute(async (req, res) => {
+    res.json(await repo.getGroupDetailedAnalysis(req.params.id, req.query || {}));
+}));
+
+router.put('/stats/groups/:id/persona-style', requireAdmin, asyncRoute(async (req, res) => {
+    const result = await repo.saveGroupPersonaStyle(req.params.id, req.body && req.body.personaStyle);
+    if (!result) return res.status(404).json({ error: '未找到该群组或讨论组记录' });
+    res.json({ success: true, ...result });
+}));
+
 router.get('/stats/unidentified', asyncRoute(async (req, res) => {
     res.json(await repo.getUnidentifiedMessages(req.query || {}));
 }));
@@ -143,6 +157,7 @@ router.post('/import', requireAdmin, upload.array('files', 100), asyncRoute(asyn
     const removeUploadedFiles = () => uploadedFiles.forEach(file => fs.rmSync(file.path, { force: true }));
     let relativePaths = [];
     let modifiedAts = [];
+    const dataKind = req.body && req.body.dataKind === 'test' ? 'test' : 'imported';
     try {
         relativePaths = JSON.parse(String(req.body && req.body.relativePaths || '[]'));
         modifiedAts = JSON.parse(String(req.body && req.body.modifiedAts || '[]'));
@@ -166,7 +181,8 @@ router.post('/import', requireAdmin, upload.array('files', 100), asyncRoute(asyn
                     filePath: file.path,
                     originalName: file.originalname,
                     relativePath: relativePaths[index],
-                    modifiedAt: Number(modifiedAts[index] || 0)
+                    modifiedAt: Number(modifiedAts[index] || 0),
+                    dataKind
                 }));
             } catch (error) {
                 errors.push({ relativePath: relativePaths[index], error: error.message || '导入失败' });

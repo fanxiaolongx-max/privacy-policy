@@ -4,7 +4,17 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>聊天记录中心</title>
-    <link rel="stylesheet" href="./chat-viewer.css?v=20260902-10">
+    <script>
+    (function(){
+        try {
+            var t = localStorage.getItem('chat_history_theme') || 'system';
+            var isDark = t === 'dark' || (t === 'system' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            if (isDark) document.documentElement.classList.add('dark-theme');
+            document.documentElement.setAttribute('data-theme', t);
+        } catch(e) {}
+    })();
+    </script>
+    <link rel="stylesheet" href="./chat-viewer.css?v=20260902-19">
 </head>
 <body>
 <div id="toast" class="toast" role="status"></div>
@@ -19,6 +29,17 @@
         <button class="top-tab admin-only" data-view="manage" hidden>数据管理</button>
     </nav>
     <div class="header-actions">
+        <div class="theme-switch" role="radiogroup" aria-label="外观主题">
+            <button type="button" class="theme-btn" data-theme="light" title="浅色模式">
+                <span class="theme-icon">☀️</span><span class="theme-label">浅色</span>
+            </button>
+            <button type="button" class="theme-btn" data-theme="dark" title="深色模式">
+                <span class="theme-icon">🌙</span><span class="theme-label">深色</span>
+            </button>
+            <button type="button" class="theme-btn active" data-theme="system" title="跟随系统外观">
+                <span class="theme-icon">🌓</span><span class="theme-label">跟随系统</span>
+            </button>
+        </div>
         <button id="settingsButton" class="btn">我的工号</button>
         <button id="importButton" class="btn btn-primary admin-only" hidden>选择聊天目录</button>
     </div>
@@ -129,6 +150,7 @@
                 <div class="head-tools">
                     <input id="directoryQuery" class="control" placeholder="搜索工号、姓名或别名…">
                     <button id="exportDirectoryBtn" class="btn btn-small" type="button">导出映射表</button>
+                    <button class="btn btn-small card-fullscreen-btn" type="button" data-card="directoryCard" title="全屏查看表格">⛶ 全屏</button>
                 </div>
             </div>
             <div class="table-wrap">
@@ -150,7 +172,96 @@
             </div>
         </article>
 
-        <article class="card people-card"><div class="card-head"><strong>每个人的对话统计</strong><input id="peopleQuery" class="control" placeholder="搜索姓名或工号"></div><div class="table-wrap"><table><thead><tr data-table-head="people"><th data-key="person_label">人员</th><th data-key="message_count" data-type="number">消息</th><th data-key="conversation_count" data-type="number">会话</th><th data-key="active_days" data-type="number">活跃天</th><th data-key="average_length" data-type="number">平均长度</th><th data-key="average_response_minutes" data-type="number">估算响应</th><th data-key="last_message_time" data-type="date">最近活跃</th></tr></thead><tbody id="peopleTable"></tbody></table></div><p class="footnote">点击表头箭头可升降排序，漏斗可单选、多选并叠加过滤。响应时间基于 12 小时内相邻发送人切换推算，群聊中不代表精确回复关系。</p></article>
+        <article id="peopleCard" class="card people-card">
+            <div class="card-head">
+                <div class="head-title">
+                    <strong>每个人的对话统计</strong>
+                    <small id="peopleStatsMeta">（统计全量单聊、群聊与讨论组发信）</small>
+                </div>
+                <div class="head-tools">
+                    <input id="peopleQuery" class="control" placeholder="搜索姓名或工号…">
+                    <button class="btn btn-small card-fullscreen-btn" type="button" data-card="peopleCard" title="全屏查看表格">⛶ 全屏</button>
+                </div>
+            </div>
+            <div class="stats-logic-tip">
+                <div class="logic-tip-header">
+                    <span class="tip-badge">ℹ️ 统计口径说明</span>
+                    <span class="tip-sub">避免理解偏差，各项指标计算规则如下：</span>
+                </div>
+                <ul class="logic-tip-list">
+                    <li><strong>统计范围：</strong>包含该人员在<b>所有单聊、群聊和讨论组</b>中发送的全量消息，并非仅限 1 对 1 单聊。</li>
+                    <li><strong>关联会话：</strong>该人员曾发言至少 1 次的所有会话去重总数（单位：<b>个</b>，包含单聊、群组与讨论组）。</li>
+                    <li><strong>平均长度：</strong>该人员每条发送文本内容的平均字数（单位：<b>字符数</b>，包含汉字、英文字母及符号标点）。</li>
+                    <li><strong>估算响应：</strong>在同一会话中，上一位成员发言后 <b>12 小时内</b>该人员首次发言的时间差均值（单位：<b>分钟 / 小时</b>）。群聊因多人交替讨论，该值为沟通活跃节奏参考，非绝对一对一专属回复时延。</li>
+                </ul>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr data-table-head="people">
+                            <th data-key="person_label">人员</th>
+                            <th data-key="message_count" data-type="number">消息</th>
+                            <th data-key="conversation_count" data-type="number">会话</th>
+                            <th data-key="active_days" data-type="number">活跃天</th>
+                            <th data-key="average_length" data-type="number">平均长度</th>
+                            <th data-key="average_response_minutes" data-type="number">估算响应</th>
+                            <th data-key="last_message_time" data-type="date">最近活跃</th>
+                        </tr>
+                    </thead>
+                    <tbody id="peopleTable"></tbody>
+                </table>
+            </div>
+            <p class="footnote">点击表头箭头可升降排序，漏斗可单选、多选并叠加过滤。响应时间基于 12 小时内相邻发送人切换推算，群聊中不代表精确回复关系。</p>
+        </article>
+
+        <article id="groupsCard" class="card groups-card">
+            <div class="card-head">
+                <div class="head-title">
+                    <strong>每个群和讨论组的对话统计</strong>
+                    <small id="groupStatsMeta">（覆盖所有已导入的群组与讨论组）</small>
+                </div>
+                <div class="head-tools">
+                    <input id="groupQuery" class="control" placeholder="搜索群名、讨论组名或发言成员…">
+                    <select id="groupTypeFilter" class="control compact">
+                        <option value="">全部类型</option>
+                        <option value="group">群组</option>
+                        <option value="discussion">讨论组</option>
+                    </select>
+                    <button class="btn btn-small card-fullscreen-btn" type="button" data-card="groupsCard" title="全屏查看表格">⛶ 全屏</button>
+                </div>
+            </div>
+            <div class="stats-logic-tip">
+                <div class="logic-tip-header">
+                    <span class="tip-badge">ℹ️ 群组统计口径说明</span>
+                    <span class="tip-sub">群组及讨论组对话活跃度统计维度：</span>
+                </div>
+                <ul class="logic-tip-list">
+                    <li><strong>统计范围：</strong>仅统计类型为<b>群组 (Group)</b> 和 <b>讨论组 (Discussion)</b> 的会话，不包含单聊。</li>
+                    <li><strong>发言人数：</strong>在该群或讨论组中发送过至少 1 条消息的不同成员去重计数（单位：<b>人</b>）。</li>
+                    <li><strong>最活跃成员：</strong>在该群内累计发送消息条数最高的人员（展示发信条数及占全群总消息量的百分比）。</li>
+                    <li><strong>快捷跳转：</strong>点击操作栏的“<b>查看聊天 ↗</b>”，可即时切换至会话视图并定位至该群展开完整记录。</li>
+                </ul>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr data-table-head="groups">
+                            <th data-key="display_name">群组 / 讨论组名称</th>
+                            <th data-key="conversation_type">类型</th>
+                            <th data-key="message_count" data-type="number">消息总量</th>
+                            <th data-key="sender_count" data-type="number">发言人数</th>
+                            <th data-key="active_days" data-type="number">活跃天数</th>
+                            <th data-key="top_speaker">最活跃成员</th>
+                            <th data-key="average_length" data-type="number">平均长度</th>
+                            <th data-key="last_message_time" data-type="date">最近活跃</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="groupsTable"></tbody>
+                </table>
+            </div>
+            <p class="footnote">点击表头箭头可升降排序，漏斗可单选、多选并叠加过滤。点击“查看聊天”可一键打开群聊详情。</p>
+        </article>
     </section>
 
     <section id="view-manage" class="view manage-view">
@@ -294,9 +405,116 @@
     </div>
 </dialog>
 
+<dialog id="groupAnalysisDialog" class="modal-dialog-extra-large" onclick="if(event.target===this)this.close()">
+    <div class="dialog-head">
+        <div class="dialog-title-group">
+            <strong id="groupAnalysisTitle">群组运营深度分析</strong>
+            <span id="groupAnalysisType" class="type-badge">群组</span>
+            <small id="groupAnalysisMeta"></small>
+        </div>
+        <div class="dialog-actions">
+            <button id="groupJumpChatBtn" class="btn btn-small btn-primary" type="button">前往该群会话 ↗</button>
+            <button id="closeGroupAnalysisDialog" class="icon-btn" type="button" title="关闭 (Esc)" onclick="this.closest('dialog').close()">×</button>
+        </div>
+    </div>
+    <div class="dialog-body group-analysis-body">
+        <div class="group-diagnostic-card">
+            <div class="diagnostic-tags">
+                <span class="diagnostic-pill" id="diagStructure">👑 核心领袖驱动</span>
+                <span class="diagnostic-pill" id="diagCadence">⚡ 极速协同 (≤5分)</span>
+                <span class="diagnostic-pill" id="diagStyle">📝 深度方案研讨</span>
+            </div>
+            <p id="diagSummaryText" class="diagnostic-summary">正在生成该社群的运营全景诊断结论…</p>
+        </div>
+
+        <div class="group-kpi-grid">
+            <div class="gkpi-card">
+                <label>消息总量</label>
+                <strong id="gkpiTotalMessages">0</strong>
+                <small id="gkpiSpan">存续跨度 - 天</small>
+            </div>
+            <div class="gkpi-card">
+                <label>发言成员数</label>
+                <strong id="gkpiSenderCount">0</strong>
+                <small id="gkpiAvgMemberMsg">人均发信 - 条</small>
+            </div>
+            <div class="gkpi-card">
+                <label>活跃天数</label>
+                <strong id="gkpiActiveDays">0</strong>
+                <small id="gkpiAvgDailyMsg">日均消息 - 条</small>
+            </div>
+            <div class="gkpi-card">
+                <label>发言集中度 (Top 2)</label>
+                <strong id="gkpiConcentration">0%</strong>
+                <small>二八效应评估</small>
+            </div>
+            <div class="gkpi-card">
+                <label>互动响应均值</label>
+                <strong id="gkpiAvgResponse">-</strong>
+                <small>相邻发言人切换时延</small>
+            </div>
+            <div class="gkpi-card">
+                <label>平均发信长度</label>
+                <strong id="gkpiAvgLength">0 字</strong>
+                <small>单条文本字符深度</small>
+            </div>
+        </div>
+
+        <div class="group-hourly-section">
+            <div class="section-head">
+                <div class="section-title">
+                    <strong>24 小时活跃时段分布</strong>
+                    <small>全天 24 个整点（0:00 - 23:59）的历史发信量统计，柱子越高代表该时段发言越集中</small>
+                </div>
+                <div id="groupHourlySummary" class="hourly-summary-badges"></div>
+            </div>
+            <div id="groupHourlyBars" class="group-hourly-bars"></div>
+            <div class="hourly-period-legend">
+                <span>🌙 凌晨 (0:00-6:00)</span>
+                <span>🌅 上午 (6:00-12:00)</span>
+                <span>☀️ 下午 (12:00-18:00)</span>
+                <span>🌃 晚上 (18:00-24:00)</span>
+            </div>
+        </div>
+
+        <div class="group-members-section">
+            <div class="section-head">
+                <div class="section-title">
+                    <strong>群成员活跃度与运营明细</strong>
+                    <small id="groupMembersCount">（共 0 位成员）</small>
+                </div>
+                <div class="section-tools">
+                    <span id="personaStyleStatus" class="persona-style-status" role="status" aria-live="polite" hidden></span>
+                    <input id="groupMemberSearch" class="control compact" placeholder="搜索成员姓名或工号…">
+                </div>
+            </div>
+            <div class="table-wrap group-member-table-wrap">
+                <table>
+                    <thead>
+                        <tr data-table-head="groupMembers">
+                            <th data-key="sender_name">成员</th>
+                            <th data-key="persona_role">运营角色画像（点击切换系列）</th>
+                            <th data-key="message_count" data-type="number">发信总量 (占比)</th>
+                            <th data-key="active_days" data-type="number">活跃天数</th>
+                            <th data-key="daily_frequency" data-type="number">发信频次</th>
+                            <th data-key="average_length" data-type="number">平均长度</th>
+                            <th data-key="average_response_minutes" data-type="number">互动响应均值</th>
+                            <th data-key="last_message_time" data-type="date">最近发言</th>
+                        </tr>
+                    </thead>
+                    <tbody id="groupMemberTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="dialog-foot">
+        <button id="closeGroupAnalysisBtn" class="btn" type="button" onclick="this.closest('dialog').close()">关闭</button>
+    </div>
+</dialog>
+
 <script src="/js/shared/api.js"></script>
 <script src="/js/shared/xlsx.full.min.js"></script>
 <script src="./chat-test-data.js?v=20260901-4"></script>
-<script src="./chat-viewer.js?v=20260902-11"></script>
+<script src="./chat-viewer.js?v=20260902-19"></script>
 </body>
 </html>

@@ -23,15 +23,47 @@
         sourceTotal: 0,
         sourceTotalPages: 1,
         parserRules: [],
-        tableData: { directory: [], people: [] },
+        tableData: { directory: [], people: [], groups: [], groupMembers: [] },
         tableViews: {
             directory: { sortKey: 'message_count', sortDirection: 'desc', filters: new Map() },
-            people: { sortKey: 'message_count', sortDirection: 'desc', filters: new Map() }
+            people: { sortKey: 'message_count', sortDirection: 'desc', filters: new Map() },
+            groups: { sortKey: 'message_count', sortDirection: 'desc', filters: new Map() },
+            groupMembers: { sortKey: 'message_count', sortDirection: 'desc', filters: new Map() }
         },
-        activeTableFilter: null
+        activeTableFilter: null,
+        groupAnalysis: null,
+        personaStyleSaving: false,
+        theme: localStorage.getItem('chat_history_theme') || 'system'
     };
     const $ = id => document.getElementById(id);
     const typeLabels = { single: '单聊', group: '群组', discussion: '讨论组', other: '其他' };
+    const personaStyleSeries = {
+        operations: {
+            label: '经典运营',
+            roles: { core: '👑 核心领袖', active: '🔥 积极中坚', regular: '💬 常规参与', low: '🌱 边缘发言' }
+        },
+        team: {
+            label: '团队协作',
+            roles: { core: '🧭 团队领航者', active: '🚀 推进主力', regular: '🤝 协作伙伴', low: '👀 观察参与者' }
+        },
+        pets: {
+            label: '萌宠乐园',
+            roles: { core: '🦁 领队狮狮', active: '🐰 活力兔兔', regular: '🐿️ 协作松鼠', low: '🐣 潜力萌新' }
+        },
+        dessert: {
+            label: '甜点派对',
+            roles: { core: '🎂 镇场蛋糕', active: '🧁 活力杯糕', regular: '🍪 协作曲奇', low: '🍬 甜心萌新' }
+        },
+        energy: {
+            label: '能量等级',
+            roles: { core: '🏆 S 级核心', active: '⚡ A 级活跃', regular: '💡 B 级参与', low: '🌙 C 级低频' }
+        },
+        nature: {
+            label: '自然生态',
+            roles: { core: '🌳 参天主干', active: '🌿 繁茂枝干', regular: '🌼 活力新芽', low: '🌰 待萌种子' }
+        }
+    };
+    const personaStyleKeys = Object.keys(personaStyleSeries);
     let toastTimer;
     let conversationDebounce;
     let peopleDebounce;
@@ -62,6 +94,22 @@
         return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
     }
 
+    function applyTheme(theme) {
+        const pref = ['light', 'dark', 'system'].includes(theme) ? theme : 'system';
+        state.theme = pref;
+        try { localStorage.setItem('chat_history_theme', pref); } catch (_) {}
+
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const isDark = pref === 'dark' || (pref === 'system' && prefersDark);
+
+        document.documentElement.setAttribute('data-theme', pref);
+        document.documentElement.classList.toggle('dark-theme', isDark);
+
+        document.querySelectorAll('.theme-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.theme === pref);
+        });
+    }
+
     function escapeHtml(text) {
         return String(text || '')
             .replace(/&/g, '&amp;')
@@ -80,9 +128,106 @@
         if (tableName === 'people' && key === 'person_label') {
             return `${item.sender_name || '未知'} (${item.sender_id || '-'})${item.is_me ? ' （我）' : ''}`;
         }
+        if (tableName === 'groups' && key === 'conversation_type') {
+            return typeLabels[item.conversation_type] || item.conversation_type || '-';
+        }
+        if (tableName === 'groups' && key === 'top_speaker') {
+            return item.top_speaker_name ? `${item.top_speaker_name}${item.top_speaker_count ? ` (${item.top_speaker_count}条)` : ''}` : '-';
+        }
+        if (tableName === 'groupMembers' && key === 'sender_name') {
+            return `${item.sender_name || '未知'} (${item.sender_id || '-'})${item.is_me ? ' （我）' : ''}`;
+        }
+        if (tableName === 'groupMembers' && key === 'persona_role') {
+            return personaRoleLabel(item.role_level);
+        }
         const value = item[key];
         if (value === null || value === undefined || value === '') return '-';
         return String(value);
+    }
+
+    function currentPersonaStyle() {
+        const style = state.groupAnalysis?.conversation?.persona_style;
+        return personaStyleSeries[style] ? style : 'operations';
+    }
+
+    function personaRoleLabel(roleLevel) {
+        const series = personaStyleSeries[currentPersonaStyle()] || personaStyleSeries.operations;
+        return series.roles[roleLevel] || series.roles.low;
+    }
+
+    function updatePersonaStyleHeader() {
+        const label = document.querySelector('[data-table-head="groupMembers"] [data-key="persona_role"] .table-head-label');
+        const series = personaStyleSeries[currentPersonaStyle()];
+        if (!label || !series) return;
+        label.textContent = `运营角色画像 · ${series.label}`;
+        label.title = state.user?.role === 'admin'
+            ? '点击任一角色画像，可切换整个群组的系列风格'
+            : '当前群组使用的运营角色画像系列';
+    }
+
+    function personaPendingStorageKey(conversationId) {
+        const tenantId = state.user?.tenantId || 'default';
+        return `chat-history-persona-style-pending:${tenantId}:${conversationId}`;
+    }
+
+    function readPendingPersonaStyle(conversationId) {
+        try {
+            const style = localStorage.getItem(personaPendingStorageKey(conversationId));
+            return personaStyleSeries[style] ? style : '';
+        } catch (_) {
+            return '';
+        }
+    }
+
+    function writePendingPersonaStyle(conversationId, style) {
+        try {
+            const key = personaPendingStorageKey(conversationId);
+            if (style) localStorage.setItem(key, style);
+            else localStorage.removeItem(key);
+        } catch (_) { /* 本机存储不可用时仍保留当前页面选择 */ }
+    }
+
+    function setPersonaStyleStatus(message = '', kind = '') {
+        const status = $('personaStyleStatus');
+        if (!status) return;
+        status.textContent = message;
+        status.className = `persona-style-status${kind ? ` ${kind}` : ''}`;
+        status.hidden = !message;
+    }
+
+    async function persistPersonaStyle(activeAnalysis, style, options = {}) {
+        if (!activeAnalysis || state.personaStyleSaving) return;
+        const conversationId = activeAnalysis.conversation.id;
+        state.personaStyleSaving = true;
+        setPersonaStyleStatus(options.retry ? '正在同步上次选择…' : '正在自动保存…', 'saving');
+        try {
+            const saved = await API.put(`/api/chat-history/stats/groups/${encodeURIComponent(conversationId)}/persona-style`, { personaStyle: style });
+            activeAnalysis.conversation.persona_style_updated_at = saved.updatedAt || null;
+            writePendingPersonaStyle(conversationId, '');
+            if (state.groupAnalysis === activeAnalysis) {
+                setPersonaStyleStatus(`已自动保存·${personaStyleSeries[style].label}`, 'saved');
+            }
+        } catch (error) {
+            writePendingPersonaStyle(conversationId, style);
+            if (state.groupAnalysis === activeAnalysis) {
+                setPersonaStyleStatus(`已保留当前选择，待服务恢复后自动同步（${error.message || '保存失败'}）`, 'pending');
+            }
+        } finally {
+            state.personaStyleSaving = false;
+        }
+    }
+
+    async function cyclePersonaStyle() {
+        if (!state.groupAnalysis || state.personaStyleSaving) return;
+        const activeAnalysis = state.groupAnalysis;
+        const current = currentPersonaStyle();
+        const next = personaStyleKeys[(personaStyleKeys.indexOf(current) + 1) % personaStyleKeys.length];
+
+        activeAnalysis.conversation.persona_style = next;
+        state.tableViews.groupMembers.filters.delete('persona_role');
+        updatePersonaStyleHeader();
+        renderTable('groupMembers');
+        await persistPersonaStyle(activeAnalysis, next);
     }
 
     function compareTableValues(left, right, type) {
@@ -133,6 +278,8 @@
 
     function renderTable(tableName) {
         if (tableName === 'directory') renderDirectoryRows(filteredAndSortedRows(tableName));
+        else if (tableName === 'groups') renderGroupRows(filteredAndSortedRows(tableName));
+        else if (tableName === 'groupMembers') renderGroupMemberRows(filteredAndSortedRows(tableName));
         else renderPeopleRows(filteredAndSortedRows(tableName));
         updateTableHeadState(tableName);
     }
@@ -274,6 +421,7 @@
     }
 
     function switchView(name) {
+        exitCardFullscreen();
         document.querySelectorAll('.top-tab').forEach(button => button.classList.toggle('active', button.dataset.view === name));
         document.querySelectorAll('.view').forEach(view => view.classList.toggle('active', view.id === `view-${name}`));
         if (name === 'analytics') loadStats();
@@ -786,14 +934,16 @@
 
     async function loadStats() {
         try {
-            const [overview, people, directory] = await Promise.all([
+            const [overview, people, directory, groups] = await Promise.all([
                 API.get('/api/chat-history/stats/overview'),
                 API.get(`/api/chat-history/stats/people?${queryString({ q: $('peopleQuery').value.trim(), limit: 5000 })}`),
-                API.get(`/api/chat-history/directory?${queryString({ q: $('directoryQuery').value.trim(), limit: 5000 })}`)
+                API.get(`/api/chat-history/directory?${queryString({ q: $('directoryQuery').value.trim(), limit: 5000 })}`),
+                API.get(`/api/chat-history/stats/groups?${queryString({ q: ($('groupQuery')?.value || '').trim(), type: $('groupTypeFilter')?.value || '', limit: 5000 })}`)
             ]);
             renderOverview(overview);
             renderPeople(people.items || []);
             renderDirectory(directory.items || []);
+            renderGroups(groups.items || []);
         } catch (error) { showToast(error.message, true); }
     }
 
@@ -1043,11 +1193,312 @@
         });
     }
 
+    function renderGroups(items) {
+        state.tableData.groups = items;
+        renderTable('groups');
+    }
+
+    function renderGroupRows(items) {
+        const body = $('groupsTable');
+        if (!body) return;
+        body.replaceChildren();
+        if ($('groupStatsMeta')) {
+            $('groupStatsMeta').textContent = `（共 ${items.length} 个群聊与讨论组）`;
+        }
+        if (!items.length) {
+            const row = document.createElement('tr');
+            row.innerHTML = '<td colspan="9" style="text-align:center;color:var(--muted);padding:18px;">暂无符合当前筛选条件的群组或讨论组</td>';
+            body.append(row);
+            return;
+        }
+        items.forEach(item => {
+            const row = document.createElement('tr');
+
+            // Name
+            const nameTd = document.createElement('td');
+            const link = document.createElement('a');
+            link.className = 'group-name-link';
+            link.href = 'javascript:void(0)';
+            link.textContent = item.display_name || '未命名群聊';
+            link.title = '点击查看该群运营深度分析';
+            link.addEventListener('click', e => {
+                e.preventDefault();
+                openGroupAnalysis(item.conversation_id);
+            });
+            nameTd.append(link);
+
+            // Type
+            const typeTd = document.createElement('td');
+            const isGroup = item.conversation_type === 'group';
+            const badgeClass = isGroup ? 'type-group' : item.conversation_type === 'discussion' ? 'type-discussion' : 'type-single';
+            const badge = document.createElement('span');
+            badge.className = `type-badge ${badgeClass}`;
+            badge.textContent = typeLabels[item.conversation_type] || item.conversation_type || '其他';
+            typeTd.append(badge);
+
+            // Message Count
+            const msgTd = document.createElement('td');
+            msgTd.textContent = `${formatNumber(item.message_count)} 条`;
+
+            // Sender Count
+            const sendersTd = document.createElement('td');
+            sendersTd.textContent = `${formatNumber(item.sender_count)} 人`;
+
+            // Active Days
+            const daysTd = document.createElement('td');
+            daysTd.textContent = `${formatNumber(item.active_days)} 天`;
+
+            // Top Speaker
+            const topTd = document.createElement('td');
+            if (item.top_speaker_name) {
+                const pct = item.message_count > 0 ? Math.round((item.top_speaker_count / item.message_count) * 100) : 0;
+                topTd.innerHTML = `<strong>${escapeHtml(item.top_speaker_name)}</strong> <small style="color:var(--muted)">(${formatNumber(item.top_speaker_count)}条 · ${pct}%)</small>`;
+            } else {
+                topTd.textContent = '-';
+            }
+
+            // Average Length
+            const lenTd = document.createElement('td');
+            lenTd.textContent = `${item.average_length || 0} 字`;
+
+            // Last Message Time
+            const lastTd = document.createElement('td');
+            lastTd.textContent = item.last_message_time ? item.last_message_time.slice(0, 16) : '-';
+
+            // Action
+            const actTd = document.createElement('td');
+            const openBtn = document.createElement('button');
+            openBtn.type = 'button';
+            openBtn.className = 'btn btn-small';
+            openBtn.textContent = '查看聊天 ↗';
+            openBtn.title = '进入会话视图查看该群完整聊天记录';
+            openBtn.addEventListener('click', async () => {
+                switchView('chat');
+                await openConversation(item.conversation_id);
+            });
+            actTd.append(openBtn);
+
+            row.append(nameTd, typeTd, msgTd, sendersTd, daysTd, topTd, lenTd, lastTd, actTd);
+            body.append(row);
+        });
+    }
+
+    async function openGroupAnalysis(conversationId) {
+        if (!conversationId) return;
+        setLoading(true, '正在加载群组深度运营分析…');
+        try {
+            const data = await API.get(`/api/chat-history/stats/groups/${encodeURIComponent(conversationId)}/analysis`);
+            state.groupAnalysis = data;
+            const pendingPersonaStyle = state.user?.role === 'admin' ? readPendingPersonaStyle(conversationId) : '';
+            if (pendingPersonaStyle) data.conversation.persona_style = pendingPersonaStyle;
+            state.tableViews.groupMembers.filters.clear();
+            updatePersonaStyleHeader();
+            setPersonaStyleStatus(pendingPersonaStyle ? '已恢复上次选择，正在同步…' : '', pendingPersonaStyle ? 'saving' : '');
+
+            // 1. Title & Meta
+            $('groupAnalysisTitle').textContent = data.conversation.display_name || '未命名会话';
+            const typeSpan = $('groupAnalysisType');
+            const cType = data.conversation.conversation_type;
+            typeSpan.textContent = typeLabels[cType] || cType || '群组';
+            typeSpan.className = `type-badge ${cType === 'group' ? 'type-group' : cType === 'discussion' ? 'type-discussion' : 'type-single'}`;
+            const firstDate = data.overview.first_message_time ? data.overview.first_message_time.slice(0, 10) : '-';
+            const lastDate = data.overview.last_message_time ? data.overview.last_message_time.slice(0, 10) : '-';
+            $('groupAnalysisMeta').textContent = `${data.conversation.relative_path} · 活跃跨度: ${firstDate} 至 ${lastDate}`;
+
+            // 2. Diagnostics
+            $('diagStructure').textContent = data.diagnosis.structure;
+            $('diagCadence').textContent = data.diagnosis.cadence;
+            $('diagStyle').textContent = data.diagnosis.style;
+            $('diagSummaryText').textContent = data.diagnosis.summary;
+
+            // 3. KPIs
+            $('gkpiTotalMessages').textContent = `${formatNumber(data.overview.total_messages)} 条`;
+            $('gkpiSpan').textContent = `存续跨度 ${data.overview.day_span} 天 · 密度 ${data.overview.activity_density}%`;
+            $('gkpiSenderCount').textContent = `${formatNumber(data.overview.sender_count)} 人`;
+            $('gkpiAvgMemberMsg').textContent = `人均发信 ${data.overview.avg_member_messages} 条`;
+            $('gkpiActiveDays').textContent = `${formatNumber(data.overview.active_days)} 天`;
+            $('gkpiAvgDailyMsg').textContent = `日均发信 ${data.overview.avg_daily_messages} 条`;
+            $('gkpiConcentration').textContent = `${data.overview.top2_concentration}%`;
+            $('gkpiAvgResponse').textContent = data.overview.overall_avg_response !== null ? responseLabel(data.overview.overall_avg_response) : '-';
+            $('gkpiAvgLength').textContent = `${data.overview.average_length} 字`;
+
+            // 4. 24h Hourly Bars & Badges
+            const maxHourCount = Math.max(...data.hourly_distribution.map(d => d.count), 1);
+            let peakHour = data.hourly_distribution[0];
+            let workHoursCount = 0;
+            data.hourly_distribution.forEach(h => {
+                if (h.count > peakHour.count) peakHour = h;
+                if (h.hour >= 9 && h.hour < 18) workHoursCount += h.count;
+            });
+            const workPct = data.overview.total_messages > 0 ? Math.round((workHoursCount / data.overview.total_messages) * 100) : 0;
+
+            const summaryHost = $('groupHourlySummary');
+            if (summaryHost) {
+                summaryHost.replaceChildren();
+                const peakBadge = document.createElement('span');
+                peakBadge.className = 'hourly-badge peak-badge';
+                peakBadge.textContent = `🔥 活跃峰值: ${peakHour.hour}:00 - ${peakHour.hour + 1}:00 (${peakHour.count}条)`;
+                const workBadge = document.createElement('span');
+                workBadge.className = 'hourly-badge';
+                workBadge.textContent = `💼 工作时段 (9:00-18:00): 占 ${workPct}%`;
+                summaryHost.append(peakBadge, workBadge);
+            }
+
+            const hourlyHost = $('groupHourlyBars');
+            hourlyHost.replaceChildren();
+            data.hourly_distribution.forEach(h => {
+                const col = document.createElement('div');
+                const isPeak = h.hour === peakHour.hour && h.count > 0;
+                col.className = `group-hour-col${isPeak ? ' is-peak' : ''}`;
+                col.title = `${h.hour}:00 - ${h.hour}:59\n累计发信: ${h.count} 条${isPeak ? '（全天峰值）' : ''}`;
+
+                if (h.count > 0) {
+                    const countNum = document.createElement('span');
+                    countNum.className = 'group-hour-count';
+                    countNum.textContent = String(h.count);
+                    col.append(countNum);
+                }
+
+                const bar = document.createElement('div');
+                bar.className = 'group-hour-bar';
+                const heightPct = Math.max(4, Math.round((h.count / maxHourCount) * 100));
+                bar.style.height = `${heightPct}%`;
+                if (h.count === 0) bar.style.opacity = '0.2';
+
+                const label = document.createElement('span');
+                label.className = 'group-hour-label';
+                label.textContent = h.hour % 2 === 0 ? `${h.hour}h` : '';
+
+                col.append(bar, label);
+                hourlyHost.append(col);
+            });
+
+            // 5. Members table
+            state.tableData.groupMembers = data.members || [];
+            $('groupMembersCount').textContent = `（共 ${state.tableData.groupMembers.length} 位发言成员）`;
+            if ($('groupMemberSearch')) $('groupMemberSearch').value = '';
+            renderTable('groupMembers');
+
+            // 6. Jump and Close buttons
+            const dlg = $('groupAnalysisDialog');
+            const closeGroupAnalysis = () => {
+                if (dlg && dlg.open) dlg.close();
+            };
+            if ($('closeGroupAnalysisDialog')) $('closeGroupAnalysisDialog').onclick = closeGroupAnalysis;
+            if ($('closeGroupAnalysisBtn')) $('closeGroupAnalysisBtn').onclick = closeGroupAnalysis;
+            if (dlg) {
+                dlg.onclick = event => {
+                    if (event.target === dlg) closeGroupAnalysis();
+                };
+            }
+
+            $('groupJumpChatBtn').onclick = async () => {
+                closeGroupAnalysis();
+                switchView('chat');
+                await openConversation(data.conversation.id);
+            };
+
+            dlg.showModal();
+            if (pendingPersonaStyle) void persistPersonaStyle(data, pendingPersonaStyle, { retry: true });
+        } catch (error) {
+            showToast(error.message, true);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    function renderGroupMemberRows(items) {
+        const body = $('groupMemberTable');
+        if (!body) return;
+        body.replaceChildren();
+
+        const query = ($('groupMemberSearch')?.value || '').trim().toLowerCase();
+        const displayItems = query
+            ? items.filter(m => (m.sender_name || '').toLowerCase().includes(query) || (m.sender_id || '').toLowerCase().includes(query))
+            : items;
+
+        if (!displayItems.length) {
+            const row = document.createElement('tr');
+            row.innerHTML = '<td colspan="8" style="text-align:center;color:var(--muted);padding:18px;">未找到匹配的群成员</td>';
+            body.append(row);
+            return;
+        }
+
+        displayItems.forEach(item => {
+            const row = document.createElement('tr');
+
+            // Member name & ID
+            const memberTd = document.createElement('td');
+            const strong = document.createElement('strong');
+            strong.textContent = `${item.sender_name || '未知'}${item.is_me ? ' （我）' : ''}`;
+            const idSmall = document.createElement('small');
+            idSmall.textContent = item.sender_id || '-';
+            idSmall.style.display = 'block';
+            idSmall.style.color = 'var(--muted)';
+            idSmall.style.fontSize = '10px';
+            memberTd.append(strong, idSmall);
+
+            // Role badge
+            const roleTd = document.createElement('td');
+            const canEditPersonaStyle = state.user?.role === 'admin';
+            const badge = document.createElement(canEditPersonaStyle ? 'button' : 'span');
+            if (canEditPersonaStyle) badge.type = 'button';
+            badge.className = `role-badge role-badge-${item.role_level || 'low'}`;
+            badge.textContent = personaRoleLabel(item.role_level);
+            badge.title = canEditPersonaStyle
+                ? `当前：${personaStyleSeries[currentPersonaStyle()].label}系列；点击切换下一系列并自动保存`
+                : `当前：${personaStyleSeries[currentPersonaStyle()].label}系列`;
+            if (canEditPersonaStyle) {
+                badge.setAttribute('aria-label', `${badge.textContent}，点击切换画像风格`);
+                badge.addEventListener('click', cyclePersonaStyle);
+            }
+            roleTd.append(badge);
+
+            // Message count & progress bar
+            const countTd = document.createElement('td');
+            const pctBox = document.createElement('div');
+            pctBox.className = 'msg-pct-bar';
+            const pctTrack = document.createElement('span');
+            pctTrack.className = 'msg-pct-track';
+            const pctFill = document.createElement('i');
+            pctFill.className = 'msg-pct-fill';
+            pctFill.style.width = `${Math.min(100, item.message_percent || 0)}%`;
+            pctTrack.append(pctFill);
+            const countLabel = document.createElement('span');
+            countLabel.textContent = `${formatNumber(item.message_count)} 条 (${item.message_percent}%)`;
+            pctBox.append(pctTrack, countLabel);
+            countTd.append(pctBox);
+
+            // Active days
+            const daysTd = document.createElement('td');
+            daysTd.textContent = `${formatNumber(item.active_days)} 天`;
+
+            // Daily frequency
+            const freqTd = document.createElement('td');
+            freqTd.textContent = `${item.daily_frequency || 0} 条/天`;
+
+            // Avg length
+            const lenTd = document.createElement('td');
+            lenTd.textContent = `${item.average_length || 0} 字`;
+
+            // Avg response
+            const respTd = document.createElement('td');
+            respTd.textContent = item.average_response_minutes !== null ? responseLabel(item.average_response_minutes) : '-';
+
+            // Last message time
+            const lastTd = document.createElement('td');
+            lastTd.textContent = item.last_message_time ? item.last_message_time.slice(0, 16) : '-';
+
+            row.append(memberTd, roleTd, countTd, daysTd, freqTd, lenTd, respTd, lastTd);
+            body.append(row);
+        });
+    }
+
     function openImportDialog() {
         $('importDialog').showModal();
     }
 
-    async function importFiles(fileList) {
+    async function importFiles(fileList, options = {}) {
         const files = [...fileList].filter(file => /\.txt$/i.test(file.name));
         if (!files.length) {
             showToast('选定目录中没有 TXT 文件', true);
@@ -1068,6 +1519,7 @@
             const relativePaths = batch.map(file => file.webkitRelativePath || file.relativePath || file.name);
             form.append('relativePaths', JSON.stringify(relativePaths));
             form.append('modifiedAts', JSON.stringify(batch.map(file => file.lastModified || 0)));
+            if (options.dataKind === 'test') form.append('dataKind', 'test');
             batch.forEach(file => form.append('files', file, file.name));
             $('importStage').textContent = `正在导入 ${relativePaths[0]}`;
             try {
@@ -1108,7 +1560,7 @@
             const myId = state.settings.mySenderId || 'f84300033';
             const files = window.ChatTestData ? window.ChatTestData.createTestFiles(myId) : [];
             if (!files.length) throw new Error('测试数据生成器未就绪，请检查脚本加载');
-            await importFiles(files);
+            await importFiles(files, { dataKind: 'test' });
             showToast('全场景测试聊天数据已导入成功！');
             switchView('chat');
             if (state.conversations && state.conversations.length) {
@@ -1130,7 +1582,7 @@
     }
 
     async function clearTestData() {
-        const confirmed = window.confirm('确认要清空所有一键导入的测试聊天数据吗？\n\n- 仅删除路径为“测试数据/...”的会话及消息\n- 真实导入的聊天记录将被完整保留\n- 清空后可随时再次一键导入测试数据');
+        const confirmed = window.confirm('确认要清空所有一键导入的测试聊天数据吗？\n\n- 删除已标记的测试数据及可安全识别的旧版测试会话\n- 真实导入的聊天记录将被完整保留\n- 清空后可随时再次一键导入测试数据');
         if (!confirmed) return;
         setLoading(true, '正在清空测试数据…');
         try {
@@ -1318,6 +1770,15 @@
             document.body.innerHTML = '<div class="empty-state" style="height:100vh"><span>🔒</span><h2>请从 Tools Platform 内打开</h2><p>此工具依赖平台的租户数据、登录鉴权和聊天服务。</p></div>';
             return;
         }
+        applyTheme(state.theme);
+        if (window.matchMedia) {
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+                if (state.theme === 'system') applyTheme('system');
+            });
+        }
+        document.querySelectorAll('.theme-btn').forEach(btn => {
+            btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
+        });
         setupInteractiveTableHeads();
         setLoading(true, '正在连接聊天记录服务…');
         try {
@@ -1430,6 +1891,18 @@
         renderTable(active.tableName);
     });
     $('peopleQuery').addEventListener('input', () => { clearTimeout(peopleDebounce); peopleDebounce = setTimeout(loadStats, 250); });
+    let groupDebounce;
+    async function loadGroupsOnly() {
+        try {
+            const data = await API.get(`/api/chat-history/stats/groups?${queryString({ q: ($('groupQuery')?.value || '').trim(), type: $('groupTypeFilter')?.value || '', limit: 5000 })}`);
+            renderGroups(data.items || []);
+        } catch (error) { showToast(error.message, true); }
+    }
+    $('groupQuery')?.addEventListener('input', () => {
+        clearTimeout(groupDebounce);
+        groupDebounce = setTimeout(loadGroupsOnly, 250);
+    });
+    $('groupTypeFilter')?.addEventListener('change', loadGroupsOnly);
     $('directoryQuery')?.addEventListener('input', () => {
         clearTimeout(directoryDebounce);
         directoryDebounce = setTimeout(() => loadDirectory($('directoryQuery').value.trim()), 250);
@@ -1527,6 +2000,76 @@
             localStorage.setItem(`chat-history-scroll:${state.activeConversation.id}`, String($('messageScroller').scrollTop));
         }, 100);
     }, { passive: true });
+
+    function toggleCardFullscreen(cardId) {
+        const card = $(cardId);
+        if (!card) return;
+        const isCurrentlyFullscreen = card.classList.contains('card-fullscreen');
+
+        document.querySelectorAll('.card.card-fullscreen').forEach(other => {
+            other.classList.remove('card-fullscreen');
+            const btn = other.querySelector('.card-fullscreen-btn');
+            if (btn) {
+                btn.classList.remove('active');
+                btn.textContent = '⛶ 全屏';
+                btn.title = '全屏查看表格';
+            }
+        });
+
+        if (isCurrentlyFullscreen) {
+            document.body.classList.remove('has-card-fullscreen');
+        } else {
+            card.classList.add('card-fullscreen');
+            document.body.classList.add('has-card-fullscreen');
+            const btn = card.querySelector('.card-fullscreen-btn');
+            if (btn) {
+                btn.classList.add('active');
+                btn.textContent = '🗗 退出全屏';
+                btn.title = '退出全屏模式 (Esc)';
+            }
+        }
+    }
+
+    function exitCardFullscreen() {
+        const fullscreenCards = document.querySelectorAll('.card.card-fullscreen');
+        if (!fullscreenCards.length) return;
+        fullscreenCards.forEach(card => {
+            card.classList.remove('card-fullscreen');
+            const btn = card.querySelector('.card-fullscreen-btn');
+            if (btn) {
+                btn.classList.remove('active');
+                btn.textContent = '⛶ 全屏';
+                btn.title = '全屏查看表格';
+            }
+        });
+        document.body.classList.remove('has-card-fullscreen');
+    }
+
+    document.querySelectorAll('.card-fullscreen-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            toggleCardFullscreen(btn.dataset.card);
+        });
+    });
+
+    window.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+            const dlg = $('groupAnalysisDialog');
+            if (dlg && dlg.open) {
+                dlg.close();
+                return;
+            }
+            if (document.body.classList.contains('has-card-fullscreen')) {
+                exitCardFullscreen();
+            }
+        }
+    });
+
+    $('closeGroupAnalysisDialog')?.addEventListener('click', () => $('groupAnalysisDialog')?.close());
+    $('closeGroupAnalysisBtn')?.addEventListener('click', () => $('groupAnalysisDialog')?.close());
+    $('groupMemberSearch')?.addEventListener('input', () => {
+        renderTable('groupMembers');
+    });
+
     window.addEventListener('tools:languagechange', () => {
         window.parent?.postMessage({ type: 'tools-custom-tool-language', lang: localStorage.getItem('tools_lang') || 'zh-CN' }, window.location.origin);
     });
