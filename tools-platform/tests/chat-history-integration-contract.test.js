@@ -15,12 +15,15 @@ function routeLayer(routePath, method) {
 test('shared chat mutations keep imports and deletion admin-only', () => {
     const importLayer = routeLayer('/import', 'post');
     const deleteLayer = routeLayer('/sources/:sourceId', 'delete');
+    const refreshStatsLayer = routeLayer('/stats/refresh', 'post');
     const settingsLayer = routeLayer('/settings', 'put');
     const favoriteLayer = routeLayer('/favorites/:stableKey', 'put');
     assert.ok(importLayer);
     assert.ok(deleteLayer);
+    assert.ok(refreshStatsLayer);
     assert.ok(importLayer.route.stack.some(layer => layer.handle.name === 'requireAdmin'));
     assert.ok(deleteLayer.route.stack.some(layer => layer.handle.name === 'requireAdmin'));
+    assert.ok(refreshStatsLayer.route.stack.some(layer => layer.handle.name === 'requireAdmin'));
     assert.equal(settingsLayer.route.stack.some(layer => layer.handle.name === 'requireAdmin'), false);
     assert.equal(favoriteLayer.route.stack.some(layer => layer.handle.name === 'requireAdmin'), false);
 
@@ -44,4 +47,16 @@ test('chat history center is a valid bundled platform-only HTML tool', () => {
     const js = fs.readFileSync(path.join(sourceDir, 'chat-history-center/chat-viewer.js'), 'utf8');
     assert.match(js, /window\.location\.protocol === 'file:'/);
     assert.match(js, /webkitRelativePath/);
+    assert.match(js, /ANALYTICS_PAGE_SIZE = 100/);
+    assert.match(js, /setupAnalyticsLazyLoading/);
+    assert.match(js, /setupResizableTableColumns/);
+    assert.match(js, /chat_history_analytics_column_widths_v1/);
+    assert.match(js, /offset: ANALYTICS_PAGE_SIZE|limit: ANALYTICS_PAGE_SIZE/);
+    assert.match(js, /\/api\/chat-history\/stats\/refresh/);
+    assert.match(js, /正在读取会话概览/);
+    assert.match(js, /peopleDebounce = setTimeout\(loadPeopleOnly/);
+    assert.doesNotMatch(js, /peopleDebounce = setTimeout\(loadStats/);
+    const css = fs.readFileSync(path.join(sourceDir, 'chat-history-center/chat-viewer.css'), 'utf8');
+    assert.match(css, /max-width:1600px/);
+    assert.match(css, /column-resize-handle/);
 });

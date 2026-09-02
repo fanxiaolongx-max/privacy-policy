@@ -178,6 +178,20 @@ async function ensureReady() {
                 updated_at TEXT NOT NULL,
                 FOREIGN KEY(conversation_id) REFERENCES chat_conversations(id) ON DELETE CASCADE
             )`);
+            await run(`CREATE TABLE IF NOT EXISTS chat_analytics_state (
+                id INTEGER PRIMARY KEY CHECK(id=1),
+                data_version INTEGER NOT NULL DEFAULT 1,
+                updated_at TEXT NOT NULL
+            )`);
+            await run(`CREATE TABLE IF NOT EXISTS chat_analytics_cache (
+                cache_key TEXT PRIMARY KEY,
+                data_version INTEGER NOT NULL,
+                payload_json TEXT NOT NULL,
+                generated_at TEXT NOT NULL
+            )`);
+            await run(`INSERT OR IGNORE INTO chat_analytics_state(id,data_version,updated_at)
+                VALUES(1,1,?)`, [new Date().toISOString()]);
+            await run('CREATE INDEX IF NOT EXISTS idx_chat_analytics_cache_version ON chat_analytics_cache(data_version)');
             await run(`CREATE TABLE IF NOT EXISTS chat_favorites (
                 user_id TEXT NOT NULL,
                 message_stable_key TEXT NOT NULL,
@@ -248,6 +262,47 @@ async function ensureReady() {
         }));
     }
     return readyByPath.get(filePath);
+}
+
+async function analyticsDataVersion() {
+    const row = await get('SELECT data_version FROM chat_analytics_state WHERE id=1');
+    return Number(row && row.data_version || 1);
+}
+
+async function cachedAnalyticsResult(cacheKey, producer) {
+    const version = await analyticsDataVersion();
+    const row = await get(`SELECT payload_json,generated_at FROM chat_analytics_cache
+        WHERE cache_key=? AND data_version=?`, [cacheKey, version]);
+    if (row) {
+        try {
+            return {
+                ...JSON.parse(row.payload_json),
+                analyticsCache: { hit: true, dataVersion: version, generatedAt: row.generated_at }
+            };
+        } catch (_error) {
+            await run('DELETE FROM chat_analytics_cache WHERE cache_key=?', [cacheKey]);
+        }
+    }
+
+    const payload = await producer();
+    const generatedAt = new Date().toISOString();
+    await run(`INSERT INTO chat_analytics_cache(cache_key,data_version,payload_json,generated_at)
+        VALUES(?,?,?,?) ON CONFLICT(cache_key) DO UPDATE SET
+        data_version=excluded.data_version,payload_json=excluded.payload_json,generated_at=excluded.generated_at`, [
+        cacheKey,
+        version,
+        JSON.stringify(payload),
+        generatedAt
+    ]);
+    return { ...payload, analyticsCache: { hit: false, dataVersion: version, generatedAt } };
+}
+
+async function invalidateAnalyticsCache() {
+    await ensureReady();
+    const now = new Date().toISOString();
+    await run(`UPDATE chat_analytics_state SET data_version=data_version+1,updated_at=? WHERE id=1`, [now]);
+    await run('DELETE FROM chat_analytics_cache');
+    return { dataVersion: await analyticsDataVersion(), invalidatedAt: now };
 }
 
 function isFtsAvailable() {
@@ -534,6 +589,7 @@ async function importTxtFile(input) {
                 WHERE message_stable_key NOT IN (SELECT stable_key FROM chat_messages)`);
             await run('COMMIT');
             await syncPersonDirectory();
+            await invalidateAnalyticsCache();
             return { relativePath, skipped: false, conversationId, messageCount: ordinal, conversationType };
         } catch (error) {
             await run('ROLLBACK').catch(() => {});
@@ -592,7 +648,8 @@ async function syncPersonDirectory() {
 async function listPersonDirectory(options = {}) {
     await ensureReady();
     const q = String(options.q || '').trim();
-    const limit = parsePositiveInt(options.limit, 200, 5000);
+    const limit = parsePositiveInt(options.limit, 100, 10000);
+    const offset = Math.max(0, Number.parseInt(options.offset, 10) || 0);
     const where = q ? 'WHERE sender_id LIKE ? OR sender_name LIKE ? OR alias_names LIKE ?' : '';
     const params = q ? [`%${q}%`, `%${q}%`, `%${q}%`] : [];
     const items = await all(`SELECT sender_id, sender_name, alias_names, message_count,
@@ -600,9 +657,9 @@ async function listPersonDirectory(options = {}) {
         FROM chat_person_directory
         ${where}
         ORDER BY message_count DESC, last_seen_at DESC
-        LIMIT ?`, [...params, limit]);
+        LIMIT ? OFFSET ?`, [...params, limit, offset]);
     const total = await get(`SELECT COUNT(*) AS total FROM chat_person_directory ${where}`, params);
-    return { items, total: Number(total && total.total || 0) };
+    return { items, total: Number(total && total.total || 0), limit, offset };
 }
 
 async function updatePersonDirectory(senderId, payload = {}) {
@@ -620,6 +677,7 @@ async function updatePersonDirectory(senderId, payload = {}) {
             await run(`UPDATE chat_messages_fts SET sender_name=? WHERE sender_id=?`, [senderName, senderId]);
         }
     }
+    await invalidateAnalyticsCache();
     return { senderId, senderName, aliasNames, updatedAt: now };
 }
 
@@ -851,6 +909,8 @@ async function getOverviewStats(userId) {
     await ensureReady();
     const settings = await getUserSettings(userId);
     const myId = settings.my_sender_id || '__not_configured__';
+    const cacheKey = `overview:${digest(`${userId}\0${myId}`).slice(0, 32)}`;
+    return cachedAnalyticsResult(cacheKey, async () => {
     const summary = await get(`SELECT
         (SELECT COUNT(*) FROM chat_conversations) AS conversation_count,
         (SELECT COUNT(*) FROM chat_messages) AS message_count,
@@ -874,16 +934,23 @@ async function getOverviewStats(userId) {
         FROM chat_messages GROUP BY substr(message_time,1,7) ORDER BY month DESC LIMIT 18`);
     const hours = await all(`SELECT substr(message_time,12,2) AS hour,COUNT(*) AS message_count
         FROM chat_messages GROUP BY substr(message_time,12,2) ORDER BY hour`);
-    return { summary, types, months: months.reverse(), hours, mySenderId: settings.my_sender_id || '' };
+        return { summary, types, months: months.reverse(), hours, mySenderId: settings.my_sender_id || '' };
+    });
 }
 
 async function getPeopleStats(userId, options = {}) {
     await ensureReady();
     const settings = await getUserSettings(userId);
-    const limit = parsePositiveInt(options.limit, 100, 5000);
+    const limit = parsePositiveInt(options.limit, 100, 500);
+    const offset = Math.max(0, Number.parseInt(options.offset, 10) || 0);
     const q = String(options.q || '').trim();
     const where = q ? 'WHERE m.sender_name LIKE ? OR m.sender_id LIKE ?' : '';
     const params = q ? [`%${q}%`, `%${q}%`] : [];
+    const cacheKey = `people:${digest(JSON.stringify({ userId, mySenderId: settings.my_sender_id || '', q, limit, offset })).slice(0, 40)}`;
+    return cachedAnalyticsResult(cacheKey, async () => {
+    const totalRow = await get(`SELECT COUNT(*) AS total FROM (
+        SELECT 1 FROM chat_messages m ${where} GROUP BY m.sender_id,m.sender_name
+    )`, params);
     const items = await all(`WITH ordered AS (
         SELECT sender_name,sender_id,message_time,
             LAG(sender_id) OVER (PARTITION BY conversation_id ORDER BY message_time,id) AS previous_sender_id,
@@ -904,15 +971,24 @@ async function getPeopleStats(userId, options = {}) {
         ROUND(MAX(r.avg_response_minutes),1) AS average_response_minutes,
         CASE WHEN m.sender_id=? THEN 1 ELSE 0 END AS is_me
     FROM chat_messages m LEFT JOIN response r ON r.sender_id=m.sender_id AND r.sender_name=m.sender_name
-    ${where} GROUP BY m.sender_id,m.sender_name ORDER BY message_count DESC,last_message_time DESC LIMIT ?`, [
-        settings.my_sender_id || '__not_configured__', ...params, limit
+    ${where} GROUP BY m.sender_id,m.sender_name ORDER BY message_count DESC,last_message_time DESC LIMIT ? OFFSET ?`, [
+        settings.my_sender_id || '__not_configured__', ...params, limit, offset
     ]);
-    return { items, approximateResponseTime: true, mySenderId: settings.my_sender_id || '' };
+        return {
+            items,
+            total: Number(totalRow && totalRow.total || 0),
+            limit,
+            offset,
+            approximateResponseTime: true,
+            mySenderId: settings.my_sender_id || ''
+        };
+    });
 }
 
 async function getGroupStats(options = {}) {
     await ensureReady();
-    const limit = parsePositiveInt(options.limit, 100, 5000);
+    const limit = parsePositiveInt(options.limit, 100, 500);
+    const offset = Math.max(0, Number.parseInt(options.offset, 10) || 0);
     const q = String(options.q || '').trim();
     const type = String(options.type || '').trim();
 
@@ -929,17 +1005,25 @@ async function getGroupStats(options = {}) {
     }
 
     const where = `WHERE ${conditions.join(' AND ')}`;
+    const cacheKey = `groups:${digest(JSON.stringify({ q, type, limit, offset })).slice(0, 40)}`;
 
-    const items = await all(`WITH top_speakers AS (
-        SELECT conversation_id, sender_name, sender_id, COUNT(*) AS speaker_msg_count,
-            ROW_NUMBER() OVER (PARTITION BY conversation_id ORDER BY COUNT(*) DESC, MAX(message_time) DESC) AS rn
-        FROM chat_messages
-        GROUP BY conversation_id, sender_id, sender_name
+    return cachedAnalyticsResult(cacheKey, async () => {
+    const totalRow = await get(`SELECT COUNT(*) AS total FROM chat_conversations c ${where}`, params);
+    const items = await all(`WITH selected_conversations AS (
+        SELECT c.id,c.display_name,c.conversation_type
+        FROM chat_conversations c
+        ${where}
+    ), top_speakers AS (
+        SELECT m.conversation_id, m.sender_name, m.sender_id, COUNT(*) AS speaker_msg_count,
+            ROW_NUMBER() OVER (PARTITION BY m.conversation_id ORDER BY COUNT(*) DESC, MAX(m.message_time) DESC) AS rn
+        FROM chat_messages m
+        JOIN selected_conversations selected ON selected.id=m.conversation_id
+        GROUP BY m.conversation_id, m.sender_id, m.sender_name
     )
     SELECT
-        c.id AS conversation_id,
-        c.display_name,
-        c.conversation_type,
+        selected.id AS conversation_id,
+        selected.display_name,
+        selected.conversation_type,
         COUNT(m.id) AS message_count,
         COUNT(DISTINCT m.sender_id) AS sender_count,
         COUNT(DISTINCT substr(m.message_time, 1, 10)) AS active_days,
@@ -949,15 +1033,15 @@ async function getGroupStats(options = {}) {
         ts.sender_name AS top_speaker_name,
         ts.sender_id AS top_speaker_id,
         ts.speaker_msg_count AS top_speaker_count
-    FROM chat_conversations c
-    JOIN chat_messages m ON m.conversation_id = c.id
-    LEFT JOIN top_speakers ts ON ts.conversation_id = c.id AND ts.rn = 1
-    ${where}
-    GROUP BY c.id, c.display_name, c.conversation_type
+    FROM selected_conversations selected
+    JOIN chat_messages m ON m.conversation_id = selected.id
+    LEFT JOIN top_speakers ts ON ts.conversation_id = selected.id AND ts.rn = 1
+    GROUP BY selected.id, selected.display_name, selected.conversation_type
     ORDER BY message_count DESC, last_message_time DESC
-    LIMIT ?`, [...params, limit]);
+    LIMIT ? OFFSET ?`, [...params, limit, offset]);
 
-    return { items };
+        return { items, total: Number(totalRow && totalRow.total || 0), limit, offset };
+    });
 }
 
 async function getGroupDetailedAnalysis(conversationId, options = {}) {
@@ -1248,6 +1332,7 @@ async function deleteSource(sourceId) {
         await run('DELETE FROM chat_favorites WHERE message_stable_key NOT IN (SELECT stable_key FROM chat_messages)');
         await run('COMMIT');
         await syncPersonDirectory();
+        await invalidateAnalyticsCache();
         return source;
     } catch (error) {
         await run('ROLLBACK').catch(() => {});
@@ -1281,6 +1366,7 @@ async function deleteTestDataSources() {
         await run('DELETE FROM chat_favorites WHERE message_stable_key NOT IN (SELECT stable_key FROM chat_messages)');
         await run('COMMIT');
         await syncPersonDirectory();
+        await invalidateAnalyticsCache();
         return { deletedCount: testSources.length, sources: testSources.map(s => s.relative_path) };
     } catch (error) {
         await run('ROLLBACK').catch(() => {});
@@ -1297,6 +1383,7 @@ async function deleteAllSources() {
         await run('DELETE FROM chat_favorites');
         await run('DELETE FROM chat_person_directory');
         await run('COMMIT');
+        await invalidateAnalyticsCache();
         return { success: true };
     } catch (error) {
         await run('ROLLBACK').catch(() => {});
@@ -1306,7 +1393,9 @@ async function deleteAllSources() {
 
 async function syncConversationTypes() {
     await ensureReady();
-    return reclassifyStoredConversations();
+    const updated = await reclassifyStoredConversations();
+    if (updated > 0) await invalidateAnalyticsCache();
+    return updated;
 }
 
 module.exports = {
@@ -1326,6 +1415,7 @@ module.exports = {
     getUnidentifiedMessages,
     getUserSettings,
     importTxtFile,
+    invalidateAnalyticsCache,
     isFtsAvailable,
     isExcludedHeaderLine,
     listConversations,

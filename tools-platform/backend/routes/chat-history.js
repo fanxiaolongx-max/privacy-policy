@@ -98,6 +98,10 @@ router.get('/stats/groups', asyncRoute(async (req, res) => {
     res.json(await repo.getGroupStats(req.query || {}));
 }));
 
+router.post('/stats/refresh', requireAdmin, asyncRoute(async (_req, res) => {
+    res.json({ success: true, ...(await repo.invalidateAnalyticsCache()) });
+}));
+
 router.get('/stats/groups/:id/analysis', asyncRoute(async (req, res) => {
     res.json(await repo.getGroupDetailedAnalysis(req.params.id, req.query || {}));
 }));

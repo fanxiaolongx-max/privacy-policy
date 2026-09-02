@@ -24,6 +24,11 @@
         sourceTotalPages: 1,
         parserRules: [],
         tableData: { directory: [], people: [], groups: [], groupMembers: [] },
+        analyticsPaging: {
+            directory: { offset: 0, total: 0, hasMore: true, loading: false, dataVersion: null, requestId: 0 },
+            people: { offset: 0, total: 0, hasMore: true, loading: false, dataVersion: null, requestId: 0 },
+            groups: { offset: 0, total: 0, hasMore: true, loading: false, dataVersion: null, requestId: 0 }
+        },
         tableViews: {
             directory: { sortKey: 'message_count', sortDirection: 'desc', filters: new Map() },
             people: { sortKey: 'message_count', sortDirection: 'desc', filters: new Map() },
@@ -31,6 +36,7 @@
             groupMembers: { sortKey: 'message_count', sortDirection: 'desc', filters: new Map() }
         },
         activeTableFilter: null,
+        activeView: 'chat',
         groupAnalysis: null,
         personaStyleSaving: false,
         theme: localStorage.getItem('chat_history_theme') || 'system'
@@ -64,11 +70,20 @@
         }
     };
     const personaStyleKeys = Object.keys(personaStyleSeries);
+    const ANALYTICS_PAGE_SIZE = 100;
+    const COLUMN_WIDTH_STORAGE_KEY = 'chat_history_analytics_column_widths_v1';
+    const ANALYTICS_COLUMN_WIDTHS = {
+        directory: [170, 150, 210, 120, 110, 130, 155, 110],
+        people: [190, 105, 105, 105, 120, 130, 155],
+        groups: [270, 105, 115, 115, 110, 205, 120, 155, 110],
+        groupMembers: [190, 210, 185, 105, 115, 115, 140, 155]
+    };
     let toastTimer;
     let conversationDebounce;
     let peopleDebounce;
     let sourceDebounce;
     let preloadRunning = false;
+    let statsLoadPromise = null;
 
     function showToast(message, error = false) {
         const toast = $('toast');
@@ -78,13 +93,93 @@
         toastTimer = setTimeout(() => { toast.className = 'toast'; }, 2800);
     }
 
-    function setLoading(visible, text = '正在处理…') {
+    function setLoading(visible, text = '正在处理…', progress = null) {
         $('loading').hidden = !visible;
         $('loadingText').textContent = text;
+        const progressHost = $('loadingProgress');
+        const progressBar = $('loadingProgressBar');
+        const progressLabel = $('loadingProgressLabel');
+        const hasProgress = visible && Number.isFinite(progress);
+        if (progressHost) progressHost.hidden = !hasProgress;
+        if (progressBar) progressBar.style.width = `${hasProgress ? Math.max(0, Math.min(100, progress)) : 0}%`;
+        if (progressLabel) progressLabel.textContent = hasProgress ? `${Math.round(progress)}%` : '';
+    }
+
+    function yieldToBrowser() {
+        return new Promise(resolve => requestAnimationFrame(() => resolve()));
+    }
+
+    function resetAnalyticsPaging() {
+        Object.values(state.analyticsPaging).forEach(page => {
+            page.offset = 0;
+            page.total = 0;
+            page.hasMore = true;
+            page.loading = false;
+            page.dataVersion = null;
+            page.requestId += 1;
+        });
+    }
+
+    function applyAnalyticsPage(tableName, data, append = false) {
+        const page = state.analyticsPaging[tableName];
+        const incomingVersion = data.analyticsCache?.dataVersion ?? null;
+        const versionChanged = append && page.dataVersion !== null && incomingVersion !== null && page.dataVersion !== incomingVersion;
+        const shouldAppend = append && !versionChanged;
+        const incoming = Array.isArray(data.items) ? data.items : [];
+        const rows = shouldAppend ? [...state.tableData[tableName], ...incoming] : incoming;
+        page.offset = rows.length;
+        page.total = Number(data.total ?? rows.length);
+        page.hasMore = page.offset < page.total && incoming.length > 0;
+        page.dataVersion = incomingVersion;
+        state.tableData[tableName] = rows;
+        return rows;
+    }
+
+    function setLazyTableLoading(tableName, loading) {
+        const wrap = $(`${tableName}TableWrap`);
+        wrap?.classList.toggle('lazy-loading', loading);
+    }
+
+    function setupAnalyticsLazyLoading() {
+        const loaders = {
+            directory: () => loadDirectory($('directoryQuery').value.trim(), { append: true }),
+            people: () => loadPeopleOnly({ append: true }),
+            groups: () => loadGroupsOnly({ append: true })
+        };
+        Object.entries(loaders).forEach(([tableName, loadMore]) => {
+            const wrap = $(`${tableName}TableWrap`);
+            if (!wrap || wrap.dataset.lazyLoadingReady === '1') return;
+            wrap.dataset.lazyLoadingReady = '1';
+            wrap.addEventListener('scroll', () => {
+                const remaining = wrap.scrollHeight - wrap.scrollTop - wrap.clientHeight;
+                if (remaining <= 160) void loadMore();
+            }, { passive: true });
+        });
+    }
+
+    function updateAnalyticsCacheStatus(responses) {
+        const status = $('analyticsCacheStatus');
+        if (!status) return;
+        const entries = responses.map(item => item?.analyticsCache).filter(Boolean);
+        if (!entries.length) {
+            status.hidden = true;
+            return;
+        }
+        const newest = entries.map(item => item.generatedAt).filter(Boolean).sort().at(-1);
+        status.textContent = entries.every(item => item.hit)
+            ? `⚡ 已读取分析缓存${newest ? ` · ${formatDateTime(newest)}` : ''}`
+            : `✓ 分析已更新并缓存${newest ? ` · ${formatDateTime(newest)}` : ''}`;
+        status.hidden = false;
     }
 
     function formatNumber(value) {
         return Number(value || 0).toLocaleString('zh-CN');
+    }
+
+    function formatDateTime(value) {
+        if (!value) return '';
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? String(value).replace('T', ' ').slice(0, 19) : date.toLocaleString('zh-CN');
     }
 
     function formatBytes(bytes) {
@@ -284,6 +379,101 @@
         updateTableHeadState(tableName);
     }
 
+    function readColumnWidths() {
+        try {
+            const value = JSON.parse(localStorage.getItem(COLUMN_WIDTH_STORAGE_KEY) || '{}');
+            return value && typeof value === 'object' ? value : {};
+        } catch (_) {
+            return {};
+        }
+    }
+
+    function saveColumnWidth(tableName, index, width) {
+        try {
+            const saved = readColumnWidths();
+            if (!saved[tableName]) saved[tableName] = {};
+            saved[tableName][index] = Math.round(width);
+            localStorage.setItem(COLUMN_WIDTH_STORAGE_KEY, JSON.stringify(saved));
+        } catch (_) {}
+    }
+
+    function applyResizableTableWidth(tableName) {
+        const head = document.querySelector(`[data-table-head="${tableName}"]`);
+        const table = head?.closest('table');
+        if (!head || !table) return;
+        const widths = [...head.children].map(th => Number.parseFloat(th.style.width) || th.getBoundingClientRect().width || 100);
+        table.style.width = `${Math.ceil(widths.reduce((sum, width) => sum + width, 0))}px`;
+        table.style.minWidth = '100%';
+        table.style.tableLayout = 'fixed';
+    }
+
+    function setupResizableTableColumns(head, tableName) {
+        if (!ANALYTICS_COLUMN_WIDTHS[tableName] || head.dataset.resizableReady === '1') return;
+        head.dataset.resizableReady = '1';
+        const saved = readColumnWidths()[tableName] || {};
+        [...head.children].forEach((th, index) => {
+            const defaultWidth = ANALYTICS_COLUMN_WIDTHS[tableName][index] || 110;
+            const initialWidth = Math.max(70, Math.min(520, Number(saved[index]) || defaultWidth));
+            th.style.width = `${initialWidth}px`;
+            th.style.minWidth = `${initialWidth}px`;
+            const handle = document.createElement('span');
+            handle.className = 'column-resize-handle';
+            handle.title = '拖动调整列宽，双击恢复默认宽度';
+            handle.tabIndex = 0;
+            handle.setAttribute('role', 'separator');
+            handle.setAttribute('aria-orientation', 'vertical');
+            handle.setAttribute('aria-label', `${th.textContent.trim() || '当前列'}：调整列宽`);
+            handle.addEventListener('pointerdown', event => {
+                if (event.button !== 0) return;
+                event.preventDefault();
+                event.stopPropagation();
+                const startX = event.clientX;
+                const startWidth = th.getBoundingClientRect().width;
+                document.body.classList.add('resizing-table-column');
+                const move = moveEvent => {
+                    const width = Math.max(70, Math.min(520, startWidth + moveEvent.clientX - startX));
+                    th.style.width = `${width}px`;
+                    th.style.minWidth = `${width}px`;
+                    applyResizableTableWidth(tableName);
+                };
+                const finish = () => {
+                    document.removeEventListener('pointermove', move);
+                    document.removeEventListener('pointerup', finish);
+                    document.removeEventListener('pointercancel', finish);
+                    document.body.classList.remove('resizing-table-column');
+                    saveColumnWidth(tableName, index, Number.parseFloat(th.style.width) || defaultWidth);
+                };
+                document.addEventListener('pointermove', move);
+                document.addEventListener('pointerup', finish, { once: true });
+                document.addEventListener('pointercancel', finish, { once: true });
+            });
+            handle.addEventListener('dblclick', event => {
+                event.preventDefault();
+                event.stopPropagation();
+                th.style.width = `${defaultWidth}px`;
+                th.style.minWidth = `${defaultWidth}px`;
+                saveColumnWidth(tableName, index, defaultWidth);
+                applyResizableTableWidth(tableName);
+                showToast('已恢复该列默认宽度');
+            });
+            handle.addEventListener('keydown', event => {
+                if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+                event.preventDefault();
+                event.stopPropagation();
+                const step = event.shiftKey ? 25 : 10;
+                const direction = event.key === 'ArrowRight' ? 1 : -1;
+                const current = Number.parseFloat(th.style.width) || defaultWidth;
+                const width = Math.max(70, Math.min(520, current + direction * step));
+                th.style.width = `${width}px`;
+                th.style.minWidth = `${width}px`;
+                saveColumnWidth(tableName, index, width);
+                applyResizableTableWidth(tableName);
+            });
+            th.append(handle);
+        });
+        applyResizableTableWidth(tableName);
+    }
+
     function closeTableFilterPopover() {
         $('tableFilterPopover').hidden = true;
         state.activeTableFilter = null;
@@ -360,6 +550,7 @@
                 actions.append(sort, filter);
                 th.append(label, actions);
             });
+            setupResizableTableColumns(head, tableName);
             updateTableHeadState(tableName);
         });
     }
@@ -422,9 +613,10 @@
 
     function switchView(name) {
         exitCardFullscreen();
+        state.activeView = name;
         document.querySelectorAll('.top-tab').forEach(button => button.classList.toggle('active', button.dataset.view === name));
         document.querySelectorAll('.view').forEach(view => view.classList.toggle('active', view.id === `view-${name}`));
-        if (name === 'analytics') loadStats();
+        if (name === 'analytics') void loadStats();
         if (name === 'manage' && state.user && state.user.role === 'admin') {
             loadSources();
             loadParserRules();
@@ -933,25 +1125,94 @@
     }
 
     async function loadStats() {
-        try {
-            const [overview, people, directory, groups] = await Promise.all([
-                API.get('/api/chat-history/stats/overview'),
-                API.get(`/api/chat-history/stats/people?${queryString({ q: $('peopleQuery').value.trim(), limit: 5000 })}`),
-                API.get(`/api/chat-history/directory?${queryString({ q: $('directoryQuery').value.trim(), limit: 5000 })}`),
-                API.get(`/api/chat-history/stats/groups?${queryString({ q: ($('groupQuery')?.value || '').trim(), type: $('groupTypeFilter')?.value || '', limit: 5000 })}`)
-            ]);
-            renderOverview(overview);
-            renderPeople(people.items || []);
-            renderDirectory(directory.items || []);
-            renderGroups(groups.items || []);
-        } catch (error) { showToast(error.message, true); }
+        if (statsLoadPromise) return statsLoadPromise;
+        statsLoadPromise = (async () => {
+            resetAnalyticsPaging();
+            setLoading(true, '正在读取会话概览…', 5);
+            try {
+                const overview = await API.get('/api/chat-history/stats/overview');
+                renderOverview(overview);
+                setLoading(true, '正在统计参与人员…', 30);
+                await yieldToBrowser();
+
+                const people = await API.get(`/api/chat-history/stats/people?${queryString({ q: $('peopleQuery').value.trim(), limit: ANALYTICS_PAGE_SIZE, offset: 0 })}`);
+                renderPeople(applyAnalyticsPage('people', people), people.total);
+                setLoading(true, '正在加载工号映射库…', 55);
+                await yieldToBrowser();
+
+                const directory = await API.get(`/api/chat-history/directory?${queryString({ q: $('directoryQuery').value.trim(), limit: ANALYTICS_PAGE_SIZE, offset: 0 })}`);
+                renderDirectory(applyAnalyticsPage('directory', directory), directory.total);
+                setLoading(true, '正在统计群组与讨论组…', 75);
+                await yieldToBrowser();
+
+                const groups = await API.get(`/api/chat-history/stats/groups?${queryString({ q: ($('groupQuery')?.value || '').trim(), type: $('groupTypeFilter')?.value || '', limit: ANALYTICS_PAGE_SIZE, offset: 0 })}`);
+                renderGroups(applyAnalyticsPage('groups', groups), groups.total);
+                updateAnalyticsCacheStatus([overview, people, groups]);
+                setLoading(true, '正在完成页面渲染…', 100);
+                await yieldToBrowser();
+            } catch (error) {
+                showToast(error.message, true);
+            } finally {
+                setLoading(false);
+                statsLoadPromise = null;
+            }
+        })();
+        return statsLoadPromise;
     }
 
-    async function loadDirectory(query = '') {
+    async function refreshAnalytics() {
+        setLoading(true, '正在刷新分析缓存…', 5);
         try {
-            const data = await API.get(`/api/chat-history/directory?${queryString({ q: query, limit: 5000 })}`);
-            renderDirectory(data.items || []);
+            await API.post('/api/chat-history/stats/refresh', {});
+            await loadStats();
+            showToast('数据洞察已重新分析并缓存');
+        } catch (error) {
+            showToast(error.message, true);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    async function loadDirectory(query = '', options = {}) {
+        const append = options.append === true;
+        const page = state.analyticsPaging.directory;
+        if (append && (page.loading || !page.hasMore)) return;
+        const requestId = append ? page.requestId : ++page.requestId;
+        page.loading = true;
+        setLazyTableLoading('directory', append);
+        try {
+            const offset = append ? page.offset : 0;
+            const data = await API.get(`/api/chat-history/directory?${queryString({ q: query, limit: ANALYTICS_PAGE_SIZE, offset })}`);
+            if (requestId !== page.requestId) return;
+            renderDirectory(applyAnalyticsPage('directory', data, append), data.total);
         } catch (error) { showToast(error.message, true); }
+        finally {
+            if (requestId === page.requestId) {
+                page.loading = false;
+                setLazyTableLoading('directory', false);
+            }
+        }
+    }
+
+    async function loadPeopleOnly(options = {}) {
+        const append = options.append === true;
+        const page = state.analyticsPaging.people;
+        if (append && (page.loading || !page.hasMore)) return;
+        const requestId = append ? page.requestId : ++page.requestId;
+        page.loading = true;
+        setLazyTableLoading('people', append);
+        try {
+            const offset = append ? page.offset : 0;
+            const data = await API.get(`/api/chat-history/stats/people?${queryString({ q: $('peopleQuery').value.trim(), limit: ANALYTICS_PAGE_SIZE, offset })}`);
+            if (requestId !== page.requestId) return;
+            renderPeople(applyAnalyticsPage('people', data, append), data.total);
+        } catch (error) { showToast(error.message, true); }
+        finally {
+            if (requestId === page.requestId) {
+                page.loading = false;
+                setLazyTableLoading('people', false);
+            }
+        }
     }
 
     function renderOverview(data) {
@@ -1079,8 +1340,13 @@
         }
     }
 
-    function renderDirectory(items) {
+    function renderDirectory(items, total = items.length) {
         state.tableData.directory = items;
+        if ($('directoryMeta')) {
+            $('directoryMeta').textContent = Number(total) > items.length
+                ? `（已加载 ${formatNumber(items.length)} / ${formatNumber(total)} 人，下滑继续加载）`
+                : `（共 ${formatNumber(total)} 人，导入时自动学习并持久化存储）`;
+        }
         renderTable('directory');
     }
 
@@ -1161,8 +1427,13 @@
         return `${(value / 60).toFixed(1)} 小时`;
     }
 
-    function renderPeople(items) {
+    function renderPeople(items, total = items.length) {
         state.tableData.people = items;
+        if ($('peopleStatsMeta')) {
+            $('peopleStatsMeta').textContent = Number(total) > items.length
+                ? `（已加载 ${formatNumber(items.length)} / ${formatNumber(total)} 人，下滑继续加载）`
+                : `（共 ${formatNumber(total)} 位发言人员）`;
+        }
         renderTable('people');
     }
 
@@ -1193,8 +1464,14 @@
         });
     }
 
-    function renderGroups(items) {
+    function renderGroups(items, total = items.length) {
         state.tableData.groups = items;
+        state.analyticsPaging.groups.total = Number(total);
+        if ($('groupStatsMeta')) {
+            $('groupStatsMeta').textContent = Number(total) > items.length
+                ? `（已加载 ${formatNumber(items.length)} / ${formatNumber(total)} 个，下滑继续加载）`
+                : `（共 ${formatNumber(total)} 个群聊与讨论组）`;
+        }
         renderTable('groups');
     }
 
@@ -1202,9 +1479,6 @@
         const body = $('groupsTable');
         if (!body) return;
         body.replaceChildren();
-        if ($('groupStatsMeta')) {
-            $('groupStatsMeta').textContent = `（共 ${items.length} 个群聊与讨论组）`;
-        }
         if (!items.length) {
             const row = document.createElement('tr');
             row.innerHTML = '<td colspan="9" style="text-align:center;color:var(--muted);padding:18px;">暂无符合当前筛选条件的群组或讨论组</td>';
@@ -1593,7 +1867,7 @@
             $('chatEmpty').hidden = false;
             $('chatWorkspace').hidden = true;
             await Promise.all([loadSources(1), loadConversations(true)]);
-            if (state.activeTab === 'analytics') loadStats();
+            if (state.activeView === 'analytics') void loadStats();
         } catch (error) {
             showToast(error.message, true);
         } finally {
@@ -1780,6 +2054,7 @@
             btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
         });
         setupInteractiveTableHeads();
+        setupAnalyticsLazyLoading();
         setLoading(true, '正在连接聊天记录服务…');
         try {
             const [user, settings] = await Promise.all([API.get('/api/auth/me'), API.get('/api/chat-history/settings')]);
@@ -1867,7 +2142,7 @@
     $('searchPrev').addEventListener('click', () => runGlobalSearch(state.searchPage - 1));
     $('searchNext').addEventListener('click', () => runGlobalSearch(state.searchPage + 1));
     $('exportSearch').addEventListener('click', exportSearch);
-    $('refreshStats').addEventListener('click', loadStats);
+    $('refreshStats').addEventListener('click', () => void refreshAnalytics());
     $('closeTableFilter')?.addEventListener('click', closeTableFilterPopover);
     $('cancelTableFilter')?.addEventListener('click', closeTableFilterPopover);
     $('tableFilterSearch')?.addEventListener('input', event => renderTableFilterOptions(event.target.value));
@@ -1890,13 +2165,27 @@
         closeTableFilterPopover();
         renderTable(active.tableName);
     });
-    $('peopleQuery').addEventListener('input', () => { clearTimeout(peopleDebounce); peopleDebounce = setTimeout(loadStats, 250); });
+    $('peopleQuery').addEventListener('input', () => { clearTimeout(peopleDebounce); peopleDebounce = setTimeout(loadPeopleOnly, 250); });
     let groupDebounce;
-    async function loadGroupsOnly() {
+    async function loadGroupsOnly(options = {}) {
+        const append = options.append === true;
+        const page = state.analyticsPaging.groups;
+        if (append && (page.loading || !page.hasMore)) return;
+        const requestId = append ? page.requestId : ++page.requestId;
+        page.loading = true;
+        setLazyTableLoading('groups', append);
         try {
-            const data = await API.get(`/api/chat-history/stats/groups?${queryString({ q: ($('groupQuery')?.value || '').trim(), type: $('groupTypeFilter')?.value || '', limit: 5000 })}`);
-            renderGroups(data.items || []);
+            const offset = append ? page.offset : 0;
+            const data = await API.get(`/api/chat-history/stats/groups?${queryString({ q: ($('groupQuery')?.value || '').trim(), type: $('groupTypeFilter')?.value || '', limit: ANALYTICS_PAGE_SIZE, offset })}`);
+            if (requestId !== page.requestId) return;
+            renderGroups(applyAnalyticsPage('groups', data, append), data.total);
         } catch (error) { showToast(error.message, true); }
+        finally {
+            if (requestId === page.requestId) {
+                page.loading = false;
+                setLazyTableLoading('groups', false);
+            }
+        }
     }
     $('groupQuery')?.addEventListener('input', () => {
         clearTimeout(groupDebounce);

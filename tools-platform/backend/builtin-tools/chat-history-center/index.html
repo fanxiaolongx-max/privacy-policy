@@ -14,11 +14,16 @@
         } catch(e) {}
     })();
     </script>
-    <link rel="stylesheet" href="./chat-viewer.css?v=20260902-19">
+    <link rel="stylesheet" href="./chat-viewer.css?v=20260902-22">
 </head>
 <body>
 <div id="toast" class="toast" role="status"></div>
-<div id="loading" class="loading" hidden><div class="spinner"></div><strong id="loadingText">正在处理…</strong></div>
+<div id="loading" class="loading" hidden>
+    <div class="loading-card">
+        <div class="loading-head"><div class="spinner"></div><strong id="loadingText">正在处理…</strong><span id="loadingProgressLabel"></span></div>
+        <div id="loadingProgress" class="loading-progress" hidden><i id="loadingProgressBar"></i></div>
+    </div>
+</div>
 
 <header class="app-header">
     <div class="brand"><span class="brand-icon">💬</span><div><h1>聊天记录中心</h1><small id="tenantHint">租户共享数据 · 个人状态独立</small></div></div>
@@ -136,7 +141,10 @@
     </section>
 
     <section id="view-analytics" class="view analytics-view">
-        <div class="page-title"><div><h2>数据洞察</h2><p>会话规模、识别质量、时段分布、工号映射库与参与者统计。</p></div><button id="refreshStats" class="btn">刷新统计</button></div>
+        <div class="page-title">
+            <div><h2>数据洞察</h2><p>会话规模、识别质量、时段分布、工号映射库与参与者统计。</p></div>
+            <div class="analytics-title-actions"><span id="analyticsCacheStatus" class="analytics-cache-status" hidden></span><button id="refreshStats" class="btn admin-only" hidden>重新分析</button></div>
+        </div>
         <div id="kpiGrid" class="kpi-grid"></div>
         <div class="analytics-grid">
             <article class="card"><div class="card-head"><strong>月度消息趋势</strong></div><div id="monthChart" class="bar-chart"></div></article>
@@ -153,7 +161,7 @@
                     <button class="btn btn-small card-fullscreen-btn" type="button" data-card="directoryCard" title="全屏查看表格">⛶ 全屏</button>
                 </div>
             </div>
-            <div class="table-wrap">
+            <div id="directoryTableWrap" class="table-wrap">
                 <table>
                     <thead>
                         <tr data-table-head="directory">
@@ -195,7 +203,7 @@
                     <li><strong>估算响应：</strong>在同一会话中，上一位成员发言后 <b>12 小时内</b>该人员首次发言的时间差均值（单位：<b>分钟 / 小时</b>）。群聊因多人交替讨论，该值为沟通活跃节奏参考，非绝对一对一专属回复时延。</li>
                 </ul>
             </div>
-            <div class="table-wrap">
+            <div id="peopleTableWrap" class="table-wrap">
                 <table>
                     <thead>
                         <tr data-table-head="people">
@@ -242,7 +250,7 @@
                     <li><strong>快捷跳转：</strong>点击操作栏的“<b>查看聊天 ↗</b>”，可即时切换至会话视图并定位至该群展开完整记录。</li>
                 </ul>
             </div>
-            <div class="table-wrap">
+            <div id="groupsTableWrap" class="table-wrap">
                 <table>
                     <thead>
                         <tr data-table-head="groups">
@@ -515,6 +523,6 @@
 <script src="/js/shared/api.js"></script>
 <script src="/js/shared/xlsx.full.min.js"></script>
 <script src="./chat-test-data.js?v=20260901-4"></script>
-<script src="./chat-viewer.js?v=20260902-19"></script>
+<script src="./chat-viewer.js?v=20260902-22"></script>
 </body>
 </html>

@@ -108,10 +108,23 @@ test('chat history imports, searches, preserves personal state and isolates tena
     assert.equal(overview.summary.unidentified_messages, 0);
     assert.equal(overview.summary.recognition_rate, '100.0%');
 
+    await repo.invalidateAnalyticsCache();
+    const uncachedOverview = await repo.getOverviewStats('alice');
+    const cachedOverview = await repo.getOverviewStats('alice');
+    assert.equal(uncachedOverview.analyticsCache.hit, false);
+    assert.equal(cachedOverview.analyticsCache.hit, true);
+    assert.equal(cachedOverview.analyticsCache.dataVersion, uncachedOverview.analyticsCache.dataVersion);
+
     const directory = await repo.listPersonDirectory();
     assert.equal(directory.total, 2);
     assert.deepEqual(directory.items.map(d => d.sender_id).sort(), ['my001', 'zhang001']);
     assert.equal(directory.items.find(d => d.sender_id === 'zhang001').sender_name, '张三');
+    const firstDirectoryPage = await repo.listPersonDirectory({ limit: 1, offset: 0 });
+    const secondDirectoryPage = await repo.listPersonDirectory({ limit: 1, offset: 1 });
+    assert.equal(firstDirectoryPage.total, 2);
+    assert.equal(firstDirectoryPage.items.length, 1);
+    assert.equal(secondDirectoryPage.items.length, 1);
+    assert.notEqual(firstDirectoryPage.items[0].sender_id, secondDirectoryPage.items[0].sender_id);
 
     await repo.updatePersonDirectory('zhang001', { senderName: '张三丰', aliasNames: '三丰' });
     const updatedDir = await repo.listPersonDirectory({ q: '三丰' });
@@ -134,12 +147,16 @@ test('chat history imports, searches, preserves personal state and isolates tena
     assert.equal(unidentStats.items[0].issue_type, '缺失工号（仅有昵称）');
 
     const overviewAfterUnident = await repo.getOverviewStats('alice');
+    assert.equal(overviewAfterUnident.analyticsCache.hit, false, '导入新数据后应使旧分析缓存失效');
+    assert.ok(overviewAfterUnident.analyticsCache.dataVersion > cachedOverview.analyticsCache.dataVersion);
     assert.equal(overviewAfterUnident.summary.unidentified_messages, 1);
     assert.equal(overviewAfterUnident.summary.identified_messages, 5);
 
     // Test group conversation stats
     const groupStats = await repo.getGroupStats();
     assert.equal(groupStats.items.length >= 1, true);
+    assert.equal(groupStats.total >= groupStats.items.length, true);
+    assert.equal(groupStats.offset, 0);
     const alertGroup = groupStats.items.find(g => g.display_name === '报警通知');
     assert.ok(alertGroup);
     assert.equal(alertGroup.conversation_type, 'group');
@@ -147,6 +164,8 @@ test('chat history imports, searches, preserves personal state and isolates tena
     assert.equal(alertGroup.sender_count, 2);
     assert.equal(alertGroup.top_speaker_name, '王工');
     assert.equal(alertGroup.top_speaker_count, 1);
+    assert.equal((await repo.getGroupStats({ q: '报警' })).items.length, 1);
+    assert.equal((await repo.getGroupStats({ type: 'discussion' })).items.length, 0);
 
     // Test group detailed operational analysis
     const groupAnalysis = await repo.getGroupDetailedAnalysis(alertGroup.conversation_id);
@@ -217,6 +236,12 @@ test('chat history imports, searches, preserves personal state and isolates tena
 
     const people = await repo.getPeopleStats('alice');
     assert.deepEqual(people.items.map(item => item.sender_id).filter(Boolean).sort(), ['my001', 'wang001', 'zhang001']);
+    const firstPeoplePage = await repo.getPeopleStats('alice', { limit: 1, offset: 0 });
+    const secondPeoplePage = await repo.getPeopleStats('alice', { limit: 1, offset: 1 });
+    assert.equal(firstPeoplePage.total, 4);
+    assert.equal(firstPeoplePage.items.length, 1);
+    assert.equal(secondPeoplePage.items.length, 1);
+    assert.notEqual(firstPeoplePage.items[0].sender_id, secondPeoplePage.items[0].sender_id);
 
     await runWithTenant('tenant-b', async () => {
         assert.equal((await repo.listConversations('alice')).total, 0);
@@ -262,6 +287,26 @@ test('chat history imports, searches, preserves personal state and isolates tena
             repo.createParserExclusionRule({ name: '坏正则', matchType: 'regex', pattern: '[', enabled: true }),
             /正则表达式无效/
         );
+    });
+
+    await runWithTenant('legacy-chat-schema', async () => {
+        const connection = tenantPool.getConnection(repo.DB_FILENAME);
+        await new Promise((resolve, reject) => connection.run(`CREATE TABLE chat_sources (
+            id TEXT PRIMARY KEY,
+            relative_path TEXT NOT NULL UNIQUE,
+            source_hash TEXT NOT NULL DEFAULT '',
+            file_size INTEGER NOT NULL DEFAULT 0,
+            modified_at INTEGER NOT NULL DEFAULT 0,
+            imported_at TEXT NOT NULL,
+            message_count INTEGER NOT NULL DEFAULT 0
+        )`, error => error ? reject(error) : resolve()));
+        await repo.ensureReady();
+        const columns = await new Promise((resolve, reject) => connection.all(
+            'PRAGMA table_info(chat_sources)',
+            (error, rows) => error ? reject(error) : resolve(rows)
+        ));
+        assert.equal(columns.some(column => column.name === 'parser_signature'), true);
+        assert.equal(columns.some(column => column.name === 'data_kind'), true);
     });
 
     assert.equal((await repo.listConversations('alice')).total, 2);
