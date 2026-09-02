@@ -102,6 +102,26 @@ router.get('/directory', asyncRoute(async (req, res) => {
     res.json(await repo.listPersonDirectory(req.query || {}));
 }));
 
+router.get('/parser-rules', asyncRoute(async (_req, res) => {
+    res.json({ items: await repo.listParserExclusionRules() });
+}));
+
+router.post('/parser-rules', requireAdmin, asyncRoute(async (req, res) => {
+    res.status(201).json(await repo.createParserExclusionRule(req.body || {}));
+}));
+
+router.put('/parser-rules/:ruleId', requireAdmin, asyncRoute(async (req, res) => {
+    const item = await repo.updateParserExclusionRule(req.params.ruleId, req.body || {});
+    if (!item) return res.status(404).json({ error: '解析排除规则不存在' });
+    res.json(item);
+}));
+
+router.delete('/parser-rules/:ruleId', requireAdmin, asyncRoute(async (req, res) => {
+    const item = await repo.deleteParserExclusionRule(req.params.ruleId);
+    if (!item) return res.status(404).json({ error: '解析排除规则不存在' });
+    res.json({ success: true, ...item });
+}));
+
 router.put('/directory/:senderId', requireAdmin, asyncRoute(async (req, res) => {
     res.json(await repo.updatePersonDirectory(req.params.senderId, req.body || {}));
 }));

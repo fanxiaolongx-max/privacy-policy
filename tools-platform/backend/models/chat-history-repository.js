@@ -5,8 +5,15 @@ const readline = require('readline');
 const tenantPool = require('./tenant-sqlite-pool');
 
 const DB_FILENAME = 'chat-history.db';
+const PARSER_VERSION = 2;
 const HEADER_WITH_ID_RE = /^(.+?)[([（]([^()（）[\]]+)[)\]）]\s+(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})$/;
 const HEADER_WITHOUT_ID_RE = /^(.+?)\s+(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})$/;
+const DEFAULT_PARSER_EXCLUSION_RULES = [
+    { id: 1, name: '网管脚本 +++ 标记', match_type: 'regex', pattern: '^[\\s\\u200B-\\u200D\\uFEFF]*\\+{3}' },
+    { id: 2, name: '网管脚本 MEID 注释', match_type: 'contains', pattern: '/*MEID:' },
+    { id: 3, name: '网管脚本 MENAME 字段', match_type: 'contains', pattern: 'MENAME:' },
+    { id: 4, name: '工单关闭日期赋值行', match_type: 'regex', pattern: '^\\s*ticket\\s+close\\s+due\\s+date\\s*=' }
+];
 const readyByPath = new Map();
 const ftsByPath = new Map();
 const importQueues = new Map();
@@ -92,6 +99,13 @@ function placeholders(count) {
     return Array.from({ length: count }, () => '?').join(',');
 }
 
+async function ensureColumn(tableName, columnName, definition) {
+    const columns = await all(`PRAGMA table_info(${tableName})`);
+    if (!columns.some(column => column.name === columnName)) {
+        await run(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`);
+    }
+}
+
 async function ensureReady() {
     const filePath = dbPath();
     if (!readyByPath.has(filePath)) {
@@ -108,6 +122,7 @@ async function ensureReady() {
                 imported_at TEXT NOT NULL,
                 message_count INTEGER NOT NULL DEFAULT 0
             )`);
+            await ensureColumn('chat_sources', 'parser_signature', "TEXT NOT NULL DEFAULT ''");
             await run(`CREATE TABLE IF NOT EXISTS chat_conversations (
                 id TEXT PRIMARY KEY,
                 source_id TEXT NOT NULL UNIQUE,
@@ -163,6 +178,23 @@ async function ensureReady() {
                 last_seen_at TEXT,
                 updated_at TEXT NOT NULL
             )`);
+            await run(`CREATE TABLE IF NOT EXISTS chat_parser_exclusion_rules (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                match_type TEXT NOT NULL CHECK(match_type IN ('contains','prefix','exact','regex')),
+                pattern TEXT NOT NULL,
+                enabled INTEGER NOT NULL DEFAULT 1 CHECK(enabled IN (0,1)),
+                is_default INTEGER NOT NULL DEFAULT 0 CHECK(is_default IN (0,1)),
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                deleted_at TEXT
+            )`);
+            const seedTime = new Date().toISOString();
+            for (const rule of DEFAULT_PARSER_EXCLUSION_RULES) {
+                await run(`INSERT OR IGNORE INTO chat_parser_exclusion_rules(
+                    id,name,match_type,pattern,enabled,is_default,created_at,updated_at
+                ) VALUES(?,?,?,?,1,1,?,?)`, [rule.id, rule.name, rule.match_type, rule.pattern, seedTime, seedTime]);
+            }
             await run('CREATE INDEX IF NOT EXISTS idx_chat_messages_conversation_time ON chat_messages(conversation_id, message_time, id)');
             await run('CREATE INDEX IF NOT EXISTS idx_chat_messages_sender ON chat_messages(sender_id, sender_name)');
             await run('CREATE INDEX IF NOT EXISTS idx_chat_messages_time ON chat_messages(message_time, id)');
@@ -217,9 +249,33 @@ function withImportQueue(task) {
     });
 }
 
-function parseHeader(line) {
+function ruleMatchesLine(line, rule) {
+    const text = String(line || '');
+    const pattern = String(rule && rule.pattern || '');
+    if (!pattern) return false;
+    const normalizedText = text.toLocaleLowerCase();
+    const normalizedPattern = pattern.toLocaleLowerCase();
+    if (rule.match_type === 'contains') return normalizedText.includes(normalizedPattern);
+    if (rule.match_type === 'prefix') return normalizedText.trimStart().startsWith(normalizedPattern);
+    if (rule.match_type === 'exact') return normalizedText.trim() === normalizedPattern.trim();
+    if (rule.match_type === 'regex') {
+        try {
+            return new RegExp(pattern, 'iu').test(text.slice(0, 4000));
+        } catch (_error) {
+            return false;
+        }
+    }
+    return false;
+}
+
+function isExcludedHeaderLine(line, rules = DEFAULT_PARSER_EXCLUSION_RULES) {
+    return (Array.isArray(rules) ? rules : []).some(rule => rule.enabled !== 0 && ruleMatchesLine(line, rule));
+}
+
+function parseHeader(line, exclusionRules = DEFAULT_PARSER_EXCLUSION_RULES) {
     const text = String(line || '').trim();
     if (!text) return null;
+    if (isExcludedHeaderLine(text, exclusionRules)) return null;
     const withIdMatch = HEADER_WITH_ID_RE.exec(text);
     if (withIdMatch) {
         return {
@@ -241,6 +297,75 @@ function parseHeader(line) {
     return null;
 }
 
+function normalizeParserRule(payload = {}) {
+    const name = cleanInline(payload.name).slice(0, 120);
+    const matchType = String(payload.matchType || payload.match_type || '').trim();
+    const pattern = String(payload.pattern || '').trim().slice(0, 500);
+    if (!name) throw new Error('规则名称不能为空');
+    if (!['contains', 'prefix', 'exact', 'regex'].includes(matchType)) throw new Error('匹配方式无效');
+    if (!pattern) throw new Error('匹配内容不能为空');
+    if (matchType === 'regex') {
+        try {
+            new RegExp(pattern, 'iu');
+        } catch (_error) {
+            throw new Error('正则表达式无效');
+        }
+    }
+    return { name, matchType, pattern, enabled: payload.enabled !== false && payload.enabled !== 0 };
+}
+
+async function listParserExclusionRules(options = {}) {
+    await ensureReady();
+    const includeDisabled = options.includeDisabled !== false;
+    const enabledClause = includeDisabled ? '' : 'AND enabled=1';
+    return all(`SELECT id,name,match_type,pattern,enabled,is_default,created_at,updated_at
+        FROM chat_parser_exclusion_rules WHERE deleted_at IS NULL ${enabledClause}
+        ORDER BY is_default DESC,id ASC`);
+}
+
+async function createParserExclusionRule(payload = {}) {
+    await ensureReady();
+    const rule = normalizeParserRule(payload);
+    const now = new Date().toISOString();
+    const result = await run(`INSERT INTO chat_parser_exclusion_rules(
+        name,match_type,pattern,enabled,is_default,created_at,updated_at
+    ) VALUES(?,?,?,?,0,?,?)`, [rule.name, rule.matchType, rule.pattern, rule.enabled ? 1 : 0, now, now]);
+    return get(`SELECT id,name,match_type,pattern,enabled,is_default,created_at,updated_at
+        FROM chat_parser_exclusion_rules WHERE id=?`, [result.lastID]);
+}
+
+async function updateParserExclusionRule(ruleId, payload = {}) {
+    await ensureReady();
+    const existing = await get('SELECT * FROM chat_parser_exclusion_rules WHERE id=? AND deleted_at IS NULL', [ruleId]);
+    if (!existing) return null;
+    const rule = normalizeParserRule({
+        name: payload.name !== undefined ? payload.name : existing.name,
+        matchType: payload.matchType !== undefined ? payload.matchType : existing.match_type,
+        pattern: payload.pattern !== undefined ? payload.pattern : existing.pattern,
+        enabled: payload.enabled !== undefined ? payload.enabled : Boolean(existing.enabled)
+    });
+    const now = new Date().toISOString();
+    await run(`UPDATE chat_parser_exclusion_rules SET name=?,match_type=?,pattern=?,enabled=?,updated_at=?
+        WHERE id=?`, [rule.name, rule.matchType, rule.pattern, rule.enabled ? 1 : 0, now, ruleId]);
+    return get(`SELECT id,name,match_type,pattern,enabled,is_default,created_at,updated_at
+        FROM chat_parser_exclusion_rules WHERE id=?`, [ruleId]);
+}
+
+async function deleteParserExclusionRule(ruleId) {
+    await ensureReady();
+    const now = new Date().toISOString();
+    const result = await run(`UPDATE chat_parser_exclusion_rules SET enabled=0,deleted_at=?,updated_at=?
+        WHERE id=? AND deleted_at IS NULL`, [now, now, ruleId]);
+    return result.changes ? { id: Number(ruleId), deletedAt: now } : null;
+}
+
+function parserSignature(rules) {
+    const activeRules = (rules || [])
+        .filter(rule => rule.enabled !== 0)
+        .map(rule => [rule.match_type, rule.pattern]);
+    return digest(JSON.stringify({ version: PARSER_VERSION, rules: activeRules }));
+}
+
 async function insertMessageBatch(rows) {
     if (!rows.length) return;
     const values = rows.map(() => '(?,?,?,?,?,?,?)').join(',');
@@ -260,6 +385,8 @@ async function insertMessageBatch(rows) {
 
 async function importTxtFile(input) {
     await ensureReady();
+    const exclusionRules = await listParserExclusionRules({ includeDisabled: false });
+    const currentParserSignature = parserSignature(exclusionRules);
     const relativePath = normalizeRelativePath(input.relativePath || input.originalName);
     const stat = fs.statSync(input.filePath);
     const sourceHash = await new Promise((resolve, reject) => {
@@ -269,8 +396,8 @@ async function importTxtFile(input) {
         stream.on('error', reject);
         stream.on('end', () => resolve(hash.digest('hex')));
     });
-    const existing = await get('SELECT id,source_hash FROM chat_sources WHERE relative_path=?', [relativePath]);
-    if (existing && existing.source_hash === sourceHash) {
+    const existing = await get('SELECT id,source_hash,parser_signature FROM chat_sources WHERE relative_path=?', [relativePath]);
+    if (existing && existing.source_hash === sourceHash && existing.parser_signature === currentParserSignature) {
         const conversation = await get('SELECT id,message_count FROM chat_conversations WHERE source_id=?', [existing.id]);
         return { relativePath, skipped: true, conversationId: conversation && conversation.id, messageCount: Number(conversation && conversation.message_count || 0) };
     }
@@ -288,19 +415,21 @@ async function importTxtFile(input) {
 
         await run('BEGIN IMMEDIATE');
         try {
-            await run(`INSERT INTO chat_sources(id,relative_path,source_hash,file_size,modified_at,imported_at,message_count)
-                VALUES(?,?,?,?,?,?,0)
+            await run(`INSERT INTO chat_sources(id,relative_path,source_hash,file_size,modified_at,imported_at,message_count,parser_signature)
+                VALUES(?,?,?,?,?,?,0,?)
                 ON CONFLICT(relative_path) DO UPDATE SET
                     source_hash=excluded.source_hash,
                     file_size=excluded.file_size,
                     modified_at=excluded.modified_at,
-                    imported_at=excluded.imported_at`, [
+                    imported_at=excluded.imported_at,
+                    parser_signature=excluded.parser_signature`, [
                 sourceId,
                 relativePath,
                 sourceHash,
                 stat.size,
                 Number(input.modifiedAt || stat.mtimeMs || 0),
-                now
+                now,
+                currentParserSignature
             ]);
             await run(`INSERT INTO chat_conversations(
                 id,source_id,display_name,conversation_type,updated_at
@@ -343,7 +472,7 @@ async function importTxtFile(input) {
                     line = line.replace(/^\uFEFF/, '');
                     firstLine = false;
                 }
-                const header = parseHeader(line);
+                const header = parseHeader(line, exclusionRules);
                 if (header) {
                     await flushCurrent();
                     current = { ...header, lines: [] };
@@ -441,7 +570,7 @@ async function syncPersonDirectory() {
 async function listPersonDirectory(options = {}) {
     await ensureReady();
     const q = String(options.q || '').trim();
-    const limit = parsePositiveInt(options.limit, 200, 500);
+    const limit = parsePositiveInt(options.limit, 200, 5000);
     const where = q ? 'WHERE sender_id LIKE ? OR sender_name LIKE ? OR alias_names LIKE ?' : '';
     const params = q ? [`%${q}%`, `%${q}%`, `%${q}%`] : [];
     const items = await all(`SELECT sender_id, sender_name, alias_names, message_count,
@@ -729,7 +858,7 @@ async function getOverviewStats(userId) {
 async function getPeopleStats(userId, options = {}) {
     await ensureReady();
     const settings = await getUserSettings(userId);
-    const limit = parsePositiveInt(options.limit, 100, 300);
+    const limit = parsePositiveInt(options.limit, 100, 5000);
     const q = String(options.q || '').trim();
     const where = q ? 'WHERE m.sender_name LIKE ? OR m.sender_id LIKE ?' : '';
     const params = q ? [`%${q}%`, `%${q}%`] : [];
@@ -870,6 +999,8 @@ async function syncConversationTypes() {
 module.exports = {
     DB_FILENAME,
     classifyConversation,
+    createParserExclusionRule,
+    deleteParserExclusionRule,
     deleteAllSources,
     deleteSource,
     deleteTestDataSources,
@@ -881,8 +1012,10 @@ module.exports = {
     getUserSettings,
     importTxtFile,
     isFtsAvailable,
+    isExcludedHeaderLine,
     listConversations,
     listMessages,
+    listParserExclusionRules,
     listPersonDirectory,
     listSources,
     markRead,
@@ -894,5 +1027,6 @@ module.exports = {
     setPinned,
     syncConversationTypes,
     syncPersonDirectory,
+    updateParserExclusionRule,
     updatePersonDirectory
 };

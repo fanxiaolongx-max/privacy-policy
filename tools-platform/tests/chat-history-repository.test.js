@@ -24,6 +24,9 @@ test('chat parser recognizes exported headers and nested conversation categories
         senderId: 'zhang001',
         messageTime: '2026-08-01 09:10:11'
     });
+    assert.equal(repo.parseHeader('+++ USCDB/*MEID:81 MENAME:AbuUSCDBUPCF01*/ 2026-01-05 14:43:14'), null);
+    assert.equal(repo.parseHeader('ticket close due date = 2026-08-01 17:03:33'), null);
+    assert.equal(repo.isExcludedHeaderLine('\u200B+++ UPCF/*MEID:232*/ 2025-12-25 03:02:59'), true);
     assert.equal(repo.parseHeader('这是正文'), null);
     assert.equal(repo.classifyConversation('聊天记录/单聊/华北/张三.txt'), 'single');
     assert.equal(repo.classifyConversation('HistoryRecord（文字）/联系人/高驰(g00365464).txt'), 'single');
@@ -167,5 +170,40 @@ test('chat history imports, searches, preserves personal state and isolates tena
         assert.equal(fs.existsSync(path.join(getDataDir(), 'chat-history.db')), true);
     });
 
+    await runWithTenant('parser-rules', async () => {
+        const scriptPath = writeChat('script-output.txt', [
+            '薛丹(x00518959) 2026-01-05 20:43:00',
+            'LST PODHEALCTRL:;',
+            '+++ USCDB/*MEID:81 MENAME:AbuUSCDBUPCF01*/ 2026-01-05 14:43:14',
+            'O&M #919',
+            'RETCODE = 0 Operation succeeded'
+        ].join('\n'));
+        const first = await repo.importTxtFile({ filePath: scriptPath, relativePath: '聊天记录/单聊/薛丹.txt' });
+        assert.equal(first.messageCount, 1);
+        const scriptMessages = await repo.listMessages(first.conversationId, 'alice');
+        assert.match(scriptMessages.items[0].content, /\+\+\+ USCDB/);
+        assert.match(scriptMessages.items[0].content, /RETCODE = 0/);
+
+        const defaults = await repo.listParserExclusionRules();
+        assert.equal(defaults.length >= 4, true);
+        const custom = await repo.createParserExclusionRule({
+            name: '自定义脚本标记',
+            matchType: 'contains',
+            pattern: 'CUSTOM-SCRIPT',
+            enabled: true
+        });
+        assert.equal(custom.pattern, 'CUSTOM-SCRIPT');
+        const reparsed = await repo.importTxtFile({ filePath: scriptPath, relativePath: '聊天记录/单聊/薛丹.txt' });
+        assert.equal(reparsed.skipped, false);
+        const disabled = await repo.updateParserExclusionRule(custom.id, { enabled: false });
+        assert.equal(disabled.enabled, 0);
+        assert.equal((await repo.deleteParserExclusionRule(custom.id)).id, custom.id);
+        await assert.rejects(
+            repo.createParserExclusionRule({ name: '坏正则', matchType: 'regex', pattern: '[', enabled: true }),
+            /正则表达式无效/
+        );
+    });
+
     assert.equal((await repo.listConversations('alice')).total, 2);
+    assert.equal((await repo.listParserExclusionRules()).some(rule => rule.name === '自定义脚本标记'), false);
 });

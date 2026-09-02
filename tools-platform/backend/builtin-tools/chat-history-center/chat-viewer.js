@@ -21,7 +21,14 @@
         conversationCache: new Map(),
         sourcePage: 1,
         sourceTotal: 0,
-        sourceTotalPages: 1
+        sourceTotalPages: 1,
+        parserRules: [],
+        tableData: { directory: [], people: [] },
+        tableViews: {
+            directory: { sortKey: 'message_count', sortDirection: 'desc', filters: new Map() },
+            people: { sortKey: 'message_count', sortDirection: 'desc', filters: new Map() }
+        },
+        activeTableFilter: null
     };
     const $ = id => document.getElementById(id);
     const typeLabels = { single: '单聊', group: '群组', discussion: '讨论组', other: '其他' };
@@ -67,6 +74,147 @@
     function compactText(value, length = 70) {
         const text = String(value || '').replace(/\s+/g, ' ').trim();
         return text.length > length ? `${text.slice(0, length)}…` : text;
+    }
+
+    function tableCellValue(tableName, item, key) {
+        if (tableName === 'people' && key === 'person_label') {
+            return `${item.sender_name || '未知'} (${item.sender_id || '-'})${item.is_me ? ' （我）' : ''}`;
+        }
+        const value = item[key];
+        if (value === null || value === undefined || value === '') return '-';
+        return String(value);
+    }
+
+    function compareTableValues(left, right, type) {
+        if (type === 'number') {
+            const a = left === null || left === undefined ? Number.NEGATIVE_INFINITY : Number(left);
+            const b = right === null || right === undefined ? Number.NEGATIVE_INFINITY : Number(right);
+            return a - b;
+        }
+        if (type === 'date') return String(left || '').localeCompare(String(right || ''));
+        return String(left || '').localeCompare(String(right || ''), 'zh-CN', { numeric: true, sensitivity: 'base' });
+    }
+
+    function filteredAndSortedRows(tableName) {
+        const view = state.tableViews[tableName];
+        const head = document.querySelector(`[data-table-head="${tableName}"]`);
+        const type = head?.querySelector(`[data-key="${view.sortKey}"]`)?.dataset.type || 'text';
+        const rows = state.tableData[tableName].filter(item => {
+            for (const [key, selected] of view.filters.entries()) {
+                if (!selected.has(tableCellValue(tableName, item, key))) return false;
+            }
+            return true;
+        });
+        rows.sort((a, b) => {
+            const result = compareTableValues(
+                view.sortKey === 'person_label' ? tableCellValue(tableName, a, view.sortKey) : a[view.sortKey],
+                view.sortKey === 'person_label' ? tableCellValue(tableName, b, view.sortKey) : b[view.sortKey],
+                type
+            );
+            return view.sortDirection === 'asc' ? result : -result;
+        });
+        return rows;
+    }
+
+    function updateTableHeadState(tableName) {
+        const view = state.tableViews[tableName];
+        document.querySelectorAll(`[data-table-head="${tableName}"] th[data-key]`).forEach(th => {
+            const sort = th.querySelector('.table-sort-btn');
+            const filter = th.querySelector('.table-filter-btn');
+            if (sort) {
+                const active = view.sortKey === th.dataset.key;
+                sort.classList.toggle('active', active);
+                sort.textContent = active ? (view.sortDirection === 'asc' ? '↑' : '↓') : '↕';
+                sort.title = active && view.sortDirection === 'asc' ? '当前升序，点击切换降序' : '点击排序';
+            }
+            filter?.classList.toggle('active', view.filters.has(th.dataset.key));
+        });
+    }
+
+    function renderTable(tableName) {
+        if (tableName === 'directory') renderDirectoryRows(filteredAndSortedRows(tableName));
+        else renderPeopleRows(filteredAndSortedRows(tableName));
+        updateTableHeadState(tableName);
+    }
+
+    function closeTableFilterPopover() {
+        $('tableFilterPopover').hidden = true;
+        state.activeTableFilter = null;
+    }
+
+    function renderTableFilterOptions(search = '') {
+        const active = state.activeTableFilter;
+        if (!active) return;
+        const query = String(search || '').trim().toLocaleLowerCase();
+        const host = $('tableFilterOptions');
+        host.replaceChildren();
+        active.values.filter(value => !query || value.toLocaleLowerCase().includes(query)).forEach(value => {
+            const label = document.createElement('label');
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.value = value;
+            checkbox.checked = active.selected.has(value);
+            checkbox.addEventListener('change', () => checkbox.checked ? active.selected.add(value) : active.selected.delete(value));
+            const text = document.createElement('span');
+            text.textContent = value;
+            label.append(checkbox, text);
+            host.append(label);
+        });
+    }
+
+    function openTableFilterPopover(tableName, key, title, anchor) {
+        const values = [...new Set(state.tableData[tableName].map(item => tableCellValue(tableName, item, key)))]
+            .sort((a, b) => a.localeCompare(b, 'zh-CN', { numeric: true, sensitivity: 'base' }));
+        const current = state.tableViews[tableName].filters.get(key);
+        const hasFilter = state.tableViews[tableName].filters.has(key);
+        state.activeTableFilter = { tableName, key, values, selected: new Set(hasFilter ? current : values) };
+        $('tableFilterTitle').textContent = `${title}筛选`;
+        $('tableFilterSearch').value = '';
+        renderTableFilterOptions();
+        const popover = $('tableFilterPopover');
+        popover.hidden = false;
+        const rect = anchor.getBoundingClientRect();
+        const left = Math.min(window.innerWidth - 292, Math.max(8, rect.left - 120));
+        const top = Math.min(window.innerHeight - 390, rect.bottom + 6);
+        popover.style.left = `${left}px`;
+        popover.style.top = `${Math.max(8, top)}px`;
+    }
+
+    function setupInteractiveTableHeads() {
+        document.querySelectorAll('[data-table-head]').forEach(head => {
+            const tableName = head.dataset.tableHead;
+            head.querySelectorAll('th[data-key]').forEach(th => {
+                const title = th.textContent.trim();
+                th.replaceChildren();
+                const label = document.createElement('span');
+                label.className = 'table-head-label';
+                label.textContent = title;
+                const actions = document.createElement('span');
+                actions.className = 'table-head-actions';
+                const sort = document.createElement('button');
+                sort.type = 'button';
+                sort.className = 'table-head-btn table-sort-btn';
+                sort.textContent = '↕';
+                sort.addEventListener('click', () => {
+                    const view = state.tableViews[tableName];
+                    if (view.sortKey === th.dataset.key) view.sortDirection = view.sortDirection === 'asc' ? 'desc' : 'asc';
+                    else {
+                        view.sortKey = th.dataset.key;
+                        view.sortDirection = th.dataset.type === 'text' || !th.dataset.type ? 'asc' : 'desc';
+                    }
+                    renderTable(tableName);
+                });
+                const filter = document.createElement('button');
+                filter.type = 'button';
+                filter.className = 'table-head-btn table-filter-btn';
+                filter.textContent = '⌄';
+                filter.title = '单选或多选过滤';
+                filter.addEventListener('click', () => openTableFilterPopover(tableName, th.dataset.key, title, filter));
+                actions.append(sort, filter);
+                th.append(label, actions);
+            });
+            updateTableHeadState(tableName);
+        });
     }
 
     function shortTime(value) {
@@ -129,7 +277,10 @@
         document.querySelectorAll('.top-tab').forEach(button => button.classList.toggle('active', button.dataset.view === name));
         document.querySelectorAll('.view').forEach(view => view.classList.toggle('active', view.id === `view-${name}`));
         if (name === 'analytics') loadStats();
-        if (name === 'manage' && state.user && state.user.role === 'admin') loadSources();
+        if (name === 'manage' && state.user && state.user.role === 'admin') {
+            loadSources();
+            loadParserRules();
+        }
     }
 
     function conversationFilters() {
@@ -637,12 +788,19 @@
         try {
             const [overview, people, directory] = await Promise.all([
                 API.get('/api/chat-history/stats/overview'),
-                API.get(`/api/chat-history/stats/people?${queryString({ q: $('peopleQuery').value.trim(), limit: 200 })}`),
-                API.get(`/api/chat-history/directory?${queryString({ q: $('directoryQuery').value.trim(), limit: 200 })}`)
+                API.get(`/api/chat-history/stats/people?${queryString({ q: $('peopleQuery').value.trim(), limit: 5000 })}`),
+                API.get(`/api/chat-history/directory?${queryString({ q: $('directoryQuery').value.trim(), limit: 5000 })}`)
             ]);
             renderOverview(overview);
             renderPeople(people.items || []);
             renderDirectory(directory.items || []);
+        } catch (error) { showToast(error.message, true); }
+    }
+
+    async function loadDirectory(query = '') {
+        try {
+            const data = await API.get(`/api/chat-history/directory?${queryString({ q: query, limit: 5000 })}`);
+            renderDirectory(data.items || []);
         } catch (error) { showToast(error.message, true); }
     }
 
@@ -772,6 +930,11 @@
     }
 
     function renderDirectory(items) {
+        state.tableData.directory = items;
+        renderTable('directory');
+    }
+
+    function renderDirectoryRows(items) {
         const body = $('directoryTable');
         body.replaceChildren();
         if (!items.length) {
@@ -849,8 +1012,19 @@
     }
 
     function renderPeople(items) {
+        state.tableData.people = items;
+        renderTable('people');
+    }
+
+    function renderPeopleRows(items) {
         const body = $('peopleTable');
         body.replaceChildren();
+        if (!items.length) {
+            const row = document.createElement('tr');
+            row.innerHTML = '<td colspan="7" style="text-align:center;color:var(--muted);padding:18px;">暂无符合当前筛选条件的人员统计</td>';
+            body.append(row);
+            return;
+        }
         items.forEach(item => {
             const row = document.createElement('tr');
             const person = document.createElement('td');
@@ -1055,11 +1229,96 @@
         } catch (error) { showToast(error.message, true); }
     }
 
+    function parserRuleTypeLabel(type) {
+        return { contains: '包含', prefix: '开头匹配', exact: '整行相等', regex: '正则' }[type] || type;
+    }
+
+    function openParserRuleDialog(rule = null) {
+        $('parserRuleDialogTitle').textContent = rule ? '编辑排除规则' : '新增排除规则';
+        $('parserRuleId').value = rule ? rule.id : '';
+        $('parserRuleName').value = rule ? rule.name : '';
+        $('parserRuleType').value = rule ? rule.match_type : 'contains';
+        $('parserRulePattern').value = rule ? rule.pattern : '';
+        $('parserRuleEnabled').checked = rule ? Boolean(rule.enabled) : true;
+        $('parserRuleDialog').showModal();
+    }
+
+    function renderParserRules() {
+        const host = $('parserRuleList');
+        host.replaceChildren();
+        if (!state.parserRules.length) {
+            host.innerHTML = '<div class="empty-state compact-empty"><span>🧩</span><h2>暂无排除规则</h2><p>新增规则后，匹配的脚本行将保留在上一条消息正文中。</p></div>';
+            return;
+        }
+        state.parserRules.forEach(rule => {
+            const row = document.createElement('div');
+            row.className = `rule-item${rule.enabled ? '' : ' disabled'}`;
+            const info = document.createElement('div');
+            info.className = 'rule-info';
+            const title = document.createElement('div');
+            const name = document.createElement('strong');
+            name.textContent = rule.name;
+            const type = document.createElement('span');
+            type.className = 'type-badge';
+            type.textContent = parserRuleTypeLabel(rule.match_type);
+            const source = document.createElement('span');
+            source.className = `rule-status ${rule.enabled ? 'enabled' : ''}`;
+            source.textContent = rule.enabled ? '已启用' : '已停用';
+            title.append(name, type, source);
+            const pattern = document.createElement('code');
+            pattern.textContent = rule.pattern;
+            info.append(title, pattern);
+            const actions = document.createElement('div');
+            actions.className = 'rule-actions';
+            const toggle = document.createElement('button');
+            toggle.className = 'btn btn-small';
+            toggle.type = 'button';
+            toggle.textContent = rule.enabled ? '停用' : '启用';
+            toggle.addEventListener('click', async () => {
+                try {
+                    await API.put(`/api/chat-history/parser-rules/${rule.id}`, { enabled: !rule.enabled });
+                    await loadParserRules();
+                    showToast(`规则已${rule.enabled ? '停用' : '启用'}，重新导入后生效`);
+                } catch (error) { showToast(error.message, true); }
+            });
+            const edit = document.createElement('button');
+            edit.className = 'btn btn-small';
+            edit.type = 'button';
+            edit.textContent = '编辑';
+            edit.addEventListener('click', () => openParserRuleDialog(rule));
+            const remove = document.createElement('button');
+            remove.className = 'danger-btn';
+            remove.type = 'button';
+            remove.textContent = '删除';
+            remove.addEventListener('click', async () => {
+                if (!window.confirm(`确认删除排除规则“${rule.name}”？`)) return;
+                try {
+                    await API.delete(`/api/chat-history/parser-rules/${rule.id}`);
+                    await loadParserRules();
+                    showToast('规则已删除，重新导入后生效');
+                } catch (error) { showToast(error.message, true); }
+            });
+            actions.append(toggle, edit, remove);
+            row.append(info, actions);
+            host.append(row);
+        });
+    }
+
+    async function loadParserRules() {
+        if (!state.user || state.user.role !== 'admin') return;
+        try {
+            const data = await API.get('/api/chat-history/parser-rules');
+            state.parserRules = data.items || [];
+            renderParserRules();
+        } catch (error) { showToast(error.message, true); }
+    }
+
     async function initialize() {
         if (window.location.protocol === 'file:') {
             document.body.innerHTML = '<div class="empty-state" style="height:100vh"><span>🔒</span><h2>请从 Tools Platform 内打开</h2><p>此工具依赖平台的租户数据、登录鉴权和聊天服务。</p></div>';
             return;
         }
+        setupInteractiveTableHeads();
         setLoading(true, '正在连接聊天记录服务…');
         try {
             const [user, settings] = await Promise.all([API.get('/api/auth/me'), API.get('/api/chat-history/settings')]);
@@ -1148,6 +1407,28 @@
     $('searchNext').addEventListener('click', () => runGlobalSearch(state.searchPage + 1));
     $('exportSearch').addEventListener('click', exportSearch);
     $('refreshStats').addEventListener('click', loadStats);
+    $('closeTableFilter')?.addEventListener('click', closeTableFilterPopover);
+    $('cancelTableFilter')?.addEventListener('click', closeTableFilterPopover);
+    $('tableFilterSearch')?.addEventListener('input', event => renderTableFilterOptions(event.target.value));
+    $('selectAllFilterValues')?.addEventListener('click', () => {
+        if (!state.activeTableFilter) return;
+        state.activeTableFilter.selected = new Set(state.activeTableFilter.values);
+        renderTableFilterOptions($('tableFilterSearch').value);
+    });
+    $('clearFilterValues')?.addEventListener('click', () => {
+        if (!state.activeTableFilter) return;
+        state.activeTableFilter.selected.clear();
+        renderTableFilterOptions($('tableFilterSearch').value);
+    });
+    $('applyTableFilter')?.addEventListener('click', () => {
+        const active = state.activeTableFilter;
+        if (!active) return;
+        const view = state.tableViews[active.tableName];
+        if (active.selected.size === active.values.length) view.filters.delete(active.key);
+        else view.filters.set(active.key, new Set(active.selected));
+        closeTableFilterPopover();
+        renderTable(active.tableName);
+    });
     $('peopleQuery').addEventListener('input', () => { clearTimeout(peopleDebounce); peopleDebounce = setTimeout(loadStats, 250); });
     $('directoryQuery')?.addEventListener('input', () => {
         clearTimeout(directoryDebounce);
@@ -1184,6 +1465,26 @@
         }
     });
     $('clearTestDataBtn')?.addEventListener('click', clearTestData);
+    $('addParserRuleBtn')?.addEventListener('click', () => openParserRuleDialog());
+    $('closeParserRuleDialog')?.addEventListener('click', () => $('parserRuleDialog').close());
+    $('cancelParserRuleBtn')?.addEventListener('click', () => $('parserRuleDialog').close());
+    $('parserRuleForm')?.addEventListener('submit', async event => {
+        event.preventDefault();
+        const id = $('parserRuleId').value;
+        const payload = {
+            name: $('parserRuleName').value.trim(),
+            matchType: $('parserRuleType').value,
+            pattern: $('parserRulePattern').value.trim(),
+            enabled: $('parserRuleEnabled').checked
+        };
+        try {
+            if (id) await API.put(`/api/chat-history/parser-rules/${encodeURIComponent(id)}`, payload);
+            else await API.post('/api/chat-history/parser-rules', payload);
+            $('parserRuleDialog').close();
+            await loadParserRules();
+            showToast('解析排除规则已保存，重新导入原目录后生效');
+        } catch (error) { showToast(error.message, true); }
+    });
     $('settingsButton').addEventListener('click', () => $('settingsDialog').showModal());
     $('saveSettings').addEventListener('click', async event => {
         event.preventDefault();
@@ -1231,4 +1532,3 @@
     });
     document.addEventListener('DOMContentLoaded', initialize);
 })();
-
