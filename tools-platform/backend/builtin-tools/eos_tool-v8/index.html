@@ -45,13 +45,27 @@
 <body>
 
 <div class="container-fluid py-3 px-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3 class="fw-bold text-dark mb-0">
-            重急EOS收编统计与任务画靶 
-            <span class="fs-5 text-muted ms-2 fw-normal">| Urgent EOS Statistics & Target Setting</span>
-        </h3>
-        <div>
-            <button class="btn btn-sm btn-outline-danger" onclick="clearData()">清空表格数据 / Clear Data</button>
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div class="d-flex align-items-center flex-wrap gap-3">
+            <h3 class="fw-bold text-dark mb-0">
+                重急EOS收编统计与任务画靶 
+                <span class="fs-5 text-muted ms-2 fw-normal">| Urgent EOS Statistics & Target Setting</span>
+            </h3>
+            <span id="activeSourceBadge" class="badge bg-primary-subtle text-primary border border-primary-subtle py-2 px-3 fs-6 d-inline-flex align-items-center gap-1 shadow-sm">
+                <span id="activeSourceIcon">🌟</span> 
+                <span id="activeSourceName">当前数据：系统内置默认数据 (Built-in)</span>
+            </span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <button class="btn btn-sm btn-primary fw-bold shadow-sm" onclick="openSaveSnapshotModal()">
+                📸 保存快照到服务器 / Save Snapshot
+            </button>
+            <button class="btn btn-sm btn-outline-primary fw-bold" onclick="openSnapshotModal()">
+                🗂️ 快照列表与数据源 / Manage Snapshots
+            </button>
+            <button class="btn btn-sm btn-outline-danger" onclick="clearData()">
+                清空表格数据 / Clear Data
+            </button>
         </div>
     </div>
 
@@ -85,7 +99,17 @@
     </div>
 
     <div class="card kpi-card p-3 mb-3">
-        <h6 class="fw-bold mb-2">📁 1. 导入或追加基线表格 <span class="fw-normal text-muted ms-2">| Select File to Auto-Import</span></h6>
+        <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+            <h6 class="fw-bold mb-0">📁 1. 导入或追加基线表格 <span class="fw-normal text-muted ms-2">| Select File to Auto-Import</span></h6>
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-secondary" onclick="loadBuiltInData(true)">
+                    🔄 恢复系统出厂数据 / Reset to Default
+                </button>
+                <button class="btn btn-sm btn-outline-primary fw-bold" onclick="openSnapshotModal()">
+                    🗂️ 从服务器载入快照 / Load from Snapshot
+                </button>
+            </div>
+        </div>
         <div class="d-flex align-items-center gap-2">
             <input class="form-control form-control-sm" type="file" id="fileInput" multiple accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" style="max-width: 400px;" onchange="handleFiles()">
             
@@ -94,7 +118,7 @@
             </div>
             <span id="loading-text" class="text-primary small d-none ms-1">正在解析数据，请稍候...</span>
         </div>
-        <small class="text-muted mt-1">注：网页已自动加载默认内置数据。如果需要，您仍可以在此追加其他表格数据。</small>
+        <small class="text-muted mt-1">注：网页已自动加载默认内置数据。导入新基线或历史回填后，可点击上方【📸 保存快照到服务器】随时在系统数据与快照间自由切换。</small>
     </div>
 
     <div class="mb-3 p-2 bg-white border rounded align-items-center shadow-sm flex-wrap gap-2" id="filterSection" style="display: none !important;">
@@ -246,10 +270,548 @@
   </div>
 </div>
 
+
+<!-- 🌟 导入差异对比与确认模态框 -->
+<div class="modal fade" id="restoreDiffModal" tabindex="-1" aria-labelledby="restoreDiffModalLabel" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content shadow-lg border-0">
+      <div class="modal-header bg-warning text-dark py-3">
+        <h5 class="modal-title fw-bold" id="restoreDiffModalLabel">⚠️ 历史报表与当前基线存在差异 / Baseline Inconsistency Detected</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="cancelRestore()"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="alert alert-warning mb-3 py-2">
+          <div class="fw-bold mb-1">🔍 唯一识别键比对结果 / Key Matching Results:</div>
+          <div class="small">系统以 <strong>【客户名称 + 产品名称】</strong> 为唯一复合主键比对了历史报表与当前基线表格，检测到存在不一致项。详情如下：</div>
+        </div>
+
+        <div class="row g-2 mb-3 text-center" id="diffStatBadges">
+          <!-- Injected dynamically -->
+        </div>
+
+        <div id="diffSectionsContainer">
+          <!-- Injected dynamically -->
+        </div>
+
+        <div class="alert alert-secondary mt-3 mb-0 small">
+          <strong>💡 操作说明 / Options:</strong>
+          <ul class="mb-0 ps-3 mt-1">
+            <li><strong>【⚡ 仍要强制回填匹配项】</strong>：仅回填两边完全匹配的行；基线新增项保持默认值 0/空白，需手动补填。</li>
+            <li><strong>【❌ 取消导入】</strong>：终止导入流程，绝不修改当前表格中的任何已填数据。</li>
+          </ul>
+        </div>
+      </div>
+      <div class="modal-footer bg-light d-flex justify-content-between">
+        <button type="button" class="btn btn-outline-secondary px-4 fw-bold" data-bs-dismiss="modal" onclick="cancelRestore()">❌ 取消导入 / Cancel</button>
+        <button type="button" class="btn btn-warning px-4 fw-bold shadow-sm" onclick="confirmForceRestore()">⚡ 仍要强制回填匹配项 / Force Import Matched</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- 🌟 保存快照模态框 -->
+<div class="modal fade" id="saveSnapshotModal" tabindex="-1" aria-labelledby="saveSnapshotModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg border-0">
+      <div class="modal-header bg-primary text-white py-3">
+        <h5 class="modal-title fw-bold" id="saveSnapshotModalLabel">📸 保存当前数据为服务器快照 / Save Server Snapshot</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <p class="text-muted small mb-3">
+          快照将完整保存当前的<strong>底层基线数据 (共 <span id="saveSnapRowCount" class="text-primary fw-bold">0</span> 条)</strong>、<strong>全部填报的收编 Target / Timeline</strong> 以及<strong>自定义列配置</strong>到服务器 SQLite 数据库。
+        </p>
+
+        <div class="mb-3">
+          <label for="snapshotNameInput" class="form-label fw-bold small text-dark">快照名称 / Snapshot Name</label>
+          <input type="text" class="form-control" id="snapshotNameInput" placeholder="例如: 2026-09-03 导入9月基线 / Q3复盘画靶...">
+        </div>
+
+        <div class="card bg-light border-0 p-3 mb-0 small">
+          <div class="fw-bold mb-2 text-secondary">📊 当前快照数据摘要预览 / Data Preview:</div>
+          <div class="row g-2 text-muted">
+            <div class="col-6">总基线台数: <strong id="saveSnapBaseline" class="text-dark">0</strong></div>
+            <div class="col-6">当前存量台数: <strong id="saveSnapCurrent" class="text-dark">0</strong></div>
+            <div class="col-6">计划收编台数: <strong id="saveSnapTarget" class="text-success">0</strong></div>
+            <div class="col-6">预计完成率: <strong id="saveSnapRate" class="text-primary">0.00%</strong></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer bg-light">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消 / Cancel</button>
+        <button type="button" class="btn btn-primary fw-bold shadow-sm px-4" onclick="submitSaveSnapshot()">💾 确认保存快照 / Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 🌟 快照管理与数据源切换模态框 -->
+<div class="modal fade" id="snapshotModal" tabindex="-1" aria-labelledby="snapshotModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content shadow-lg border-0">
+      <div class="modal-header bg-dark text-white py-3">
+        <h5 class="modal-title fw-bold" id="snapshotModalLabel">🗂️ 数据源管理与服务器快照 / Data Sources & Snapshots</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <!-- 🌟 系统内置数据卡片 -->
+        <div class="card mb-4 border-primary border-opacity-50 shadow-sm">
+          <div class="card-header bg-primary-subtle py-2 d-flex justify-content-between align-items-center">
+            <div class="fw-bold text-primary d-flex align-items-center gap-2">
+              <span>🌟 系统自带默认数据 (System Built-in Default)</span>
+              <span id="builtinActiveTag" class="badge bg-success d-none">当前正在使用</span>
+            </div>
+            <button class="btn btn-sm btn-primary fw-bold" onclick="loadBuiltInData(true)">
+              🔄 切换/恢复为系统自带数据
+            </button>
+          </div>
+          <div class="card-body p-3 small text-muted">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <div>
+                包含系统出厂预设的 5 个端到端产品线完整 EOS 基线（共 <strong class="text-dark" id="builtinRecordCount">218</strong> 条记录）。
+              </div>
+              <div class="text-end text-black-50">
+                出厂预置基线 • 随时可无损恢复
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 📸 服务器已存快照列表 -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="fw-bold mb-0 text-dark">
+            📸 服务器已存快照列表 (Saved Server Snapshots)
+            <span class="badge bg-secondary ms-1" id="serverSnapshotCount">0</span>
+          </h6>
+          <button class="btn btn-sm btn-outline-primary fw-bold" onclick="openSaveSnapshotModal()">
+            + 保存当前数据为新快照
+          </button>
+        </div>
+
+        <div id="snapshotListContainer" style="min-height: 120px;">
+          <!-- Injected dynamically -->
+          <div class="text-center py-4 text-muted">
+            <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
+            <div>正在加载服务器快照列表...</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer bg-light justify-content-between">
+        <small class="text-muted">💡 提示：快照安全存储在平台服务器数据库中，切换快照时会自动替换当前画靶表与填报进度。</small>
+        <button type="button" class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal">关闭 / Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
     function escapeHtml(unsafe) {
         if (unsafe === undefined || unsafe === null) return '';
         return String(unsafe).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    
+    // ==========================================
+    // 🌟 服务器快照与数据源切换控制器
+    // ==========================================
+    let currentDataSource = {
+        type: 'builtin', // 'builtin' | 'snapshot'
+        id: null,
+        name: '系统内置默认数据 (Built-in)'
+    };
+
+    let snapshotModalInstance = null;
+    let saveSnapshotModalInstance = null;
+
+    function getCurrentToolSlug() {
+        try {
+            const pathParts = window.location.pathname.split('/').filter(Boolean);
+            const idx = pathParts.indexOf('tools');
+            if (idx !== -1 && pathParts[idx + 1]) return pathParts[idx + 1];
+            const customIdx = pathParts.indexOf('custom-tools');
+            if (customIdx !== -1 && pathParts[customIdx + 1]) return pathParts[customIdx + 1];
+        } catch (_) {}
+        return 'eos_tool-v8';
+    }
+
+    function updateDataSourceBadge() {
+        const badge = document.getElementById('activeSourceBadge');
+        const icon = document.getElementById('activeSourceIcon');
+        const name = document.getElementById('activeSourceName');
+        if (!badge || !icon || !name) return;
+
+        if (currentDataSource.type === 'builtin') {
+            badge.className = 'badge bg-primary-subtle text-primary border border-primary-subtle py-2 px-3 fs-6 d-inline-flex align-items-center gap-1 shadow-sm';
+            icon.innerText = '🌟';
+            name.innerText = '当前数据：系统内置默认数据 (Built-in)';
+        } else {
+            badge.className = 'badge bg-success-subtle text-success border border-success-subtle py-2 px-3 fs-6 d-inline-flex align-items-center gap-1 shadow-sm';
+            icon.innerText = '📸';
+            name.innerText = `当前数据：${currentDataSource.name}`;
+        }
+    }
+
+    function openSaveSnapshotModal() {
+        const now = new Date();
+        const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        const defaultName = currentDataSource.type === 'snapshot' && currentDataSource.name
+            ? `${currentDataSource.name.replace(/\s*\(更新\)/g, '')} (更新 ${dateStr.slice(11)})`
+            : `${dateStr} 填报快照`;
+        
+        document.getElementById('snapshotNameInput').value = defaultName;
+        document.getElementById('saveSnapRowCount').innerText = globalData.length;
+
+        let totalBase = 0;
+        let totalCurr = 0;
+        let totalTgt = 0;
+        let totalExpCompleted = 0;
+
+        for (const c in groupedTargetData) {
+            totalBase += groupedTargetData[c].baseline;
+            for (const p in groupedTargetData[c].products) {
+                const prod = groupedTargetData[c].products[p];
+                totalCurr += prod.current;
+                totalTgt += (prod.target || 0);
+                totalExpCompleted += (prod.cutBaseline - prod.current) + (prod.target || 0);
+            }
+        }
+        const rate = totalBase > 0 ? (totalExpCompleted / totalBase * 100) : 0;
+
+        document.getElementById('saveSnapBaseline').innerText = totalBase;
+        document.getElementById('saveSnapCurrent').innerText = totalCurr;
+        document.getElementById('saveSnapTarget').innerText = totalTgt;
+        document.getElementById('saveSnapRate').innerText = rate.toFixed(2) + '%';
+
+        if (!saveSnapshotModalInstance) {
+            saveSnapshotModalInstance = new bootstrap.Modal(document.getElementById('saveSnapshotModal'));
+        }
+        saveSnapshotModalInstance.show();
+    }
+
+    async function submitSaveSnapshot() {
+        const nameInput = document.getElementById('snapshotNameInput');
+        const name = nameInput.value.trim() || `快照 ${new Date().toLocaleString('zh-CN')}`;
+        const slug = getCurrentToolSlug();
+
+        let totalBase = 0;
+        let totalCurr = 0;
+        let totalTgt = 0;
+        let totalExpCompleted = 0;
+
+        for (const c in groupedTargetData) {
+            totalBase += groupedTargetData[c].baseline;
+            for (const p in groupedTargetData[c].products) {
+                const prod = groupedTargetData[c].products[p];
+                totalCurr += prod.current;
+                totalTgt += (prod.target || 0);
+                totalExpCompleted += (prod.cutBaseline - prod.current) + (prod.target || 0);
+            }
+        }
+        const rate = totalBase > 0 ? (totalExpCompleted / totalBase * 100) : 0;
+
+        const summary = {
+            rowCount: globalData.length,
+            totalBaseline: totalBase,
+            totalCurrent: totalCurr,
+            totalTarget: totalTgt,
+            expectedRate: parseFloat(rate.toFixed(2)),
+            customColCount: customColumns.length,
+            yearSplitEnabled: yearSplitEnabled
+        };
+
+        const payload = {
+            globalData: globalData,
+            savedInputData: savedInputData,
+            customColumns: customColumns,
+            yearSplitEnabled: yearSplitEnabled,
+            currentYearView: currentYearView
+        };
+
+        document.getElementById('loading').classList.remove('d-none');
+        document.getElementById('loading-text').innerText = '正在保存快照到服务器...';
+        document.getElementById('loading-text').classList.remove('d-none');
+
+        try {
+            const resp = await fetch(`/api/custom-tools/${slug}/snapshots`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, summary, payload })
+            });
+            const resJson = await resp.json();
+            if (!resp.ok || !resJson.success) {
+                throw new Error(resJson.error || '保存快照失败');
+            }
+
+            if (saveSnapshotModalInstance) saveSnapshotModalInstance.hide();
+
+            currentDataSource = {
+                type: 'snapshot',
+                id: resJson.item.id,
+                name: resJson.item.name
+            };
+            updateDataSourceBadge();
+
+            alert(`✅ 快照【${name}】已成功保存到服务器！\n[Snapshot saved to server successfully!]`);
+        } catch (err) {
+            console.error(err);
+            alert(`保存快照失败：${err.message}`);
+        } finally {
+            document.getElementById('loading').classList.add('d-none');
+            document.getElementById('loading-text').classList.add('d-none');
+        }
+    }
+
+    async function openSnapshotModal() {
+        if (!snapshotModalInstance) {
+            snapshotModalInstance = new bootstrap.Modal(document.getElementById('snapshotModal'));
+        }
+        snapshotModalInstance.show();
+        await fetchAndRenderSnapshots();
+    }
+
+    async function fetchAndRenderSnapshots() {
+        const slug = getCurrentToolSlug();
+        const container = document.getElementById('snapshotListContainer');
+        const builtinTag = document.getElementById('builtinActiveTag');
+        const countBadge = document.getElementById('serverSnapshotCount');
+
+        if (currentDataSource.type === 'builtin') {
+            builtinTag.classList.remove('d-none');
+        } else {
+            builtinTag.classList.add('d-none');
+        }
+
+        container.innerHTML = `
+            <div class="text-center py-4 text-muted">
+                <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
+                <div>正在加载服务器快照列表...</div>
+            </div>
+        `;
+
+        try {
+            const resp = await fetch(`/api/custom-tools/${slug}/snapshots`);
+            const resJson = await resp.json();
+            if (!resp.ok || !resJson.success) throw new Error(resJson.error || '加载快照列表失败');
+
+            const items = resJson.items || [];
+            countBadge.innerText = items.length;
+
+            if (items.length === 0) {
+                container.innerHTML = `
+                    <div class="p-4 text-center border rounded bg-light text-muted">
+                        <div class="fs-4 mb-2">📭</div>
+                        <div class="fw-bold mb-1">暂无已保存的服务器快照</div>
+                        <div class="small">导入新基线表格或填报后，点击右上角【📸 保存快照到服务器】即可在此随时切换。</div>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            items.forEach(item => {
+                const isActive = (currentDataSource.type === 'snapshot' && currentDataSource.id === item.id);
+                const sum = item.summary || {};
+                const dateStr = item.timestamp ? new Date(item.timestamp).toLocaleString('zh-CN', { hour12: false }) : '';
+
+                html += `
+                    <div class="card mb-3 shadow-sm ${isActive ? 'border-success border-2 bg-success-subtle bg-opacity-10' : 'border'}">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
+                                <div>
+                                    <h6 class="fw-bold mb-1 d-flex align-items-center gap-2">
+                                        <span>📸 ${escapeHtml(item.name)}</span>
+                                        ${isActive ? '<span class="badge bg-success">🟢 当前正在使用</span>' : ''}
+                                    </h6>
+                                    <div class="text-muted small">保存时间: ${dateStr}</div>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    ${isActive ? `
+                                        <button class="btn btn-sm btn-outline-success fw-bold" disabled>已在当前视图</button>
+                                    ` : `
+                                        <button class="btn btn-sm btn-success fw-bold shadow-sm" onclick="loadServerSnapshot('${item.id}')">
+                                            ⚡ 切换载入此快照
+                                        </button>
+                                    `}
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="renameServerSnapshot('${item.id}', '${escapeHtml(item.name)}')">
+                                        ✏️
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteServerSnapshot('${item.id}', '${escapeHtml(item.name)}')">
+                                        🗑️
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="row g-2 mt-1 pt-2 border-top small text-muted">
+                                <div class="col-6 col-md-3">📊 基线行数: <strong class="text-dark">${sum.rowCount || 0}</strong></div>
+                                <div class="col-6 col-md-3">📦 总基线存量: <strong class="text-dark">${sum.totalBaseline || 0}</strong></div>
+                                <div class="col-6 col-md-3">🎯 收编 Target: <strong class="text-success">${sum.totalTarget || 0}</strong></div>
+                                <div class="col-6 col-md-3">📈 预计完成率: <strong class="text-primary">${(sum.expectedRate || 0).toFixed(2)}%</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        } catch (err) {
+            console.error(err);
+            container.innerHTML = `
+                <div class="alert alert-danger py-3 text-center">
+                    加载快照列表失败: ${escapeHtml(err.message)}
+                    <div class="mt-2"><button class="btn btn-sm btn-outline-danger" onclick="fetchAndRenderSnapshots()">重试</button></div>
+                </div>
+            `;
+        }
+    }
+
+    async function loadServerSnapshot(snapshotId) {
+        const slug = getCurrentToolSlug();
+        document.getElementById('loading').classList.remove('d-none');
+        document.getElementById('loading-text').innerText = '正在载入服务器快照...';
+        document.getElementById('loading-text').classList.remove('d-none');
+
+        try {
+            const resp = await fetch(`/api/custom-tools/${slug}/snapshots/${snapshotId}`);
+            const resJson = await resp.json();
+            if (!resp.ok || !resJson.success || !resJson.item) throw new Error(resJson.error || '获取快照数据失败');
+
+            const snap = resJson.item;
+            const payload = snap.payload || {};
+
+            if (!Array.isArray(payload.globalData) || payload.globalData.length === 0) {
+                throw new Error('快照中不包含有效的基线表格数据');
+            }
+
+            globalData = JSON.parse(JSON.stringify(payload.globalData));
+            savedInputData = payload.savedInputData || { '26-27': {}, '<=25': {}, 'all': {} };
+            if (Array.isArray(payload.customColumns)) {
+                customColumns = JSON.parse(JSON.stringify(payload.customColumns));
+                localStorage.setItem('eos_custom_columns_v3', JSON.stringify(customColumns));
+                renderColumnManager();
+            }
+            if (payload.yearSplitEnabled !== undefined) {
+                yearSplitEnabled = payload.yearSplitEnabled;
+                document.getElementById('yearSplitSwitch').checked = yearSplitEnabled;
+                onYearSplitToggle();
+            }
+
+            localStorage.setItem('eos_raw_parsed_data_v3', JSON.stringify(globalData));
+            localStorage.setItem('eos_saved_row_data', JSON.stringify(savedInputData));
+
+            globalHeaders = [];
+            if (globalData.length > 0 && globalData[0].dataObj) {
+                globalHeaders = Object.keys(globalData[0].dataObj);
+            }
+            updateDashboard();
+            renderTargetTable();
+            renderTable();
+
+            currentDataSource = {
+                type: 'snapshot',
+                id: snap.id,
+                name: snap.name
+            };
+            updateDataSourceBadge();
+
+            if (snapshotModalInstance) snapshotModalInstance.hide();
+
+            alert(`✅ 已成功载入快照【${snap.name}】！\n[Loaded snapshot ${snap.name} successfully!]`);
+        } catch (err) {
+            console.error(err);
+            alert(`载入快照失败: ${err.message}`);
+        } finally {
+            document.getElementById('loading').classList.add('d-none');
+            document.getElementById('loading-text').classList.add('d-none');
+        }
+    }
+
+    function loadBuiltInData(showConfirm = false) {
+        if (showConfirm) {
+            if (!confirm('确定要切换/恢复为系统自带的默认数据吗？\n[Are you sure you want to switch back to system default dataset?]')) {
+                return;
+            }
+        }
+
+        let dataStr = defaultBuiltInData.trim();
+        if (!dataStr) return; 
+
+        let rawRows = dataStr.split('\n').map(line => line.split('\t'));
+        if (rawRows.length > 1) {
+            globalHeaders = [];
+            globalData = [];
+            groupedTargetData = {};
+            savedInputData = { '26-27': {}, '<=25': {}, 'all': {} };
+            localStorage.setItem('eos_saved_row_data', JSON.stringify(savedInputData));
+            let addedCount = processParsedData(rawRows);
+            if (addedCount > 0) {
+                localStorage.setItem('eos_raw_parsed_data_v3', JSON.stringify(globalData));
+                updateDashboard();
+                renderTargetTable();
+                renderTable();
+            }
+        }
+
+        currentDataSource = {
+            type: 'builtin',
+            id: null,
+            name: '系统内置默认数据 (Built-in)'
+        };
+        updateDataSourceBadge();
+
+        if (snapshotModalInstance) snapshotModalInstance.hide();
+
+        if (showConfirm) {
+            alert('✅ 已成功恢复为系统自带默认数据！\n[Switched to built-in default dataset!]');
+        }
+    }
+
+    async function renameServerSnapshot(snapshotId, oldName) {
+        const newName = prompt('请输入新的快照名称:', oldName);
+        if (!newName || newName.trim() === oldName) return;
+
+        const slug = getCurrentToolSlug();
+        try {
+            const resp = await fetch(`/api/custom-tools/${slug}/snapshots/${snapshotId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: newName.trim() })
+            });
+            const resJson = await resp.json();
+            if (!resp.ok || !resJson.success) throw new Error(resJson.error || '重命名失败');
+
+            if (currentDataSource.id === snapshotId) {
+                currentDataSource.name = newName.trim();
+                updateDataSourceBadge();
+            }
+            await fetchAndRenderSnapshots();
+        } catch (err) {
+            alert(`重命名失败: ${err.message}`);
+        }
+    }
+
+    async function deleteServerSnapshot(snapshotId, name) {
+        if (!confirm(`确定要彻底删除快照【${name}】吗？此操作不可撤销。`)) return;
+
+        const slug = getCurrentToolSlug();
+        try {
+            const resp = await fetch(`/api/custom-tools/${slug}/snapshots/${snapshotId}`, {
+                method: 'DELETE'
+            });
+            const resJson = await resp.json();
+            if (!resp.ok || !resJson.success) throw new Error(resJson.error || '删除失败');
+
+            if (currentDataSource.id === snapshotId) {
+                currentDataSource = {
+                    type: 'builtin',
+                    id: null,
+                    name: '系统内置默认数据 (Built-in)'
+                };
+                updateDataSourceBadge();
+            }
+            await fetchAndRenderSnapshots();
+        } catch (err) {
+            alert(`删除失败: ${err.message}`);
+        }
     }
 
     let globalHeaders = [];
@@ -415,20 +977,7 @@ ES20251020000619		运营商	北部非洲地区部	埃及代表处	埃及	EG-Egyp
         guideModal.show();
     };
 
-    function loadBuiltInData() {
-        let dataStr = defaultBuiltInData.trim();
-        if (!dataStr) return; 
 
-        let rawRows = dataStr.split('\n').map(line => line.split('\t'));
-        if (rawRows.length > 1) {
-            let addedCount = processParsedData(rawRows);
-            if (addedCount > 0) {
-                updateDashboard();
-                renderTargetTable();
-                renderTable();
-            }
-        }
-    }
 
     const defaultCustomColumns = [
         { id: 'col_timeline', name: 'Timeline' }
@@ -525,6 +1074,17 @@ ES20251020000619		运营商	北部非洲地区部	埃及代表处	埃及	EG-Egyp
             updateDashboard();
             renderTargetTable(); 
             renderTable();
+            currentDataSource = {
+                type: 'snapshot',
+                id: null,
+                name: '新导入基线 (未保存为快照)'
+            };
+            updateDataSourceBadge();
+            setTimeout(() => {
+                if (confirm(`✅ 成功导入/追加 ${totalAdded} 条基线数据！\n[Successfully imported ${totalAdded} records!]\n\n📸 是否立即将当前表格数据保存为服务器快照，以便后续自由切换？`)) {
+                    openSaveSnapshotModal();
+                }
+            }, 200);
         } else {
             alert('未能提取到有效数据，请检查表头。');
         }
@@ -992,9 +1552,71 @@ ES20251020000619		运营商	北部非洲地区部	埃及代表处	埃及	EG-Egyp
         summaryEl.innerHTML = `填入后较填入前增加 <span class="text-primary">${deltaTotal}</span> 台收编量，预计完成率提升 <span class="text-primary">${deltaRate.toFixed(2)}%</span>（${beforePivot.rate.toFixed(2)}% → ${afterPivot.rate.toFixed(2)}%）。`;
     }
 
+        // ==========================================
+    // 🌟 一键恢复历史填写的进度 (从导出的 Excel 逆向解析，含唯一键比对与差异弹窗)
     // ==========================================
-    // 🌟 一键恢复历史填写的进度 (从导出的 Excel 逆向解析)
-    // ==========================================
+    let stagedRestorePayload = null;
+    let restoreDiffModalInstance = null;
+
+    function cancelRestore() {
+        stagedRestorePayload = null;
+        if (restoreDiffModalInstance) restoreDiffModalInstance.hide();
+    }
+
+    function confirmForceRestore() {
+        if (!stagedRestorePayload) return;
+        if (restoreDiffModalInstance) restoreDiffModalInstance.hide();
+        commitRestoreData(stagedRestorePayload, true);
+        stagedRestorePayload = null;
+    }
+
+    function commitRestoreData(payload, isForced = false) {
+        if (payload.newCustomColsAdded) {
+            localStorage.setItem('eos_custom_columns_v3', JSON.stringify(customColumns));
+            renderColumnManager();
+        }
+        Object.keys(payload.parsedDataByView).forEach(view => {
+            if (!savedInputData[view]) savedInputData[view] = {};
+            const rowsObj = payload.parsedDataByView[view];
+            Object.keys(rowsObj).forEach(key => {
+                savedInputData[view][key] = rowsObj[key];
+            });
+        });
+        localStorage.setItem('eos_saved_row_data', JSON.stringify(savedInputData));
+        renderTargetTable();
+        
+        if (isForced) {
+            alert(`⚡ 已强制回填 ${payload.matchedCount} 条匹配记录的填报进度！\n[Force restored ${payload.matchedCount} matched records!]`);
+        } else {
+            alert(`✅ 唯一识别键 100% 匹配！已成功回填 ${payload.matchedCount} 条记录的进度！\n[Successfully restored inputs for ${payload.matchedCount} records!]`);
+        }
+    }
+
+    function getBaselineGroupedMap() {
+        const map = { '26-27': new Map(), '<=25': new Map(), 'all': new Map() };
+        ['26-27', '<=25', 'all'].forEach(view => {
+            globalData.forEach(item => {
+                if (itemMatchesView(item, view)) {
+                    let key = item.customer + '|||' + item.product;
+                    if (!map[view].has(key)) {
+                        map[view].set(key, {
+                            customer: item.customer,
+                            product: item.product,
+                            current: 0,
+                            baseline: 0,
+                            cutBaseline: 0
+                        });
+                    }
+                    const rec = map[view].get(key);
+                    rec.current += (item.current || 0);
+                    rec.baseline += (item.baseline || 0);
+                    rec.cutBaseline += (item.cutBaseline !== undefined ? item.cutBaseline : item.baseline || 0);
+                }
+            });
+        });
+        return map;
+    }
+
     async function restoreFromExportedFile() {
         const input = document.createElement('input');
         input.type = 'file';
@@ -1004,65 +1626,28 @@ ES20251020000619		运营商	北部非洲地区部	埃及代表处	埃及	EG-Egyp
             if (!file) return;
             
             document.getElementById('loading').classList.remove('d-none');
-            document.getElementById('loading-text').innerText = '正在回填数据...';
+            document.getElementById('loading-text').innerText = '正在预检比对数据...';
             document.getElementById('loading-text').classList.remove('d-none');
             
             try {
                 const arrayBuffer = await readFileAsArrayBuffer(file);
                 const workbook = XLSX.read(arrayBuffer, { type: 'array' });
                 
-                let restoredCount = 0;
                 let newCustomColsAdded = false;
-                const expectedKeysByView = buildExpectedKeysByView();
-                const restoreDebug = {
-                    fileName: file.name,
-                    sheetNames: workbook.SheetNames,
-                    currentYearView,
-                    activeView: getActiveViewKey(),
-                    yearSplitEnabled,
-                    globalRows: globalData.length,
-                    expectedKeyCounts: {
-                        '26-27': expectedKeysByView['26-27'].size,
-                        '<=25': expectedKeysByView['<=25'].size,
-                        'all': expectedKeysByView.all.size
-                    },
-                    sheets: [],
-                    restoredSamples: [],
-                    unmatchedSamples: [],
-                    skippedSamples: []
-                };
-                eosLog('restore start', restoreDebug);
-                
+                const baselineGroupedMap = getBaselineGroupedMap();
+                const parsedDataByView = { '26-27': {}, '<=25': {}, 'all': {} };
+                let sheetsFound = 0;
+
                 workbook.SheetNames.forEach(sheetName => {
                     let view = '';
                     const lowerSheetName = sheetName.toLowerCase();
                     if (sheetName.includes('全部') || lowerSheetName.includes('all')) view = 'all';
                     else if (sheetName.includes('2026') || sheetName.includes('26')) view = '26-27';
                     else if (sheetName.includes('2025') || sheetName.includes('25')) view = '<=25';
-                    else {
-                        restoreDebug.sheets.push({ sheetName, skipped: true, reason: 'sheet name does not include 全部/all, 2026/26, or 2025/25' });
-                        return;
-                    }
-                    
+                    else return;
+
                     const worksheet = workbook.Sheets[sheetName];
                     const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
-                    const sheetDebug = {
-                        sheetName,
-                        view,
-                        rowCount: rows.length,
-                        mergeCount: (worksheet['!merges'] || []).length,
-                        headerIdx: -1,
-                        indexes: {},
-                        headers: [],
-                        fileCustomCols: [],
-                        restoredRows: 0,
-                        matchedCurrentBase: 0,
-                        unmatchedCurrentBase: 0,
-                        skippedNoCustomer: 0,
-                        skippedNoProduct: 0,
-                        rowSamples: []
-                    };
-                    
                     let headerIdx = -1;
                     for (let i = 0; i < rows.length; i++) {
                         let rowStr = rows[i].join('');
@@ -1070,31 +1655,17 @@ ES20251020000619		运营商	北部非洲地区部	埃及代表处	埃及	EG-Egyp
                             headerIdx = i; break;
                         }
                     }
-                    sheetDebug.headerIdx = headerIdx;
-                    if (headerIdx === -1) {
-                        sheetDebug.skipped = true;
-                        sheetDebug.reason = 'header row not found: requires 客户名称 + 产品名称 + 已消减';
-                        restoreDebug.sheets.push(sheetDebug);
-                        eosWarn('restore sheet skipped', sheetDebug);
-                        return;
-                    }
-                    
+                    if (headerIdx === -1) return;
+
                     const headers = rows[headerIdx].map(h => String(h).trim());
                     const idxCust = headers.findIndex(h => h.includes('客户名称'));
                     const idxProd = headers.findIndex(h => h.includes('产品名称'));
                     const idxHist = headers.findIndex(h => h.includes('已消减'));
                     const idxTarget = headers.findIndex(h => h.includes('计划收编') || h.includes('Target'));
-                    sheetDebug.headers = headers;
-                    sheetDebug.indexes = { idxCust, idxProd, idxHist, idxTarget };
-                    
-                    if (idxCust === -1 || idxProd === -1 || idxTarget === -1) {
-                        sheetDebug.skipped = true;
-                        sheetDebug.reason = 'required column index missing';
-                        restoreDebug.sheets.push(sheetDebug);
-                        eosWarn('restore sheet skipped', sheetDebug);
-                        return;
-                    }
-                    
+                    if (idxCust === -1 || idxProd === -1 || idxTarget === -1) return;
+
+                    sheetsFound++;
+
                     const isGeneratedExportColumn = (header) => {
                         const text = String(header || '').trim();
                         return !text
@@ -1141,120 +1712,236 @@ ES20251020000619		运营商	北部非洲地区部	埃及代表处	埃及	EG-Egyp
                             }
                         }
                     });
-                    sheetDebug.fileCustomCols = fileCustomCols.map(c => ({ name: c.name, colIdx: c.colIdx, mappedId: c.mappedId, source: c.source }));
-                    if (!fileCustomCols.length) {
-                        eosWarn('restore custom column detection empty', {
-                            sheetName,
-                            idxHist,
-                            idxTarget,
-                            headers,
-                            note: 'No custom columns found between 已消减->Target or Target->自动/预计完成率/状态.'
-                        });
-                    }
-                    
-                    if (!savedInputData[view]) savedInputData[view] = {};
-                    
+
                     let lastNonEmptyCustomer = '';
                     for (let i = headerIdx + 1; i < rows.length; i++) {
                         let row = rows[i];
                         if (!row || row.length === 0) continue;
                         const rawCustomer = row[idxCust] !== undefined ? String(row[idxCust]).trim() : '';
                         if (rawCustomer) lastNonEmptyCustomer = rawCustomer;
-                        if (!rawCustomer && !lastNonEmptyCustomer) {
-                            sheetDebug.skippedNoCustomer++;
-                            if (restoreDebug.skippedSamples.length < 20) {
-                                restoreDebug.skippedSamples.push({
-                                    sheetName,
-                                    rowNumber: i + 1,
-                                    reason: 'empty customer cell',
-                                    product: row[idxProd],
-                                    wouldUsePreviousCustomer: lastNonEmptyCustomer || '(none)'
-                                });
-                            }
-                            continue;
-                        }
-                        
                         let cName = rawCustomer || lastNonEmptyCustomer;
                         let pName = String(row[idxProd]).trim();
-                        if (!cName || !pName) {
-                            sheetDebug.skippedNoProduct++;
-                            if (restoreDebug.skippedSamples.length < 20) {
-                                restoreDebug.skippedSamples.push({ sheetName, rowNumber: i + 1, reason: 'empty customer or product', customer: cName, product: pName });
-                            }
-                            continue;
-                        }
-                        
+                        if (!cName || !pName) continue;
+
                         let key = cName + '|||' + pName;
-                        if (!savedInputData[view][key]) savedInputData[view][key] = {};
-                        
                         let tVal = parseInt(row[idxTarget]) || 0;
-                        savedInputData[view][key]['target'] = tVal;
-                        
+                        if (!parsedDataByView[view][key]) {
+                            parsedDataByView[view][key] = { customer: cName, product: pName, target: tVal };
+                        } else {
+                            parsedDataByView[view][key].target = tVal;
+                        }
+
                         fileCustomCols.forEach(fc => {
                             let val = row[fc.colIdx] !== undefined ? String(row[fc.colIdx]) : '';
-                            savedInputData[view][key][fc.mappedId] = val;
+                            parsedDataByView[view][key][fc.mappedId] = val;
                         });
-                        
-                        restoredCount++;
-                        sheetDebug.restoredRows++;
-                        const matchedCurrentBase = expectedKeysByView[view].has(key);
-                        if (matchedCurrentBase) sheetDebug.matchedCurrentBase++;
-                        else {
-                            sheetDebug.unmatchedCurrentBase++;
-                            if (restoreDebug.unmatchedSamples.length < 20) {
-                                restoreDebug.unmatchedSamples.push({ sheetName, rowNumber: i + 1, view, key, target: tVal });
-                            }
-                        }
-                        if (restoreDebug.restoredSamples.length < 20) {
-                            restoreDebug.restoredSamples.push({ sheetName, rowNumber: i + 1, view, key, target: tVal, matchedCurrentBase });
-                        }
-                        if (sheetDebug.rowSamples.length < 12) {
-                            sheetDebug.rowSamples.push({ rowNumber: i + 1, key, target: tVal, matchedCurrentBase });
-                        }
                     }
-                    restoreDebug.sheets.push(sheetDebug);
-                    eosLog('restore sheet parsed', sheetDebug);
                 });
-                
-                if (newCustomColsAdded) {
-                    localStorage.setItem('eos_custom_columns_v3', JSON.stringify(customColumns));
-                    renderColumnManager();
-                }
-                localStorage.setItem('eos_saved_row_data', JSON.stringify(savedInputData));
-                restoreDebug.restoredCount = restoredCount;
-                restoreDebug.savedInputKeyCountsAfter = {
-                    '26-27': Object.keys(savedInputData['26-27'] || {}).length,
-                    '<=25': Object.keys(savedInputData['<=25'] || {}).length,
-                    'all': Object.keys(savedInputData.all || {}).length
-                };
-                restoreDebug.savedInputSamplesAfter = {
-                    '26-27': Object.entries(savedInputData['26-27'] || {}).slice(0, 8),
-                    '<=25': Object.entries(savedInputData['<=25'] || {}).slice(0, 8),
-                    'all': Object.entries(savedInputData.all || {}).slice(0, 8)
-                };
-                eosLog('restore final summary', restoreDebug);
-                
+
                 document.getElementById('loading').classList.add('d-none');
                 document.getElementById('loading-text').classList.add('d-none');
-                
-                if (restoredCount > 0) {
-                    renderTargetTable();
-                    alert(`✅ 成功回填 ${restoredCount} 条记录的进度！\n[Successfully restored inputs for ${restoredCount} records!]`);
-                } else {
-                    alert('未在文件中找到有效的填报数据，请确认上传的是之前导出的报表。');
+
+                if (sheetsFound === 0) {
+                    alert('未在文件中找到有效的收编填报 Sheet 页，请确认上传的是之前导出的 Excel 报表。');
+                    return;
                 }
-                
+
+                // --- 🌟 进行唯一识别键比对与差异分析 ---
+                const parsedViews = Object.keys(parsedDataByView).filter(v => Object.keys(parsedDataByView[v]).length > 0);
+                let totalMatched = 0;
+                let baselineOnlyList = [];
+                let historyOnlyList = [];
+                let clampedList = [];
+                const matchedDataByView = { '26-27': {}, '<=25': {}, 'all': {} };
+
+                const viewLabelMap = { '26-27': '2026-2027年', '<=25': '≤2025年', 'all': '全部年份' };
+
+                parsedViews.forEach(view => {
+                    const baseMap = baselineGroupedMap[view];
+                    const excelMap = parsedDataByView[view];
+
+                    // 1. 检查历史报表中的项
+                    Object.keys(excelMap).forEach(key => {
+                        const item = excelMap[key];
+                        if (baseMap.has(key)) {
+                            totalMatched++;
+                            matchedDataByView[view][key] = item;
+                            const baseRec = baseMap.get(key);
+                            if (item.target > baseRec.current) {
+                                clampedList.push({
+                                    view: viewLabelMap[view] || view,
+                                    customer: item.customer,
+                                    product: item.product,
+                                    historyTarget: item.target,
+                                    currentStock: baseRec.current
+                                });
+                            }
+                        } else {
+                            historyOnlyList.push({
+                                view: viewLabelMap[view] || view,
+                                customer: item.customer,
+                                product: item.product,
+                                target: item.target
+                            });
+                        }
+                    });
+
+                    // 2. 检查基线中有但历史报表中没有的项
+                    for (let [key, baseRec] of baseMap.entries()) {
+                        if (!excelMap[key]) {
+                            baselineOnlyList.push({
+                                view: viewLabelMap[view] || view,
+                                customer: baseRec.customer,
+                                product: baseRec.product,
+                                current: baseRec.current,
+                                baseline: baseRec.baseline
+                            });
+                        }
+                    }
+                });
+
+                const payload = {
+                    parsedDataByView: matchedDataByView,
+                    newCustomColsAdded: newCustomColsAdded,
+                    matchedCount: totalMatched
+                };
+
+                // --- 🌟 若 100% 完全匹配且无超额截断，则直接提交 ---
+                if (baselineOnlyList.length === 0 && historyOnlyList.length === 0 && clampedList.length === 0 && totalMatched > 0) {
+                    commitRestoreData(payload, false);
+                    return;
+                }
+
+                // --- 🌟 存在差异，弹出差异比对与强制导入确认对话框 ---
+                stagedRestorePayload = payload;
+
+                const diffStatBadges = document.getElementById('diffStatBadges');
+                diffStatBadges.innerHTML = `
+                    <div class="col-6 col-md-3">
+                        <div class="p-2 border rounded bg-success-subtle text-success border-success">
+                            <div class="small fw-bold">🟢 匹配可回填</div>
+                            <div class="fs-4 fw-bold">${totalMatched} <span class="fs-6 fw-normal">项</span></div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-2 border rounded ${baselineOnlyList.length > 0 ? 'bg-danger-subtle text-danger border-danger' : 'bg-light text-muted'}">
+                            <div class="small fw-bold">🔴 基线新增/未填报</div>
+                            <div class="fs-4 fw-bold">${baselineOnlyList.length} <span class="fs-6 fw-normal">项</span></div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-2 border rounded ${historyOnlyList.length > 0 ? 'bg-secondary-subtle text-secondary border-secondary' : 'bg-light text-muted'}">
+                            <div class="small fw-bold">⚪ 历史多余/基线无</div>
+                            <div class="fs-4 fw-bold">${historyOnlyList.length} <span class="fs-6 fw-normal">项</span></div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-2 border rounded ${clampedList.length > 0 ? 'bg-warning-subtle text-warning border-warning' : 'bg-light text-muted'}">
+                            <div class="small fw-bold">🟠 存量缩减/需截断</div>
+                            <div class="fs-4 fw-bold">${clampedList.length} <span class="fs-6 fw-normal">项</span></div>
+                        </div>
+                    </div>
+                `;
+
+                let sectionsHtml = '';
+
+                if (baselineOnlyList.length > 0) {
+                    sectionsHtml += `
+                        <div class="card mb-3 border-danger">
+                            <div class="card-header bg-danger text-white py-2 fw-bold d-flex justify-content-between align-items-center">
+                                <span>🔴 当前基线存在，但历史报表中缺失 (${baselineOnlyList.length} 项)</span>
+                                <small class="fw-normal">导入后将保持 0 / 空白，需手动补填</small>
+                            </div>
+                            <div class="card-body p-2" style="max-height: 150px; overflow-y: auto;">
+                                <table class="table table-sm table-striped mb-0 small">
+                                    <thead><tr><th>视图</th><th>客户名称</th><th>产品名称</th><th>当前存量</th></tr></thead>
+                                    <tbody>
+                                        ${baselineOnlyList.map(item => `
+                                            <tr>
+                                                <td><span class="badge bg-secondary">${escapeHtml(item.view)}</span></td>
+                                                <td class="fw-bold">${escapeHtml(item.customer)}</td>
+                                                <td>${escapeHtml(item.product)}</td>
+                                                <td class="text-danger fw-bold">${item.current}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                if (historyOnlyList.length > 0) {
+                    sectionsHtml += `
+                        <div class="card mb-3 border-secondary">
+                            <div class="card-header bg-secondary text-white py-2 fw-bold d-flex justify-content-between align-items-center">
+                                <span>⚪ 历史报表存在，但当前基线中已无此项 (${historyOnlyList.length} 项)</span>
+                                <small class="fw-normal">将被自动跳过，不导入当前画靶表</small>
+                            </div>
+                            <div class="card-body p-2" style="max-height: 150px; overflow-y: auto;">
+                                <table class="table table-sm table-striped mb-0 small">
+                                    <thead><tr><th>视图</th><th>客户名称</th><th>产品名称</th><th>历史 Target</th></tr></thead>
+                                    <tbody>
+                                        ${historyOnlyList.map(item => `
+                                            <tr>
+                                                <td><span class="badge bg-secondary">${escapeHtml(item.view)}</span></td>
+                                                <td class="fw-bold text-muted">${escapeHtml(item.customer)}</td>
+                                                <td class="text-muted">${escapeHtml(item.product)}</td>
+                                                <td>${item.target}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                if (clampedList.length > 0) {
+                    sectionsHtml += `
+                        <div class="card mb-3 border-warning">
+                            <div class="card-header bg-warning text-dark py-2 fw-bold d-flex justify-content-between align-items-center">
+                                <span>🟠 历史填写的 Target 超过当前剩余存量 (${clampedList.length} 项)</span>
+                                <small class="fw-normal">导入时将自动截断并限制为当前存量上限</small>
+                            </div>
+                            <div class="card-body p-2" style="max-height: 150px; overflow-y: auto;">
+                                <table class="table table-sm table-striped mb-0 small">
+                                    <thead><tr><th>视图</th><th>客户名称</th><th>产品名称</th><th>历史 Target</th><th>当前存量(上限)</th></tr></thead>
+                                    <tbody>
+                                        ${clampedList.map(item => `
+                                            <tr>
+                                                <td><span class="badge bg-secondary">${escapeHtml(item.view)}</span></td>
+                                                <td class="fw-bold">${escapeHtml(item.customer)}</td>
+                                                <td>${escapeHtml(item.product)}</td>
+                                                <td class="text-danger fw-bold text-decoration-line-through">${item.historyTarget}</td>
+                                                <td class="text-success fw-bold">→ 修正为 ${item.currentStock}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                document.getElementById('diffSectionsContainer').innerHTML = sectionsHtml || '<div class="text-success text-center py-2">无额外异常项</div>';
+
+                if (!restoreDiffModalInstance) {
+                    restoreDiffModalInstance = new bootstrap.Modal(document.getElementById('restoreDiffModal'));
+                }
+                restoreDiffModalInstance.show();
+
             } catch (err) {
                 console.error(err);
                 document.getElementById('loading').classList.add('d-none');
                 document.getElementById('loading-text').classList.add('d-none');
-                alert('读取文件失败，请重试。');
+                alert('读取文件失败，请重试。' + (err.message ? ` (${err.message})` : ''));
             }
         };
         input.click();
     }
 
-    // ==========================================
+// ==========================================
     // 🌟 一键导出当前统计模式 (包含漏填拦截校验)
     // ==========================================
     async function exportTargetDataExcel() {

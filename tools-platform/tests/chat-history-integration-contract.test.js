@@ -51,6 +51,8 @@ test('chat history center is a valid bundled platform-only HTML tool', () => {
     assert.match(js, /setupAnalyticsLazyLoading/);
     assert.match(js, /setupResizableTableColumns/);
     assert.match(js, /chat_history_analytics_column_widths_v1/);
+    assert.match(js, /group-name-cell/);
+    assert.match(js, /ANALYTICS_COLUMN_MIN_WIDTHS/);
     assert.match(js, /offset: ANALYTICS_PAGE_SIZE|limit: ANALYTICS_PAGE_SIZE/);
     assert.match(js, /\/api\/chat-history\/stats\/refresh/);
     assert.match(js, /正在读取会话概览/);
@@ -59,4 +61,6 @@ test('chat history center is a valid bundled platform-only HTML tool', () => {
     const css = fs.readFileSync(path.join(sourceDir, 'chat-history-center/chat-viewer.css'), 'utf8');
     assert.match(css, /max-width:1600px/);
     assert.match(css, /column-resize-handle/);
+    assert.match(css, /group-name-link\{display:block;width:100%;max-width:100%;overflow:hidden;text-overflow:ellipsis/);
+    assert.match(css, /resizable-table td\{min-width:0;overflow:hidden;text-overflow:ellipsis/);
 });

@@ -18,6 +18,7 @@ const { getDataDir } = require('../models/store');
 const { requireAdmin } = require('../middleware/auth');
 const customToolI18nGenerator = require('../../scripts/generate-custom-tool-i18n');
 const customToolExportService = require('../models/custom-tool-export-service');
+const snapshotsRepo = require('../models/custom-tools-snapshots-repository');
 
 const builtinToolsSourceDir = path.join(__dirname, '../builtin-tools');
 const backupUpload = multer({
@@ -399,12 +400,6 @@ router.put('/:slug/state', async (req, res) => {
     }
 });
 
-router.get('/:slug/snapshots', async (req, res) => {
-    const state = await repo.getToolState(req.params.slug);
-    if (!state) return res.status(404).json({ error: '自定义工具不存在' });
-    res.json((state.snapshots || []).map(({ data, ...item }) => item));
-});
-
 router.post('/:slug/state/restore', async (req, res) => {
     const restored = await repo.restoreToolState(req.params.slug, req.body && req.body.snapshotId);
     if (restored === null) return res.status(404).json({ error: '自定义工具不存在' });
@@ -496,6 +491,67 @@ router.delete('/:slug', async (req, res) => {
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message || '删除自定义工具失败' });
+    }
+});
+
+// ==========================================
+// 📸 自定义工具快照 API (Snapshots)
+// ==========================================
+router.get('/:slug/snapshots', async (req, res) => {
+    try {
+        const includePayload = req.query.full === '1' || req.query.includePayload === 'true';
+        const items = await snapshotsRepo.listSnapshots(req.params.slug, { includePayload });
+        res.json({ success: true, items });
+    } catch (err) {
+        console.error('[custom-tools] list snapshots error:', err);
+        res.status(500).json({ error: err.message || '获取快照列表失败' });
+    }
+});
+
+router.get('/:slug/snapshots/:id', async (req, res) => {
+    try {
+        const item = await snapshotsRepo.getSnapshot(req.params.slug, req.params.id);
+        if (!item) return res.status(404).json({ error: '未找到指定快照' });
+        res.json({ success: true, item });
+    } catch (err) {
+        console.error('[custom-tools] get snapshot error:', err);
+        res.status(500).json({ error: err.message || '读取快照失败' });
+    }
+});
+
+router.post('/:slug/snapshots', async (req, res) => {
+    try {
+        const { name, summary, payload } = req.body || {};
+        if (!payload) return res.status(400).json({ error: '缺少快照数据 (payload)' });
+        const item = await snapshotsRepo.addSnapshot(req.params.slug, { name, summary, payload });
+        res.status(201).json({ success: true, item });
+    } catch (err) {
+        console.error('[custom-tools] add snapshot error:', err);
+        res.status(500).json({ error: err.message || '保存快照失败' });
+    }
+});
+
+router.put('/:slug/snapshots/:id', async (req, res) => {
+    try {
+        const { name } = req.body || {};
+        if (!name) return res.status(400).json({ error: '缺少快照名称' });
+        const item = await snapshotsRepo.updateSnapshotName(req.params.slug, req.params.id, name);
+        if (!item) return res.status(404).json({ error: '未找到指定快照' });
+        res.json({ success: true, item });
+    } catch (err) {
+        console.error('[custom-tools] update snapshot error:', err);
+        res.status(500).json({ error: err.message || '更新快照失败' });
+    }
+});
+
+router.delete('/:slug/snapshots/:id', async (req, res) => {
+    try {
+        const success = await snapshotsRepo.deleteSnapshot(req.params.slug, req.params.id);
+        if (!success) return res.status(404).json({ error: '未找到指定快照或删除失败' });
+        res.json({ success: true });
+    } catch (err) {
+        console.error('[custom-tools] delete snapshot error:', err);
+        res.status(500).json({ error: err.message || '删除快照失败' });
     }
 });
 

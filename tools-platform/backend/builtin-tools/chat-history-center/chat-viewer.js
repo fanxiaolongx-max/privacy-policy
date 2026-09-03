@@ -78,6 +78,12 @@
         groups: [270, 105, 115, 115, 110, 205, 120, 155, 110],
         groupMembers: [190, 210, 185, 105, 115, 115, 140, 155]
     };
+    const ANALYTICS_COLUMN_MIN_WIDTHS = {
+        directory: [110, 100, 110, 90, 85, 100, 120, 96],
+        people: [120, 80, 80, 80, 95, 105, 120],
+        groups: [130, 85, 90, 90, 90, 130, 95, 120, 96],
+        groupMembers: [120, 140, 140, 85, 95, 95, 110, 120]
+    };
     let toastTimer;
     let conversationDebounce;
     let peopleDebounce;
@@ -410,10 +416,12 @@
     function setupResizableTableColumns(head, tableName) {
         if (!ANALYTICS_COLUMN_WIDTHS[tableName] || head.dataset.resizableReady === '1') return;
         head.dataset.resizableReady = '1';
+        head.closest('table')?.classList.add('resizable-table');
         const saved = readColumnWidths()[tableName] || {};
         [...head.children].forEach((th, index) => {
             const defaultWidth = ANALYTICS_COLUMN_WIDTHS[tableName][index] || 110;
-            const initialWidth = Math.max(70, Math.min(520, Number(saved[index]) || defaultWidth));
+            const minimumWidth = ANALYTICS_COLUMN_MIN_WIDTHS[tableName]?.[index] || 70;
+            const initialWidth = Math.max(minimumWidth, Math.min(520, Number(saved[index]) || defaultWidth));
             th.style.width = `${initialWidth}px`;
             th.style.minWidth = `${initialWidth}px`;
             const handle = document.createElement('span');
@@ -431,7 +439,7 @@
                 const startWidth = th.getBoundingClientRect().width;
                 document.body.classList.add('resizing-table-column');
                 const move = moveEvent => {
-                    const width = Math.max(70, Math.min(520, startWidth + moveEvent.clientX - startX));
+                    const width = Math.max(minimumWidth, Math.min(520, startWidth + moveEvent.clientX - startX));
                     th.style.width = `${width}px`;
                     th.style.minWidth = `${width}px`;
                     applyResizableTableWidth(tableName);
@@ -463,7 +471,7 @@
                 const step = event.shiftKey ? 25 : 10;
                 const direction = event.key === 'ArrowRight' ? 1 : -1;
                 const current = Number.parseFloat(th.style.width) || defaultWidth;
-                const width = Math.max(70, Math.min(520, current + direction * step));
+                const width = Math.max(minimumWidth, Math.min(520, current + direction * step));
                 th.style.width = `${width}px`;
                 th.style.minWidth = `${width}px`;
                 saveColumnWidth(tableName, index, width);
@@ -1363,10 +1371,13 @@
             const tr = document.createElement('tr');
             const idTd = document.createElement('td');
             idTd.innerHTML = `<code>${escapeHtml(item.sender_id)}</code>`;
+            idTd.title = item.sender_id || '';
             const nameTd = document.createElement('td');
             nameTd.innerHTML = `<strong>${escapeHtml(item.sender_name)}</strong>`;
+            nameTd.title = item.sender_name || '';
             const aliasTd = document.createElement('td');
             aliasTd.textContent = item.alias_names || '-';
+            aliasTd.title = item.alias_names || '-';
             aliasTd.style.color = 'var(--muted)';
             const convTd = document.createElement('td');
             convTd.textContent = `${formatNumber(item.conversation_count)} 个会话`;
@@ -1453,6 +1464,7 @@
             strong.textContent = `${item.sender_name || '未知'}${item.is_me ? ' （我）' : ''}`;
             const id = document.createElement('small');
             id.textContent = item.sender_id || '-';
+            person.title = `${item.sender_name || '未知'}\n${item.sender_id || '-'}`;
             person.append(strong, id);
             [item.message_count, item.conversation_count, item.active_days, item.average_length, responseLabel(item.average_response_minutes), item.last_message_time || '-'].forEach(value => {
                 const cell = document.createElement('td');
@@ -1490,11 +1502,12 @@
 
             // Name
             const nameTd = document.createElement('td');
+            nameTd.className = 'group-name-cell';
             const link = document.createElement('a');
             link.className = 'group-name-link';
             link.href = 'javascript:void(0)';
             link.textContent = item.display_name || '未命名群聊';
-            link.title = '点击查看该群运营深度分析';
+            link.title = `${item.display_name || '未命名群聊'}\n点击查看该群运营深度分析`;
             link.addEventListener('click', e => {
                 e.preventDefault();
                 openGroupAnalysis(item.conversation_id);
@@ -1527,6 +1540,7 @@
             if (item.top_speaker_name) {
                 const pct = item.message_count > 0 ? Math.round((item.top_speaker_count / item.message_count) * 100) : 0;
                 topTd.innerHTML = `<strong>${escapeHtml(item.top_speaker_name)}</strong> <small style="color:var(--muted)">(${formatNumber(item.top_speaker_count)}条 · ${pct}%)</small>`;
+                topTd.title = `${item.top_speaker_name}\n${formatNumber(item.top_speaker_count)} 条 · ${pct}%`;
             } else {
                 topTd.textContent = '-';
             }
@@ -1710,6 +1724,7 @@
             idSmall.style.display = 'block';
             idSmall.style.color = 'var(--muted)';
             idSmall.style.fontSize = '10px';
+            memberTd.title = `${item.sender_name || '未知'}\n${item.sender_id || '-'}`;
             memberTd.append(strong, idSmall);
 
             // Role badge
