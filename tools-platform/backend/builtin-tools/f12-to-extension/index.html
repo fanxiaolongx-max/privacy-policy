@@ -189,13 +189,11 @@
               <optgroup label="系统内置脚本">
                 <option value="sv-cfc-monitor" selected>SV/CFC 满意度监控（原内置）</option>
                 <option value="exam-question-bank">题库与答题助手</option>
+                <option value="authorized-media-exporter">授权媒体下载脚本生成器</option>
                 <option value="chrome-capture-pro">Chrome Capture Pro 屏幕录制与截图增强版</option>
               </optgroup>
               <optgroup id="serverScriptOptions" label="服务器保存脚本"></optgroup>
             </select>
-            <button id="loadBuiltinBtn" type="button" class="rounded-lg border border-indigo-400/40 bg-indigo-500/15 px-3 py-2 text-xs font-semibold text-indigo-100 transition hover:bg-indigo-500/30">
-              载入脚本
-            </button>
             <button id="newScriptBtn" type="button" class="rounded-lg border border-slate-400/40 bg-slate-500/15 px-3 py-2 text-xs font-semibold text-slate-100 transition hover:bg-slate-500/30">新建</button>
             <button id="saveServerScriptBtn" type="button" class="rounded-lg border border-emerald-400/40 bg-emerald-500/15 px-3 py-2 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-500/30">保存到服务器</button>
           </div>
@@ -246,14 +244,27 @@
           <button id="closeLicenseManagerBtn" type="button" class="rounded-lg bg-slate-700 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-600">关闭</button>
         </div>
       </div>
-      <div class="mb-3 grid gap-2 md:grid-cols-[1fr_auto]">
+      <div class="mb-3 grid gap-2 md:grid-cols-[minmax(180px,0.8fr)_minmax(240px,1.2fr)_auto_auto]">
+        <select id="licenseProductFilter" class="input-field rounded-lg px-3 py-2 text-sm" aria-label="按扩展名称筛选">
+          <option value="">全部扩展</option>
+        </select>
         <input id="licenseSearchInput" type="search" class="input-field rounded-lg px-3 py-2 text-sm" placeholder="搜索扩展名称、备注、License ID 或月份">
+        <select id="licensePageSize" class="input-field rounded-lg px-3 py-2 text-sm" aria-label="每页数量">
+          <option value="10">每页 10 条</option>
+          <option value="20">每页 20 条</option>
+          <option value="50">每页 50 条</option>
+        </select>
         <label class="flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs text-slate-300">
           <input id="showArchivedLicenses" type="checkbox" checked class="accent-indigo-500">显示已归档
         </label>
       </div>
       <div id="licenseManagerStatus" class="mb-2 text-xs text-slate-400"></div>
       <div id="licenseList" class="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1"></div>
+      <div id="licensePagination" class="mt-3 flex items-center justify-between gap-3 border-t border-white/10 pt-3">
+        <button id="licensePrevPage" type="button" class="rounded-lg bg-slate-700 px-3 py-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40">上一页</button>
+        <span id="licensePageInfo" class="text-xs text-slate-300">第 1 / 1 页</span>
+        <button id="licenseNextPage" type="button" class="rounded-lg bg-slate-700 px-3 py-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40">下一页</button>
+      </div>
     </section>
   </div>
 
@@ -276,6 +287,16 @@
         world: 'MAIN',
         includePopup: true,
         manualLaunch: true
+      },
+      'authorized-media-exporter': {
+        file: './authorized-media-exporter.js?v=20260905-01',
+        name: '授权媒体下载脚本生成器',
+        description: '扫描当前页面已直接暴露的视频地址，并生成可审阅的 ffmpeg 批量下载脚本；不解密或绕过 DRM。',
+        matches: '<all_urls>',
+        world: 'MAIN',
+        includePopup: true,
+        manualLaunch: true,
+        runAt: 'document_idle'
       },
       'chrome-capture-pro': {
         type: 'template',
@@ -476,10 +497,8 @@
     async function loadBuiltinScript(scriptId, applyPreset = true) {
       const preset = BUILTIN_SCRIPTS[scriptId];
       if (!preset) throw new Error('未找到所选内置脚本。');
-      const button = document.getElementById('loadBuiltinBtn');
-      const originalText = button.textContent;
-      button.disabled = true;
-      button.textContent = '载入中…';
+      const select = document.getElementById('builtinScriptSelect');
+      select.disabled = true;
       try {
         if (preset.type === 'template' || preset.isFullExtension) {
           document.getElementById('extCode').value = preset.overviewCode || '// 完整扩展工程模板已就绪';
@@ -488,7 +507,6 @@
           await refreshVersionPreview();
           const validation = F12ExtensionPacker.validateOptions(collectOptions());
           renderReport(validation);
-          button.textContent = '已载入';
           return;
         }
         const res = await fetch(preset.file + '?t=' + Date.now());
@@ -501,11 +519,30 @@
         await refreshVersionPreview();
         const validation = F12ExtensionPacker.validateOptions(collectOptions());
         renderReport(validation);
-        button.textContent = '已载入';
       } finally {
-        button.disabled = false;
-        setTimeout(() => { button.textContent = originalText; }, 1200);
+        select.disabled = false;
       }
+    }
+
+    async function loadSelectedScript(selected = document.getElementById('builtinScriptSelect').value) {
+      if (selected === '__new__') {
+        startNewScript();
+        return;
+      }
+      if (selected.startsWith('server:')) {
+        const scriptId = selected.slice('server:'.length);
+        const script = serverScripts.find(item => item.id === scriptId);
+        if (!script) throw new Error('服务器脚本不存在，请刷新页面');
+        document.getElementById('extCode').value = script.code;
+        applyScriptMetadata(script);
+        setActiveScript('server', script.id);
+        await refreshVersionPreview();
+        renderReport(F12ExtensionPacker.validateOptions(collectOptions()));
+        setScriptLibraryStatus(`已自动载入服务器脚本：${script.name}`, 'text-emerald-300');
+        return;
+      }
+      await loadBuiltinScript(selected);
+      setScriptLibraryStatus('已自动载入系统内置脚本。', 'text-emerald-300');
     }
 
     window.addEventListener('DOMContentLoaded', async () => {
@@ -523,27 +560,9 @@
       }
     });
 
-    document.getElementById('loadBuiltinBtn').addEventListener('click', async () => {
+    document.getElementById('builtinScriptSelect').addEventListener('change', async event => {
       try {
-        const selected = document.getElementById('builtinScriptSelect').value;
-        if (selected === '__new__') {
-          startNewScript();
-          return;
-        }
-        if (selected.startsWith('server:')) {
-          const scriptId = selected.slice('server:'.length);
-          const script = serverScripts.find(item => item.id === scriptId);
-          if (!script) throw new Error('服务器脚本不存在，请刷新页面');
-          document.getElementById('extCode').value = script.code;
-          applyScriptMetadata(script);
-          setActiveScript('server', script.id);
-          await refreshVersionPreview();
-          renderReport(F12ExtensionPacker.validateOptions(collectOptions()));
-          setScriptLibraryStatus(`已载入服务器脚本：${script.name}`, 'text-emerald-300');
-          return;
-        }
-        await loadBuiltinScript(selected);
-        setScriptLibraryStatus('已载入系统内置脚本。', 'text-emerald-300');
+        await loadSelectedScript(event.target.value);
       } catch (error) {
         alert('载入脚本失败: ' + error.message);
       }
@@ -689,6 +708,7 @@
     const licenseList = document.getElementById('licenseList');
     const licenseManagerStatus = document.getElementById('licenseManagerStatus');
     let managedLicenses = [];
+    const licenseManagerState = { page: 1, pageSize: 10, total: 0, totalPages: 1, products: [], productId: '', loading: false };
 
     function escapeLicenseHtml(value) {
       return String(value ?? '').replace(/[&<>"']/g, char => ({
@@ -730,14 +750,7 @@
     }
 
     function renderLicenseManager() {
-      const keyword = document.getElementById('licenseSearchInput').value.trim().toLowerCase();
-      const showArchived = document.getElementById('showArchivedLicenses').checked;
-      const records = managedLicenses.filter(record => {
-        if (!showArchived && record.status === 'archived') return false;
-        if (!keyword) return true;
-        return [record.productId, record.label, record.licenseId, record.month, record.status]
-          .some(value => String(value || '').toLowerCase().includes(keyword));
-      });
+      const records = managedLicenses;
       if (!records.length) {
         licenseList.innerHTML = '<div class="rounded-xl border border-white/10 p-8 text-center text-sm text-slate-400">没有符合条件的 License 记录</div>';
         return;
@@ -773,20 +786,84 @@
       }).join('');
     }
 
-    async function refreshLicenseManager() {
+    function renderLicenseProductFilter() {
+      const select = document.getElementById('licenseProductFilter');
+      const currentName = document.getElementById('extName').value.trim();
+      select.replaceChildren();
+      const allOption = document.createElement('option');
+      allOption.value = '';
+      allOption.textContent = '全部扩展';
+      select.appendChild(allOption);
+      const usedNames = new Set();
+      const appendGroup = (label, names) => {
+        const uniqueNames = names
+          .map(name => String(name || '').trim())
+          .filter(name => name && !usedNames.has(name));
+        uniqueNames.forEach(name => usedNames.add(name));
+        if (!uniqueNames.length) return;
+        const group = document.createElement('optgroup');
+        group.label = label;
+        uniqueNames.forEach(productId => {
+          const option = document.createElement('option');
+          option.value = productId;
+          option.textContent = productId === currentName ? `${productId}（当前选择）` : productId;
+          group.appendChild(option);
+        });
+        select.appendChild(group);
+      };
+      appendGroup('当前编辑', [currentName]);
+      appendGroup('系统内置脚本', Object.values(BUILTIN_SCRIPTS).map(script => script.name));
+      appendGroup('服务器保存脚本', serverScripts.map(script => script.name));
+      appendGroup('License 历史扩展', licenseManagerState.products);
+      select.value = licenseManagerState.productId;
+    }
+
+    function renderLicensePagination() {
+      document.getElementById('licensePageInfo').textContent = `第 ${licenseManagerState.page} / ${licenseManagerState.totalPages} 页`;
+      document.getElementById('licensePrevPage').disabled = licenseManagerState.loading || licenseManagerState.page <= 1;
+      document.getElementById('licenseNextPage').disabled = licenseManagerState.loading || licenseManagerState.page >= licenseManagerState.totalPages;
+    }
+
+    async function refreshLicenseManager({ resetPage = false } = {}) {
+      if (resetPage) licenseManagerState.page = 1;
+      licenseManagerState.loading = true;
       licenseManagerStatus.textContent = '正在读取 License 台账…';
+      renderLicensePagination();
       try {
-        const body = await licenseAdminRequest('/api/custom-tools/f12-to-extension/licenses?includeArchived=1');
+        const params = new URLSearchParams({
+          includeArchived: document.getElementById('showArchivedLicenses').checked ? '1' : '0',
+          page: String(licenseManagerState.page),
+          pageSize: String(licenseManagerState.pageSize)
+        });
+        const keyword = document.getElementById('licenseSearchInput').value.trim();
+        if (licenseManagerState.productId) params.set('productId', licenseManagerState.productId);
+        if (keyword) params.set('q', keyword);
+        const body = await licenseAdminRequest(`/api/custom-tools/f12-to-extension/licenses?${params}`);
         managedLicenses = body.licenses || [];
-        licenseManagerStatus.textContent = `共 ${managedLicenses.length} 条新版 License 记录`;
+        licenseManagerState.page = Number(body.page) || 1;
+        licenseManagerState.pageSize = Number(body.pageSize) || licenseManagerState.pageSize;
+        licenseManagerState.total = Number(body.total) || 0;
+        licenseManagerState.totalPages = Number(body.totalPages) || 1;
+        licenseManagerState.products = Array.isArray(body.products) ? body.products : [];
+        const filterText = licenseManagerState.productId || '全部扩展';
+        licenseManagerStatus.textContent = `共 ${licenseManagerState.total} 条记录 · 当前筛选：${filterText}`;
+        renderLicenseProductFilter();
         renderLicenseManager();
       } catch (error) {
         licenseManagerStatus.textContent = `读取失败：${error.message}`;
         licenseList.innerHTML = '';
+      } finally {
+        licenseManagerState.loading = false;
+        renderLicensePagination();
       }
     }
 
     document.getElementById('manageLicensesBtn').addEventListener('click', async () => {
+      const currentProductId = document.getElementById('extName').value.trim();
+      licenseManagerState.productId = currentProductId;
+      licenseManagerState.page = 1;
+      licenseManagerState.pageSize = Number(document.getElementById('licensePageSize').value) || 10;
+      document.getElementById('licenseSearchInput').value = '';
       licenseManager.classList.remove('hidden');
       licenseManager.classList.add('flex');
       await refreshLicenseManager();
@@ -796,8 +873,30 @@
       licenseManager.classList.remove('flex');
     });
     document.getElementById('refreshLicensesBtn').addEventListener('click', refreshLicenseManager);
-    document.getElementById('licenseSearchInput').addEventListener('input', renderLicenseManager);
-    document.getElementById('showArchivedLicenses').addEventListener('change', renderLicenseManager);
+    document.getElementById('licenseProductFilter').addEventListener('change', event => {
+      licenseManagerState.productId = event.target.value;
+      refreshLicenseManager({ resetPage: true });
+    });
+    let licenseSearchTimer = null;
+    document.getElementById('licenseSearchInput').addEventListener('input', () => {
+      clearTimeout(licenseSearchTimer);
+      licenseSearchTimer = setTimeout(() => refreshLicenseManager({ resetPage: true }), 260);
+    });
+    document.getElementById('showArchivedLicenses').addEventListener('change', () => refreshLicenseManager({ resetPage: true }));
+    document.getElementById('licensePageSize').addEventListener('change', event => {
+      licenseManagerState.pageSize = Number(event.target.value) || 10;
+      refreshLicenseManager({ resetPage: true });
+    });
+    document.getElementById('licensePrevPage').addEventListener('click', () => {
+      if (licenseManagerState.page <= 1 || licenseManagerState.loading) return;
+      licenseManagerState.page -= 1;
+      refreshLicenseManager();
+    });
+    document.getElementById('licenseNextPage').addEventListener('click', () => {
+      if (licenseManagerState.page >= licenseManagerState.totalPages || licenseManagerState.loading) return;
+      licenseManagerState.page += 1;
+      refreshLicenseManager();
+    });
 
     licenseList.addEventListener('click', async event => {
       const button = event.target.closest('[data-license-action]');

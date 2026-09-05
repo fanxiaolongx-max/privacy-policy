@@ -78,6 +78,12 @@ test('chat history imports, searches, preserves personal state and isolates tena
     const messages = await repo.listMessages(imported.conversationId, 'alice', { limit: 20 });
     assert.equal(messages.items.length, 3);
     assert.equal(messages.items[0].content, '你好，这是第一条\n这是第二行');
+    const newestMessagePage = await repo.listMessages(imported.conversationId, 'alice', { limit: 2 });
+    assert.equal(newestMessagePage.items.length, 2);
+    assert.equal(newestMessagePage.hasMore, true);
+    const olderMessagePage = await repo.listMessages(imported.conversationId, 'alice', { limit: 2, before: newestMessagePage.nextBefore });
+    assert.equal(olderMessagePage.items.length, 1);
+    assert.equal(olderMessagePage.hasMore, false);
     const favoriteKey = messages.items[0].stable_key;
     await repo.setFavorite('alice', favoriteKey, true);
     await repo.setPinned('alice', imported.conversationId, true);
@@ -88,6 +94,14 @@ test('chat history imports, searches, preserves personal state and isolates tena
     const search = await repo.searchMessages('alice', { keyword: '项目已经', favorites: '' });
     assert.equal(search.total, 1);
     assert.equal(search.items[0].sender_id, 'zhang001');
+    const senderSearch = await repo.searchMessages('alice', { senderId: 'zhang001' });
+    assert.equal(senderSearch.total, 2);
+    assert.equal(senderSearch.items.every(item => item.sender_id === 'zhang001'), true);
+    const firstSenderSearchPage = await repo.searchMessages('alice', { senderId: 'zhang001', limit: 1, offset: 0 });
+    const secondSenderSearchPage = await repo.searchMessages('alice', { senderId: 'zhang001', limit: 1, offset: 1 });
+    assert.equal(firstSenderSearchPage.items.length, 1);
+    assert.equal(secondSenderSearchPage.items.length, 1);
+    assert.notEqual(firstSenderSearchPage.items[0].id, secondSenderSearchPage.items[0].id);
     const favoriteSearch = await repo.searchMessages('alice', { favorites: '1' });
     assert.equal(favoriteSearch.total, 1);
 
@@ -107,6 +121,16 @@ test('chat history imports, searches, preserves personal state and isolates tena
     assert.equal(overview.summary.identified_messages, 4);
     assert.equal(overview.summary.unidentified_messages, 0);
     assert.equal(overview.summary.recognition_rate, '100.0%');
+
+    const relationshipGraph = await repo.getRelationshipGraph('alice');
+    assert.equal(relationshipGraph.mode, 'chat');
+    assert.equal(relationshipGraph.configured, true);
+    assert.equal(relationshipGraph.nodes.find(node => node.id === 'chat-root').senderId, 'my001');
+    assert.equal(relationshipGraph.stats.conversations, 1);
+    assert.equal(relationshipGraph.stats.people, 1);
+    assert.equal(relationshipGraph.nodes.some(node => node.type === 'chatConversation' && node.conversationType === 'single'), true);
+    assert.equal(relationshipGraph.nodes.some(node => node.type === 'chatPerson' && node.senderId === 'zhang001'), true);
+    assert.equal(relationshipGraph.edges.some(edge => edge.source === 'chat-root' && edge.activity > 0), true);
 
     await repo.invalidateAnalyticsCache();
     const uncachedOverview = await repo.getOverviewStats('alice');

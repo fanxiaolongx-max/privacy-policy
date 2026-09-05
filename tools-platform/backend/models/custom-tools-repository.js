@@ -43,6 +43,14 @@ function createSlug(name, existingSlugs = new Set()) {
     return slug;
 }
 
+function latestTimestampValue(...values) {
+    const valid = values
+        .map(value => ({ value, timestamp: Date.parse(value) }))
+        .filter(item => Number.isFinite(item.timestamp));
+    if (!valid.length) return values.find(Boolean) || null;
+    return valid.reduce((latest, item) => item.timestamp > latest.timestamp ? item : latest).value;
+}
+
 function listToolDirs() {
     ensureCustomToolsDir();
     return fs.readdirSync(getCustomToolsDir(), { withFileTypes: true })
@@ -57,6 +65,11 @@ function rowToTool(row) {
         if (Array.isArray(parsed)) tags = parsed;
     } catch (_) {}
     const i18nFallback = customToolI18nDefaults[row.slug] || {};
+    const runtimeManifest = readToolManifest(row.slug);
+    const builtIn = fs.existsSync(path.join(BUILTIN_TOOLS_DIR, row.slug, TOOL_MANIFEST_FILE))
+        || runtimeManifest?.builtIn === true
+        || runtimeManifest?.system?.managedBy === 'tools-platform';
+    const updatedAt = latestTimestampValue(row.updated_at, runtimeManifest?.tool?.updatedAt);
     return {
         slug: row.slug,
         name: row.name,
@@ -68,8 +81,9 @@ function rowToTool(row) {
         href: row.href,
         filePath: row.file_path,
         publicAccess: Number(row.public_access || 0) === 1,
+        builtIn,
         createdAt: row.created_at,
-        updatedAt: row.updated_at
+        updatedAt
     };
 }
 
@@ -292,6 +306,23 @@ async function updateToolName(slug, value) {
         const previousManifest = readToolManifest(slug);
         writeToolManifest(tool, { history: previousManifest && previousManifest.history });
         return tool;
+    });
+}
+
+async function markToolsUpdated(slugValues, updatedAt = new Date().toISOString()) {
+    const slugs = [...new Set((Array.isArray(slugValues) ? slugValues : [])
+        .map(normalizeSlug)
+        .filter(Boolean))];
+    if (!slugs.length) return [];
+    return withRegistryMutation(async () => {
+        await ensureRegistryReady();
+        const placeholders = slugs.map(() => '?').join(',');
+        await run(
+            `UPDATE custom_tools SET updated_at = ? WHERE slug IN (${placeholders})`,
+            [updatedAt, ...slugs]
+        );
+        await syncLegacyRegistryMirror();
+        return (await listTools()).filter(tool => slugs.includes(tool.slug));
     });
 }
 
@@ -770,6 +801,7 @@ module.exports = {
     createTool,
     updateToolAccess,
     updateToolName,
+    markToolsUpdated,
     getToolState,
     saveToolState,
     restoreToolState,

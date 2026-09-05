@@ -166,12 +166,16 @@ router.post('/f12-to-extension/version/reserve', requireAdmin, (req, res) => {
 
 router.get('/f12-to-extension/licenses', requireAdmin, (req, res) => {
     try {
-        const licenses = f12LicenseRegistry.listRecords({
+        const result = f12LicenseRegistry.queryRecords({
             includeArchived: req.query.includeArchived !== '0',
-            productId: req.query.productId
+            productId: req.query.productId,
+            q: req.query.q,
+            page: req.query.page,
+            pageSize: req.query.pageSize
         });
+        const { items, ...pagination } = result;
         res.setHeader('Cache-Control', 'no-store');
-        res.json({ success: true, licenses });
+        res.json({ success: true, licenses: items, ...pagination });
     } catch (error) {
         res.status(500).json({ error: error.message || '读取 License 台账失败' });
     }
@@ -302,6 +306,9 @@ router.post('/builtin-sync/apply', requireAdmin, async (req, res) => {
         });
         const changedCount = result.installed.length + result.adopted.length + result.updated.length;
         const reconcile = changedCount ? await repo.reconcileToolsFromDisk() : null;
+        if (changedCount) {
+            await repo.markToolsUpdated([...result.installed, ...result.adopted, ...result.updated]);
+        }
         res.json({ success: result.invalid.length === 0, ...result, reconcile });
     } catch (err) {
         res.status(err.status || 500).json({ error: err.message || '处理系统工具更新失败' });

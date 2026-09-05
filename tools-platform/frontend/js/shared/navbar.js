@@ -63,6 +63,17 @@ const NAV_DEFAULT_SETTINGS = {
 
 const NAV_BOOTSTRAP_CACHE_KEY = 'tools_nav_bootstrap_v3';
 const NAV_BOOTSTRAP_CACHE_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
+const NAV_NEW_BADGE_MAX_AGE = 3 * 24 * 60 * 60 * 1000;
+
+function isRecentlyChangedTool(tool, now = Date.now()) {
+    const timestamps = [tool?.createdAt, tool?.updatedAt]
+        .map(value => Date.parse(value))
+        .filter(Number.isFinite);
+    if (!timestamps.length) return false;
+    const latestTimestamp = Math.max(...timestamps);
+    const age = now - latestTimestamp;
+    return age >= 0 && age < NAV_NEW_BADGE_MAX_AGE;
+}
 
 let navState = {
     settings: JSON.parse(JSON.stringify(NAV_DEFAULT_SETTINGS)),
@@ -1196,7 +1207,9 @@ function getAllNavItems() {
         labelEn: tool.nameEn || '',
         defaultCategory: 'custom',
         match: p => p === tool.href || p.startsWith(`${tool.href}/`),
-        createdAt: tool.createdAt
+        builtIn: typeof tool.builtIn === 'boolean' ? tool.builtIn : undefined,
+        createdAt: tool.createdAt,
+        updatedAt: tool.updatedAt
     }));
     return [...NAV_BUILTIN_LINKS, ...customItems];
 }
@@ -1219,8 +1232,11 @@ function renderNavItem(item, className) {
         ? `<span class="nav-more-item-icon">${item.icon}</span><span class="nav-more-item-label">${label}</span>`
         : `${item.icon} ${label}`;
     
-    if (item.createdAt && (Date.now() - new Date(item.createdAt).getTime() < 3 * 24 * 3600 * 1000)) {
+    if (isRecentlyChangedTool(item)) {
         content += `<span class="new-badge">NEW!</span>`;
+    }
+    if (item.id.startsWith('custom:') && item.builtIn === false) {
+        content += `<span class="tool-kind-badge">${navEscape(navLocaleText('自定义', 'CUSTOM'))}</span>`;
     }
         
     return `<a href="${item.href}" class="${className} ${item.match(path) ? 'active' : ''}" data-nav-item-id="${navEscape(item.id)}" data-nav-search="${navEscape(buildNavSearchIndex(item))}">${content}</a>`;
@@ -4955,7 +4971,7 @@ window.openToolsKnowledgeGraph = function (options = {}) {
             script.addEventListener('load', handleLoad, { once: true });
             script.addEventListener('error', handleError, { once: true });
             if (!existing) {
-                script.src = '/js/shared/ai-knowledge-graph-spatial-themes-v5.js?v=20260814-10';
+                script.src = '/js/shared/ai-knowledge-graph-spatial-themes-v5.js?v=20260905-08';
                 document.body.appendChild(script);
             }
         }).catch(error => {
@@ -4979,7 +4995,7 @@ window.openToolsAIAssistant = function (options = {}) {
             script.addEventListener('load', resolve, { once: true });
             script.addEventListener('error', () => reject(new Error('AI 助手组件加载失败')), { once: true });
             if (!existing) {
-                script.src = '/js/shared/ai-assistant.js?v=20260814-10';
+                script.src = '/js/shared/ai-assistant.js?v=20260905-03';
                 document.body.appendChild(script);
             }
         }).catch(error => {
@@ -5002,7 +5018,7 @@ window.openToolsAIAssistant = function (options = {}) {
     // 确保不重复加载
     if (!document.querySelector('script[src^="/js/shared/ai-assistant.js"]')) {
         const aiScript = document.createElement('script');
-        aiScript.src = '/js/shared/ai-assistant.js?v=20260814-10';
+        aiScript.src = '/js/shared/ai-assistant.js?v=20260905-03';
         document.body.appendChild(aiScript);
     }
 })();

@@ -169,6 +169,9 @@
         .ai-kg-section-title { margin:19px 0 9px; color:#aeb8ce; font-size:11px; font-weight:700; }
         .ai-kg-chunk { margin-bottom:8px; padding:10px; border-radius:10px; background:rgba(31,40,64,.55); border:1px solid rgba(116,130,174,.13); cursor:pointer; }
         .ai-kg-chunk:hover { border-color:rgba(117,134,214,.42); }
+        .ai-kg-chat-open { float:right; color:#91a7ee; font-size:9px; font-weight:700; }
+        .ai-kg-chat-record-btn { width:100%; height:34px; margin-top:12px; border:1px solid rgba(112,139,228,.38); border-radius:9px; background:rgba(72,91,170,.24); color:#cdd7ff; cursor:pointer; font-size:11px; font-weight:700; }
+        .ai-kg-chat-record-btn:hover { background:rgba(83,105,198,.42); border-color:rgba(132,155,245,.58); }
         .ai-kg-chunk.answer-citation { border-color:rgba(151,120,255,.4); background:rgba(79,62,139,.26); }
         .ai-kg-chunk-title { color:#dfe5f2; font-size:11px; font-weight:650; }
         .ai-kg-chunk-lines { color:#71809e; font-size:9px; margin-top:3px; }
@@ -207,6 +210,29 @@
         .ai-kg-loading { position:absolute; inset:0; display:grid; place-items:center; background:rgba(9,14,25,.72); z-index:3; }
         .ai-kg-loading-card { padding:14px 18px; border-radius:12px; background:#151d31; border:1px solid #273452; color:#b9c3d8; font-size:12px; box-shadow:0 16px 44px rgba(0,0,0,.25); }
         .ai-kg-loading[hidden] { display:none; }
+        .ai-kg-chat-dialog { position:absolute; z-index:30; inset:0; display:grid; place-items:center; padding:24px; background:rgba(3,7,16,.68); backdrop-filter:blur(5px); }
+        .ai-kg-chat-dialog[hidden] { display:none; }
+        .ai-kg-chat-window { display:flex; flex-direction:column; width:min(760px,92vw); height:min(720px,84vh); overflow:hidden; border:1px solid rgba(132,151,213,.28); border-radius:16px; background:#111a2b; box-shadow:0 28px 80px rgba(0,0,0,.58); }
+        .ai-kg-chat-head { display:flex; align-items:center; gap:12px; min-height:58px; padding:10px 14px 10px 18px; border-bottom:1px solid rgba(131,148,198,.16); background:rgba(24,34,57,.94); }
+        .ai-kg-chat-head-main { min-width:0; flex:1; }
+        .ai-kg-chat-title { overflow:hidden; color:#f3f6ff; font-size:14px; font-weight:750; text-overflow:ellipsis; white-space:nowrap; }
+        .ai-kg-chat-meta { margin-top:3px; color:#7f8da9; font-size:10px; }
+        .ai-kg-chat-close { width:32px; height:32px; border:0; border-radius:8px; background:rgba(255,255,255,.05); color:#aab5ca; cursor:pointer; font-size:20px; }
+        .ai-kg-chat-search { display:flex; gap:8px; padding:10px 14px; border-bottom:1px solid rgba(131,148,198,.12); background:rgba(17,25,43,.96); }
+        .ai-kg-chat-search input { min-width:0; flex:1; height:34px; padding:0 11px; border:1px solid rgba(128,146,201,.22); border-radius:9px; outline:none; background:rgba(33,44,72,.76); color:#eef2fb; font-size:11px; }
+        .ai-kg-chat-search input:focus { border-color:rgba(116,140,232,.64); box-shadow:0 0 0 3px rgba(91,108,204,.13); }
+        .ai-kg-chat-search button { height:34px; padding:0 13px; border:1px solid rgba(112,139,228,.34); border-radius:9px; background:rgba(72,91,170,.32); color:#d6deff; cursor:pointer; font-size:11px; font-weight:700; }
+        .ai-kg-chat-list { flex:1; overflow:auto; padding:18px; scrollbar-width:thin; }
+        .ai-kg-chat-load-more { display:block; min-width:150px; height:30px; margin:0 auto 16px; padding:0 14px; border:1px solid rgba(117,137,194,.24); border-radius:999px; background:rgba(43,55,86,.58); color:#9eabc4; cursor:pointer; font-size:10px; }
+        .ai-kg-chat-load-more:hover { color:#e2e8f7; border-color:rgba(128,149,220,.48); }
+        .ai-kg-chat-load-more[hidden] { display:none; }
+        .ai-kg-chat-message { display:flex; flex-direction:column; align-items:flex-start; margin:0 0 13px; }
+        .ai-kg-chat-message.mine { align-items:flex-end; }
+        .ai-kg-chat-message-context { max-width:78%; margin:0 4px 4px; color:#74829e; font-size:9px; }
+        .ai-kg-chat-message.mine .ai-kg-chat-message-context { text-align:right; }
+        .ai-kg-chat-bubble { max-width:78%; padding:9px 11px; border:1px solid rgba(124,142,194,.16); border-radius:4px 12px 12px 12px; background:rgba(43,55,86,.72); color:#dce3f1; font-size:11px; line-height:1.58; white-space:pre-wrap; word-break:break-word; user-select:text; }
+        .ai-kg-chat-message.mine .ai-kg-chat-bubble { border-color:rgba(93,134,232,.3); border-radius:12px 4px 12px 12px; background:rgba(62,99,190,.48); color:#f1f5ff; }
+        .ai-kg-chat-dialog-state { display:grid; min-height:100%; place-items:center; padding:24px; color:#8290aa; font-size:12px; text-align:center; }
         @media (max-width: 820px) {
             .ai-kg-header { gap:8px; flex-wrap:wrap; }
             .ai-kg-brand { min-width:170px; }
@@ -234,6 +260,7 @@
             <div class="ai-kg-view-switch" id="aiKgViewSwitch" aria-label="图谱视图">
                 <button class="ai-kg-view-btn active" type="button" data-kg-mode="knowledge">项目知识</button>
                 <button class="ai-kg-view-btn" type="button" data-kg-mode="metrics">指标体系</button>
+                <button class="ai-kg-view-btn" type="button" data-kg-mode="chat">聊天关系</button>
             </div>
             <div class="ai-kg-dimension-switch" id="aiKgDimensionSwitch" aria-label="图谱维度">
                 <button class="ai-kg-dimension-btn active" type="button" data-kg-dimension="2d" aria-pressed="true">2D</button>
@@ -290,6 +317,13 @@
             <aside class="ai-kg-sidebar" id="aiKgSidebar"><div class="ai-kg-side-empty">点击图谱中的模块或文件，可查看索引时间、知识片段和文件关系。</div></aside>
             <button class="ai-kg-sidebar-toggle" id="aiKgSidebarToggle" type="button" aria-expanded="true">›</button>
         </div>
+        <div class="ai-kg-chat-dialog" id="aiKgChatDialog" role="dialog" aria-modal="true" aria-labelledby="aiKgChatTitle" hidden>
+            <div class="ai-kg-chat-window">
+                <div class="ai-kg-chat-head"><div class="ai-kg-chat-head-main"><div class="ai-kg-chat-title" id="aiKgChatTitle"></div><div class="ai-kg-chat-meta" id="aiKgChatMeta"></div></div><button class="ai-kg-chat-close" id="aiKgChatClose" type="button" aria-label="关闭">×</button></div>
+                <form class="ai-kg-chat-search" id="aiKgChatSearch"><input id="aiKgChatSearchInput" type="search" autocomplete="off"><button id="aiKgChatSearchButton" type="submit"></button></form>
+                <div class="ai-kg-chat-list" id="aiKgChatList"><button class="ai-kg-chat-load-more" id="aiKgChatLoadMore" type="button" hidden></button><div id="aiKgChatMessages"></div></div>
+            </div>
+        </div>
     `;
     document.body.appendChild(overlay);
 
@@ -315,6 +349,15 @@
     const fullscreenButton = overlay.querySelector('#aiKgFullscreen');
     const controlPanel = overlay.querySelector('#aiKgControlPanel');
     const growButton = overlay.querySelector('#aiKgGrow');
+    const chatDialog = overlay.querySelector('#aiKgChatDialog');
+    const chatDialogTitle = overlay.querySelector('#aiKgChatTitle');
+    const chatDialogMeta = overlay.querySelector('#aiKgChatMeta');
+    const chatDialogList = overlay.querySelector('#aiKgChatList');
+    const chatSearchForm = overlay.querySelector('#aiKgChatSearch');
+    const chatSearchInput = overlay.querySelector('#aiKgChatSearchInput');
+    const chatSearchButton = overlay.querySelector('#aiKgChatSearchButton');
+    const chatLoadMoreButton = overlay.querySelector('#aiKgChatLoadMore');
+    const chatMessages = overlay.querySelector('#aiKgChatMessages');
     const ctx = canvas.getContext('2d');
     const DEFAULT_SETTINGS = Object.freeze({ palette:'galaxy', particleDensity:.2, nodeScale:0.72, lineScale:1, labelDensity:1, labelOpacity:1, growthSpeed:1, centerForce:1, repulsion:1, attraction:1, linkLength:1, drift:1 });
     function loadSettings() {
@@ -328,7 +371,7 @@
     function loadPreferredMode() {
         try {
             const mode = localStorage.getItem('ai_kg_preferred_mode');
-            return ['knowledge', 'metrics'].includes(mode) ? mode : 'knowledge';
+            return ['knowledge', 'metrics', 'chat'].includes(mode) ? mode : 'knowledge';
         } catch (_error) { return 'knowledge'; }
     }
     function loadTourMuted() {
@@ -381,6 +424,11 @@
         hasFailingMetricAlerts: false,
         tour: { active:false, index:0, nextAt:0, nodeIds:[], muted:loadTourMuted() },
         sidebarDocument: null,
+        chatDialogLoadSequence: 0,
+        chatRecord: { node:null, keyword:'', before:null, offset:0, hasMore:false, loading:false, total:null, loadedCount:0 },
+        chatFullData: null,
+        chatView: { mode:'overview', nodeId:null },
+        chatSidebarList: { nodeId:null, items:[], visibleCount:0, loading:false },
         growth: { active:false, startedAt:0, duration:0, nodeOrder:new Map() }
     };
     const TOUR_AUDIO_VOLUME = 0.16;
@@ -399,16 +447,18 @@
 
     const KG_TEXT = {
         zh: {
-            view: '图谱视图', knowledge: '项目知识', metrics: '指标体系', ruleMonth: '规则月份', refreshKnowledge: '刷新知识库', refreshMetrics: '刷新指标',
+            view: '图谱视图', knowledge: '项目知识', metrics: '指标体系', chat: '聊天关系', ruleMonth: '规则月份', refreshKnowledge: '刷新知识库', refreshMetrics: '刷新指标', refreshChat: '刷新聊天关系',
             refreshKnowledgeTitle: '重建变化的知识文件', refreshMetricsTitle: '重新读取指标规则与历史快照', motion: '动态仿真', motionPaused: '仿真已暂停', motionTitle: '开启或暂停力导向仿真', tour: '演示巡航', tourStop: '停止巡航', tourTitle: '自动巡航重要节点，任意操作即停止', soundOnTitle: '关闭巡航音乐', soundOffTitle: '开启巡航音乐', fit: '重置视图', fullscreen: '全屏', exitFullscreen: '退出全屏', sidebarCollapse: '收起详情栏', sidebarExpand: '展开详情栏', close: '关闭',
-            knowledgeTitle: '✦ 项目知识关系图谱', metricTitle: '◈ 运营指标体系图谱', knowledgeSubtitle: '项目 → 模块 / 工具 / 数据库 → 文件 / 表 · 细线为代码、查询和资源依赖', metricSubtitle: '月份规则 → 指标分类 → 指标 → 子指标 · 点击查看每日最新历史值',
-            searchKnowledge: '搜索 README、工具、数据库表、接口、AI 助手…', searchMetrics: '搜索分类、指标、子指标…',
+            knowledgeTitle: '✦ 项目知识关系图谱', metricTitle: '◈ 运营指标体系图谱', chatTitle: '◉ 聊天关系图谱', knowledgeSubtitle: '项目 → 模块 / 工具 / 数据库 → 文件 / 表 · 细线为代码、查询和资源依赖', metricSubtitle: '月份规则 → 指标分类 → 指标 → 子指标 · 点击查看每日最新历史值', chatSubtitle: '我 → 单聊 / 群组 / 讨论组 → 参与人 · 节点、连线和光晕强度代表交流频度',
+            searchKnowledge: '搜索 README、工具、数据库表、接口、AI 助手…', searchMetrics: '搜索分类、指标、子指标…', searchChat: '搜索联系人、单聊、群组或讨论组…',
             hints: ['拖动画布','滚轮缩放','放大显示文件名','点击节点查看','点击空白取消高亮','拖动节点可拉扯关系'],
             hints3d: ['左键拖动空白处旋转','点击节点镜头聚焦','双击设为旋转中心','按住滚轮拖动平移','滚轮缩放','手动操作停止巡航'],
+            chatHints: ['默认展开全部群组与讨论组','点击会话聚焦其成员','点击人物进入人物视角','点击空白返回总览','右侧条目可查看聊天记录','滚轮缩放'],
             dimension: '图谱维度',
-            project: '项目', module: '模块', knowledgeFile: '知识文件', toolData: '工具/数据资产', monthRules: '月份规则', category: '指标分类', metric: '指标', submetric: '子指标',
+            project: '项目', module: '模块', knowledgeFile: '知识文件', toolData: '工具/数据资产', monthRules: '月份规则', category: '指标分类', metric: '指标', submetric: '子指标', self: '自己', contact: '联系人', singleChat: '单聊', groupChat: '群组', discussionChat: '讨论组', conversations: '会话', people: '人员', messages: '消息', communicationFrequency: '交流强度', viewRecords: '查看聊天记录', backOverview: '返回会话总览', loadingRecords: '正在加载聊天记录…', noRecords: '暂无聊天记录', latestRecords: '最多显示最近 200 条', configureMyId: '请先在“聊天记录中心 → 设置”中配置我的发送人工号，才能准确建立以自己为中心的关系图谱。',
+            loadEarlier: '加载更早记录', searchRecords: '搜索', searchRecordsPlaceholder: '搜索全部聊天记录…', noSearchRecords: '未找到匹配的聊天记录', loadedRecords: n => `已加载 ${n} 条`, matchedRecords: n => `找到 ${n} 条`, loadingMoreRelations: '继续下滑加载更多…',
             files: '文件', chunks: '片段', dependencies: '依赖', recentUpdated: '最近更新', tools: '工具', databases: '数据库', tables: '数据表', tableRelations: '表关系', snapshots: '历史日期',
-            loadingKnowledge: '正在读取项目知识库…', loadingMetrics: '正在读取指标规则与历史快照…', refreshLoading: '正在刷新…', count: n => `${n} 个`, unknown: '未知',
+            loadingKnowledge: '正在读取项目知识库…', loadingMetrics: '正在读取指标规则与历史快照…', loadingChat: '正在读取聊天关系…', refreshLoading: '正在刷新…', count: n => `${n} 个`, unknown: '未知',
             rootType: '项目根节点', businessModules: '业务模块', codeDependencies: '代码依赖', assetFiles: '资产文件', builtInTools: '自带工具', customTools: '自定义工具',
             assetCategory: '资产分类', htmlTool: 'HTML 工具', database: '数据库', table: '数据表', toolFile: '工具目录文件', related: '关联节点', contained: '下级节点', fileSize: '文件大小', updatedAt: '更新时间', publicAccess: '公开访问', yes: '是', no: '否', columns: '字段', schema: '表结构',
             empty: '点击图谱中的模块、工具、文件、数据库或表，可查看详细关系。', moduleFiles: '模块文件', indexTime: '索引时间', viewChunks: '可点击查看的知识片段', readingFile: '正在读取文件节点', unnamedChunk: '未命名片段', expandChunk: '展开全文', collapseChunk: '收起详情', aiAnalyze: 'AI 分析', analyzeFile: '分析代码文件', analyzeChunk: '分析代码片段', answerSources: '本次回答引用路径', citedChunk: '引用片段', citedFiles: '引用文件', answerMetrics: '本次回答引用指标', referencedMetrics: '个引用指标',
@@ -417,16 +467,18 @@
             controls: '外观与力度', appearance: '外观', force: '力度', palette: '颜色主题', galaxy: '银河', cosmic: '星云', obsidian: 'Obsidian', aurora: '极光', particleDensity: '背景粒子', nodeSize: '节点大小', lineWidth: '连线粗细', labelDensity: '标签密度', labelOpacity: '文本透明度', growthSpeed: '生长速度', playGrowth: '播放生长动画', stopGrowth: '停止动画', centerForce: '图谱向心力', repulsion: '节点排斥力', attraction: '相连节点吸引力', linkLength: '连线长度', drift: '漂浮力度', resetControls: '恢复默认参数'
         },
         en: {
-            view: 'Graph view', knowledge: 'Project Knowledge', metrics: 'Metric System', ruleMonth: 'Rule month', refreshKnowledge: 'Refresh Knowledge', refreshMetrics: 'Refresh Metrics',
+            view: 'Graph view', knowledge: 'Project Knowledge', metrics: 'Metric System', chat: 'Chat Relations', ruleMonth: 'Rule month', refreshKnowledge: 'Refresh Knowledge', refreshMetrics: 'Refresh Metrics', refreshChat: 'Refresh Chat Relations',
             refreshKnowledgeTitle: 'Re-index changed knowledge files', refreshMetricsTitle: 'Reload metric rules and snapshots', motion: 'Live Simulation', motionPaused: 'Simulation Paused', motionTitle: 'Start or pause force simulation', tour: 'Guided Tour', tourStop: 'Stop Tour', tourTitle: 'Automatically tour important nodes; any interaction stops it', soundOnTitle: 'Mute tour music', soundOffTitle: 'Play tour music', fit: 'Reset view', fullscreen: 'Fullscreen', exitFullscreen: 'Exit fullscreen', sidebarCollapse: 'Collapse details', sidebarExpand: 'Expand details', close: 'Close',
-            knowledgeTitle: '✦ Project Knowledge Graph', metricTitle: '◈ Operations Metric Graph', knowledgeSubtitle: 'Project → modules / tools / databases → files / tables · thin lines show code, query, and asset dependencies', metricSubtitle: 'Monthly rules → categories → metrics → submetrics · click to inspect historical values',
-            searchKnowledge: 'Search README, tools, database tables, APIs, AI assistant…', searchMetrics: 'Search categories, metrics, submetrics…',
+            knowledgeTitle: '✦ Project Knowledge Graph', metricTitle: '◈ Operations Metric Graph', chatTitle: '◉ Chat Relationship Graph', knowledgeSubtitle: 'Project → modules / tools / databases → files / tables · thin lines show code, query, and asset dependencies', metricSubtitle: 'Monthly rules → categories → metrics → submetrics · click to inspect historical values', chatSubtitle: 'Me → direct chats / groups / discussions → participants · node, link, and halo strength reflect communication volume',
+            searchKnowledge: 'Search README, tools, database tables, APIs, AI assistant…', searchMetrics: 'Search categories, metrics, submetrics…', searchChat: 'Search contacts, direct chats, groups, or discussions…',
             hints: ['Drag canvas','Wheel to zoom','Zoom in for filenames','Click a node for details','Click empty space to clear focus','Drag nodes to pull relations'],
             hints3d: ['Left-drag empty space to orbit','Click a node to focus camera','Double-click to set orbit center','Middle-drag to pan','Wheel to zoom','Manual input stops the tour'],
+            chatHints: ['All groups and discussions expand by default','Click a conversation to focus its members','Click a person for person view','Click empty space to return to overview','Use sidebar items to view chat records','Wheel to zoom'],
             dimension: 'Graph dimension',
-            project: 'Project', module: 'Module', knowledgeFile: 'Knowledge File', toolData: 'Tool/Data Asset', monthRules: 'Monthly Rules', category: 'Metric Category', metric: 'Metric', submetric: 'Submetric',
+            project: 'Project', module: 'Module', knowledgeFile: 'Knowledge File', toolData: 'Tool/Data Asset', monthRules: 'Monthly Rules', category: 'Metric Category', metric: 'Metric', submetric: 'Submetric', self: 'Me', contact: 'Contact', singleChat: 'Direct Chat', groupChat: 'Group', discussionChat: 'Discussion', conversations: 'conversations', people: 'people', messages: 'messages', communicationFrequency: 'Communication strength', viewRecords: 'View chat records', backOverview: 'Back to conversation overview', loadingRecords: 'Loading chat records…', noRecords: 'No chat records', latestRecords: 'Showing up to the latest 200 messages', configureMyId: 'Configure My Sender ID in Chat History Center settings to build an accurate relationship graph centered on you.',
+            loadEarlier: 'Load earlier records', searchRecords: 'Search', searchRecordsPlaceholder: 'Search all chat records…', noSearchRecords: 'No matching chat records', loadedRecords: n => `${n} loaded`, matchedRecords: n => `${n} matches`, loadingMoreRelations: 'Scroll for more…',
             files: 'files', chunks: 'chunks', dependencies: 'dependencies', recentUpdated: 'Recently updated', tools: 'tools', databases: 'databases', tables: 'tables', tableRelations: 'table relations', snapshots: 'history days',
-            loadingKnowledge: 'Loading project knowledge…', loadingMetrics: 'Loading metric rules and snapshots…', refreshLoading: 'Refreshing…', count: n => `${n}`, unknown: 'Unknown',
+            loadingKnowledge: 'Loading project knowledge…', loadingMetrics: 'Loading metric rules and snapshots…', loadingChat: 'Loading chat relationships…', refreshLoading: 'Refreshing…', count: n => `${n}`, unknown: 'Unknown',
             rootType: 'Project Root', businessModules: 'Business Modules', codeDependencies: 'Code Dependencies', assetFiles: 'asset files', builtInTools: 'built-in tools', customTools: 'custom tools',
             assetCategory: 'Asset Category', htmlTool: 'HTML Tool', database: 'Database', table: 'Table', toolFile: 'Tool Directory File', related: 'Related Nodes', contained: 'Child Nodes', fileSize: 'File Size', updatedAt: 'Updated', publicAccess: 'Public Access', yes: 'Yes', no: 'No', columns: 'Columns', schema: 'Table Schema',
             empty: 'Click a module, tool, file, database, or table to inspect its relationships.', moduleFiles: 'Module Files', indexTime: 'Indexed At', viewChunks: 'Indexed Knowledge Chunks', readingFile: 'Loading File Node', unnamedChunk: 'Untitled Chunk', expandChunk: 'Expand full text', collapseChunk: 'Collapse details', aiAnalyze: 'AI Analyze', analyzeFile: 'Analyze code file', analyzeChunk: 'Analyze code chunk', answerSources: 'Sources used by this answer', citedChunk: 'Cited chunk', citedFiles: 'cited files', answerMetrics: 'Metrics used by this answer', referencedMetrics: 'referenced metrics',
@@ -534,19 +586,31 @@
     }
 
     function isRootNode(node) {
-        return node?.type === 'root' || node?.type === 'metricRoot';
+        return node?.type === 'root' || node?.type === 'metricRoot' || node?.type === 'chatRoot';
     }
 
     function isGroupNode(node) {
-        return node?.type === 'group' || node?.type === 'metricCategory';
+        return node?.type === 'group' || node?.type === 'metricCategory' || node?.type === 'chatConversation';
     }
 
     function isLeafNode(node) {
-        return ['document', 'citation', 'submetric', 'assetFile', 'table'].includes(node?.type);
+        return ['document', 'citation', 'submetric', 'assetFile', 'table', 'chatPerson'].includes(node?.type);
     }
 
     function isMetricMode() {
         return state.mode === 'metrics';
+    }
+
+    function isChatMode() {
+        return state.mode === 'chat';
+    }
+
+    function graphRootId() {
+        return isMetricMode() ? 'metric-root' : isChatMode() ? 'chat-root' : 'root';
+    }
+
+    function graphHintItems() {
+        return kgT(isChatMode() ? 'chatHints' : state.dimension === '3d' ? 'hints3d' : 'hints');
     }
 
     function formatRuleTarget(rule, category = '') {
@@ -582,6 +646,17 @@
             `;
             return;
         }
+        if (data.mode === 'chat') {
+            statuses.innerHTML = `
+                <span class="ai-kg-status"><strong>${Number(data.stats?.conversations) || 0}</strong> ${kgT('conversations')}</span>
+                <span class="ai-kg-status"><strong>${Number(data.stats?.people) || 0}</strong> ${kgT('people')}</span>
+                <span class="ai-kg-status"><strong>${Number(data.stats?.messages) || 0}</strong> ${kgT('messages')}</span>
+                <span class="ai-kg-status"><strong>${Number(data.stats?.single) || 0}</strong> ${kgT('singleChat')}</span>
+                <span class="ai-kg-status"><strong>${Number(data.stats?.group) || 0}</strong> ${kgT('groupChat')}</span>
+                <span class="ai-kg-status"><strong>${Number(data.stats?.discussion) || 0}</strong> ${kgT('discussionChat')}</span>
+            `;
+            return;
+        }
         const refresh = data.status?.lastRefresh;
         const changed = refresh ? Number(refresh.indexedFiles) || 0 : 0;
         statuses.innerHTML = `
@@ -594,6 +669,86 @@
             <span class="ai-kg-status">${kgT('recentUpdated')} <strong>${changed}</strong> ${kgT('files')}</span>
             <span class="ai-kg-status">${escapeHtml(formatTime(data.status?.lastIndexedAt))}</span>
         `;
+    }
+
+    function buildChatViewData(view = state.chatView) {
+        const full = state.chatFullData;
+        if (!full) return null;
+        const root = full.nodes.find(node => node.id === 'chat-root');
+        const conversations = full.nodes.filter(node => node.type === 'chatConversation');
+        const rootEdges = full.edges.filter(edge => edge.source === 'chat-root');
+        let nodes = [root, ...conversations].filter(Boolean);
+        let edges = rootEdges;
+        if (view.mode === 'conversation') {
+            const memberEdges = full.edges.filter(edge => edge.source === view.nodeId && edge.target !== 'chat-root');
+            const memberIds = new Set(memberEdges.map(edge => edge.target));
+            nodes = [...nodes, ...full.nodes.filter(node => memberIds.has(node.id))];
+            edges = [...rootEdges, ...memberEdges];
+        } else if (view.mode === 'person') {
+            const memberEdges = full.edges.filter(edge => edge.target === view.nodeId);
+            const conversationIds = new Set(memberEdges.map(edge => edge.source));
+            nodes = [root, ...conversations.filter(node => conversationIds.has(node.id)), full.nodes.find(node => node.id === view.nodeId)].filter(Boolean);
+            edges = [...rootEdges.filter(edge => conversationIds.has(edge.target)), ...memberEdges];
+        } else {
+            const expandedConversationIds = new Set(conversations
+                .filter(node => ['group', 'discussion'].includes(node.conversationType))
+                .map(node => node.id));
+            const memberEdges = full.edges.filter(edge => expandedConversationIds.has(edge.source) && edge.target !== 'chat-root');
+            const peopleById = new Map(full.nodes
+                .filter(node => node.type === 'chatPerson')
+                .map(node => [node.id, node]));
+            const conversationsById = new Map(conversations.map(node => [node.id, node]));
+            const memberInstances = [];
+            const instanceEdges = [];
+            memberEdges.forEach(edge => {
+                const person = peopleById.get(edge.target);
+                if (!person) return;
+                const conversation = conversationsById.get(edge.source);
+                const instanceId = `${person.id}:conversation:${conversation?.conversationId || edge.source}`;
+                memberInstances.push({
+                    ...person,
+                    id: instanceId,
+                    canonicalPersonId: person.id,
+                    scopeConversationId: conversation?.conversationId || '',
+                    messageCount: Number(edge.weight) || 0,
+                    conversationCount: 1,
+                    activity: Number(edge.activity) || 0
+                });
+                instanceEdges.push({ ...edge, target: instanceId });
+            });
+            nodes = [...nodes, ...memberInstances];
+            edges = [...rootEdges, ...instanceEdges];
+        }
+        return { ...full, nodes, edges, chatView: { ...view } };
+    }
+
+    function applyChatView(view, selectedNodeId = null) {
+        if (!isChatMode() || !state.chatFullData) return false;
+        state.chatView = view;
+        const data = buildChatViewData(view);
+        initializeLayout(data);
+        const selected = state.nodeMap.get(selectedNodeId || graphRootId());
+        selectNode(selected);
+        state.selected = selected;
+        render();
+        return true;
+    }
+
+    function activateChatNode(node) {
+        if (!isChatMode() || !node) return false;
+        if (node.type === 'chatConversation' && (state.chatView.mode !== 'conversation' || state.chatView.nodeId !== node.id)) {
+            return applyChatView({ mode:'conversation', nodeId:node.id }, node.id);
+        }
+        if (node.type === 'chatPerson') {
+            const personId = node.canonicalPersonId || node.id;
+            if (state.chatView.mode !== 'person' || state.chatView.nodeId !== personId) {
+                return applyChatView({ mode:'person', nodeId:personId }, personId);
+            }
+        }
+        if (node.type === 'chatRoot' && state.chatView.mode !== 'overview') {
+            return applyChatView({ mode:'overview', nodeId:null }, node.id);
+        }
+        return false;
     }
 
     function initializeLayout(data) {
@@ -632,22 +787,25 @@
         const groups = state.nodes.filter(isGroupNode);
         groups.forEach((group, groupIndex) => {
             const angle = (Math.PI * 2 * groupIndex / Math.max(1, groups.length)) - Math.PI / 2;
-            const groupRadiusX = isMetricMode() ? 330 : 285;
-            const groupRadiusY = isMetricMode() ? 270 : 235;
-            group.x = Math.cos(angle) * groupRadiusX;
-            group.y = Math.sin(angle) * groupRadiusY;
+            const groupRadiusX = isMetricMode() ? 330 : isChatMode() ? 300 : 285;
+            const groupRadiusY = isMetricMode() ? 270 : isChatMode() ? 250 : 235;
+            const activityDistanceFactor = isChatMode()
+                ? 1.16 - Math.max(0, Math.min(1, Number(group.activity) || 0)) * 0.42
+                : 1;
+            group.x = Math.cos(angle) * groupRadiusX * activityDistanceFactor;
+            group.y = Math.sin(angle) * groupRadiusY * activityDistanceFactor;
             group.z = Math.sin(angle * 2 + group.motionPhase * 0.08) * (isMetricMode() ? 150 : 125);
             const children = state.edges
                 .filter(edge => edge.source === group.id)
                 .map(edge => edge.targetNode)
                 .filter(Boolean);
             children.forEach((child, childIndex) => {
-                const ringSize = isMetricMode() ? 9 : 12;
+                const ringSize = isMetricMode() ? 9 : isChatMode() ? 8 : 12;
                 const ring = Math.floor(childIndex / ringSize);
                 const slot = childIndex % ringSize;
                 const countInRing = Math.min(ringSize, children.length - ring * ringSize || 1);
                 const localAngle = angle + (Math.PI * 2 * slot / countInRing);
-                const radius = (isMetricMode() ? 94 : 74) + ring * (isMetricMode() ? 56 : 42);
+                const radius = (isMetricMode() ? 94 : isChatMode() ? 88 : 74) + ring * (isMetricMode() ? 56 : isChatMode() ? 48 : 42);
                 child.x = group.x + Math.cos(localAngle) * radius;
                 child.y = group.y + Math.sin(localAngle) * radius;
                 child.z = group.z + Math.sin(localAngle * 1.45 + child.motionPhase) * (isMetricMode() ? 82 : 68);
@@ -663,12 +821,12 @@
                         subMetric.y = child.y + Math.sin(subAngle) * subRadius;
                         subMetric.z = child.z + Math.sin(subAngle * 1.8 + subMetric.motionPhase) * 44;
                     });
-                } else if (!isMetricMode()) {
+                } else if (!isMetricMode() && !isChatMode()) {
                     placeDescendants(child, localAngle, 1, new Set());
                 }
             });
         });
-        const root = state.nodeMap.get(isMetricMode() ? 'metric-root' : 'root');
+        const root = state.nodeMap.get(graphRootId());
         if (root) { root.x = 0; root.y = 0; root.z = 0; root.fixed = true; }
         const hierarchyLevel = new Map();
         if (root) hierarchyLevel.set(root.id, 0);
@@ -685,7 +843,7 @@
             });
             frontier = next;
         }
-        const layerSpacing = isMetricMode() ? 118 : 104;
+        const layerSpacing = isMetricMode() ? 118 : isChatMode() ? 112 : 104;
         state.nodes.forEach(node => {
             const fallbackLevel = isRootNode(node) ? 0 : isGroupNode(node) ? 1 : ['metric','tool','database','document'].includes(node.type) ? 2 : 3;
             node.hierarchyLevel = Math.min(4, hierarchyLevel.get(node.id) ?? fallbackLevel);
@@ -769,7 +927,10 @@
                 : edge.type === 'contains'
                 ? (isRootNode(a) ? (isMetricMode() ? 305 : 250) : a.type === 'metricCategory' ? 112 : a.type === 'metric' ? 56 : a.type === 'tool' || a.type === 'database' ? 72 : a.type === 'assetCategory' ? 108 : 86)
                 : 145;
-            const desired = desiredBase * state.settings.linkLength;
+            const activityDistanceFactor = isChatMode() && isRootNode(a) && b.type === 'chatConversation'
+                ? 1.16 - Math.max(0, Math.min(1, Number(edge.activity) || 0)) * 0.42
+                : 1;
+            const desired = desiredBase * activityDistanceFactor * state.settings.linkLength;
             const strength = (edge.type === 'citation' ? 0.02 : edge.type === 'contains' ? 0.014 : 0.0022) * state.settings.attraction;
             const force = (distance - desired) * strength * alpha * elapsed;
             const fx = dx / distance * force;
@@ -883,9 +1044,33 @@
     function nodeBaseColor(node, alpha = 1) {
         if (isRootNode(node)) return state.settings.palette === 'galaxy' ? `rgba(255,255,255,${alpha})` : `rgba(247,248,255,${alpha})`;
         if (node?.type === 'citation') return accentColor(Math.min(alpha, 0.98));
+        if (node?.type === 'chatConversation') {
+            if (node.conversationType === 'single') return `rgba(56,189,248,${alpha})`;
+            if (node.conversationType === 'group') return `rgba(52,211,153,${alpha})`;
+            return `rgba(192,132,252,${alpha})`;
+        }
+        if (node?.type === 'chatPerson') return `rgba(251,191,36,${Math.min(alpha, .94)})`;
         if (isGroupNode(node)) return colorForGroup(node.group, alpha);
         if (node.type === 'metric') return colorForGroup(node.group, Math.min(alpha, 0.96));
         return colorForGroup(node.group, Math.min(alpha, 0.78));
+    }
+
+    function drawChatActivityHalo(node, point, radius, now) {
+        if (!isChatMode() || node.type === 'chatRoot') return;
+        const activity = Math.max(0, Math.min(1, Number(node.activity) || 0));
+        if (activity < 0.08) return;
+        const pulse = 0.5 + Math.sin(now * 0.0024 + Number(node.motionPhase || 0)) * 0.5;
+        const outerRadius = radius * (1.45 + activity * 1.25 + pulse * 0.14);
+        const glow = ctx.createRadialGradient(point.x, point.y, radius, point.x, point.y, outerRadius);
+        glow.addColorStop(0, nodeBaseColor(node, 0.22 + activity * 0.2));
+        glow.addColorStop(0.55, nodeBaseColor(node, 0.08 + activity * 0.1));
+        glow.addColorStop(1, 'transparent');
+        ctx.save();
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, outerRadius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
     }
 
     function drawLitSphere(node, point, radius, emphasized) {
@@ -1006,7 +1191,7 @@
     }
 
     function prepareGrowthOrder() {
-        const rootId = isMetricMode() ? 'metric-root' : 'root';
+        const rootId = graphRootId();
         const depth = new Map([[rootId, 0]]);
         const queue = [rootId];
         while (queue.length) {
@@ -1468,9 +1653,13 @@
                 ctx.shadowColor = active ? accentColor((answerFocus ? .96 : .72) * focusStrength) : 'transparent';
                 ctx.shadowBlur = active ? (answerFocus ? 12 : 5) * focusStrength : 0;
             } else {
-                ctx.strokeStyle = edge.type !== 'contains' ? `rgba(117,132,173,${.11 * depthOpacity})` : `rgba(133,147,187,${.22 * depthOpacity})`;
-                ctx.lineWidth = (edge.type !== 'contains' ? 0.65 : 0.9) * state.settings.lineScale * depthWidth;
-                ctx.shadowBlur = 0;
+                const chatActivity = isChatMode() ? Math.max(0, Math.min(1, Number(edge.activity) || 0)) : 0;
+                ctx.strokeStyle = isChatMode()
+                    ? nodeBaseColor(edge.targetNode, (0.16 + chatActivity * 0.62) * depthOpacity)
+                    : edge.type !== 'contains' ? `rgba(117,132,173,${.11 * depthOpacity})` : `rgba(133,147,187,${.22 * depthOpacity})`;
+                ctx.lineWidth = (isChatMode() ? 0.65 + chatActivity * 2.15 : edge.type !== 'contains' ? 0.65 : 0.9) * state.settings.lineScale * depthWidth;
+                ctx.shadowColor = isChatMode() && chatActivity > 0.55 ? nodeBaseColor(edge.targetNode, 0.7) : 'transparent';
+                ctx.shadowBlur = isChatMode() ? chatActivity * 8 : 0;
             }
             if (answerActive) {
                 ctx.save();
@@ -1523,6 +1712,7 @@
             const dimmed = hasFocus && !highlighted.has(node.id);
             const isAnswerHighlighted = Boolean(answerFocus && highlighted.has(node.id));
             const radius = screenNodeRadius(node, point) * growthNodeScale(growthProgress) * (isAnswerHighlighted ? 1.14 : 1);
+            drawChatActivityHalo(node, point, radius, now);
             const dimmedNodeAlpha = answerFocus ? .035 : (1 - .88 * focusStrength);
             const depthAlpha = state.dimension === '3d' ? Math.max(.36, Math.min(1, Math.pow(point.perspective || 1, 1.22))) : 1;
             ctx.globalAlpha = (dimmed ? dimmedNodeAlpha : 1) * Math.min(1, growthProgress * 1.5) * depthAlpha;
@@ -1692,7 +1882,7 @@
             const query = new URLSearchParams({ metric: metricNode.label, month: String(state.month) });
             if (category) query.set('category', category);
             const response = await fetch(`/api/ai/knowledge/metric-history?${query}`, { headers: authHeaders() });
-            const data = await response.json();
+            let data = await response.json();
             if (!response.ok) throw new Error(data.error || kgT('metricHistoryLoadFailed'));
             if (state.selected?.id !== node.id) return;
             const loadingText = sidebar.querySelector('.ai-kg-history-loading');
@@ -1704,12 +1894,199 @@
         }
     }
 
+    function chatConversationTypeLabel(type) {
+        if (type === 'single') return kgT('singleChat');
+        if (type === 'group') return kgT('groupChat');
+        return kgT('discussionChat');
+    }
+
+    const CHAT_SIDEBAR_PAGE_SIZE = 24;
+    const CHAT_RECORD_PAGE_SIZE = 80;
+
+    function getChatRelationItems(node) {
+        return state.edges
+            .filter(edge => edge.source === node.id || edge.target === node.id)
+            .map(edge => edge.source === node.id ? edge.targetNode : edge.sourceNode)
+            .filter(Boolean);
+    }
+
+    function renderChatRelationRows(items) {
+        return items.map(item => `<div class="ai-kg-chunk" data-node-id="${escapeHtml(item.id)}" data-chat-record-node-id="${escapeHtml(item.id)}" title="${escapeHtml(kgT('viewRecords'))}"><div class="ai-kg-chunk-title">${escapeHtml(nodeLabel(item))}<span class="ai-kg-chat-open">${escapeHtml(kgT('viewRecords'))} ↗</span></div><div class="ai-kg-chunk-lines">${escapeHtml(item.type === 'chatConversation' ? chatConversationTypeLabel(item.conversationType) : kgT(item.type === 'chatPerson' ? 'contact' : 'self'))} · ${Number(item.messageCount) || 0} ${escapeHtml(kgT('messages'))}</div></div>`).join('');
+    }
+
+    function renderChatRelations(node) {
+        const items = getChatRelationItems(node);
+        const visibleCount = Math.min(CHAT_SIDEBAR_PAGE_SIZE, items.length);
+        state.chatSidebarList = { nodeId:node.id, items, visibleCount, loading:false };
+        const more = visibleCount < items.length
+            ? `<div class="ai-kg-side-empty" data-chat-relations-more>${escapeHtml(kgT('loadingMoreRelations'))}</div>`
+            : '';
+        return `<div data-chat-relations-list>${renderChatRelationRows(items.slice(0, visibleCount))}${more}</div>`;
+    }
+
+    function loadMoreChatSidebarRelations() {
+        const listState = state.chatSidebarList;
+        if (listState.loading || listState.visibleCount >= listState.items.length) return;
+        const container = sidebar.querySelector('[data-chat-relations-list]');
+        const marker = container?.querySelector('[data-chat-relations-more]');
+        if (!container || !marker) return;
+        listState.loading = true;
+        const nextCount = Math.min(listState.visibleCount + CHAT_SIDEBAR_PAGE_SIZE, listState.items.length);
+        marker.insertAdjacentHTML('beforebegin', renderChatRelationRows(listState.items.slice(listState.visibleCount, nextCount)));
+        listState.visibleCount = nextCount;
+        if (nextCount >= listState.items.length) marker.remove();
+        listState.loading = false;
+    }
+
+    function selectChatNode(node) {
+        if (!node) {
+            sidebar.innerHTML = `<div class="ai-kg-side-empty">${escapeHtml(kgT('chatSubtitle'))}</div>`;
+            return;
+        }
+        const stats = state.data?.stats || {};
+        if (node.type === 'chatRoot') {
+            const configurationHint = state.data?.configured ? '' : `<div class="ai-kg-side-empty">⚠️ ${escapeHtml(kgT('configureMyId'))}</div>`;
+            sidebar.innerHTML = `<div class="ai-kg-node-type">${escapeHtml(kgT('self'))}</div><div class="ai-kg-node-title">${escapeHtml(nodeLabel(node))}</div>${node.senderId ? `<div class="ai-kg-node-path">ID: ${escapeHtml(node.senderId)}</div>` : ''}<div class="ai-kg-node-stats"><div class="ai-kg-stat-card"><b>${Number(stats.conversations) || 0}</b><span>${escapeHtml(kgT('conversations'))}</span></div><div class="ai-kg-stat-card"><b>${Number(stats.people) || 0}</b><span>${escapeHtml(kgT('people'))}</span></div><div class="ai-kg-stat-card"><b>${Number(stats.messages) || 0}</b><span>${escapeHtml(kgT('messages'))}</span></div><div class="ai-kg-stat-card"><b>${Number(stats.group) + Number(stats.discussion) || 0}</b><span>${escapeHtml(kgT('groupChat'))} / ${escapeHtml(kgT('discussionChat'))}</span></div></div>${configurationHint}${state.data?.configured ? `<div class="ai-kg-section-title">${escapeHtml(kgT('conversations'))}</div>${renderChatRelations(node)}` : ''}`;
+            return;
+        }
+        if (node.type === 'chatConversation') {
+            sidebar.innerHTML = `<div class="ai-kg-node-type">${escapeHtml(chatConversationTypeLabel(node.conversationType))}</div><div class="ai-kg-node-title">${escapeHtml(nodeLabel(node))}</div><div class="ai-kg-node-stats"><div class="ai-kg-stat-card"><b>${Number(node.messageCount) || 0}</b><span>${escapeHtml(kgT('messages'))}</span></div><div class="ai-kg-stat-card"><b>${Number(node.participantCount) || 0}</b><span>${escapeHtml(kgT('people'))}</span></div><div class="ai-kg-stat-card"><b>${Math.round((Number(node.activity) || 0) * 100)}%</b><span>${escapeHtml(kgT('communicationFrequency'))}</span></div></div><div class="ai-kg-node-path">${escapeHtml(formatTime(node.firstMessageTime))} → ${escapeHtml(formatTime(node.lastMessageTime))}</div><button class="ai-kg-chat-record-btn" type="button" data-chat-record-node-id="${escapeHtml(node.id)}">${escapeHtml(kgT('viewRecords'))}</button><button class="ai-kg-chat-record-btn" type="button" data-chat-view-overview>${escapeHtml(kgT('backOverview'))}</button><div class="ai-kg-section-title">${escapeHtml(kgT('people'))}</div>${renderChatRelations(node)}`;
+            return;
+        }
+        sidebar.innerHTML = `<div class="ai-kg-node-type">${escapeHtml(kgT('contact'))}</div><div class="ai-kg-node-title">${escapeHtml(nodeLabel(node))}</div>${node.senderId ? `<div class="ai-kg-node-path">ID: ${escapeHtml(node.senderId)}</div>` : ''}<div class="ai-kg-node-stats"><div class="ai-kg-stat-card"><b>${Number(node.messageCount) || 0}</b><span>${escapeHtml(kgT('messages'))}</span></div><div class="ai-kg-stat-card"><b>${Number(node.conversationCount) || 0}</b><span>${escapeHtml(kgT('conversations'))}</span></div><div class="ai-kg-stat-card"><b>${Math.round((Number(node.activity) || 0) * 100)}%</b><span>${escapeHtml(kgT('communicationFrequency'))}</span></div></div><div class="ai-kg-node-path">${escapeHtml(formatTime(node.firstMessageTime))} → ${escapeHtml(formatTime(node.lastMessageTime))}</div><button class="ai-kg-chat-record-btn" type="button" data-chat-record-node-id="${escapeHtml(node.id)}">${escapeHtml(kgT('viewRecords'))}</button><button class="ai-kg-chat-record-btn" type="button" data-chat-view-overview>${escapeHtml(kgT('backOverview'))}</button><div class="ai-kg-section-title">${escapeHtml(kgT('conversations'))}</div>${renderChatRelations(node)}`;
+    }
+
+    function closeChatRecordDialog() {
+        state.chatDialogLoadSequence += 1;
+        chatDialog.hidden = true;
+        state.chatRecord = { node:null, keyword:'', before:null, offset:0, hasMore:false, loading:false, total:null, loadedCount:0 };
+        chatMessages.innerHTML = '';
+        chatLoadMoreButton.hidden = true;
+        chatSearchInput.value = '';
+    }
+
+    function renderChatRecordMessages(items) {
+        const mySenderId = String(state.data?.mySenderId || '');
+        return items.map(item => {
+            const mine = mySenderId && String(item.sender_id || '') === mySenderId;
+            const context = [item.display_name, item.sender_name || item.sender_id, formatTime(item.message_time)].filter(Boolean).join(' · ');
+            return `<div class="ai-kg-chat-message${mine ? ' mine' : ''}"><div class="ai-kg-chat-message-context">${escapeHtml(context)}</div><div class="ai-kg-chat-bubble">${escapeHtml(item.content || '')}</div></div>`;
+        }).join('');
+    }
+
+    function syncChatRecordControls() {
+        const record = state.chatRecord;
+        chatSearchInput.placeholder = kgT('searchRecordsPlaceholder');
+        chatSearchButton.textContent = kgT('searchRecords');
+        chatLoadMoreButton.textContent = record.loading ? kgT('loadingRecords') : kgT('loadEarlier');
+        chatLoadMoreButton.disabled = record.loading;
+        chatLoadMoreButton.hidden = !record.hasMore;
+        if (record.keyword) chatDialogMeta.textContent = kgT('matchedRecords', Number(record.total) || 0);
+        else {
+            const total = Number.isFinite(record.total) ? ` / ${record.total}` : '';
+            chatDialogMeta.textContent = `${kgT('loadedRecords', record.loadedCount)}${total} ${kgT('messages')}`;
+        }
+    }
+
+    function chatRecordEndpoint() {
+        const record = state.chatRecord;
+        const node = record.node;
+        const useSearch = Boolean(record.keyword) || node.type === 'chatPerson';
+        if (!useSearch) {
+            const query = new URLSearchParams({ limit:String(CHAT_RECORD_PAGE_SIZE) });
+            if (record.before) query.set('before', String(record.before));
+            return { endpoint:`/api/chat-history/conversations/${encodeURIComponent(node.conversationId)}/messages?${query}`, search:false };
+        }
+        const query = new URLSearchParams({ limit:String(CHAT_RECORD_PAGE_SIZE), offset:String(record.offset) });
+        if (record.keyword) query.set('keyword', record.keyword);
+        if (node.type === 'chatConversation') query.set('conversationId', node.conversationId);
+        else if (node.senderId) {
+            query.set('senderId', node.senderId);
+            if (node.scopeConversationId) query.set('conversationId', node.scopeConversationId);
+        }
+        else query.set('senderName', nodeLabel(node));
+        return { endpoint:`/api/chat-history/search?${query}`, search:true };
+    }
+
+    async function loadChatRecordPage({ initial = false } = {}) {
+        const record = state.chatRecord;
+        if (!record.node || record.loading || (!initial && !record.hasMore)) return;
+        const loadSequence = state.chatDialogLoadSequence;
+        const previousScrollHeight = chatDialogList.scrollHeight;
+        record.loading = true;
+        if (initial) chatMessages.innerHTML = `<div class="ai-kg-chat-dialog-state">${escapeHtml(kgT('loadingRecords'))}</div>`;
+        syncChatRecordControls();
+        try {
+            const request = chatRecordEndpoint();
+            const response = await fetch(request.endpoint, { headers:authHeaders() });
+            const data = await readJsonResponse(response, kgT('loadingRecords'));
+            if (loadSequence !== state.chatDialogLoadSequence) return;
+            const rawItems = Array.isArray(data.items) ? data.items : [];
+            const items = request.search ? [...rawItems].reverse() : rawItems;
+            const html = renderChatRecordMessages(items);
+            if (initial) {
+                const emptyText = record.keyword ? kgT('noSearchRecords') : kgT('noRecords');
+                chatMessages.innerHTML = html || `<div class="ai-kg-chat-dialog-state">${escapeHtml(emptyText)}</div>`;
+            } else if (html) {
+                chatMessages.insertAdjacentHTML('afterbegin', html);
+            }
+            record.loadedCount += rawItems.length;
+            if (request.search) {
+                record.offset += rawItems.length;
+                record.total = Number(data.total) || 0;
+                record.hasMore = record.offset < record.total;
+            } else {
+                record.before = data.nextBefore || null;
+                record.total = Number(record.node.messageCount) || null;
+                record.hasMore = Boolean(data.hasMore);
+            }
+            if (initial) chatDialogList.scrollTop = chatDialogList.scrollHeight;
+            else chatDialogList.scrollTop += chatDialogList.scrollHeight - previousScrollHeight;
+        } catch (error) {
+            if (loadSequence === state.chatDialogLoadSequence && initial) chatMessages.innerHTML = `<div class="ai-kg-chat-dialog-state">⚠️ ${escapeHtml(error.message)}</div>`;
+        } finally {
+            if (loadSequence === state.chatDialogLoadSequence) {
+                record.loading = false;
+                syncChatRecordControls();
+            }
+        }
+    }
+
+    async function resetChatRecordSearch(keyword = '') {
+        const record = state.chatRecord;
+        state.chatDialogLoadSequence += 1;
+        record.loading = false;
+        record.keyword = String(keyword || '').trim();
+        record.before = null;
+        record.offset = 0;
+        record.hasMore = true;
+        record.total = null;
+        record.loadedCount = 0;
+        await loadChatRecordPage({ initial:true });
+    }
+
+    async function openChatRecordDialog(node) {
+        if (!node || !['chatConversation', 'chatPerson'].includes(node.type)) return;
+        state.chatDialogLoadSequence += 1;
+        state.chatRecord = { node, keyword:'', before:null, offset:0, hasMore:true, loading:false, total:null, loadedCount:0 };
+        chatDialog.hidden = false;
+        chatDialogTitle.textContent = nodeLabel(node);
+        chatSearchInput.value = '';
+        syncChatRecordControls();
+        overlay.querySelector('#aiKgChatClose').focus();
+        await loadChatRecordPage({ initial:true });
+    }
+
     async function selectNode(node) {
         state.selected = node;
         state.sidebarDocument = null;
         render();
         if (isMetricMode()) {
             await selectMetricNode(node);
+            return;
+        }
+        if (isChatMode()) {
+            selectChatNode(node);
             return;
         }
         if (!node) {
@@ -1838,11 +2215,11 @@
     }
 
     function buildTourNodeIds() {
-        const rootId = isMetricMode() ? 'metric-root' : 'root';
+        const rootId = graphRootId();
         const priority = [
             state.nodeMap.get(rootId),
             ...state.nodes.filter(isGroupNode),
-            ...state.nodes.filter(node => isMetricMode() ? node.type === 'metric' : ['tool','database'].includes(node.type))
+            ...state.nodes.filter(node => isMetricMode() ? node.type === 'metric' : isChatMode() ? node.type === 'chatPerson' : ['tool','database'].includes(node.type))
         ].filter(Boolean);
         const seen = new Set();
         return priority.filter(node => !seen.has(node.id) && seen.add(node.id)).slice(0, 12).map(node => node.id);
@@ -1975,6 +2352,7 @@
 
     function focusNode(node, { fromTour = false } = {}) {
         if (!node) return;
+        if (!fromTour && activateChatNode(node)) return;
         if (!fromTour) stopTour({ keepView:true });
         if (state.dimension === '3d') {
             setOrbitTarget(node, { duration:fromTour ? 1100 : 720 });
@@ -2001,20 +2379,24 @@
 
     function updateModeChrome(data) {
         const metrics = data.mode === 'metrics';
-        titleEl.textContent = metrics ? kgT('metricTitle') : kgT('knowledgeTitle');
-        subtitleEl.textContent = metrics ? kgT('metricSubtitle') : kgT('knowledgeSubtitle');
+        const chat = data.mode === 'chat';
+        titleEl.textContent = metrics ? kgT('metricTitle') : chat ? kgT('chatTitle') : kgT('knowledgeTitle');
+        subtitleEl.textContent = metrics ? kgT('metricSubtitle') : chat ? kgT('chatSubtitle') : kgT('knowledgeSubtitle');
         legendEl.innerHTML = metrics
             ? `<span><i style="background:#f5f7ff"></i>${kgT('monthRules')}</span><span><i style="background:#8b9cff"></i>${kgT('category')}</span><span><i style="background:#cf7e9d"></i>${kgT('metric')}</span><span><i style="background:#64739a"></i>${kgT('submetric')}</span>`
+            : chat
+            ? `<span><i style="background:#f5f7ff"></i>${kgT('self')}</span><span><i style="background:#38bdf8"></i>${kgT('singleChat')}</span><span><i style="background:#34d399"></i>${kgT('groupChat')}</span><span><i style="background:#c084fc"></i>${kgT('discussionChat')}</span><span><i style="background:#fbbf24"></i>${kgT('contact')}</span>`
             : `<span><i style="background:#f5f7ff"></i>${kgT('project')}</span><span><i style="background:#8b9cff"></i>${kgT('module')}</span><span><i style="background:#6fc4ee"></i>${kgT('toolData')}</span><span><i style="background:#64739a"></i>${kgT('knowledgeFile')}</span>`;
         monthWrap.classList.toggle('visible', metrics);
-        refreshButton.textContent = metrics ? kgT('refreshMetrics') : kgT('refreshKnowledge');
-        refreshButton.title = metrics ? kgT('refreshMetricsTitle') : kgT('refreshKnowledgeTitle');
-        searchInput.placeholder = metrics ? kgT('searchMetrics') : kgT('searchKnowledge');
+        refreshButton.textContent = metrics ? kgT('refreshMetrics') : chat ? kgT('refreshChat') : kgT('refreshKnowledge');
+        refreshButton.title = metrics ? kgT('refreshMetricsTitle') : chat ? kgT('refreshChat') : kgT('refreshKnowledgeTitle');
+        searchInput.placeholder = metrics ? kgT('searchMetrics') : chat ? kgT('searchChat') : kgT('searchKnowledge');
         overlay.querySelectorAll('[data-kg-mode]').forEach(button => button.classList.toggle('active', button.dataset.kgMode === state.mode));
         if (metrics) {
             state.month = Number(data.month);
             monthSelect.innerHTML = (data.availableMonths || []).map(month => `<option value="${month}" ${Number(month) === state.month ? 'selected' : ''}>${kgLang() === 'en' ? `Month ${month}` : `${month}月`}</option>`).join('');
         }
+        overlay.querySelector('#aiKgHint').innerHTML = graphHintItems().map(item => `<span>${escapeHtml(item)}</span>`).join('');
     }
 
     function applyGraphLanguage() {
@@ -2022,6 +2404,7 @@
         overlay.querySelector('#aiKgDimensionSwitch').setAttribute('aria-label', kgT('dimension'));
         overlay.querySelector('[data-kg-mode="knowledge"]').textContent = kgT('knowledge');
         overlay.querySelector('[data-kg-mode="metrics"]').textContent = kgT('metrics');
+        overlay.querySelector('[data-kg-mode="chat"]').textContent = kgT('chat');
         monthWrap.childNodes[0].nodeValue = kgT('ruleMonth');
         motionButton.textContent = state.motionEnabled ? kgT('motion') : kgT('motionPaused');
         motionButton.title = kgT('motionTitle');
@@ -2055,13 +2438,13 @@
         updateFullscreenButton();
         syncSidebarToggle();
         overlay.querySelector('#aiKgClose').title = kgT('close');
-        overlay.querySelector('#aiKgHint').innerHTML = kgT(state.dimension === '3d' ? 'hints3d' : 'hints').map(item => `<span>${escapeHtml(item)}</span>`).join('');
+        overlay.querySelector('#aiKgHint').innerHTML = graphHintItems().map(item => `<span>${escapeHtml(item)}</span>`).join('');
         if (state.data) {
             updateModeChrome(state.data);
             renderStatuses(state.data);
             if (state.selected) selectNode(state.selected);
             else {
-                selectNode(state.nodeMap.get(isMetricMode() ? 'metric-root' : 'root'));
+                selectNode(state.nodeMap.get(graphRootId()));
                 state.selected = null;
             }
         }
@@ -2219,13 +2602,15 @@
 
     async function loadGraph() {
         const loadSequence = ++state.loadSequence;
-        setLoading(isMetricMode() ? kgT('loadingMetrics') : kgT('loadingKnowledge'), true);
+        setLoading(isMetricMode() ? kgT('loadingMetrics') : isChatMode() ? kgT('loadingChat') : kgT('loadingKnowledge'), true);
         try {
             const endpoint = isMetricMode()
                 ? `/api/ai/knowledge/metric-graph${state.month ? `?month=${state.month}` : ''}`
+                : isChatMode()
+                ? '/api/chat-history/relationship-graph'
                 : '/api/ai/knowledge/graph';
             const response = await fetch(endpoint, { headers: authHeaders() });
-            const data = await response.json();
+            let data = await response.json();
             if (loadSequence !== state.loadSequence) return;
             if (!response.ok) throw new Error(data.error || (isMetricMode() ? kgT('metricLoadFailed') : kgT('graphLoadFailed')));
             updateModeChrome(data);
@@ -2237,6 +2622,13 @@
             setGrowthButtonState();
             searchInput.value = '';
             searchCount.textContent = '';
+            if (isChatMode()) {
+                state.chatFullData = data;
+                state.chatView = { mode:'overview', nodeId:null };
+                data = buildChatViewData(state.chatView);
+            } else {
+                state.chatFullData = null;
+            }
             initializeLayout(data);
             setLoading('', false);
             if (applyMetricAnswerFocus(state.pendingFocus)) {
@@ -2252,7 +2644,7 @@
                 return;
             }
             state.pendingFocus = null;
-            const rootNode = state.nodeMap.get(isMetricMode() ? 'metric-root' : 'root');
+            const rootNode = state.nodeMap.get(graphRootId());
             await selectNode(rootNode);
             state.selected = null;
             render();
@@ -2263,7 +2655,7 @@
     }
 
     async function switchMode(mode) {
-        if (!['knowledge', 'metrics'].includes(mode) || mode === state.mode) return;
+        if (!['knowledge', 'metrics', 'chat'].includes(mode) || mode === state.mode) return;
         state.mode = mode;
         state.preferredMode = mode;
         try { localStorage.setItem('ai_kg_preferred_mode', mode); } catch (_error) {}
@@ -2298,7 +2690,7 @@
         });
         resetView();
         reheat(0.72);
-        overlay.querySelector('#aiKgHint').innerHTML = kgT(dimension === '3d' ? 'hints3d' : 'hints').map(item => `<span>${escapeHtml(item)}</span>`).join('');
+        overlay.querySelector('#aiKgHint').innerHTML = graphHintItems().map(item => `<span>${escapeHtml(item)}</span>`).join('');
         render();
     }
 
@@ -2367,9 +2759,14 @@
         }
         if (pointer && pointer.node && !pointer.moved) {
             if (state.dimension === '3d') focusNode(pointer.node);
-            else selectNode(pointer.node);
+            else if (!activateChatNode(pointer.node)) selectNode(pointer.node);
         }
         else if (pointer && !pointer.node && !pointer.moved && pointer.button !== 1) {
+            if (isChatMode() && state.chatView.mode !== 'overview') {
+                applyChatView({ mode:'overview', nodeId:null }, 'chat-root');
+                try { canvas.releasePointerCapture(event.pointerId); } catch (_error) {}
+                return;
+            }
             state.selected = null;
             state.answerFocus = null;
             state.searchMatches = new Set();
@@ -2391,6 +2788,7 @@
         const node = nodeAt(event.clientX, event.clientY);
         if (!node) return;
         event.preventDefault();
+        if (activateChatNode(node)) return;
         setOrbitTarget(node);
         selectNode(node);
     });
@@ -2416,7 +2814,13 @@
 
     searchInput.addEventListener('input', () => {
         const query = searchInput.value.trim().toLowerCase();
-        const matches = query ? state.nodes.filter(node => `${node.label || ''} ${node.labelEn || ''} ${node.path || ''} ${node.group || ''} ${node.category || ''} ${node.metricLabel || ''} ${node.database || ''} ${node.slug || ''} ${node.rule?.monthTarget || ''}`.toLowerCase().includes(query)) : [];
+        if (!query && isChatMode() && state.chatView.mode !== 'overview') {
+            applyChatView({ mode:'overview', nodeId:null }, 'chat-root');
+        }
+        const searchableNodes = isChatMode() && state.chatFullData && state.chatView.mode !== 'overview'
+            ? state.chatFullData.nodes
+            : state.nodes;
+        const matches = query ? searchableNodes.filter(node => `${node.label || ''} ${node.labelEn || ''} ${node.path || ''} ${node.group || ''} ${node.category || ''} ${node.metricLabel || ''} ${node.database || ''} ${node.slug || ''} ${node.senderId || ''} ${node.rule?.monthTarget || ''}`.toLowerCase().includes(query)) : [];
         state.searchMatches = new Set(matches.map(node => node.id));
         searchCount.textContent = query ? kgT('count', matches.length) : '';
         if (matches.length === 1) focusNode(matches[0]);
@@ -2424,7 +2828,10 @@
     });
     searchInput.addEventListener('keydown', event => {
         if (event.key !== 'Enter') return;
-        const first = state.nodes.find(node => state.searchMatches.has(node.id));
+        const searchableNodes = isChatMode() && state.chatFullData && state.chatView.mode !== 'overview'
+            ? state.chatFullData.nodes
+            : state.nodes;
+        const first = searchableNodes.find(node => state.searchMatches.has(node.id));
         if (first) focusNode(first);
     });
     function toggleChunkDetail(item) {
@@ -2473,10 +2880,21 @@
         }
     }
     sidebar.addEventListener('click', event => {
+        if (event.target.closest('[data-chat-view-overview]') && isChatMode()) {
+            event.stopPropagation();
+            applyChatView({ mode:'overview', nodeId:null }, 'chat-root');
+            return;
+        }
         const analyzeButton = event.target.closest('[data-ai-analyze]');
         if (analyzeButton) {
             event.stopPropagation();
             analyzeSidebarCode(analyzeButton);
+            return;
+        }
+        const chatRecordItem = event.target.closest('[data-chat-record-node-id]');
+        if (chatRecordItem && isChatMode()) {
+            event.stopPropagation();
+            openChatRecordDialog(state.nodeMap.get(chatRecordItem.getAttribute('data-chat-record-node-id')));
             return;
         }
         const item = event.target.closest('[data-node-id]');
@@ -2494,6 +2912,22 @@
         if (!chunk) return;
         event.preventDefault();
         toggleChunkDetail(chunk);
+    });
+    sidebar.addEventListener('scroll', () => {
+        if (!isChatMode() || sidebar.scrollTop + sidebar.clientHeight < sidebar.scrollHeight - 96) return;
+        loadMoreChatSidebarRelations();
+    }, { passive:true });
+    overlay.querySelector('#aiKgChatClose').onclick = closeChatRecordDialog;
+    chatDialog.addEventListener('click', event => {
+        if (event.target === chatDialog) closeChatRecordDialog();
+    });
+    chatLoadMoreButton.onclick = () => loadChatRecordPage();
+    chatSearchForm.addEventListener('submit', event => {
+        event.preventDefault();
+        resetChatRecordSearch(chatSearchInput.value);
+    });
+    chatSearchInput.addEventListener('search', () => {
+        if (!chatSearchInput.value && state.chatRecord.keyword) resetChatRecordSearch('');
     });
     overlay.querySelectorAll('[data-kg-mode]').forEach(button => {
         button.onclick = () => switchMode(button.dataset.kgMode);
@@ -2606,7 +3040,7 @@
         button.disabled = true;
         button.textContent = kgT('refreshLoading');
         try {
-            if (!isMetricMode()) {
+            if (!isMetricMode() && !isChatMode()) {
                 const response = await fetch('/api/ai/knowledge/refresh', { method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }) });
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.error || kgT('refreshFailed'));
@@ -2616,11 +3050,16 @@
             sidebar.innerHTML = `<div class="ai-kg-side-empty">⚠️ ${escapeHtml(error.message)}</div>`;
         } finally {
             button.disabled = false;
-            button.textContent = isMetricMode() ? kgT('refreshMetrics') : kgT('refreshKnowledge');
+            button.textContent = isMetricMode() ? kgT('refreshMetrics') : isChatMode() ? kgT('refreshChat') : kgT('refreshKnowledge');
         }
     };
     document.addEventListener('keydown', event => {
-        if (event.key === 'Escape' && overlay.classList.contains('open') && !isGraphFullscreen()) window.AIKnowledgeGraph.close();
+        if (event.key !== 'Escape' || !overlay.classList.contains('open')) return;
+        if (!chatDialog.hidden) {
+            closeChatRecordDialog();
+            return;
+        }
+        if (!isGraphFullscreen()) window.AIKnowledgeGraph.close();
     });
     document.addEventListener('fullscreenchange', () => {
         updateFullscreenButton();
@@ -2643,7 +3082,7 @@
                 state.mode = requestedMode;
                 const requestedMonth = Number(options.month);
                 if (Number.isInteger(requestedMonth) && requestedMonth >= 1 && requestedMonth <= 12) state.month = requestedMonth;
-            } else if (requestedMode === 'knowledge') {
+            } else if (requestedMode === 'knowledge' || requestedMode === 'chat') {
                 state.mode = requestedMode;
                 state.month = null;
             } else {
@@ -2663,6 +3102,7 @@
                 if (exit) Promise.resolve(exit.call(document)).catch(() => {});
             }
             overlay.classList.remove('open');
+            closeChatRecordDialog();
             document.body.classList.remove('ai-kg-open');
             stopTour({ keepView:true });
             state.cameraTransition = null;

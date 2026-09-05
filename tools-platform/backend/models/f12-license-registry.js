@@ -71,6 +71,34 @@ function listRecords({ includeArchived = true, productId = '' } = {}) {
     );
 }
 
+function queryRecords({ includeArchived = true, productId = '', q = '', page = 1, pageSize = 10 } = {}) {
+    const allRecords = readState().licenses;
+    const wantedProduct = String(productId || '').trim();
+    const keyword = String(q || '').trim().toLocaleLowerCase();
+    const normalizedPageSize = Math.min(100, Math.max(1, Number.parseInt(pageSize, 10) || 10));
+    const products = [...new Set(allRecords.map(record => String(record.productId || '').trim()).filter(Boolean))]
+        .sort((left, right) => left.localeCompare(right, 'zh-CN'));
+    const filtered = allRecords.filter(record => {
+        if (!includeArchived && record.status === 'archived') return false;
+        if (wantedProduct && record.productId !== wantedProduct) return false;
+        if (!keyword) return true;
+        return [record.productId, record.label, record.licenseId, record.month, record.status]
+            .some(value => String(value || '').toLocaleLowerCase().includes(keyword));
+    });
+    const total = filtered.length;
+    const totalPages = Math.max(1, Math.ceil(total / normalizedPageSize));
+    const normalizedPage = Math.min(totalPages, Math.max(1, Number.parseInt(page, 10) || 1));
+    const offset = (normalizedPage - 1) * normalizedPageSize;
+    return {
+        items: filtered.slice(offset, offset + normalizedPageSize),
+        total,
+        page: normalizedPage,
+        pageSize: normalizedPageSize,
+        totalPages,
+        products
+    };
+}
+
 function getRecord(licenseId) {
     return readState().licenses.find(record => record.licenseId === String(licenseId || '')) || null;
 }
@@ -132,6 +160,7 @@ module.exports = {
     getRecord,
     linkRenewal,
     listRecords,
+    queryRecords,
     normalizeLabel,
     setStatus,
     updateRecord

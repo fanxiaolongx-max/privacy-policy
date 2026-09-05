@@ -94,6 +94,10 @@ router.get('/stats/people', asyncRoute(async (req, res) => {
     res.json(await repo.getPeopleStats(currentUser(req), req.query || {}));
 }));
 
+router.get('/relationship-graph', asyncRoute(async (req, res) => {
+    res.json(await repo.getRelationshipGraph(currentUser(req), req.query || {}));
+}));
+
 router.get('/stats/groups', asyncRoute(async (req, res) => {
     res.json(await repo.getGroupStats(req.query || {}));
 }));

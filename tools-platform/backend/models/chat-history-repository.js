@@ -801,9 +801,10 @@ async function listMessages(conversationId, userId, options = {}) {
         CASE WHEN f.message_stable_key IS NULL THEN 0 ELSE 1 END AS favorite
         FROM chat_messages m LEFT JOIN chat_favorites f
             ON f.message_stable_key=m.stable_key AND f.user_id=?
-        WHERE ${conditions.join(' AND ')} ORDER BY m.id DESC LIMIT ?`, [...params, limit]);
-    const items = rows.reverse();
-    return { items, nextBefore: items.length === limit ? items[0].id : null, hasMore: items.length === limit };
+        WHERE ${conditions.join(' AND ')} ORDER BY m.id DESC LIMIT ?`, [...params, limit + 1]);
+    const hasMore = rows.length > limit;
+    const items = rows.slice(0, limit).reverse();
+    return { items, nextBefore: hasMore && items.length ? items[0].id : null, hasMore };
 }
 
 async function markRead(userId, conversationId) {
@@ -868,6 +869,13 @@ async function searchMessages(userId, filters = {}) {
     if (filters.sender) {
         conditions.push('(m.sender_name LIKE ? OR m.sender_id LIKE ?)');
         params.push(`%${filters.sender}%`, `%${filters.sender}%`);
+    }
+    if (filters.senderId) {
+        conditions.push('m.sender_id=?');
+        params.push(String(filters.senderId));
+    } else if (filters.senderName) {
+        conditions.push('m.sender_name=?');
+        params.push(String(filters.senderName));
     }
     if (filters.conversationId) {
         conditions.push('m.conversation_id=?');
@@ -983,6 +991,150 @@ async function getPeopleStats(userId, options = {}) {
             mySenderId: settings.my_sender_id || ''
         };
     });
+}
+
+async function getRelationshipGraph(userId, options = {}) {
+    await ensureReady();
+    const settings = await getUserSettings(userId);
+    const mySenderId = cleanInline(settings.my_sender_id || '');
+    const conversationLimit = parsePositiveInt(options.limit, 120, 300);
+    const rootLabelRow = mySenderId ? await get(`SELECT sender_name
+        FROM chat_messages WHERE sender_id=? AND sender_name<>''
+        GROUP BY sender_name ORDER BY COUNT(*) DESC, MAX(message_time) DESC LIMIT 1`, [mySenderId]) : null;
+    const rootLabel = rootLabelRow && rootLabelRow.sender_name || mySenderId || userId || '我';
+    const root = {
+        id: 'chat-root',
+        type: 'chatRoot',
+        label: rootLabel,
+        labelEn: rootLabel,
+        senderId: mySenderId,
+        group: 'chat-self',
+        size: 15,
+        activity: 1
+    };
+    if (!mySenderId) {
+        return {
+            mode: 'chat',
+            configured: false,
+            mySenderId: '',
+            nodes: [root],
+            edges: [],
+            stats: { conversations: 0, people: 0, messages: 0, single: 0, group: 0, discussion: 0 },
+            generatedAt: new Date().toISOString()
+        };
+    }
+
+    const conversations = await all(`SELECT c.id,c.display_name,c.conversation_type,c.message_count,
+            c.participant_count,c.first_message_time,c.last_message_time
+        FROM chat_conversations c
+        WHERE c.conversation_type IN ('single','group','discussion')
+          AND EXISTS (SELECT 1 FROM chat_messages mine WHERE mine.conversation_id=c.id AND mine.sender_id=?)
+        ORDER BY c.message_count DESC,c.last_message_time DESC
+        LIMIT ?`, [mySenderId, conversationLimit]);
+    if (!conversations.length) {
+        return {
+            mode: 'chat', configured: true, mySenderId, nodes: [root], edges: [],
+            stats: { conversations: 0, people: 0, messages: 0, single: 0, group: 0, discussion: 0 },
+            generatedAt: new Date().toISOString()
+        };
+    }
+
+    const conversationIds = conversations.map(item => item.id);
+    const participants = await all(`SELECT m.conversation_id,MAX(m.sender_id) AS sender_id,
+            COALESCE(MAX(NULLIF(d.sender_name,'')),MAX(m.sender_name)) AS sender_name,
+            COUNT(*) AS message_count,MIN(m.message_time) AS first_message_time,MAX(m.message_time) AS last_message_time
+        FROM chat_messages m
+        LEFT JOIN chat_person_directory d ON d.sender_id=m.sender_id AND m.sender_id<>''
+        WHERE m.conversation_id IN (${placeholders(conversationIds.length)})
+          AND NOT (m.sender_id=? AND m.sender_id<>'')
+          AND (m.sender_id<>'' OR m.sender_name<>'')
+        GROUP BY m.conversation_id,CASE WHEN m.sender_id<>'' THEN 'id:'||m.sender_id ELSE 'name:'||m.sender_name END
+        ORDER BY message_count DESC`, [...conversationIds, mySenderId]);
+    const maxConversationMessages = Math.max(1, ...conversations.map(item => Number(item.message_count) || 0));
+    const maxParticipantMessages = Math.max(1, ...participants.map(item => Number(item.message_count) || 0));
+    const people = new Map();
+    const nodes = [root];
+    const edges = [];
+
+    conversations.forEach(conversation => {
+        const messageCount = Number(conversation.message_count) || 0;
+        const activity = Math.log1p(messageCount) / Math.log1p(maxConversationMessages);
+        const nodeId = `chat-conversation:${conversation.id}`;
+        nodes.push({
+            id: nodeId,
+            type: 'chatConversation',
+            conversationId: conversation.id,
+            conversationType: conversation.conversation_type,
+            label: conversation.display_name,
+            labelEn: conversation.display_name,
+            group: `chat-${conversation.conversation_type}`,
+            messageCount,
+            participantCount: Number(conversation.participant_count) || 0,
+            firstMessageTime: conversation.first_message_time,
+            lastMessageTime: conversation.last_message_time,
+            activity,
+            size: 7 + activity * 7
+        });
+        edges.push({ source: root.id, target: nodeId, type: 'contains', weight: messageCount, activity });
+    });
+
+    participants.forEach(participant => {
+        const identity = cleanInline(participant.sender_id) || `name:${cleanInline(participant.sender_name)}`;
+        if (!identity) return;
+        const personId = `chat-person:${digest(identity).slice(0, 20)}`;
+        const messageCount = Number(participant.message_count) || 0;
+        if (!people.has(personId)) {
+            people.set(personId, {
+                id: personId,
+                type: 'chatPerson',
+                label: cleanInline(participant.sender_name) || cleanInline(participant.sender_id) || '未知成员',
+                labelEn: cleanInline(participant.sender_name) || cleanInline(participant.sender_id) || 'Unknown member',
+                senderId: cleanInline(participant.sender_id),
+                group: 'chat-person',
+                messageCount: 0,
+                conversationCount: 0,
+                firstMessageTime: participant.first_message_time,
+                lastMessageTime: participant.last_message_time,
+                size: 5,
+                activity: 0
+            });
+        }
+        const person = people.get(personId);
+        person.messageCount += messageCount;
+        person.conversationCount += 1;
+        if (String(participant.first_message_time || '') < String(person.firstMessageTime || '')) person.firstMessageTime = participant.first_message_time;
+        if (String(participant.last_message_time || '') > String(person.lastMessageTime || '')) person.lastMessageTime = participant.last_message_time;
+        const activity = Math.log1p(messageCount) / Math.log1p(maxParticipantMessages);
+        edges.push({
+            source: `chat-conversation:${participant.conversation_id}`,
+            target: personId,
+            type: 'contains',
+            weight: messageCount,
+            activity
+        });
+    });
+    const maxPersonMessages = Math.max(1, ...[...people.values()].map(item => item.messageCount));
+    people.forEach(person => {
+        person.activity = Math.log1p(person.messageCount) / Math.log1p(maxPersonMessages);
+        person.size = 4.5 + person.activity * 6.5;
+        nodes.push(person);
+    });
+    const typeCounts = { single: 0, group: 0, discussion: 0 };
+    conversations.forEach(item => { typeCounts[item.conversation_type] = (typeCounts[item.conversation_type] || 0) + 1; });
+    return {
+        mode: 'chat',
+        configured: true,
+        mySenderId,
+        nodes,
+        edges,
+        stats: {
+            conversations: conversations.length,
+            people: people.size,
+            messages: conversations.reduce((sum, item) => sum + (Number(item.message_count) || 0), 0),
+            ...typeCounts
+        },
+        generatedAt: new Date().toISOString()
+    };
 }
 
 async function getGroupStats(options = {}) {
@@ -1412,6 +1564,7 @@ module.exports = {
     getGroupStats,
     getOverviewStats,
     getPeopleStats,
+    getRelationshipGraph,
     getUnidentifiedMessages,
     getUserSettings,
     importTxtFile,
