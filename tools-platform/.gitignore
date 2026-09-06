@@ -42,3 +42,12 @@ outputs/
 .DS_Store
 .idea/
 .vscode/
+
+# Large media assets / Video assets (不推送到 GitHub)
+frontend/assets/videos/
+*.mp4
+*.mkv
+*.webm
+*.mov
+*.m4v
+

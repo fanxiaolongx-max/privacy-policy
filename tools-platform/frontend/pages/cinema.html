@@ -1,0 +1,2962 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎬 Tools Cinema - 光影点播大厅</title>
+    <meta name="description" content="Tools Platform 影视作品点播中心，超清流畅、免登录随时随地畅快观影。">
+    <link rel="icon" href="/favicon.ico">
+    <style>
+        :root {
+            --bg-base: #0a0b10;
+            --bg-surface: #12141e;
+            --bg-card: rgba(26, 29, 44, 0.7);
+            --bg-card-hover: rgba(35, 39, 60, 0.85);
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --accent: #a855f7;
+            --accent-pink: #ec4899;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --text-muted: #64748b;
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --border-glass-hover: rgba(168, 85, 247, 0.4);
+            --radius-sm: 8px;
+            --radius-md: 14px;
+            --radius-lg: 20px;
+            --radius-full: 9999px;
+            --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            --player-height: 580px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.5;
+            position: relative;
+        }
+
+        /* 动态背景星芒与弥散光球 */
+        .ambient-sphere {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(120px);
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.28;
+            animation: pulseGlow 18s ease-in-out infinite alternate;
+        }
+
+        .sphere-1 {
+            top: -120px;
+            left: 10%;
+            width: 550px;
+            height: 550px;
+            background: radial-gradient(circle, #4f46e5 0%, #7c3aed 70%, transparent 100%);
+        }
+
+        .sphere-2 {
+            top: 35%;
+            right: -100px;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, #ec4899 0%, #8b5cf6 70%, transparent 100%);
+            animation-delay: -9s;
+        }
+
+        @keyframes pulseGlow {
+            0% {
+                transform: scale(0.9) translate(0, 0);
+            }
+            100% {
+                transform: scale(1.15) translate(40px, 30px);
+            }
+        }
+
+        /* --- 导航顶栏 --- */
+        header.cinema-nav {
+            position: sticky;
+            top: 0;
+            width: 100%;
+            height: 68px;
+            padding: 0 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(10, 11, 16, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-glass);
+            z-index: 100;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .brand-icon {
+            font-size: 26px;
+            filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.6));
+            animation: gentleFloat 4s ease-in-out infinite;
+        }
+
+        @keyframes gentleFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+
+        .brand-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand-title {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            background: linear-gradient(135deg, #ffffff 30%, #c7d2fe 70%, #f472b6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-sub {
+            font-size: 11px;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .nav-center {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex: 1;
+            max-width: 520px;
+            margin: 0 32px;
+        }
+
+        .search-box {
+            position: relative;
+            width: 100%;
+        }
+
+        .search-box input {
+            width: 100%;
+            height: 40px;
+            padding: 0 16px 0 42px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-full);
+            color: #fff;
+            font-size: 13px;
+            outline: none;
+            transition: all 0.25s ease;
+        }
+
+        .search-box input:focus {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(168, 85, 247, 0.6);
+            box-shadow: 0 0 16px rgba(168, 85, 247, 0.25);
+        }
+
+        .search-box svg {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            width: 16px;
+            height: 16px;
+            pointer-events: none;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-nav {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-sub);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-full);
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-nav:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.25);
+            transform: translateY(-1px);
+        }
+
+        .btn-nav.primary {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: #fff;
+            border: none;
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+        }
+
+        .btn-nav.primary:hover {
+            background: linear-gradient(135deg, #4338ca 0%, #6d28d9 100%);
+            box-shadow: 0 6px 18px rgba(99, 102, 241, 0.5);
+        }
+
+        /* --- 页面主体容器 --- */
+        main.cinema-container {
+            position: relative;
+            z-index: 10;
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 24px 32px 80px;
+        }
+
+        /* --- 焦点巨幕 Hero Banner --- */
+        .hero-banner {
+            position: relative;
+            width: 100%;
+            height: 480px;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            margin-bottom: 40px;
+            box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.8), 0 0 0 1px var(--border-glass);
+            background-color: #12141f;
+        }
+
+        .hero-bg-image {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center 30%;
+            filter: brightness(0.72) contrast(1.05);
+            transform: scale(1.01);
+            transition: transform 8s ease;
+        }
+
+        .hero-banner:hover .hero-bg-image {
+            transform: scale(1.04);
+        }
+
+        .hero-gradient-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, #0a0b10 0%, rgba(10, 11, 16, 0.82) 45%, rgba(10, 11, 16, 0.2) 80%, rgba(10, 11, 16, 0.6) 100%),
+                        linear-gradient(0deg, #0a0b10 0%, rgba(10, 11, 16, 0) 50%);
+        }
+
+        .hero-content {
+            position: absolute;
+            bottom: 48px;
+            left: 48px;
+            max-width: 640px;
+            z-index: 2;
+        }
+
+        .hero-badges {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 6px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .badge-exclusive {
+            background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(236, 72, 153, 0.4);
+        }
+
+        .badge-res {
+            background: rgba(255, 255, 255, 0.12);
+            color: #e2e8f0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(4px);
+        }
+
+        .badge-rating {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .hero-title {
+            font-size: 44px;
+            font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 12px;
+            letter-spacing: 2px;
+            color: #fff;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+        }
+
+        .hero-meta {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-size: 13px;
+            color: #cbd5e1;
+            margin-bottom: 16px;
+        }
+
+        .hero-meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .hero-meta .dot {
+            width: 4px;
+            height: 4px;
+            background: var(--text-muted);
+            border-radius: 50%;
+        }
+
+        .hero-desc {
+            font-size: 14px;
+            line-height: 1.65;
+            color: #94a3b8;
+            margin-bottom: 24px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+        }
+
+        .hero-actions {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .btn-play-hero {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 28px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #0f172a;
+            background: #ffffff;
+            border: none;
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(255, 255, 255, 0.3);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-play-hero:hover {
+            background: #f1f5f9;
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(255, 255, 255, 0.45);
+        }
+
+        .btn-play-hero svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        .btn-theater-hero {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 22px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-theater-hero:hover {
+            background: rgba(255, 255, 255, 0.22);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-1px);
+        }
+
+        /* --- 沉浸式专业播放器区域 --- */
+        .player-section {
+            position: relative;
+            margin-bottom: 48px;
+            scroll-margin-top: 90px;
+        }
+
+        .player-wrapper {
+            position: relative;
+            width: 100%;
+            background: #000;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.08);
+            transition: all 0.35s ease;
+        }
+
+        /* 剧场模式展开 - 保证控制栏永远完整可见且不被剪切 */
+        .player-section.theater-mode {
+            max-width: 100vw;
+            margin-left: calc(-50vw + 50%);
+            margin-right: calc(-50vw + 50%);
+            padding: 0 16px;
+            margin-top: 0;
+            width: 100vw;
+            box-sizing: border-box;
+        }
+
+        .player-section.theater-mode .player-wrapper {
+            border-radius: 12px;
+            max-height: none;
+            overflow: hidden;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.12);
+        }
+
+        .player-section.theater-mode .video-box {
+            width: 100%;
+            height: min(calc(100vh - 120px), calc(100vw * 9 / 16));
+            max-height: 82vh;
+            min-height: 360px;
+            aspect-ratio: auto;
+        }
+
+        /* 动态氛围光 Ambient Light */
+        .player-ambient-glow {
+            position: absolute;
+            inset: -40px;
+            border-radius: 36px;
+            background: radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.28) 0%, rgba(168, 85, 247, 0.18) 45%, transparent 70%);
+            filter: blur(50px);
+            opacity: 0.85;
+            z-index: -1;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        .player-ambient-glow.hidden {
+            opacity: 0;
+        }
+
+        .video-box {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        video#mainVideo {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: #000;
+            display: block;
+        }
+
+        /* 大播放/暂停水波纹中心按钮 */
+        .center-action-btn {
+            position: absolute;
+            width: 76px;
+            height: 76px;
+            background: rgba(15, 23, 42, 0.75);
+            border: 2px solid rgba(255, 255, 255, 0.35);
+            backdrop-filter: blur(12px);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            opacity: 0;
+            transform: scale(0.85);
+            pointer-events: none;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 25px rgba(99, 102, 241, 0.3);
+        }
+
+        .center-action-btn.visible {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
+        }
+
+        .center-action-btn:hover {
+            transform: scale(1.12);
+            background: rgba(99, 102, 241, 0.85);
+            border-color: #fff;
+        }
+
+        .center-action-btn svg {
+            width: 32px;
+            height: 32px;
+            fill: currentColor;
+            margin-left: 3px;
+        }
+
+        /* 顶部悬浮信息栏 */
+        .player-top-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            padding: 16px 24px;
+            background: linear-gradient(180deg, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 20;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .player-title-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .player-current-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .player-badge-spec {
+            font-size: 11px;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: #cbd5e1;
+            backdrop-filter: blur(4px);
+        }
+
+        /* 底部全功能专业控制条 */
+        .player-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 24px 24px 16px;
+            background: linear-gradient(0deg, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.6) 60%, rgba(0, 0, 0, 0) 100%);
+            z-index: 20;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .video-box.user-active .player-controls,
+        .video-box.user-active .player-top-bar,
+        .video-box.paused .player-controls,
+        .video-box.paused .player-top-bar,
+        .video-box.episode-picker-open .player-controls,
+        .video-box.episode-picker-open .player-top-bar {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* 进度条 Scrub Bar */
+        .progress-container {
+            position: relative;
+            width: 100%;
+            height: 14px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .progress-bar-bg {
+            position: relative;
+            width: 100%;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.22);
+            border-radius: 3px;
+            transition: height 0.15s ease;
+            overflow: visible;
+        }
+
+        .progress-container:hover .progress-bar-bg {
+            height: 7px;
+        }
+
+        .progress-buffer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 0%;
+            background: rgba(255, 255, 255, 0.38);
+            border-radius: 3px;
+        }
+
+        .progress-played {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #6366f1 0%, #a855f7 70%, #ec4899 100%);
+            border-radius: 3px;
+            box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+        }
+
+        .progress-handle {
+            position: absolute;
+            right: -6px;
+            top: 50%;
+            transform: translateY(-50%) scale(0);
+            width: 14px;
+            height: 14px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.6);
+            transition: transform 0.15s ease;
+        }
+
+        .progress-container:hover .progress-handle {
+            transform: translateY(-50%) scale(1);
+        }
+
+        /* 悬停时间预览 Tooltip */
+        .progress-tooltip {
+            position: absolute;
+            bottom: 22px;
+            transform: translateX(-50%);
+            padding: 4px 8px;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid var(--border-glass);
+            border-radius: 4px;
+            font-size: 11px;
+            color: #fff;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.15s ease;
+        }
+
+        .progress-container:hover .progress-tooltip {
+            opacity: 1;
+        }
+
+        /* 控制按钮行 */
+        .controls-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .controls-left, .controls-right {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .ctrl-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #e2e8f0;
+            cursor: pointer;
+            height: 30px;
+            padding: 0 10px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            position: relative;
+            backdrop-filter: blur(8px);
+            user-select: none;
+            line-height: 1;
+            box-sizing: border-box;
+            vertical-align: middle;
+        }
+
+        .ctrl-btn:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.18);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .ctrl-btn:disabled {
+            opacity: 0.38;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .episode-picker {
+            position: absolute;
+            right: 24px;
+            bottom: 84px;
+            z-index: 35;
+            width: min(460px, calc(100% - 48px));
+            max-height: min(420px, calc(100% - 120px));
+            display: none;
+            overflow: hidden;
+            border: 1px solid rgba(168, 85, 247, .45);
+            border-radius: 14px;
+            background: rgba(15, 23, 42, .96);
+            box-shadow: 0 20px 55px rgba(0, 0, 0, .72);
+            backdrop-filter: blur(18px);
+        }
+
+        .episode-picker.open {
+            display: flex;
+            flex-direction: column;
+            animation: slideInDown .2s ease-out;
+        }
+
+        .episode-picker-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 13px 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, .1);
+        }
+
+        .episode-picker-head strong {
+            min-width: 0;
+            overflow: hidden;
+            color: #fff;
+            font-size: 13px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .episode-picker-list {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+            overflow-y: auto;
+            padding: 12px;
+        }
+
+        .episode-item {
+            min-width: 0;
+            min-height: 42px;
+            display: grid;
+            grid-template-columns: 28px minmax(0, 1fr);
+            align-items: center;
+            gap: 8px;
+            padding: 6px 9px;
+            border: 1px solid rgba(255, 255, 255, .12);
+            border-radius: 8px;
+            color: #cbd5e1;
+            background: rgba(255, 255, 255, .05);
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .episode-item:hover,
+        .episode-item.active {
+            border-color: rgba(168, 85, 247, .7);
+            color: #fff;
+            background: rgba(99, 102, 241, .25);
+        }
+
+        .episode-number {
+            color: #a5b4fc;
+            font-size: 11px;
+            font-weight: 800;
+            text-align: center;
+        }
+
+        .episode-title {
+            overflow: hidden;
+            font-size: 11px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .ctrl-btn.active {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.35) 0%, rgba(168, 85, 247, 0.4) 100%);
+            border-color: rgba(168, 85, 247, 0.65);
+            color: #fff;
+            box-shadow: 0 0 14px rgba(124, 58, 237, 0.35);
+        }
+
+        .ctrl-btn.icon-only {
+            padding: 7px;
+            background: none;
+            border: none;
+            border-radius: 6px;
+        }
+
+        .ctrl-btn.icon-only:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: scale(1.08);
+        }
+
+        .ctrl-btn svg {
+            width: 15px;
+            height: 15px;
+            display: block;
+            flex-shrink: 0;
+        }
+
+        .ctrl-btn.icon-only svg {
+            width: 22px;
+            height: 22px;
+        }
+
+        /* 全屏模式下的专业样式重置 */
+        .video-box:fullscreen,
+        .video-box:-webkit-full-screen,
+        .video-box.is-fullscreen {
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: 100vw !important;
+            max-height: 100vh !important;
+            aspect-ratio: auto !important;
+            border-radius: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #000 !important;
+        }
+
+        .video-box:fullscreen video#mainVideo,
+        .video-box:-webkit-full-screen video#mainVideo,
+        .video-box.is-fullscreen video#mainVideo {
+            width: 100% !important;
+            height: 100% !important;
+            max-height: 100vh !important;
+            object-fit: contain !important;
+        }
+
+        /* 音量条容器 */
+        .volume-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .volume-slider-wrap {
+            width: 0;
+            overflow: hidden;
+            transition: width 0.25s ease;
+            display: flex;
+            align-items: center;
+        }
+
+        .volume-group:hover .volume-slider-wrap {
+            width: 75px;
+        }
+
+        .volume-slider {
+            -webkit-appearance: none;
+            width: 70px;
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(255, 255, 255, 0.3);
+            outline: none;
+            cursor: pointer;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+        }
+
+        /* 时间码显示 */
+        .time-display {
+            font-size: 13px;
+            font-variant-numeric: tabular-nums;
+            color: #cbd5e1;
+            user-select: none;
+            margin-left: 4px;
+        }
+
+        .time-current {
+            color: #fff;
+            font-weight: 500;
+        }
+
+        .time-divider {
+            color: var(--text-muted);
+            margin: 0 3px;
+        }
+
+        /* 倍速菜单 */
+        .speed-menu-wrap {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .speed-dropdown {
+            position: absolute;
+            bottom: 38px;
+            right: 50%;
+            transform: translateX(50%);
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-glass);
+            border-radius: 8px;
+            padding: 4px 0;
+            display: none;
+            flex-direction: column;
+            min-width: 64px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+            z-index: 30;
+        }
+
+        .speed-dropdown.open {
+            display: flex;
+        }
+
+        .speed-option {
+            padding: 6px 14px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #cbd5e1;
+            background: none;
+            border: none;
+            text-align: center;
+            cursor: pointer;
+            transition: background 0.15s;
+            white-space: nowrap !important;
+            line-height: 1.2;
+        }
+
+        .speed-option:hover, .speed-option.active {
+            background: rgba(99, 102, 241, 0.3);
+            color: #a5b4fc;
+            font-weight: 600;
+        }
+
+        /* 断点续播提示浮窗 */
+        .resume-toast {
+            position: absolute;
+            top: 24px;
+            left: 24px;
+            background: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(168, 85, 247, 0.4);
+            border-radius: 10px;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+            z-index: 30;
+            animation: slideInDown 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            display: none;
+        }
+
+        @keyframes slideInDown {
+            from { opacity: 0; transform: translateY(-15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .resume-toast-text {
+            font-size: 12px;
+            color: #e2e8f0;
+        }
+
+        .resume-toast-text b {
+            color: #a5b4fc;
+        }
+
+        .resume-btn {
+            background: #6366f1;
+            border: none;
+            color: #fff;
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .resume-btn:hover {
+            background: #4f46e5;
+        }
+
+        .resume-btn-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        /* --- 播放器下方详情栏 --- */
+        .player-info-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            margin-top: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 24px;
+        }
+
+        .info-main h2 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+
+        .info-meta-chips {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .chip {
+            font-size: 12px;
+            color: var(--text-sub);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-glass);
+            padding: 3px 10px;
+            border-radius: 6px;
+        }
+
+        .info-desc {
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--text-sub);
+            max-width: 880px;
+        }
+
+        .info-specs-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px 16px;
+            min-width: 260px;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--border-glass);
+            border-radius: 10px;
+            padding: 14px;
+        }
+
+        .spec-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .spec-label {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .spec-val {
+            font-size: 12px;
+            font-weight: 600;
+            color: #cbd5e1;
+        }
+
+        /* --- 点播作品矩阵与分类 --- */
+        .catalog-section {
+            margin-top: 48px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .section-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 0.5px;
+        }
+
+        .section-count {
+            font-size: 12px;
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.06);
+            padding: 2px 8px;
+            border-radius: var(--radius-full);
+        }
+
+        .category-tabs {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .tab-item {
+            padding: 6px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-sub);
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .tab-item:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.09);
+        }
+
+        .tab-item.active {
+            color: #fff;
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            border-color: transparent;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        /* 视频卡片网格 */
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .video-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .video-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--border-glass-hover);
+            box-shadow: 0 16px 32px -8px rgba(0, 0, 0, 0.7), 0 0 20px rgba(168, 85, 247, 0.25);
+            background: var(--bg-card-hover);
+        }
+
+        .card-cover-wrap {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background: #1e2130;
+            overflow: hidden;
+        }
+
+        .card-cover {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+
+        .video-card:hover .card-cover {
+            transform: scale(1.06);
+        }
+
+        .card-overlay-gradient {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(0deg, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0) 60%);
+        }
+
+        .card-hover-play {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.35);
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+
+        .video-card:hover .card-hover-play {
+            opacity: 1;
+        }
+
+        .card-play-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #0f172a;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            transform: scale(0.8);
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .video-card:hover .card-play-icon {
+            transform: scale(1);
+        }
+
+        .card-play-icon svg {
+            width: 22px;
+            height: 22px;
+            fill: currentColor;
+            margin-left: 2px;
+        }
+
+        .card-badge-res {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 7px;
+            border-radius: 4px;
+        }
+
+        .card-duration {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            color: #e2e8f0;
+            font-size: 11px;
+            font-weight: 500;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .card-body {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 6px;
+            line-height: 1.35;
+        }
+
+        .card-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+
+        .card-desc {
+            font-size: 12px;
+            line-height: 1.55;
+            color: var(--text-sub);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .card-footer {
+            margin-top: auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 10px;
+            border-top: 1px solid var(--border-glass);
+        }
+
+        .card-tag {
+            font-size: 11px;
+            color: #a5b4fc;
+            background: rgba(99, 102, 241, 0.15);
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .card-status {
+            font-size: 12px;
+            color: #cbd5e1;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* 快捷键帮助弹窗 Modal */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-backdrop.open {
+            display: flex;
+        }
+
+        .continue-dialog {
+            width: min(520px, 100%);
+            overflow: hidden;
+            border: 1px solid rgba(168, 85, 247, .48);
+            border-radius: 18px;
+            background: #12141f;
+            box-shadow: 0 28px 80px rgba(0, 0, 0, .82);
+            animation: zoomIn .25s cubic-bezier(.16, 1, .3, 1);
+        }
+
+        .continue-preview {
+            position: relative;
+            height: 210px;
+            overflow: hidden;
+            background: #090b12;
+        }
+
+        .continue-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: .72;
+        }
+
+        .continue-preview::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, transparent 20%, #12141f 100%);
+        }
+
+        .continue-body {
+            padding: 0 24px 24px;
+        }
+
+        .continue-kicker {
+            margin-bottom: 7px;
+            color: #a5b4fc;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .08em;
+        }
+
+        .continue-title {
+            margin: 0 0 8px;
+            color: #fff;
+            font-size: 22px;
+        }
+
+        .continue-copy {
+            margin: 0;
+            color: #94a3b8;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .continue-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .continue-actions button {
+            min-height: 38px;
+            padding: 0 16px;
+            border: 1px solid rgba(255, 255, 255, .16);
+            border-radius: 8px;
+            color: #e2e8f0;
+            background: rgba(255, 255, 255, .07);
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .continue-actions .primary {
+            border-color: #6366f1;
+            color: #fff;
+            background: #6366f1;
+        }
+
+        .continue-actions button:hover {
+            filter: brightness(1.12);
+        }
+
+        .shortcuts-dialog {
+            background: #12141f;
+            border: 1px solid var(--border-glass-hover);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 480px;
+            padding: 28px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
+            animation: zoomIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes zoomIn {
+            from { opacity: 0; transform: scale(0.92); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .dialog-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .dialog-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .dialog-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .shortcuts-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .shortcut-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-glass);
+        }
+
+        .shortcut-name {
+            font-size: 13px;
+            color: #cbd5e1;
+        }
+
+        .shortcut-key {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: monospace;
+            color: #fff;
+        }
+
+        /* 响应式调整 (平板与移动端深度适配) */
+        @media (max-width: 900px) {
+            header.cinema-nav {
+                padding: 0 16px;
+            }
+            .nav-center {
+                display: none;
+            }
+            .hero-banner {
+                height: 380px;
+            }
+            .hero-title {
+                font-size: 32px;
+            }
+            .hero-content {
+                bottom: 24px;
+                left: 24px;
+                right: 24px;
+            }
+            .player-info-card {
+                flex-direction: column;
+            }
+            .info-specs-grid {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            header.cinema-nav {
+                height: 56px;
+                padding: 0 12px;
+            }
+            .brand-title {
+                font-size: 15px;
+            }
+            .brand-sub {
+                display: none;
+            }
+            .nav-actions {
+                gap: 6px;
+            }
+            .btn-nav {
+                padding: 5px 10px;
+                font-size: 12px;
+            }
+
+            main.cinema-container {
+                padding: 12px 10px 60px;
+            }
+
+            /* 巨幕 Hero 适配为自适应卡片 */
+            .hero-banner {
+                height: auto;
+                min-height: 260px;
+                margin-bottom: 20px;
+                border-radius: var(--radius-md);
+            }
+            .hero-bg-image {
+                position: absolute;
+                inset: 0;
+                height: 100%;
+            }
+            .hero-content {
+                position: relative;
+                padding: 20px 16px 18px;
+                bottom: auto;
+                left: auto;
+                right: auto;
+                background: linear-gradient(180deg, rgba(10, 11, 16, 0.4) 0%, rgba(10, 11, 16, 0.95) 60%, #0a0b10 100%);
+            }
+            .hero-title {
+                font-size: 26px;
+                letter-spacing: 1px;
+                margin-bottom: 8px;
+            }
+            .hero-badges {
+                margin-bottom: 10px;
+                gap: 6px;
+            }
+            .badge {
+                font-size: 10px;
+                padding: 2px 7px;
+            }
+            .hero-meta {
+                font-size: 12px;
+                gap: 6px;
+                margin-bottom: 10px;
+            }
+            .hero-desc {
+                font-size: 12px;
+                -webkit-line-clamp: 2;
+                margin-bottom: 14px;
+            }
+            .hero-actions {
+                gap: 8px;
+            }
+            .btn-play-hero {
+                padding: 9px 18px;
+                font-size: 13px;
+            }
+            .btn-theater-hero {
+                display: none !important; /* 手机端竖屏隐藏无意义的“剧场模式” */
+            }
+
+            /* 播放器尺寸与控制栏移动端深度适配 */
+            .player-wrapper {
+                border-radius: var(--radius-md);
+            }
+            .player-top-bar {
+                height: 48px;
+                padding: 8px 10px;
+            }
+            .player-current-title {
+                font-size: 12px;
+                max-width: 170px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .player-badge-spec {
+                font-size: 10px;
+                padding: 1px 5px;
+            }
+            #topShortcutsBtn {
+                display: none !important; /* 手机无实体键盘，隐藏快捷键按钮 */
+            }
+
+            .player-controls {
+                padding: 10px 8px 6px;
+                gap: 4px;
+            }
+            .progress-container {
+                height: 14px;
+            }
+            .controls-row {
+                width: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 4px;
+            }
+            .controls-left, .controls-right {
+                gap: 4px;
+                flex-shrink: 0;
+            }
+
+            .episode-nav-text {
+                display: none;
+            }
+
+            .speed-menu-wrap {
+                display: none;
+            }
+
+            .episode-picker {
+                right: 8px;
+                bottom: 56px;
+                width: calc(100% - 16px);
+                max-height: calc(100% - 70px);
+            }
+
+            .episode-picker-list {
+                grid-template-columns: 1fr;
+            }
+
+            .continue-preview {
+                height: 150px;
+            }
+
+            .continue-body {
+                padding: 0 18px 18px;
+            }
+
+            .continue-actions {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+            }
+
+            /* 手机端隐藏电脑端专属冗余控件，杜绝横向挤出屏幕 */
+            .volume-group {
+                display: none !important; /* 手机自带物理音量键，隐藏软件音量条 */
+            }
+            #ambientToggleBtn {
+                display: none !important; /* 移动端窄屏隐藏氛围光 */
+            }
+            #theaterBtn {
+                display: none !important; /* 移动端无宽屏剧场 */
+            }
+            #pipBtn {
+                display: none !important; /* 移动端以全屏观影为主 */
+            }
+
+            /* 移动端保留的控制按钮微调紧凑并统一高度 */
+            .ctrl-btn {
+                height: 28px !important;
+                padding: 0 8px !important;
+                font-size: 11px !important;
+                gap: 4px !important;
+                border-radius: 6px !important;
+                box-sizing: border-box !important;
+            }
+            .ctrl-btn.icon-only {
+                height: 28px !important;
+                padding: 0 5px !important;
+            }
+            .ctrl-btn.icon-only svg {
+                width: 18px;
+                height: 18px;
+            }
+
+            .time-display {
+                font-size: 10px;
+                margin-left: 2px;
+                letter-spacing: -0.2px;
+            }
+
+            /* 播放器下方详情卡片 */
+            .player-info-card {
+                padding: 14px;
+                margin-top: 12px;
+                border-radius: var(--radius-md);
+            }
+            .info-main h2 {
+                font-size: 16px;
+            }
+            .chip {
+                font-size: 11px;
+                padding: 2px 7px;
+            }
+            .info-desc {
+                font-size: 12px;
+                line-height: 1.5;
+            }
+            .info-specs-grid {
+                width: 100%;
+                min-width: 0;
+                grid-template-columns: 1fr 1fr;
+                padding: 10px;
+                gap: 8px;
+            }
+            .spec-val {
+                font-size: 11px;
+            }
+
+            /* 点播片库 */
+            .catalog-section {
+                margin-top: 28px;
+            }
+            .section-title {
+                font-size: 18px;
+            }
+            .video-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .btn-skip-10 {
+                display: none !important; /* 420px 以下超窄机型只保留播放键与时间码，绝对不溢出 */
+            }
+            .time-divider, .time-total {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 弥散背景流光 -->
+    <div class="ambient-sphere sphere-1"></div>
+    <div class="ambient-sphere sphere-2"></div>
+
+    <!-- 顶部导航栏 -->
+    <header class="cinema-nav">
+        <a href="/cinema" class="nav-brand">
+            <span class="brand-icon">🎬</span>
+            <div class="brand-text">
+                <span class="brand-title">Tools Cinema</span>
+                <span class="brand-sub">光影点播中心 · 独播剧场</span>
+            </div>
+        </a>
+
+        <div class="nav-center">
+            <div class="search-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" id="videoSearchInput" placeholder="搜索片名、剧情关键词、规格标签..." oninput="handleSearch(this.value)">
+            </div>
+        </div>
+
+        <div class="nav-actions">
+            <a href="/login.html" class="btn-nav">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                    <polyline points="10 17 15 12 10 7"></polyline>
+                    <line x1="15" y1="12" x2="3" y2="12"></line>
+                </svg>
+                返回登录
+            </a>
+            <a href="/" class="btn-nav primary">
+                进入工作台
+            </a>
+        </div>
+    </header>
+
+    <main class="cinema-container">
+        <!-- 焦点巨幕 Hero Banner -->
+        <section class="hero-banner" id="heroBanner">
+            <img class="hero-bg-image" id="heroBackdrop" src="/assets/videos/龙餐馆_backdrop.jpg" alt="龙餐馆">
+            <div class="hero-gradient-overlay"></div>
+            <div class="hero-content">
+                <div class="hero-badges">
+                    <span class="badge badge-exclusive">✨ 独家首播</span>
+                    <span class="badge badge-res">720P 超清</span>
+                    <span class="badge badge-res">HEVC / AAC</span>
+                    <span class="badge badge-rating">★ 9.8 高分</span>
+                </div>
+                <h1 class="hero-title" id="heroTitle">龙 餐 馆</h1>
+                <div class="hero-meta">
+                    <span id="heroYear">2026</span>
+                    <span class="dot"></span>
+                    <span id="heroDuration">2小时17分</span>
+                    <span class="dot"></span>
+                    <span id="heroCategory">动作 / 美食 / 剧情</span>
+                </div>
+                <p class="hero-desc" id="heroDesc">
+                    深夜老街深处，一家只在特定时刻亮灯的餐馆。掌勺的老板身怀绝技，锅勺起伏间翻涌着江湖旧梦与人间烟火。每一道菜肴都是一次试炼，每一个食客都带着未解的心事...
+                </p>
+                <div class="hero-actions">
+                    <button class="btn-play-hero" onclick="playHeroVideo()">
+                        <svg viewBox="0 0 24 24">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                        立即播放
+                    </button>
+                    <button class="btn-theater-hero" onclick="toggleTheaterMode()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                            <line x1="2" y1="10" x2="22" y2="10"></line>
+                        </svg>
+                        剧场宽屏模式
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 专业内置 Web 播放器 -->
+        <section class="player-section" id="playerSection">
+            <!-- 动态环境背光 -->
+            <div class="player-ambient-glow" id="playerAmbientGlow"></div>
+
+            <div class="player-wrapper">
+                <div class="video-box paused" id="videoBox">
+                    <video id="mainVideo" preload="metadata" poster="/assets/videos/龙餐馆_poster.jpg" playsinline>
+                        <source src="/assets/videos/龙餐馆_1334x720.mp4" type="video/mp4">
+                        您的浏览器暂不支持 HTML5 视频播放。
+                    </video>
+
+                    <!-- 中心大播放按钮 -->
+                    <div class="center-action-btn visible" id="centerPlayBtn" onclick="togglePlayPause()">
+                        <svg id="centerPlayIcon" viewBox="0 0 24 24">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                    </div>
+
+                    <!-- 顶部悬浮信息 -->
+                    <div class="player-top-bar">
+                        <div class="player-title-info">
+                            <span class="player-current-title" id="playerVideoTitle">龙餐馆 · 超清正片</span>
+                            <span class="player-badge-spec" id="playerVideoSpec">720P · HEVC</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <button class="ctrl-btn" id="topExitTheaterBtn" onclick="toggleTheaterMode()" style="display:none; background:rgba(99, 102, 241, 0.35); border:1px solid rgba(168, 85, 247, 0.65); color:#fff; font-weight:600;" title="退出宽屏剧场模式 (T / Esc)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                                <span>✕ 退出剧场</span>
+                            </button>
+                            <button class="ctrl-btn" id="topExitFsBtn" onclick="toggleFullscreen()" style="display:none; background:rgba(239, 68, 68, 0.25); border:1px solid rgba(239, 68, 68, 0.5); color:#fca5a5; font-weight:600;" title="退出全屏 (Esc / F)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                                <span>退出全屏 (Esc)</span>
+                            </button>
+                            <button class="ctrl-btn" id="topShortcutsBtn" title="快捷键帮助" onclick="toggleShortcutsModal(true)">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                </svg>
+                                <span>快捷键</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 记忆续播浮窗 -->
+                    <div class="resume-toast" id="resumeToast">
+                        <span class="resume-toast-text">上次观看到 <b id="resumeTimeStr">00:00:00</b></span>
+                        <button class="resume-btn" onclick="applyResume()">继续播放</button>
+                        <button class="resume-btn-close" onclick="dismissResume()">×</button>
+                    </div>
+
+                    <!-- 当前分类选集面板 -->
+                    <div class="episode-picker" id="episodePicker">
+                        <div class="episode-picker-head">
+                            <strong id="episodePickerTitle">选集</strong>
+                            <button class="resume-btn-close" type="button" onclick="toggleEpisodePicker(false)" aria-label="关闭选集">×</button>
+                        </div>
+                        <div class="episode-picker-list" id="episodePickerList"></div>
+                    </div>
+
+                    <!-- 底部专业控制栏 -->
+                    <div class="player-controls">
+                        <!-- 交互时间轴 -->
+                        <div class="progress-container" id="progressContainer">
+                            <div class="progress-bar-bg">
+                                <div class="progress-buffer" id="progressBuffer"></div>
+                                <div class="progress-played" id="progressPlayed">
+                                    <span class="progress-handle"></span>
+                                </div>
+                            </div>
+                            <div class="progress-tooltip" id="progressTooltip">00:00:00</div>
+                        </div>
+
+                        <!-- 控件行 -->
+                        <div class="controls-row">
+                            <div class="controls-left">
+                                <!-- 播放/暂停 -->
+                                <button class="ctrl-btn icon-only" id="ctrlPlayBtn" onclick="togglePlayPause()" title="播放/暂停 (空格)">
+                                    <svg id="playIconSvg" viewBox="0 0 24 24">
+                                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                    </svg>
+                                </button>
+
+                                <!-- 快退10秒 -->
+                                <button class="ctrl-btn icon-only btn-skip-10" onclick="skipTime(-10)" title="后退 10 秒 (←)">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="11 17 6 12 11 7"></polyline>
+                                        <polyline points="18 17 13 12 18 7"></polyline>
+                                    </svg>
+                                </button>
+
+                                <!-- 快进10秒 -->
+                                <button class="ctrl-btn icon-only btn-skip-10" onclick="skipTime(10)" title="前进 10 秒 (→)">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="13 17 18 12 13 7"></polyline>
+                                        <polyline points="6 17 11 12 6 7"></polyline>
+                                    </svg>
+                                </button>
+
+                                <!-- 音量控制 -->
+                                <div class="volume-group">
+                                    <button class="ctrl-btn icon-only" id="muteBtn" onclick="toggleMute()" title="静音切换 (M)">
+                                        <svg id="volumeIconSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                                        </svg>
+                                    </button>
+                                    <div class="volume-slider-wrap">
+                                        <input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.05" value="1" oninput="changeVolume(this.value)">
+                                    </div>
+                                </div>
+
+                                <!-- 时间码 -->
+                                <div class="time-display">
+                                    <span class="time-current" id="timeCurrent">00:00:00</span>
+                                    <span class="time-divider">/</span>
+                                    <span class="time-total" id="timeTotal">02:17:30</span>
+                                </div>
+                            </div>
+
+                            <div class="controls-right">
+                                <button class="ctrl-btn" id="previousEpisodeBtn" type="button" onclick="playAdjacentVideo(-1)" title="播放上一集">
+                                    <span aria-hidden="true">⏮</span><span class="episode-nav-text">上一集</span>
+                                </button>
+                                <button class="ctrl-btn" id="episodePickerBtn" type="button" onclick="toggleEpisodePicker()" title="打开当前分类选集" aria-expanded="false" aria-controls="episodePicker">
+                                    <span aria-hidden="true">☷</span><span id="episodePickerBtnText">选集</span>
+                                </button>
+                                <button class="ctrl-btn" id="nextEpisodeBtn" type="button" onclick="playAdjacentVideo(1)" title="播放下一集">
+                                    <span class="episode-nav-text">下一集</span><span aria-hidden="true">⏭</span>
+                                </button>
+
+                                <!-- 倍速选择器 -->
+                                <div class="speed-menu-wrap">
+                                    <button class="ctrl-btn" id="speedBtn" onclick="toggleSpeedDropdown()" title="调节播放倍速">
+                                        <span id="speedValText">1.0x</span>
+                                    </button>
+                                    <div class="speed-dropdown" id="speedDropdown">
+                                        <button class="speed-option" onclick="setPlaybackRate(0.5)">0.5x</button>
+                                        <button class="speed-option" onclick="setPlaybackRate(0.75)">0.75x</button>
+                                        <button class="speed-option active" onclick="setPlaybackRate(1.0)">1.0x</button>
+                                        <button class="speed-option" onclick="setPlaybackRate(1.25)">1.25x</button>
+                                        <button class="speed-option" onclick="setPlaybackRate(1.5)">1.5x</button>
+                                        <button class="speed-option" onclick="setPlaybackRate(2.0)">2.0x</button>
+                                    </div>
+                                </div>
+
+                                <!-- 氛围背光开关 -->
+                                <button class="ctrl-btn active" id="ambientToggleBtn" onclick="toggleAmbientLight()" title="动态流光氛围背光 (开/关)">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="4"></circle>
+                                        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
+                                    </svg>
+                                    <span id="ambientBtnText">氛围光</span>
+                                </button>
+
+                                <!-- 剧场模式 -->
+                                <button class="ctrl-btn" id="theaterBtn" onclick="toggleTheaterMode()" title="切换宽屏影院剧场模式 (T)">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                                        <line x1="2" y1="9" x2="22" y2="9"></line>
+                                    </svg>
+                                    <span id="theaterBtnText">剧场</span>
+                                </button>
+
+                                <!-- 画中画 -->
+                                <button class="ctrl-btn" id="pipBtn" onclick="togglePiP()" title="画中画小窗播放 (P)">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                                        <rect x="12" y="11" width="8" height="7" rx="1" fill="none"></rect>
+                                    </svg>
+                                    <span>画中画</span>
+                                </button>
+
+                                <!-- 原生全屏 / 退出全屏 -->
+                                <button class="ctrl-btn" id="fullscreenBtn" onclick="toggleFullscreen()" title="切换全屏模式 (F)">
+                                    <svg id="fullscreenIconSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+                                    </svg>
+                                    <span id="fullscreenBtnText">全屏</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 播放器下方详情展示卡片 -->
+            <div class="player-info-card">
+                <div class="info-main">
+                    <h2 id="currentVideoTitle">龙餐馆 (2026)</h2>
+                    <div class="info-meta-chips">
+                        <span class="chip" id="currentCategory">动作 / 美食 / 剧情</span>
+                        <span class="chip">720P HD</span>
+                        <span class="chip">时长 02:17:30</span>
+                        <span class="chip">HEVC (H.265) 视频编码</span>
+                        <span class="chip">AAC 立体声</span>
+                    </div>
+                    <p class="info-desc" id="currentVideoDesc">
+                        深夜老街深处，一家只在特定时刻亮灯的餐馆。掌勺的老板身怀绝技，锅勺起伏间翻涌着江湖旧梦与人间烟火。每一道菜肴都是一次试炼，每一个食客都带着未解的心事...
+                    </p>
+                </div>
+                <div class="info-specs-grid">
+                    <div class="spec-item">
+                        <span class="spec-label">视频分辨率</span>
+                        <span class="spec-val">1332 × 720 (720P)</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">编码格式</span>
+                        <span class="spec-val">HEVC Main (hvc1)</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">文件体积</span>
+                        <span class="spec-val">~580 MB</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">音频声道</span>
+                        <span class="spec-val">AAC Stereo 44.1kHz</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 点播矩阵与片库列表 -->
+        <section class="catalog-section">
+            <div class="section-header">
+                <div class="section-title-wrap">
+                    <h3 class="section-title">影视作品展播</h3>
+                    <span class="section-count" id="videoCountBadge">共 1 部影片</span>
+                </div>
+
+                <div class="category-tabs" id="categoryTabs">
+                    <button class="tab-item active" onclick="filterCategory('all', this)">全部影视</button>
+                    <button class="tab-item" onclick="filterCategory('film', this)">🌟 独家影院</button>
+                    <button class="tab-item" onclick="filterCategory('阿语日常', this)">🗣️ 阿语日常</button>
+                    <button class="tab-item" onclick="filterCategory('阿语字母', this)">🔤 阿语字母</button>
+                </div>
+            </div>
+
+            <!-- 卡片网格 -->
+            <div class="video-grid" id="videoGrid">
+                <!-- 动态卡片 -->
+            </div>
+        </section>
+    </main>
+
+    <!-- 快捷键指南弹窗 -->
+    <div class="modal-backdrop" id="shortcutsModal" onclick="handleModalBackdrop(event)">
+        <div class="shortcuts-dialog" role="dialog" aria-modal="true">
+            <div class="dialog-head">
+                <h4 class="dialog-title">⌨️ 播放器快捷键速查</h4>
+                <button class="dialog-close" onclick="toggleShortcutsModal(false)">×</button>
+            </div>
+            <div class="shortcuts-list">
+                <div class="shortcut-row">
+                    <span class="shortcut-name">播放 / 暂停</span>
+                    <span class="shortcut-key">Space 空格 / 单击画面</span>
+                </div>
+                <div class="shortcut-row">
+                    <span class="shortcut-name">快退 10 秒 / 快进 10 秒</span>
+                    <span class="shortcut-key">← 方向左 / → 方向右</span>
+                </div>
+                <div class="shortcut-row">
+                    <span class="shortcut-name">音量增加 10% / 减少 10%</span>
+                    <span class="shortcut-key">↑ 方向上 / ↓ 方向下</span>
+                </div>
+                <div class="shortcut-row">
+                    <span class="shortcut-name">静音 / 恢复声音</span>
+                    <span class="shortcut-key">M 键</span>
+                </div>
+                <div class="shortcut-row">
+                    <span class="shortcut-name">全屏 / 退出全屏</span>
+                    <span class="shortcut-key">F 键 / 双击画面</span>
+                </div>
+                <div class="shortcut-row">
+                    <span class="shortcut-name">剧场宽屏模式切换</span>
+                    <span class="shortcut-key">T 键</span>
+                </div>
+                <div class="shortcut-row">
+                    <span class="shortcut-name">画中画模式</span>
+                    <span class="shortcut-key">P 键</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 同设备再次进入时的续播确认 -->
+    <div class="modal-backdrop" id="continueWatchingModal" onclick="handleContinueWatchingBackdrop(event)">
+        <div class="continue-dialog" role="dialog" aria-modal="true" aria-labelledby="continueWatchingTitle">
+            <div class="continue-preview">
+                <img id="continueWatchingPoster" src="/assets/videos/龙餐馆_poster.jpg" alt="">
+            </div>
+            <div class="continue-body">
+                <div class="continue-kicker">继续上次观看</div>
+                <h3 class="continue-title" id="continueWatchingTitle">是否继续播放？</h3>
+                <p class="continue-copy" id="continueWatchingCopy"></p>
+                <div class="continue-actions">
+                    <button type="button" onclick="dismissContinueWatching()">暂不继续</button>
+                    <button type="button" class="primary" id="continueWatchingBtn" onclick="continueLastWatching()">继续播放</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 全局片库数据 ---
+        let allVideos = [
+            {
+                id: 'long-restaurant',
+                title: '龙餐馆',
+                englishTitle: 'Dragon Restaurant',
+                year: '2026',
+                duration: 8250,
+                durationFormatted: '02:17:30',
+                resolution: '1334x720 (720P HD)',
+                codec: 'HEVC / AAC',
+                category: 'action',
+                categoryName: '动作 / 美食 / 剧情',
+                rating: '9.8',
+                tags: ['超清', '独家首播', '剧情'],
+                src: '/assets/videos/龙餐馆_1334x720.mp4',
+                poster: '/assets/videos/龙餐馆_poster.jpg',
+                backdrop: '/assets/videos/龙餐馆_backdrop.jpg',
+                description: '深夜老街深处，一家只在特定时刻亮灯的餐馆。掌勺的老板身怀绝技，锅勺起伏间翻涌着江湖旧梦与人间烟火。每一道菜肴都是一次试炼，每一个食客都带着未解的心事...'
+            }
+        ];
+
+        const LAST_WATCH_KEY = 'cinema_last_watch_v1';
+        let currentVideo = allVideos[0];
+        let pendingResumeTime = 0;
+        let pendingLastWatch = null;
+        let resumeDismissTimer = null;
+        let lastProgressSavedSecond = -1;
+        let isUserSeeking = false;
+        let ambientLightEnabled = true;
+        let hideControlsTimeout = null;
+
+        // DOM 元素引用
+        const video = document.getElementById('mainVideo');
+        const videoBox = document.getElementById('videoBox');
+        const playerSection = document.getElementById('playerSection');
+        const centerPlayBtn = document.getElementById('centerPlayBtn');
+        const playIconSvg = document.getElementById('playIconSvg');
+        const centerPlayIcon = document.getElementById('centerPlayIcon');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressPlayed = document.getElementById('progressPlayed');
+        const progressBuffer = document.getElementById('progressBuffer');
+        const progressTooltip = document.getElementById('progressTooltip');
+        const timeCurrent = document.getElementById('timeCurrent');
+        const timeTotal = document.getElementById('timeTotal');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const volumeIconSvg = document.getElementById('volumeIconSvg');
+        const speedBtn = document.getElementById('speedBtn');
+        const speedDropdown = document.getElementById('speedDropdown');
+        const resumeToast = document.getElementById('resumeToast');
+        const resumeTimeStr = document.getElementById('resumeTimeStr');
+        const playerAmbientGlow = document.getElementById('playerAmbientGlow');
+        const videoGrid = document.getElementById('videoGrid');
+        const videoCountBadge = document.getElementById('videoCountBadge');
+        const episodePicker = document.getElementById('episodePicker');
+        const episodePickerList = document.getElementById('episodePickerList');
+        const previousEpisodeBtn = document.getElementById('previousEpisodeBtn');
+        const nextEpisodeBtn = document.getElementById('nextEpisodeBtn');
+        const continueWatchingModal = document.getElementById('continueWatchingModal');
+
+        // --- 初始化加载 ---
+        async function initVideos() {
+            try {
+                const res = await fetch('/api/public/videos');
+                if (res.ok) {
+                    const json = await res.json();
+                    if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+                        allVideos = json.data;
+                        // 服务端已按管理员设置的优先级排序；龙餐馆在未配置时默认置顶。
+                        const defaultFilm = allVideos[0];
+                        if (defaultFilm) {
+                            currentVideo = defaultFilm;
+                            applyVideoToPage(defaultFilm);
+                        }
+                    }
+                    if (json.categories && Array.isArray(json.categories)) {
+                        renderCategoryTabs(json.categories);
+                    }
+                }
+            } catch (e) {
+                console.warn('[Cinema] 读取服务端视频列表失败，采用本地默认配置:', e);
+            }
+            renderVideoGrid(allVideos);
+            updateEpisodeNavigation();
+            if (!offerLastWatchResume()) checkResumeProgress(currentVideo.id);
+        }
+
+        // --- 动态渲染分类标签 ---
+        function renderCategoryTabs(categories) {
+            const container = document.getElementById('categoryTabs');
+            if (!container) return;
+            const counts = {};
+            allVideos.forEach(v => {
+                const f = v.folder || 'film';
+                counts[f] = (counts[f] || 0) + 1;
+            });
+
+            container.innerHTML = `
+                <button class="tab-item active" onclick="filterCategory('all', this)">全部 (${allVideos.length})</button>
+                <button class="tab-item" onclick="filterCategory('film', this)">🌟 独家影院 (${counts['film'] || 1})</button>
+                <button class="tab-item" onclick="filterCategory('阿语日常', this)">🗣️ 阿语日常 (${counts['阿语日常'] || 0})</button>
+                <button class="tab-item" onclick="filterCategory('阿语字母', this)">🔤 阿语字母 (${counts['阿语字母'] || 0})</button>
+            `;
+        }
+
+        // --- 渲染视频网格 ---
+        function renderVideoGrid(videos) {
+            videoCountBadge.textContent = `共 ${videos.length} 部影片`;
+            if (videos.length === 0) {
+                videoGrid.innerHTML = `
+                    <div style="grid-column: 1/-1; padding: 60px 0; text-align: center; color: var(--text-muted);">
+                        <p style="font-size: 16px; margin-bottom: 8px;">未找到匹配的影视作品</p>
+                        <p style="font-size: 13px;">请尝试其他搜索词或清除筛选</p>
+                    </div>
+                `;
+                return;
+            }
+
+            videoGrid.innerHTML = videos.map(item => `
+                <div class="video-card" onclick="selectVideo('${item.id}')">
+                    <div class="card-cover-wrap">
+                        <img class="card-cover" src="${item.poster || '/assets/videos/龙餐馆_poster.jpg'}" alt="${item.title}" loading="lazy">
+                        <div class="card-overlay-gradient"></div>
+                        <span class="card-badge-res">${item.resolution ? item.resolution.split(' ')[0] : 'HD'}</span>
+                        <span class="card-duration">${item.durationFormatted || '精选'}</span>
+                        <div class="card-hover-play">
+                            <div class="card-play-icon">
+                                <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <h4 class="card-title">${item.title}</h4>
+                        <div class="card-meta">
+                            <span>${item.year || '2026'}</span>
+                            <span>·</span>
+                            <span>${item.categoryName || '精彩剧集'}</span>
+                            ${item.rating ? `<span>·</span><span style="color:#fbbf24">★ ${item.rating}</span>` : ''}
+                        </div>
+                        <p class="card-desc">${item.description || '点击即可在上方专业播放器即刻播放。'}</p>
+                        <div class="card-footer">
+                            <span class="card-tag">${(item.tags && item.tags[0]) || '超清'}</span>
+                            <span class="card-status">▶ 立即点播</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function applyVideoToPage(item) {
+            lastProgressSavedSecond = -1;
+            toggleEpisodePicker(false);
+            document.getElementById('playerVideoTitle').textContent = `${item.title} · 正片`;
+            document.getElementById('playerVideoSpec').textContent = `${item.resolution || '720P'} · ${item.codec || 'HEVC'}`;
+            document.getElementById('currentVideoTitle').textContent = `${item.title} (${item.year || '2026'})`;
+            document.getElementById('currentCategory').textContent = item.categoryName || '影视作品';
+            document.getElementById('currentVideoDesc').textContent = item.description || '';
+
+            // 更新 Hero Banner
+            document.getElementById('heroTitle').textContent = item.title;
+            document.getElementById('heroDesc').textContent = item.description;
+            const backdrop = item.backdrop || item.poster;
+            if (backdrop) {
+                document.getElementById('heroBackdrop').src = backdrop;
+            }
+
+            // 更新视频源
+            video.src = item.src;
+            if (item.poster) video.poster = item.poster;
+            updateEpisodeNavigation();
+        }
+
+        // --- 切换播放视频 ---
+        function selectVideo(id, showResumePrompt = true) {
+            const item = allVideos.find(v => v.id === id);
+            if (!item) return;
+            if (currentVideo && video.currentTime > 5) {
+                saveResumeProgress(currentVideo.id, video.currentTime);
+            }
+            currentVideo = item;
+            applyVideoToPage(item);
+
+            // 滚动到播放器位置
+            playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            // 检查历史续播
+            if (showResumePrompt) checkResumeProgress(item.id);
+
+            // 开始播放
+            video.play().catch(e => console.log('Autoplay prevent:', e));
+        }
+
+        function getVideoCategoryKey(item) {
+            return item ? (item.folder || item.category || 'film') : 'film';
+        }
+
+        function getCurrentCategoryEpisodes() {
+            const categoryKey = getVideoCategoryKey(currentVideo);
+            return allVideos.filter(item => getVideoCategoryKey(item) === categoryKey);
+        }
+
+        function escapeCinemaHtml(value) {
+            return String(value ?? '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
+
+        function updateEpisodeNavigation() {
+            if (!currentVideo) return;
+            const episodes = getCurrentCategoryEpisodes();
+            const index = episodes.findIndex(item => item.id === currentVideo.id);
+            const position = index >= 0 ? index + 1 : 1;
+            previousEpisodeBtn.disabled = index <= 0;
+            nextEpisodeBtn.disabled = index < 0 || index >= episodes.length - 1;
+            previousEpisodeBtn.title = index > 0 ? `上一集：${episodes[index - 1].title}` : '已经是本分类第一集';
+            nextEpisodeBtn.title = index >= 0 && index < episodes.length - 1 ? `下一集：${episodes[index + 1].title}` : '已经是本分类最后一集';
+            document.getElementById('episodePickerBtnText').textContent = `选集 ${position}/${episodes.length}`;
+            renderEpisodePicker();
+        }
+
+        function renderEpisodePicker() {
+            if (!currentVideo) return;
+            const episodes = getCurrentCategoryEpisodes();
+            const categoryName = currentVideo.categoryName || currentVideo.folder || '影视作品';
+            document.getElementById('episodePickerTitle').textContent = `${categoryName} · 共 ${episodes.length} 集`;
+            episodePickerList.innerHTML = episodes.map((item, index) => `
+                <button type="button" class="episode-item ${item.id === currentVideo.id ? 'active' : ''}" data-video-id="${escapeCinemaHtml(item.id)}" onclick="selectEpisode(this.dataset.videoId)" title="${escapeCinemaHtml(item.title)}">
+                    <span class="episode-number">${String(index + 1).padStart(2, '0')}</span>
+                    <span class="episode-title">${escapeCinemaHtml(item.title)}</span>
+                </button>
+            `).join('');
+        }
+
+        function toggleEpisodePicker(force) {
+            const shouldOpen = typeof force === 'boolean' ? force : !episodePicker.classList.contains('open');
+            episodePicker.classList.toggle('open', shouldOpen);
+            videoBox.classList.toggle('episode-picker-open', shouldOpen);
+            document.getElementById('episodePickerBtn').setAttribute('aria-expanded', String(shouldOpen));
+            if (shouldOpen) {
+                renderEpisodePicker();
+                episodePickerList.querySelector('.active')?.scrollIntoView({ block: 'nearest' });
+            }
+        }
+
+        function selectEpisode(id) {
+            toggleEpisodePicker(false);
+            selectVideo(id);
+        }
+
+        function playAdjacentVideo(direction) {
+            const episodes = getCurrentCategoryEpisodes();
+            const currentIndex = episodes.findIndex(item => item.id === currentVideo.id);
+            const target = episodes[currentIndex + direction];
+            if (!target) return false;
+            dismissResume();
+            selectVideo(target.id, false);
+            return true;
+        }
+
+        function playHeroVideo() {
+            playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (video.paused) {
+                video.play().catch(e => console.log(e));
+            }
+        }
+
+        // --- 播放器核心控制逻辑 ---
+        function togglePlayPause() {
+            if (video.paused || video.ended) {
+                video.play();
+            } else {
+                video.pause();
+            }
+        }
+
+        video.addEventListener('play', () => {
+            videoBox.classList.remove('paused');
+            centerPlayBtn.classList.remove('visible');
+            playIconSvg.innerHTML = '<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>';
+            centerPlayIcon.innerHTML = '<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>';
+            startHideControlsTimer();
+        });
+
+        video.addEventListener('pause', () => {
+            videoBox.classList.add('paused');
+            centerPlayBtn.classList.add('visible');
+            playIconSvg.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"></polygon>';
+            centerPlayIcon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"></polygon>';
+            clearTimeout(hideControlsTimeout);
+        });
+
+        video.addEventListener('ended', () => {
+            if (currentVideo) saveResumeProgress(currentVideo.id, video.duration || video.currentTime);
+            playAdjacentVideo(1);
+        });
+
+        // 鼠标在播放器内移动时唤醒控制栏
+        videoBox.addEventListener('mousemove', () => {
+            videoBox.classList.add('user-active');
+            startHideControlsTimer();
+        });
+
+        videoBox.addEventListener('mouseleave', () => {
+            if (!video.paused) {
+                videoBox.classList.remove('user-active');
+            }
+        });
+
+        function startHideControlsTimer() {
+            clearTimeout(hideControlsTimeout);
+            hideControlsTimeout = setTimeout(() => {
+                if (!video.paused) {
+                    videoBox.classList.remove('user-active');
+                    speedDropdown.classList.remove('open');
+                }
+            }, 2600);
+        }
+
+        // 点击视频主体切换播放（排除控制条与按钮）
+        video.addEventListener('click', (e) => {
+            togglePlayPause();
+        });
+
+        // 双击全屏
+        video.addEventListener('dblclick', () => {
+            toggleFullscreen();
+        });
+
+        // --- 时间格式化与更新 ---
+        function formatSeconds(sec) {
+            if (!sec || isNaN(sec)) return '00:00:00';
+            const s = Math.floor(sec);
+            const hrs = Math.floor(s / 3600);
+            const mins = Math.floor((s % 3600) / 60);
+            const secs = s % 60;
+            const pad = (n) => String(n).padStart(2, '0');
+            return `${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
+        }
+
+        video.addEventListener('loadedmetadata', () => {
+            timeTotal.textContent = formatSeconds(video.duration);
+        });
+
+        video.addEventListener('timeupdate', () => {
+            if (!isUserSeeking) {
+                const percent = (video.currentTime / video.duration) * 100;
+                progressPlayed.style.width = `${percent}%`;
+                timeCurrent.textContent = formatSeconds(video.currentTime);
+            }
+
+            // 保存记忆续播进度（每个记录点只写入一次）
+            const currentSecond = Math.floor(video.currentTime);
+            if (currentSecond > 5 && currentSecond % 3 === 0 && currentSecond !== lastProgressSavedSecond) {
+                lastProgressSavedSecond = currentSecond;
+                saveResumeProgress(currentVideo.id, currentSecond);
+            }
+
+            // 缓冲进度
+            if (video.buffered.length > 0) {
+                const bufferedEnd = video.buffered.end(video.buffered.length - 1);
+                const bufPercent = (bufferedEnd / video.duration) * 100;
+                progressBuffer.style.width = `${bufPercent}%`;
+            }
+        });
+
+        // --- 交互式进度条拖拽与时间预览 ---
+        function updateProgressFromEvent(e) {
+            const rect = progressContainer.getBoundingClientRect();
+            const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+            progressPlayed.style.width = `${pos * 100}%`;
+            timeCurrent.textContent = formatSeconds(pos * video.duration);
+            return pos * video.duration;
+        }
+
+        progressContainer.addEventListener('mousedown', (e) => {
+            isUserSeeking = true;
+            const newTime = updateProgressFromEvent(e);
+            video.currentTime = newTime;
+
+            function onMouseMove(moveEvent) {
+                const dragTime = updateProgressFromEvent(moveEvent);
+                video.currentTime = dragTime;
+            }
+
+            function onMouseUp() {
+                isUserSeeking = false;
+                window.removeEventListener('mousemove', onMouseMove);
+                window.removeEventListener('mouseup', onMouseUp);
+            }
+
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('mouseup', onMouseUp);
+        });
+
+        progressContainer.addEventListener('mousemove', (e) => {
+            const rect = progressContainer.getBoundingClientRect();
+            const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+            const hoverTime = pos * video.duration;
+            progressTooltip.textContent = formatSeconds(hoverTime);
+            progressTooltip.style.left = `${pos * 100}%`;
+        });
+
+        // --- 快进快退 ---
+        function skipTime(delta) {
+            video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + delta));
+        }
+
+        // --- 音量调节 ---
+        function changeVolume(val) {
+            video.volume = parseFloat(val);
+            video.muted = video.volume === 0;
+            updateVolumeIcon();
+        }
+
+        function toggleMute() {
+            video.muted = !video.muted;
+            if (video.muted) {
+                volumeSlider.value = 0;
+            } else {
+                volumeSlider.value = video.volume || 0.8;
+            }
+            updateVolumeIcon();
+        }
+
+        function updateVolumeIcon() {
+            if (video.muted || video.volume === 0) {
+                volumeIconSvg.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line>';
+            } else if (video.volume < 0.5) {
+                volumeIconSvg.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>';
+            } else {
+                volumeIconSvg.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>';
+            }
+        }
+
+        // --- 倍速调节 ---
+        function toggleSpeedDropdown() {
+            speedDropdown.classList.toggle('open');
+        }
+
+        function setPlaybackRate(rate) {
+            video.playbackRate = rate;
+            const speedVal = document.getElementById('speedValText');
+            if (speedVal) speedVal.textContent = `${rate}x`;
+            document.querySelectorAll('.speed-option').forEach(opt => {
+                opt.classList.toggle('active', opt.textContent.trim() === `${rate}x`);
+            });
+            speedDropdown.classList.remove('open');
+        }
+
+        // 点击页面外部关闭倍速菜单
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.speed-menu-wrap')) {
+                speedDropdown.classList.remove('open');
+            }
+        });
+
+        // --- 剧场模式切换 ---
+        function toggleTheaterMode() {
+            const isTheater = playerSection.classList.toggle('theater-mode');
+            const theaterBtn = document.getElementById('theaterBtn');
+            const theaterText = document.getElementById('theaterBtnText');
+            const topExitTheaterBtn = document.getElementById('topExitTheaterBtn');
+
+            if (theaterBtn && theaterText) {
+                theaterBtn.classList.toggle('active', isTheater);
+                theaterText.textContent = isTheater ? '退出剧场' : '剧场';
+                theaterBtn.title = isTheater ? '退出宽屏剧场模式 (T)' : '切换宽屏影院剧场模式 (T)';
+            }
+            if (topExitTheaterBtn) {
+                topExitTheaterBtn.style.display = isTheater ? 'inline-flex' : 'none';
+            }
+
+            // 平滑定位：扣除顶部导航高度，确保剧场模式下播放器头部与底部控制条均在视窗内完整展示
+            if (isTheater) {
+                const navHeight = document.querySelector('header.cinema-nav')?.offsetHeight || 68;
+                const rect = playerSection.getBoundingClientRect();
+                const targetY = window.pageYOffset + rect.top - navHeight - 8;
+                window.scrollTo({ top: Math.max(0, targetY), behavior: 'smooth' });
+            }
+        }
+
+        // --- 原生全屏切换与全生命周期状态同步 ---
+        function toggleFullscreen() {
+            const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+            if (!isFs) {
+                if (videoBox.requestFullscreen) {
+                    videoBox.requestFullscreen().catch(err => console.warn(err));
+                } else if (videoBox.webkitRequestFullscreen) {
+                    videoBox.webkitRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen().catch(err => console.warn(err));
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                }
+            }
+        }
+
+        function handleFullscreenChange() {
+            const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+            const fsBtn = document.getElementById('fullscreenBtn');
+            const fsText = document.getElementById('fullscreenBtnText');
+            const fsSvg = document.getElementById('fullscreenIconSvg');
+            const exitTopBtn = document.getElementById('topExitFsBtn');
+
+            if (isFs) {
+                videoBox.classList.add('is-fullscreen');
+                if (fsBtn) {
+                    fsBtn.classList.add('active');
+                    fsBtn.title = '退出全屏模式 (Esc 或 F)';
+                }
+                if (fsText) fsText.textContent = '退出全屏';
+                if (fsSvg) {
+                    // 内缩四角图标：退出全屏
+                    fsSvg.innerHTML = '<path d="M4 14h6v6m10-10h-6V4m0 6 7-7M3 21l7-7"></path>';
+                }
+                if (exitTopBtn) exitTopBtn.style.display = 'inline-flex';
+            } else {
+                videoBox.classList.remove('is-fullscreen');
+                if (fsBtn) {
+                    fsBtn.classList.remove('active');
+                    fsBtn.title = '切换全屏模式 (F)';
+                }
+                if (fsText) fsText.textContent = '全屏';
+                if (fsSvg) {
+                    // 外扩四角图标：进入全屏
+                    fsSvg.innerHTML = '<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>';
+                }
+                if (exitTopBtn) exitTopBtn.style.display = 'none';
+            }
+        }
+
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+
+        // --- 画中画模式 ---
+        async function togglePiP() {
+            try {
+                if (document.pictureInPictureElement) {
+                    await document.exitPictureInPicture();
+                } else if (document.pictureInPictureEnabled && !video.disablePictureInPicture) {
+                    await video.requestPictureInPicture();
+                }
+            } catch (err) {
+                console.warn('PiP error:', err);
+            }
+        }
+
+        // --- 动态环境背光开关 ---
+        function toggleAmbientLight() {
+            ambientLightEnabled = !ambientLightEnabled;
+            playerAmbientGlow.classList.toggle('hidden', !ambientLightEnabled);
+            const ambientBtn = document.getElementById('ambientToggleBtn');
+            const ambientText = document.getElementById('ambientBtnText');
+            if (ambientBtn) ambientBtn.classList.toggle('active', ambientLightEnabled);
+            if (ambientText) ambientText.textContent = ambientLightEnabled ? '氛围光' : '氛围关';
+            if (ambientBtn) ambientBtn.title = ambientLightEnabled ? '关闭动态流光氛围背光' : '开启动态流光氛围背光';
+        }
+
+        // --- 断点续播存储 ---
+        function saveResumeProgress(videoId, time) {
+            try {
+                const seconds = Math.max(0, Math.floor(time));
+                localStorage.setItem(`cinema_progress_${videoId}`, String(seconds));
+                localStorage.setItem(LAST_WATCH_KEY, JSON.stringify({
+                    videoId,
+                    time: seconds,
+                    duration: Number.isFinite(video.duration) ? Math.floor(video.duration) : 0,
+                    updatedAt: Date.now()
+                }));
+            } catch (e) {}
+        }
+
+        function readLastWatch() {
+            try {
+                const parsed = JSON.parse(localStorage.getItem(LAST_WATCH_KEY) || 'null');
+                if (!parsed || typeof parsed.videoId !== 'string') return null;
+                const time = Number(parsed.time);
+                const duration = Number(parsed.duration);
+                if (!Number.isFinite(time) || time <= 15) return null;
+                if (Number.isFinite(duration) && duration > 0 && time >= duration - 30) return null;
+                return { ...parsed, time };
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function offerLastWatchResume() {
+            const saved = readLastWatch();
+            const item = saved && allVideos.find(videoItem => videoItem.id === saved.videoId);
+            if (!item) return false;
+            pendingLastWatch = { ...saved, item };
+            document.getElementById('continueWatchingPoster').src = item.poster || '/assets/videos/龙餐馆_poster.jpg';
+            document.getElementById('continueWatchingTitle').textContent = item.title;
+            document.getElementById('continueWatchingCopy').textContent = `上次播放到 ${formatSeconds(saved.time)}，是否从这里继续？`;
+            continueWatchingModal.classList.add('open');
+            document.getElementById('continueWatchingBtn').focus();
+            return true;
+        }
+
+        function dismissContinueWatching() {
+            continueWatchingModal.classList.remove('open');
+            pendingLastWatch = null;
+        }
+
+        function handleContinueWatchingBackdrop(event) {
+            if (event.target === continueWatchingModal) dismissContinueWatching();
+        }
+
+        function playFromTime(time) {
+            const startPlayback = () => {
+                const maxTime = Number.isFinite(video.duration) ? Math.max(0, video.duration - 1) : time;
+                video.currentTime = Math.min(time, maxTime);
+                video.play().catch(error => console.log('Autoplay prevent:', error));
+            };
+            if (video.readyState >= 1) startPlayback();
+            else video.addEventListener('loadedmetadata', startPlayback, { once: true });
+        }
+
+        function continueLastWatching() {
+            if (!pendingLastWatch) return;
+            const { item, time } = pendingLastWatch;
+            continueWatchingModal.classList.remove('open');
+            pendingLastWatch = null;
+            currentVideo = item;
+            applyVideoToPage(item);
+            playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            playFromTime(time);
+        }
+
+        function checkResumeProgress(videoId) {
+            try {
+                const saved = localStorage.getItem(`cinema_progress_${videoId}`);
+                if (saved) {
+                    const time = parseInt(saved, 10);
+                    if (time > 15 && (!video.duration || time < video.duration - 30)) {
+                        pendingResumeTime = time;
+                        resumeTimeStr.textContent = formatSeconds(time);
+                        resumeToast.style.display = 'flex';
+                        clearTimeout(resumeDismissTimer);
+                        resumeDismissTimer = setTimeout(() => dismissResume(), 8000);
+                    }
+                }
+            } catch (e) {}
+        }
+
+        function applyResume() {
+            if (pendingResumeTime > 0) {
+                playFromTime(pendingResumeTime);
+                dismissResume();
+            }
+        }
+
+        function dismissResume() {
+            clearTimeout(resumeDismissTimer);
+            resumeToast.style.display = 'none';
+            pendingResumeTime = 0;
+        }
+
+        window.addEventListener('beforeunload', () => {
+            if (currentVideo && video.currentTime > 5) saveResumeProgress(currentVideo.id, video.currentTime);
+        });
+
+        // --- 快捷键支持 ---
+        document.addEventListener('keydown', (e) => {
+            // 如果在输入框输入，不触发全局快捷键
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+            switch (e.code) {
+                case 'Space':
+                    e.preventDefault();
+                    togglePlayPause();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    skipTime(-10);
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    skipTime(10);
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    video.volume = Math.min(1, video.volume + 0.1);
+                    volumeSlider.value = video.volume;
+                    updateVolumeIcon();
+                    break;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    video.volume = Math.max(0, video.volume - 0.1);
+                    volumeSlider.value = video.volume;
+                    updateVolumeIcon();
+                    break;
+                case 'KeyF':
+                    e.preventDefault();
+                    toggleFullscreen();
+                    break;
+                case 'KeyT':
+                    e.preventDefault();
+                    toggleTheaterMode();
+                    break;
+                case 'KeyP':
+                    e.preventDefault();
+                    togglePiP();
+                    break;
+                case 'KeyM':
+                    e.preventDefault();
+                    toggleMute();
+                    break;
+                case 'Escape':
+                    if (continueWatchingModal.classList.contains('open')) {
+                        e.preventDefault();
+                        dismissContinueWatching();
+                    } else if (episodePicker.classList.contains('open')) {
+                        e.preventDefault();
+                        toggleEpisodePicker(false);
+                    }
+                    if (playerSection.classList.contains('theater-mode')) {
+                        e.preventDefault();
+                        toggleTheaterMode();
+                    }
+                    break;
+            }
+        });
+
+        // --- 快捷键模态框 ---
+        function toggleShortcutsModal(show) {
+            document.getElementById('shortcutsModal').classList.toggle('open', show);
+        }
+
+        function handleModalBackdrop(e) {
+            if (e.target.id === 'shortcutsModal') {
+                toggleShortcutsModal(false);
+            }
+        }
+
+        // --- 搜索筛选 ---
+        function handleSearch(query) {
+            const q = query.trim().toLowerCase();
+            if (!q) {
+                renderVideoGrid(allVideos);
+                return;
+            }
+            const filtered = allVideos.filter(item => {
+                return (item.title && item.title.toLowerCase().includes(q)) ||
+                       (item.description && item.description.toLowerCase().includes(q)) ||
+                       (item.categoryName && item.categoryName.toLowerCase().includes(q)) ||
+                       (item.tags && item.tags.some(t => t.toLowerCase().includes(q)));
+            });
+            renderVideoGrid(filtered);
+        }
+
+        // --- 分类切换 ---
+        function filterCategory(cat, btn) {
+            document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+
+            if (cat === 'all') {
+                renderVideoGrid(allVideos);
+            } else if (cat === 'film') {
+                renderVideoGrid(allVideos.filter(v => !v.folder || v.folder === '' || v.category === 'film'));
+            } else {
+                renderVideoGrid(allVideos.filter(v => v.folder === cat || v.category === cat));
+            }
+        }
+
+        // 启动时载入
+        window.addEventListener('DOMContentLoaded', initVideos);
+    </script>
+</body>
+
+</html>

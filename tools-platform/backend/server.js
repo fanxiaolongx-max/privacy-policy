@@ -256,13 +256,17 @@ const PUBLIC_HTML_PATHS = new Set([
     '/terms',
     '/terms.html',
     '/pages/terms.html',
-    '/googlea8435fd020ce60ab.html'
+    '/googlea8435fd020ce60ab.html',
+    '/cinema',
+    '/cinema.html',
+    '/pages/cinema.html'
 ]);
 const PUBLIC_ASSET_EXTS = new Set([
     '.css', '.js', '.mjs', '.map',
     '.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.ico',
     '.woff', '.woff2', '.ttf', '.otf',
-    '.json', '.txt', '.zip'
+    '.json', '.txt', '.zip',
+    '.mp4', '.webm', '.mkv', '.mov', '.m4v'
 ]);
 
 function shouldProtectHtmlEntry(req) {
@@ -318,6 +322,14 @@ app.get('/api/migration-status', (req, res) => {
 app.use('/api/uiv-auto-import', uivAutoImportRoutes);
 app.use('/api/public/f12-license', f12LicensePublicRoutes);
 
+// 媒体资源管理与公开点播路由
+const { router: mediaRoutes } = require('./routes/media');
+app.use('/api/media', mediaRoutes);
+app.get('/api/public/videos', (req, res, next) => {
+    req.url = '/public/list' + (req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '');
+    mediaRoutes(req, res, next);
+});
+
 app.use('/api', checkAuth); // Protect all /api/* (except login, which is handled inside checkAuth)
 app.use('/api', tenantMiddleware);
 
@@ -372,6 +384,12 @@ app.get('/', (req, res) => {
 });
 app.get('/login.html', (req, res) => {
     res.sendFile(path.join(FRONTEND_DIR, 'pages/login.html'));
+});
+app.get(['/cinema', '/cinema.html'], (req, res) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.sendFile(path.join(FRONTEND_DIR, 'pages/cinema.html'));
 });
 app.get('/uivf12', (req, res) => {
     res.sendFile(path.join(FRONTEND_DIR, 'pages/uivf12.html'));

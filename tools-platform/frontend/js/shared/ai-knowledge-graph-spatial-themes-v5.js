@@ -42,6 +42,10 @@
         .ai-kg-month-wrap { display:none; align-items:center; gap:6px; color:#8290aa; font-size:10px; white-space:nowrap; }
         .ai-kg-month-wrap.visible { display:flex; }
         .ai-kg-month { height:34px; padding:0 25px 0 9px; border-radius:9px; border:1px solid rgba(143,157,207,.2); outline:none; background:#1a2238; color:#e4e9f5; font-size:11px; }
+        .ai-kg-chat-limit-wrap { display:none; width:150px; flex:0 0 150px; gap:3px; color:#8290aa; font-size:9px; white-space:nowrap; }
+        .ai-kg-chat-limit-wrap.visible { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; }
+        .ai-kg-chat-limit-wrap output { color:#dce3f2; font-size:10px; font-variant-numeric:tabular-nums; }
+        .ai-kg-chat-limit-wrap input { grid-column:1 / -1; width:100%; height:12px; margin:0; accent-color:#806ee8; cursor:pointer; }
         .ai-kg-statuses { display: flex; gap: 7px; flex-wrap: wrap; }
         .ai-kg-status {
             padding: 5px 9px;
@@ -239,6 +243,7 @@
             .ai-kg-statuses { display:none; }
             .ai-kg-view-switch { margin-left:auto; }
             .ai-kg-month-wrap { order:2; }
+            .ai-kg-chat-limit-wrap { order:2; width:min(45vw,180px); flex-basis:min(45vw,180px); }
             .ai-kg-search-wrap { order:3; max-width:none; flex-basis:100%; }
             .ai-kg-sidebar { position:absolute; right:0; bottom:0; width:min(88vw,350px); height:48%; border-top:1px solid rgba(134,148,189,.14); }
             .ai-kg-sidebar.compact { display:none; }
@@ -267,6 +272,7 @@
                 <button class="ai-kg-dimension-btn" type="button" data-kg-dimension="3d" aria-pressed="false">3D</button>
             </div>
             <label class="ai-kg-month-wrap" id="aiKgMonthWrap">规则月份<select class="ai-kg-month" id="aiKgMonth"></select></label>
+            <label class="ai-kg-chat-limit-wrap" id="aiKgChatLimitWrap"><span id="aiKgChatLimitLabel">高频近期会话</span><output id="aiKgChatLimitOutput">Top 20</output><input id="aiKgChatLimit" type="range" min="5" max="120" step="5" value="20"></label>
             <div class="ai-kg-statuses" id="aiKgStatuses"></div>
             <div class="ai-kg-search-wrap">
                 <span class="ai-kg-search-icon">⌕</span>
@@ -341,6 +347,9 @@
     const legendEl = overlay.querySelector('#aiKgLegend');
     const monthWrap = overlay.querySelector('#aiKgMonthWrap');
     const monthSelect = overlay.querySelector('#aiKgMonth');
+    const chatLimitWrap = overlay.querySelector('#aiKgChatLimitWrap');
+    const chatLimitInput = overlay.querySelector('#aiKgChatLimit');
+    const chatLimitOutput = overlay.querySelector('#aiKgChatLimitOutput');
     const refreshButton = overlay.querySelector('#aiKgRefresh');
     const motionButton = overlay.querySelector('#aiKgMotion');
     const tourButton = overlay.querySelector('#aiKgTour');
@@ -359,7 +368,7 @@
     const chatLoadMoreButton = overlay.querySelector('#aiKgChatLoadMore');
     const chatMessages = overlay.querySelector('#aiKgChatMessages');
     const ctx = canvas.getContext('2d');
-    const DEFAULT_SETTINGS = Object.freeze({ palette:'galaxy', particleDensity:.2, nodeScale:0.72, lineScale:1, labelDensity:1, labelOpacity:1, growthSpeed:1, centerForce:1, repulsion:1, attraction:1, linkLength:1, drift:1 });
+    const DEFAULT_SETTINGS = Object.freeze({ palette:'galaxy', particleDensity:.2, nodeScale:0.72, lineScale:1, labelDensity:1, labelOpacity:1, growthSpeed:1, centerForce:1, repulsion:1, attraction:1, linkLength:1, drift:1, chatConversationLimit:20 });
     function loadSettings() {
         try { return { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem('ai_kg_preferences') || '{}') }; }
         catch (_error) { return { ...DEFAULT_SETTINGS }; }
@@ -464,7 +473,7 @@
             empty: '点击图谱中的模块、工具、文件、数据库或表，可查看详细关系。', moduleFiles: '模块文件', indexTime: '索引时间', viewChunks: '可点击查看的知识片段', readingFile: '正在读取文件节点', unnamedChunk: '未命名片段', expandChunk: '展开全文', collapseChunk: '收起详情', aiAnalyze: 'AI 分析', analyzeFile: '分析代码文件', analyzeChunk: '分析代码片段', answerSources: '本次回答引用路径', citedChunk: '引用片段', citedFiles: '引用文件', answerMetrics: '本次回答引用指标', referencedMetrics: '个引用指标',
             metricRootType: '指标体系根节点', dataMethod: '数据口径', categoryMetrics: '分类指标', weight: '权重', latest: '最新', valuedDays: '个有值日期', twelveMonthRules: '12个月规则', dailyLatestHistory: '历史有值日期（每日最新）', loadingSavedHistory: '正在读取已保存历史值…', standardScoring: '标准计分', proportionalScoring: '比例计分', noValue: '无值', failing: '未达标', passing: '达标', undetermined: '未判定', noSavedHistory: '这个月份还没有已保存的历史录入快照。', nonNumericHistory: '历史值不是连续数值，已在下方按快照列出。', noRule: '当前指标尚未配置月份目标规则。', bySubmetric: '分子指标', metricHelp: '点击分类、指标或子指标，可查看月份规则和历史录入快照。', metricHistoryRule: '历史值按有值日期读取 ReportMetricData 每天最后一次已保存入库；当前月份规则只用于展示，不重算历史结果。', metricHistoryLoadFailed: '历史快照读取失败', historyTrend: '历史快照趋势', monthRule: n => `${n}月规则`, monthLabel: n => `${n}月`, rootMetricRule: n => `${n}月指标规则`,
             graphLoadFailed: '知识图谱加载失败', metricLoadFailed: '指标图谱加载失败', refreshFailed: '刷新失败',
-            controls: '外观与力度', appearance: '外观', force: '力度', palette: '颜色主题', galaxy: '银河', cosmic: '星云', obsidian: 'Obsidian', aurora: '极光', particleDensity: '背景粒子', nodeSize: '节点大小', lineWidth: '连线粗细', labelDensity: '标签密度', labelOpacity: '文本透明度', growthSpeed: '生长速度', playGrowth: '播放生长动画', stopGrowth: '停止动画', centerForce: '图谱向心力', repulsion: '节点排斥力', attraction: '相连节点吸引力', linkLength: '连线长度', drift: '漂浮力度', resetControls: '恢复默认参数'
+            controls: '外观与力度', appearance: '外观', force: '力度', palette: '颜色主题', galaxy: '银河', cosmic: '星云', obsidian: 'Obsidian', aurora: '极光', particleDensity: '背景粒子', nodeSize: '节点大小', lineWidth: '连线粗细', labelDensity: '标签密度', labelOpacity: '文本透明度', growthSpeed: '生长速度', playGrowth: '播放生长动画', stopGrowth: '停止动画', centerForce: '图谱向心力', repulsion: '节点排斥力', attraction: '相连节点吸引力', linkLength: '连线长度', drift: '漂浮力度', resetControls: '恢复默认参数', chatConversationLimit: '高频近期会话'
         },
         en: {
             view: 'Graph view', knowledge: 'Project Knowledge', metrics: 'Metric System', chat: 'Chat Relations', ruleMonth: 'Rule month', refreshKnowledge: 'Refresh Knowledge', refreshMetrics: 'Refresh Metrics', refreshChat: 'Refresh Chat Relations',
@@ -484,7 +493,7 @@
             empty: 'Click a module, tool, file, database, or table to inspect its relationships.', moduleFiles: 'Module Files', indexTime: 'Indexed At', viewChunks: 'Indexed Knowledge Chunks', readingFile: 'Loading File Node', unnamedChunk: 'Untitled Chunk', expandChunk: 'Expand full text', collapseChunk: 'Collapse details', aiAnalyze: 'AI Analyze', analyzeFile: 'Analyze code file', analyzeChunk: 'Analyze code chunk', answerSources: 'Sources used by this answer', citedChunk: 'Cited chunk', citedFiles: 'cited files', answerMetrics: 'Metrics used by this answer', referencedMetrics: 'referenced metrics',
             metricRootType: 'Metric System Root', dataMethod: 'Data Methodology', categoryMetrics: 'Category Metrics', weight: 'Weight', latest: 'Latest', valuedDays: 'valued days', twelveMonthRules: '12-Month Rules', dailyLatestHistory: 'Historical Values (Latest Saved per Day)', loadingSavedHistory: 'Loading saved historical values…', standardScoring: 'Standard Scoring', proportionalScoring: 'Proportional Scoring', noValue: 'No Value', failing: 'Below Target', passing: 'On Target', undetermined: 'Undetermined', noSavedHistory: 'No saved historical snapshots are available for this month.', nonNumericHistory: 'Historical values are not a continuous numeric series; snapshots are listed below.', noRule: 'No monthly target rule is configured for this metric.', bySubmetric: 'By Submetric', metricHelp: 'Click a category, metric, or submetric to inspect monthly rules and historical snapshots.', metricHistoryRule: 'Historical values use the last saved ReportMetricData entry for each day with data. Current monthly rules are display-only and do not recalculate historical results.', metricHistoryLoadFailed: 'Failed to load historical snapshots', historyTrend: 'Historical Snapshot Trend', monthRule: n => `Month ${n} rule`, monthLabel: n => `Month ${n}`, rootMetricRule: n => `Month ${n} Metric Rules`,
             graphLoadFailed: 'Failed to load the knowledge graph', metricLoadFailed: 'Failed to load the metric graph', refreshFailed: 'Refresh failed',
-            controls: 'Appearance & Forces', appearance: 'Appearance', force: 'Forces', palette: 'Color Theme', galaxy: 'Galaxy', cosmic: 'Cosmic', obsidian: 'Obsidian', aurora: 'Aurora', particleDensity: 'Background Particles', nodeSize: 'Node Size', lineWidth: 'Line Width', labelDensity: 'Label Density', labelOpacity: 'Text Opacity', growthSpeed: 'Growth Speed', playGrowth: 'Play Growth Animation', stopGrowth: 'Stop Animation', centerForce: 'Center Force', repulsion: 'Node Repulsion', attraction: 'Linked Attraction', linkLength: 'Link Length', drift: 'Drift Force', resetControls: 'Reset Defaults'
+            controls: 'Appearance & Forces', appearance: 'Appearance', force: 'Forces', palette: 'Color Theme', galaxy: 'Galaxy', cosmic: 'Cosmic', obsidian: 'Obsidian', aurora: 'Aurora', particleDensity: 'Background Particles', nodeSize: 'Node Size', lineWidth: 'Line Width', labelDensity: 'Label Density', labelOpacity: 'Text Opacity', growthSpeed: 'Growth Speed', playGrowth: 'Play Growth Animation', stopGrowth: 'Stop Animation', centerForce: 'Center Force', repulsion: 'Node Repulsion', attraction: 'Linked Attraction', linkLength: 'Link Length', drift: 'Drift Force', resetControls: 'Reset Defaults', chatConversationLimit: 'Frequent recent chats'
         }
     };
     function kgLang() {
@@ -671,12 +680,37 @@
         `;
     }
 
+    function rankedChatConversations(full = state.chatFullData) {
+        return (full?.nodes || [])
+            .filter(node => node.type === 'chatConversation')
+            .sort((left, right) => (Number(right.messageCount) || 0) - (Number(left.messageCount) || 0)
+                || String(right.lastMessageTime || '').localeCompare(String(left.lastMessageTime || '')));
+    }
+
+    function chatConversationLimit(total = rankedChatConversations().length) {
+        if (total <= 0) return 0;
+        const configured = Number.parseInt(state.settings.chatConversationLimit, 10) || DEFAULT_SETTINGS.chatConversationLimit;
+        return Math.max(1, Math.min(total, configured));
+    }
+
+    function syncChatConversationLimit(full = state.chatFullData) {
+        const total = rankedChatConversations(full).length;
+        const smallDataset = total < 5;
+        chatLimitInput.min = smallDataset ? '1' : '5';
+        chatLimitInput.max = String(smallDataset ? Math.max(1, total) : Math.max(5, Math.ceil(total / 5) * 5));
+        chatLimitInput.step = smallDataset ? '1' : '5';
+        chatLimitInput.value = String(total ? chatConversationLimit(total) : 1);
+        chatLimitOutput.textContent = `Top ${chatConversationLimit(total)} / ${total}`;
+    }
+
     function buildChatViewData(view = state.chatView) {
         const full = state.chatFullData;
         if (!full) return null;
         const root = full.nodes.find(node => node.id === 'chat-root');
-        const conversations = full.nodes.filter(node => node.type === 'chatConversation');
-        const rootEdges = full.edges.filter(edge => edge.source === 'chat-root');
+        const rankedConversations = rankedChatConversations(full);
+        const conversations = rankedConversations.slice(0, chatConversationLimit(rankedConversations.length));
+        const visibleConversationIds = new Set(conversations.map(node => node.id));
+        const rootEdges = full.edges.filter(edge => edge.source === 'chat-root' && visibleConversationIds.has(edge.target));
         let nodes = [root, ...conversations].filter(Boolean);
         let edges = rootEdges;
         if (view.mode === 'conversation') {
@@ -685,7 +719,7 @@
             nodes = [...nodes, ...full.nodes.filter(node => memberIds.has(node.id))];
             edges = [...rootEdges, ...memberEdges];
         } else if (view.mode === 'person') {
-            const memberEdges = full.edges.filter(edge => edge.target === view.nodeId);
+            const memberEdges = full.edges.filter(edge => edge.target === view.nodeId && visibleConversationIds.has(edge.source));
             const conversationIds = new Set(memberEdges.map(edge => edge.source));
             nodes = [root, ...conversations.filter(node => conversationIds.has(node.id)), full.nodes.find(node => node.id === view.nodeId)].filter(Boolean);
             edges = [...rootEdges.filter(edge => conversationIds.has(edge.target)), ...memberEdges];
@@ -2388,6 +2422,8 @@
             ? `<span><i style="background:#f5f7ff"></i>${kgT('self')}</span><span><i style="background:#38bdf8"></i>${kgT('singleChat')}</span><span><i style="background:#34d399"></i>${kgT('groupChat')}</span><span><i style="background:#c084fc"></i>${kgT('discussionChat')}</span><span><i style="background:#fbbf24"></i>${kgT('contact')}</span>`
             : `<span><i style="background:#f5f7ff"></i>${kgT('project')}</span><span><i style="background:#8b9cff"></i>${kgT('module')}</span><span><i style="background:#6fc4ee"></i>${kgT('toolData')}</span><span><i style="background:#64739a"></i>${kgT('knowledgeFile')}</span>`;
         monthWrap.classList.toggle('visible', metrics);
+        chatLimitWrap.classList.toggle('visible', chat);
+        if (chat) syncChatConversationLimit(state.chatFullData || data);
         refreshButton.textContent = metrics ? kgT('refreshMetrics') : chat ? kgT('refreshChat') : kgT('refreshKnowledge');
         refreshButton.title = metrics ? kgT('refreshMetricsTitle') : chat ? kgT('refreshChat') : kgT('refreshKnowledgeTitle');
         searchInput.placeholder = metrics ? kgT('searchMetrics') : chat ? kgT('searchChat') : kgT('searchKnowledge');
@@ -2406,6 +2442,7 @@
         overlay.querySelector('[data-kg-mode="metrics"]').textContent = kgT('metrics');
         overlay.querySelector('[data-kg-mode="chat"]').textContent = kgT('chat');
         monthWrap.childNodes[0].nodeValue = kgT('ruleMonth');
+        overlay.querySelector('#aiKgChatLimitLabel').textContent = kgT('chatConversationLimit');
         motionButton.textContent = state.motionEnabled ? kgT('motion') : kgT('motionPaused');
         motionButton.title = kgT('motionTitle');
         syncTourButton();
@@ -2613,6 +2650,7 @@
             let data = await response.json();
             if (loadSequence !== state.loadSequence) return;
             if (!response.ok) throw new Error(data.error || (isMetricMode() ? kgT('metricLoadFailed') : kgT('graphLoadFailed')));
+            state.chatFullData = isChatMode() ? data : null;
             updateModeChrome(data);
             renderStatuses(data);
             state.selected = null;
@@ -2623,11 +2661,8 @@
             searchInput.value = '';
             searchCount.textContent = '';
             if (isChatMode()) {
-                state.chatFullData = data;
                 state.chatView = { mode:'overview', nodeId:null };
                 data = buildChatViewData(state.chatView);
-            } else {
-                state.chatFullData = null;
             }
             initializeLayout(data);
             setLoading('', false);
@@ -2817,9 +2852,7 @@
         if (!query && isChatMode() && state.chatView.mode !== 'overview') {
             applyChatView({ mode:'overview', nodeId:null }, 'chat-root');
         }
-        const searchableNodes = isChatMode() && state.chatFullData && state.chatView.mode !== 'overview'
-            ? state.chatFullData.nodes
-            : state.nodes;
+        const searchableNodes = state.nodes;
         const matches = query ? searchableNodes.filter(node => `${node.label || ''} ${node.labelEn || ''} ${node.path || ''} ${node.group || ''} ${node.category || ''} ${node.metricLabel || ''} ${node.database || ''} ${node.slug || ''} ${node.senderId || ''} ${node.rule?.monthTarget || ''}`.toLowerCase().includes(query)) : [];
         state.searchMatches = new Set(matches.map(node => node.id));
         searchCount.textContent = query ? kgT('count', matches.length) : '';
@@ -2828,9 +2861,7 @@
     });
     searchInput.addEventListener('keydown', event => {
         if (event.key !== 'Enter') return;
-        const searchableNodes = isChatMode() && state.chatFullData && state.chatView.mode !== 'overview'
-            ? state.chatFullData.nodes
-            : state.nodes;
+        const searchableNodes = state.nodes;
         const first = searchableNodes.find(node => state.searchMatches.has(node.id));
         if (first) focusNode(first);
     });
@@ -2939,6 +2970,22 @@
         state.month = Number(monthSelect.value);
         await loadGraph();
     };
+    let chatLimitRenderTimer = 0;
+    function scheduleChatLimitRender(delay = 140) {
+        const total = rankedChatConversations().length;
+        const requested = Number.parseInt(chatLimitInput.value, 10) || DEFAULT_SETTINGS.chatConversationLimit;
+        state.settings.chatConversationLimit = requested;
+        chatLimitOutput.textContent = `Top ${Math.min(total, requested)} / ${total}`;
+        saveSettings();
+        clearTimeout(chatLimitRenderTimer);
+        chatLimitRenderTimer = setTimeout(() => {
+            if (!isChatMode() || !state.chatFullData) return;
+            syncChatConversationLimit();
+            applyChatView({ mode:'overview', nodeId:null }, 'chat-root');
+        }, delay);
+    }
+    chatLimitInput.addEventListener('input', () => scheduleChatLimitRender());
+    chatLimitInput.addEventListener('change', () => scheduleChatLimitRender(0));
     overlay.querySelector('#aiKgFit').onclick = resetView;
     tourButton.onclick = () => {
         if (state.tour.active) stopTour({ keepView:true });
@@ -2967,6 +3014,11 @@
         state.settings = { ...DEFAULT_SETTINGS };
         saveSettings();
         syncControlPanel();
+        syncChatConversationLimit();
+        if (isChatMode() && state.chatFullData) {
+            applyChatView({ mode:'overview', nodeId:null }, 'chat-root');
+            return;
+        }
         reheat(0.72);
         render();
     };

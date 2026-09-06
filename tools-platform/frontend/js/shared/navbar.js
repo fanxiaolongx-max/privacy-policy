@@ -135,7 +135,7 @@ function switchTenantBrowserState(fromTenantId, toTenantId) {
     try {
         const target = JSON.parse(localStorage.getItem(`${TENANT_BROWSER_STATE_PREFIX}${toTenantId || 'default'}`) || '{}');
         Object.entries(target || {}).forEach(([key, value]) => localStorage.setItem(key, String(value)));
-    } catch (_) {}
+    } catch (_) { }
     sessionStorage.clear();
 }
 
@@ -369,6 +369,7 @@ function registerNavbarI18n() {
             'nav.set.tab.backup': '备份恢复',
             'nav.set.tab.initialize': '初始化',
             'nav.set.tab.tenants': '租户管理',
+            'nav.set.tab.media': '媒体资源',
             'nav.set.tab.customBackup': '自定义工具备份',
             'nav.set.tab.accounts': '账号管理',
             'nav.set.tab.security': '安全策略',
@@ -386,6 +387,10 @@ function registerNavbarI18n() {
             'nav.set.sub.backup': '备份与恢复仅作用于当前租户的数据库、附件和自定义工具，不会覆盖其他租户。',
             'nav.set.sub.initialize': '补齐开箱即用内容，或在安全备份和完整归档后恢复到首次使用状态。',
             'nav.set.sub.tenants': '管理独立业务空间。每个租户拥有自己的脚本、规则、数据库、附件和自定义工具。',
+            'nav.set.sub.media': '统一管理点播媒体库、分类文件夹、本地资源批量导入与封面重绘。',
+            'nav.media.categoryFilter': '媒体分类筛选',
+            'nav.media.searchLabel': '搜索媒体资源',
+            'nav.media.previewBack': '返回媒体设置',
             'nav.tenant.current': '当前租户',
             'nav.tenant.switch': '切换租户',
             'nav.tenant.manage': '管理租户',
@@ -788,6 +793,7 @@ function registerNavbarI18n() {
             'nav.set.tab.backup': 'Backup & Restore',
             'nav.set.tab.initialize': 'Initialization',
             'nav.set.tab.tenants': 'Tenants',
+            'nav.set.tab.media': '🎬 Media Library',
             'nav.set.tab.customBackup': 'Custom Tool Backup',
             'nav.set.tab.accounts': 'Accounts',
             'nav.set.tab.security': 'Security',
@@ -805,6 +811,10 @@ function registerNavbarI18n() {
             'nav.set.sub.backup': 'Backup and restore only affect the current tenant\'s databases, attachments, and custom tools, without overwriting other tenants.',
             'nav.set.sub.initialize': 'Add the Quick Start defaults or return to a clean first-run state after a safety backup and full archive.',
             'nav.set.sub.tenants': 'Manage isolated workspaces. Each tenant has separate scripts, rules, databases, attachments, and custom tools.',
+            'nav.set.sub.media': 'Manage the on-demand media library, category folders, local batch imports, and poster regeneration.',
+            'nav.media.categoryFilter': 'Filter media categories',
+            'nav.media.searchLabel': 'Search media resources',
+            'nav.media.previewBack': 'Back to media settings',
             'nav.tenant.current': 'Current tenant',
             'nav.tenant.switch': 'Switch tenant',
             'nav.tenant.manage': 'Manage tenants',
@@ -1231,14 +1241,14 @@ function renderNavItem(item, className) {
     let content = className.includes('nav-more-item')
         ? `<span class="nav-more-item-icon">${item.icon}</span><span class="nav-more-item-label">${label}</span>`
         : `${item.icon} ${label}`;
-    
+
     if (isRecentlyChangedTool(item)) {
         content += `<span class="new-badge">NEW!</span>`;
     }
     if (item.id.startsWith('custom:') && item.builtIn === false) {
         content += `<span class="tool-kind-badge">${navEscape(navLocaleText('自定义', 'CUSTOM'))}</span>`;
     }
-        
+
     return `<a href="${item.href}" class="${className} ${item.match(path) ? 'active' : ''}" data-nav-item-id="${navEscape(item.id)}" data-nav-search="${navEscape(buildNavSearchIndex(item))}">${content}</a>`;
 }
 
@@ -1705,6 +1715,7 @@ function renderNavSettingsSidebar() {
         <button class="nav-settings-tab ${t === 'backup' ? 'active' : ''}" data-tab="backup" onclick="switchNavSettingsTab('backup')">${navEscape(navT('nav.set.tab.backup'))}</button>
         <button class="nav-settings-tab ${t === 'initialize' ? 'active' : ''}" data-tab="initialize" onclick="switchNavSettingsTab('initialize')">${navEscape(navT('nav.set.tab.initialize'))}</button>
         <button class="nav-settings-tab ${t === 'tenants' ? 'active' : ''}" data-tab="tenants" onclick="switchNavSettingsTab('tenants')">${navEscape(navT('nav.set.tab.tenants'))}</button>
+        <button class="nav-settings-tab ${t === 'media' ? 'active' : ''}" data-tab="media" onclick="switchNavSettingsTab('media')">${navEscape(navT('nav.set.tab.media'))}</button>
         <button class="nav-settings-tab ${t === 'customBackup' ? 'active' : ''}" data-tab="customBackup" onclick="switchNavSettingsTab('customBackup')">${navEscape(navT('nav.set.tab.customBackup'))}</button>
         <button class="nav-settings-tab ${t === 'accounts' ? 'active' : ''}" data-tab="accounts" onclick="switchNavSettingsTab('accounts')">${navEscape(navT('nav.set.tab.accounts'))}</button>
         <button class="nav-settings-tab ${t === 'security' ? 'active' : ''}" data-tab="security" onclick="switchNavSettingsTab('security')">${navEscape(navT('nav.set.tab.security'))}</button>
@@ -1772,6 +1783,7 @@ function getNavSettingsTitle() {
     if (navState.settingsTab === 'backup') return navT('nav.set.tab.backup');
     if (navState.settingsTab === 'initialize') return navT('nav.set.tab.initialize');
     if (navState.settingsTab === 'tenants') return navT('nav.set.tab.tenants');
+    if (navState.settingsTab === 'media') return navT('nav.set.tab.media');
     if (navState.settingsTab === 'customBackup') return navT('nav.set.tab.customBackup');
     if (navState.settingsTab === 'categories') return navT('nav.set.tab.categories');
     if (navState.settingsTab === 'items') return navT('nav.set.tab.items');
@@ -1791,6 +1803,7 @@ function getNavSettingsSubtitle() {
     if (navState.settingsTab === 'backup') return navT('nav.set.sub.backup');
     if (navState.settingsTab === 'initialize') return navT('nav.set.sub.initialize');
     if (navState.settingsTab === 'tenants') return navT('nav.set.sub.tenants');
+    if (navState.settingsTab === 'media') return navT('nav.set.sub.media');
     if (navState.settingsTab === 'customBackup') return navT('nav.set.sub.customBackup');
     if (navState.settingsTab === 'categories') return navT('nav.set.sub.categories');
     if (navState.settingsTab === 'items') return navT('nav.set.sub.items');
@@ -1818,6 +1831,7 @@ function renderNavSettingsContent() {
     if (navState.settingsTab === 'backup') return renderBackupSettings(content);
     if (navState.settingsTab === 'initialize') return renderInitializationSettings(content);
     if (navState.settingsTab === 'tenants') return renderTenantSettings(content);
+    if (navState.settingsTab === 'media') return renderMediaSettings(content);
     if (navState.settingsTab === 'customBackup') return renderCustomToolBackupSettings(content);
     if (navState.settingsTab === 'categories') return renderCategorySettings(content);
     if (navState.settingsTab === 'items') return renderItemCategorySettings(content);
@@ -2942,9 +2956,9 @@ async function renderTenantSettings(content) {
             <div class="nav-backup-toolbar">
                 <button type="button" onclick="editTenantInfo('${navEscape(tenant.id)}')">${navEscape(navT('nav.tenant.edit'))}</button>
                 ${archived
-                    ? `<button type="button" onclick="restoreArchivedTenantInfo('${navEscape(tenant.id)}')">${navEscape(navT('nav.tenant.restore'))}</button>
+            ? `<button type="button" onclick="restoreArchivedTenantInfo('${navEscape(tenant.id)}')">${navEscape(navT('nav.tenant.restore'))}</button>
                        <button type="button" class="danger" onclick="deleteTenantData('${navEscape(tenant.id)}')">${navEscape(navT('nav.tenant.delete'))}</button>`
-                    : tenant.id !== 'default' ? `<button type="button" class="danger" onclick="archiveTenantInfo('${navEscape(tenant.id)}')">${navEscape(navT('nav.tenant.archive'))}</button>` : ''}
+            : tenant.id !== 'default' ? `<button type="button" class="danger" onclick="archiveTenantInfo('${navEscape(tenant.id)}')">${navEscape(navT('nav.tenant.archive'))}</button>` : ''}
             </div>
         </div>`;
     content.innerHTML = `
@@ -3248,6 +3262,518 @@ async function renderCustomToolBackupSettings(content) {
         content.innerHTML = `<div class="nav-settings-empty">${navEscape(navT('nav.ctbk.fail'))}${navEscape(e.message)}</div>`;
     }
 }
+
+// ============================================================
+// 🎬 媒体资源管理中心 (Media Resource Management)
+// ============================================================
+navState.mediaCategoryFilter = 'all';
+navState.mediaSearchQuery = '';
+navState.mediaVideosCache = [];
+navState.mediaCategoriesCache = [];
+navState.mediaOverviewCache = null;
+navState.mediaSearchTimer = null;
+
+async function renderMediaSettings(content) {
+    content.innerHTML = `<div class="nav-settings-empty">正在加载媒体资源库...</div>`;
+    try {
+        const [overviewRes, videosRes] = await Promise.all([
+            fetch('/api/media/admin/overview', { headers: getAuthHeaderForNav() }),
+            fetch('/api/media/admin/videos', { headers: getAuthHeaderForNav() })
+        ]);
+
+        if (!overviewRes.ok || !videosRes.ok) {
+            throw new Error(`无法获取媒体资源数据 (HTTP ${overviewRes.status}/${videosRes.status})`);
+        }
+
+        const overview = await overviewRes.json();
+        const videosData = await videosRes.json();
+        navState.mediaOverviewCache = overview;
+        navState.mediaVideosCache = videosData.data || [];
+        navState.mediaCategoriesCache = videosData.categories || [];
+
+        renderMediaSettingsHtml(content, overview, navState.mediaVideosCache, navState.mediaCategoriesCache);
+    } catch (e) {
+        content.innerHTML = `<div class="nav-settings-empty" style="color:#ef4444;">加载媒体资源管理失败：${navEscape(e.message)}</div>`;
+    }
+}
+
+function renderMediaSettingsHtml(content, overview, videos, categories) {
+    const managedCategories = categories.filter(category => category.id !== 'all');
+    const categoryCount = category => videos.filter(video => {
+        if (category.folder) return video.folder === category.folder || video.category === category.id;
+        return video.category === category.id;
+    }).length;
+
+    const activeFilter = navState.mediaCategoryFilter || 'all';
+    const query = (navState.mediaSearchQuery || '').trim().toLowerCase();
+
+    let filteredVideos = videos;
+    if (activeFilter !== 'all') {
+        filteredVideos = filteredVideos.filter(v => (v.folder || '') === activeFilter || v.category === activeFilter);
+    }
+    if (query) {
+        filteredVideos = filteredVideos.filter(v =>
+            (v.title && v.title.toLowerCase().includes(query)) ||
+            (v.fileName && v.fileName.toLowerCase().includes(query)) ||
+            (v.tags && v.tags.some(t => t.toLowerCase().includes(query)))
+        );
+    }
+
+    content.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:16px;">
+            <!-- 资产总体概况卡片 -->
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:12px;">
+                <div style="background:linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border:1px solid #e2e8f0; border-radius:10px; padding:14px;">
+                    <div style="font-size:12px; color:#64748b; margin-bottom:4px;">🎬 视频资产总数</div>
+                    <div style="font-size:22px; font-weight:800; color:#0f172a;">${overview.totalVideos} <span style="font-size:12px; font-weight:500; color:#64748b;">部</span></div>
+                </div>
+                <div style="background:linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border:1px solid #e2e8f0; border-radius:10px; padding:14px;">
+                    <div style="font-size:12px; color:#64748b; margin-bottom:4px;">📁 分类文件夹</div>
+                    <div style="font-size:22px; font-weight:800; color:#0f172a;">${overview.totalCategories} <span style="font-size:12px; font-weight:500; color:#64748b;">个</span></div>
+                </div>
+                <div style="background:linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border:1px solid #e2e8f0; border-radius:10px; padding:14px;">
+                    <div style="font-size:12px; color:#64748b; margin-bottom:4px;">💾 媒体库占用</div>
+                    <div style="font-size:22px; font-weight:800; color:#6366f1;">${overview.totalSizeFormatted}</div>
+                </div>
+                <div style="background:linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border:1px solid #e2e8f0; border-radius:10px; padding:14px;">
+                    <div style="font-size:12px; color:#64748b; margin-bottom:4px;">💽 磁盘可用空间</div>
+                    <div style="font-size:22px; font-weight:800; color:#10b981;">${overview.disk.freeGb} <span style="font-size:12px; font-weight:500; color:#64748b;">GB 可用</span></div>
+                </div>
+            </div>
+
+            <!-- 操作工具条 -->
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; padding:12px; background:#fff; border:1px solid #e2e8f0; border-radius:10px;">
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button type="button" class="sys-btn" onclick="openCreateMediaFolderModal()" style="background:#6366f1; color:#fff; border:none; border-radius:6px; padding:6px 12px; font-size:13px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
+                        <span>+</span> 新建分类文件夹
+                    </button>
+                    <button type="button" class="sys-btn" onclick="openImportLocalMediaModal()" style="background:#0ea5e9; color:#fff; border:none; border-radius:6px; padding:6px 12px; font-size:13px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
+                        <span>📥</span> 本地目录一键导入
+                    </button>
+                    <a href="/cinema" target="_blank" style="text-decoration:none; background:#f8fafc; color:#334155; border:1px solid #cbd5e1; border-radius:6px; padding:6px 12px; font-size:13px; font-weight:600; display:inline-flex; align-items:center; gap:4px;">
+                        <span>🎬</span> 预览点播大厅 ↗
+                    </a>
+                </div>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <button type="button" onclick="renderMediaSettings(document.getElementById('navSettingsContent'))" style="background:#f1f5f9; border:1px solid #cbd5e1; border-radius:6px; padding:6px 10px; font-size:12px; cursor:pointer;" title="重新扫描磁盘视频">
+                        🔄 刷新
+                    </button>
+                </div>
+            </div>
+
+            <!-- 分类切换与实时筛选 -->
+            <div class="nav-media-filter-row">
+                <div class="nav-media-category-tabs" aria-label="${navEscape(navT('nav.media.categoryFilter'))}">
+                    <button type="button" class="tab-item" onclick="switchMediaCategoryFilter('all')" style="border-radius:20px; padding:4px 14px; font-size:12px; font-weight:600; cursor:pointer; border:1px solid ${activeFilter === 'all' ? '#6366f1' : '#cbd5e1'}; background:${activeFilter === 'all' ? '#6366f1' : '#fff'}; color:${activeFilter === 'all' ? '#fff' : '#475569'};">
+                        全部 (${videos.length})
+                    </button>
+                    ${managedCategories.map(c => {
+        const filterValue = c.folder || c.id;
+        const cnt = categoryCount(c);
+        const isAct = activeFilter === filterValue;
+        return `
+                            <button type="button" class="tab-item" onclick="switchMediaCategoryFilter('${navEscape(filterValue)}')" style="border-radius:20px; padding:4px 14px; font-size:12px; font-weight:600; cursor:pointer; border:1px solid ${isAct ? '#6366f1' : '#cbd5e1'}; background:${isAct ? '#6366f1' : '#fff'}; color:${isAct ? '#fff' : '#475569'}; display:inline-flex; align-items:center; gap:4px;">
+                                <span>${c.icon || '📁'}</span> ${navEscape(c.name || filterValue || '独家影院')} (${cnt})
+                            </button>
+                        `;
+    }).join('')}
+                </div>
+                <label class="nav-media-search">
+                    <span aria-hidden="true">🔍</span>
+                    <input type="search" id="mediaSearchInput" value="${navEscape(navState.mediaSearchQuery)}" placeholder="搜索片名、文件名或标签..." oninput="handleMediaSearchInput(this.value)" aria-label="${navEscape(navT('nav.media.searchLabel'))}">
+                </label>
+            </div>
+
+            <!-- 视频表格管理区 -->
+            <div style="background:#fff; border:1px solid #e2e8f0; border-radius:10px; overflow:hidden;">
+                <div class="nav-media-table-scroll">
+                    <table class="nav-media-table">
+                        <thead>
+                            <tr style="background:#f8fafc; border-bottom:1px solid #e2e8f0; color:#64748b; font-weight:600;">
+                                <th style="padding:10px 12px; width:70px;">封面</th>
+                                <th style="padding:10px 12px;">片名 & 文件名</th>
+                                <th style="padding:10px 12px; width:130px;">所属分类</th>
+                                <th style="padding:10px 12px; width:100px;">大小规格</th>
+                                <th style="padding:10px 12px; width:248px; text-align:center;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${filteredVideos.length === 0 ? `
+                                <tr>
+                                    <td colspan="5" style="padding:40px; text-align:center; color:#94a3b8;">未找到匹配的视频媒体文件</td>
+                                </tr>
+                            ` : filteredVideos.map(item => `
+                                <tr style="border-bottom:1px solid #f1f5f9; transition:background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                                    <td style="padding:8px 12px;">
+                                        <div onclick="previewMediaVideo('${navEscape(item.src)}', '${navEscape(item.title)}')" style="width:64px; height:40px; border-radius:4px; overflow:hidden; position:relative; cursor:pointer; background:#000;">
+                                            <img src="${item.poster || '/assets/videos/龙餐馆_poster.jpg'}" style="width:100%; height:100%; object-fit:cover;" loading="lazy">
+                                            <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.3); opacity:0; transition:opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0'">
+                                                <span style="color:#fff; font-size:14px;">▶</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td style="padding:8px 12px;">
+                                        <div style="font-weight:600; color:#0f172a; margin-bottom:2px;" title="${navEscape(item.title)}">${navEscape(item.title)}</div>
+                                        <div class="nav-media-item-meta">
+                                            <span class="nav-media-file-name">${navEscape(item.fileName)}</span>
+                                            <label class="nav-media-priority" title="数字越小，在影视作品展播中越靠前">
+                                                <span>优先级</span>
+                                                <input type="number" step="1" value="${Number.isSafeInteger(item.order) ? item.order : 1000}" onchange="setMediaPriority('${navEscape(item.id)}', this.value, this)" aria-label="${navEscape(item.title)} 展播优先级">
+                                            </label>
+                                        </div>
+                                    </td>
+                                    <td style="padding:8px 12px;">
+                                        <span style="display:inline-block; padding:2px 8px; border-radius:12px; background:#eff6ff; color:#2563eb; font-size:11px; font-weight:500;">
+                                            ${navEscape(item.folder || item.categoryName || '独家影院')}
+                                        </span>
+                                    </td>
+                                    <td style="padding:8px 12px;">
+                                        <div style="font-weight:500; color:#334155;">${navEscape(item.fileSizeFormatted)}</div>
+                                        <div style="font-size:11px; color:#94a3b8;">${navEscape(item.format)} · ${navEscape(item.resolution || 'HD')}</div>
+                                    </td>
+                                    <td style="padding:8px 12px; text-align:center;">
+                                        <div class="nav-media-row-actions">
+                                            <button type="button" class="nav-media-action" onclick="previewMediaVideo('${navEscape(item.src)}', '${navEscape(item.title)}')" title="在线预览播放">
+                                                👁️ 预览
+                                            </button>
+                                            <button type="button" class="nav-media-action" onclick="openEditMediaModal('${navEscape(item.id)}')" title="修改标题、分类与简介">
+                                                ✏️ 编辑
+                                            </button>
+                                            <button type="button" class="nav-media-action" onclick="extractMediaPoster('${navEscape(item.id)}')" title="重新截取高清封面帧">
+                                                🖼️ 抽帧
+                                            </button>
+                                            <button type="button" class="nav-media-action danger" onclick="deleteMediaVideo('${navEscape(item.id)}', '${navEscape(item.title)}')" title="彻底删除该视频" aria-label="删除 ${navEscape(item.title)}">
+                                                🗑️
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 分类文件夹管理卡片 -->
+            <div style="background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:14px;">
+                <div style="font-size:13px; font-weight:700; color:#0f172a; margin-bottom:10px;">📁 现有分类文件夹列表</div>
+                <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:10px;">
+                    ${managedCategories.map(cat => {
+        const f = cat.folder || '';
+        const isSystem = !f || f === 'film';
+        const cnt = categoryCount(cat);
+        return `
+                            <div style="border:1px solid #e2e8f0; border-radius:8px; padding:10px 12px; display:flex; justify-content:space-between; align-items:center; background:#f8fafc;">
+                                <div>
+                                    <div style="font-weight:600; font-size:13px; color:#0f172a;">${cat.icon || '📁'} ${navEscape(cat.name || f || '独家影院')}</div>
+                                    <div style="font-size:11px; color:#64748b; margin-top:2px;">目录: ${f ? navEscape(f) : '根目录'} · ${cnt} 部视频</div>
+                                </div>
+                                <div style="display:flex; gap:4px;">
+                                    ${!isSystem ? `
+                                        <button type="button" onclick="deleteMediaFolder('${navEscape(f)}')" style="border:1px solid #fecaca; background:#fff; color:#ef4444; border-radius:4px; padding:3px 6px; font-size:11px; cursor:pointer;" title="删除分类">
+                                            删除
+                                        </button>
+                                    ` : '<span style="font-size:11px; color:#94a3b8;">系统内置</span>'}
+                                </div>
+                            </div>
+                        `;
+    }).join('')}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// 客户端即时筛选分类
+window.switchMediaCategoryFilter = function (category) {
+    navState.mediaCategoryFilter = category;
+    const content = document.getElementById('navSettingsContent');
+    if (content && navState.mediaOverviewCache) {
+        renderMediaSettingsHtml(content, navState.mediaOverviewCache, navState.mediaVideosCache, navState.mediaCategoriesCache);
+    }
+};
+
+// 客户端即时搜索
+window.handleMediaSearchInput = function (val) {
+    navState.mediaSearchQuery = val;
+    clearTimeout(navState.mediaSearchTimer);
+    navState.mediaSearchTimer = setTimeout(() => {
+        const content = document.getElementById('navSettingsContent');
+        if (!content || !navState.mediaOverviewCache) return;
+        renderMediaSettingsHtml(content, navState.mediaOverviewCache, navState.mediaVideosCache, navState.mediaCategoriesCache);
+        const input = document.getElementById('mediaSearchInput');
+        if (input) {
+            input.focus();
+            input.setSelectionRange(input.value.length, input.value.length);
+        }
+    }, 180);
+};
+
+window.setMediaPriority = async function (videoId, value, input) {
+    const order = Number(value);
+    if (!Number.isSafeInteger(order)) {
+        alert('优先级请输入整数；数字越小，展播顺序越靠前。');
+        return;
+    }
+    if (input) input.disabled = true;
+    try {
+        const response = await fetch(`/api/media/admin/videos/${encodeURIComponent(videoId)}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaderForNav() },
+            body: JSON.stringify({ order })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+        await renderMediaSettings(document.getElementById('navSettingsContent'));
+    } catch (error) {
+        if (input) input.disabled = false;
+        alert(`优先级保存失败：${error.message}`);
+    }
+};
+
+// 播放预览弹窗
+window.previewMediaVideo = function (src, title) {
+    let modal = document.getElementById('mediaPreviewModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'mediaPreviewModal';
+        modal.className = 'nav-media-preview-modal';
+        modal.addEventListener('click', event => {
+            if (event.target === modal) closeMediaPreview();
+        });
+        document.body.appendChild(modal);
+    }
+    modal.innerHTML = `
+        <div class="nav-media-preview-dialog" role="dialog" aria-modal="true" aria-label="播放预览：${navEscape(title)}">
+            <div class="nav-media-preview-head">
+                <div class="nav-media-preview-title">🎬 播放预览：${navEscape(title)}</div>
+                <button type="button" class="nav-media-preview-back" onclick="closeMediaPreview()">← ${navEscape(navT('nav.media.previewBack'))}</button>
+            </div>
+            <div class="nav-media-preview-player">
+                <video id="previewVideoEl" src="${navEscape(src)}" controls autoplay playsinline></video>
+            </div>
+        </div>
+    `;
+    modal.style.display = 'flex';
+    modal.querySelector('.nav-media-preview-back')?.focus();
+};
+
+window.closeMediaPreview = function () {
+    const modal = document.getElementById('mediaPreviewModal');
+    if (!modal) return;
+    modal.querySelector('video')?.pause();
+    modal.style.display = 'none';
+    document.querySelector('.nav-settings-tab[data-tab="media"]')?.focus();
+};
+
+document.addEventListener('keydown', event => {
+    const modal = document.getElementById('mediaPreviewModal');
+    if (event.key === 'Escape' && modal?.style.display === 'flex') closeMediaPreview();
+});
+
+// 媒体分类与设备文件导入
+function openMediaForm(importing) {
+    document.getElementById('mediaFormDialog')?.remove();
+    const dialog = document.createElement('dialog');
+    dialog.id = 'mediaFormDialog';
+    dialog.style.cssText = 'width:min(540px,90vw);padding:28px;border:1px solid #cbd5e1;border-radius:18px;background:#f8fafc;color:#172033;box-shadow:0 24px 90px #0006;max-height:85vh;overflow:auto;';
+    dialog.innerHTML = `
+        <form method="dialog">
+            <h2 style="margin:0 0 8px;font-size:21px;">${importing ? '📥 导入媒体' : '📁 新建分类'}</h2>
+            <p style="color:#64748b;font-size:13px;line-height:1.7;">${importing ? '从此设备选择文件夹或多个视频，上传至指定分类。同名文件会自动重命名。' : '为视频创建一个分类，例如：经典纪录片、少儿动画。'}</p>
+            <label style="display:block;font-size:13px;font-weight:600;">分类名称
+                <input id="mediaFormName" required maxlength="80" placeholder="输入分类名称" style="display:block;width:100%;box-sizing:border-box;margin:8px 0 18px;padding:11px;border:1px solid #cbd5e1;border-radius:8px;">
+            </label>
+            ${importing ? `<div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button type="button" class="nav-media-action" id="mediaChooseFolder">📂 选择文件夹</button>
+                <button type="button" class="nav-media-action" id="mediaChooseFiles">🎬 选择视频</button>
+                <input hidden type="file" id="mediaFolderFiles" webkitdirectory multiple>
+                <input hidden type="file" id="mediaVideoFiles" accept=".mp4,.webm,.mkv,.mov,.m4v" multiple>
+            </div><p id="mediaFileSummary" style="font-size:13px;color:#64748b;">尚未选择文件 · 支持 MP4 / WebM / MKV / MOV / M4V</p>
+            <progress id="mediaUploadProgress" max="100" value="0" style="width:100%;" hidden></progress>` : ''}
+            <p id="mediaFormStatus" role="status" style="font-size:13px;line-height:1.6;white-space:pre-wrap;"></p>
+            <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:22px;">
+                <button type="button" class="nav-media-action" id="mediaFormCancel">关闭</button>
+                <button type="submit" class="nav-media-action" id="mediaFormSubmit" style="background:#6366f1;color:white;border-color:#6366f1;height:38px;padding:0 18px;">${importing ? '开始上传' : '创建分类'}</button>
+            </div>
+        </form>`;
+    document.body.appendChild(dialog);
+    let files = [], busy = false;
+    const name = dialog.querySelector('#mediaFormName');
+    const status = dialog.querySelector('#mediaFormStatus');
+    const submit = dialog.querySelector('#mediaFormSubmit');
+    const close = () => { if (!busy) { dialog.close(); dialog.remove(); } };
+    dialog.querySelector('#mediaFormCancel').onclick = close;
+    dialog.addEventListener('cancel', event => { event.preventDefault(); close(); });
+    if (importing) {
+        const selectFiles = event => {
+            files = Array.from(event.target.files).filter(file => /\.(mp4|webm|mkv|mov|m4v)$/i.test(file.name));
+            const folder = files[0]?.webkitRelativePath?.split('/')[0];
+            if (!name.value && folder) name.value = folder;
+            dialog.querySelector('#mediaFileSummary').textContent = `已选择 ${files.length} 个视频 · ${(files.reduce((sum, file) => sum + file.size, 0) / 1024 ** 2).toFixed(1)} MB`;
+        };
+        dialog.querySelector('#mediaFolderFiles').onchange = selectFiles;
+        dialog.querySelector('#mediaVideoFiles').onchange = selectFiles;
+        dialog.querySelector('#mediaChooseFolder').onclick = () => dialog.querySelector('#mediaFolderFiles').click();
+        dialog.querySelector('#mediaChooseFiles').onclick = () => dialog.querySelector('#mediaVideoFiles').click();
+    }
+    dialog.querySelector('form').onsubmit = async event => {
+        event.preventDefault();
+        if (busy) return;
+        if (importing && !files.length) { status.textContent = '请先选择视频文件或文件夹。'; return; }
+        busy = true;
+        dialog.querySelectorAll('button,input').forEach(el => { el.disabled = true; });
+        try {
+            if (!importing) {
+                const response = await fetch('/api/media/admin/folders', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json', ...getAuthHeaderForNav() },
+                    body: JSON.stringify({ name: name.value.trim(), icon: '📁' })
+                });
+                const data = await response.json();
+                if (!response.ok || !data.success) throw new Error(data.error || '创建失败');
+                status.textContent = '✓ 分类已创建';
+            } else {
+                const progress = dialog.querySelector('progress');
+                progress.hidden = false;
+                let completed = 0;
+                while (files.length) {
+                    const file = files[0];
+                    status.textContent = `正在上传：${file.name}（已完成 ${completed} 个）`;
+                    await new Promise((resolve, reject) => {
+                        const xhr = new XMLHttpRequest();
+                        xhr.open('POST', '/api/media/admin/upload');
+                        Object.entries(getAuthHeaderForNav()).forEach(([key, value]) => xhr.setRequestHeader(key, value));
+                        xhr.upload.onprogress = event => { if (event.lengthComputable) progress.value = event.loaded / event.total * 100; };
+                        xhr.onerror = () => reject(new Error('网络连接中断，请重试'));
+                        xhr.onload = () => {
+                            let data;
+                            try { data = JSON.parse(xhr.responseText); } catch (_) {}
+                            if (xhr.status >= 200 && xhr.status < 300 && data?.success) resolve();
+                            else reject(new Error(data?.error || `上传失败（HTTP ${xhr.status}）`));
+                        };
+                        const form = new FormData();
+                        form.append('folder', name.value.trim());
+                        form.append('fileName', file.name);
+                        form.append('video', file);
+                        xhr.send(form);
+                    });
+                    files.shift();
+                    completed++;
+                }
+                status.textContent = `✓ 已成功导入 ${completed} 个视频`;
+                progress.value = 100;
+            }
+            status.style.color = '#15803d';
+            submit.hidden = true;
+            await renderMediaSettings(document.getElementById('navSettingsContent'));
+        } catch (error) {
+            status.style.color = '#dc2626';
+            status.textContent = error.message + (importing ? '；已完成的文件已保留，可重试剩余文件。' : '');
+        } finally {
+            busy = false;
+            dialog.querySelectorAll('button,input').forEach(el => { el.disabled = false; });
+        }
+    };
+    dialog.showModal();
+    name.focus();
+}
+window.openCreateMediaFolderModal = () => openMediaForm(false);
+
+// 删除分类文件夹
+window.deleteMediaFolder = function (folderName) {
+    if (!confirm(`确定彻底删除分类文件夹“${folderName}”吗？\n警告：该文件夹下的所有视频资源将被一并清理！`)) return;
+
+    fetch(`/api/media/admin/folders/${encodeURIComponent(folderName)}`, {
+        method: 'DELETE',
+        headers: getAuthHeaderForNav()
+    })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message || '删除成功');
+                renderMediaSettings(document.getElementById('navSettingsContent'));
+            } else {
+                alert(data.error || '删除失败');
+            }
+        })
+        .catch(e => alert('请求失败：' + e.message));
+};
+
+// 从当前设备选择文件夹或视频上传
+window.openImportLocalMediaModal = () => openMediaForm(true);
+
+// 编辑视频元数据
+window.openEditMediaModal = function (videoId) {
+    const video = navState.mediaVideosCache.find(v => v.id === videoId);
+    if (!video) return;
+
+    const newTitle = prompt('修改视频展示标题：', video.title);
+    if (newTitle === null) return;
+
+    const newDesc = prompt('修改视频简介：', video.description || '');
+    if (newDesc === null) return;
+
+    fetch(`/api/media/admin/videos/${encodeURIComponent(videoId)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaderForNav() },
+        body: JSON.stringify({
+            title: newTitle.trim(),
+            description: newDesc.trim()
+        })
+    })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                alert('修改成功！');
+                renderMediaSettings(document.getElementById('navSettingsContent'));
+            } else {
+                alert(data.error || '修改失败');
+            }
+        })
+        .catch(e => alert('请求失败：' + e.message));
+};
+
+// 抽取封面帧
+window.extractMediaPoster = function (videoId) {
+    const time = prompt('请输入抽取封面的时间点（格式：00:00:05 或 00:01:20）：', '00:00:06');
+    if (!time) return;
+
+    fetch(`/api/media/admin/extract-poster/${encodeURIComponent(videoId)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaderForNav() },
+        body: JSON.stringify({ timeOffset: time.trim() })
+    })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                alert('封面抽帧成功！');
+                renderMediaSettings(document.getElementById('navSettingsContent'));
+            } else {
+                alert(data.error || '抽帧失败');
+            }
+        })
+        .catch(e => alert('请求失败：' + e.message));
+};
+
+// 删除单个视频
+window.deleteMediaVideo = function (videoId, title) {
+    if (!confirm(`确定彻底删除视频“${title}”吗？此操作不可逆！`)) return;
+
+    fetch(`/api/media/admin/videos/${encodeURIComponent(videoId)}`, {
+        method: 'DELETE',
+        headers: getAuthHeaderForNav()
+    })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                alert('视频删除成功！');
+                renderMediaSettings(document.getElementById('navSettingsContent'));
+            } else {
+                alert(data.error || '删除失败');
+            }
+        })
+        .catch(e => alert('请求失败：' + e.message));
+};
 
 window.updateCustomToolBackupSelectionSummary = updateCustomToolBackupSelectionSummary;
 
@@ -4971,7 +5497,7 @@ window.openToolsKnowledgeGraph = function (options = {}) {
             script.addEventListener('load', handleLoad, { once: true });
             script.addEventListener('error', handleError, { once: true });
             if (!existing) {
-                script.src = '/js/shared/ai-knowledge-graph-spatial-themes-v5.js?v=20260905-08';
+                script.src = '/js/shared/ai-knowledge-graph-spatial-themes-v5.js?v=20260906-01';
                 document.body.appendChild(script);
             }
         }).catch(error => {
@@ -5552,7 +6078,7 @@ function trackCurrentToolOpen() {
             },
             body: JSON.stringify({ toolKey })
         });
-    Promise.resolve(submit).catch(() => {});
+    Promise.resolve(submit).catch(() => { });
 }
 
 function initBackToTopButton() {

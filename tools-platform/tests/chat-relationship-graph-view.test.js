@@ -26,3 +26,12 @@ test('chat relationship overview creates a separate person node for each convers
     assert.match(graphSource, /instanceEdges\.push\(\{ \.\.\.edge, target: instanceId \}\)/);
     assert.match(graphSource, /node\.canonicalPersonId \|\| node\.id/);
 });
+
+test('chat relationship overview limits high-volume recent conversations with an adjustable slider', () => {
+    assert.match(graphSource, /chatConversationLimit:20/);
+    assert.match(graphSource, /id="aiKgChatLimit" type="range"/);
+    assert.match(graphSource, /Number\(right\.messageCount\).*Number\(left\.messageCount\)/);
+    assert.match(graphSource, /right\.lastMessageTime.*localeCompare/);
+    assert.match(graphSource, /rankedConversations\.slice\(0, chatConversationLimit/);
+    assert.match(graphSource, /scheduleChatLimitRender/);
+});

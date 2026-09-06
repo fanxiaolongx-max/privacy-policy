@@ -15,3 +15,12 @@ tools-platform/data/*.db
 # Electron build output
 tools-platform/dist/
 tools-platform/node_modules/
+
+# Large media assets / Video assets (不推送到 GitHub)
+tools-platform/frontend/assets/videos/
+*.mp4
+*.mkv
+*.webm
+*.mov
+*.m4v
+
