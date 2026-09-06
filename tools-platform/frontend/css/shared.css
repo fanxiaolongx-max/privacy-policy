@@ -1674,6 +1674,340 @@ body {
     outline: none;
 }
 
+/* 媒体管理表单弹窗 (#mediaFormDialog) */
+dialog#mediaFormDialog {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    margin: 0 !important;
+    width: min(520px, calc(100vw - 32px)) !important;
+    max-height: 85vh !important;
+    padding: 26px 28px !important;
+    border: 1px solid rgba(148, 163, 184, 0.35) !important;
+    border-radius: 18px !important;
+    background: #ffffff !important;
+    color: #172033 !important;
+    box-shadow: 0 28px 80px rgba(15, 23, 42, 0.28) !important;
+    overflow-y: auto !important;
+    z-index: 100005 !important;
+    animation: navConfirmIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+dialog#mediaFormDialog::backdrop {
+    background: rgba(15, 23, 42, 0.52) !important;
+    backdrop-filter: blur(5px) !important;
+    -webkit-backdrop-filter: blur(5px) !important;
+}
+
+.nav-media-dialog-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 38px;
+    min-width: 90px;
+    padding: 0 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.nav-media-dialog-btn.secondary {
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #475569;
+}
+
+.nav-media-dialog-btn.secondary:hover {
+    border-color: #94a3b8;
+    background: #f8fafc;
+    color: #1e293b;
+}
+
+.nav-media-dialog-btn.primary {
+    border: 1px solid #6366f1;
+    background: #6366f1;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+}
+
+.nav-media-dialog-btn.primary:hover {
+    border-color: #4f46e5;
+    background: #4f46e5;
+    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.35);
+}
+
+.nav-media-dialog-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* 导入媒体实时进度与日志面板 */
+dialog#mediaFormDialog.is-importing {
+    width: min(650px, calc(100vw - 32px)) !important;
+}
+
+.nav-media-dashboard {
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.nav-media-progress-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px 14px;
+}
+
+.nav-media-progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 6px;
+}
+
+.nav-media-progress-pct {
+    font-size: 13px;
+    font-weight: 700;
+    color: #4f46e5;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.nav-media-progress-track {
+    width: 100%;
+    height: 7px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+    position: relative;
+}
+
+.nav-media-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #6366f1, #a855f7);
+    border-radius: 999px;
+    transition: width 0.15s ease;
+}
+
+.nav-media-progress-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: #64748b;
+    margin-top: 6px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.nav-media-current-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 9px 12px;
+}
+
+.nav-media-current-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: #334155;
+    margin-bottom: 5px;
+}
+
+.nav-media-current-name {
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 75%;
+}
+
+.nav-media-current-pct {
+    font-weight: 600;
+    color: #0284c7;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.nav-media-current-track {
+    width: 100%;
+    height: 5px;
+    background: #f1f5f9;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.nav-media-current-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #0284c7, #38bdf8);
+    border-radius: 999px;
+    transition: width 0.12s ease;
+}
+
+.nav-media-file-queue {
+    max-height: 110px;
+    overflow-y: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #fff;
+    font-size: 12px;
+}
+
+.nav-media-queue-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 12px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.nav-media-queue-item:last-child {
+    border-bottom: none;
+}
+
+.nav-media-queue-name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 65%;
+    color: #1e293b;
+}
+
+.nav-media-queue-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: #64748b;
+    white-space: nowrap;
+}
+
+.nav-media-queue-status {
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.nav-media-queue-status.waiting {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.nav-media-queue-status.uploading {
+    background: #e0f2fe;
+    color: #0369a1;
+    font-weight: 600;
+}
+
+.nav-media-queue-status.success {
+    background: #dcfce7;
+    color: #15803d;
+    font-weight: 600;
+}
+
+.nav-media-queue-status.error {
+    background: #fee2e2;
+    color: #b91c1c;
+    font-weight: 600;
+}
+
+/* 详情日志终端控制台 */
+.nav-media-log-wrap {
+    border: 1px solid #1e293b;
+    border-radius: 10px;
+    background: #0f172a;
+    overflow: hidden;
+}
+
+.nav-media-log-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 12px;
+    background: #1e293b;
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.nav-media-log-title {
+    color: #cbd5e1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.nav-media-log-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 6px #10b981;
+}
+
+.nav-media-log-dot.busy {
+    background: #38bdf8;
+    box-shadow: 0 0 8px #38bdf8;
+    animation: navPulseDot 1s infinite alternate;
+}
+
+@keyframes navPulseDot {
+    from { opacity: 0.5; }
+    to { opacity: 1; transform: scale(1.2); }
+}
+
+.nav-media-log-badge {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 10px;
+    color: #64748b;
+}
+
+.nav-media-log-terminal {
+    height: 120px;
+    overflow-y: auto;
+    padding: 8px 12px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 11px;
+    line-height: 1.6;
+    color: #e2e8f0;
+}
+
+.nav-media-log-line {
+    display: flex;
+    gap: 8px;
+    word-break: break-all;
+}
+
+.nav-media-log-time {
+    color: #64748b;
+    flex-shrink: 0;
+}
+
+.nav-media-log-line.info .nav-media-log-text { color: #94a3b8; }
+.nav-media-log-line.start .nav-media-log-text { color: #60a5fa; }
+.nav-media-log-line.progress .nav-media-log-text { color: #c084fc; }
+.nav-media-log-line.success .nav-media-log-text { color: #34d399; }
+.nav-media-log-line.error .nav-media-log-text { color: #f87171; }
+
+
+
 .nav-settings-list {
     display: grid;
     gap: 8px;

@@ -3470,7 +3470,7 @@ function renderMediaSettingsHtml(content, overview, videos, categories) {
                                 </div>
                                 <div style="display:flex; gap:4px;">
                                     ${!isSystem ? `
-                                        <button type="button" onclick="deleteMediaFolder('${navEscape(f)}')" style="border:1px solid #fecaca; background:#fff; color:#ef4444; border-radius:4px; padding:3px 6px; font-size:11px; cursor:pointer;" title="删除分类">
+                                        <button type="button" onclick="deleteMediaFolder('${navEscape(f)}')" style="border:1px solid #fecaca; background:#fff; color:#ef4444; border-radius:6px; padding:3px 9px; font-size:11px; font-weight:600; cursor:pointer; transition:all .15s ease;" onmouseover="this.style.background='#fef2f2';this.style.borderColor='#f87171'" onmouseout="this.style.background='#fff';this.style.borderColor='#fecaca'" title="删除分类">
                                             删除
                                         </button>
                                     ` : '<span style="font-size:11px; color:#94a3b8;">系统内置</span>'}
@@ -3512,7 +3512,11 @@ window.handleMediaSearchInput = function (val) {
 window.setMediaPriority = async function (videoId, value, input) {
     const order = Number(value);
     if (!Number.isSafeInteger(order)) {
-        alert('优先级请输入整数；数字越小，展播顺序越靠前。');
+        showNavbarNotice({
+            title: '输入提示',
+            message: '优先级请输入整数；数字越小，展播顺序越靠前。',
+            tone: 'info'
+        });
         return;
     }
     if (input) input.disabled = true;
@@ -3527,7 +3531,11 @@ window.setMediaPriority = async function (videoId, value, input) {
         await renderMediaSettings(document.getElementById('navSettingsContent'));
     } catch (error) {
         if (input) input.disabled = false;
-        alert(`优先级保存失败：${error.message}`);
+        showNavbarNotice({
+            title: '保存失败',
+            message: `优先级保存失败：${error.message}`,
+            tone: 'error'
+        });
     }
 };
 
@@ -3576,100 +3584,366 @@ function openMediaForm(importing) {
     document.getElementById('mediaFormDialog')?.remove();
     const dialog = document.createElement('dialog');
     dialog.id = 'mediaFormDialog';
-    dialog.style.cssText = 'width:min(540px,90vw);padding:28px;border:1px solid #cbd5e1;border-radius:18px;background:#f8fafc;color:#172033;box-shadow:0 24px 90px #0006;max-height:85vh;overflow:auto;';
+    if (importing) dialog.classList.add('is-importing');
+    dialog.style.cssText = `position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);margin:0;width:min(${importing ? '650px' : '520px'},calc(100vw - 32px));max-height:85vh;padding:26px 28px;border:1px solid rgba(148,163,184,0.35);border-radius:18px;background:#ffffff;color:#172033;box-shadow:0 28px 80px rgba(15,23,42,0.28);overflow:auto;z-index:100005;`;
     dialog.innerHTML = `
-        <form method="dialog">
-            <h2 style="margin:0 0 8px;font-size:21px;">${importing ? '📥 导入媒体' : '📁 新建分类'}</h2>
-            <p style="color:#64748b;font-size:13px;line-height:1.7;">${importing ? '从此设备选择文件夹或多个视频，上传至指定分类。同名文件会自动重命名。' : '为视频创建一个分类，例如：经典纪录片、少儿动画。'}</p>
-            <label style="display:block;font-size:13px;font-weight:600;">分类名称
-                <input id="mediaFormName" required maxlength="80" placeholder="输入分类名称" style="display:block;width:100%;box-sizing:border-box;margin:8px 0 18px;padding:11px;border:1px solid #cbd5e1;border-radius:8px;">
+        <form method="dialog" style="margin:0;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                <h2 style="margin:0;font-size:20px;font-weight:700;color:#0f172a;">${importing ? '📥 导入媒体' : '📁 新建分类'}</h2>
+                <button type="button" id="mediaFormCloseX" title="关闭" style="border:none;background:none;font-size:22px;line-height:1;color:#94a3b8;cursor:pointer;padding:4px 6px;border-radius:6px;transition:all .15s ease;">×</button>
+            </div>
+            <p style="color:#64748b;font-size:13px;line-height:1.6;margin:0 0 16px;">${importing ? '从此设备选择文件夹或多个视频，上传至指定分类。同名文件会自动重命名。' : '为视频创建一个分类，例如：经典纪录片、少儿动画。'}</p>
+            <label style="display:block;font-size:13px;font-weight:600;color:#1e293b;margin-bottom:6px;">分类名称
+                <input id="mediaFormName" required maxlength="80" placeholder="输入分类名称" style="display:block;width:100%;box-sizing:border-box;margin:6px 0 16px;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;color:#0f172a;outline:none;background:#fff;">
             </label>
-            ${importing ? `<div style="display:flex;gap:10px;flex-wrap:wrap;">
-                <button type="button" class="nav-media-action" id="mediaChooseFolder">📂 选择文件夹</button>
-                <button type="button" class="nav-media-action" id="mediaChooseFiles">🎬 选择视频</button>
-                <input hidden type="file" id="mediaFolderFiles" webkitdirectory multiple>
-                <input hidden type="file" id="mediaVideoFiles" accept=".mp4,.webm,.mkv,.mov,.m4v" multiple>
-            </div><p id="mediaFileSummary" style="font-size:13px;color:#64748b;">尚未选择文件 · 支持 MP4 / WebM / MKV / MOV / M4V</p>
-            <progress id="mediaUploadProgress" max="100" value="0" style="width:100%;" hidden></progress>` : ''}
-            <p id="mediaFormStatus" role="status" style="font-size:13px;line-height:1.6;white-space:pre-wrap;"></p>
-            <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:22px;">
-                <button type="button" class="nav-media-action" id="mediaFormCancel">关闭</button>
-                <button type="submit" class="nav-media-action" id="mediaFormSubmit" style="background:#6366f1;color:white;border-color:#6366f1;height:38px;padding:0 18px;">${importing ? '开始上传' : '创建分类'}</button>
+            ${importing ? `
+                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+                    <button type="button" class="nav-media-action" id="mediaChooseFolder" style="height:34px;padding:0 12px;font-size:12px;">📂 选择文件夹</button>
+                    <button type="button" class="nav-media-action" id="mediaChooseFiles" style="height:34px;padding:0 12px;font-size:12px;">🎬 选择视频</button>
+                    <input hidden type="file" id="mediaFolderFiles" webkitdirectory multiple>
+                    <input hidden type="file" id="mediaVideoFiles" accept=".mp4,.webm,.mkv,.mov,.m4v" multiple>
+                </div>
+                <p id="mediaFileSummary" style="font-size:12px;color:#64748b;margin-bottom:8px;">尚未选择文件 · 支持 MP4 / WebM / MKV / MOV / M4V</p>
+
+                <!-- 实时上传进度与详情日志看板 -->
+                <div id="mediaUploadDashboard" class="nav-media-dashboard" style="display:none;">
+                    <!-- 总进度卡片 -->
+                    <div class="nav-media-progress-card">
+                        <div class="nav-media-progress-header">
+                            <span id="mediaOverallTitle">总进度：等待开始...</span>
+                            <span class="nav-media-progress-pct" id="mediaOverallPct">0%</span>
+                        </div>
+                        <div class="nav-media-progress-track">
+                            <div class="nav-media-progress-bar" id="mediaOverallBar" style="width:0%;"></div>
+                        </div>
+                        <div class="nav-media-progress-meta">
+                            <span id="mediaOverallSize">0 MB / 0 MB</span>
+                            <span id="mediaOverallSpeed">-- MB/s</span>
+                            <span id="mediaOverallEta">剩余时间: --</span>
+                        </div>
+                    </div>
+
+                    <!-- 当前文件卡片 -->
+                    <div class="nav-media-current-card" id="mediaCurrentCard">
+                        <div class="nav-media-current-header">
+                            <span class="nav-media-current-name" id="mediaCurrentName">当前文件：就绪</span>
+                            <span class="nav-media-current-pct" id="mediaCurrentPct">0%</span>
+                        </div>
+                        <div class="nav-media-current-track">
+                            <div class="nav-media-current-bar" id="mediaCurrentBar" style="width:0%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- 文件队列清单 -->
+                    <div class="nav-media-file-queue" id="mediaFileQueue"></div>
+
+                    <!-- 实时详情日志窗口 -->
+                    <div class="nav-media-log-wrap">
+                        <div class="nav-media-log-header">
+                            <span class="nav-media-log-title"><span class="nav-media-log-dot" id="mediaLogDot"></span> 实时详情日志</span>
+                            <span class="nav-media-log-badge" id="mediaLogCount">0 条记录</span>
+                        </div>
+                        <div class="nav-media-log-terminal" id="mediaLogTerminal" role="log" aria-live="polite"></div>
+                    </div>
+                </div>
+            ` : ''}
+            <p id="mediaFormStatus" role="status" style="font-size:13px;line-height:1.6;white-space:pre-wrap;margin:0;"></p>
+            <div style="display:flex;justify-content:flex-end;align-items:center;gap:12px;margin-top:20px;">
+                <button type="button" class="nav-media-dialog-btn secondary" id="mediaFormCancel">关闭</button>
+                <button type="submit" class="nav-media-dialog-btn primary" id="mediaFormSubmit">${importing ? '开始上传' : '创建分类'}</button>
             </div>
         </form>`;
     document.body.appendChild(dialog);
+
     let files = [], busy = false;
     const name = dialog.querySelector('#mediaFormName');
     const status = dialog.querySelector('#mediaFormStatus');
     const submit = dialog.querySelector('#mediaFormSubmit');
-    const close = () => { if (!busy) { dialog.close(); dialog.remove(); } };
-    dialog.querySelector('#mediaFormCancel').onclick = close;
+    const cancel = dialog.querySelector('#mediaFormCancel');
+    const closeBtn = dialog.querySelector('#mediaFormCloseX');
+
+    if (closeBtn) {
+        closeBtn.onmouseover = () => { closeBtn.style.color = '#334155'; closeBtn.style.background = '#f1f5f9'; };
+        closeBtn.onmouseout = () => { closeBtn.style.color = '#94a3b8'; closeBtn.style.background = 'none'; };
+    }
+
+    const forceClose = () => {
+        busy = false;
+        try { dialog.close(); } catch (_) {}
+        dialog.remove();
+        document.querySelectorAll('#mediaFormDialog').forEach(el => el.remove());
+    };
+    const close = () => {
+        if (!busy) {
+            forceClose();
+        }
+    };
+    cancel.onclick = close;
+    closeBtn?.addEventListener('click', close);
     dialog.addEventListener('cancel', event => { event.preventDefault(); close(); });
+    dialog.addEventListener('click', event => {
+        const rect = dialog.getBoundingClientRect();
+        const isInDialog = (
+            rect.top <= event.clientY && event.clientY <= rect.top + rect.height &&
+            rect.left <= event.clientX && event.clientX <= rect.left + rect.width
+        );
+        if (!isInDialog) close();
+    });
+
+    const formatMediaBytes = bytes => {
+        if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
+        if (bytes >= 1024 * 1024 * 1024) return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+        if (bytes >= 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        if (bytes >= 1024) return (bytes / 1024).toFixed(0) + ' KB';
+        return bytes + ' B';
+    };
+
+    const formatMediaEta = seconds => {
+        if (!Number.isFinite(seconds) || seconds <= 0) return '即将完成';
+        if (seconds < 60) return `${Math.ceil(seconds)} 秒`;
+        const m = Math.floor(seconds / 60);
+        const s = Math.ceil(seconds % 60);
+        return `${m} 分 ${s} 秒`;
+    };
+
+    let logCount = 0;
+    const addMediaLog = (msg, type = 'info') => {
+        const term = dialog.querySelector('#mediaLogTerminal');
+        const badge = dialog.querySelector('#mediaLogCount');
+        if (!term) return;
+        const time = new Date().toTimeString().slice(0, 8);
+        const line = document.createElement('div');
+        line.className = `nav-media-log-line ${type}`;
+        line.innerHTML = `<span class="nav-media-log-time">[${time}]</span><span class="nav-media-log-text">${navEscape(msg)}</span>`;
+        term.appendChild(line);
+        term.scrollTop = term.scrollHeight;
+        logCount++;
+        if (badge) badge.textContent = `${logCount} 条记录`;
+    };
+
     if (importing) {
+        const dashboard = dialog.querySelector('#mediaUploadDashboard');
+        const queueEl = dialog.querySelector('#mediaFileQueue');
+        const summaryEl = dialog.querySelector('#mediaFileSummary');
+        const overallSizeEl = dialog.querySelector('#mediaOverallSize');
+
         const selectFiles = event => {
             files = Array.from(event.target.files).filter(file => /\.(mp4|webm|mkv|mov|m4v)$/i.test(file.name));
+            if (!files.length) {
+                summaryEl.textContent = '未选定有效的视频文件（支持 MP4 / WebM / MKV / MOV / M4V）';
+                if (dashboard) dashboard.style.display = 'none';
+                return;
+            }
             const folder = files[0]?.webkitRelativePath?.split('/')[0];
             if (!name.value && folder) name.value = folder;
-            dialog.querySelector('#mediaFileSummary').textContent = `已选择 ${files.length} 个视频 · ${(files.reduce((sum, file) => sum + file.size, 0) / 1024 ** 2).toFixed(1)} MB`;
+
+            const totalBytes = files.reduce((sum, f) => sum + f.size, 0);
+            summaryEl.textContent = `已选择 ${files.length} 个视频 · 共 ${formatMediaBytes(totalBytes)}`;
+            if (overallSizeEl) overallSizeEl.textContent = `0 B / ${formatMediaBytes(totalBytes)}`;
+
+            if (queueEl) {
+                queueEl.innerHTML = files.map((file, idx) => `
+                    <div class="nav-media-queue-item" id="mediaQueueItem_${idx}">
+                        <div class="nav-media-queue-name" title="${navEscape(file.name)}">
+                            <span>🎬</span>
+                            <span>${navEscape(file.name)}</span>
+                        </div>
+                        <div class="nav-media-queue-meta">
+                            <span>${formatMediaBytes(file.size)}</span>
+                            <span class="nav-media-queue-status waiting" id="mediaQueueStatus_${idx}">⏳ 待上传</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            if (dashboard) dashboard.style.display = 'flex';
+            addMediaLog(`已扫描并选定 ${files.length} 个媒体文件，总计 ${formatMediaBytes(totalBytes)}。准备就绪。`, 'info');
         };
+
         dialog.querySelector('#mediaFolderFiles').onchange = selectFiles;
         dialog.querySelector('#mediaVideoFiles').onchange = selectFiles;
         dialog.querySelector('#mediaChooseFolder').onclick = () => dialog.querySelector('#mediaFolderFiles').click();
         dialog.querySelector('#mediaChooseFiles').onclick = () => dialog.querySelector('#mediaVideoFiles').click();
     }
+
     dialog.querySelector('form').onsubmit = async event => {
         event.preventDefault();
         if (busy) return;
-        if (importing && !files.length) { status.textContent = '请先选择视频文件或文件夹。'; return; }
+        if (importing && !files.length) {
+            status.style.color = '#dc2626';
+            status.textContent = '请先选择视频文件或文件夹。';
+            return;
+        }
         busy = true;
         dialog.querySelectorAll('button,input').forEach(el => { el.disabled = true; });
         try {
             if (!importing) {
+                const folderName = name.value.trim();
                 const response = await fetch('/api/media/admin/folders', {
                     method: 'POST', headers: { 'Content-Type': 'application/json', ...getAuthHeaderForNav() },
-                    body: JSON.stringify({ name: name.value.trim(), icon: '📁' })
+                    body: JSON.stringify({ name: folderName, icon: '📁' })
                 });
                 const data = await response.json();
                 if (!response.ok || !data.success) throw new Error(data.error || '创建失败');
-                status.textContent = '✓ 分类已创建';
+
+                forceClose();
+                await renderMediaSettings(document.getElementById('navSettingsContent'));
+                showNavbarNotice({
+                    title: '分类创建成功',
+                    message: `已成功创建分类“${folderName}”。`,
+                    tone: 'success'
+                });
+                return;
             } else {
-                const progress = dialog.querySelector('progress');
-                progress.hidden = false;
-                let completed = 0;
-                while (files.length) {
-                    const file = files[0];
-                    status.textContent = `正在上传：${file.name}（已完成 ${completed} 个）`;
-                    await new Promise((resolve, reject) => {
-                        const xhr = new XMLHttpRequest();
-                        xhr.open('POST', '/api/media/admin/upload');
-                        Object.entries(getAuthHeaderForNav()).forEach(([key, value]) => xhr.setRequestHeader(key, value));
-                        xhr.upload.onprogress = event => { if (event.lengthComputable) progress.value = event.loaded / event.total * 100; };
-                        xhr.onerror = () => reject(new Error('网络连接中断，请重试'));
-                        xhr.onload = () => {
-                            let data;
-                            try { data = JSON.parse(xhr.responseText); } catch (_) {}
-                            if (xhr.status >= 200 && xhr.status < 300 && data?.success) resolve();
-                            else reject(new Error(data?.error || `上传失败（HTTP ${xhr.status}）`));
-                        };
-                        const form = new FormData();
-                        form.append('folder', name.value.trim());
-                        form.append('fileName', file.name);
-                        form.append('video', file);
-                        xhr.send(form);
-                    });
-                    files.shift();
-                    completed++;
+                const folderName = name.value.trim() || '未分类';
+                const totalFiles = files.length;
+                const totalBytes = files.reduce((s, f) => s + f.size, 0);
+                let completedFiles = 0;
+                let failedFiles = 0;
+                let completedBytesBefore = 0;
+
+                const overallTitle = dialog.querySelector('#mediaOverallTitle');
+                const overallPct = dialog.querySelector('#mediaOverallPct');
+                const overallBar = dialog.querySelector('#mediaOverallBar');
+                const overallSize = dialog.querySelector('#mediaOverallSize');
+                const overallSpeed = dialog.querySelector('#mediaOverallSpeed');
+                const overallEta = dialog.querySelector('#mediaOverallEta');
+                const currentName = dialog.querySelector('#mediaCurrentName');
+                const currentPct = dialog.querySelector('#mediaCurrentPct');
+                const currentBar = dialog.querySelector('#mediaCurrentBar');
+                const logDot = dialog.querySelector('#mediaLogDot');
+
+                if (logDot) logDot.classList.add('busy');
+                submit.textContent = '正在上传中...';
+
+                addMediaLog(`🚀 开始批量上传：共 ${totalFiles} 个文件，目标分类：“${folderName}”`, 'start');
+
+                let speedWindowBytes = 0;
+                let speedWindowTime = Date.now();
+                let currentSpeed = 0;
+
+                for (let i = 0; i < totalFiles; i++) {
+                    const file = files[i];
+                    const queueStatus = dialog.querySelector(`#mediaQueueStatus_${i}`);
+                    if (queueStatus) {
+                        queueStatus.className = 'nav-media-queue-status uploading';
+                        queueStatus.textContent = '⚡ 上传中 0%';
+                    }
+                    if (currentName) currentName.textContent = `当前文件 [${i + 1}/${totalFiles}]：${file.name}`;
+                    if (currentPct) currentPct.textContent = '0%';
+                    if (currentBar) currentBar.style.width = '0%';
+
+                    addMediaLog(`[${i + 1}/${totalFiles}] 开始传输：${file.name} (${formatMediaBytes(file.size)})`, 'start');
+                    const fileStartTime = Date.now();
+                    let lastLoggedMilestone = 0;
+
+                    try {
+                        const result = await new Promise((resolve, reject) => {
+                            const xhr = new XMLHttpRequest();
+                            xhr.open('POST', '/api/media/admin/upload');
+                            Object.entries(getAuthHeaderForNav()).forEach(([key, value]) => xhr.setRequestHeader(key, value));
+
+                            xhr.upload.onprogress = ev => {
+                                if (!ev.lengthComputable) return;
+                                const fileLoaded = ev.loaded;
+                                const fileTotal = ev.total;
+                                const filePctVal = Math.min(100, (fileLoaded / fileTotal) * 100);
+
+                                if (currentPct) currentPct.textContent = `${filePctVal.toFixed(0)}%`;
+                                if (currentBar) currentBar.style.width = `${filePctVal}%`;
+                                if (queueStatus) queueStatus.textContent = `⚡ 上传中 ${filePctVal.toFixed(0)}%`;
+
+                                const overallLoaded = completedBytesBefore + fileLoaded;
+                                const overallPctVal = Math.min(100, (overallLoaded / totalBytes) * 100);
+                                if (overallBar) overallBar.style.width = `${overallPctVal}%`;
+                                if (overallPct) overallPct.textContent = `${overallPctVal.toFixed(1)}%`;
+                                if (overallTitle) overallTitle.textContent = `总进度：正在上传第 ${i + 1} / ${totalFiles} 个文件`;
+                                if (overallSize) overallSize.textContent = `${formatMediaBytes(overallLoaded)} / ${formatMediaBytes(totalBytes)}`;
+
+                                const now = Date.now();
+                                const deltaT = (now - speedWindowTime) / 1000;
+                                if (deltaT >= 0.5) {
+                                    const deltaB = overallLoaded - speedWindowBytes;
+                                    currentSpeed = deltaB / deltaT;
+                                    speedWindowBytes = overallLoaded;
+                                    speedWindowTime = now;
+
+                                    if (overallSpeed) overallSpeed.textContent = `${formatMediaBytes(currentSpeed)}/s`;
+                                    if (overallEta) {
+                                        const remainingBytes = Math.max(0, totalBytes - overallLoaded);
+                                        const etaSec = currentSpeed > 0 ? remainingBytes / currentSpeed : 0;
+                                        overallEta.textContent = `剩余时间: ${formatMediaEta(etaSec)}`;
+                                    }
+                                }
+
+                                const curMilestone = Math.floor(filePctVal / 25) * 25;
+                                if (curMilestone > lastLoggedMilestone && curMilestone < 100) {
+                                    lastLoggedMilestone = curMilestone;
+                                    addMediaLog(`📡 [${i + 1}/${totalFiles}] ${file.name} 进度 ${curMilestone}% · 当前速度 ${formatMediaBytes(currentSpeed)}/s`, 'progress');
+                                }
+                            };
+
+                            xhr.onerror = () => reject(new Error('网络连接中断'));
+                            xhr.onload = () => {
+                                let data;
+                                try { data = JSON.parse(xhr.responseText); } catch (_) {}
+                                if (xhr.status >= 200 && xhr.status < 300 && data?.success) resolve(data);
+                                else reject(new Error(data?.error || `HTTP ${xhr.status}`));
+                            };
+
+                            const form = new FormData();
+                            form.append('folder', folderName);
+                            form.append('fileName', file.name);
+                            form.append('video', file);
+                            xhr.send(form);
+                        });
+
+                        const elapsed = ((Date.now() - fileStartTime) / 1000).toFixed(1);
+                        completedFiles++;
+                        completedBytesBefore += file.size;
+
+                        if (queueStatus) {
+                            queueStatus.className = 'nav-media-queue-status success';
+                            queueStatus.textContent = '✅ 已完成';
+                        }
+                        if (currentBar) currentBar.style.width = '100%';
+                        if (currentPct) currentPct.textContent = '100%';
+
+                        const savedAs = result.fileName && result.fileName !== file.name ? `（服务端保存为 ${result.fileName}）` : '';
+                        addMediaLog(`✅ [${i + 1}/${totalFiles}] ${file.name} 上传成功${savedAs}，耗时 ${elapsed}s`, 'success');
+                    } catch (fileErr) {
+                        failedFiles++;
+                        completedBytesBefore += file.size;
+                        if (queueStatus) {
+                            queueStatus.className = 'nav-media-queue-status error';
+                            queueStatus.textContent = '❌ 失败';
+                        }
+                        addMediaLog(`❌ [${i + 1}/${totalFiles}] ${file.name} 上传失败：${fileErr.message}`, 'error');
+                    }
                 }
-                status.textContent = `✓ 已成功导入 ${completed} 个视频`;
-                progress.value = 100;
+
+                if (logDot) logDot.classList.remove('busy');
+                if (overallBar) overallBar.style.width = '100%';
+                if (overallPct) overallPct.textContent = '100%';
+                if (overallSpeed) overallSpeed.textContent = '传输完成';
+                if (overallEta) overallEta.textContent = '全部完成';
+                if (overallTitle) overallTitle.textContent = `总进度：传输完毕（成功 ${completedFiles} / 失败 ${failedFiles}）`;
+
+                addMediaLog(`🎉 全部上传任务处理完成！成功 ${completedFiles} 个，失败 ${failedFiles} 个，总计 ${formatMediaBytes(totalBytes)}。`, completedFiles > 0 ? 'success' : 'error');
+
+                await renderMediaSettings(document.getElementById('navSettingsContent'));
+
+                submit.style.display = 'none';
+                if (cancel) {
+                    cancel.textContent = '完成并关闭';
+                    cancel.className = 'nav-media-dialog-btn primary';
+                    cancel.disabled = false;
+                    busy = false;
+                    cancel.onclick = () => forceClose();
+                }
             }
-            status.style.color = '#15803d';
-            submit.hidden = true;
-            await renderMediaSettings(document.getElementById('navSettingsContent'));
         } catch (error) {
             status.style.color = '#dc2626';
-            status.textContent = error.message + (importing ? '；已完成的文件已保留，可重试剩余文件。' : '');
-        } finally {
+            status.textContent = error.message;
             busy = false;
             dialog.querySelectorAll('button,input').forEach(el => { el.disabled = false; });
         }
@@ -3680,99 +3954,188 @@ function openMediaForm(importing) {
 window.openCreateMediaFolderModal = () => openMediaForm(false);
 
 // 删除分类文件夹
-window.deleteMediaFolder = function (folderName) {
-    if (!confirm(`确定彻底删除分类文件夹“${folderName}”吗？\n警告：该文件夹下的所有视频资源将被一并清理！`)) return;
+window.deleteMediaFolder = async function (folderName) {
+    const confirmed = await showNavbarConfirm({
+        title: '删除分类文件夹',
+        eyebrow: '危险操作 · 分类删除',
+        message: `确定彻底删除分类文件夹“${folderName}”吗？`,
+        hint: '⚠️ 警告：该文件夹下的所有视频资源将被一并清理，此操作无法撤销！',
+        confirmText: '确认删除',
+        cancelText: '取消',
+        tone: 'danger',
+        icon: '🗑'
+    });
+    if (!confirmed) return;
 
-    fetch(`/api/media/admin/folders/${encodeURIComponent(folderName)}`, {
-        method: 'DELETE',
-        headers: getAuthHeaderForNav()
-    })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-                alert(data.message || '删除成功');
-                renderMediaSettings(document.getElementById('navSettingsContent'));
-            } else {
-                alert(data.error || '删除失败');
-            }
-        })
-        .catch(e => alert('请求失败：' + e.message));
+    try {
+        const response = await fetch(`/api/media/admin/folders/${encodeURIComponent(folderName)}`, {
+            method: 'DELETE',
+            headers: getAuthHeaderForNav()
+        });
+        const data = await response.json();
+        if (data.success) {
+            await renderMediaSettings(document.getElementById('navSettingsContent'));
+            showNavbarNotice({
+                title: '删除成功',
+                message: data.message || `分类“${folderName}”已成功删除。`,
+                tone: 'success'
+            });
+        } else {
+            showNavbarNotice({
+                title: '删除失败',
+                message: data.error || '未能删除该分类',
+                tone: 'error'
+            });
+        }
+    } catch (e) {
+        showNavbarNotice({
+            title: '请求失败',
+            message: e.message || '网络连接异常，请重试',
+            tone: 'error'
+        });
+    }
 };
 
 // 从当前设备选择文件夹或视频上传
 window.openImportLocalMediaModal = () => openMediaForm(true);
 
 // 编辑视频元数据
-window.openEditMediaModal = function (videoId) {
-    const video = navState.mediaVideosCache.find(v => v.id === videoId);
+window.openEditMediaModal = async function (videoId) {
+    const video = navState.mediaVideosCache?.find(v => v.id === videoId);
     if (!video) return;
 
-    const newTitle = prompt('修改视频展示标题：', video.title);
-    if (newTitle === null) return;
+    const values = await showNavbarFormDialog({
+        title: '编辑视频展示信息',
+        eyebrow: '媒体库管理',
+        icon: '✎',
+        fields: [
+            { name: 'title', label: '视频展示标题', value: video.title || '', required: true, maxLength: 80, placeholder: '输入视频标题' },
+            { name: 'description', label: '视频简介', value: video.description || '', multiline: true, maxLength: 300, placeholder: '输入视频简介描述' }
+        ],
+        confirmText: '保存修改',
+        cancelText: '取消'
+    });
+    if (!values) return;
 
-    const newDesc = prompt('修改视频简介：', video.description || '');
-    if (newDesc === null) return;
-
-    fetch(`/api/media/admin/videos/${encodeURIComponent(videoId)}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeaderForNav() },
-        body: JSON.stringify({
-            title: newTitle.trim(),
-            description: newDesc.trim()
-        })
-    })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-                alert('修改成功！');
-                renderMediaSettings(document.getElementById('navSettingsContent'));
-            } else {
-                alert(data.error || '修改失败');
-            }
-        })
-        .catch(e => alert('请求失败：' + e.message));
+    try {
+        const response = await fetch(`/api/media/admin/videos/${encodeURIComponent(videoId)}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaderForNav() },
+            body: JSON.stringify({
+                title: (values.title || '').trim(),
+                description: (values.description || '').trim()
+            })
+        });
+        const data = await response.json();
+        if (data.success) {
+            await renderMediaSettings(document.getElementById('navSettingsContent'));
+            showNavbarNotice({
+                title: '修改成功',
+                message: '视频信息已更新。',
+                tone: 'success'
+            });
+        } else {
+            showNavbarNotice({
+                title: '修改失败',
+                message: data.error || '保存失败',
+                tone: 'error'
+            });
+        }
+    } catch (e) {
+        showNavbarNotice({
+            title: '请求失败',
+            message: e.message || '网络连接异常，请重试',
+            tone: 'error'
+        });
+    }
 };
 
 // 抽取封面帧
-window.extractMediaPoster = function (videoId) {
-    const time = prompt('请输入抽取封面的时间点（格式：00:00:05 或 00:01:20）：', '00:00:06');
-    if (!time) return;
+window.extractMediaPoster = async function (videoId) {
+    const values = await showNavbarFormDialog({
+        title: '重新截取封面帧',
+        message: '请输入抽取封面的时间点（格式如 00:00:06 或 00:01:20）：',
+        eyebrow: '媒体库管理',
+        icon: '🎬',
+        fields: [
+            { name: 'timeOffset', label: '截取时间点', value: '00:00:06', required: true, placeholder: '00:00:06' }
+        ],
+        confirmText: '开始截取',
+        cancelText: '取消'
+    });
+    if (!values || !values.timeOffset) return;
 
-    fetch(`/api/media/admin/extract-poster/${encodeURIComponent(videoId)}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeaderForNav() },
-        body: JSON.stringify({ timeOffset: time.trim() })
-    })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-                alert('封面抽帧成功！');
-                renderMediaSettings(document.getElementById('navSettingsContent'));
-            } else {
-                alert(data.error || '抽帧失败');
-            }
-        })
-        .catch(e => alert('请求失败：' + e.message));
+    try {
+        const response = await fetch(`/api/media/admin/extract-poster/${encodeURIComponent(videoId)}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaderForNav() },
+            body: JSON.stringify({ timeOffset: values.timeOffset.trim() })
+        });
+        const data = await response.json();
+        if (data.success) {
+            await renderMediaSettings(document.getElementById('navSettingsContent'));
+            showNavbarNotice({
+                title: '封面抽帧成功',
+                message: '视频高清封面帧已更新！',
+                tone: 'success'
+            });
+        } else {
+            showNavbarNotice({
+                title: '抽帧失败',
+                message: data.error || '截取失败',
+                tone: 'error'
+            });
+        }
+    } catch (e) {
+        showNavbarNotice({
+            title: '请求失败',
+            message: e.message || '网络连接异常，请重试',
+            tone: 'error'
+        });
+    }
 };
 
 // 删除单个视频
-window.deleteMediaVideo = function (videoId, title) {
-    if (!confirm(`确定彻底删除视频“${title}”吗？此操作不可逆！`)) return;
+window.deleteMediaVideo = async function (videoId, title) {
+    const confirmed = await showNavbarConfirm({
+        title: '删除视频',
+        eyebrow: '不可逆操作',
+        message: `确定彻底删除视频“${title}”吗？`,
+        hint: '⚠️ 该视频文件及关联封面资源将被永久清除，且无法恢复。',
+        confirmText: '确认删除',
+        cancelText: '取消',
+        tone: 'danger',
+        icon: '🗑'
+    });
+    if (!confirmed) return;
 
-    fetch(`/api/media/admin/videos/${encodeURIComponent(videoId)}`, {
-        method: 'DELETE',
-        headers: getAuthHeaderForNav()
-    })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-                alert('视频删除成功！');
-                renderMediaSettings(document.getElementById('navSettingsContent'));
-            } else {
-                alert(data.error || '删除失败');
-            }
-        })
-        .catch(e => alert('请求失败：' + e.message));
+    try {
+        const response = await fetch(`/api/media/admin/videos/${encodeURIComponent(videoId)}`, {
+            method: 'DELETE',
+            headers: getAuthHeaderForNav()
+        });
+        const data = await response.json();
+        if (data.success) {
+            await renderMediaSettings(document.getElementById('navSettingsContent'));
+            showNavbarNotice({
+                title: '删除成功',
+                message: '视频已成功删除。',
+                tone: 'success'
+            });
+        } else {
+            showNavbarNotice({
+                title: '删除失败',
+                message: data.error || '未能删除该视频',
+                tone: 'error'
+            });
+        }
+    } catch (e) {
+        showNavbarNotice({
+            title: '请求失败',
+            message: e.message || '网络连接异常，请重试',
+            tone: 'error'
+        });
+    }
 };
 
 window.updateCustomToolBackupSelectionSummary = updateCustomToolBackupSelectionSummary;
