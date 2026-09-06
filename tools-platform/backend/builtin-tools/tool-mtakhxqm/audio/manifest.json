@@ -1,0 +1,3585 @@
+{
+  "version": 4,
+  "generatedAt": "2026-09-05T16:20:08.664Z",
+  "voices": {
+    "egyptian": {
+      "locale": "ar-EG",
+      "name": "ar-EG-SalmaNeural",
+      "gender": "female"
+    },
+    "standard": {
+      "locale": "ar-SA",
+      "name": "ar-SA-ZariyahNeural",
+      "gender": "female"
+    }
+  },
+  "itemCount": 200,
+  "wordCount": 435,
+  "letterCount": 36,
+  "audioFileCount": 951,
+  "items": {
+    "أبي": {
+      "egyptianText": "أبي",
+      "standardText": "أبي",
+      "egyptian": "audio/eg-e3059a53dc3af9a7.mp3",
+      "standard": "audio/msa-e3059a53dc3af9a7.mp3"
+    },
+    "أمي": {
+      "egyptianText": "أمي",
+      "standardText": "أمي",
+      "egyptian": "audio/eg-957b398a759b6bb3.mp3",
+      "standard": "audio/msa-957b398a759b6bb3.mp3"
+    },
+    "جَدّ": {
+      "egyptianText": "جَدّ",
+      "standardText": "جَدّ",
+      "egyptian": "audio/eg-71ef97f051ac5f30.mp3",
+      "standard": "audio/msa-71ef97f051ac5f30.mp3"
+    },
+    "جَدَّة": {
+      "egyptianText": "جَدَّة",
+      "standardText": "جَدَّة",
+      "egyptian": "audio/eg-de807b2235693104.mp3",
+      "standard": "audio/msa-de807b2235693104.mp3"
+    },
+    "ابن": {
+      "egyptianText": "ابن",
+      "standardText": "ابن",
+      "egyptian": "audio/eg-cb8ea71541286d12.mp3",
+      "standard": "audio/msa-cb8ea71541286d12.mp3"
+    },
+    "بنت": {
+      "egyptianText": "بنت",
+      "standardText": "بنت",
+      "egyptian": "audio/eg-8f7d8bb5541ca56b.mp3",
+      "standard": "audio/msa-8f7d8bb5541ca56b.mp3"
+    },
+    "عَمّ": {
+      "egyptianText": "عَمّ",
+      "standardText": "عَمّ",
+      "egyptian": "audio/eg-de934571c104fb1c.mp3",
+      "standard": "audio/msa-de934571c104fb1c.mp3"
+    },
+    "عَمَّة": {
+      "egyptianText": "عَمَّة",
+      "standardText": "عَمَّة",
+      "egyptian": "audio/eg-c781129bc00b56c0.mp3",
+      "standard": "audio/msa-c781129bc00b56c0.mp3"
+    },
+    "خال": {
+      "egyptianText": "خال",
+      "standardText": "خال",
+      "egyptian": "audio/eg-170abf36c0d837f2.mp3",
+      "standard": "audio/msa-170abf36c0d837f2.mp3"
+    },
+    "خالة": {
+      "egyptianText": "خالة",
+      "standardText": "خالة",
+      "egyptian": "audio/eg-ecafcf9b8123daba.mp3",
+      "standard": "audio/msa-ecafcf9b8123daba.mp3"
+    },
+    "ابن عَمّي": {
+      "egyptianText": "ابن عَمّي",
+      "standardText": "ابن عَمّي",
+      "egyptian": "audio/eg-72e0b35b1de7f03f.mp3",
+      "standard": "audio/msa-72e0b35b1de7f03f.mp3"
+    },
+    "بنت عَمّي": {
+      "egyptianText": "بنت عَمّي",
+      "standardText": "بنت عَمّي",
+      "egyptian": "audio/eg-0481477de36a521e.mp3",
+      "standard": "audio/msa-0481477de36a521e.mp3"
+    },
+    "ابن عَمَّتي": {
+      "egyptianText": "ابن عَمَّتي",
+      "standardText": "ابن عَمَّتي",
+      "egyptian": "audio/eg-8410d6c9e22c5a00.mp3",
+      "standard": "audio/msa-8410d6c9e22c5a00.mp3"
+    },
+    "بنت عَمَّتي": {
+      "egyptianText": "بنت عَمَّتي",
+      "standardText": "بنت عَمَّتي",
+      "egyptian": "audio/eg-7b5bc97405bf4818.mp3",
+      "standard": "audio/msa-7b5bc97405bf4818.mp3"
+    },
+    "ابن خالي": {
+      "egyptianText": "ابن خالي",
+      "standardText": "ابن خالي",
+      "egyptian": "audio/eg-e76a58e328d30a22.mp3",
+      "standard": "audio/msa-e76a58e328d30a22.mp3"
+    },
+    "بنت خالي": {
+      "egyptianText": "بنت خالي",
+      "standardText": "بنت خالي",
+      "egyptian": "audio/eg-19fa84c526acd8df.mp3",
+      "standard": "audio/msa-19fa84c526acd8df.mp3"
+    },
+    "ابن خالتي": {
+      "egyptianText": "ابن خالتي",
+      "standardText": "ابن خالتي",
+      "egyptian": "audio/eg-4f2d77165054a7cb.mp3",
+      "standard": "audio/msa-4f2d77165054a7cb.mp3"
+    },
+    "بنت خالتي": {
+      "egyptianText": "بنت خالتي",
+      "standardText": "بنت خالتي",
+      "egyptian": "audio/eg-aab3293bb7d730df.mp3",
+      "standard": "audio/msa-aab3293bb7d730df.mp3"
+    },
+    "عايز": {
+      "egyptianText": "عايز",
+      "standardText": "أريد",
+      "egyptian": "audio/eg-2c32ddc0fb55d118.mp3",
+      "standard": "audio/msa-2c32ddc0fb55d118.mp3"
+    },
+    "عايزة": {
+      "egyptianText": "عايزة",
+      "standardText": "أريد",
+      "egyptian": "audio/eg-c8a368d64d4bbb1d.mp3",
+      "standard": "audio/msa-c8a368d64d4bbb1d.mp3"
+    },
+    "لو سمحت": {
+      "egyptianText": "لو سمحت",
+      "standardText": "لو سمحت",
+      "egyptian": "audio/eg-e0a4b64166d1ee52.mp3",
+      "standard": "audio/msa-e0a4b64166d1ee52.mp3"
+    },
+    "عندك...؟": {
+      "egyptianText": "عندك...؟",
+      "standardText": "هل عندك...؟",
+      "egyptian": "audio/eg-af65c0c8b685f7af.mp3",
+      "standard": "audio/msa-af65c0c8b685f7af.mp3"
+    },
+    "موجود": {
+      "egyptianText": "موجود",
+      "standardText": "موجود",
+      "egyptian": "audio/eg-8d8ddd2defe03477.mp3",
+      "standard": "audio/msa-8d8ddd2defe03477.mp3"
+    },
+    "مفيش": {
+      "egyptianText": "مفيش",
+      "standardText": "لا يوجد",
+      "egyptian": "audio/eg-df103aaa682769b3.mp3",
+      "standard": "audio/msa-df103aaa682769b3.mp3"
+    },
+    "آسف": {
+      "egyptianText": "آسف",
+      "standardText": "آسف",
+      "egyptian": "audio/eg-19ce59eeb0188ac4.mp3",
+      "standard": "audio/msa-19ce59eeb0188ac4.mp3"
+    },
+    "اتفضل": {
+      "egyptianText": "اتفضل",
+      "standardText": "تفضل",
+      "egyptian": "audio/eg-0f1611a1b1b997c7.mp3",
+      "standard": "audio/msa-0f1611a1b1b997c7.mp3"
+    },
+    "هات": {
+      "egyptianText": "هات",
+      "standardText": "أعطني",
+      "egyptian": "audio/eg-d3c287ee286a0280.mp3",
+      "standard": "audio/msa-d3c287ee286a0280.mp3"
+    },
+    "شوف": {
+      "egyptianText": "شوف",
+      "standardText": "انظر",
+      "egyptian": "audio/eg-1e1dbfbdfa9790d5.mp3",
+      "standard": "audio/msa-1e1dbfbdfa9790d5.mp3"
+    },
+    "اسمع": {
+      "egyptianText": "اسمع",
+      "standardText": "اسمع",
+      "egyptian": "audio/eg-cf3a8fd3c64efc2d.mp3",
+      "standard": "audio/msa-cf3a8fd3c64efc2d.mp3"
+    },
+    "قول": {
+      "egyptianText": "قول",
+      "standardText": "قل",
+      "egyptian": "audio/eg-c805b2dd061cf85d.mp3",
+      "standard": "audio/msa-c805b2dd061cf85d.mp3"
+    },
+    "كيس": {
+      "egyptianText": "كيس",
+      "standardText": "كيس",
+      "egyptian": "audio/eg-89e2f096fa1aa360.mp3",
+      "standard": "audio/msa-89e2f096fa1aa360.mp3"
+    },
+    "برطمان": {
+      "egyptianText": "برطمان",
+      "standardText": "برطمان",
+      "egyptian": "audio/eg-925f0e5da9c68d06.mp3",
+      "standard": "audio/msa-925f0e5da9c68d06.mp3"
+    },
+    "قزازة": {
+      "egyptianText": "قزازة",
+      "standardText": "زجاجة",
+      "egyptian": "audio/eg-3edf81079b2db5f2.mp3",
+      "standard": "audio/msa-3edf81079b2db5f2.mp3"
+    },
+    "كرتونة": {
+      "egyptianText": "كرتونة",
+      "standardText": "كرتونة",
+      "egyptian": "audio/eg-0b6765c4d1bf04a6.mp3",
+      "standard": "audio/msa-0b6765c4d1bf04a6.mp3"
+    },
+    "علبة": {
+      "egyptianText": "علبة",
+      "standardText": "علبة",
+      "egyptian": "audio/eg-86fddf0fd73512a2.mp3",
+      "standard": "audio/msa-86fddf0fd73512a2.mp3"
+    },
+    "كيلو رز": {
+      "egyptianText": "كيلو رز",
+      "standardText": "كيلو أرز",
+      "egyptian": "audio/eg-7513b08c507c2bf3.mp3",
+      "standard": "audio/msa-7513b08c507c2bf3.mp3"
+    },
+    "برطمان مربى": {
+      "egyptianText": "برطمان مربى",
+      "standardText": "برطمان مربى",
+      "egyptian": "audio/eg-77ca1f23c2d1d9f2.mp3",
+      "standard": "audio/msa-77ca1f23c2d1d9f2.mp3"
+    },
+    "قزازة زيت": {
+      "egyptianText": "قزازة زيت",
+      "standardText": "زجاجة زيت",
+      "egyptian": "audio/eg-f9197777f57c9b81.mp3",
+      "standard": "audio/msa-f9197777f57c9b81.mp3"
+    },
+    "كرتونة بيض": {
+      "egyptianText": "كرتونة بيض",
+      "standardText": "علبة بيض",
+      "egyptian": "audio/eg-0549c3e85497ce78.mp3",
+      "standard": "audio/msa-0549c3e85497ce78.mp3"
+    },
+    "كيس سكر": {
+      "egyptianText": "كيس سكر",
+      "standardText": "كيس سكر",
+      "egyptian": "audio/eg-8e0281179e825ede.mp3",
+      "standard": "audio/msa-8e0281179e825ede.mp3"
+    },
+    "كيس دقيق": {
+      "egyptianText": "كيس دقيق",
+      "standardText": "كيس دقيق",
+      "egyptian": "audio/eg-9543fa388186ca3a.mp3",
+      "standard": "audio/msa-9543fa388186ca3a.mp3"
+    },
+    "كيس مكرونة": {
+      "egyptianText": "كيس مكرونة",
+      "standardText": "كيس معكرونة",
+      "egyptian": "audio/eg-2dbf7dbaaf11edc7.mp3",
+      "standard": "audio/msa-2dbf7dbaaf11edc7.mp3"
+    },
+    "قزازة مية": {
+      "egyptianText": "قزازة مية",
+      "standardText": "زجاجة ماء",
+      "egyptian": "audio/eg-6d92886e6bc9afdb.mp3",
+      "standard": "audio/msa-6d92886e6bc9afdb.mp3"
+    },
+    "صندوق مية": {
+      "egyptianText": "صندوق مية",
+      "standardText": "صندوق ماء",
+      "egyptian": "audio/eg-e38dae85b60a8f27.mp3",
+      "standard": "audio/msa-e38dae85b60a8f27.mp3"
+    },
+    "علبة بسكوت": {
+      "egyptianText": "علبة بسكوت",
+      "standardText": "علبة بسكويت",
+      "egyptian": "audio/eg-4b52ec812c7c1bf7.mp3",
+      "standard": "audio/msa-4b52ec812c7c1bf7.mp3"
+    },
+    "برطمان عسل": {
+      "egyptianText": "برطمان عسل",
+      "standardText": "برطمان عسل",
+      "egyptian": "audio/eg-f5829bc5b5296e50.mp3",
+      "standard": "audio/msa-f5829bc5b5296e50.mp3"
+    },
+    "علبة زبادي": {
+      "egyptianText": "علبة زبادي",
+      "standardText": "علبة زبادي",
+      "egyptian": "audio/eg-9d4990cb9189ff21.mp3",
+      "standard": "audio/msa-9d4990cb9189ff21.mp3"
+    },
+    "علبة جبنة": {
+      "egyptianText": "علبة جبنة",
+      "standardText": "علبة جبن",
+      "egyptian": "audio/eg-97de0854f7abb51c.mp3",
+      "standard": "audio/msa-97de0854f7abb51c.mp3"
+    },
+    "علبة سمك": {
+      "egyptianText": "علبة سمك",
+      "standardText": "علبة سمك",
+      "egyptian": "audio/eg-41ed2a543fc6d036.mp3",
+      "standard": "audio/msa-41ed2a543fc6d036.mp3"
+    },
+    "عشرة": {
+      "egyptianText": "عشرة",
+      "standardText": "عشرة",
+      "egyptian": "audio/eg-f2d35f5ab78606e9.mp3",
+      "standard": "audio/msa-f2d35f5ab78606e9.mp3"
+    },
+    "خمستاشر": {
+      "egyptianText": "خمستاشر",
+      "standardText": "خمسة عشر",
+      "egyptian": "audio/eg-def2389caf3d1f65.mp3",
+      "standard": "audio/msa-def2389caf3d1f65.mp3"
+    },
+    "عشرين": {
+      "egyptianText": "عشرين",
+      "standardText": "عشرين",
+      "egyptian": "audio/eg-501cc9ef8d7df5d1.mp3",
+      "standard": "audio/msa-501cc9ef8d7df5d1.mp3"
+    },
+    "تلاتين": {
+      "egyptianText": "تلاتين",
+      "standardText": "ثلاثون",
+      "egyptian": "audio/eg-78d4ccdb6e575601.mp3",
+      "standard": "audio/msa-78d4ccdb6e575601.mp3"
+    },
+    "أربعين": {
+      "egyptianText": "أربعين",
+      "standardText": "أربعين",
+      "egyptian": "audio/eg-ea40dba64b259977.mp3",
+      "standard": "audio/msa-ea40dba64b259977.mp3"
+    },
+    "الحساب كام؟": {
+      "egyptianText": "الحساب كام؟",
+      "standardText": "كم الحساب؟",
+      "egyptian": "audio/eg-b15c0f55baa14820.mp3",
+      "standard": "audio/msa-b15c0f55baa14820.mp3"
+    },
+    "معاك فكة؟": {
+      "egyptianText": "معاك فكة؟",
+      "standardText": "هل معك فكة؟",
+      "egyptian": "audio/eg-a37ee6c551be71db.mp3",
+      "standard": "audio/msa-a37ee6c551be71db.mp3"
+    },
+    "معاك فكة من مية؟": {
+      "egyptianText": "معاك فكة من مية؟",
+      "standardText": "هل لديك فكة من مئة؟",
+      "egyptian": "audio/eg-b7947d3fe6fcee9b.mp3",
+      "standard": "audio/msa-b7947d3fe6fcee9b.mp3"
+    },
+    "الباقي": {
+      "egyptianText": "الباقي",
+      "standardText": "الباقي",
+      "egyptian": "audio/eg-37bd31bf3892daee.mp3",
+      "standard": "audio/msa-37bd31bf3892daee.mp3"
+    },
+    "حاجة تانية؟": {
+      "egyptianText": "حاجة تانية؟",
+      "standardText": "هل تريد شيئاً آخر؟",
+      "egyptian": "audio/eg-1b1ca67af0f93d80.mp3",
+      "standard": "audio/msa-1b1ca67af0f93d80.mp3"
+    },
+    "بس كده": {
+      "egyptianText": "بس كده",
+      "standardText": "هذا فقط",
+      "egyptian": "audio/eg-466366d18a8df6c9.mp3",
+      "standard": "audio/msa-466366d18a8df6c9.mp3"
+    },
+    "خلاص": {
+      "egyptianText": "خلاص",
+      "standardText": "حسناً",
+      "egyptian": "audio/eg-bd9353f800ba9761.mp3",
+      "standard": "audio/msa-bd9353f800ba9761.mp3"
+    },
+    "عندك حاجة أرخص؟": {
+      "egyptianText": "عندك حاجة أرخص؟",
+      "standardText": "هل لديك شيء أرخص؟",
+      "egyptian": "audio/eg-b9badeba25979544.mp3",
+      "standard": "audio/msa-b9badeba25979544.mp3"
+    },
+    "أكتر": {
+      "egyptianText": "أكتر",
+      "standardText": "أكثر",
+      "egyptian": "audio/eg-c83455b9a08e3bc2.mp3",
+      "standard": "audio/msa-c83455b9a08e3bc2.mp3"
+    },
+    "أقل": {
+      "egyptianText": "أقل",
+      "standardText": "أقل",
+      "egyptian": "audio/eg-9bab402084d6f661.mp3",
+      "standard": "audio/msa-9bab402084d6f661.mp3"
+    },
+    "لو سمحت، عندك قلم؟": {
+      "egyptianText": "لو سمحت، عندك قلم؟",
+      "standardText": "لو سمحت، هل عندك قلم؟",
+      "egyptian": "audio/eg-20641363a1974f07.mp3",
+      "standard": "audio/msa-20641363a1974f07.mp3"
+    },
+    "موجود.": {
+      "egyptianText": "موجود.",
+      "standardText": "موجود.",
+      "egyptian": "audio/eg-b18115aa88c1f086.mp3",
+      "standard": "audio/msa-b18115aa88c1f086.mp3"
+    },
+    "شكراً.": {
+      "egyptianText": "شكراً.",
+      "standardText": "شكراً.",
+      "egyptian": "audio/eg-71ab2948417ccb72.mp3",
+      "standard": "audio/msa-71ab2948417ccb72.mp3"
+    },
+    "عايزة رز.": {
+      "egyptianText": "عايزة رز.",
+      "standardText": "أريد أرزاً.",
+      "egyptian": "audio/eg-c493acf5930f0e52.mp3",
+      "standard": "audio/msa-c493acf5930f0e52.mp3"
+    },
+    "حاضر.": {
+      "egyptianText": "حاضر.",
+      "standardText": "حسناً.",
+      "egyptian": "audio/eg-275d0826d80d4f19.mp3",
+      "standard": "audio/msa-275d0826d80d4f19.mp3"
+    },
+    "عشرين جنيه.": {
+      "egyptianText": "عشرين جنيه.",
+      "standardText": "عشرون جنيهاً.",
+      "egyptian": "audio/eg-ab05baaa490c8204.mp3",
+      "standard": "audio/msa-ab05baaa490c8204.mp3"
+    },
+    "الباقي ٨٠ جنيه. حاجة تانية؟": {
+      "egyptianText": "الباقي ٨٠ جنيه. حاجة تانية؟",
+      "standardText": "الباقي ثمانون جنيهاً. هل تريد شيئاً آخر؟",
+      "egyptian": "audio/eg-130e3540516b3ec3.mp3",
+      "standard": "audio/msa-130e3540516b3ec3.mp3"
+    },
+    "بس كده، خلاص.": {
+      "egyptianText": "بس كده، خلاص.",
+      "standardText": "هذا فقط، شكراً.",
+      "egyptian": "audio/eg-4cb9649938466551.mp3",
+      "standard": "audio/msa-4cb9649938466551.mp3"
+    },
+    "اتفضل.": {
+      "egyptianText": "اتفضل.",
+      "standardText": "تفضل.",
+      "egyptian": "audio/eg-9e756fc60ebb8a3c.mp3",
+      "standard": "audio/msa-9e756fc60ebb8a3c.mp3"
+    },
+    "أَب": {
+      "egyptianText": "أَب",
+      "standardText": "أَب",
+      "egyptian": "audio/eg-86dc319309c71f8d.mp3",
+      "standard": "audio/msa-86dc319309c71f8d.mp3"
+    },
+    "أَوْ": {
+      "egyptianText": "أَوْ",
+      "standardText": "أَوْ",
+      "egyptian": "audio/eg-1e1e1d5b152e4991.mp3",
+      "standard": "audio/msa-1e1e1d5b152e4991.mp3"
+    },
+    "بَاب": {
+      "egyptianText": "بَاب",
+      "standardText": "بَاب",
+      "egyptian": "audio/eg-06740eb42b1dda4b.mp3",
+      "standard": "audio/msa-06740eb42b1dda4b.mp3"
+    },
+    "بَيْت": {
+      "egyptianText": "بَيْت",
+      "standardText": "بَيْت",
+      "egyptian": "audio/eg-a29c323540e8fc90.mp3",
+      "standard": "audio/msa-a29c323540e8fc90.mp3"
+    },
+    "بِنْت": {
+      "egyptianText": "بِنْت",
+      "standardText": "بِنْت",
+      "egyptian": "audio/eg-267293791cd84a13.mp3",
+      "standard": "audio/msa-267293791cd84a13.mp3"
+    },
+    "تِين": {
+      "egyptianText": "تِين",
+      "standardText": "تِين",
+      "egyptian": "audio/eg-193d8e04eebe561d.mp3",
+      "standard": "audio/msa-193d8e04eebe561d.mp3"
+    },
+    "تُوت": {
+      "egyptianText": "تُوت",
+      "standardText": "تُوت",
+      "egyptian": "audio/eg-47e1365d9f1dce4f.mp3",
+      "standard": "audio/msa-47e1365d9f1dce4f.mp3"
+    },
+    "ثَوْب": {
+      "egyptianText": "ثَوْب",
+      "standardText": "ثَوْب",
+      "egyptian": "audio/eg-0870b2542212719a.mp3",
+      "standard": "audio/msa-0870b2542212719a.mp3"
+    },
+    "لَبَن": {
+      "egyptianText": "لَبَن",
+      "standardText": "لَبَن",
+      "egyptian": "audio/eg-c97c3c932f0734b2.mp3",
+      "standard": "audio/msa-c97c3c932f0734b2.mp3"
+    },
+    "كَتَبَ": {
+      "egyptianText": "كَتَبَ",
+      "standardText": "كَتَبَ",
+      "egyptian": "audio/eg-7ef4234357ba7102.mp3",
+      "standard": "audio/msa-7ef4234357ba7102.mp3"
+    },
+    "كَبِير": {
+      "egyptianText": "كَبِير",
+      "standardText": "كَبِير",
+      "egyptian": "audio/eg-f132d51db4f9470c.mp3",
+      "standard": "audio/msa-f132d51db4f9470c.mp3"
+    },
+    "بِقَلْبِ": {
+      "egyptianText": "بِقَلْبِ",
+      "standardText": "بِقَلْبِ",
+      "egyptian": "audio/eg-41385edfde43850f.mp3",
+      "standard": "audio/msa-41385edfde43850f.mp3"
+    },
+    "بُرْتُقَال": {
+      "egyptianText": "بُرْتُقَال",
+      "standardText": "بُرْتُقَال",
+      "egyptian": "audio/eg-2490e44d0100f4ab.mp3",
+      "standard": "audio/msa-2490e44d0100f4ab.mp3"
+    },
+    "خُبُز": {
+      "egyptianText": "خُبُز",
+      "standardText": "خُبُز",
+      "egyptian": "audio/eg-f03ca1164e05bd95.mp3",
+      "standard": "audio/msa-f03ca1164e05bd95.mp3"
+    },
+    "كُتُبُ": {
+      "egyptianText": "كُتُبُ",
+      "standardText": "كُتُبُ",
+      "egyptian": "audio/eg-e17795665e5a2952.mp3",
+      "standard": "audio/msa-e17795665e5a2952.mp3"
+    },
+    "شَبَاب": {
+      "egyptianText": "شَبَاب",
+      "standardText": "شَبَاب",
+      "egyptian": "audio/eg-11c4f5dd5cb95501.mp3",
+      "standard": "audio/msa-11c4f5dd5cb95501.mp3"
+    },
+    "رِبَا": {
+      "egyptianText": "رِبَا",
+      "standardText": "رِبَا",
+      "egyptian": "audio/eg-05eb8c573756d1ae.mp3",
+      "standard": "audio/msa-05eb8c573756d1ae.mp3"
+    },
+    "بِيئَة": {
+      "egyptianText": "بِيئَة",
+      "standardText": "بِيئَة",
+      "egyptian": "audio/eg-ebdfbc23dd7c9fc1.mp3",
+      "standard": "audio/msa-ebdfbc23dd7c9fc1.mp3"
+    },
+    "طَبِيب": {
+      "egyptianText": "طَبِيب",
+      "standardText": "طَبِيب",
+      "egyptian": "audio/eg-c7402c4dab14d012.mp3",
+      "standard": "audio/msa-c7402c4dab14d012.mp3"
+    },
+    "حَبِيب": {
+      "egyptianText": "حَبِيب",
+      "standardText": "حَبِيب",
+      "egyptian": "audio/eg-15fd2bf17d6cee50.mp3",
+      "standard": "audio/msa-15fd2bf17d6cee50.mp3"
+    },
+    "بُومَة": {
+      "egyptianText": "بُومَة",
+      "standardText": "بُومَة",
+      "egyptian": "audio/eg-35c9d93587038fdc.mp3",
+      "standard": "audio/msa-35c9d93587038fdc.mp3"
+    },
+    "عَبُوس": {
+      "egyptianText": "عَبُوس",
+      "standardText": "عَبُوس",
+      "egyptian": "audio/eg-6ff0368d7a430219.mp3",
+      "standard": "audio/msa-6ff0368d7a430219.mp3"
+    },
+    "أَبُو": {
+      "egyptianText": "أَبُو",
+      "standardText": "أَبُو",
+      "egyptian": "audio/eg-2592539cb29a4f53.mp3",
+      "standard": "audio/msa-2592539cb29a4f53.mp3"
+    },
+    "تَمْر": {
+      "egyptianText": "تَمْر",
+      "standardText": "تَمْر",
+      "egyptian": "audio/eg-6684f0d7036a3791.mp3",
+      "standard": "audio/msa-6684f0d7036a3791.mp3"
+    },
+    "كِتَاب": {
+      "egyptianText": "كِتَاب",
+      "standardText": "كِتَاب",
+      "egyptian": "audio/eg-85fcb04d12e31be9.mp3",
+      "standard": "audio/msa-85fcb04d12e31be9.mp3"
+    },
+    "بَيْتَ": {
+      "egyptianText": "بَيْتَ",
+      "standardText": "بَيْتَ",
+      "egyptian": "audio/eg-f5f09c07f8979495.mp3",
+      "standard": "audio/msa-f5f09c07f8979495.mp3"
+    },
+    "تِمْسَاح": {
+      "egyptianText": "تِمْسَاح",
+      "standardText": "تِمْسَاح",
+      "egyptian": "audio/eg-de1e5cba8529adbe.mp3",
+      "standard": "audio/msa-de1e5cba8529adbe.mp3"
+    },
+    "عَتِيق": {
+      "egyptianText": "عَتِيق",
+      "standardText": "عَتِيق",
+      "egyptian": "audio/eg-4baf57a8e7ddab85.mp3",
+      "standard": "audio/msa-4baf57a8e7ddab85.mp3"
+    },
+    "بَيْتِ": {
+      "egyptianText": "بَيْتِ",
+      "standardText": "بَيْتِ",
+      "egyptian": "audio/eg-a41ca9dd4625c02b.mp3",
+      "standard": "audio/msa-a41ca9dd4625c02b.mp3"
+    },
+    "تُفَّاح": {
+      "egyptianText": "تُفَّاح",
+      "standardText": "تُفَّاح",
+      "egyptian": "audio/eg-a4ab7dcb62e6d8af.mp3",
+      "standard": "audio/msa-a4ab7dcb62e6d8af.mp3"
+    },
+    "كُتُب": {
+      "egyptianText": "كُتُب",
+      "standardText": "كُتُب",
+      "egyptian": "audio/eg-718484592d9be2ec.mp3",
+      "standard": "audio/msa-718484592d9be2ec.mp3"
+    },
+    "بَيْتُ": {
+      "egyptianText": "بَيْتُ",
+      "standardText": "بَيْتُ",
+      "egyptian": "audio/eg-40198738f61fbb75.mp3",
+      "standard": "audio/msa-40198738f61fbb75.mp3"
+    },
+    "تَاج": {
+      "egyptianText": "تَاج",
+      "standardText": "تَاج",
+      "egyptian": "audio/eg-2ef4055917e610c9.mp3",
+      "standard": "audio/msa-2ef4055917e610c9.mp3"
+    },
+    "فَتَى": {
+      "egyptianText": "فَتَى",
+      "standardText": "فَتَى",
+      "egyptian": "audio/eg-c2f7c00a8cc11ed4.mp3",
+      "standard": "audio/msa-c2f7c00a8cc11ed4.mp3"
+    },
+    "يَتِيم": {
+      "egyptianText": "يَتِيم",
+      "standardText": "يَتِيم",
+      "egyptian": "audio/eg-c13bd17a967348ef.mp3",
+      "standard": "audio/msa-c13bd17a967348ef.mp3"
+    },
+    "تَلَاتِين": {
+      "egyptianText": "تَلَاتِين",
+      "standardText": "تَلَاتِين",
+      "egyptian": "audio/eg-cda80736f42e8a09.mp3",
+      "standard": "audio/msa-cda80736f42e8a09.mp3"
+    },
+    "زَيْتُون": {
+      "egyptianText": "زَيْتُون",
+      "standardText": "زَيْتُون",
+      "egyptian": "audio/eg-f60b8ca897020b95.mp3",
+      "standard": "audio/msa-f60b8ca897020b95.mp3"
+    },
+    "سَكَتُوا": {
+      "egyptianText": "سَكَتُوا",
+      "standardText": "سَكَتُوا",
+      "egyptian": "audio/eg-e630533dd13b27ac.mp3",
+      "standard": "audio/msa-e630533dd13b27ac.mp3"
+    },
+    "ثَلْج": {
+      "egyptianText": "ثَلْج",
+      "standardText": "ثَلْج",
+      "egyptian": "audio/eg-7d66cf1000a085d1.mp3",
+      "standard": "audio/msa-7d66cf1000a085d1.mp3"
+    },
+    "مَثَل": {
+      "egyptianText": "مَثَل",
+      "standardText": "مَثَل",
+      "egyptian": "audio/eg-cd4691d0e72b057c.mp3",
+      "standard": "audio/msa-cd4691d0e72b057c.mp3"
+    },
+    "حَدَثَ": {
+      "egyptianText": "حَدَثَ",
+      "standardText": "حَدَثَ",
+      "egyptian": "audio/eg-c3845ee270da0d22.mp3",
+      "standard": "audio/msa-c3845ee270da0d22.mp3"
+    },
+    "ثِقَة": {
+      "egyptianText": "ثِقَة",
+      "standardText": "ثِقَة",
+      "egyptian": "audio/eg-e8d3eff61977437f.mp3",
+      "standard": "audio/msa-e8d3eff61977437f.mp3"
+    },
+    "كَثِير": {
+      "egyptianText": "كَثِير",
+      "standardText": "كَثِير",
+      "egyptian": "audio/eg-a57edaaef2a5f312.mp3",
+      "standard": "audio/msa-a57edaaef2a5f312.mp3"
+    },
+    "بِالْإِرْثِ": {
+      "egyptianText": "بِالْإِرْثِ",
+      "standardText": "بِالْإِرْثِ",
+      "egyptian": "audio/eg-aaac6b07bf9d982d.mp3",
+      "standard": "audio/msa-aaac6b07bf9d982d.mp3"
+    },
+    "ثُعْبَان": {
+      "egyptianText": "ثُعْبَان",
+      "standardText": "ثُعْبَان",
+      "egyptian": "audio/eg-5c1e445e3d3aec48.mp3",
+      "standard": "audio/msa-5c1e445e3d3aec48.mp3"
+    },
+    "مَثُلَ": {
+      "egyptianText": "مَثُلَ",
+      "standardText": "مَثُلَ",
+      "egyptian": "audio/eg-5a07a058b005395c.mp3",
+      "standard": "audio/msa-5a07a058b005395c.mp3"
+    },
+    "يَلْبَثُ": {
+      "egyptianText": "يَلْبَثُ",
+      "standardText": "يَلْبَثُ",
+      "egyptian": "audio/eg-1862a93ab1691018.mp3",
+      "standard": "audio/msa-1862a93ab1691018.mp3"
+    },
+    "ثَانِيَة": {
+      "egyptianText": "ثَانِيَة",
+      "standardText": "ثَانِيَة",
+      "egyptian": "audio/eg-bb0c758eb18fba4b.mp3",
+      "standard": "audio/msa-bb0c758eb18fba4b.mp3"
+    },
+    "مِثَال": {
+      "egyptianText": "مِثَال",
+      "standardText": "مِثَال",
+      "egyptian": "audio/eg-9f756c211f388189.mp3",
+      "standard": "audio/msa-9f756c211f388189.mp3"
+    },
+    "أَثَاث": {
+      "egyptianText": "أَثَاث",
+      "standardText": "أَثَاث",
+      "egyptian": "audio/eg-e07183696fb3b092.mp3",
+      "standard": "audio/msa-e07183696fb3b092.mp3"
+    },
+    "ثِيرَان": {
+      "egyptianText": "ثِيرَان",
+      "standardText": "ثِيرَان",
+      "egyptian": "audio/eg-debb5760d9802ad6.mp3",
+      "standard": "audio/msa-debb5760d9802ad6.mp3"
+    },
+    "وَثِيقَة": {
+      "egyptianText": "وَثِيقَة",
+      "standardText": "وَثِيقَة",
+      "egyptian": "audio/eg-dc4e1307e1074018.mp3",
+      "standard": "audio/msa-dc4e1307e1074018.mp3"
+    },
+    "مِثِيل": {
+      "egyptianText": "مِثِيل",
+      "standardText": "مِثِيل",
+      "egyptian": "audio/eg-c1c54829416ae296.mp3",
+      "standard": "audio/msa-c1c54829416ae296.mp3"
+    },
+    "ثُوم": {
+      "egyptianText": "ثُوم",
+      "standardText": "ثُوم",
+      "egyptian": "audio/eg-9d9eaf6beaf71b08.mp3",
+      "standard": "audio/msa-9d9eaf6beaf71b08.mp3"
+    },
+    "مَثُوبَة": {
+      "egyptianText": "مَثُوبَة",
+      "standardText": "مَثُوبَة",
+      "egyptian": "audio/eg-f50b0617a8db85da.mp3",
+      "standard": "audio/msa-f50b0617a8db85da.mp3"
+    },
+    "يَرِثُون": {
+      "egyptianText": "يَرِثُون",
+      "standardText": "يَرِثُون",
+      "egyptian": "audio/eg-702a2ec7c7a1dcc5.mp3",
+      "standard": "audio/msa-702a2ec7c7a1dcc5.mp3"
+    },
+    "ثَعْلَب": {
+      "egyptianText": "ثَعْلَب",
+      "standardText": "ثَعْلَب",
+      "egyptian": "audio/eg-e04a5dacfad18cab.mp3",
+      "standard": "audio/msa-e04a5dacfad18cab.mp3"
+    },
+    "مِثْل": {
+      "egyptianText": "مِثْل",
+      "standardText": "مِثْل",
+      "egyptian": "audio/eg-fc115ffb2c35a496.mp3",
+      "standard": "audio/msa-fc115ffb2c35a496.mp3"
+    },
+    "إِرْث": {
+      "egyptianText": "إِرْث",
+      "standardText": "إِرْث",
+      "egyptian": "audio/eg-6184996fe7f5a599.mp3",
+      "standard": "audio/msa-6184996fe7f5a599.mp3"
+    },
+    "وَرْدَة": {
+      "egyptianText": "وَرْدَة",
+      "standardText": "وَرْدَة",
+      "egyptian": "audio/eg-8cdd45621eb00d21.mp3",
+      "standard": "audio/msa-8cdd45621eb00d21.mp3"
+    },
+    "دَوَاء": {
+      "egyptianText": "دَوَاء",
+      "standardText": "دَوَاء",
+      "egyptian": "audio/eg-fe4a84206e18f342.mp3",
+      "standard": "audio/msa-fe4a84206e18f342.mp3"
+    },
+    "هُوَ": {
+      "egyptianText": "هُوَ",
+      "standardText": "هُوَ",
+      "egyptian": "audio/eg-7af96a47a4b6cd36.mp3",
+      "standard": "audio/msa-7af96a47a4b6cd36.mp3"
+    },
+    "وِسَادَة": {
+      "egyptianText": "وِسَادَة",
+      "standardText": "وِسَادَة",
+      "egyptian": "audio/eg-2ef04bdc930c619d.mp3",
+      "standard": "audio/msa-2ef04bdc930c619d.mp3"
+    },
+    "طَوِيل": {
+      "egyptianText": "طَوِيل",
+      "standardText": "طَوِيل",
+      "egyptian": "audio/eg-1a62ab8797027803.mp3",
+      "standard": "audio/msa-1a62ab8797027803.mp3"
+    },
+    "اِرْوِ": {
+      "egyptianText": "اِرْوِ",
+      "standardText": "اِرْوِ",
+      "egyptian": "audio/eg-748dd968eeef22ea.mp3",
+      "standard": "audio/msa-748dd968eeef22ea.mp3"
+    },
+    "وُجُود": {
+      "egyptianText": "وُجُود",
+      "standardText": "وُجُود",
+      "egyptian": "audio/eg-e4da1a96877c7a5b.mp3",
+      "standard": "audio/msa-e4da1a96877c7a5b.mp3"
+    },
+    "طَاوُوس": {
+      "egyptianText": "طَاوُوس",
+      "standardText": "طَاوُوس",
+      "egyptian": "audio/eg-49a21f37826a20a8.mp3",
+      "standard": "audio/msa-49a21f37826a20a8.mp3"
+    },
+    "عُضْوُ": {
+      "egyptianText": "عُضْوُ",
+      "standardText": "عُضْوُ",
+      "egyptian": "audio/eg-f541d7a1f44bb047.mp3",
+      "standard": "audio/msa-f541d7a1f44bb047.mp3"
+    },
+    "وَاحِد": {
+      "egyptianText": "وَاحِد",
+      "standardText": "وَاحِد",
+      "egyptian": "audio/eg-97bd774f160af144.mp3",
+      "standard": "audio/msa-97bd774f160af144.mp3"
+    },
+    "هَوَاء": {
+      "egyptianText": "هَوَاء",
+      "standardText": "هَوَاء",
+      "egyptian": "audio/eg-b6ccb31d03427470.mp3",
+      "standard": "audio/msa-b6ccb31d03427470.mp3"
+    },
+    "يُوسُف": {
+      "egyptianText": "يُوسُف",
+      "standardText": "يُوسُف",
+      "egyptian": "audio/eg-8f70f0d464964195.mp3",
+      "standard": "audio/msa-8f70f0d464964195.mp3"
+    },
+    "يَدْعُو": {
+      "egyptianText": "يَدْعُو",
+      "standardText": "يَدْعُو",
+      "egyptian": "audio/eg-197f45c84e006e07.mp3",
+      "standard": "audio/msa-197f45c84e006e07.mp3"
+    },
+    "مَوْزَة": {
+      "egyptianText": "مَوْزَة",
+      "standardText": "مَوْزَة",
+      "egyptian": "audio/eg-bbe2e707f247c579.mp3",
+      "standard": "audio/msa-bbe2e707f247c579.mp3"
+    },
+    "نَوْم": {
+      "egyptianText": "نَوْم",
+      "standardText": "نَوْم",
+      "egyptian": "audio/eg-4cc6721269a22310.mp3",
+      "standard": "audio/msa-4cc6721269a22310.mp3"
+    },
+    "يَمِين": {
+      "egyptianText": "يَمِين",
+      "standardText": "يَمِين",
+      "egyptian": "audio/eg-bbce395ce768d9f8.mp3",
+      "standard": "audio/msa-bbce395ce768d9f8.mp3"
+    },
+    "بَيَان": {
+      "egyptianText": "بَيَان",
+      "standardText": "بَيَان",
+      "egyptian": "audio/eg-1462051ff25278ee.mp3",
+      "standard": "audio/msa-1462051ff25278ee.mp3"
+    },
+    "هِيَ": {
+      "egyptianText": "هِيَ",
+      "standardText": "هِيَ",
+      "egyptian": "audio/eg-d0c9045c49d56ed9.mp3",
+      "standard": "audio/msa-d0c9045c49d56ed9.mp3"
+    },
+    "بُيُوت": {
+      "egyptianText": "بُيُوت",
+      "standardText": "بُيُوت",
+      "egyptian": "audio/eg-dc1f25eea21d4d95.mp3",
+      "standard": "audio/msa-dc1f25eea21d4d95.mp3"
+    },
+    "هَدْيُ": {
+      "egyptianText": "هَدْيُ",
+      "standardText": "هَدْيُ",
+      "egyptian": "audio/eg-89081889ecd1449d.mp3",
+      "standard": "audio/msa-89081889ecd1449d.mp3"
+    },
+    "شَيْء": {
+      "egyptianText": "شَيْء",
+      "standardText": "شَيْء",
+      "egyptian": "audio/eg-4565a6dc0b3f4767.mp3",
+      "standard": "audio/msa-4565a6dc0b3f4767.mp3"
+    },
+    "إِيمَان": {
+      "egyptianText": "إِيمَان",
+      "standardText": "إِيمَان",
+      "egyptian": "audio/eg-2cb1b9a4badcfe4c.mp3",
+      "standard": "audio/msa-2cb1b9a4badcfe4c.mp3"
+    },
+    "لِيمُونَة": {
+      "egyptianText": "لِيمُونَة",
+      "standardText": "لِيمُونَة",
+      "egyptian": "audio/eg-37f0186ce093517c.mp3",
+      "standard": "audio/msa-37f0186ce093517c.mp3"
+    },
+    "فِي": {
+      "egyptianText": "فِي",
+      "standardText": "فِي",
+      "egyptian": "audio/eg-db7696accf250cbf.mp3",
+      "standard": "audio/msa-db7696accf250cbf.mp3"
+    },
+    "يَاسِر": {
+      "egyptianText": "يَاسِر",
+      "standardText": "يَاسِر",
+      "egyptian": "audio/eg-6c6a4536e7b4678f.mp3",
+      "standard": "audio/msa-6c6a4536e7b4678f.mp3"
+    },
+    "رِيَاضَة": {
+      "egyptianText": "رِيَاضَة",
+      "standardText": "رِيَاضَة",
+      "egyptian": "audio/eg-1758848ecd3d37e6.mp3",
+      "standard": "audio/msa-1758848ecd3d37e6.mp3"
+    },
+    "دُنْيَا": {
+      "egyptianText": "دُنْيَا",
+      "standardText": "دُنْيَا",
+      "egyptian": "audio/eg-3f2479cbe97b1902.mp3",
+      "standard": "audio/msa-3f2479cbe97b1902.mp3"
+    },
+    "أَنَا": {
+      "egyptianText": "أَنَا",
+      "standardText": "أَنَا",
+      "egyptian": "audio/eg-199cee76927d679a.mp3",
+      "standard": "audio/msa-199cee76927d679a.mp3"
+    },
+    "سَأَلَ": {
+      "egyptianText": "سَأَلَ",
+      "standardText": "سَأَلَ",
+      "egyptian": "audio/eg-1b487e806f99f6db.mp3",
+      "standard": "audio/msa-1b487e806f99f6db.mp3"
+    },
+    "مَبْدَأَ": {
+      "egyptianText": "مَبْدَأَ",
+      "standardText": "مَبْدَأَ",
+      "egyptian": "audio/eg-c5498211c81e1d12.mp3",
+      "standard": "audio/msa-c5498211c81e1d12.mp3"
+    },
+    "إِبْرَة": {
+      "egyptianText": "إِبْرَة",
+      "standardText": "إِبْرَة",
+      "egyptian": "audio/eg-c71bdeb59067f9e2.mp3",
+      "standard": "audio/msa-c71bdeb59067f9e2.mp3"
+    },
+    "سُئِلَ": {
+      "egyptianText": "سُئِلَ",
+      "standardText": "سُئِلَ",
+      "egyptian": "audio/eg-25a3af196536e1ec.mp3",
+      "standard": "audio/msa-25a3af196536e1ec.mp3"
+    },
+    "أُمّ": {
+      "egyptianText": "أُمّ",
+      "standardText": "أُمّ",
+      "egyptian": "audio/eg-713e3597d7f2279c.mp3",
+      "standard": "audio/msa-713e3597d7f2279c.mp3"
+    },
+    "يَؤُمُّ": {
+      "egyptianText": "يَؤُمُّ",
+      "standardText": "يَؤُمُّ",
+      "egyptian": "audio/eg-8e686c7ffc2a9eef.mp3",
+      "standard": "audio/msa-8e686c7ffc2a9eef.mp3"
+    },
+    "تَبَاطُؤُ": {
+      "egyptianText": "تَبَاطُؤُ",
+      "standardText": "تَبَاطُؤُ",
+      "egyptian": "audio/eg-f3daac75e9c638ea.mp3",
+      "standard": "audio/msa-f3daac75e9c638ea.mp3"
+    },
+    "آسِف": {
+      "egyptianText": "آسِف",
+      "standardText": "آسِف",
+      "egyptian": "audio/eg-9bb03a923d48b0c1.mp3",
+      "standard": "audio/msa-9bb03a923d48b0c1.mp3"
+    },
+    "بَطَّة": {
+      "egyptianText": "بَطَّة",
+      "standardText": "بَطَّة",
+      "egyptian": "audio/eg-ac96142318865717.mp3",
+      "standard": "audio/msa-ac96142318865717.mp3"
+    },
+    "حَلِيب": {
+      "egyptianText": "حَلِيب",
+      "standardText": "حَلِيب",
+      "egyptian": "audio/eg-9bd4e6cf454aace0.mp3",
+      "standard": "audio/msa-9bd4e6cf454aace0.mp3"
+    },
+    "أَنْتَ": {
+      "egyptianText": "أَنْتَ",
+      "standardText": "أَنْتَ",
+      "egyptian": "audio/eg-05e09911865b27c9.mp3",
+      "standard": "audio/msa-05e09911865b27c9.mp3"
+    },
+    "أَنْتِ": {
+      "egyptianText": "أَنْتِ",
+      "standardText": "أَنْتِ",
+      "egyptian": "audio/eg-541cc468d5f7fe37.mp3",
+      "standard": "audio/msa-541cc468d5f7fe37.mp3"
+    },
+    "أَخ": {
+      "egyptianText": "أَخ",
+      "standardText": "أَخ",
+      "egyptian": "audio/eg-7141a8824fbbe68d.mp3",
+      "standard": "audio/msa-7141a8824fbbe68d.mp3"
+    },
+    "اِبْن": {
+      "egyptianText": "اِبْن",
+      "standardText": "اِبْن",
+      "egyptian": "audio/eg-a16c3861cb153618.mp3",
+      "standard": "audio/msa-a16c3861cb153618.mp3"
+    },
+    "يَوْم": {
+      "egyptianText": "يَوْم",
+      "standardText": "يَوْم",
+      "egyptian": "audio/eg-dee003172e0527dd.mp3",
+      "standard": "audio/msa-dee003172e0527dd.mp3"
+    },
+    "حُبُوب": {
+      "egyptianText": "حُبُوب",
+      "standardText": "حُبُوب",
+      "egyptian": "audio/eg-6781a66290bd5a42.mp3",
+      "standard": "audio/msa-6781a66290bd5a42.mp3"
+    },
+    "ثَوْم": {
+      "egyptianText": "ثَوْم",
+      "standardText": "ثَوْم",
+      "egyptian": "audio/eg-e8eb802c0d6ab3a5.mp3",
+      "standard": "audio/msa-e8eb802c0d6ab3a5.mp3"
+    },
+    "ثَمَانِيَة": {
+      "egyptianText": "ثَمَانِيَة",
+      "standardText": "ثَمَانِيَة",
+      "egyptian": "audio/eg-1b77046cc3ae9dac.mp3",
+      "standard": "audio/msa-1b77046cc3ae9dac.mp3"
+    },
+    "السَّلَامُ عَلَيْكُمْ": {
+      "egyptianText": "السَّلَامُ عَلَيْكُمْ",
+      "standardText": "السَّلَامُ عَلَيْكُمْ",
+      "egyptian": "audio/eg-e31fdbee479e90d9.mp3",
+      "standard": "audio/msa-e31fdbee479e90d9.mp3"
+    },
+    "وَعَلَيْكُمُ السَّلَام": {
+      "egyptianText": "وَعَلَيْكُمُ السَّلَام",
+      "standardText": "وَعَلَيْكُمُ السَّلَام",
+      "egyptian": "audio/eg-d39444dd02faefe9.mp3",
+      "standard": "audio/msa-d39444dd02faefe9.mp3"
+    },
+    "أَهْلًا وَسَهْلًا": {
+      "egyptianText": "أَهْلًا وَسَهْلًا",
+      "standardText": "أَهْلًا وَسَهْلًا",
+      "egyptian": "audio/eg-24548dc346040729.mp3",
+      "standard": "audio/msa-24548dc346040729.mp3"
+    },
+    "أَهْلًا بِيك": {
+      "egyptianText": "أَهْلًا بِيك",
+      "standardText": "أَهْلًا بِيك",
+      "egyptian": "audio/eg-e55aaa4d04c12790.mp3",
+      "standard": "audio/msa-e55aaa4d04c12790.mp3"
+    },
+    "حَضْرِتَك عَامِل إِيه؟": {
+      "egyptianText": "حَضْرِتَك عَامِل إِيه؟",
+      "standardText": "حَضْرِتَك عَامِل إِيه؟",
+      "egyptian": "audio/eg-209e02959f7f00e5.mp3",
+      "standard": "audio/msa-209e02959f7f00e5.mp3"
+    },
+    "الْحَمْدُ لِلّٰهِ، كُوَيِّس": {
+      "egyptianText": "الْحَمْدُ لِلّٰهِ، كُوَيِّس",
+      "standardText": "الْحَمْدُ لِلّٰهِ، كُوَيِّس",
+      "egyptian": "audio/eg-80cf0afbba9acd2c.mp3",
+      "standard": "audio/msa-80cf0afbba9acd2c.mp3"
+    },
+    "اِسْم حَضْرِتَك إِيه؟": {
+      "egyptianText": "اِسْم حَضْرِتَك إِيه؟",
+      "standardText": "اِسْم حَضْرِتَك إِيه؟",
+      "egyptian": "audio/eg-0993063e821eda97.mp3",
+      "standard": "audio/msa-0993063e821eda97.mp3"
+    },
+    "اِسْمِي أَحْمَد": {
+      "egyptianText": "اِسْمِي أَحْمَد",
+      "standardText": "اِسْمِي أَحْمَد",
+      "egyptian": "audio/eg-30c0224a9f8bb00f.mp3",
+      "standard": "audio/msa-30c0224a9f8bb00f.mp3"
+    },
+    "إِنْتَ مِنِين؟": {
+      "egyptianText": "إِنْتَ مِنِين؟",
+      "standardText": "إِنْتَ مِنِين؟",
+      "egyptian": "audio/eg-f4026ef8f916ccb5.mp3",
+      "standard": "audio/msa-f4026ef8f916ccb5.mp3"
+    },
+    "أَنَا مِنَ الصِّين. وَإِنْتَ؟": {
+      "egyptianText": "أَنَا مِنَ الصِّين. وَإِنْتَ؟",
+      "standardText": "أَنَا مِنَ الصِّين. وَإِنْتَ؟",
+      "egyptian": "audio/eg-b4b6bc57147b4e1b.mp3",
+      "standard": "audio/msa-b4b6bc57147b4e1b.mp3"
+    },
+    "أَنَا مِنْ مَصْر": {
+      "egyptianText": "أَنَا مِنْ مَصْر",
+      "standardText": "أَنَا مِنْ مَصْر",
+      "egyptian": "audio/eg-ecf2f849baa04562.mp3",
+      "standard": "audio/msa-ecf2f849baa04562.mp3"
+    },
+    "حَضْرِتَك عَنْدَك كَام سَنَة؟": {
+      "egyptianText": "حَضْرِتَك عَنْدَك كَام سَنَة؟",
+      "standardText": "حَضْرِتَك عَنْدَك كَام سَنَة؟",
+      "egyptian": "audio/eg-d639bf93b86a8514.mp3",
+      "standard": "audio/msa-d639bf93b86a8514.mp3"
+    },
+    "عَنْدِي اِتْنِين وَتَلَاتِين سَنَة (٣٢)": {
+      "egyptianText": "عَنْدِي اِتْنِين وَتَلَاتِين سَنَة (٣٢)",
+      "standardText": "عَنْدِي اِتْنِين وَتَلَاتِين سَنَة (٣٢)",
+      "egyptian": "audio/eg-5912b0ecf82e602e.mp3",
+      "standard": "audio/msa-5912b0ecf82e602e.mp3"
+    },
+    "اِتْشَرَّفْنَا": {
+      "egyptianText": "اِتْشَرَّفْنَا",
+      "standardText": "اِتْشَرَّفْنَا",
+      "egyptian": "audio/eg-d5209bcf4a64b645.mp3",
+      "standard": "audio/msa-d5209bcf4a64b645.mp3"
+    },
+    "وَأَنَا كَمَان": {
+      "egyptianText": "وَأَنَا كَمَان",
+      "standardText": "وَأَنَا كَمَان",
+      "egyptian": "audio/eg-9e271321dd7eb2e5.mp3",
+      "standard": "audio/msa-9e271321dd7eb2e5.mp3"
+    },
+    "إِنْتَ": {
+      "egyptianText": "إِنْتَ",
+      "standardText": "إِنْتَ",
+      "egyptian": "audio/eg-a3f65cecfff30497.mp3",
+      "standard": "audio/msa-a3f65cecfff30497.mp3"
+    },
+    "حَضْرِتَك": {
+      "egyptianText": "حَضْرِتَك",
+      "standardText": "حَضْرِتَك",
+      "egyptian": "audio/eg-be33c3a171c1a9be.mp3",
+      "standard": "audio/msa-be33c3a171c1a9be.mp3"
+    },
+    "اِسْمَك": {
+      "egyptianText": "اِسْمَك",
+      "standardText": "اِسْمَك",
+      "egyptian": "audio/eg-71e6a9185b97b722.mp3",
+      "standard": "audio/msa-71e6a9185b97b722.mp3"
+    },
+    "إِنْتِي": {
+      "egyptianText": "إِنْتِي",
+      "standardText": "إِنْتِي",
+      "egyptian": "audio/eg-de83f536c1c5cca2.mp3",
+      "standard": "audio/msa-de83f536c1c5cca2.mp3"
+    },
+    "حَضْرِتِك": {
+      "egyptianText": "حَضْرِتِك",
+      "standardText": "حَضْرِتِك",
+      "egyptian": "audio/eg-76155d464b539511.mp3",
+      "standard": "audio/msa-76155d464b539511.mp3"
+    },
+    "أَهْلًا بِيكِي": {
+      "egyptianText": "أَهْلًا بِيكِي",
+      "standardText": "أَهْلًا بِيكِي",
+      "egyptian": "audio/eg-b1ad6fb885dd4184.mp3",
+      "standard": "audio/msa-b1ad6fb885dd4184.mp3"
+    },
+    "اِسْمِك": {
+      "egyptianText": "اِسْمِك",
+      "standardText": "اِسْمِك",
+      "egyptian": "audio/eg-bf7ba9d8ab8169de.mp3",
+      "standard": "audio/msa-bf7ba9d8ab8169de.mp3"
+    }
+  },
+  "units": {
+    "words": {
+      "egyptian": {
+        "أبي": "audio/eg-e3059a53dc3af9a7.mp3",
+        "أمي": "audio/eg-957b398a759b6bb3.mp3",
+        "جَدّ": "audio/eg-71ef97f051ac5f30.mp3",
+        "جَدَّة": "audio/eg-de807b2235693104.mp3",
+        "ابن": "audio/eg-cb8ea71541286d12.mp3",
+        "بنت": "audio/eg-8f7d8bb5541ca56b.mp3",
+        "عَمّ": "audio/eg-de934571c104fb1c.mp3",
+        "عَمَّة": "audio/eg-c781129bc00b56c0.mp3",
+        "خال": "audio/eg-170abf36c0d837f2.mp3",
+        "خالة": "audio/eg-ecafcf9b8123daba.mp3",
+        "عَمّي": "audio/word-egyptian-a3550a46f728b970.mp3",
+        "عَمَّتي": "audio/word-egyptian-bb80f44403e20c05.mp3",
+        "خالي": "audio/word-egyptian-f869d28057e55e2d.mp3",
+        "خالتي": "audio/word-egyptian-0b16264435c077b4.mp3",
+        "عايز": "audio/eg-2c32ddc0fb55d118.mp3",
+        "عايزة": "audio/eg-c8a368d64d4bbb1d.mp3",
+        "لو": "audio/word-egyptian-d25cf89fa41aaac0.mp3",
+        "سمحت": "audio/word-egyptian-fe9613116a6fff72.mp3",
+        "عندك": "audio/word-egyptian-b5e79c0663613aad.mp3",
+        "موجود": "audio/eg-8d8ddd2defe03477.mp3",
+        "مفيش": "audio/eg-df103aaa682769b3.mp3",
+        "آسف": "audio/eg-19ce59eeb0188ac4.mp3",
+        "اتفضل": "audio/eg-0f1611a1b1b997c7.mp3",
+        "هات": "audio/eg-d3c287ee286a0280.mp3",
+        "شوف": "audio/eg-1e1dbfbdfa9790d5.mp3",
+        "اسمع": "audio/eg-cf3a8fd3c64efc2d.mp3",
+        "قول": "audio/eg-c805b2dd061cf85d.mp3",
+        "كيس": "audio/eg-89e2f096fa1aa360.mp3",
+        "برطمان": "audio/eg-925f0e5da9c68d06.mp3",
+        "قزازة": "audio/eg-3edf81079b2db5f2.mp3",
+        "كرتونة": "audio/eg-0b6765c4d1bf04a6.mp3",
+        "علبة": "audio/eg-86fddf0fd73512a2.mp3",
+        "كيلو": "audio/word-egyptian-0d755bde91fb3179.mp3",
+        "رز": "audio/word-egyptian-e28f2064dc86646c.mp3",
+        "مربى": "audio/word-egyptian-0f1d5123a4f2c82e.mp3",
+        "زيت": "audio/word-egyptian-33d6f3819d54b59b.mp3",
+        "بيض": "audio/word-egyptian-0c0c172c5cf4af50.mp3",
+        "سكر": "audio/word-egyptian-b51e3b2060712641.mp3",
+        "دقيق": "audio/word-egyptian-ed36d9a6de5e3ef4.mp3",
+        "مكرونة": "audio/word-egyptian-9669dae9e925e784.mp3",
+        "مية": "audio/word-egyptian-651541d79bc950f0.mp3",
+        "صندوق": "audio/word-egyptian-e8c39755d5e8255c.mp3",
+        "بسكوت": "audio/word-egyptian-d4e033b841da35f7.mp3",
+        "عسل": "audio/word-egyptian-540a8e4db52c0129.mp3",
+        "زبادي": "audio/word-egyptian-5c6b9ea73ed5e2ba.mp3",
+        "جبنة": "audio/word-egyptian-6930eebf4d6128a9.mp3",
+        "سمك": "audio/word-egyptian-2b7d54ce3b204558.mp3",
+        "عشرة": "audio/eg-f2d35f5ab78606e9.mp3",
+        "خمستاشر": "audio/eg-def2389caf3d1f65.mp3",
+        "عشرين": "audio/eg-501cc9ef8d7df5d1.mp3",
+        "تلاتين": "audio/eg-78d4ccdb6e575601.mp3",
+        "أربعين": "audio/eg-ea40dba64b259977.mp3",
+        "الحساب": "audio/word-egyptian-66dcee1f461697dd.mp3",
+        "كام": "audio/word-egyptian-d2e4fa8f076c63ff.mp3",
+        "معاك": "audio/word-egyptian-b6ce5ab16d448331.mp3",
+        "فكة": "audio/word-egyptian-4c748578c5644a47.mp3",
+        "من": "audio/word-egyptian-4d7d679f7b4cca4e.mp3",
+        "الباقي": "audio/eg-37bd31bf3892daee.mp3",
+        "حاجة": "audio/word-egyptian-8d1a426280801c0e.mp3",
+        "تانية": "audio/word-egyptian-0b5fa22d9f64ec0d.mp3",
+        "بس": "audio/word-egyptian-38576889442e3e30.mp3",
+        "كده": "audio/word-egyptian-cff9aa850e931cce.mp3",
+        "خلاص": "audio/eg-bd9353f800ba9761.mp3",
+        "أرخص": "audio/word-egyptian-3c6c63ac56abb375.mp3",
+        "أكتر": "audio/eg-c83455b9a08e3bc2.mp3",
+        "أقل": "audio/eg-9bab402084d6f661.mp3",
+        "قلم": "audio/word-egyptian-cb8520ad82a22232.mp3",
+        "شكراً": "audio/word-egyptian-7e0a05932660f292.mp3",
+        "حاضر": "audio/word-egyptian-40284b78e717014d.mp3",
+        "جنيه": "audio/word-egyptian-54e474a6cc36ef42.mp3",
+        "٨٠": "audio/word-egyptian-8b9be19437c6024a.mp3",
+        "أَب": "audio/eg-86dc319309c71f8d.mp3",
+        "أَوْ": "audio/eg-1e1e1d5b152e4991.mp3",
+        "بَاب": "audio/eg-06740eb42b1dda4b.mp3",
+        "بَيْت": "audio/eg-a29c323540e8fc90.mp3",
+        "بِنْت": "audio/eg-267293791cd84a13.mp3",
+        "تِين": "audio/eg-193d8e04eebe561d.mp3",
+        "تُوت": "audio/eg-47e1365d9f1dce4f.mp3",
+        "ثَوْب": "audio/eg-0870b2542212719a.mp3",
+        "لَبَن": "audio/eg-c97c3c932f0734b2.mp3",
+        "كَتَبَ": "audio/eg-7ef4234357ba7102.mp3",
+        "كَبِير": "audio/eg-f132d51db4f9470c.mp3",
+        "بِقَلْبِ": "audio/eg-41385edfde43850f.mp3",
+        "بُرْتُقَال": "audio/eg-2490e44d0100f4ab.mp3",
+        "خُبُز": "audio/eg-f03ca1164e05bd95.mp3",
+        "كُتُبُ": "audio/eg-e17795665e5a2952.mp3",
+        "شَبَاب": "audio/eg-11c4f5dd5cb95501.mp3",
+        "رِبَا": "audio/eg-05eb8c573756d1ae.mp3",
+        "بِيئَة": "audio/eg-ebdfbc23dd7c9fc1.mp3",
+        "طَبِيب": "audio/eg-c7402c4dab14d012.mp3",
+        "حَبِيب": "audio/eg-15fd2bf17d6cee50.mp3",
+        "بُومَة": "audio/eg-35c9d93587038fdc.mp3",
+        "عَبُوس": "audio/eg-6ff0368d7a430219.mp3",
+        "أَبُو": "audio/eg-2592539cb29a4f53.mp3",
+        "تَمْر": "audio/eg-6684f0d7036a3791.mp3",
+        "كِتَاب": "audio/eg-85fcb04d12e31be9.mp3",
+        "بَيْتَ": "audio/eg-f5f09c07f8979495.mp3",
+        "تِمْسَاح": "audio/eg-de1e5cba8529adbe.mp3",
+        "عَتِيق": "audio/eg-4baf57a8e7ddab85.mp3",
+        "بَيْتِ": "audio/eg-a41ca9dd4625c02b.mp3",
+        "تُفَّاح": "audio/eg-a4ab7dcb62e6d8af.mp3",
+        "كُتُب": "audio/eg-718484592d9be2ec.mp3",
+        "بَيْتُ": "audio/eg-40198738f61fbb75.mp3",
+        "تَاج": "audio/eg-2ef4055917e610c9.mp3",
+        "فَتَى": "audio/eg-c2f7c00a8cc11ed4.mp3",
+        "يَتِيم": "audio/eg-c13bd17a967348ef.mp3",
+        "تَلَاتِين": "audio/eg-cda80736f42e8a09.mp3",
+        "زَيْتُون": "audio/eg-f60b8ca897020b95.mp3",
+        "سَكَتُوا": "audio/eg-e630533dd13b27ac.mp3",
+        "ثَلْج": "audio/eg-7d66cf1000a085d1.mp3",
+        "مَثَل": "audio/eg-cd4691d0e72b057c.mp3",
+        "حَدَثَ": "audio/eg-c3845ee270da0d22.mp3",
+        "ثِقَة": "audio/eg-e8d3eff61977437f.mp3",
+        "كَثِير": "audio/eg-a57edaaef2a5f312.mp3",
+        "بِالْإِرْثِ": "audio/eg-aaac6b07bf9d982d.mp3",
+        "ثُعْبَان": "audio/eg-5c1e445e3d3aec48.mp3",
+        "مَثُلَ": "audio/eg-5a07a058b005395c.mp3",
+        "يَلْبَثُ": "audio/eg-1862a93ab1691018.mp3",
+        "ثَانِيَة": "audio/eg-bb0c758eb18fba4b.mp3",
+        "مِثَال": "audio/eg-9f756c211f388189.mp3",
+        "أَثَاث": "audio/eg-e07183696fb3b092.mp3",
+        "ثِيرَان": "audio/eg-debb5760d9802ad6.mp3",
+        "وَثِيقَة": "audio/eg-dc4e1307e1074018.mp3",
+        "مِثِيل": "audio/eg-c1c54829416ae296.mp3",
+        "ثُوم": "audio/eg-9d9eaf6beaf71b08.mp3",
+        "مَثُوبَة": "audio/eg-f50b0617a8db85da.mp3",
+        "يَرِثُون": "audio/eg-702a2ec7c7a1dcc5.mp3",
+        "ثَعْلَب": "audio/eg-e04a5dacfad18cab.mp3",
+        "مِثْل": "audio/eg-fc115ffb2c35a496.mp3",
+        "إِرْث": "audio/eg-6184996fe7f5a599.mp3",
+        "وَرْدَة": "audio/eg-8cdd45621eb00d21.mp3",
+        "دَوَاء": "audio/eg-fe4a84206e18f342.mp3",
+        "هُوَ": "audio/eg-7af96a47a4b6cd36.mp3",
+        "وِسَادَة": "audio/eg-2ef04bdc930c619d.mp3",
+        "طَوِيل": "audio/eg-1a62ab8797027803.mp3",
+        "اِرْوِ": "audio/eg-748dd968eeef22ea.mp3",
+        "وُجُود": "audio/eg-e4da1a96877c7a5b.mp3",
+        "طَاوُوس": "audio/eg-49a21f37826a20a8.mp3",
+        "عُضْوُ": "audio/eg-f541d7a1f44bb047.mp3",
+        "وَاحِد": "audio/eg-97bd774f160af144.mp3",
+        "هَوَاء": "audio/eg-b6ccb31d03427470.mp3",
+        "يُوسُف": "audio/eg-8f70f0d464964195.mp3",
+        "يَدْعُو": "audio/eg-197f45c84e006e07.mp3",
+        "مَوْزَة": "audio/eg-bbe2e707f247c579.mp3",
+        "نَوْم": "audio/eg-4cc6721269a22310.mp3",
+        "يَمِين": "audio/eg-bbce395ce768d9f8.mp3",
+        "بَيَان": "audio/eg-1462051ff25278ee.mp3",
+        "هِيَ": "audio/eg-d0c9045c49d56ed9.mp3",
+        "بُيُوت": "audio/eg-dc1f25eea21d4d95.mp3",
+        "هَدْيُ": "audio/eg-89081889ecd1449d.mp3",
+        "شَيْء": "audio/eg-4565a6dc0b3f4767.mp3",
+        "إِيمَان": "audio/eg-2cb1b9a4badcfe4c.mp3",
+        "لِيمُونَة": "audio/eg-37f0186ce093517c.mp3",
+        "فِي": "audio/eg-db7696accf250cbf.mp3",
+        "يَاسِر": "audio/eg-6c6a4536e7b4678f.mp3",
+        "رِيَاضَة": "audio/eg-1758848ecd3d37e6.mp3",
+        "دُنْيَا": "audio/eg-3f2479cbe97b1902.mp3",
+        "أَنَا": "audio/eg-199cee76927d679a.mp3",
+        "سَأَلَ": "audio/eg-1b487e806f99f6db.mp3",
+        "مَبْدَأَ": "audio/eg-c5498211c81e1d12.mp3",
+        "إِبْرَة": "audio/eg-c71bdeb59067f9e2.mp3",
+        "سُئِلَ": "audio/eg-25a3af196536e1ec.mp3",
+        "أُمّ": "audio/eg-713e3597d7f2279c.mp3",
+        "يَؤُمُّ": "audio/eg-8e686c7ffc2a9eef.mp3",
+        "تَبَاطُؤُ": "audio/eg-f3daac75e9c638ea.mp3",
+        "آسِف": "audio/eg-9bb03a923d48b0c1.mp3",
+        "بَطَّة": "audio/eg-ac96142318865717.mp3",
+        "حَلِيب": "audio/eg-9bd4e6cf454aace0.mp3",
+        "أَنْتَ": "audio/eg-05e09911865b27c9.mp3",
+        "أَنْتِ": "audio/eg-541cc468d5f7fe37.mp3",
+        "أَخ": "audio/eg-7141a8824fbbe68d.mp3",
+        "اِبْن": "audio/eg-a16c3861cb153618.mp3",
+        "يَوْم": "audio/eg-dee003172e0527dd.mp3",
+        "حُبُوب": "audio/eg-6781a66290bd5a42.mp3",
+        "ثَوْم": "audio/eg-e8eb802c0d6ab3a5.mp3",
+        "ثَمَانِيَة": "audio/eg-1b77046cc3ae9dac.mp3",
+        "السَّلَامُ": "audio/word-egyptian-b9c18141276e4483.mp3",
+        "عَلَيْكُمْ": "audio/word-egyptian-729429e7e03ad410.mp3",
+        "وَعَلَيْكُمُ": "audio/word-egyptian-a02422b041f25fe0.mp3",
+        "السَّلَام": "audio/word-egyptian-7b42082fb6b6d11b.mp3",
+        "أَهْلًا": "audio/word-egyptian-531f1eeb4243d2ed.mp3",
+        "وَسَهْلًا": "audio/word-egyptian-356f362dd92ad7f5.mp3",
+        "بِيك": "audio/word-egyptian-2f446d0f10b0b670.mp3",
+        "حَضْرِتَك": "audio/eg-be33c3a171c1a9be.mp3",
+        "عَامِل": "audio/word-egyptian-174f0a43ee8920b4.mp3",
+        "إِيه": "audio/word-egyptian-1ac649eecbf352d9.mp3",
+        "الْحَمْدُ": "audio/word-egyptian-e2d53e52eea5f125.mp3",
+        "لِلّٰهِ": "audio/word-egyptian-cbbb86b4b63cef5f.mp3",
+        "كُوَيِّس": "audio/word-egyptian-606661f27a858e5c.mp3",
+        "اِسْم": "audio/word-egyptian-1f4329e6f789f6c3.mp3",
+        "اِسْمِي": "audio/word-egyptian-c8f196e6334d88c0.mp3",
+        "أَحْمَد": "audio/word-egyptian-59cba5b8bb47caec.mp3",
+        "إِنْتَ": "audio/eg-a3f65cecfff30497.mp3",
+        "مِنِين": "audio/word-egyptian-58d908323c5bc4b5.mp3",
+        "مِنَ": "audio/word-egyptian-417e57d76bd51aae.mp3",
+        "الصِّين": "audio/word-egyptian-8a63cdad214cde3b.mp3",
+        "وَإِنْتَ": "audio/word-egyptian-70773daebde1cb45.mp3",
+        "مِنْ": "audio/word-egyptian-9f9e9e354c42cb50.mp3",
+        "مَصْر": "audio/word-egyptian-ca9d759a80614df1.mp3",
+        "عَنْدَك": "audio/word-egyptian-b53473e25a8ffdb4.mp3",
+        "كَام": "audio/word-egyptian-4bbdecc95a299e3c.mp3",
+        "سَنَة": "audio/word-egyptian-0cf9d756c2191b41.mp3",
+        "عَنْدِي": "audio/word-egyptian-e770b92a3d572567.mp3",
+        "اِتْنِين": "audio/word-egyptian-3978aa95030681e8.mp3",
+        "وَتَلَاتِين": "audio/word-egyptian-0dd55d497eb594df.mp3",
+        "٣٢": "audio/word-egyptian-2585ae629bccd36c.mp3",
+        "اِتْشَرَّفْنَا": "audio/eg-d5209bcf4a64b645.mp3",
+        "وَأَنَا": "audio/word-egyptian-25ee2e9238fbd5f7.mp3",
+        "كَمَان": "audio/word-egyptian-8df5a0687361cea7.mp3",
+        "اِسْمَك": "audio/eg-71e6a9185b97b722.mp3",
+        "إِنْتِي": "audio/eg-de83f536c1c5cca2.mp3",
+        "حَضْرِتِك": "audio/eg-76155d464b539511.mp3",
+        "بِيكِي": "audio/word-egyptian-9bae644993839653.mp3",
+        "اِسْمِك": "audio/eg-bf7ba9d8ab8169de.mp3"
+      },
+      "standard": {
+        "أبي": "audio/msa-e3059a53dc3af9a7.mp3",
+        "أمي": "audio/msa-957b398a759b6bb3.mp3",
+        "جَدّ": "audio/msa-71ef97f051ac5f30.mp3",
+        "جَدَّة": "audio/msa-de807b2235693104.mp3",
+        "ابن": "audio/msa-cb8ea71541286d12.mp3",
+        "بنت": "audio/msa-8f7d8bb5541ca56b.mp3",
+        "عَمّ": "audio/msa-de934571c104fb1c.mp3",
+        "عَمَّة": "audio/msa-c781129bc00b56c0.mp3",
+        "خال": "audio/msa-170abf36c0d837f2.mp3",
+        "خالة": "audio/msa-ecafcf9b8123daba.mp3",
+        "عَمّي": "audio/word-standard-a3550a46f728b970.mp3",
+        "عَمَّتي": "audio/word-standard-bb80f44403e20c05.mp3",
+        "خالي": "audio/word-standard-f869d28057e55e2d.mp3",
+        "خالتي": "audio/word-standard-0b16264435c077b4.mp3",
+        "أريد": "audio/word-standard-362269ed1bbc2d0b.mp3",
+        "لو": "audio/word-standard-d25cf89fa41aaac0.mp3",
+        "سمحت": "audio/word-standard-fe9613116a6fff72.mp3",
+        "هل": "audio/word-standard-da3e571a28fba0fd.mp3",
+        "عندك": "audio/word-standard-b5e79c0663613aad.mp3",
+        "موجود": "audio/msa-8d8ddd2defe03477.mp3",
+        "لا": "audio/word-standard-2bd073516a87c409.mp3",
+        "يوجد": "audio/word-standard-98133eadd83d87bf.mp3",
+        "آسف": "audio/msa-19ce59eeb0188ac4.mp3",
+        "تفضل": "audio/word-standard-2158f4e714728f68.mp3",
+        "أعطني": "audio/word-standard-5d388db440bf1e90.mp3",
+        "انظر": "audio/word-standard-8dcc49ac0e6f353c.mp3",
+        "اسمع": "audio/msa-cf3a8fd3c64efc2d.mp3",
+        "قل": "audio/word-standard-7bfdeacf7dcffcfc.mp3",
+        "كيس": "audio/msa-89e2f096fa1aa360.mp3",
+        "برطمان": "audio/msa-925f0e5da9c68d06.mp3",
+        "زجاجة": "audio/word-standard-91e8a18418385360.mp3",
+        "كرتونة": "audio/msa-0b6765c4d1bf04a6.mp3",
+        "علبة": "audio/msa-86fddf0fd73512a2.mp3",
+        "كيلو": "audio/word-standard-0d755bde91fb3179.mp3",
+        "أرز": "audio/word-standard-decfd3999f2a3e99.mp3",
+        "مربى": "audio/word-standard-0f1d5123a4f2c82e.mp3",
+        "زيت": "audio/word-standard-33d6f3819d54b59b.mp3",
+        "بيض": "audio/word-standard-0c0c172c5cf4af50.mp3",
+        "سكر": "audio/word-standard-b51e3b2060712641.mp3",
+        "دقيق": "audio/word-standard-ed36d9a6de5e3ef4.mp3",
+        "معكرونة": "audio/word-standard-f24d750fbe2177c3.mp3",
+        "ماء": "audio/word-standard-efb91875554854dd.mp3",
+        "صندوق": "audio/word-standard-e8c39755d5e8255c.mp3",
+        "بسكويت": "audio/word-standard-e3725e0055c99602.mp3",
+        "عسل": "audio/word-standard-540a8e4db52c0129.mp3",
+        "زبادي": "audio/word-standard-5c6b9ea73ed5e2ba.mp3",
+        "جبن": "audio/word-standard-084bee5c76a9f000.mp3",
+        "سمك": "audio/word-standard-2b7d54ce3b204558.mp3",
+        "عشرة": "audio/msa-f2d35f5ab78606e9.mp3",
+        "خمسة": "audio/word-standard-1ba32ae2545bf97f.mp3",
+        "عشر": "audio/word-standard-16eabc537c246a57.mp3",
+        "عشرين": "audio/msa-501cc9ef8d7df5d1.mp3",
+        "ثلاثون": "audio/word-standard-b9836f8327d31a00.mp3",
+        "أربعين": "audio/msa-ea40dba64b259977.mp3",
+        "كم": "audio/word-standard-0318695e0ba90213.mp3",
+        "الحساب": "audio/word-standard-66dcee1f461697dd.mp3",
+        "معك": "audio/word-standard-15d2285c064ffb83.mp3",
+        "فكة": "audio/word-standard-4c748578c5644a47.mp3",
+        "لديك": "audio/word-standard-c82dc9b9e1189dbf.mp3",
+        "من": "audio/word-standard-4d7d679f7b4cca4e.mp3",
+        "مئة": "audio/word-standard-94a7cc69de7c4062.mp3",
+        "الباقي": "audio/msa-37bd31bf3892daee.mp3",
+        "تريد": "audio/word-standard-c9aec15a1f12bd21.mp3",
+        "شيئاً": "audio/word-standard-e48c469ff411b880.mp3",
+        "آخر": "audio/word-standard-a2804af08fd896a5.mp3",
+        "هذا": "audio/word-standard-2d323c34022e8195.mp3",
+        "فقط": "audio/word-standard-52a86c5c98e1d3b4.mp3",
+        "حسناً": "audio/word-standard-c556786eb1694240.mp3",
+        "شيء": "audio/word-standard-68d075e8e38abe8c.mp3",
+        "أرخص": "audio/word-standard-3c6c63ac56abb375.mp3",
+        "أكثر": "audio/word-standard-42a45109c3dd23eb.mp3",
+        "أقل": "audio/msa-9bab402084d6f661.mp3",
+        "قلم": "audio/word-standard-cb8520ad82a22232.mp3",
+        "شكراً": "audio/word-standard-7e0a05932660f292.mp3",
+        "أرزاً": "audio/word-standard-d6fe093c76918c4d.mp3",
+        "عشرون": "audio/word-standard-0090314b288b6901.mp3",
+        "جنيهاً": "audio/word-standard-681cf2a1cabbab54.mp3",
+        "ثمانون": "audio/word-standard-da6be90116941a86.mp3",
+        "أَب": "audio/msa-86dc319309c71f8d.mp3",
+        "أَوْ": "audio/msa-1e1e1d5b152e4991.mp3",
+        "بَاب": "audio/msa-06740eb42b1dda4b.mp3",
+        "بَيْت": "audio/msa-a29c323540e8fc90.mp3",
+        "بِنْت": "audio/msa-267293791cd84a13.mp3",
+        "تِين": "audio/msa-193d8e04eebe561d.mp3",
+        "تُوت": "audio/msa-47e1365d9f1dce4f.mp3",
+        "ثَوْب": "audio/msa-0870b2542212719a.mp3",
+        "لَبَن": "audio/msa-c97c3c932f0734b2.mp3",
+        "كَتَبَ": "audio/msa-7ef4234357ba7102.mp3",
+        "كَبِير": "audio/msa-f132d51db4f9470c.mp3",
+        "بِقَلْبِ": "audio/msa-41385edfde43850f.mp3",
+        "بُرْتُقَال": "audio/msa-2490e44d0100f4ab.mp3",
+        "خُبُز": "audio/msa-f03ca1164e05bd95.mp3",
+        "كُتُبُ": "audio/msa-e17795665e5a2952.mp3",
+        "شَبَاب": "audio/msa-11c4f5dd5cb95501.mp3",
+        "رِبَا": "audio/msa-05eb8c573756d1ae.mp3",
+        "بِيئَة": "audio/msa-ebdfbc23dd7c9fc1.mp3",
+        "طَبِيب": "audio/msa-c7402c4dab14d012.mp3",
+        "حَبِيب": "audio/msa-15fd2bf17d6cee50.mp3",
+        "بُومَة": "audio/msa-35c9d93587038fdc.mp3",
+        "عَبُوس": "audio/msa-6ff0368d7a430219.mp3",
+        "أَبُو": "audio/msa-2592539cb29a4f53.mp3",
+        "تَمْر": "audio/msa-6684f0d7036a3791.mp3",
+        "كِتَاب": "audio/msa-85fcb04d12e31be9.mp3",
+        "بَيْتَ": "audio/msa-f5f09c07f8979495.mp3",
+        "تِمْسَاح": "audio/msa-de1e5cba8529adbe.mp3",
+        "عَتِيق": "audio/msa-4baf57a8e7ddab85.mp3",
+        "بَيْتِ": "audio/msa-a41ca9dd4625c02b.mp3",
+        "تُفَّاح": "audio/msa-a4ab7dcb62e6d8af.mp3",
+        "كُتُب": "audio/msa-718484592d9be2ec.mp3",
+        "بَيْتُ": "audio/msa-40198738f61fbb75.mp3",
+        "تَاج": "audio/msa-2ef4055917e610c9.mp3",
+        "فَتَى": "audio/msa-c2f7c00a8cc11ed4.mp3",
+        "يَتِيم": "audio/msa-c13bd17a967348ef.mp3",
+        "تَلَاتِين": "audio/msa-cda80736f42e8a09.mp3",
+        "زَيْتُون": "audio/msa-f60b8ca897020b95.mp3",
+        "سَكَتُوا": "audio/msa-e630533dd13b27ac.mp3",
+        "ثَلْج": "audio/msa-7d66cf1000a085d1.mp3",
+        "مَثَل": "audio/msa-cd4691d0e72b057c.mp3",
+        "حَدَثَ": "audio/msa-c3845ee270da0d22.mp3",
+        "ثِقَة": "audio/msa-e8d3eff61977437f.mp3",
+        "كَثِير": "audio/msa-a57edaaef2a5f312.mp3",
+        "بِالْإِرْثِ": "audio/msa-aaac6b07bf9d982d.mp3",
+        "ثُعْبَان": "audio/msa-5c1e445e3d3aec48.mp3",
+        "مَثُلَ": "audio/msa-5a07a058b005395c.mp3",
+        "يَلْبَثُ": "audio/msa-1862a93ab1691018.mp3",
+        "ثَانِيَة": "audio/msa-bb0c758eb18fba4b.mp3",
+        "مِثَال": "audio/msa-9f756c211f388189.mp3",
+        "أَثَاث": "audio/msa-e07183696fb3b092.mp3",
+        "ثِيرَان": "audio/msa-debb5760d9802ad6.mp3",
+        "وَثِيقَة": "audio/msa-dc4e1307e1074018.mp3",
+        "مِثِيل": "audio/msa-c1c54829416ae296.mp3",
+        "ثُوم": "audio/msa-9d9eaf6beaf71b08.mp3",
+        "مَثُوبَة": "audio/msa-f50b0617a8db85da.mp3",
+        "يَرِثُون": "audio/msa-702a2ec7c7a1dcc5.mp3",
+        "ثَعْلَب": "audio/msa-e04a5dacfad18cab.mp3",
+        "مِثْل": "audio/msa-fc115ffb2c35a496.mp3",
+        "إِرْث": "audio/msa-6184996fe7f5a599.mp3",
+        "وَرْدَة": "audio/msa-8cdd45621eb00d21.mp3",
+        "دَوَاء": "audio/msa-fe4a84206e18f342.mp3",
+        "هُوَ": "audio/msa-7af96a47a4b6cd36.mp3",
+        "وِسَادَة": "audio/msa-2ef04bdc930c619d.mp3",
+        "طَوِيل": "audio/msa-1a62ab8797027803.mp3",
+        "اِرْوِ": "audio/msa-748dd968eeef22ea.mp3",
+        "وُجُود": "audio/msa-e4da1a96877c7a5b.mp3",
+        "طَاوُوس": "audio/msa-49a21f37826a20a8.mp3",
+        "عُضْوُ": "audio/msa-f541d7a1f44bb047.mp3",
+        "وَاحِد": "audio/msa-97bd774f160af144.mp3",
+        "هَوَاء": "audio/msa-b6ccb31d03427470.mp3",
+        "يُوسُف": "audio/msa-8f70f0d464964195.mp3",
+        "يَدْعُو": "audio/msa-197f45c84e006e07.mp3",
+        "مَوْزَة": "audio/msa-bbe2e707f247c579.mp3",
+        "نَوْم": "audio/msa-4cc6721269a22310.mp3",
+        "يَمِين": "audio/msa-bbce395ce768d9f8.mp3",
+        "بَيَان": "audio/msa-1462051ff25278ee.mp3",
+        "هِيَ": "audio/msa-d0c9045c49d56ed9.mp3",
+        "بُيُوت": "audio/msa-dc1f25eea21d4d95.mp3",
+        "هَدْيُ": "audio/msa-89081889ecd1449d.mp3",
+        "شَيْء": "audio/msa-4565a6dc0b3f4767.mp3",
+        "إِيمَان": "audio/msa-2cb1b9a4badcfe4c.mp3",
+        "لِيمُونَة": "audio/msa-37f0186ce093517c.mp3",
+        "فِي": "audio/msa-db7696accf250cbf.mp3",
+        "يَاسِر": "audio/msa-6c6a4536e7b4678f.mp3",
+        "رِيَاضَة": "audio/msa-1758848ecd3d37e6.mp3",
+        "دُنْيَا": "audio/msa-3f2479cbe97b1902.mp3",
+        "أَنَا": "audio/msa-199cee76927d679a.mp3",
+        "سَأَلَ": "audio/msa-1b487e806f99f6db.mp3",
+        "مَبْدَأَ": "audio/msa-c5498211c81e1d12.mp3",
+        "إِبْرَة": "audio/msa-c71bdeb59067f9e2.mp3",
+        "سُئِلَ": "audio/msa-25a3af196536e1ec.mp3",
+        "أُمّ": "audio/msa-713e3597d7f2279c.mp3",
+        "يَؤُمُّ": "audio/msa-8e686c7ffc2a9eef.mp3",
+        "تَبَاطُؤُ": "audio/msa-f3daac75e9c638ea.mp3",
+        "آسِف": "audio/msa-9bb03a923d48b0c1.mp3",
+        "بَطَّة": "audio/msa-ac96142318865717.mp3",
+        "حَلِيب": "audio/msa-9bd4e6cf454aace0.mp3",
+        "أَنْتَ": "audio/msa-05e09911865b27c9.mp3",
+        "أَنْتِ": "audio/msa-541cc468d5f7fe37.mp3",
+        "أَخ": "audio/msa-7141a8824fbbe68d.mp3",
+        "اِبْن": "audio/msa-a16c3861cb153618.mp3",
+        "يَوْم": "audio/msa-dee003172e0527dd.mp3",
+        "حُبُوب": "audio/msa-6781a66290bd5a42.mp3",
+        "ثَوْم": "audio/msa-e8eb802c0d6ab3a5.mp3",
+        "ثَمَانِيَة": "audio/msa-1b77046cc3ae9dac.mp3",
+        "السَّلَامُ": "audio/word-standard-b9c18141276e4483.mp3",
+        "عَلَيْكُمْ": "audio/word-standard-729429e7e03ad410.mp3",
+        "وَعَلَيْكُمُ": "audio/word-standard-a02422b041f25fe0.mp3",
+        "السَّلَام": "audio/word-standard-7b42082fb6b6d11b.mp3",
+        "أَهْلًا": "audio/word-standard-531f1eeb4243d2ed.mp3",
+        "وَسَهْلًا": "audio/word-standard-356f362dd92ad7f5.mp3",
+        "بِيك": "audio/word-standard-2f446d0f10b0b670.mp3",
+        "حَضْرِتَك": "audio/msa-be33c3a171c1a9be.mp3",
+        "عَامِل": "audio/word-standard-174f0a43ee8920b4.mp3",
+        "إِيه": "audio/word-standard-1ac649eecbf352d9.mp3",
+        "الْحَمْدُ": "audio/word-standard-e2d53e52eea5f125.mp3",
+        "لِلّٰهِ": "audio/word-standard-cbbb86b4b63cef5f.mp3",
+        "كُوَيِّس": "audio/word-standard-606661f27a858e5c.mp3",
+        "اِسْم": "audio/word-standard-1f4329e6f789f6c3.mp3",
+        "اِسْمِي": "audio/word-standard-c8f196e6334d88c0.mp3",
+        "أَحْمَد": "audio/word-standard-59cba5b8bb47caec.mp3",
+        "إِنْتَ": "audio/msa-a3f65cecfff30497.mp3",
+        "مِنِين": "audio/word-standard-58d908323c5bc4b5.mp3",
+        "مِنَ": "audio/word-standard-417e57d76bd51aae.mp3",
+        "الصِّين": "audio/word-standard-8a63cdad214cde3b.mp3",
+        "وَإِنْتَ": "audio/word-standard-70773daebde1cb45.mp3",
+        "مِنْ": "audio/word-standard-9f9e9e354c42cb50.mp3",
+        "مَصْر": "audio/word-standard-ca9d759a80614df1.mp3",
+        "عَنْدَك": "audio/word-standard-b53473e25a8ffdb4.mp3",
+        "كَام": "audio/word-standard-4bbdecc95a299e3c.mp3",
+        "سَنَة": "audio/word-standard-0cf9d756c2191b41.mp3",
+        "عَنْدِي": "audio/word-standard-e770b92a3d572567.mp3",
+        "اِتْنِين": "audio/word-standard-3978aa95030681e8.mp3",
+        "وَتَلَاتِين": "audio/word-standard-0dd55d497eb594df.mp3",
+        "٣٢": "audio/word-standard-2585ae629bccd36c.mp3",
+        "اِتْشَرَّفْنَا": "audio/msa-d5209bcf4a64b645.mp3",
+        "وَأَنَا": "audio/word-standard-25ee2e9238fbd5f7.mp3",
+        "كَمَان": "audio/word-standard-8df5a0687361cea7.mp3",
+        "اِسْمَك": "audio/msa-71e6a9185b97b722.mp3",
+        "إِنْتِي": "audio/msa-de83f536c1c5cca2.mp3",
+        "حَضْرِتِك": "audio/msa-76155d464b539511.mp3",
+        "بِيكِي": "audio/word-standard-9bae644993839653.mp3",
+        "اِسْمِك": "audio/msa-bf7ba9d8ab8169de.mp3"
+      }
+    },
+    "letters": {
+      "egyptian": {
+        "ا": {
+          "name": "ألف",
+          "audio": "audio/letter-egyptian-be0fa08bb8f12a37.mp3"
+        },
+        "ب": {
+          "name": "باء",
+          "audio": "audio/letter-egyptian-cb22e4a914210546.mp3"
+        },
+        "ت": {
+          "name": "تاء",
+          "audio": "audio/letter-egyptian-6a9b00bf691bdfd2.mp3"
+        },
+        "ث": {
+          "name": "ثاء",
+          "audio": "audio/letter-egyptian-e57c96ba8aea7ea0.mp3"
+        },
+        "ج": {
+          "name": "جيم",
+          "audio": "audio/letter-egyptian-51c9a584ad13b9d2.mp3"
+        },
+        "ح": {
+          "name": "حاء",
+          "audio": "audio/letter-egyptian-56750292f58ce336.mp3"
+        },
+        "خ": {
+          "name": "خاء",
+          "audio": "audio/letter-egyptian-84d816dcc5339ad7.mp3"
+        },
+        "د": {
+          "name": "دال",
+          "audio": "audio/letter-egyptian-b15aa8e25eddf663.mp3"
+        },
+        "ذ": {
+          "name": "ذال",
+          "audio": "audio/letter-egyptian-29b50a05e8dc1b4a.mp3"
+        },
+        "ر": {
+          "name": "راء",
+          "audio": "audio/letter-egyptian-36a9d753b0bdc5e7.mp3"
+        },
+        "ز": {
+          "name": "زاي",
+          "audio": "audio/letter-egyptian-a83185c0fe218172.mp3"
+        },
+        "س": {
+          "name": "سين",
+          "audio": "audio/letter-egyptian-861183a44bf3c1f1.mp3"
+        },
+        "ش": {
+          "name": "شين",
+          "audio": "audio/letter-egyptian-119c5451ad7c3fae.mp3"
+        },
+        "ص": {
+          "name": "صاد",
+          "audio": "audio/letter-egyptian-1f6940369a9cd852.mp3"
+        },
+        "ض": {
+          "name": "ضاد",
+          "audio": "audio/letter-egyptian-892f5fc72c8aceba.mp3"
+        },
+        "ط": {
+          "name": "طاء",
+          "audio": "audio/letter-egyptian-a55da129540086ad.mp3"
+        },
+        "ظ": {
+          "name": "ظاء",
+          "audio": "audio/letter-egyptian-ac850b0dfe00607a.mp3"
+        },
+        "ع": {
+          "name": "عين",
+          "audio": "audio/letter-egyptian-a0f49047a7ffbc61.mp3"
+        },
+        "غ": {
+          "name": "غين",
+          "audio": "audio/letter-egyptian-d6f7c01d455fe141.mp3"
+        },
+        "ف": {
+          "name": "فاء",
+          "audio": "audio/letter-egyptian-6e6a73ade56e964f.mp3"
+        },
+        "ق": {
+          "name": "قاف",
+          "audio": "audio/letter-egyptian-c67f042db9cc1f17.mp3"
+        },
+        "ك": {
+          "name": "كاف",
+          "audio": "audio/letter-egyptian-854a312a1a019aaa.mp3"
+        },
+        "ل": {
+          "name": "لام",
+          "audio": "audio/letter-egyptian-6ddaa72eed069591.mp3"
+        },
+        "م": {
+          "name": "ميم",
+          "audio": "audio/letter-egyptian-988ada1c5b979ec6.mp3"
+        },
+        "ن": {
+          "name": "نون",
+          "audio": "audio/letter-egyptian-cb92a8b00c6956fd.mp3"
+        },
+        "ه": {
+          "name": "هاء",
+          "audio": "audio/letter-egyptian-517d335897807109.mp3"
+        },
+        "و": {
+          "name": "واو",
+          "audio": "audio/letter-egyptian-6245b4d08f3f2a99.mp3"
+        },
+        "ي": {
+          "name": "ياء",
+          "audio": "audio/letter-egyptian-68a74b81692467b8.mp3"
+        },
+        "أ": {
+          "name": "ألف",
+          "audio": "audio/letter-egyptian-dd0eaa23a748ac49.mp3"
+        },
+        "ة": {
+          "name": "تاء مربوطة",
+          "audio": "audio/letter-egyptian-3dc7f235d6462142.mp3"
+        },
+        "آ": {
+          "name": "ألف ممدودة",
+          "audio": "audio/letter-egyptian-b3d1e2abe09a5f5f.mp3"
+        },
+        "ى": {
+          "name": "ألف مقصورة",
+          "audio": "audio/letter-egyptian-57c11c5c261c9846.mp3"
+        },
+        "ئ": {
+          "name": "همزة على نبرة",
+          "audio": "audio/letter-egyptian-c32fec9eb3eebbc7.mp3"
+        },
+        "إ": {
+          "name": "ألف",
+          "audio": "audio/letter-egyptian-35b4890d0c8cfa47.mp3"
+        },
+        "ء": {
+          "name": "همزة",
+          "audio": "audio/letter-egyptian-b1d37f39b0b4e280.mp3"
+        },
+        "ؤ": {
+          "name": "همزة على واو",
+          "audio": "audio/letter-egyptian-757af27e2412aab7.mp3"
+        }
+      },
+      "standard": {
+        "ا": {
+          "name": "ألف",
+          "audio": "audio/letter-standard-be0fa08bb8f12a37.mp3"
+        },
+        "ب": {
+          "name": "باء",
+          "audio": "audio/letter-standard-cb22e4a914210546.mp3"
+        },
+        "ت": {
+          "name": "تاء",
+          "audio": "audio/letter-standard-6a9b00bf691bdfd2.mp3"
+        },
+        "ث": {
+          "name": "ثاء",
+          "audio": "audio/letter-standard-e57c96ba8aea7ea0.mp3"
+        },
+        "ج": {
+          "name": "جيم",
+          "audio": "audio/letter-standard-51c9a584ad13b9d2.mp3"
+        },
+        "ح": {
+          "name": "حاء",
+          "audio": "audio/letter-standard-56750292f58ce336.mp3"
+        },
+        "خ": {
+          "name": "خاء",
+          "audio": "audio/letter-standard-84d816dcc5339ad7.mp3"
+        },
+        "د": {
+          "name": "دال",
+          "audio": "audio/letter-standard-b15aa8e25eddf663.mp3"
+        },
+        "ذ": {
+          "name": "ذال",
+          "audio": "audio/letter-standard-29b50a05e8dc1b4a.mp3"
+        },
+        "ر": {
+          "name": "راء",
+          "audio": "audio/letter-standard-36a9d753b0bdc5e7.mp3"
+        },
+        "ز": {
+          "name": "زاي",
+          "audio": "audio/letter-standard-a83185c0fe218172.mp3"
+        },
+        "س": {
+          "name": "سين",
+          "audio": "audio/letter-standard-861183a44bf3c1f1.mp3"
+        },
+        "ش": {
+          "name": "شين",
+          "audio": "audio/letter-standard-119c5451ad7c3fae.mp3"
+        },
+        "ص": {
+          "name": "صاد",
+          "audio": "audio/letter-standard-1f6940369a9cd852.mp3"
+        },
+        "ض": {
+          "name": "ضاد",
+          "audio": "audio/letter-standard-892f5fc72c8aceba.mp3"
+        },
+        "ط": {
+          "name": "طاء",
+          "audio": "audio/letter-standard-a55da129540086ad.mp3"
+        },
+        "ظ": {
+          "name": "ظاء",
+          "audio": "audio/letter-standard-ac850b0dfe00607a.mp3"
+        },
+        "ع": {
+          "name": "عين",
+          "audio": "audio/letter-standard-a0f49047a7ffbc61.mp3"
+        },
+        "غ": {
+          "name": "غين",
+          "audio": "audio/letter-standard-d6f7c01d455fe141.mp3"
+        },
+        "ف": {
+          "name": "فاء",
+          "audio": "audio/letter-standard-6e6a73ade56e964f.mp3"
+        },
+        "ق": {
+          "name": "قاف",
+          "audio": "audio/letter-standard-c67f042db9cc1f17.mp3"
+        },
+        "ك": {
+          "name": "كاف",
+          "audio": "audio/letter-standard-854a312a1a019aaa.mp3"
+        },
+        "ل": {
+          "name": "لام",
+          "audio": "audio/letter-standard-6ddaa72eed069591.mp3"
+        },
+        "م": {
+          "name": "ميم",
+          "audio": "audio/letter-standard-988ada1c5b979ec6.mp3"
+        },
+        "ن": {
+          "name": "نون",
+          "audio": "audio/letter-standard-cb92a8b00c6956fd.mp3"
+        },
+        "ه": {
+          "name": "هاء",
+          "audio": "audio/letter-standard-517d335897807109.mp3"
+        },
+        "و": {
+          "name": "واو",
+          "audio": "audio/letter-standard-6245b4d08f3f2a99.mp3"
+        },
+        "ي": {
+          "name": "ياء",
+          "audio": "audio/letter-standard-68a74b81692467b8.mp3"
+        },
+        "أ": {
+          "name": "ألف",
+          "audio": "audio/letter-standard-dd0eaa23a748ac49.mp3"
+        },
+        "ة": {
+          "name": "تاء مربوطة",
+          "audio": "audio/letter-standard-3dc7f235d6462142.mp3"
+        },
+        "آ": {
+          "name": "ألف ممدودة",
+          "audio": "audio/letter-standard-b3d1e2abe09a5f5f.mp3"
+        },
+        "ى": {
+          "name": "ألف مقصورة",
+          "audio": "audio/letter-standard-57c11c5c261c9846.mp3"
+        },
+        "ئ": {
+          "name": "همزة على نبرة",
+          "audio": "audio/letter-standard-c32fec9eb3eebbc7.mp3"
+        },
+        "إ": {
+          "name": "ألف",
+          "audio": "audio/letter-standard-35b4890d0c8cfa47.mp3"
+        },
+        "ء": {
+          "name": "همزة",
+          "audio": "audio/letter-standard-b1d37f39b0b4e280.mp3"
+        },
+        "ؤ": {
+          "name": "همزة على واو",
+          "audio": "audio/letter-standard-757af27e2412aab7.mp3"
+        }
+      }
+    },
+    "syllables": {
+      "egyptian": {
+        "أَ": {
+          "text": "أَ",
+          "label": "a",
+          "audio": "audio/syllable-egyptian-3b893751d8579297.mp3"
+        },
+        "إِ": {
+          "text": "إِ",
+          "label": "i",
+          "audio": "audio/syllable-egyptian-6f0e9d907af1fad2.mp3"
+        },
+        "أُ": {
+          "text": "أُ",
+          "label": "u",
+          "audio": "audio/syllable-egyptian-bae3393e29117cd3.mp3"
+        },
+        "آ": {
+          "text": "آ",
+          "label": "ā",
+          "audio": "audio/syllable-egyptian-b3d1e2abe09a5f5f.mp3"
+        },
+        "بَ": {
+          "text": "بَ",
+          "label": "a",
+          "audio": "audio/syllable-egyptian-e006f0b8074fa19c.mp3"
+        },
+        "بِ": {
+          "text": "بِ",
+          "label": "i",
+          "audio": "audio/syllable-egyptian-2701f008f06f6062.mp3"
+        },
+        "بُ": {
+          "text": "بُ",
+          "label": "u",
+          "audio": "audio/syllable-egyptian-f2768d97d70e971d.mp3"
+        },
+        "بْ": {
+          "text": "أَبْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-egyptian-2476b03531d7ac2e.mp3"
+        },
+        "تَ": {
+          "text": "تَ",
+          "label": "a",
+          "audio": "audio/syllable-egyptian-2d6a557df5ca357e.mp3"
+        },
+        "تِ": {
+          "text": "تِ",
+          "label": "i",
+          "audio": "audio/syllable-egyptian-0ee7bf085410db85.mp3"
+        },
+        "تُ": {
+          "text": "تُ",
+          "label": "u",
+          "audio": "audio/syllable-egyptian-ba861d96a2dae8e3.mp3"
+        },
+        "تْ": {
+          "text": "أَتْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-egyptian-a408f28bfbf36728.mp3"
+        },
+        "ثَ": {
+          "text": "ثَ",
+          "label": "a",
+          "audio": "audio/syllable-egyptian-79a5e4461bac4446.mp3"
+        },
+        "ثِ": {
+          "text": "ثِ",
+          "label": "i",
+          "audio": "audio/syllable-egyptian-81a333ca8e1954f0.mp3"
+        },
+        "ثُ": {
+          "text": "ثُ",
+          "label": "u",
+          "audio": "audio/syllable-egyptian-cc4c2e4dbfdab3e5.mp3"
+        },
+        "ثْ": {
+          "text": "أَثْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-egyptian-f9e06530526b5109.mp3"
+        },
+        "جَ": {
+          "text": "جَ",
+          "label": "a",
+          "audio": "audio/syllable-egyptian-d4221add8206568c.mp3"
+        },
+        "جِ": {
+          "text": "جِ",
+          "label": "i",
+          "audio": "audio/syllable-egyptian-07b43bc6987769e9.mp3"
+        },
+        "جُ": {
+          "text": "جُ",
+          "label": "u",
+          "audio": "audio/syllable-egyptian-45fc1490399d02cb.mp3"
+        },
+        "جْ": {
+          "text": "أَجْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-egyptian-09022991a381e881.mp3"
+        },
+        "حَ": {
+          "text": "حَ",
+          "label": "a",
+          "audio": "audio/syllable-egyptian-780f94e600871699.mp3"
+        },
+        "حِ": {
+          "text": "حِ",
+          "label": "i",
+          "audio": "audio/syllable-egyptian-c781688bdfdc94d0.mp3"
+        },
+        "حُ": {
+          "text": "حُ",
+          "label": "u",
+          "audio": "audio/syllable-egyptian-50e6cddd272bd2ab.mp3"
+        },
+        "حْ": {
+          "text": "أَحْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-egyptian-7547b08d2d4a1db6.mp3"
+        },
+        "خَ": {
+          "text": "خَ",
+          "label": "a",
+          "audio": "audio/syllable-egyptian-147954761063a663.mp3"
+        },
+        "خِ": {
+          "text": "خِ",
+          "label": "i",
+          "audio": "audio/syllable-egyptian-f3d5f289598acd47.mp3"
+        },
+        "خُ": {
+          "text": "خُ",
+          "label": "u",
+          "audio": "audio/syllable-egyptian-e7757adcd3765b0f.mp3"
+        },
+        "خْ": {
+          "text": "أَخْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-egyptian-a7e9ce06a04525f0.mp3"
+        },
+        "دَ": {
+          "text": "دَ",
+          "label": "a",
+          "audio": "audio/syllable-egyptian-65ebd28d0327d6f6.mp3"
+        },
+        "دِ": {
+          "text": "دِ",
+          "label": "i",
+          "audio": "audio/syllable-egyptian-2b8af86d7225d523.mp3"
+        },
+        "دُ": {
+          "text": "دُ",
+          "label": "u",
+          "audio": "audio/syllable-egyptian-3b719e0537b9b026.mp3"
+        },
+        "دْ": {
+          "text": "أَدْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-egyptian-0a698f01afe376ac.mp3"
+        },
+        "ذَ": {
+          "text": "ذَ",
+          "label": "a",
+          "audio": "audio/syllable-egyptian-a2b1661793d8f02b.mp3"
+        },
+        "ذِ": {
+          "text": "ذِ",
+          "label": "i",
+          "audio": "audio/syllable-egyptian-fd9537adfffb28f6.mp3"
+        },
+        "ذُ": {
+          "text": "ذُ",
+          "label": "u",
+          "audio": "audio/syllable-egyptian-ab7f409141779d7e.mp3"
+        },
+        "ذْ": {
+          "text": "أَذْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-egyptian-649749a23153788f.mp3"
+        },
+        "رَ": {
+          "text": "رَ",
+          "label": "a",
+          "audio": "audio/syllable-egyptian-291b92e492fb6d86.mp3"
+        },
+        "رِ": {
+          "text": "رِ",
+          "label": "i",
+          "audio": "audio/syllable-egyptian-924bb86de5f82f6b.mp3"
+        },
+        "رُ": {
+          "text": "رُ",
+          "label": "u",
+          "audio": "audio/syllable-egyptian-ba536aa2ea006824.mp3"
+        },
+        "رْ": {
+          "text": "أَرْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-egyptian-e8992004d15daea7.mp3"
+        },
+        "زَ": {
+          "text": "زَ",
+          "label": "a",
+          "audio": "audio/syllable-egyptian-64cbd95c7cd800c7.mp3"
+        },
+        "زِ": {
+          "text": "زِ",
+          "label": "i",
+          "audio": "audio/syllable-egyptian-413cd9ef96150556.mp3"
+        },
+        "زُ": {
+          "text": "زُ",
+          "label": "u",
+          "audio": "audio/syllable-egyptian-224b9bc0b043bea5.mp3"
+        },
+        "زْ": {
+          "text": "أَزْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-egyptian-798b7b4ea9840f13.mp3"
+        },
+        "سَ": {
+          "text": "سَ",
+          "label": "a",
+          "audio": "audio/syllable-egyptian-0c204c583369036d.mp3"
+        },
+        "سِ": {
+          "text": "سِ",
+          "label": "i",
+          "audio": "audio/syllable-egyptian-34fa019fc0cfa83d.mp3"
+        },
+        "سُ": {
+          "text": "سُ",
+          "label": "u",
+          "audio": "audio/syllable-egyptian-f106b520337d0965.mp3"
+        },
+        "سْ": {
+          "text": "أَسْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-egyptian-8419a1f000f565a4.mp3"
+        },
+        "شَ": {
+          "text": "شَ",
+          "label": "a",
+          "audio": "audio/syllable-egyptian-c70774f9ecbf1d67.mp3"
+        },
+        "شِ": {
+          "text": "شِ",
+          "label": "i",
+          "audio": "audio/syllable-egyptian-b395574965f12182.mp3"
+        },
+        "شُ": {
+          "text": "شُ",
+          "label": "u",
+          "audio": "audio/syllable-egyptian-4866a45a046c7fba.mp3"
+        },
+        "شْ": {
+          "text": "أَشْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-egyptian-f710a3675701690d.mp3"
+        },
+        "صَ": {
+          "text": "صَ",
+          "label": "a",
+          "audio": "audio/syllable-egyptian-f33099a288efe463.mp3"
+        },
+        "صِ": {
+          "text": "صِ",
+          "label": "i",
+          "audio": "audio/syllable-egyptian-ea38bdb8dbab90a7.mp3"
+        },
+        "صُ": {
+          "text": "صُ",
+          "label": "u",
+          "audio": "audio/syllable-egyptian-a8429e61a00617cc.mp3"
+        },
+        "صْ": {
+          "text": "أَصْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-egyptian-40ec7e34c947645b.mp3"
+        },
+        "ضَ": {
+          "text": "ضَ",
+          "label": "a",
+          "audio": "audio/syllable-egyptian-1ebb7dbf1c58d84f.mp3"
+        },
+        "ضِ": {
+          "text": "ضِ",
+          "label": "i",
+          "audio": "audio/syllable-egyptian-3942d76b714f636b.mp3"
+        },
+        "ضُ": {
+          "text": "ضُ",
+          "label": "u",
+          "audio": "audio/syllable-egyptian-040d0fff887a751a.mp3"
+        },
+        "ضْ": {
+          "text": "أَضْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-egyptian-42d2bdd3e2b74861.mp3"
+        },
+        "طَ": {
+          "text": "طَ",
+          "label": "a",
+          "audio": "audio/syllable-egyptian-8845ef7899547ebc.mp3"
+        },
+        "طِ": {
+          "text": "طِ",
+          "label": "i",
+          "audio": "audio/syllable-egyptian-05d7abc3e058820e.mp3"
+        },
+        "طُ": {
+          "text": "طُ",
+          "label": "u",
+          "audio": "audio/syllable-egyptian-e49934a2356fccbe.mp3"
+        },
+        "طْ": {
+          "text": "أَطْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-egyptian-d6581c975d492ed5.mp3"
+        },
+        "ظَ": {
+          "text": "ظَ",
+          "label": "a",
+          "audio": "audio/syllable-egyptian-84e9e184b660cddc.mp3"
+        },
+        "ظِ": {
+          "text": "ظِ",
+          "label": "i",
+          "audio": "audio/syllable-egyptian-f8b192cd3a041298.mp3"
+        },
+        "ظُ": {
+          "text": "ظُ",
+          "label": "u",
+          "audio": "audio/syllable-egyptian-8f13db9909e59db3.mp3"
+        },
+        "ظْ": {
+          "text": "أَظْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-egyptian-f95b0996b87c8d17.mp3"
+        },
+        "عَ": {
+          "text": "عَ",
+          "label": "a",
+          "audio": "audio/syllable-egyptian-470dbb77d4df236c.mp3"
+        },
+        "عِ": {
+          "text": "عِ",
+          "label": "i",
+          "audio": "audio/syllable-egyptian-36a1e7188648b631.mp3"
+        },
+        "عُ": {
+          "text": "عُ",
+          "label": "u",
+          "audio": "audio/syllable-egyptian-76bad5b506e75cfe.mp3"
+        },
+        "عْ": {
+          "text": "أَعْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-egyptian-79a63769c5120616.mp3"
+        },
+        "غَ": {
+          "text": "غَ",
+          "label": "a",
+          "audio": "audio/syllable-egyptian-f6bfae64253ce9c0.mp3"
+        },
+        "غِ": {
+          "text": "غِ",
+          "label": "i",
+          "audio": "audio/syllable-egyptian-3b8732d73847a0f9.mp3"
+        },
+        "غُ": {
+          "text": "غُ",
+          "label": "u",
+          "audio": "audio/syllable-egyptian-b03e507decd76ff6.mp3"
+        },
+        "غْ": {
+          "text": "أَغْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-egyptian-10d7083974c3c7e7.mp3"
+        },
+        "فَ": {
+          "text": "فَ",
+          "label": "a",
+          "audio": "audio/syllable-egyptian-139a6ba5cae19dca.mp3"
+        },
+        "فِ": {
+          "text": "فِ",
+          "label": "i",
+          "audio": "audio/syllable-egyptian-390d2843328ddca3.mp3"
+        },
+        "فُ": {
+          "text": "فُ",
+          "label": "u",
+          "audio": "audio/syllable-egyptian-ea02a7a1f92ea9fa.mp3"
+        },
+        "فْ": {
+          "text": "أَفْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-egyptian-1ec89dc4cf740949.mp3"
+        },
+        "قَ": {
+          "text": "قَ",
+          "label": "a",
+          "audio": "audio/syllable-egyptian-d73b8f256e66a8f1.mp3"
+        },
+        "قِ": {
+          "text": "قِ",
+          "label": "i",
+          "audio": "audio/syllable-egyptian-2155dba946011ef5.mp3"
+        },
+        "قُ": {
+          "text": "قُ",
+          "label": "u",
+          "audio": "audio/syllable-egyptian-96d6e570767478a5.mp3"
+        },
+        "قْ": {
+          "text": "أَقْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-egyptian-96432475c8340b38.mp3"
+        },
+        "كَ": {
+          "text": "كَ",
+          "label": "a",
+          "audio": "audio/syllable-egyptian-c73467ff17416788.mp3"
+        },
+        "كِ": {
+          "text": "كِ",
+          "label": "i",
+          "audio": "audio/syllable-egyptian-fc64a7da85e6c24e.mp3"
+        },
+        "كُ": {
+          "text": "كُ",
+          "label": "u",
+          "audio": "audio/syllable-egyptian-6bf3f9e02464b11d.mp3"
+        },
+        "كْ": {
+          "text": "أَكْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-egyptian-14ea79174f94fac8.mp3"
+        },
+        "لَ": {
+          "text": "لَ",
+          "label": "a",
+          "audio": "audio/syllable-egyptian-ba418754028bff1b.mp3"
+        },
+        "لِ": {
+          "text": "لِ",
+          "label": "i",
+          "audio": "audio/syllable-egyptian-c09f1ab2e58ceeb8.mp3"
+        },
+        "لُ": {
+          "text": "لُ",
+          "label": "u",
+          "audio": "audio/syllable-egyptian-f9e63fd121fb0526.mp3"
+        },
+        "لْ": {
+          "text": "أَلْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-egyptian-e686d089e7857438.mp3"
+        },
+        "مَ": {
+          "text": "مَ",
+          "label": "a",
+          "audio": "audio/syllable-egyptian-31fc2e8f811d7a2f.mp3"
+        },
+        "مِ": {
+          "text": "مِ",
+          "label": "i",
+          "audio": "audio/syllable-egyptian-9e1d5e7f2d91fe51.mp3"
+        },
+        "مُ": {
+          "text": "مُ",
+          "label": "u",
+          "audio": "audio/syllable-egyptian-7e363b4b23fc9b4e.mp3"
+        },
+        "مْ": {
+          "text": "أَمْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-egyptian-cc81ca269ffff823.mp3"
+        },
+        "نَ": {
+          "text": "نَ",
+          "label": "a",
+          "audio": "audio/syllable-egyptian-875ff90371bca316.mp3"
+        },
+        "نِ": {
+          "text": "نِ",
+          "label": "i",
+          "audio": "audio/syllable-egyptian-2c61c719a2642e1c.mp3"
+        },
+        "نُ": {
+          "text": "نُ",
+          "label": "u",
+          "audio": "audio/syllable-egyptian-b49450735a14bdfb.mp3"
+        },
+        "نْ": {
+          "text": "أَنْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-egyptian-e7217df2947b5ecf.mp3"
+        },
+        "هَ": {
+          "text": "هَ",
+          "label": "a",
+          "audio": "audio/syllable-egyptian-e2fece36d71a13c4.mp3"
+        },
+        "هِ": {
+          "text": "هِ",
+          "label": "i",
+          "audio": "audio/syllable-egyptian-9d34621d847ec72a.mp3"
+        },
+        "هُ": {
+          "text": "هُ",
+          "label": "u",
+          "audio": "audio/syllable-egyptian-33fae2c3fa929ade.mp3"
+        },
+        "هْ": {
+          "text": "أَهْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-egyptian-82d51413f1bc19d5.mp3"
+        },
+        "وَ": {
+          "text": "وَ",
+          "label": "a",
+          "audio": "audio/syllable-egyptian-8ce960a3420ab649.mp3"
+        },
+        "وِ": {
+          "text": "وِ",
+          "label": "i",
+          "audio": "audio/syllable-egyptian-e7bebb428fb2f27a.mp3"
+        },
+        "وُ": {
+          "text": "وُ",
+          "label": "u",
+          "audio": "audio/syllable-egyptian-31d16c7f5df3c54b.mp3"
+        },
+        "وْ": {
+          "text": "أَوْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-egyptian-1b495636af9557b9.mp3"
+        },
+        "يَ": {
+          "text": "يَ",
+          "label": "a",
+          "audio": "audio/syllable-egyptian-08208c74a20d7933.mp3"
+        },
+        "يِ": {
+          "text": "يِ",
+          "label": "i",
+          "audio": "audio/syllable-egyptian-209639ac36ba3cfc.mp3"
+        },
+        "يُ": {
+          "text": "يُ",
+          "label": "u",
+          "audio": "audio/syllable-egyptian-ed132d80ef2ec7db.mp3"
+        },
+        "يْ": {
+          "text": "أَيْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-egyptian-a05e9524114811e2.mp3"
+        },
+        "أ": {
+          "text": "أ",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-dd0eaa23a748ac49.mp3"
+        },
+        "ب": {
+          "text": "ب",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-cb22e4a914210546.mp3"
+        },
+        "ي": {
+          "text": "ي",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-68a74b81692467b8.mp3"
+        },
+        "م": {
+          "text": "م",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-988ada1c5b979ec6.mp3"
+        },
+        "دّ": {
+          "text": "دّ",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-514f3a8ec18ac3e1.mp3"
+        },
+        "دَّ": {
+          "text": "دَّ",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-2dc3ad101960927e.mp3"
+        },
+        "ة": {
+          "text": "ة",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-3dc7f235d6462142.mp3"
+        },
+        "ا": {
+          "text": "ا",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-be0fa08bb8f12a37.mp3"
+        },
+        "ن": {
+          "text": "ن",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-cb92a8b00c6956fd.mp3"
+        },
+        "ت": {
+          "text": "ت",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-6a9b00bf691bdfd2.mp3"
+        },
+        "مّ": {
+          "text": "مّ",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-12708006eda2c7d9.mp3"
+        },
+        "مَّ": {
+          "text": "مَّ",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-d100b60f26b0cedd.mp3"
+        },
+        "خ": {
+          "text": "خ",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-84d816dcc5339ad7.mp3"
+        },
+        "ل": {
+          "text": "ل",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-6ddaa72eed069591.mp3"
+        },
+        "ع": {
+          "text": "ع",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-a0f49047a7ffbc61.mp3"
+        },
+        "ز": {
+          "text": "ز",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-a83185c0fe218172.mp3"
+        },
+        "و": {
+          "text": "و",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-6245b4d08f3f2a99.mp3"
+        },
+        "س": {
+          "text": "س",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-861183a44bf3c1f1.mp3"
+        },
+        "ح": {
+          "text": "ح",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-56750292f58ce336.mp3"
+        },
+        "د": {
+          "text": "د",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-b15aa8e25eddf663.mp3"
+        },
+        "ك": {
+          "text": "ك",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-854a312a1a019aaa.mp3"
+        },
+        "ج": {
+          "text": "ج",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-51c9a584ad13b9d2.mp3"
+        },
+        "ف": {
+          "text": "ف",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-6e6a73ade56e964f.mp3"
+        },
+        "ش": {
+          "text": "ش",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-119c5451ad7c3fae.mp3"
+        },
+        "ض": {
+          "text": "ض",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-892f5fc72c8aceba.mp3"
+        },
+        "ه": {
+          "text": "ه",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-517d335897807109.mp3"
+        },
+        "ق": {
+          "text": "ق",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-c67f042db9cc1f17.mp3"
+        },
+        "ر": {
+          "text": "ر",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-36a9d753b0bdc5e7.mp3"
+        },
+        "ط": {
+          "text": "ط",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-a55da129540086ad.mp3"
+        },
+        "ى": {
+          "text": "ى",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-57c11c5c261c9846.mp3"
+        },
+        "ص": {
+          "text": "ص",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-1f6940369a9cd852.mp3"
+        },
+        "اً": {
+          "text": "اً",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-727773c02a85a050.mp3"
+        },
+        "ئَ": {
+          "text": "ئَ",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-85f858f7ee531fc5.mp3"
+        },
+        "فَّ": {
+          "text": "فَّ",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-3d56019a96e440e2.mp3"
+        },
+        "ث": {
+          "text": "ث",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-e57c96ba8aea7ea0.mp3"
+        },
+        "ء": {
+          "text": "ء",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-b1d37f39b0b4e280.mp3"
+        },
+        "اِ": {
+          "text": "اِ",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-fee2b201b5e5cef0.mp3"
+        },
+        "ئِ": {
+          "text": "ئِ",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-fd93e9dbd1237a0b.mp3"
+        },
+        "ؤُ": {
+          "text": "ؤُ",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-d398feac984a4b54.mp3"
+        },
+        "مُّ": {
+          "text": "مُّ",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-a5d61b4789ac5b01.mp3"
+        },
+        "طَّ": {
+          "text": "طَّ",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-51d31bf88181ef5b.mp3"
+        },
+        "سَّ": {
+          "text": "سَّ",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-b2b2b8b6c9855086.mp3"
+        },
+        "لً": {
+          "text": "لً",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-4cc52666fb5ef61e.mp3"
+        },
+        "لّٰ": {
+          "text": "لّٰ",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-944196cd42f9f7c2.mp3"
+        },
+        "يِّ": {
+          "text": "يِّ",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-519ad4d87d50b324.mp3"
+        },
+        "صِّ": {
+          "text": "صِّ",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-7939a1440043a233.mp3"
+        },
+        "رَّ": {
+          "text": "رَّ",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-a3e23b6f31472b1b.mp3"
+        },
+        "ظ": {
+          "text": "ظ",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-ac850b0dfe00607a.mp3"
+        },
+        "ئ": {
+          "text": "ئ",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-c32fec9eb3eebbc7.mp3"
+        },
+        "ذ": {
+          "text": "ذ",
+          "label": "页面字素",
+          "audio": "audio/syllable-egyptian-29b50a05e8dc1b4a.mp3"
+        }
+      },
+      "standard": {
+        "أَ": {
+          "text": "أَ",
+          "label": "a",
+          "audio": "audio/syllable-standard-3b893751d8579297.mp3"
+        },
+        "إِ": {
+          "text": "إِ",
+          "label": "i",
+          "audio": "audio/syllable-standard-6f0e9d907af1fad2.mp3"
+        },
+        "أُ": {
+          "text": "أُ",
+          "label": "u",
+          "audio": "audio/syllable-standard-bae3393e29117cd3.mp3"
+        },
+        "آ": {
+          "text": "آ",
+          "label": "ā",
+          "audio": "audio/syllable-standard-b3d1e2abe09a5f5f.mp3"
+        },
+        "بَ": {
+          "text": "بَ",
+          "label": "a",
+          "audio": "audio/syllable-standard-e006f0b8074fa19c.mp3"
+        },
+        "بِ": {
+          "text": "بِ",
+          "label": "i",
+          "audio": "audio/syllable-standard-2701f008f06f6062.mp3"
+        },
+        "بُ": {
+          "text": "بُ",
+          "label": "u",
+          "audio": "audio/syllable-standard-f2768d97d70e971d.mp3"
+        },
+        "بْ": {
+          "text": "أَبْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-standard-2476b03531d7ac2e.mp3"
+        },
+        "تَ": {
+          "text": "تَ",
+          "label": "a",
+          "audio": "audio/syllable-standard-2d6a557df5ca357e.mp3"
+        },
+        "تِ": {
+          "text": "تِ",
+          "label": "i",
+          "audio": "audio/syllable-standard-0ee7bf085410db85.mp3"
+        },
+        "تُ": {
+          "text": "تُ",
+          "label": "u",
+          "audio": "audio/syllable-standard-ba861d96a2dae8e3.mp3"
+        },
+        "تْ": {
+          "text": "أَتْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-standard-a408f28bfbf36728.mp3"
+        },
+        "ثَ": {
+          "text": "ثَ",
+          "label": "a",
+          "audio": "audio/syllable-standard-79a5e4461bac4446.mp3"
+        },
+        "ثِ": {
+          "text": "ثِ",
+          "label": "i",
+          "audio": "audio/syllable-standard-81a333ca8e1954f0.mp3"
+        },
+        "ثُ": {
+          "text": "ثُ",
+          "label": "u",
+          "audio": "audio/syllable-standard-cc4c2e4dbfdab3e5.mp3"
+        },
+        "ثْ": {
+          "text": "أَثْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-standard-f9e06530526b5109.mp3"
+        },
+        "جَ": {
+          "text": "جَ",
+          "label": "a",
+          "audio": "audio/syllable-standard-d4221add8206568c.mp3"
+        },
+        "جِ": {
+          "text": "جِ",
+          "label": "i",
+          "audio": "audio/syllable-standard-07b43bc6987769e9.mp3"
+        },
+        "جُ": {
+          "text": "جُ",
+          "label": "u",
+          "audio": "audio/syllable-standard-45fc1490399d02cb.mp3"
+        },
+        "جْ": {
+          "text": "أَجْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-standard-09022991a381e881.mp3"
+        },
+        "حَ": {
+          "text": "حَ",
+          "label": "a",
+          "audio": "audio/syllable-standard-780f94e600871699.mp3"
+        },
+        "حِ": {
+          "text": "حِ",
+          "label": "i",
+          "audio": "audio/syllable-standard-c781688bdfdc94d0.mp3"
+        },
+        "حُ": {
+          "text": "حُ",
+          "label": "u",
+          "audio": "audio/syllable-standard-50e6cddd272bd2ab.mp3"
+        },
+        "حْ": {
+          "text": "أَحْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-standard-7547b08d2d4a1db6.mp3"
+        },
+        "خَ": {
+          "text": "خَ",
+          "label": "a",
+          "audio": "audio/syllable-standard-147954761063a663.mp3"
+        },
+        "خِ": {
+          "text": "خِ",
+          "label": "i",
+          "audio": "audio/syllable-standard-f3d5f289598acd47.mp3"
+        },
+        "خُ": {
+          "text": "خُ",
+          "label": "u",
+          "audio": "audio/syllable-standard-e7757adcd3765b0f.mp3"
+        },
+        "خْ": {
+          "text": "أَخْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-standard-a7e9ce06a04525f0.mp3"
+        },
+        "دَ": {
+          "text": "دَ",
+          "label": "a",
+          "audio": "audio/syllable-standard-65ebd28d0327d6f6.mp3"
+        },
+        "دِ": {
+          "text": "دِ",
+          "label": "i",
+          "audio": "audio/syllable-standard-2b8af86d7225d523.mp3"
+        },
+        "دُ": {
+          "text": "دُ",
+          "label": "u",
+          "audio": "audio/syllable-standard-3b719e0537b9b026.mp3"
+        },
+        "دْ": {
+          "text": "أَدْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-standard-0a698f01afe376ac.mp3"
+        },
+        "ذَ": {
+          "text": "ذَ",
+          "label": "a",
+          "audio": "audio/syllable-standard-a2b1661793d8f02b.mp3"
+        },
+        "ذِ": {
+          "text": "ذِ",
+          "label": "i",
+          "audio": "audio/syllable-standard-fd9537adfffb28f6.mp3"
+        },
+        "ذُ": {
+          "text": "ذُ",
+          "label": "u",
+          "audio": "audio/syllable-standard-ab7f409141779d7e.mp3"
+        },
+        "ذْ": {
+          "text": "أَذْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-standard-649749a23153788f.mp3"
+        },
+        "رَ": {
+          "text": "رَ",
+          "label": "a",
+          "audio": "audio/syllable-standard-291b92e492fb6d86.mp3"
+        },
+        "رِ": {
+          "text": "رِ",
+          "label": "i",
+          "audio": "audio/syllable-standard-924bb86de5f82f6b.mp3"
+        },
+        "رُ": {
+          "text": "رُ",
+          "label": "u",
+          "audio": "audio/syllable-standard-ba536aa2ea006824.mp3"
+        },
+        "رْ": {
+          "text": "أَرْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-standard-e8992004d15daea7.mp3"
+        },
+        "زَ": {
+          "text": "زَ",
+          "label": "a",
+          "audio": "audio/syllable-standard-64cbd95c7cd800c7.mp3"
+        },
+        "زِ": {
+          "text": "زِ",
+          "label": "i",
+          "audio": "audio/syllable-standard-413cd9ef96150556.mp3"
+        },
+        "زُ": {
+          "text": "زُ",
+          "label": "u",
+          "audio": "audio/syllable-standard-224b9bc0b043bea5.mp3"
+        },
+        "زْ": {
+          "text": "أَزْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-standard-798b7b4ea9840f13.mp3"
+        },
+        "سَ": {
+          "text": "سَ",
+          "label": "a",
+          "audio": "audio/syllable-standard-0c204c583369036d.mp3"
+        },
+        "سِ": {
+          "text": "سِ",
+          "label": "i",
+          "audio": "audio/syllable-standard-34fa019fc0cfa83d.mp3"
+        },
+        "سُ": {
+          "text": "سُ",
+          "label": "u",
+          "audio": "audio/syllable-standard-f106b520337d0965.mp3"
+        },
+        "سْ": {
+          "text": "أَسْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-standard-8419a1f000f565a4.mp3"
+        },
+        "شَ": {
+          "text": "شَ",
+          "label": "a",
+          "audio": "audio/syllable-standard-c70774f9ecbf1d67.mp3"
+        },
+        "شِ": {
+          "text": "شِ",
+          "label": "i",
+          "audio": "audio/syllable-standard-b395574965f12182.mp3"
+        },
+        "شُ": {
+          "text": "شُ",
+          "label": "u",
+          "audio": "audio/syllable-standard-4866a45a046c7fba.mp3"
+        },
+        "شْ": {
+          "text": "أَشْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-standard-f710a3675701690d.mp3"
+        },
+        "صَ": {
+          "text": "صَ",
+          "label": "a",
+          "audio": "audio/syllable-standard-f33099a288efe463.mp3"
+        },
+        "صِ": {
+          "text": "صِ",
+          "label": "i",
+          "audio": "audio/syllable-standard-ea38bdb8dbab90a7.mp3"
+        },
+        "صُ": {
+          "text": "صُ",
+          "label": "u",
+          "audio": "audio/syllable-standard-a8429e61a00617cc.mp3"
+        },
+        "صْ": {
+          "text": "أَصْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-standard-40ec7e34c947645b.mp3"
+        },
+        "ضَ": {
+          "text": "ضَ",
+          "label": "a",
+          "audio": "audio/syllable-standard-1ebb7dbf1c58d84f.mp3"
+        },
+        "ضِ": {
+          "text": "ضِ",
+          "label": "i",
+          "audio": "audio/syllable-standard-3942d76b714f636b.mp3"
+        },
+        "ضُ": {
+          "text": "ضُ",
+          "label": "u",
+          "audio": "audio/syllable-standard-040d0fff887a751a.mp3"
+        },
+        "ضْ": {
+          "text": "أَضْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-standard-42d2bdd3e2b74861.mp3"
+        },
+        "طَ": {
+          "text": "طَ",
+          "label": "a",
+          "audio": "audio/syllable-standard-8845ef7899547ebc.mp3"
+        },
+        "طِ": {
+          "text": "طِ",
+          "label": "i",
+          "audio": "audio/syllable-standard-05d7abc3e058820e.mp3"
+        },
+        "طُ": {
+          "text": "طُ",
+          "label": "u",
+          "audio": "audio/syllable-standard-e49934a2356fccbe.mp3"
+        },
+        "طْ": {
+          "text": "أَطْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-standard-d6581c975d492ed5.mp3"
+        },
+        "ظَ": {
+          "text": "ظَ",
+          "label": "a",
+          "audio": "audio/syllable-standard-84e9e184b660cddc.mp3"
+        },
+        "ظِ": {
+          "text": "ظِ",
+          "label": "i",
+          "audio": "audio/syllable-standard-f8b192cd3a041298.mp3"
+        },
+        "ظُ": {
+          "text": "ظُ",
+          "label": "u",
+          "audio": "audio/syllable-standard-8f13db9909e59db3.mp3"
+        },
+        "ظْ": {
+          "text": "أَظْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-standard-f95b0996b87c8d17.mp3"
+        },
+        "عَ": {
+          "text": "عَ",
+          "label": "a",
+          "audio": "audio/syllable-standard-470dbb77d4df236c.mp3"
+        },
+        "عِ": {
+          "text": "عِ",
+          "label": "i",
+          "audio": "audio/syllable-standard-36a1e7188648b631.mp3"
+        },
+        "عُ": {
+          "text": "عُ",
+          "label": "u",
+          "audio": "audio/syllable-standard-76bad5b506e75cfe.mp3"
+        },
+        "عْ": {
+          "text": "أَعْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-standard-79a63769c5120616.mp3"
+        },
+        "غَ": {
+          "text": "غَ",
+          "label": "a",
+          "audio": "audio/syllable-standard-f6bfae64253ce9c0.mp3"
+        },
+        "غِ": {
+          "text": "غِ",
+          "label": "i",
+          "audio": "audio/syllable-standard-3b8732d73847a0f9.mp3"
+        },
+        "غُ": {
+          "text": "غُ",
+          "label": "u",
+          "audio": "audio/syllable-standard-b03e507decd76ff6.mp3"
+        },
+        "غْ": {
+          "text": "أَغْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-standard-10d7083974c3c7e7.mp3"
+        },
+        "فَ": {
+          "text": "فَ",
+          "label": "a",
+          "audio": "audio/syllable-standard-139a6ba5cae19dca.mp3"
+        },
+        "فِ": {
+          "text": "فِ",
+          "label": "i",
+          "audio": "audio/syllable-standard-390d2843328ddca3.mp3"
+        },
+        "فُ": {
+          "text": "فُ",
+          "label": "u",
+          "audio": "audio/syllable-standard-ea02a7a1f92ea9fa.mp3"
+        },
+        "فْ": {
+          "text": "أَفْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-standard-1ec89dc4cf740949.mp3"
+        },
+        "قَ": {
+          "text": "قَ",
+          "label": "a",
+          "audio": "audio/syllable-standard-d73b8f256e66a8f1.mp3"
+        },
+        "قِ": {
+          "text": "قِ",
+          "label": "i",
+          "audio": "audio/syllable-standard-2155dba946011ef5.mp3"
+        },
+        "قُ": {
+          "text": "قُ",
+          "label": "u",
+          "audio": "audio/syllable-standard-96d6e570767478a5.mp3"
+        },
+        "قْ": {
+          "text": "أَقْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-standard-96432475c8340b38.mp3"
+        },
+        "كَ": {
+          "text": "كَ",
+          "label": "a",
+          "audio": "audio/syllable-standard-c73467ff17416788.mp3"
+        },
+        "كِ": {
+          "text": "كِ",
+          "label": "i",
+          "audio": "audio/syllable-standard-fc64a7da85e6c24e.mp3"
+        },
+        "كُ": {
+          "text": "كُ",
+          "label": "u",
+          "audio": "audio/syllable-standard-6bf3f9e02464b11d.mp3"
+        },
+        "كْ": {
+          "text": "أَكْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-standard-14ea79174f94fac8.mp3"
+        },
+        "لَ": {
+          "text": "لَ",
+          "label": "a",
+          "audio": "audio/syllable-standard-ba418754028bff1b.mp3"
+        },
+        "لِ": {
+          "text": "لِ",
+          "label": "i",
+          "audio": "audio/syllable-standard-c09f1ab2e58ceeb8.mp3"
+        },
+        "لُ": {
+          "text": "لُ",
+          "label": "u",
+          "audio": "audio/syllable-standard-f9e63fd121fb0526.mp3"
+        },
+        "لْ": {
+          "text": "أَلْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-standard-e686d089e7857438.mp3"
+        },
+        "مَ": {
+          "text": "مَ",
+          "label": "a",
+          "audio": "audio/syllable-standard-31fc2e8f811d7a2f.mp3"
+        },
+        "مِ": {
+          "text": "مِ",
+          "label": "i",
+          "audio": "audio/syllable-standard-9e1d5e7f2d91fe51.mp3"
+        },
+        "مُ": {
+          "text": "مُ",
+          "label": "u",
+          "audio": "audio/syllable-standard-7e363b4b23fc9b4e.mp3"
+        },
+        "مْ": {
+          "text": "أَمْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-standard-cc81ca269ffff823.mp3"
+        },
+        "نَ": {
+          "text": "نَ",
+          "label": "a",
+          "audio": "audio/syllable-standard-875ff90371bca316.mp3"
+        },
+        "نِ": {
+          "text": "نِ",
+          "label": "i",
+          "audio": "audio/syllable-standard-2c61c719a2642e1c.mp3"
+        },
+        "نُ": {
+          "text": "نُ",
+          "label": "u",
+          "audio": "audio/syllable-standard-b49450735a14bdfb.mp3"
+        },
+        "نْ": {
+          "text": "أَنْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-standard-e7217df2947b5ecf.mp3"
+        },
+        "هَ": {
+          "text": "هَ",
+          "label": "a",
+          "audio": "audio/syllable-standard-e2fece36d71a13c4.mp3"
+        },
+        "هِ": {
+          "text": "هِ",
+          "label": "i",
+          "audio": "audio/syllable-standard-9d34621d847ec72a.mp3"
+        },
+        "هُ": {
+          "text": "هُ",
+          "label": "u",
+          "audio": "audio/syllable-standard-33fae2c3fa929ade.mp3"
+        },
+        "هْ": {
+          "text": "أَهْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-standard-82d51413f1bc19d5.mp3"
+        },
+        "وَ": {
+          "text": "وَ",
+          "label": "a",
+          "audio": "audio/syllable-standard-8ce960a3420ab649.mp3"
+        },
+        "وِ": {
+          "text": "وِ",
+          "label": "i",
+          "audio": "audio/syllable-standard-e7bebb428fb2f27a.mp3"
+        },
+        "وُ": {
+          "text": "وُ",
+          "label": "u",
+          "audio": "audio/syllable-standard-31d16c7f5df3c54b.mp3"
+        },
+        "وْ": {
+          "text": "أَوْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-standard-1b495636af9557b9.mp3"
+        },
+        "يَ": {
+          "text": "يَ",
+          "label": "a",
+          "audio": "audio/syllable-standard-08208c74a20d7933.mp3"
+        },
+        "يِ": {
+          "text": "يِ",
+          "label": "i",
+          "audio": "audio/syllable-standard-209639ac36ba3cfc.mp3"
+        },
+        "يُ": {
+          "text": "يُ",
+          "label": "u",
+          "audio": "audio/syllable-standard-ed132d80ef2ec7db.mp3"
+        },
+        "يْ": {
+          "text": "أَيْ",
+          "label": "无元音收尾",
+          "audio": "audio/syllable-standard-a05e9524114811e2.mp3"
+        },
+        "أ": {
+          "text": "أ",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-dd0eaa23a748ac49.mp3"
+        },
+        "ب": {
+          "text": "ب",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-cb22e4a914210546.mp3"
+        },
+        "ي": {
+          "text": "ي",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-68a74b81692467b8.mp3"
+        },
+        "م": {
+          "text": "م",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-988ada1c5b979ec6.mp3"
+        },
+        "دّ": {
+          "text": "دّ",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-514f3a8ec18ac3e1.mp3"
+        },
+        "دَّ": {
+          "text": "دَّ",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-2dc3ad101960927e.mp3"
+        },
+        "ة": {
+          "text": "ة",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-3dc7f235d6462142.mp3"
+        },
+        "ا": {
+          "text": "ا",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-be0fa08bb8f12a37.mp3"
+        },
+        "ن": {
+          "text": "ن",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-cb92a8b00c6956fd.mp3"
+        },
+        "ت": {
+          "text": "ت",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-6a9b00bf691bdfd2.mp3"
+        },
+        "مّ": {
+          "text": "مّ",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-12708006eda2c7d9.mp3"
+        },
+        "مَّ": {
+          "text": "مَّ",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-d100b60f26b0cedd.mp3"
+        },
+        "خ": {
+          "text": "خ",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-84d816dcc5339ad7.mp3"
+        },
+        "ل": {
+          "text": "ل",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-6ddaa72eed069591.mp3"
+        },
+        "ع": {
+          "text": "ع",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-a0f49047a7ffbc61.mp3"
+        },
+        "ز": {
+          "text": "ز",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-a83185c0fe218172.mp3"
+        },
+        "و": {
+          "text": "و",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-6245b4d08f3f2a99.mp3"
+        },
+        "س": {
+          "text": "س",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-861183a44bf3c1f1.mp3"
+        },
+        "ح": {
+          "text": "ح",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-56750292f58ce336.mp3"
+        },
+        "د": {
+          "text": "د",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-b15aa8e25eddf663.mp3"
+        },
+        "ك": {
+          "text": "ك",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-854a312a1a019aaa.mp3"
+        },
+        "ج": {
+          "text": "ج",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-51c9a584ad13b9d2.mp3"
+        },
+        "ف": {
+          "text": "ف",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-6e6a73ade56e964f.mp3"
+        },
+        "ش": {
+          "text": "ش",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-119c5451ad7c3fae.mp3"
+        },
+        "ض": {
+          "text": "ض",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-892f5fc72c8aceba.mp3"
+        },
+        "ه": {
+          "text": "ه",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-517d335897807109.mp3"
+        },
+        "ق": {
+          "text": "ق",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-c67f042db9cc1f17.mp3"
+        },
+        "ر": {
+          "text": "ر",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-36a9d753b0bdc5e7.mp3"
+        },
+        "ط": {
+          "text": "ط",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-a55da129540086ad.mp3"
+        },
+        "ى": {
+          "text": "ى",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-57c11c5c261c9846.mp3"
+        },
+        "ص": {
+          "text": "ص",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-1f6940369a9cd852.mp3"
+        },
+        "اً": {
+          "text": "اً",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-727773c02a85a050.mp3"
+        },
+        "ئَ": {
+          "text": "ئَ",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-85f858f7ee531fc5.mp3"
+        },
+        "فَّ": {
+          "text": "فَّ",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-3d56019a96e440e2.mp3"
+        },
+        "ث": {
+          "text": "ث",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-e57c96ba8aea7ea0.mp3"
+        },
+        "ء": {
+          "text": "ء",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-b1d37f39b0b4e280.mp3"
+        },
+        "اِ": {
+          "text": "اِ",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-fee2b201b5e5cef0.mp3"
+        },
+        "ئِ": {
+          "text": "ئِ",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-fd93e9dbd1237a0b.mp3"
+        },
+        "ؤُ": {
+          "text": "ؤُ",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-d398feac984a4b54.mp3"
+        },
+        "مُّ": {
+          "text": "مُّ",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-a5d61b4789ac5b01.mp3"
+        },
+        "طَّ": {
+          "text": "طَّ",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-51d31bf88181ef5b.mp3"
+        },
+        "سَّ": {
+          "text": "سَّ",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-b2b2b8b6c9855086.mp3"
+        },
+        "لً": {
+          "text": "لً",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-4cc52666fb5ef61e.mp3"
+        },
+        "لّٰ": {
+          "text": "لّٰ",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-944196cd42f9f7c2.mp3"
+        },
+        "يِّ": {
+          "text": "يِّ",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-519ad4d87d50b324.mp3"
+        },
+        "صِّ": {
+          "text": "صِّ",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-7939a1440043a233.mp3"
+        },
+        "رَّ": {
+          "text": "رَّ",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-a3e23b6f31472b1b.mp3"
+        },
+        "ظ": {
+          "text": "ظ",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-ac850b0dfe00607a.mp3"
+        },
+        "ئ": {
+          "text": "ئ",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-c32fec9eb3eebbc7.mp3"
+        },
+        "ذ": {
+          "text": "ذ",
+          "label": "页面字素",
+          "audio": "audio/syllable-standard-29b50a05e8dc1b4a.mp3"
+        }
+      }
+    }
+  }
+}

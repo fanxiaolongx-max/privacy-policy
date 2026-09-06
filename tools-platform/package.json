@@ -7,7 +7,9 @@
   "scripts": {
     "start": "node backend/server.js",
     "start:desktop": "electron .",
-    "postinstall": "electron-builder install-app-deps",
+    "postinstall": "electron-builder install-app-deps && node scripts/ensure-builtin-assets.js",
+    "assets:ensure": "node scripts/ensure-builtin-assets.js",
+    "assets:pack-audio": "node backend/builtin-tools/tool-mtakhxqm/pack-audio.mjs",
     "license:sync-desktop-key": "node scripts/sync-desktop-license-public-key.js",
     "license:verify-desktop-config": "node scripts/verify-desktop-license-client-config.js",
     "defaults:export": "node scripts/export-default-quick-start-bundle.js && node scripts/update-default-quick-start-readme.js",

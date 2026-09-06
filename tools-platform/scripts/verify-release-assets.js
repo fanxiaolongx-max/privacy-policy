@@ -16,6 +16,14 @@ const captureToolRoot = path.join(
     'f12-to-extension'
 );
 const captureTemplatePath = path.join(captureToolRoot, 'chrome-capture-pro.template.zip');
+const arabicAudioBundlePath = path.join(
+    projectRoot,
+    'backend',
+    'builtin-tools',
+    'tool-mtakhxqm',
+    'audio',
+    'audio.bundle.zip'
+);
 const captureBundlePaths = [
     'aviftest/bundle.js',
     'editor/bundle.js',
@@ -78,6 +86,7 @@ async function assertTemplateContainsNoGoogleApiKeys() {
 
 async function main() {
     await assertZipHasFiles(offlinePackagePath);
+    await assertZipHasFiles(arabicAudioBundlePath);
     assertBundlesContainNoGoogleApiKeys();
     await assertTemplateContainsNoGoogleApiKeys();
     console.log('Release assets verified.');

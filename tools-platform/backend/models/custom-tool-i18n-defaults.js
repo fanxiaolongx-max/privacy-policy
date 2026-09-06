@@ -31,5 +31,6 @@ module.exports = {
     'optical-transfer': { nameEn: 'Optical File Transfer', descriptionEn: 'Transfers text or small files through animated QR frames with offline support and no server-side file transfer.' },
     'tool-msh8aro4': { nameEn: 'Platform Panorama', descriptionEn: 'Bilingual overview of platform modules, custom tools, access methods, search, and capability categories.' },
     'question-bank-assistant-privacy': { nameEn: 'Question Bank Assistant Privacy Policy', descriptionEn: 'Bilingual privacy policy for the Question Bank and Answer Assistant browser extension.' },
-    'question-bank-study': { nameEn: 'Question Bank Study & Excel Converter', descriptionEn: 'Search and study exported question-bank JSON files and convert them to Excel entirely in the browser.' }
+    'question-bank-study': { nameEn: 'Question Bank Study & Excel Converter', descriptionEn: 'Search and study exported question-bank JSON files and convert them to Excel entirely in the browser.' },
+    'tool-mtakhxqm': { nameEn: 'Egyptian Arabic Interactive Classroom', descriptionEn: 'An immersive Egyptian Arabic interactive learning platform for Chinese speakers, featuring phonetics, joining rules, symbol vocabulary, flashcards memory deck, real-world dialogues, and quizzes.' }
 };

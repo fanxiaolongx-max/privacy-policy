@@ -16,11 +16,13 @@ tools-platform/data/*.db
 tools-platform/dist/
 tools-platform/node_modules/
 
-# Large media assets / Video assets (不推送到 GitHub)
+# Large media assets / Video & Audio assets (不推送到 GitHub，本地运行保留)
 tools-platform/frontend/assets/videos/
+tools-platform/backend/builtin-tools/*/audio/*.mp3
 *.mp4
 *.mkv
 *.webm
 *.mov
 *.m4v
+
 

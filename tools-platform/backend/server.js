@@ -73,6 +73,7 @@ const externalMetricsRoutes = require('./routes/external-metrics');
 const customToolsRepo = require('./models/custom-tools-repository');
 const customToolI18nService = require('./models/custom-tool-i18n-service');
 const { initializeBuiltinTools } = require('./models/builtin-tools-sync');
+const { ensureBuiltinToolAssets } = require('./models/builtin-assets-unpacker');
 const { DATA_DIR } = require('./models/store');
 const navSettingsRoutes = require('./routes/nav-settings');
 const aiSettingsRoutes = require('./routes/ai-settings');
@@ -516,6 +517,14 @@ async function startServer() {
         }
     } catch (error) {
         console.warn(`[custom-tools] 系统工具初始化失败，继续使用现有用户工具：${error.message}`);
+    }
+    try {
+        await ensureBuiltinToolAssets({
+            sourceDir: path.join(__dirname, 'builtin-tools'),
+            targetDir: customToolsRepo.CUSTOM_TOOLS_DIR
+        });
+    } catch (assetsError) {
+        console.warn(`[builtin-assets] 媒体资源包就绪检查失败：${assetsError.message}`);
     }
     const customToolReconcile = await customToolsRepo.reconcileToolsFromDisk();
     if (customToolReconcile.recovered.length) {
