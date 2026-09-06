@@ -1,6 +1,6 @@
 {
   "name": "tools-platform",
-  "version": "1.0.203",
+  "version": "1.0.204",
   "description": "Tools Platform Desktop App",
   "repository": "github:fanxiaolongx-max/privacy-policy",
   "main": "electron-main.js",
