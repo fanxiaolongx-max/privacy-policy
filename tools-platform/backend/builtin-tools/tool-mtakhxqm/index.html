@@ -141,14 +141,32 @@
             gap: 30px;
         }
 
-        /* 侧边导航栏 */
+        /* 侧边导航栏（悬浮常驻吸顶） */
         .sidebar {
             width: 240px;
             flex-shrink: 0;
             display: flex;
             flex-direction: column;
             gap: 10px;
+            position: sticky;
+            top: 20px;
+            align-self: flex-start;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0,0,0,0.15) transparent;
             transition: width 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+            z-index: 100;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.15);
+            border-radius: 4px;
         }
 
         body.sidebar-collapsed .sidebar {
@@ -297,12 +315,18 @@
         .starter-flip-front { background: linear-gradient(145deg, #5b55e8, #4338ca); color: #fff; }
         .starter-flip-back { border: 2px solid var(--starter); background: #fff; color: #312e81; transform: rotateY(180deg); }
         .starter-word { direction: rtl; font-family: "Amiri", "Traditional Arabic", serif; font-size: 34px; font-weight: 700; line-height: 1.2; text-align: center; max-width: 95%; overflow: hidden; text-overflow: ellipsis; }
-        .starter-word.playing, .starter-breakdown-letter.playing { border-radius: 8px; background: #dcf4ff; color: #1476a5; }
+        .starter-back-word-wrap { margin-top: 3px; margin-bottom: 4px; display: flex; align-items: center; justify-content: center; width: 100%; }
+        .starter-back-word { direction: rtl; font-family: "Amiri", "Traditional Arabic", serif; font-size: 21px; font-weight: 700; color: #4338ca; line-height: 1.15; cursor: pointer; padding: 1px 10px; border-radius: 8px; transition: all .15s ease; border: 1px solid rgba(99, 102, 241, 0.18); background: #f8fafc; }
+        .starter-back-word:hover { background: #e0e7ff; color: #3730a3; border-color: #c7d2fe; transform: scale(1.05); }
+        .starter-word.playing, .starter-back-word.playing, .starter-breakdown-letter.playing { border-radius: 8px; background: #dcf4ff; color: #1476a5; }
         .starter-meaning { margin-top: 4px; font-size: 13.5px; font-weight: 600; text-align: center; max-width: 95%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .starter-breakdown { display: flex; flex-wrap: nowrap; align-items: center; justify-content: center; gap: 4px; direction: rtl; width: 100%; max-width: 100%; white-space: nowrap; margin-bottom: 2px; }
         .starter-breakdown-letter { display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 35px; padding: 2px 5px; border: 1px solid #d7d9f9; border-radius: 8px; background: var(--starter-soft); color: #3730a3; font-family: "Amiri", "Traditional Arabic", serif; font-size: 22px; line-height: 1; cursor: pointer; flex-shrink: 0; box-shadow: 0 1px 3px rgba(79, 70, 229, .08); transition: transform .15s ease, background .15s ease, box-shadow .15s ease; }
         .starter-breakdown-letter:hover { transform: translateY(-1px); background: #e0e7ff; box-shadow: 0 3px 8px rgba(79, 70, 229, .15); }
         .starter-breakdown-letter:active { transform: scale(0.96); }
+        .starter-breakdown-letter.is-key-letter { background: linear-gradient(145deg, #fff7ed, #ffedd5); border: 1.5px solid #f97316; color: #c2410c; font-weight: 700; box-shadow: 0 2px 6px rgba(249, 115, 22, 0.22); transform: scale(1.04); z-index: 2; }
+        .starter-breakdown-letter.is-key-letter:hover { transform: scale(1.08) translateY(-1px); background: #fed7aa; border-color: #ea580c; box-shadow: 0 4px 10px rgba(249, 115, 22, 0.32); }
+        .starter-breakdown-letter.is-key-letter.playing { background: #fed7aa !important; color: #ea580c !important; border-color: #ea580c !important; }
         .starter-breakdown-plus { display: inline-flex; align-items: center; justify-content: center; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px; font-weight: 700; color: #818cf8; user-select: none; flex-shrink: 0; line-height: 1; }
         .starter-pron { margin-top: 6px; padding: 2px 9px; border-radius: 999px; background: #f3f4f6; color: #6b7280; font-family: monospace; font-size: 12px; max-width: 90%; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .starter-card-hint { margin-top: 4px; color: rgba(255,255,255,.72); font-size: 10.5px; }
@@ -312,13 +336,23 @@
         /* 卡片字母与长短音属性标签 */
         .starter-card-phonetic-badge { position: absolute; top: 7px; right: 8px; font-size: 10px; padding: 2px 7px; border-radius: 12px; background: rgba(255,255,255,.25); color: #fff; font-weight: 700; letter-spacing: 0.2px; display: inline-flex; align-items: center; gap: 4px; border: 1px solid rgba(255,255,255,0.35); }
         .starter-card-phonetic-badge .badge-letter { font-family: "Amiri", "Traditional Arabic", serif; font-size: 13px; line-height: 1; }
-        .starter-card-phonetic-badge.vowel-long { background: rgba(234, 88, 12, 0.45); border-color: rgba(253, 186, 116, 0.6); }
-        .starter-card-phonetic-badge.vowel-diph { background: rgba(147, 51, 234, 0.45); border-color: rgba(216, 180, 254, 0.6); }
+        .starter-card-phonetic-badge.vowel-long, .starter-card-phonetic-badge.vowel-long-a { background: rgba(234, 88, 12, 0.45); border-color: rgba(253, 186, 116, 0.6); }
+        .starter-card-phonetic-badge.vowel-long-i { background: rgba(22, 163, 74, 0.45); border-color: rgba(134, 239, 172, 0.6); }
+        .starter-card-phonetic-badge.vowel-long-u { background: rgba(124, 58, 237, 0.45); border-color: rgba(196, 181, 253, 0.6); }
+        .starter-card-phonetic-badge.vowel-diph { background: rgba(192, 38, 211, 0.45); border-color: rgba(240, 171, 252, 0.6); }
         .starter-card-phonetic-badge.vowel-short { background: rgba(2, 132, 199, 0.45); border-color: rgba(125, 211, 252, 0.6); }
+        .starter-card-phonetic-badge.vowel-sukun { background: rgba(100, 116, 139, 0.55); border-color: rgba(203, 213, 225, 0.6); }
+        .starter-card-phonetic-badge.vowel-shaddah { background: rgba(220, 38, 38, 0.55); border-color: rgba(252, 165, 165, 0.6); }
         .starter-flip-back .starter-card-phonetic-badge { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
-        .starter-flip-back .starter-card-phonetic-badge.vowel-long { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
-        .starter-flip-back .starter-card-phonetic-badge.vowel-diph { background: #faf5ff; color: #7e22ce; border-color: #e9d5ff; }
+        .starter-flip-back .starter-card-phonetic-badge.vowel-long, .starter-flip-back .starter-card-phonetic-badge.vowel-long-a { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
+        .starter-flip-back .starter-card-phonetic-badge.vowel-long-i { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
+        .starter-flip-back .starter-card-phonetic-badge.vowel-long-u { background: #faf5ff; color: #6d28d9; border-color: #ddd6fe; }
+        .starter-flip-back .starter-card-phonetic-badge.vowel-diph { background: #fdf4ff; color: #a21caf; border-color: #f5d0fe; }
         .starter-flip-back .starter-card-phonetic-badge.vowel-short { background: #f0f9ff; color: #0369a1; border-color: #bae6fd; }
+        .starter-flip-back .starter-card-phonetic-badge.vowel-sukun { background: #f8fafc; color: #475569; border-color: #cbd5e1; }
+        .starter-flip-back .starter-card-phonetic-badge.vowel-shaddah { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+        .starter-card-phonetic-badge .badge-pos-tag { display: inline-block; font-size: 9.5px; font-weight: 800; padding: 1px 4px; border-radius: 4px; background: rgba(0,0,0,0.18); margin-left: 2px; line-height: 1.1; vertical-align: middle; }
+        .starter-flip-back .starter-card-phonetic-badge .badge-pos-tag { background: rgba(0,0,0,0.07); }
 
         /* 单词卡片分类转移工具栏 */
         .card-shift-actions { position: absolute; bottom: 6px; display: flex; gap: 4px; align-items: center; justify-content: center; z-index: 5; }
@@ -352,7 +386,7 @@
         .deck-btn-label { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; }
         .deck-btn-count { font-size: 13px; font-weight: 800; padding: 2px 8px; border-radius: 10px; background: rgba(0,0,0,0.06); }
         .deck-controls { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding-top: 14px; border-top: 1px solid #f1f5f9; }
-        .deck-controls-secondary { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding-top: 12px; margin-top: 12px; border-top: 1px dashed #e2e8f0; }
+        .deck-controls-secondary { display: flex; justify-content: flex-start; align-items: center; gap: 12px; flex-wrap: wrap; padding-top: 12px; margin-top: 12px; border-top: 1px dashed #e2e8f0; }
         .deck-controls-tertiary { display: flex; justify-content: flex-start; align-items: center; gap: 12px; flex-wrap: wrap; padding-top: 12px; margin-top: 12px; border-top: 1px dashed #e2e8f0; }
         .deck-filter-chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
         .deck-chip { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #cbd5e1; background: #fff; color: #475569; cursor: pointer; transition: all .15s ease; }
@@ -363,7 +397,15 @@
         .deck-chip.letter-chip .chip-ar { font-family: "Amiri", "Traditional Arabic", serif; font-size: 16px; font-weight: 700; margin-right: 3px; line-height: 1; vertical-align: middle; }
         .deck-chip.letter-chip.active { background: #ea580c; border-color: #ea580c; color: #fff; }
         .deck-chip.letter-chip:hover { border-color: #ea580c; color: #ea580c; }
-        .deck-sort-wrap { display: flex; align-items: center; gap: 8px; }
+        .deck-controls-quaternary { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding-top: 12px; margin-top: 12px; border-top: 1px dashed #e2e8f0; }
+        .deck-chip.pos-chip .pos-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+        .deck-chip.pos-chip .dot-initial { background: #10b981; }
+        .deck-chip.pos-chip .dot-medial { background: #06b6d4; }
+        .deck-chip.pos-chip .dot-final { background: #f59e0b; }
+        .deck-chip.pos-chip.active { background: #0d9488; border-color: #0d9488; color: #fff; }
+        .deck-chip.pos-chip.active .pos-dot { background: #fff !important; }
+        .deck-chip.pos-chip:hover { border-color: #0d9488; color: #0d9488; }
+        .deck-sort-wrap { display: flex; align-items: center; gap: 8px; margin-left: auto; }
         .deck-sort-label { font-size: 12px; font-weight: 700; color: #64748b; white-space: nowrap; }
         .deck-select { padding: 6px 12px; border-radius: 10px; border: 1px solid #cbd5e1; background: #fff; color: #334155; font-size: 12.5px; font-weight: 600; outline: none; cursor: pointer; transition: all .15s ease; }
         .deck-select:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.12); }
@@ -1622,6 +1664,8 @@
                 width: 100%;
                 flex-direction: row;
                 overflow-x: auto;
+                position: static;
+                max-height: none;
                 padding-bottom: 5px;
             }
 
@@ -2283,21 +2327,13 @@
                         <div class="deck-filter-chips" id="deck-vowel-chips">
                             <span style="font-size:12px; font-weight:700; color:#64748b; margin-right:4px;">音性标签:</span>
                             <button type="button" class="deck-chip vowel-chip active" onclick="filterDeckByVowel('all')">全部音性</button>
-                            <button type="button" class="deck-chip vowel-chip" onclick="filterDeckByVowel('long')">🟠 长音 (ā / ī / ū)</button>
-                            <button type="button" class="deck-chip vowel-chip" onclick="filterDeckByVowel('short')">🔵 短音 (a / i / u)</button>
-                            <button type="button" class="deck-chip vowel-chip" onclick="filterDeckByVowel('diphthong')">🟣 双元音 (aw / ay)</button>
-                        </div>
-                        <div class="deck-sort-wrap">
-                            <label for="deck-sort-select" class="deck-sort-label">排序维度:</label>
-                            <select id="deck-sort-select" class="deck-select" onchange="handleDeckSortChange(this.value)">
-                                <option value="default">默认排列</option>
-                                <option value="letter-asc">按阿语字母 (ا - ي)</option>
-                                <option value="letter-desc">按阿语字母 (ي - ا)</option>
-                                <option value="pron-asc">按读音音标 (A - Z)</option>
-                                <option value="pron-desc">按读音音标 (Z - A)</option>
-                                <option value="vowel-long-first">按长短音 (长音优先)</option>
-                                <option value="vowel-short-first">按长短音 (短音优先)</option>
-                            </select>
+                            <button type="button" class="deck-chip vowel-chip" onclick="filterDeckByVowel('long-a')">🟠 长音 ā</button>
+                            <button type="button" class="deck-chip vowel-chip" onclick="filterDeckByVowel('long-i')">🟢 长音 ī</button>
+                            <button type="button" class="deck-chip vowel-chip" onclick="filterDeckByVowel('long-u')">🟣 长音 ū</button>
+                            <button type="button" class="deck-chip vowel-chip" onclick="filterDeckByVowel('short')">🔵 短音 (a/i/u)</button>
+                            <button type="button" class="deck-chip vowel-chip" onclick="filterDeckByVowel('diphthong')">🟤 双元音 (aw/ay)</button>
+                            <button type="button" class="deck-chip vowel-chip" onclick="filterDeckByVowel('sukun')">⚪ 静音 (Sukūn ْ)</button>
+                            <button type="button" class="deck-chip vowel-chip" onclick="filterDeckByVowel('shaddah')">🔴 重音 (Shaddah ّ)</button>
                         </div>
                     </div>
 
@@ -2311,6 +2347,28 @@
                             <button type="button" class="deck-chip letter-chip" onclick="filterDeckByLetter('ث')"><span class="chip-ar">ث</span> Thāʾ</button>
                             <button type="button" class="deck-chip letter-chip" onclick="filterDeckByLetter('و')"><span class="chip-ar">و</span> Wāw</button>
                             <button type="button" class="deck-chip letter-chip" onclick="filterDeckByLetter('ي')"><span class="chip-ar">ي</span> Yāʾ</button>
+                        </div>
+                    </div>
+
+                    <div class="deck-controls-quaternary">
+                        <div class="deck-filter-chips" id="deck-position-chips">
+                            <span style="font-size:12px; font-weight:700; color:#64748b; margin-right:4px;">字母位置:</span>
+                            <button type="button" class="deck-chip pos-chip active" onclick="filterDeckByPosition('all')">全部位置</button>
+                            <button type="button" class="deck-chip pos-chip" onclick="filterDeckByPosition('initial')"><span class="pos-dot dot-initial"></span> 词首 (词前)</button>
+                            <button type="button" class="deck-chip pos-chip" onclick="filterDeckByPosition('medial')"><span class="pos-dot dot-medial"></span> 词中</button>
+                            <button type="button" class="deck-chip pos-chip" onclick="filterDeckByPosition('final')"><span class="pos-dot dot-final"></span> 词尾 (词后)</button>
+                        </div>
+                        <div class="deck-sort-wrap">
+                            <label for="deck-sort-select" class="deck-sort-label"><i class="fa-solid fa-arrow-down-short-wide" style="color:#6366f1; margin-right:3px;"></i>排序维度:</label>
+                            <select id="deck-sort-select" class="deck-select" onchange="handleDeckSortChange(this.value)">
+                                <option value="default">默认排列</option>
+                                <option value="letter-asc">按阿语字母 (ا - ي)</option>
+                                <option value="letter-desc">按阿语字母 (ي - ا)</option>
+                                <option value="pron-asc">按读音音标 (A - Z)</option>
+                                <option value="pron-desc">按读音音标 (Z - A)</option>
+                                <option value="vowel-long-first">按长短音 (长音优先)</option>
+                                <option value="vowel-short-first">按长短音 (短音优先)</option>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -2511,7 +2569,27 @@
             { ar: 'بِنْت', emoji: '👧', translation: '女孩', pron: 'bint' },
             { ar: 'تِين', emoji: '🌿', translation: '无花果', pron: 'tīn' },
             { ar: 'تُوت', emoji: '🫐', translation: '桑葚', pron: 'tūt' },
-            { ar: 'ثَوْب', emoji: '👕', translation: '衣服／长袍', pron: 'thawb' }
+            { ar: 'ثَوْب', emoji: '👕', translation: '衣服／长袍', pron: 'thawb' },
+            // 静音符号 (Sukūn ْ) 典型词汇
+            { ar: 'أَنْتَ', emoji: '👉', translation: '你(男性)', pron: 'anta' },
+            { ar: 'تَمْر', emoji: '🌴', translation: '椰枣', pron: 'tamr' },
+            { ar: 'خُبْز', emoji: '🍞', translation: '面包', pron: 'khubz' },
+            { ar: 'وَقْت', emoji: '⏰', translation: '时间', pron: 'waqt' },
+            { ar: 'شَمْس', emoji: '☀️', translation: '太阳', pron: 'shams' },
+            // 重音/叠音符号 (Shaddah ّ) 典型词汇
+            { ar: 'أُمّ', emoji: '👩', translation: '母亲', pron: 'umm' },
+            { ar: 'جَدّ', emoji: '👴', translation: '祖父/爷爷', pron: 'jadd' },
+            { ar: 'جَدَّة', emoji: '👵', translation: '祖母/奶奶', pron: 'jaddah' },
+            { ar: 'بُطّ', emoji: '🦆', translation: '鸭子', pron: 'buṭṭ' },
+            { ar: 'تُفَّاح', emoji: '🍎', translation: '苹果', pron: 'tuffāḥ' },
+            { ar: 'كُلّ', emoji: '🌐', translation: '全部/每个', pron: 'kull' },
+            { ar: 'حَبَّ', emoji: '❤️', translation: '喜爱', pron: 'ḥabba' },
+            // 长音 ū / ī / ā 扩展典型词汇
+            { ar: 'سُوق', emoji: '🛒', translation: '集市/市场', pron: 'sūq' },
+            { ar: 'نُور', emoji: '💡', translation: '光明/光芒', pron: 'nūr' },
+            { ar: 'حَلِيب', emoji: '🥛', translation: '牛奶', pron: 'ḥalīb' },
+            { ar: 'كَبِير', emoji: '🐘', translation: '大的', pron: 'kabīr' },
+            { ar: 'كِتَاب', emoji: '📚', translation: '书本', pron: 'kitāb' }
         ];
 
         const STARTER_LETTER_FORMS = [
@@ -2892,6 +2970,17 @@
                 display,
                 key: display.replace(/[\u064b-\u065f\u0670]/g, '')
             }));
+        }
+
+        function isKeyLetterMatch(unitKey, targetLetter) {
+            if (!unitKey || !targetLetter) return false;
+            const cleanU = unitKey.replace(/[\u064b-\u065f\u0670\s]/g, '');
+            const cleanT = targetLetter.replace(/[\u064b-\u065f\u0670\s]/g, '');
+            if (cleanU === cleanT) return true;
+            if (['ا', 'أ', 'إ', 'آ', 'ء', 'ئ', 'ؤ'].includes(cleanT) && ['ا', 'أ', 'إ', 'آ', 'ء', 'ئ', 'ؤ'].includes(cleanU)) return true;
+            if (['ي', 'ى'].includes(cleanT) && ['ي', 'ى'].includes(cleanU)) return true;
+            if (['ت', 'ة'].includes(cleanT) && ['ت', 'ة'].includes(cleanU)) return true;
+            return false;
         }
 
         function interactiveArabicHtml(text, variant) {
@@ -3717,8 +3806,9 @@
         let wordCategoryState = {};
         let activeDeckView = 'all'; // 'all' | 'new' | 'mastered' | 'review'
         let activeTagFilter = 'all'; // 'all' | 'starter' | 'symbol-vocab' | 'family' | ...
-        let activeVowelFilter = 'all'; // 'all' | 'long' | 'short' | 'diphthong'
+        let activeVowelFilter = 'all'; // 'all' | 'long-a' | 'long-i' | 'long-u' | 'short' | 'diphthong' | 'sukun' | 'shaddah'
         let activeLetterFilter = 'all'; // 'all' | 'ا' | 'ب' | 'ت' | 'ث' | 'و' | 'ي'
+        let activePositionFilter = 'all'; // 'all' | 'initial' | 'medial' | 'final'
         let activeDeckSort = 'default'; // 'default' | 'letter-asc' | 'letter-desc' | 'pron-asc' | 'pron-desc' | 'vowel-long-first' | 'vowel-short-first'
         let deckSearchKeyword = '';
         let aggregatedWordList = [];
@@ -3739,7 +3829,7 @@
             return ARABIC_ALPHABET_ORDER[base] || 500;
         }
 
-        // 单词语言学属性智能分析：首字母、长短音/双元音判定
+        // 单词语言学属性智能分析：首字母、长音(ā/ī/ū)、短音、双元音、静符(Sukūn)、叠符/重音(Shaddah)判定
         function analyzeWordPhonetics(arText, pronText) {
             const cleanAr = (arText || '').replace(/[.؟،!…0-9\s]/g, '');
             const cleanPron = (pronText || '').toLowerCase().trim();
@@ -3757,33 +3847,78 @@
                 }
             }
 
-            // 2. 长短音与双元音判定
-            // 长音标记：音标含 ā, ī, ū, aa, ee, oo, 或阿语含 َا, ُو, ِي, آ
-            const hasLongPron = /[āīū]|\b(aa|ee|oo)\b/.test(cleanPron);
-            const hasLongAr = /[\u064e]ا|[\u064f]و|[\u0650]ي|آ/.test(cleanAr);
+            // 2. 双元音判定：aw, ay, ai, au, ey, oy 或 َو, َي
+            const hasDiphthong = /aw|ay|ai|au|ey|oy/.test(cleanPron) || /[\u064e][وي]/.test(cleanAr) || /[َ]?[وي]ْ/.test(cleanAr);
 
-            // 双元音判定：aw, ay 或 َو, َي
-            const hasDiphthong = /aw|ay|ai|au/.test(cleanPron) || /[\u064e][وي]/.test(cleanAr);
+            // 3. 重音/叠音符号 (Shaddah ّ)
+            const hasShaddah = /[\u0651]/.test(cleanAr) || /ّ/.test(cleanAr) || /\b\w*([b-z])\1\w*\b/i.test(cleanPron);
+
+            // 4. 静音符号 (Sukūn ْ)
+            const reducedPron = cleanPron.replace(/([a-z])\1/gi, '$1').replace(/sh|th|kh|dh|gh/gi, 'c');
+            const hasSukun = /[\u0652]/.test(cleanAr) || /ْ/.test(cleanAr) || /[^aeiouāīūōē\s]{2}/i.test(reducedPron);
+
+            // 5. 长音拆分判定 (ā, ī, ū)
+            const hasLongA = /ā|\baa\b/.test(cleanPron) || 
+                             /[\u064e]ا|آ|[\u064e]ى/.test(cleanAr) || 
+                             (!hasDiphthong && !cleanAr.startsWith('ال') && !/^[اأإآ]/.test(cleanAr) && /ا/.test(cleanAr) && !cleanAr.includes('أ') && !cleanAr.includes('إ'));
+
+            const hasLongI = /ī|\bee\b/.test(cleanPron) || 
+                             /[\u0650]ي/.test(cleanAr) || 
+                             (!hasDiphthong && /[\u0650]?[ي]/.test(cleanAr) && !cleanAr.startsWith('ي') && !/y[aeiou]/i.test(cleanPron) && /i/i.test(cleanPron) && !cleanPron.endsWith('wi') && !/w[aeiou]/i.test(cleanPron.slice(-2)));
+
+            const hasLongU = /ū|\boo\b|ō/.test(cleanPron) || 
+                             /[\u064f]و/.test(cleanAr) || 
+                             (!hasDiphthong && /[\u064f]?[و]/.test(cleanAr) && !cleanAr.startsWith('و') && !/w[aeiou]/i.test(cleanPron) && /[uūo]/i.test(cleanPron));
+
+            // 6. 短音判定：不含任何长音且不含双元音，或者主音为短音 a, i, u
+            const hasAnyLong = hasLongA || hasLongI || hasLongU;
+            const hasShort = !hasAnyLong && !hasDiphthong;
+
+            const phoneticTypes = new Set();
+            if (hasLongA) phoneticTypes.add('long-a');
+            if (hasLongI) phoneticTypes.add('long-i');
+            if (hasLongU) phoneticTypes.add('long-u');
+            if (hasShort) phoneticTypes.add('short');
+            if (hasDiphthong) phoneticTypes.add('diphthong');
+            if (hasSukun) phoneticTypes.add('sukun');
+            if (hasShaddah) phoneticTypes.add('shaddah');
 
             let vowelType = 'short';
             let vowelLabel = '短音';
             let vowelDetail = '短音';
             let vowelClass = 'vowel-short';
 
-            if (hasDiphthong) {
+            if (hasShaddah && !hasAnyLong && !hasDiphthong) {
+                vowelType = 'shaddah';
+                vowelLabel = '重音';
+                vowelDetail = '重音 ّ';
+                vowelClass = 'vowel-shaddah';
+            } else if (hasDiphthong) {
                 vowelType = 'diphthong';
                 const diphSub = cleanPron.includes('aw') || cleanPron.includes('au') ? 'aw' : 'ay';
                 vowelLabel = '双元音';
                 vowelDetail = `双元音 ${diphSub}`;
                 vowelClass = 'vowel-diph';
-            } else if (hasLongPron || hasLongAr) {
-                vowelType = 'long';
-                let longV = 'ā';
-                if (cleanPron.includes('ī') || cleanPron.includes('ee')) longV = 'ī';
-                else if (cleanPron.includes('ū') || cleanPron.includes('oo')) longV = 'ū';
-                vowelLabel = '长音';
-                vowelDetail = `长音 ${longV}`;
-                vowelClass = 'vowel-long';
+            } else if (hasLongA) {
+                vowelType = 'long-a';
+                vowelLabel = '长音 ā';
+                vowelDetail = hasShaddah ? '长音 ā · 重音' : '长音 ā';
+                vowelClass = 'vowel-long-a';
+            } else if (hasLongI) {
+                vowelType = 'long-i';
+                vowelLabel = '长音 ī';
+                vowelDetail = hasShaddah ? '长音 ī · 重音' : '长音 ī';
+                vowelClass = 'vowel-long-i';
+            } else if (hasLongU) {
+                vowelType = 'long-u';
+                vowelLabel = '长音 ū';
+                vowelDetail = hasShaddah ? '长音 ū · 重音' : '长音 ū';
+                vowelClass = 'vowel-long-u';
+            } else if (hasSukun) {
+                vowelType = 'sukun';
+                vowelLabel = '静音';
+                vowelDetail = '静音 ْ';
+                vowelClass = 'vowel-sukun';
             } else {
                 vowelType = 'short';
                 let shortV = 'a';
@@ -3794,7 +3929,7 @@
                 vowelClass = 'vowel-short';
             }
 
-            // 3. 音标纯文本（去除特殊重音符号，便于 A-Z 读音排序）
+            // 7. 音标纯文本（去除特殊重音符号，便于 A-Z 读音排序）
             const pronSortKey = cleanPron
                 .replace(/ā/g, 'a')
                 .replace(/ī/g, 'i')
@@ -3809,7 +3944,86 @@
                 vowelLabel,
                 vowelDetail,
                 vowelClass,
+                phoneticTypes: Array.from(phoneticTypes),
+                hasLongA,
+                hasLongI,
+                hasLongU,
+                hasShort,
+                hasDiphthong,
+                hasSukun,
+                hasShaddah,
                 pronSortKey
+            };
+        }
+
+        // 关键字母在词前 (词首)、词中、词后 (词尾) 位置深度分析
+        function analyzeWordLetterPositions(cleanAr) {
+            const text = (cleanAr || '').replace(/[.؟،!…0-9\s]/g, '');
+            const segments = 'Segmenter' in Intl
+                ? [...new Intl.Segmenter('ar', { granularity: 'grapheme' }).segment(text)].map(item => item.segment)
+                : Array.from(text);
+
+            const letters = [];
+            segments.forEach(seg => {
+                const base = seg.replace(/[\u064b-\u065f\u0670]/g, '');
+                if (base) letters.push(base);
+            });
+
+            const total = letters.length;
+            const keyPositions = {
+                'ا': new Set(),
+                'ب': new Set(),
+                'ت': new Set(),
+                'ث': new Set(),
+                'و': new Set(),
+                'ي': new Set()
+            };
+            const anyPositions = new Set();
+
+            function mapToKeyLetter(ch) {
+                if (['ا', 'أ', 'إ', 'آ', 'ء', 'ئ', 'ؤ'].includes(ch)) return 'ا';
+                if (ch === 'ب') return 'ب';
+                if (ch === 'ت' || ch === 'ة') return 'ت';
+                if (ch === 'ث') return 'ث';
+                if (ch === 'و') return 'و';
+                if (ch === 'ي' || ch === 'ى') return 'ي';
+                return null;
+            }
+
+            letters.forEach((ch, idx) => {
+                let pos = 'medial';
+                if (total === 1) {
+                    pos = 'all';
+                } else if (idx === 0) {
+                    pos = 'initial';
+                } else if (idx === total - 1) {
+                    pos = 'final';
+                } else {
+                    pos = 'medial';
+                }
+
+                const key = mapToKeyLetter(ch);
+                if (key && keyPositions[key]) {
+                    if (pos === 'all') {
+                        ['initial', 'medial', 'final'].forEach(p => {
+                            keyPositions[key].add(p);
+                            anyPositions.add(p);
+                        });
+                    } else {
+                        keyPositions[key].add(pos);
+                        anyPositions.add(pos);
+                    }
+                }
+            });
+
+            const resultPositions = {};
+            for (const [k, set] of Object.entries(keyPositions)) {
+                resultPositions[k] = Array.from(set);
+            }
+
+            return {
+                letterPositions: resultPositions,
+                anyPositions: Array.from(anyPositions)
             };
         }
 
@@ -3911,22 +4125,32 @@
 
             function registerWord(item, sourceTag, sourceName, fallbackEmoji = '📖', explicitLetters = []) {
                 const cleanAr = (item.ar || '').replace(/[.؟،!…0-9]/g, '').trim();
-                if (!cleanAr || cleanAr.includes(' ') || !containsLearnedLetters(cleanAr)) return;
+                if (!cleanAr || cleanAr.includes(' ') || (sourceTag !== 'starter' && !containsLearnedLetters(cleanAr))) return;
 
                 const dedupeKey = getWordDeduplicationKey(cleanAr, item.translation || item.zh);
                 if (seenDedupe.has(dedupeKey)) return;
                 seenDedupe.add(dedupeKey);
 
                 const translation = (item.translation || item.zh || '').replace(/<[^>]*>/g, '').replace(/本课(?:新学|复习)/g, '').trim();
-                const emojiMatch = translation.match(/^([\p{Extended_Pictographic}\u200d\ufe0f\u20e30-9#*]+)\s*(.*)$/u);
-                const finalEmoji = item.emoji || (emojiMatch ? emojiMatch[1] : fallbackEmoji);
-                const finalZh = emojiMatch ? emojiMatch[2] : translation;
+                const emojiMatch = translation.match(/^([\p{Extended_Pictographic}\u200d\ufe0f]+|[0-9#*]\uFE0F?\u20E3)\s*(.*)$/u);
+                const finalEmoji = item.emoji || (emojiMatch && emojiMatch[2] ? emojiMatch[1] : fallbackEmoji);
+                const finalZh = (emojiMatch && emojiMatch[2]) ? emojiMatch[2] : translation;
                 const phonetics = analyzeWordPhonetics(cleanAr, item.pron || item.py);
 
                 const targetLetters = extractWordTargetLetters(cleanAr, explicitLetters);
+                if (targetLetters.length === 0 && phonetics.initialLetter) {
+                    targetLetters.push(phonetics.initialLetter);
+                }
                 const primaryLetter = explicitLetters.length > 0 
                     ? explicitLetters[0] 
                     : (targetLetters.find(l => l === phonetics.initialLetter) || targetLetters[0] || phonetics.initialLetter || 'ا');
+
+                const posData = analyzeWordLetterPositions(cleanAr);
+                const posMapZh = { initial: '词首', medial: '词中', final: '词尾' };
+                const posMapShort = { initial: '首', medial: '中', final: '尾' };
+                const primaryPositions = posData.letterPositions[primaryLetter] || [];
+                const primaryPosShort = primaryPositions.map(p => posMapShort[p]).join('/');
+                const primaryPosZh = primaryPositions.map(p => posMapZh[p]).join('、');
 
                 list.push({
                     id: sourceTag + '_' + dedupeKey,
@@ -3939,6 +4163,11 @@
                     targetLetters: targetLetters,
                     primaryLetter: primaryLetter,
                     primaryLetterRank: getArabicLetterRank(primaryLetter),
+                    letterPositions: posData.letterPositions,
+                    anyPositions: posData.anyPositions,
+                    primaryPositions: primaryPositions,
+                    primaryPosShort: primaryPosShort,
+                    positionSummaryZh: primaryPosZh ? `${primaryLetter}(${primaryPosZh})` : '',
                     ...phonetics
                 });
             }
@@ -3946,11 +4175,14 @@
             // 1. 生活词汇拼读 (STARTER_WORD_DATA) - 最标准带音符号词汇优先加入
             STARTER_WORD_DATA.forEach(item => {
                 let explicit = [];
-                if (item.ar === 'أَب') explicit = ['ا', 'ب'];
+                if (item.ar === 'أَب' || item.ar === 'أَنْتَ' || item.ar === 'أُمّ') explicit = ['ا'];
                 else if (item.ar === 'أَوْ') explicit = ['ا', 'و'];
-                else if (item.ar === 'بَاب' || item.ar === 'بَيْت' || item.ar === 'بِنْت') explicit = ['ب'];
-                else if (item.ar === 'تِين' || item.ar === 'تُوت') explicit = ['ت'];
+                else if (item.ar === 'بَاب' || item.ar === 'بَيْت' || item.ar === 'بِنْت' || item.ar === 'بُطّ' || item.ar === 'حَبَّ' || item.ar === 'خُبْز') explicit = ['ب'];
+                else if (item.ar === 'تِين' || item.ar === 'تُوت' || item.ar === 'تَمْر' || item.ar === 'تُفَّاح' || item.ar === 'جَدَّة') explicit = ['ت'];
                 else if (item.ar === 'ثَوْب') explicit = ['ث'];
+                else if (item.ar === 'وَقْت' || item.ar === 'سُوق' || item.ar === 'نُور') explicit = ['و'];
+                else if (item.ar === 'حَلِيب' || item.ar === 'كَبِير') explicit = ['ي', 'ب'];
+                else if (item.ar === 'كِتَاب') explicit = ['ت', 'ا', 'ب'];
                 registerWord({ ar: item.ar, emoji: item.emoji || '✨', translation: item.translation, pron: item.pron }, 'starter', '生活拼读', '✨', explicit);
             });
 
@@ -4036,8 +4268,16 @@
 
             // 6. 数字与付款（数字与单项付款词，过滤问句与整句）
             if (DB.numbers) {
+                const NUM_ZH_MAP = {
+                    '10': '10 (十)',
+                    '15': '15 (十五)',
+                    '20': '20 (二十)',
+                    '30': '30 (三十)',
+                    '40': '40 (四十)'
+                };
                 DB.numbers.forEach(item => {
-                    registerWord({ ar: item.ar, emoji: item.group === '数字' ? '🔢' : '💵', translation: item.zh, pron: item.py }, 'numbers', '数字付款');
+                    const fullZh = NUM_ZH_MAP[item.zh] || item.zh;
+                    registerWord({ ar: item.ar, emoji: item.group === '数字' ? '🔢' : '💵', translation: fullZh, pron: item.py }, 'numbers', '数字付款');
                 });
             }
 
@@ -4144,9 +4384,13 @@
             const chips = document.querySelectorAll('#deck-vowel-chips .deck-chip');
             chips.forEach(chip => {
                 const isTarget = (vowel === 'all' && chip.textContent.includes('全部音性')) ||
-                    (vowel === 'long' && chip.textContent.includes('长音')) ||
+                    (vowel === 'long-a' && chip.textContent.includes('长音 ā')) ||
+                    (vowel === 'long-i' && chip.textContent.includes('长音 ī')) ||
+                    (vowel === 'long-u' && chip.textContent.includes('长音 ū')) ||
                     (vowel === 'short' && chip.textContent.includes('短音')) ||
-                    (vowel === 'diphthong' && chip.textContent.includes('双元音'));
+                    (vowel === 'diphthong' && chip.textContent.includes('双元音')) ||
+                    (vowel === 'sukun' && chip.textContent.includes('静音')) ||
+                    (vowel === 'shaddah' && chip.textContent.includes('重音'));
                 chip.classList.toggle('active', isTarget);
             });
             resetZonePageLimits();
@@ -4176,6 +4420,20 @@
             renderAggregatedFlashcards();
         }
 
+        function filterDeckByPosition(pos) {
+            activePositionFilter = pos;
+            const chips = document.querySelectorAll('#deck-position-chips .deck-chip');
+            chips.forEach(chip => {
+                const isTarget = (pos === 'all' && chip.textContent.includes('全部位置')) ||
+                    (pos === 'initial' && chip.textContent.includes('词首')) ||
+                    (pos === 'medial' && chip.textContent.includes('词中')) ||
+                    (pos === 'final' && chip.textContent.includes('词尾'));
+                chip.classList.toggle('active', isTarget);
+            });
+            resetZonePageLimits();
+            renderAggregatedFlashcards();
+        }
+
         let deckSearchDebounceTimer = null;
         function handleDeckSearch(value) {
             clearTimeout(deckSearchDebounceTimer);
@@ -4193,10 +4451,33 @@
             card.setAttribute('role', 'button');
             card.setAttribute('aria-label', `${word.translation}，点击翻转卡片`);
 
+            // 卡片右上角音性、位置与关键字母标签：动态根据当前选中的字母或位置优先展示
+            let badgeLetter = word.primaryLetter || word.initialLetter;
+            if (activeLetterFilter !== 'all' && word.targetLetters && word.targetLetters.includes(activeLetterFilter)) {
+                badgeLetter = activeLetterFilter;
+            } else if (activePositionFilter !== 'all') {
+                const matchedPosLetter = word.targetLetters && word.targetLetters.find(l => (word.letterPositions?.[l] || []).includes(activePositionFilter));
+                if (matchedPosLetter) badgeLetter = matchedPosLetter;
+            }
+            const posList = word.letterPositions?.[badgeLetter] || word.primaryPositions || [];
+            const posMapShort = { initial: '首', medial: '中', final: '尾' };
+            const posMapZh = { initial: '词首', medial: '词中', final: '词尾' };
+            const badgePosShort = posList.map(p => posMapShort[p]).join('/');
+            const badgePosZh = posList.map(p => posMapZh[p]).join('、');
+            const targetLettersStr = (word.targetLetters && word.targetLetters.length) 
+                ? word.targetLetters.join('、') 
+                : (word.primaryLetter || word.initialLetter);
+            const badgePosTagHtml = badgePosShort 
+                ? `<span class="badge-pos-tag" title="字母位置: ${escapeHtml(badgeLetter)} (${badgePosZh})">${escapeHtml(badgePosShort)}</span>` 
+                : '';
+
             const units = graphemeParts(word.ar);
-            const breakdownHtml = units.map(({ display, key }) => 
-                `<span class="starter-breakdown-letter" lang="ar" role="button" tabindex="0" data-display="${escapeHtml(display)}" data-key="${escapeHtml(key)}" title="点击播放 ${escapeHtml(display)}">${escapeHtml(display)}</span>`
-            ).join('<span class="starter-breakdown-plus" aria-hidden="true">+</span>');
+            const breakdownHtml = units.map(({ display, key }) => {
+                const isKey = isKeyLetterMatch(key, badgeLetter);
+                const keyClass = isKey ? ' is-key-letter' : '';
+                const keyTitle = isKey ? `关键字母: ${escapeHtml(display)} · 点击发音` : `点击播放 ${escapeHtml(display)}`;
+                return `<span class="starter-breakdown-letter${keyClass}" lang="ar" role="button" tabindex="0" data-display="${escapeHtml(display)}" data-key="${escapeHtml(key)}" data-is-key="${isKey ? 'true' : 'false'}" title="${keyTitle}">${escapeHtml(display)}</span>`;
+            }).join('<span class="starter-breakdown-plus" aria-hidden="true">+</span>');
 
             const categoryButtonsHtml = `
                 <div class="card-shift-actions" onclick="event.stopPropagation()">
@@ -4205,14 +4486,9 @@
                     <button type="button" class="shift-btn ${currentCategory === 'review' ? 'active-cat' : ''}" title="标记为需加强记忆" onclick="setWordCategory('${escapeHtml(word.ar)}', 'review', event)">🔥 加强</button>
                 </div>
             `;
-
-            // 卡片右上角音性与关键字母标签
-            const targetLettersStr = (word.targetLetters && word.targetLetters.length) 
-                ? word.targetLetters.join('、') 
-                : (word.primaryLetter || word.initialLetter);
             const badgeTagHtml = `
                 <span class="starter-card-phonetic-badge ${escapeHtml(word.vowelClass)}" title="关键字母: ${escapeHtml(targetLettersStr)} | ${escapeHtml(word.vowelDetail)}">
-                    <span class="badge-letter">${escapeHtml(word.primaryLetter || word.initialLetter)}</span> · <span>${escapeHtml(word.vowelDetail)}</span>
+                    <span class="badge-letter">${escapeHtml(badgeLetter)}</span>${badgePosTagHtml} · <span>${escapeHtml(word.vowelDetail)}</span>
                 </span>
             `;
 
@@ -4229,6 +4505,9 @@
                     <div class="starter-flip-face starter-flip-back">
                         <span class="starter-card-source">${escapeHtml(word.sourceName)}</span>
                         ${badgeTagHtml}
+                        <div class="starter-back-word-wrap">
+                            <span class="starter-back-word" lang="ar" role="button" tabindex="0" title="点击朗读整词">${escapeHtml(word.ar)}</span>
+                        </div>
                         <div class="starter-breakdown" aria-label="逐字母点读">${breakdownHtml}</div>
                         <span class="starter-pron">/${escapeHtml(word.pron || '')}/</span>
                         <span class="starter-meaning">${word.emoji} ${escapeHtml(word.translation)}</span>
@@ -4236,7 +4515,7 @@
                     </div>
                 </div>`;
 
-            // 正面发音
+            // 正面整词发音
             const wordButton = card.querySelector('.starter-word');
             const playWord = event => {
                 event.stopPropagation();
@@ -4249,6 +4528,22 @@
                     playWord(event);
                 }
             });
+
+            // 背面整词小字发音
+            const backWordButton = card.querySelector('.starter-back-word');
+            if (backWordButton) {
+                const playBackWord = event => {
+                    event.stopPropagation();
+                    playUnit('words', word.ar, 'egyptian', backWordButton);
+                };
+                backWordButton.addEventListener('click', playBackWord);
+                backWordButton.addEventListener('keydown', event => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        playBackWord(event);
+                    }
+                });
+            }
 
             // 逐字母发音
             card.querySelectorAll('.starter-breakdown-letter').forEach(letter => {
@@ -4279,7 +4574,7 @@
             };
 
             const flip = event => {
-                if (event.target.closest('.starter-word, .starter-breakdown-letter, .card-shift-actions, button')) return;
+                if (event.target.closest('.starter-word, .starter-back-word, .starter-breakdown-letter, .card-shift-actions, button')) return;
                 toggleFlip();
             };
             card.addEventListener('click', flip);
@@ -4314,11 +4609,22 @@
             document.getElementById('count-mastered').textContent = countMasteredTotal;
             document.getElementById('count-review').textContent = countReviewTotal;
 
-            // 筛选条件过滤（来源 + 音性 + 关键字母 + 关键词）
+            // 筛选条件过滤（来源 + 音性 + 关键字母 + 字母位置 + 关键词）
             let filteredWords = aggregatedWordList.filter(w => {
                 if (activeTagFilter !== 'all' && w.sourceTag !== activeTagFilter) return false;
-                if (activeVowelFilter !== 'all' && w.vowelType !== activeVowelFilter) return false;
+                if (activeVowelFilter !== 'all') {
+                    if (!w.phoneticTypes || !w.phoneticTypes.includes(activeVowelFilter)) return false;
+                }
                 if (activeLetterFilter !== 'all' && (!w.targetLetters || !w.targetLetters.includes(activeLetterFilter))) return false;
+                if (activePositionFilter !== 'all') {
+                    if (activeLetterFilter !== 'all') {
+                        const letterPositions = w.letterPositions?.[activeLetterFilter] || [];
+                        if (!letterPositions.includes(activePositionFilter)) return false;
+                    } else {
+                        const anyPositions = w.anyPositions || [];
+                        if (!anyPositions.includes(activePositionFilter)) return false;
+                    }
+                }
                 if (deckSearchKeyword) {
                     const matchAr = w.ar.toLowerCase().includes(deckSearchKeyword);
                     const matchZh = (w.translation || '').toLowerCase().includes(deckSearchKeyword);
@@ -4327,7 +4633,8 @@
                                         (w.initialLetter || '').includes(deckSearchKeyword) ||
                                         (w.targetLetters && w.targetLetters.includes(deckSearchKeyword));
                     const matchVowel = (w.vowelDetail || '').toLowerCase().includes(deckSearchKeyword);
-                    if (!matchAr && !matchZh && !matchPy && !matchLetter && !matchVowel) return false;
+                    const matchPos = (w.positionSummaryZh || '').includes(deckSearchKeyword);
+                    if (!matchAr && !matchZh && !matchPy && !matchLetter && !matchVowel && !matchPos) return false;
                 }
                 return true;
             });
