@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "tool": {
+    "slug": "tool-mtpx4vtr",
+    "name": "餐单核验",
+    "nameEn": "Order Data Validator",
+    "icon": "🧩",
+    "description": "用于餐厅采购订单数据清洗与核对，支持Excel导入、文本解析、数量单位纠错及多表差异比对。",
+    "descriptionEn": "A restaurant order data validation tool for cleaning and checking procurement records, supporting Excel import, text parsing, quantity and unit correction, and multi-table discrepancy comparison.",
+    "tags": [
+      "Excel核对",
+      "数据清洗",
+      "文本解析",
+      "单位纠错",
+      "差异比对"
+    ],
+    "href": "/tools/tool-mtpx4vtr",
+    "filePath": "/custom-tools/tool-mtpx4vtr/index.html",
+    "publicAccess": true,
+    "createdAt": "2026-09-06T14:40:07.455Z",
+    "updatedAt": "2026-09-06T15:18:14.975Z"
+  },
+  "history": {
+    "id": "custom-import-tool-mtpx4vtr",
+    "tool": "custom",
+    "action": "导入自定义工具",
+    "detail": "餐单核验 (tool-mtpx4vtr)",
+    "time": "2026-09-06T14:40:07.455Z"
+  }
+}

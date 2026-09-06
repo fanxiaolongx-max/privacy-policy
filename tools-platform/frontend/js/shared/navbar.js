@@ -475,7 +475,7 @@ function registerNavbarI18n() {
             'nav.page.home.help': '逐个控制自定义 HTML 工具的新窗口直达地址是否需要登录。默认关闭公开访问；开启后，任何获得链接的人都可以访问该工具及其静态资源。',
             'nav.page.home.title': '自定义 HTML 访问鉴权',
             'nav.page.home.public': '允许免登录新窗口访问',
-            'nav.page.home.private': '需要登录',
+            'nav.page.home.private': '免登录',
             'nav.page.home.empty': '暂无自定义 HTML 工具。',
             'nav.page.report.help': '清理报表看板“历史快照”下拉列表使用的 SLA 源快照。可彻底删除全部旧快照，只保留最新一份；也可按天数保留。已入库的月报/报表档案不在此清理范围内。',
             'nav.page.report.title': '历史快照冗余清理',
@@ -3669,7 +3669,7 @@ function openMediaForm(importing) {
 
     const forceClose = () => {
         busy = false;
-        try { dialog.close(); } catch (_) {}
+        try { dialog.close(); } catch (_) { }
         dialog.remove();
         document.querySelectorAll('#mediaFormDialog').forEach(el => el.remove());
     };
@@ -3885,7 +3885,7 @@ function openMediaForm(importing) {
                             xhr.onerror = () => reject(new Error('网络连接中断'));
                             xhr.onload = () => {
                                 let data;
-                                try { data = JSON.parse(xhr.responseText); } catch (_) {}
+                                try { data = JSON.parse(xhr.responseText); } catch (_) { }
                                 if (xhr.status >= 200 && xhr.status < 300 && data?.success) resolve(data);
                                 else reject(new Error(data?.error || `HTTP ${xhr.status}`));
                             };

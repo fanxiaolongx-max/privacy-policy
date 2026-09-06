@@ -1,0 +1,2100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>餐饮下单数据智能核对平台 - 完整规则版</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { brand: { 500: '#6366f1' }, benchmark: { 500: '#10b981' } } } }
+    }
+  </script>
+  <style>
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    .table-container {
+      max-height: calc(100vh - 420px);
+      min-height: 380px;
+    }
+
+    #main-tabs {
+      gap: 0.2rem;
+      flex-wrap: nowrap;
+    }
+
+    #main-tabs .tab-btn {
+      flex-shrink: 0;
+      white-space: nowrap;
+      padding: 0.55rem 0.5rem;
+      font-size: 11px;
+      letter-spacing: -0.02em;
+    }
+
+    #main-tabs .tab-btn [id^="tab-badge-"] {
+      margin-left: 0.2rem;
+      padding-left: 0.2rem;
+      padding-right: 0.2rem;
+      font-size: 9px;
+    }
+
+    #tab-lineage {
+      height: 44px;
+      min-width: 100%;
+      pointer-events: none;
+    }
+
+    #tab-lineage-paths > path {
+      fill: none;
+      stroke-width: 1.45;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .ignored-compact-table {
+      table-layout: fixed;
+      min-width: 1380px;
+    }
+
+    .ignored-compact-table th,
+    .ignored-compact-table td {
+      vertical-align: middle;
+    }
+
+    .ignored-cell-one-line {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .comparison-card:fullscreen,
+    .comparison-card:-webkit-full-screen,
+    .comparison-card.fullscreen-fallback {
+      width: 100vw;
+      height: 100vh;
+      max-width: none;
+      max-height: none;
+      border-radius: 0;
+      background: white;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .comparison-card.fullscreen-fallback {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+    }
+
+    .comparison-card:fullscreen .comparison-table-scroll,
+    .comparison-card:-webkit-full-screen .comparison-table-scroll,
+    .comparison-card.fullscreen-fallback .comparison-table-scroll {
+      flex: 1;
+      max-height: none;
+      overflow: auto;
+    }
+
+    body.comparison-fullscreen-fallback {
+      overflow: hidden;
+    }
+  </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-[1920px] w-full mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div
+          class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-emerald-500 flex items-center justify-center text-white shadow-md">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4">
+            </path>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <h1 class="text-lg font-bold text-slate-900 tracking-tight">餐厅下单数据智能核对平台</h1>
+            <span
+              class="px-2 py-0.5 text-xs font-semibold bg-emerald-50 text-emerald-700 rounded-full border border-emerald-200">v2.5
+              完整清洗版</span>
+          </div>
+          <p class="text-xs text-slate-500">包含功能：智能提取列、空行过滤、缺失物品补全、单位纠错、文本智能解析、单位预警、工作表日期预警</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-3">
+        <button id="btn-view-anomalies" onclick="openAnomalyModal(true)"
+          class="hidden px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-lg border border-amber-200 transition-colors flex items-center shadow-sm">
+          <svg class="w-3.5 h-3.5 mr-1.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+            </path>
+          </svg>
+          质检纠错明细 (<span id="anomaly-badge-count">0</span>)
+        </button>
+        <button onclick="loadSampleData()"
+          class="px-3 py-1.5 text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg border border-indigo-200 transition-colors flex items-center shadow-sm">
+          <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z">
+            </path>
+          </svg>
+          载入演示数据
+        </button>
+        <button onclick="resetAllData()"
+          class="px-3 py-1.5 text-xs font-medium text-slate-600 bg-white hover:bg-slate-100 rounded-lg border border-slate-200 transition-colors">清空</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-1 max-w-[1920px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <!-- Status Indicators -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div id="status-std-excel" class="bg-white border border-slate-200 rounded-xl p-3 shadow-sm transition-all">
+        <div class="flex items-center justify-between"><span
+            class="text-xs font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">★
+            核心数据源</span><span class="status-indicator w-2 h-2 rounded-full bg-slate-300"></span></div>
+        <div class="mt-2 font-medium text-sm text-slate-800 truncate">标准 Excel 表格</div>
+        <div class="text-xs text-slate-400 detail-text mt-0.5">未导入</div>
+      </div>
+      <div id="status-std-txt" class="bg-white border border-slate-200 rounded-xl p-3 shadow-sm transition-all">
+        <div class="flex items-center justify-between"><span
+            class="text-xs font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">★
+            文本提取源</span><span class="status-indicator w-2 h-2 rounded-full bg-slate-300"></span></div>
+        <div class="mt-2 font-medium text-sm text-slate-800 truncate">标准 TXT (智能表格化)</div>
+        <div class="text-xs text-slate-400 detail-text mt-0.5">未输入</div>
+      </div>
+      <div id="status-targets" class="bg-white border border-slate-200 rounded-xl p-3 shadow-sm transition-all">
+        <div class="flex items-center justify-between"><span
+            class="text-xs font-semibold text-indigo-800 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">待核对表</span><span
+            class="status-indicator w-2 h-2 rounded-full bg-slate-300"></span></div>
+        <div class="mt-2 font-medium text-sm text-slate-800 truncate target-count-text">支持 1 个或多个表格</div>
+        <div class="text-xs text-slate-400 detail-text mt-0.5">未导入</div>
+      </div>
+    </div>
+
+    <!-- Input Configuration -->
+    <section class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+      <div class="p-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+        <!-- Left: Standards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="bg-emerald-50/40 rounded-xl p-3 border border-emerald-100">
+            <label class="block text-xs font-semibold text-emerald-950 mb-1 flex justify-between"><span>1. 源数据表格
+                (自动过滤、纠错)</span></label>
+            <div class="relative mt-1">
+              <input type="file" id="file-std-excel" accept=".xlsx, .xls" class="hidden"
+                onchange="handleExcelUpload(event, 'stdExcel')">
+              <label for="file-std-excel"
+                class="flex items-center justify-center border border-dashed border-emerald-300 hover:border-emerald-500 rounded-lg px-3 py-2.5 cursor-pointer transition-colors group">
+                <span class="text-xs font-medium text-emerald-700" id="label-std-excel">上传标准源表格</span>
+              </label>
+            </div>
+          </div>
+          <div class="bg-emerald-50/40 rounded-xl p-3 border border-emerald-100 flex flex-col">
+            <div class="flex justify-between mb-1">
+              <label class="block text-xs font-semibold text-emerald-950">2. 标准文本 (如：鸡精1件)</label>
+              <button onclick="document.getElementById('txt-std-content').value=''; handleTxtInput();"
+                class="text-[11px] text-slate-400">清空</button>
+            </div>
+            <textarea id="txt-std-content" oninput="handleTxtInput()" rows="2" placeholder="在此粘贴采购清单文本..."
+              class="w-full min-h-[42px] text-xs p-2 bg-white border border-emerald-200 rounded-lg focus:ring-emerald-500 font-mono resize-y"></textarea>
+          </div>
+        </div>
+
+        <!-- Right: Targets -->
+        <div class="rounded-xl border border-indigo-100 bg-indigo-50/40 p-3 flex flex-col justify-center">
+          <div class="flex items-center justify-between gap-3">
+            <div class="min-w-0">
+              <div class="text-xs font-semibold text-indigo-950">待核对表格</div>
+              <div class="text-[11px] text-indigo-600 mt-0.5">一次选择 1 个或多个 Excel，重新导入会替换当前列表</div>
+            </div>
+            <input type="file" id="file-target-batch" accept=".xlsx, .xls" multiple class="hidden"
+              onchange="handleBatchTargetUpload(event)">
+            <label for="file-target-batch"
+              class="shrink-0 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold cursor-pointer transition-colors shadow-sm"
+              id="label-target-batch">批量导入待核对表</label>
+          </div>
+          <div id="target-import-list" class="mt-2 flex gap-1.5 overflow-x-auto text-[10px] text-slate-500">
+            <span class="rounded bg-white/80 border border-indigo-100 px-2 py-1">尚未导入文件</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Data Presentation -->
+    <section class="bg-white rounded-2xl border border-slate-200/80 shadow-sm flex flex-col overflow-hidden">
+      <!-- Tabs -->
+      <div class="border-b border-slate-200 bg-slate-50 px-4 pt-2 flex flex-wrap items-end justify-between gap-2">
+        <div class="min-w-0 flex-1">
+          <svg id="tab-lineage" class="block" aria-label="数据合并与比对关系" role="img">
+            <defs>
+              <marker id="arrow-core" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#34d399"></path></marker>
+              <marker id="arrow-target" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#818cf8"></path></marker>
+              <marker id="arrow-result" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#c084fc"></path></marker>
+            </defs>
+            <g id="tab-lineage-paths"></g>
+          </svg>
+          <div class="flex overflow-x-auto pb-px" id="main-tabs">
+            <button onclick="switchMainTab('tab-std-excel')" title="★ 源数据表格"
+              class="tab-btn px-4 py-2.5 text-xs font-bold border-b-2 border-emerald-600 text-emerald-700 flex items-center focus:outline-none"
+              data-tab="tab-std-excel"><span>★源表</span><span id="tab-badge-std-excel"
+                class="text-[10px] bg-emerald-100 px-1 rounded-full ml-1">0条</span></button>
+            <button onclick="switchMainTab('tab-std-txt')" title="★ 标准文本（解析）"
+              class="tab-btn px-4 py-2.5 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 flex items-center focus:outline-none"
+              data-tab="tab-std-txt"><span>★文本</span><span id="tab-badge-std-txt"
+                class="text-[10px] bg-slate-200 px-1 rounded-full ml-1">0行</span></button>
+            <span id="target-tabs" class="contents"></span>
+            <button onclick="switchMainTab('tab-merged-core')" title="合并数据源"
+              class="tab-btn px-4 py-2.5 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-emerald-700 flex items-center focus:outline-none"
+              data-tab="tab-merged-core"><span>合并源</span><span id="tab-badge-merged-core"
+                class="text-[10px] bg-emerald-100 px-1 rounded-full ml-1">0条</span></button>
+            <button onclick="switchMainTab('tab-merged-targets')" title="合并待核对"
+              class="tab-btn px-4 py-2.5 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-indigo-700 flex items-center focus:outline-none"
+              data-tab="tab-merged-targets"><span>合并核对</span><span id="tab-badge-merged-targets"
+                class="text-[10px] bg-indigo-100 px-1 rounded-full ml-1">0条</span></button>
+            <button onclick="switchMainTab('tab-comparison')" title="最终比对结果"
+              class="tab-btn px-4 py-2.5 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-violet-700 flex items-center focus:outline-none"
+              data-tab="tab-comparison"><span>比对结果</span><span id="tab-badge-comparison"
+                class="text-[10px] bg-violet-100 px-1 rounded-full ml-1">0项需关注</span></button>
+            <button onclick="switchMainTab('tab-ignored')" title="查看因不可纠错或规则过滤而忽略的数据行及原因"
+              class="tab-btn px-4 py-2.5 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-rose-700 flex items-center focus:outline-none"
+              data-tab="tab-ignored"><span class="flex items-center"><svg class="w-3.5 h-3.5 mr-1 text-rose-500"
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636">
+                  </path>
+                </svg>已忽略行</span><span id="tab-badge-ignored"
+                class="text-[10px] bg-rose-100 text-rose-700 font-bold px-1.5 py-0.5 rounded-full ml-1 font-mono">0条</span></button>
+          </div>
+        </div>
+        <div class="pb-2 flex items-center gap-2">
+          <button id="export-comparison-btn" type="button" onclick="exportComparisonWorkbook()"
+            title="导出差异项和全部疑似缺货行，每个日期一个 Sheet"
+            class="hidden px-3 py-1.5 text-xs font-semibold text-white bg-violet-600 hover:bg-violet-700 rounded-lg border border-violet-700 transition-colors shadow-sm whitespace-nowrap">
+            ⬇️ 一键导出比对结果
+          </button>
+          <input type="text" oninput="handleTableSearch(this.value)" placeholder="搜索内容..."
+            class="w-48 text-xs px-3 py-1.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500">
+        </div>
+      </div>
+
+      <div id="sheet-nav-bar"
+        class="px-6 py-2 bg-slate-100/70 border-b border-slate-200 flex items-center space-x-2 text-xs overflow-x-auto">
+        <span class="text-[11px] font-semibold text-slate-500 shrink-0">工作表（此处为单表预览，合并结果会包含全部 Sheet）:</span>
+        <div id="sheet-buttons" class="flex items-center space-x-2 whitespace-nowrap"></div>
+      </div>
+
+      <div class="p-6">
+        <!-- Excel View -->
+        <div id="content-table-view" class="block">
+          <div
+            class="table-container overflow-auto rounded-xl border border-slate-200 shadow-inner bg-slate-50 relative">
+            <table class="min-w-full divide-y divide-slate-200 text-left text-xs bg-white">
+              <thead id="active-table-head"
+                class="bg-slate-100 sticky top-0 z-10 text-slate-700 font-semibold uppercase tracking-wider"></thead>
+              <tbody id="active-table-body" class="divide-y divide-slate-100 font-mono"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Comparison View (grouped by date) -->
+        <div id="comparison-group-view" class="hidden space-y-4"></div>
+
+        <!-- Text View (Parsed Table) -->
+        <div id="content-txt-view" class="hidden">
+          <div
+            class="table-container overflow-auto rounded-xl border border-emerald-200 shadow-inner bg-slate-50 relative">
+            <table class="min-w-full divide-y divide-emerald-200 text-left text-xs bg-white">
+              <thead id="txt-table-head"
+                class="bg-emerald-50 sticky top-0 z-10 text-emerald-800 font-semibold uppercase tracking-wider">
+                <tr>
+                  <th class="px-4 py-3 text-center w-12">#</th>
+                  <th class="px-4 py-3">DESCRIPTION OF GOODS (物品)</th>
+                  <th id="txt-qty-header" class="px-4 py-3">采购量（汇总：0）</th>
+                  <th class="px-4 py-3">UNIT (单位)</th>
+                </tr>
+              </thead>
+              <tbody id="txt-table-body" class="divide-y divide-emerald-100 font-mono">
+                <tr>
+                  <td colspan="4" class="px-6 py-20 text-center text-slate-400">暂无解析结果，请在上方输入标准文本。</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Ignored Rows View -->
+        <div id="content-ignored-view" class="hidden">
+          <div
+            class="mb-2 flex flex-wrap items-center justify-between gap-2 bg-rose-50/70 px-3 py-2 rounded-xl border border-rose-200">
+            <div class="flex items-center space-x-2">
+              <span
+                class="inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-200 whitespace-nowrap">
+                <svg class="w-4 h-4 mr-1 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                  </path>
+                </svg>
+                已忽略行审计
+              </span>
+              <span class="text-[11px] text-slate-500 whitespace-nowrap">以下行未参与比对，悬停可查看完整内容</span>
+            </div>
+            <div class="flex items-center space-x-3">
+              <span class="text-xs text-rose-700 font-bold font-mono" id="ignored-view-summary">共 0 条已忽略行</span>
+              <button onclick="exportIgnoredRowsCSV()"
+                class="px-2.5 py-1 text-xs font-semibold text-rose-700 bg-white hover:bg-rose-100 border border-rose-300 rounded-lg shadow-xs flex items-center transition-colors">
+                <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                </svg>
+                导出已忽略清单 (CSV)
+              </button>
+            </div>
+          </div>
+          <div
+            class="table-container overflow-auto rounded-xl border border-rose-200 shadow-inner bg-slate-50 relative">
+            <table class="ignored-compact-table w-full divide-y divide-rose-200 text-left text-[11px] bg-white">
+              <colgroup>
+                <col style="width:44px">
+                <col style="width:230px">
+                <col style="width:155px">
+                <col style="width:90px">
+                <col style="width:220px">
+                <col style="width:255px">
+                <col style="width:270px">
+                <col style="width:130px">
+              </colgroup>
+              <thead id="ignored-table-head"
+                class="bg-rose-50 sticky top-0 z-10 text-rose-900 font-semibold uppercase tracking-wider">
+                <tr>
+                  <th class="px-2 py-2 text-center">#</th>
+                  <th class="px-2 py-2">来源</th>
+                  <th class="px-2 py-2">工作表</th>
+                  <th class="px-2 py-2 text-center">位置</th>
+                  <th class="px-2 py-2">忽略原因</th>
+                  <th class="px-2 py-2">说明</th>
+                  <th class="px-2 py-2">原始行快照</th>
+                  <th class="px-2 py-2 text-center">状态</th>
+                </tr>
+              </thead>
+              <tbody id="ignored-table-body" class="divide-y divide-rose-100 font-mono">
+                <tr>
+                  <td colspan="8" class="px-6 py-20 text-center text-slate-400">暂无被忽略的数据行。</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    window.auditStore = {
+      benchmark: { excel: { fileName: '', sheetNames: [], activeSheet: '', dataBySheet: {} }, txt: { rawText: '', parsedData: [] } },
+      targets: [],
+      currentActiveTab: 'tab-std-excel',
+      searchKeywords: '',
+      anomalyLogs: [],
+      currentModalAnomalies: [],
+      pendingImportAction: null,
+      pendingCancelAction: null,
+      anomalyFilter: 'all'
+    };
+
+    const WILDCARD_DATE = '＊';
+    const COMPARISON_STATUS_PRIORITY = { '少了': 0, '多了': 1, '核心源无此物品': 2, '一致': 3 };
+
+    const KEY_COLS = ["DATE", "BIG SERIES", "DESCRIPTION OF GOODS", "UNIT", "采购量", "厨师备注"];
+    const TARGET_KEY_COLS = ["SUPPLIER NAME", ...KEY_COLS];
+    const VALID_UNITS = ['kg', 'ctn', 'bag', 'kral', 'pcs', 'bottle', 'm', '公斤', '件', '包', '桶', '斤', '袋', '板', '条'];
+
+    // ===== 核心数据清洗引擎 =====
+    function formatExcelDate(val) {
+      // Excel 的日期对象以 UTC 零点保存；使用本地时区读取可能退回前一天。
+      if (val instanceof Date) return val.getUTCFullYear() + '/' + (val.getUTCMonth() + 1) + '/' + val.getUTCDate();
+      if (typeof val === 'number' && val > 30000 && val < 60000) {
+        if (typeof XLSX !== 'undefined' && XLSX.SSF && XLSX.SSF.parse_date_code) {
+          const parsed = XLSX.SSF.parse_date_code(val);
+          if (parsed) return parsed.y + '/' + parsed.m + '/' + parsed.d;
+        }
+        const date = new Date(Math.round((val - 25569) * 86400 * 1000));
+        return date.getUTCFullYear() + '/' + (date.getUTCMonth() + 1) + '/' + date.getUTCDate();
+      }
+      return val;
+    }
+
+    function isRecognizableDateValue(value) {
+      if (value instanceof Date) return !Number.isNaN(value.getTime());
+      if (typeof value === 'number') return value > 30000 && value < 60000;
+
+      const text = String(value ?? '').trim();
+      if (!text) return false;
+      return /^\d{4}[/.\-]\d{1,2}[/.\-]\d{1,2}(?:[T\s].*)?$/.test(text) ||
+        /^\d{1,2}[/.\-]\d{1,2}[/.\-]\d{4}(?:[T\s].*)?$/.test(text) ||
+        /^\d{4}年\d{1,2}月\d{1,2}日/.test(text);
+    }
+
+    function columnHasRecognizableDate(grid, headerRowIndex, columnIndex) {
+      return grid.slice(headerRowIndex + 1).some(row => row && isRecognizableDateValue(row[columnIndex]));
+    }
+
+    function getHeaderMatchScore(cell, key, grid, headerRowIndex, columnIndex, isTarget) {
+      const headerText = String(cell ?? '').toUpperCase().trim();
+      const normalizedHeader = headerText.replace(/[\s_]+/g, '');
+      const normalizedKey = key.toUpperCase().replace(/[\s_]+/g, '');
+      if (normalizedHeader === normalizedKey) return 3;
+
+      if (key === 'DATE' && (headerText.includes('DATE') || headerText.includes('日期'))) {
+        return columnHasRecognizableDate(grid, headerRowIndex, columnIndex) ? 2 : 0;
+      }
+      if (isTarget && key === 'SUPPLIER NAME' && headerText.includes('SUPPLIER')) return 2;
+      return 0;
+    }
+
+    function checkSheetDateAnomalies(sheetNames, dataBySheet, meta, collector) {
+      if (!sheetNames || !dataBySheet || !collector) return;
+      sheetNames.forEach(sheetName => {
+        const grid = dataBySheet[sheetName];
+        if (!grid || grid.length < 2) return;
+        const headers = grid[0];
+        const dateIdx = headers.indexOf('DATE');
+        if (dateIdx === -1) return;
+        const dates = new Set();
+        for (let i = 1; i < grid.length; i++) {
+          const d = grid[i][dateIdx];
+          if (d !== undefined && String(d).trim() !== '') {
+            dates.add(String(d).trim());
+          }
+        }
+        if (dates.size > 1) {
+          collector.push({
+            id: 'anm-' + Math.random().toString(36).substring(2, 9),
+            sourceName: meta.sourceName,
+            fileName: meta.fileName,
+            sheetName: sheetName,
+            rowNumber: '跨行',
+            colName: 'DATE (送货日期)',
+            rawValue: Array.from(dates).slice(0, 4).join(', ') + (dates.size > 4 ? '...' : ''),
+            issueType: '单据跨天预警',
+            issueDesc: `同一个送货单工作表中出现 ${dates.size} 个不同送货日期`,
+            hasCorrection: true,
+            correctionRule: '保留各自真实送货日期独立参与差异核对计算，并在页签标注 ⚠️ 跨天数据 醒目提醒',
+            actionTaken: '标注跨天并保留独立核对'
+          });
+        }
+      });
+    }
+
+    function cleanAndFilterData(grid, isTarget = false, meta = {}, collector = null) {
+      if (!grid || grid.length === 0) return [];
+      const sourceName = meta.sourceName || (isTarget ? '待核对目标表' : '核心标准源');
+      const fileName = meta.fileName || '未知文件';
+      const sheetName = meta.sheetName || '默认工作表';
+
+      const logAnomaly = (rowNum, colName, rawVal, issueType, issueDesc, hasCorrection, correctionRule, actionTaken, rawRowData = null) => {
+        if (collector && Array.isArray(collector)) {
+          collector.push({
+            id: 'anm-' + Math.random().toString(36).substring(2, 9),
+            sourceName, fileName, sheetName,
+            rowNumber: rowNum,
+            colName,
+            rawValue: String(rawVal ?? ''),
+            rawRowData: rawRowData ? (Array.isArray(rawRowData) ? [...rawRowData] : rawRowData) : null,
+            issueType,
+            issueDesc,
+            hasCorrection,
+            correctionRule,
+            actionTaken
+          });
+        }
+      };
+
+      let headerRowIndex = -1;
+      let colMap = {};
+      let duplicateColMap = {};
+      const desiredCols = isTarget ? TARGET_KEY_COLS : KEY_COLS;
+
+      for (let i = 0; i < grid.length; i++) {
+        let matchCount = 0;
+        let tempMap = {};
+        let tempDuplicateMap = {};
+        let tempMatchScores = {};
+        (grid[i] || []).forEach((cell, idx) => {
+          desiredCols.forEach(key => {
+            const matchScore = getHeaderMatchScore(cell, key, grid, i, idx, isTarget);
+            if (matchScore > 0) {
+              if (tempMap[key] === undefined) {
+                tempMap[key] = idx;
+                tempMatchScores[key] = matchScore;
+              } else if (matchScore > tempMatchScores[key]) {
+                tempMap[key] = idx;
+                tempMatchScores[key] = matchScore;
+              } else if (key === 'BIG SERIES') {
+                if (!tempDuplicateMap[key]) tempDuplicateMap[key] = [];
+                tempDuplicateMap[key].push(idx);
+              }
+            }
+          });
+        });
+        matchCount = Object.keys(tempMap).length;
+        if (matchCount >= 2) {
+          headerRowIndex = i;
+          colMap = tempMap;
+          duplicateColMap = tempDuplicateMap;
+          break;
+        }
+      }
+
+      if (headerRowIndex === -1) {
+        logAnomaly(1, '表头行', '', '未识别关键列头', '未在前若干行识别到至少2个关键列（如 品名、采购量、日期）', false, '无（无法自动分析列结构，保持原数据不变）', '保持原样', grid.slice(0, 3));
+        return grid;
+      }
+
+      const newGrid = [];
+      const outHeaders = desiredCols.filter(k => colMap[k] !== undefined);
+      if (isTarget && colMap['采购量'] !== undefined && !outHeaders.includes('UNIT')) {
+        const qtyPos = outHeaders.indexOf('采购量');
+        outHeaders.splice(qtyPos, 0, 'UNIT');
+        logAnomaly(headerRowIndex + 1, 'UNIT (单位)', '缺失', '缺少单位列', '目标表中包含采购量但无 UNIT 列', true, '已自动在采购量前补充虚拟 UNIT 列以容纳提取的单位', '补充单位列', outHeaders);
+      }
+      newGrid.push(outHeaders);
+
+      for (let i = headerRowIndex + 1; i < grid.length; i++) {
+        const row = grid[i];
+        if (!row || row.length === 0 || row.every(c => String(c ?? '').trim() === '')) {
+          logAnomaly(i + 1, '整行', '', '全空行', '行内所有单元格均为空白或无内容', false, '无（自动过滤跳过空行）', '过滤跳过', row);
+          continue;
+        }
+
+        const bigSeriesIdx = colMap['BIG SERIES'];
+        const descIdx = colMap['DESCRIPTION OF GOODS'];
+        const unitIdx = colMap['UNIT'];
+        const bigSeriesIndices = bigSeriesIdx === undefined ? [] : [bigSeriesIdx, ...(duplicateColMap['BIG SERIES'] || [])];
+        const bigSeriesValues = [...new Set(bigSeriesIndices.map(idx => String(row[idx] ?? '').trim()).filter(Boolean))];
+        const combinedBigSeries = bigSeriesValues.join(' / ');
+        if (bigSeriesIdx !== undefined) row[bigSeriesIdx] = combinedBigSeries;
+        if (duplicateColMap['BIG SERIES'] && duplicateColMap['BIG SERIES'].length > 0 && bigSeriesValues.length > 1) {
+          logAnomaly(i + 1, 'BIG SERIES (分类)', bigSeriesValues.join(', '), '多重大分类列', '检测到重复的大分类列存在不同值', true, `已自动合并去重为 "${combinedBigSeries}"`, '合并去重', row);
+        }
+
+        // ★ 源表导入后的第一步处理：直接补全源表中的物品名称。
+        if (!isTarget && descIdx !== undefined && bigSeriesIdx !== undefined) {
+          const descVal = String(row[descIdx] ?? '').trim();
+          const bigSeriesVal = combinedBigSeries;
+          if (!descVal && bigSeriesVal) {
+            row[descIdx] = bigSeriesVal;
+            logAnomaly(i + 1, 'DESCRIPTION OF GOODS (品名)', '空', '物品名称缺失', '物品名称为空，但大分类列有值', true, `已自动使用分类名称 "${bigSeriesVal}" 补全品名`, '补全品名', row);
+          }
+        }
+
+        const descriptionValue = descIdx === undefined ? '' : String(row[descIdx] ?? '').trim();
+        if (!combinedBigSeries && !descriptionValue) {
+          logAnomaly(i + 1, '品名与分类', '', '无有效物品信息', '品名和大分类同时为空，无法识别商品', false, '无（自动过滤无效数据行）', '过滤跳过', row);
+          continue;
+        }
+
+        const purchaseQtyIdx = colMap['采购量'];
+        if (purchaseQtyIdx !== undefined) {
+          const qty = String(row[purchaseQtyIdx] ?? '').trim();
+          if (!qty || qty === '0') {
+            logAnomaly(i + 1, '采购量', qty || '空', '数量为空或为0', `采购量字段值为 "${qty || '空'}"，无实际采购数据`, false, '无（自动过滤零采购或空数量行）', '过滤跳过', row);
+            continue;
+          }
+          if (!/\d/.test(qty)) {
+            logAnomaly(i + 1, '采购量', qty, '采购量非有效数值', `采购量字段填入了无法提取数字的文本 "${qty}"`, false, '无（无法推断有效采购数量，自动过滤该行）', '过滤跳过', row);
+            continue;
+          }
+        }
+
+        if (descIdx !== undefined && unitIdx !== undefined) {
+          let descVal = String(row[descIdx] || '').trim();
+          let unitVal = String(row[unitIdx] || '').trim();
+          let descLower = descVal.toLowerCase();
+
+          if (VALID_UNITS.includes(descLower)) {
+            row[descIdx] = unitVal;
+            row[unitIdx] = descVal;
+            logAnomaly(i + 1, '品名 / 单位', `品名: "${descVal}", 单位: "${unitVal}"`, '品名与单位错位反转', `物品名称填成了计量单位 "${descVal}"，单位列反而是物品名 "${unitVal}"`, true, `已自动调换两列：品名修正为 "${unitVal}"，单位修正为 "${descVal}"`, '调换两列', row);
+          }
+        }
+
+        let correctedQty;
+        let correctedUnit;
+        if (isTarget && purchaseQtyIdx !== undefined) {
+          const rawQty = String(row[purchaseQtyIdx] ?? '')
+            .replace(/&#x20;|&#32;|&nbsp;/gi, ' ')
+            .trim();
+          const combined = rawQty.match(/^([+-]?\d+(?:\.\d+)?)\s*([^\d\s].*?)\s*[,，;；。]?$/);
+          if (combined) {
+            correctedQty = combined[1];
+            correctedUnit = combined[2].trim();
+            logAnomaly(i + 1, '采购量', rawQty, '数量含单位混写', `采购量中混入了文本字符 "${rawQty}"`, true, `已自动正则拆解：采购量提取为 "${correctedQty}"，单位自动识别为 "${correctedUnit}"`, '拆解数值与单位', row);
+          } else {
+            correctedQty = rawQty;
+          }
+        }
+
+        const newRow = [];
+        let hasData = false;
+        outHeaders.forEach(k => {
+          let val;
+          if (isTarget && k === '采购量' && correctedQty !== undefined) {
+            val = correctedQty;
+          } else if (isTarget && k === 'UNIT' && correctedUnit !== undefined) {
+            val = correctedUnit;
+          } else {
+            val = colMap[k] !== undefined ? row[colMap[k]] : '';
+          }
+          if (k === 'DATE') val = formatExcelDate(val);
+          newRow.push(val !== undefined ? val : '');
+          if (val !== undefined && String(val).trim() !== '') hasData = true;
+        });
+
+        if (hasData) newGrid.push(newRow);
+      }
+      return newGrid;
+    }
+
+    // ===== Excel 导入与核验拦截 =====
+    function parseWorkbookToData(file, isTarget, sourceName, collector) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array', cellDates: false });
+            const parsedSheets = {};
+            workbook.SheetNames.forEach(sheetName => {
+              const worksheet = workbook.Sheets[sheetName];
+              const rawGrid = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+              parsedSheets[sheetName] = cleanAndFilterData(rawGrid, isTarget, { sourceName, fileName: file.name, sheetName }, collector);
+            });
+            checkSheetDateAnomalies(workbook.SheetNames, parsedSheets, { sourceName, fileName: file.name }, collector);
+            resolve({
+              fileName: file.name,
+              sheetNames: workbook.SheetNames,
+              activeSheet: workbook.SheetNames[0] || '',
+              dataBySheet: parsedSheets
+            });
+          } catch (err) {
+            reject(err);
+          }
+        };
+        reader.onerror = () => reject(new Error(`无法读取文件：${file.name}`));
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    async function handleExcelUpload(event, sourceKey) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const collector = [];
+
+      try {
+        const parsedFile = await parseWorkbookToData(file, false, '标准源表格', collector);
+
+        const applyImport = () => {
+          const targetRef = window.auditStore.benchmark.excel;
+          targetRef.fileName = parsedFile.fileName;
+          targetRef.sheetNames = parsedFile.sheetNames;
+          targetRef.activeSheet = parsedFile.activeSheet;
+          targetRef.dataBySheet = parsedFile.dataBySheet;
+
+          document.getElementById('label-std-excel').textContent = file.name;
+          document.getElementById('status-std-excel').querySelector('.detail-text').textContent = "已补全、清洗与过滤";
+          document.getElementById('status-std-excel').querySelector('.status-indicator').classList.add('bg-emerald-500');
+          updateAllBadges();
+          switchToComparisonIfReady('tab-std-excel');
+        };
+
+        requestAnomalyConfirmation(collector, applyImport, () => {
+          event.target.value = '';
+        });
+      } catch (error) {
+        alert('解析 Excel 失败：' + error.message);
+        console.error(error);
+      } finally {
+        event.target.value = '';
+      }
+    }
+
+    async function handleBatchTargetUpload(event) {
+      const files = Array.from(event.target.files || []);
+      if (!files.length) return;
+      const label = document.getElementById('label-target-batch');
+      label.textContent = `正在解析 ${files.length} 个...`;
+
+      const collector = [];
+      try {
+        const parsedResults = await Promise.all(
+          files.map((file, idx) => parseWorkbookToData(file, true, `待核对源 ${idx + 1}`, collector))
+        );
+
+        const applyBatchImport = () => {
+          window.auditStore.targets = parsedResults;
+          label.textContent = `已导入 ${files.length} 个表格`;
+          renderTargetNavigation();
+          updateAllBadges();
+          switchToComparisonIfReady('tab-merged-targets');
+        };
+
+        requestAnomalyConfirmation(collector, applyBatchImport, () => {
+          label.textContent = '批量导入待核对表';
+          event.target.value = '';
+        });
+      } catch (error) {
+        label.textContent = '导入失败，请重试';
+        console.error(error);
+      } finally {
+        event.target.value = '';
+      }
+    }
+
+    // ===== 文本结构化解析引擎 =====
+    function parseTextToTable(text) {
+      const lines = text.split('\n').map(l => l.trim().replace(/[，。,.;；\s]+$/, '')).filter(l => l.length > 0);
+      const parsedData = [];
+      lines.forEach(line => {
+        const regex = /^(.*?)(\d+(?:\.\d+)?)\s*([a-zA-Z\u4e00-\u9fa5（）\(\)]*)$/;
+        const match = line.match(regex);
+        if (match) {
+          parsedData.push({ item: match[1].trim(), qty: match[2].trim(), unit: match[3].trim(), quantityAny: false });
+        } else {
+          parsedData.push({ item: line, qty: '', unit: '', quantityAny: true });
+        }
+      });
+      return parsedData;
+    }
+
+    function handleTxtInput() {
+      const text = document.getElementById('txt-std-content').value;
+      window.auditStore.benchmark.txt.rawText = text;
+      window.auditStore.benchmark.txt.parsedData = parseTextToTable(text);
+
+      const isFilled = text.trim().length > 0;
+      document.getElementById('status-std-txt').querySelector('.detail-text').textContent = isFilled ? "已表格化" : "未输入";
+      document.getElementById('status-std-txt').querySelector('.status-indicator').className = `status-indicator w-2 h-2 rounded-full ${isFilled ? 'bg-emerald-500' : 'bg-slate-300'}`;
+
+      updateAllBadges();
+      if (window.auditStore.currentActiveTab === 'tab-std-txt') renderTxtTable();
+    }
+
+    function renderTxtTable() {
+      const tbody = document.getElementById('txt-table-body');
+      const qtyHeader = document.getElementById('txt-qty-header');
+      const data = window.auditStore.benchmark.txt.parsedData;
+      const kw = window.auditStore.searchKeywords.toLowerCase();
+
+      const totalQty = data.reduce((sum, row) => {
+        const qty = Number(row.qty);
+        return sum + (Number.isFinite(qty) ? qty : 0);
+      }, 0);
+      const anyQuantityCount = data.filter(row => row.quantityAny).length;
+      qtyHeader.textContent = `采购量（汇总：${formatNumber(totalQty)}${anyQuantityCount ? ` + ${anyQuantityCount}项任意数量` : ''}）`;
+
+      if (data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-12 text-center text-slate-400">暂无数据</td></tr>`;
+        return;
+      }
+
+      const filtered = kw ? data.filter(r => r.item.toLowerCase().includes(kw) || r.qty.includes(kw) || r.unit.includes(kw)) : data;
+
+      let html = '';
+      filtered.forEach((row, i) => {
+        const bg = i % 2 === 0 ? 'bg-white' : 'bg-emerald-50/30';
+
+        let qtyDisplay = escapeHtml(row.qty);
+        let unitDisplay = escapeHtml(row.unit);
+        if (!row.qty) {
+          qtyDisplay = `<span class="text-violet-700 font-bold text-[10px] bg-violet-50 px-1.5 py-0.5 rounded border border-violet-200 shadow-sm" title="匹配时不校验数量">∞ 任意数量</span>`;
+        }
+        if (!row.unit) {
+          unitDisplay = `<span class="text-red-600 font-bold text-[10px] bg-red-50 px-1.5 py-0.5 rounded border border-red-200 shadow-sm" title="系统未识别到单位">⚠️ 缺失单位</span>`;
+        }
+
+        html += `<tr class="${bg} hover:bg-emerald-100/50 transition-colors">
+          <td class="px-4 py-2 text-center text-emerald-400 text-[11px]">${i + 1}</td>
+          <td class="px-4 py-2 text-slate-700 font-bold">${escapeHtml(row.item)}</td>
+          <td class="px-4 py-2 text-indigo-700 font-bold">${qtyDisplay}</td>
+          <td class="px-4 py-2 text-slate-600">${unitDisplay}</td>
+        </tr>`;
+      });
+      tbody.innerHTML = html || `<tr><td colspan="4" class="px-6 py-12 text-center text-slate-400">无匹配数据</td></tr>`;
+    }
+
+    // ===== 视图渲染 =====
+    function drawTabLineage() {
+      const svg = document.getElementById('tab-lineage');
+      const paths = document.getElementById('tab-lineage-paths');
+      const tabs = document.getElementById('main-tabs');
+      if (!svg || !paths || !tabs) return;
+
+      const svgRect = svg.getBoundingClientRect();
+      const width = Math.max(1, svg.clientWidth);
+      const bottomY = 42;
+      svg.setAttribute('viewBox', `0 0 ${width} 44`);
+
+      const centerX = (tabId, offset = 0) => {
+        const button = tabs.querySelector(`[data-tab="${tabId}"]`);
+        if (!button) return null;
+        const rect = button.getBoundingClientRect();
+        return rect.left - svgRect.left + rect.width / 2 + offset;
+      };
+      const makePath = (d, color, marker, opacity = 1) =>
+        `<path d="${d}" stroke="${color}" opacity="${opacity}" marker-end="url(#${marker})"></path>`;
+      const makeStem = (x, trackY, color) =>
+        `<path d="M ${x.toFixed(1)} ${bottomY} V ${trackY}" stroke="${color}" opacity="0.76"></path>`;
+      const drawMerge = (sourceIds, destinationId, trackY, color, marker, sourceOffset = 0, destinationOffset = 0) => {
+        const sources = sourceIds.map(id => centerX(id, sourceOffset)).filter(x => x !== null);
+        const destination = centerX(destinationId, destinationOffset);
+        if (!sources.length || destination === null) return '';
+        const stems = sources.map(x => makeStem(x, trackY, color)).join('');
+        const startX = Math.min(...sources);
+        const direction = destination >= startX ? 1 : -1;
+        const radius = Math.min(6, Math.abs(destination - startX) / 2, (bottomY - trackY) / 2);
+        const turnX = destination - direction * radius;
+        const turnY = trackY + radius;
+        const route = `M ${startX.toFixed(1)} ${trackY} H ${turnX.toFixed(1)} Q ${destination.toFixed(1)} ${trackY} ${destination.toFixed(1)} ${turnY.toFixed(1)} V ${bottomY}`;
+        return stems + makePath(route, color, marker, 0.88);
+      };
+
+      const targetIds = window.auditStore.targets.map((_, index) => `tab-target-${index + 1}`);
+      paths.innerHTML =
+        drawMerge(['tab-std-excel', 'tab-std-txt'], 'tab-merged-core', 5, '#34d399', 'arrow-core', 0, -5) +
+        drawMerge(targetIds, 'tab-merged-targets', 16, '#818cf8', 'arrow-target', 0, -5) +
+        drawMerge(['tab-merged-core', 'tab-merged-targets'], 'tab-comparison', 27, '#c084fc', 'arrow-result', 5, 0);
+    }
+
+    function scheduleTabLineageDraw() {
+      requestAnimationFrame(drawTabLineage);
+    }
+
+    function switchMainTab(tabId) {
+      window.auditStore.currentActiveTab = tabId;
+      document.querySelectorAll('#main-tabs .tab-btn').forEach(btn => {
+        const isCur = btn.dataset.tab === tabId;
+        btn.classList.toggle('border-emerald-600', isCur && (tabId.startsWith('tab-std') || tabId === 'tab-merged-core'));
+        btn.classList.toggle('border-indigo-600', isCur && (tabId.startsWith('tab-target') || tabId === 'tab-merged-targets'));
+        btn.classList.toggle('border-violet-600', isCur && tabId === 'tab-comparison');
+        btn.classList.toggle('border-rose-600', isCur && tabId === 'tab-ignored');
+        btn.classList.toggle('border-transparent', !isCur);
+
+        if (isCur) {
+          btn.classList.add('font-bold');
+          btn.classList.remove('text-slate-500');
+          if (tabId === 'tab-ignored') btn.classList.add('text-rose-700');
+          else if (tabId === 'tab-comparison') btn.classList.add('text-violet-700');
+          else if (tabId.startsWith('tab-std') || tabId === 'tab-merged-core') btn.classList.add('text-emerald-700');
+          else btn.classList.add('text-indigo-700');
+        } else {
+          btn.classList.remove('text-rose-700', 'text-violet-700', 'text-emerald-700', 'text-indigo-700', 'font-bold');
+          btn.classList.add('text-slate-500');
+        }
+      });
+
+      const isTxt = tabId === 'tab-std-txt';
+      const isComparison = tabId === 'tab-comparison';
+      const isIgnored = tabId === 'tab-ignored';
+      const isMerged = tabId.startsWith('tab-merged-');
+      const isSingleSheetExcel = !isTxt && !isComparison && !isIgnored && !isMerged;
+
+      // content-table-view is used for single sheet excel tables as well as merged core & merged targets
+      document.getElementById('content-table-view').classList.toggle('hidden', isTxt || isComparison || isIgnored);
+      document.getElementById('content-txt-view').classList.toggle('hidden', !isTxt);
+      document.getElementById('comparison-group-view').classList.toggle('hidden', !isComparison);
+      document.getElementById('content-ignored-view').classList.toggle('hidden', !isIgnored);
+      document.getElementById('sheet-nav-bar').classList.toggle('hidden', !isSingleSheetExcel);
+      document.getElementById('export-comparison-btn').classList.toggle('hidden', !isComparison);
+
+      if (isTxt) {
+        renderTxtTable();
+      } else if (isIgnored) {
+        renderIgnoredTableView();
+      } else if (isMerged || isComparison) {
+        renderResultView(tabId);
+      } else {
+        refreshSheetTabs();
+        renderActiveTable();
+      }
+    }
+
+    function refreshSheetTabs() {
+      const tabId = window.auditStore.currentActiveTab;
+      const container = document.getElementById('sheet-buttons');
+      container.innerHTML = '';
+      let src = getExcelSourceByTab(tabId);
+
+      if (!src.sheetNames.length) {
+        container.innerHTML = '<span class="text-slate-400 italic">空</span>';
+        return;
+      }
+
+      src.sheetNames.forEach(name => {
+        const grid = src.dataBySheet[name];
+        let dateSuffix = '';
+        let hasMultipleDates = false;
+
+        if (grid && grid.length > 1) {
+          const headers = grid[0];
+          const dateColIdx = headers.indexOf('DATE');
+          if (dateColIdx !== -1) {
+            const dates = new Set();
+            for (let i = 1; i < grid.length; i++) {
+              const d = grid[i][dateColIdx];
+              if (d !== undefined && String(d).trim() !== '') {
+                dates.add(String(d).trim());
+              }
+            }
+            if (dates.size === 1) {
+              dateSuffix = ` <span class="text-[10px] font-mono font-normal opacity-70 ml-1">(${Array.from(dates)[0]})</span>`;
+            } else if (dates.size > 1) {
+              dateSuffix = ` <span class="text-[10px] font-mono font-bold text-red-600 bg-red-100 px-1 rounded ml-1" title="包含: ${Array.from(dates).slice(0, 3).join(', ')}...">(⚠️ 跨天数据)</span>`;
+              hasMultipleDates = true;
+            }
+          }
+        }
+
+        const btn = document.createElement('button');
+        const isActive = name === src.activeSheet;
+
+        let btnClass = isActive
+          ? 'px-2 py-1 text-xs font-bold bg-white rounded shadow-xs flex items-center '
+          : 'px-2 py-1 text-xs font-medium bg-slate-200/70 hover:bg-white rounded transition-colors flex items-center ';
+
+        if (hasMultipleDates) {
+          btnClass += isActive ? 'text-red-700 ring-1 ring-red-300' : 'text-red-600';
+        } else {
+          btnClass += isActive ? 'text-indigo-700' : 'text-slate-600';
+        }
+
+        btn.className = btnClass;
+        btn.innerHTML = `<span>${name}</span>${dateSuffix}`;
+        btn.onclick = () => {
+          src.activeSheet = name;
+          const targetMatch = tabId.match(/^tab-target-(\d+)$/);
+          if (targetMatch) updateTargetTabLabel(targetMatch[1], src);
+          refreshSheetTabs();
+          renderActiveTable();
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    function renderActiveTable() {
+      const tabId = window.auditStore.currentActiveTab;
+      const thead = document.getElementById('active-table-head');
+      const tbody = document.getElementById('active-table-body');
+      let src = getExcelSourceByTab(tabId);
+
+      if (!src.activeSheet || !src.dataBySheet[src.activeSheet]) {
+        thead.innerHTML = ''; tbody.innerHTML = `<tr><td class="px-6 py-20 text-center text-slate-400">无数据</td></tr>`;
+        return;
+      }
+
+      const grid = src.dataBySheet[src.activeSheet];
+      if (grid.length === 0) {
+        thead.innerHTML = ''; tbody.innerHTML = `<tr><td class="px-6 py-12 text-center text-slate-400">全部数据被过滤或为空</td></tr>`;
+        return;
+      }
+
+      const headers = grid[0];
+      const rows = grid.slice(1);
+      const supplierColIdx = headers.indexOf('SUPPLIER NAME');
+      const showStockWarning = tabId.startsWith('tab-target-') && supplierColIdx !== -1;
+      const kw = window.auditStore.searchKeywords.toLowerCase();
+      const filtered = kw ? rows.filter(row =>
+        row.some(cell => String(cell).toLowerCase().includes(kw)) ||
+        (showStockWarning && !String(row[supplierColIdx] ?? '').trim() && '疑似缺货'.includes(kw))
+      ) : rows;
+      const displayRows = showStockWarning
+        ? [...filtered].sort((a, b) => Number(Boolean(String(a[supplierColIdx] ?? '').trim())) - Number(Boolean(String(b[supplierColIdx] ?? '').trim())))
+        : filtered;
+
+      const qtyColIdx = headers.indexOf('采购量');
+      const totalQty = qtyColIdx === -1 ? 0 : rows.reduce((sum, row) => {
+        const qty = Number(row[qtyColIdx]);
+        return sum + (Number.isFinite(qty) ? qty : 0);
+      }, 0);
+
+      const displayHeaders = showStockWarning ? [...headers, '备注'] : headers;
+      thead.innerHTML = `<tr><th class="px-3 py-2.5 text-center text-slate-400 w-12 bg-slate-100/90">#</th>` +
+        displayHeaders.map(h => {
+          const label = h === '采购量' ? `采购量（汇总：${formatNumber(totalQty)}）` : h;
+          return `<th class="px-4 py-2.5 text-slate-700 whitespace-nowrap bg-slate-100/90">${escapeHtml(String(label))}</th>`;
+        }).join('') + `</tr>`;
+
+      let html = '';
+      displayRows.slice(0, 300).forEach((row, i) => {
+        const isSuspectedOutOfStock = showStockWarning && !String(row[supplierColIdx] ?? '').trim();
+        const rowClass = isSuspectedOutOfStock ? 'bg-orange-100/80 hover:bg-orange-200/70' : `${i % 2 === 0 ? 'bg-white' : 'bg-slate-50/70'} hover:bg-indigo-50/40`;
+        html += `<tr class="${rowClass}">
+          <td class="px-3 py-2 text-center text-slate-400 text-[11px] select-none">${i + 1}</td>` +
+          headers.map((_, cIdx) => {
+            const value = row[cIdx] !== undefined ? row[cIdx] : '';
+            if (isSuspectedOutOfStock && cIdx === supplierColIdx) {
+              return `<td class="px-4 py-2 whitespace-nowrap text-xs"><span class="font-semibold text-orange-700">—</span></td>`;
+            }
+            return `<td class="px-4 py-2 text-slate-700 whitespace-nowrap text-xs">${escapeHtml(String(value))}</td>`;
+          }).join('') +
+          (showStockWarning ? `<td class="px-4 py-2 whitespace-nowrap text-xs">${isSuspectedOutOfStock ? '<span class="inline-flex rounded-full border border-orange-300 bg-orange-50 px-2 py-0.5 font-bold text-orange-700">疑似缺货</span>' : ''}</td>` : '') +
+          `</tr>`;
+      });
+      tbody.innerHTML = html || `<tr><td colspan="${displayHeaders.length + 1}" class="px-6 py-12 text-center text-slate-400">无匹配行</td></tr>`;
+    }
+
+    function handleTableSearch(val) {
+      window.auditStore.searchKeywords = val;
+      if (window.auditStore.currentActiveTab === 'tab-std-txt') renderTxtTable();
+      else if (window.auditStore.currentActiveTab === 'tab-ignored') renderIgnoredTableView();
+      else if (window.auditStore.currentActiveTab.startsWith('tab-merged-') || window.auditStore.currentActiveTab === 'tab-comparison') renderResultView(window.auditStore.currentActiveTab);
+      else renderActiveTable();
+    }
+
+    function switchToComparisonIfReady(fallbackTab) {
+      const hasCoreData = buildMergedCoreData().length > 0;
+      const hasTargetData = buildMergedTargetData().length > 0;
+      switchMainTab(hasCoreData && hasTargetData ? 'tab-comparison' : fallbackTab);
+    }
+
+    function updateAllBadges() {
+      const getC = src => (src.activeSheet && src.dataBySheet[src.activeSheet] ? Math.max(0, src.dataBySheet[src.activeSheet].length - 1) : 0);
+      document.getElementById('tab-badge-std-excel').textContent = getC(window.auditStore.benchmark.excel) + '条';
+      window.auditStore.targets.forEach((src, index) => {
+        const badge = document.getElementById(`tab-badge-target-${index + 1}`);
+        if (badge) badge.textContent = getC(src) + '条';
+      });
+      document.getElementById('tab-badge-std-txt').textContent = window.auditStore.benchmark.txt.parsedData.length + '行';
+      const core = buildMergedCoreData();
+      const targets = buildMergedTargetData();
+      const comparison = buildComparisonData(core, targets);
+      document.getElementById('tab-badge-merged-core').textContent = core.length + '条';
+      document.getElementById('tab-badge-merged-targets').textContent = targets.length + '条';
+      const attentionCount = comparison.filter(row => row.status !== '一致' || row.remark === '疑似缺货').length;
+      document.getElementById('tab-badge-comparison').textContent = attentionCount + '项需关注';
+
+      const ignoredCount = (window.auditStore.anomalyLogs || []).filter(item => !item.hasCorrection || item.actionTaken === '过滤跳过').length;
+      const ignoredBadge = document.getElementById('tab-badge-ignored');
+      if (ignoredBadge) ignoredBadge.textContent = ignoredCount + '条';
+      const ignoredSummary = document.getElementById('ignored-view-summary');
+      if (ignoredSummary) ignoredSummary.textContent = `共 ${ignoredCount} 条已忽略行`;
+    }
+
+    // ===== 合并与核对 =====
+    function normalizeItem(value) {
+      return String(value ?? '').trim().replace(/\s+/g, ' ').toLowerCase();
+    }
+
+    function numericQty(value) {
+      const num = Number(String(value ?? '').replace(/,/g, '').trim());
+      return Number.isFinite(num) ? num : 0;
+    }
+
+    function compareComparisonRows(a, b, includeDate = false) {
+      return Number(a.remark !== '疑似缺货') - Number(b.remark !== '疑似缺货') ||
+        (includeDate ? String(a.date).localeCompare(String(b.date), 'zh-CN') : 0) ||
+        (COMPARISON_STATUS_PRIORITY[a.status] ?? 9) - (COMPARISON_STATUS_PRIORITY[b.status] ?? 9) ||
+        a.item.localeCompare(b.item, 'zh-CN');
+    }
+
+    function normalizeDate(value) {
+      const text = String(value ?? '').trim();
+      if (!text || text === WILDCARD_DATE) return text;
+      const match = text.match(/^(\d{4})[\/.\-](\d{1,2})[\/.\-](\d{1,2})(?:\s.*)?$/);
+      return match ? `${Number(match[1])}/${Number(match[2])}/${Number(match[3])}` : text;
+    }
+
+    function addReference(set, value) {
+      const text = String(value ?? '').trim();
+      if (text) set.add(text);
+    }
+
+    function collectExcelRecords(src, sourceName) {
+      const records = [];
+      src.sheetNames.forEach(sheetName => {
+        const grid = src.dataBySheet[sheetName];
+        if (!grid || grid.length < 2) return;
+        const headers = grid[0];
+        const index = name => headers.indexOf(name);
+        grid.slice(1).forEach(row => {
+          const item = index('DESCRIPTION OF GOODS') === -1 ? '' : String(row[index('DESCRIPTION OF GOODS')] ?? '').trim();
+          if (!item) return;
+          records.push({
+            date: index('DATE') === -1 ? '' : normalizeDate(row[index('DATE')]),
+            item,
+            qty: index('采购量') === -1 ? 0 : numericQty(row[index('采购量')]),
+            supplier: index('SUPPLIER NAME') === -1 ? '' : String(row[index('SUPPLIER NAME')] ?? '').trim(),
+            bigSeries: index('BIG SERIES') === -1 ? '' : String(row[index('BIG SERIES')] ?? '').trim(),
+            unit: index('UNIT') === -1 ? '' : String(row[index('UNIT')] ?? '').trim(),
+            quantityAny: false,
+            source: `${sourceName} / ${sheetName}`
+          });
+        });
+      });
+      return records;
+    }
+
+    function aggregateRecords(records) {
+      const map = new Map();
+      records.forEach(record => {
+        const date = record.date || '';
+        const normalizedItem = normalizeItem(record.item);
+        if (!normalizedItem) return;
+        const key = `${date}\u0000${normalizedItem}`;
+        if (!map.has(key)) {
+          map.set(key, {
+            key, date, normalizedItem, item: record.item, qty: 0,
+            suppliers: new Set(), bigSeries: new Set(), units: new Set(), sources: new Set(),
+            hasMissingSupplier: false, quantityAny: false
+          });
+        }
+        const merged = map.get(key);
+        merged.qty += numericQty(record.qty);
+        if (!String(record.supplier ?? '').trim()) merged.hasMissingSupplier = true;
+        if (record.quantityAny) merged.quantityAny = true;
+        addReference(merged.suppliers, record.supplier);
+        addReference(merged.bigSeries, record.bigSeries);
+        addReference(merged.units, record.unit);
+        addReference(merged.sources, record.source);
+      });
+      return [...map.values()].map(row => ({
+        ...row,
+        supplier: [...row.suppliers].join(' / '),
+        bigSeriesText: [...row.bigSeries].join(' / '),
+        unitText: [...row.units].join(' / '),
+        sourceText: [...row.sources].join('；')
+      })).sort((a, b) => String(a.date).localeCompare(String(b.date), 'zh-CN') || a.item.localeCompare(b.item, 'zh-CN'));
+    }
+
+    function buildMergedCoreData() {
+      const records = collectExcelRecords(window.auditStore.benchmark.excel, '核心数据源');
+      window.auditStore.benchmark.txt.parsedData.forEach(row => {
+        if (!row.item) return;
+        records.push({
+          date: WILDCARD_DATE, item: row.item, qty: numericQty(row.qty), supplier: '',
+          bigSeries: '', unit: row.unit, quantityAny: Boolean(row.quantityAny || !row.qty), source: '标准文本'
+        });
+      });
+      return aggregateRecords(records);
+    }
+
+    function buildMergedTargetData() {
+      const records = [];
+      window.auditStore.targets.forEach((target, index) => {
+        records.push(...collectExcelRecords(target, `待核对 ${index + 1}`));
+      });
+      return aggregateRecords(records);
+    }
+
+    function buildComparisonData(coreRows = buildMergedCoreData(), targetRows = buildMergedTargetData()) {
+      const exactCore = new Map(coreRows.filter(row => row.date !== WILDCARD_DATE).map(row => [row.key, row]));
+      const wildcardCore = new Map(coreRows.filter(row => row.date === WILDCARD_DATE).map(row => [row.normalizedItem, row]));
+      const targetMap = new Map(targetRows.map(row => [row.key, row]));
+      const matchedWildcardItems = new Set();
+      const result = [];
+
+      targetRows.forEach(target => {
+        const exact = exactCore.get(target.key);
+        const wildcard = wildcardCore.get(target.normalizedItem);
+        if (wildcard) matchedWildcardItems.add(target.normalizedItem);
+        const expected = (exact?.qty || 0) + (wildcard?.qty || 0);
+        const hasCore = Boolean(exact || wildcard);
+        const quantityAny = Boolean(exact?.quantityAny || wildcard?.quantityAny);
+        const difference = quantityAny ? 0 : target.qty - expected;
+        let status = '一致';
+        if (!hasCore) status = '核心源无此物品';
+        else if (!quantityAny && difference < -1e-9) status = '少了';
+        else if (!quantityAny && difference > 1e-9) status = '多了';
+        result.push({
+          status, date: target.date, item: target.item, expected, actual: target.qty,
+          difference, quantityAny, supplier: target.supplier,
+          remark: target.hasMissingSupplier || !target.supplier ? '疑似缺货' : '',
+          coreUnit: [exact?.unitText, wildcard?.unitText].filter(Boolean).join(' / '),
+          targetUnit: target.unitText,
+          bigSeries: target.bigSeriesText,
+          sourceText: target.sourceText
+        });
+      });
+
+      coreRows.filter(row => row.date !== WILDCARD_DATE && !targetMap.has(row.key)).forEach(core => {
+        result.push({ status: '少了', date: core.date, item: core.item, expected: core.qty, actual: 0, difference: core.quantityAny ? 0 : -core.qty, quantityAny: core.quantityAny, supplier: '', remark: '疑似缺货', coreUnit: core.unitText, targetUnit: '', bigSeries: core.bigSeriesText, sourceText: '' });
+      });
+      coreRows.filter(row => row.date === WILDCARD_DATE && !matchedWildcardItems.has(row.normalizedItem)).forEach(core => {
+        result.push({ status: '少了', date: WILDCARD_DATE, item: core.item, expected: core.qty, actual: 0, difference: core.quantityAny ? 0 : -core.qty, quantityAny: core.quantityAny, supplier: '', remark: '疑似缺货', coreUnit: core.unitText, targetUnit: '', bigSeries: core.bigSeriesText, sourceText: '' });
+      });
+      return result.sort((a, b) => compareComparisonRows(a, b, true));
+    }
+
+    function renderResultView(tabId) {
+      const core = buildMergedCoreData();
+      const targets = buildMergedTargetData();
+      if (tabId === 'tab-merged-core') {
+        const total = core.reduce((sum, row) => sum + row.qty, 0);
+        const anyQuantityCount = core.filter(row => row.quantityAny).length;
+        renderGenericTable(
+          ['DATE', 'DESCRIPTION OF GOODS', `采购量（汇总：${formatNumber(total)}${anyQuantityCount ? ` + ${anyQuantityCount}项任意数量` : ''}）`, 'BIG SERIES（参考）', 'UNIT（参考）', '来源'],
+          core.map(row => [row.date === WILDCARD_DATE ? '＊ 任意日期' : row.date, row.item, row.quantityAny ? '任意' : formatNumber(row.qty), row.bigSeriesText, row.unitText, row.sourceText])
+        );
+      } else if (tabId === 'tab-merged-targets') {
+        const total = targets.reduce((sum, row) => sum + row.qty, 0);
+        renderGenericTable(
+          ['DATE', 'DESCRIPTION OF GOODS', `采购量（汇总：${formatNumber(total)}）`, 'SUPPLIER NAME', 'BIG SERIES（参考）', 'UNIT（参考）', '来源', '备注'],
+          targets.map(row => [row.date, row.item, formatNumber(row.qty), row.supplier, row.bigSeriesText, row.unitText, row.sourceText, row.hasMissingSupplier || !row.supplier ? '疑似缺货' : '']),
+          { remarkColumnIndex: 7 }
+        );
+      } else {
+        const comparison = buildComparisonData(core, targets);
+        renderComparisonGroups(comparison);
+      }
+    }
+
+    function compareDateGroups(a, b) {
+      if (a === WILDCARD_DATE) return 1;
+      if (b === WILDCARD_DATE) return -1;
+      const toTime = value => {
+        const match = String(value).match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
+        return match ? Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])) : Number.MAX_SAFE_INTEGER;
+      };
+      return toTime(a) - toTime(b) || String(a).localeCompare(String(b), 'zh-CN');
+    }
+
+    function createComparisonSheetName(date, usedNames) {
+      let baseName;
+      const dateMatch = String(date).match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
+      if (dateMatch) {
+        baseName = `${dateMatch[1]}-${dateMatch[2].padStart(2, '0')}-${dateMatch[3].padStart(2, '0')}`;
+      } else if (date === WILDCARD_DATE) {
+        baseName = '任意日期';
+      } else {
+        baseName = String(date || '未填写日期');
+      }
+      baseName = baseName.replace(/[\\/?*\[\]:]/g, '_').slice(0, 31) || '未填写日期';
+
+      let sheetName = baseName;
+      let suffix = 2;
+      while (usedNames.has(sheetName)) {
+        const suffixText = `_${suffix++}`;
+        sheetName = `${baseName.slice(0, 31 - suffixText.length)}${suffixText}`;
+      }
+      usedNames.add(sheetName);
+      return sheetName;
+    }
+
+    function applyComparisonWorksheetStyles(worksheet, rowCount) {
+      const border = {
+        top: { style: 'thin', color: { rgb: 'D8DEE9' } },
+        bottom: { style: 'thin', color: { rgb: 'D8DEE9' } },
+        left: { style: 'thin', color: { rgb: 'D8DEE9' } },
+        right: { style: 'thin', color: { rgb: 'D8DEE9' } }
+      };
+      const rowFillByStatus = {
+        '少了': 'FDECEC',
+        '多了': 'FDECEC',
+        '核心源无此物品': 'FFF7D6',
+        '一致': 'E7F6EC'
+      };
+      const statusFontColors = {
+        '少了': 'B42318',
+        '多了': 'B42318',
+        '核心源无此物品': 'A15C00',
+        '一致': '087443'
+      };
+
+      for (let column = 0; column < 11; column++) {
+        const address = XLSX.utils.encode_cell({ r: 0, c: column });
+        const cell = worksheet[address] || (worksheet[address] = { t: 's', v: '' });
+        cell.s = {
+          fill: { patternType: 'solid', fgColor: { rgb: '5B21B6' } },
+          font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 11 },
+          alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+          border
+        };
+      }
+
+      for (let row = 1; row <= rowCount; row++) {
+        const status = String(worksheet[XLSX.utils.encode_cell({ r: row, c: 1 })]?.v ?? '');
+        const remark = String(worksheet[XLSX.utils.encode_cell({ r: row, c: 7 })]?.v ?? '');
+        const fillColor = remark ? 'FFF0D9' : (rowFillByStatus[status] || (row % 2 ? 'FFFFFF' : 'F8FAFC'));
+        for (let column = 0; column < 11; column++) {
+          const address = XLSX.utils.encode_cell({ r: row, c: column });
+          const cell = worksheet[address] || (worksheet[address] = { t: 's', v: '' });
+          cell.s = {
+            fill: { patternType: 'solid', fgColor: { rgb: fillColor } },
+            font: {
+              bold: column === 1 || (column === 7 && Boolean(remark)),
+              color: { rgb: column === 1 ? (statusFontColors[status] || '334155') : column === 7 && remark ? 'C2410C' : '334155' },
+              sz: 10
+            },
+            alignment: { vertical: 'center', horizontal: column === 0 || (column >= 3 && column <= 5) ? 'center' : 'left', wrapText: column === 2 || column >= 6 },
+            border
+          };
+          if (column >= 3 && column <= 5 && typeof cell.v === 'number') cell.z = '0.######';
+        }
+      }
+      worksheet['!rows'] = [{ hpt: 28 }, ...Array.from({ length: rowCount }, () => ({ hpt: 24 }))];
+      worksheet['!margins'] = { left: 0.3, right: 0.3, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 };
+    }
+
+    function exportComparisonWorkbook() {
+      if (typeof XLSX === 'undefined') {
+        alert('缺少 Excel 导出依赖，请刷新页面后重试');
+        return;
+      }
+
+      const rowsToExport = buildComparisonData().filter(row => row.status !== '一致' || row.remark === '疑似缺货');
+      if (!rowsToExport.length) {
+        alert('当前没有需要导出的差异项或疑似缺货行');
+        return;
+      }
+
+      const groups = new Map();
+      rowsToExport.forEach(row => {
+        const dateKey = row.date || '未填写日期';
+        if (!groups.has(dateKey)) groups.set(dateKey, []);
+        groups.get(dateKey).push(row);
+      });
+
+      const headers = ['序号', '核对结果', 'DESCRIPTION OF GOODS', '应有数量', '实际数量', '差值（实际-应有）', 'SUPPLIER NAME', '备注', '核心UNIT（参考）', '待核对UNIT（参考）', 'BIG SERIES（参考）'];
+      const workbook = XLSX.utils.book_new();
+      const usedNames = new Set();
+
+      [...groups.keys()].sort(compareDateGroups).forEach(date => {
+        const rows = groups.get(date).sort((a, b) => compareComparisonRows(a, b));
+        const sheetRows = rows.map((row, index) => [
+          index + 1,
+          row.status,
+          row.item,
+          row.quantityAny ? '任意' : row.expected,
+          row.actual,
+          row.quantityAny ? '' : row.difference,
+          row.supplier,
+          row.remark,
+          row.coreUnit,
+          row.targetUnit,
+          row.bigSeries
+        ]);
+        const worksheet = XLSX.utils.aoa_to_sheet([headers, ...sheetRows]);
+        applyComparisonWorksheetStyles(worksheet, sheetRows.length);
+        worksheet['!cols'] = [
+          { wch: 8 }, { wch: 18 }, { wch: 32 }, { wch: 14 }, { wch: 14 },
+          { wch: 22 }, { wch: 28 }, { wch: 14 }, { wch: 22 }, { wch: 24 }, { wch: 24 }
+        ];
+        worksheet['!autofilter'] = { ref: `A1:K${sheetRows.length + 1}` };
+        XLSX.utils.book_append_sheet(workbook, worksheet, createComparisonSheetName(date, usedNames));
+      });
+
+      const exportDate = new Date().toISOString().slice(0, 10);
+      XLSX.writeFile(workbook, `比对结果_差异及疑似缺货_${exportDate}.xlsx`, { compression: true });
+    }
+
+    function renderComparisonGroups(comparison) {
+      const container = document.getElementById('comparison-group-view');
+      const kw = window.auditStore.searchKeywords.toLowerCase();
+      const filtered = kw ? comparison.filter(row => Object.values(row).some(value => String(value ?? '').toLowerCase().includes(kw))) : comparison;
+      if (!filtered.length) {
+        container.innerHTML = `<div class="px-6 py-20 text-center text-slate-400 border border-slate-200 rounded-xl">暂无数据</div>`;
+        return;
+      }
+
+      const groups = new Map();
+      filtered.forEach(row => {
+        const dateKey = row.date || '未填写日期';
+        if (!groups.has(dateKey)) groups.set(dateKey, []);
+        groups.get(dateKey).push(row);
+      });
+
+      const headers = ['核对结果', 'DESCRIPTION OF GOODS', '应有数量', '实际数量', '差值（实际-应有）', 'SUPPLIER NAME', '备注', '核心UNIT（参考）', '待核对UNIT（参考）', 'BIG SERIES（参考）'];
+      container.innerHTML = [...groups.keys()].sort(compareDateGroups).map(date => {
+        const rows = groups.get(date).sort((a, b) => compareComparisonRows(a, b));
+        const differenceCount = rows.filter(row => row.status !== '一致').length;
+        const dateLabel = date === WILDCARD_DATE ? '＊ 任意日期' : date;
+        const summaryClass = differenceCount ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700';
+        const body = rows.map((row, index) => {
+          const rowClass = row.remark ? 'bg-orange-100/80' : row.status === '一致' ? 'bg-emerald-50/60' : row.status === '核心源无此物品' ? 'bg-amber-50/70' : 'bg-red-50/70';
+          const statusClass = row.status === '一致' ? 'text-emerald-700' : row.status === '核心源无此物品' ? 'text-amber-700' : 'text-red-700';
+          const cells = [row.status, row.item, row.quantityAny ? '任意' : formatNumber(row.expected), formatNumber(row.actual), row.quantityAny ? '—' : formatNumber(row.difference), row.supplier, row.remark, row.coreUnit, row.targetUnit, row.bigSeries];
+          return `<tr class="${rowClass} ${row.remark ? 'hover:bg-orange-200/70' : 'hover:bg-indigo-50/60'}"><td class="px-3 py-2 text-center text-slate-400 text-[11px]">${index + 1}</td>${cells.map((cell, cellIndex) => {
+            if (cellIndex === 6 && cell) return `<td class="px-4 py-2 whitespace-nowrap text-xs"><span class="inline-flex rounded-full border border-orange-300 bg-orange-50 px-2 py-0.5 font-bold text-orange-700">${escapeHtml(String(cell))}</span></td>`;
+            return `<td class="px-4 py-2 whitespace-nowrap text-xs ${cellIndex === 0 ? statusClass + ' font-bold' : 'text-slate-700'}">${escapeHtml(String(cell ?? ''))}</td>`;
+          }).join('')}</tr>`;
+        }).join('');
+        return `<section class="comparison-card rounded-xl border border-slate-200 overflow-hidden shadow-sm bg-white">
+          <div class="px-4 py-3 bg-slate-100 border-b border-slate-200 flex items-center justify-between gap-3">
+            <h3 class="font-bold text-sm text-slate-800">DATE：${escapeHtml(dateLabel)}</h3>
+            <div class="flex items-center gap-2 text-[10px]"><span class="px-2 py-1 rounded-full ${summaryClass}">${differenceCount}项差异</span><span class="px-2 py-1 rounded-full bg-slate-200 text-slate-600">共${rows.length}项</span><button type="button" onclick="toggleComparisonFullscreen(this)" class="fullscreen-btn px-2.5 py-1 rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors font-semibold">全屏</button></div>
+          </div>
+          <div class="comparison-table-scroll overflow-x-auto"><table class="min-w-full divide-y divide-slate-200 text-left text-xs"><thead class="bg-slate-50 sticky top-0 z-10"><tr><th class="px-3 py-2.5 text-center text-slate-400 w-12 bg-slate-50">#</th>${headers.map(header => `<th class="px-4 py-2.5 text-slate-700 whitespace-nowrap bg-slate-50">${escapeHtml(header)}</th>`).join('')}</tr></thead><tbody class="divide-y divide-slate-100 font-mono">${body}</tbody></table></div>
+        </section>`;
+      }).join('');
+    }
+
+    async function toggleComparisonFullscreen(button) {
+      const card = button.closest('.comparison-card');
+      if (!card) return;
+
+      if (document.fullscreenElement === card || document.webkitFullscreenElement === card) {
+        if (document.exitFullscreen) await document.exitFullscreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        return;
+      }
+
+      if (card.classList.contains('fullscreen-fallback')) {
+        card.classList.remove('fullscreen-fallback');
+        document.body.classList.remove('comparison-fullscreen-fallback');
+        refreshFullscreenButtons();
+        return;
+      }
+
+      try {
+        if (card.requestFullscreen) await card.requestFullscreen();
+        else if (card.webkitRequestFullscreen) card.webkitRequestFullscreen();
+        else throw new Error('Fullscreen API unavailable');
+      } catch (error) {
+        card.classList.add('fullscreen-fallback');
+        document.body.classList.add('comparison-fullscreen-fallback');
+        refreshFullscreenButtons();
+      }
+    }
+
+    function refreshFullscreenButtons() {
+      document.querySelectorAll('.comparison-card').forEach(card => {
+        const button = card.querySelector('.fullscreen-btn');
+        if (!button) return;
+        const isFullscreen = document.fullscreenElement === card || document.webkitFullscreenElement === card || card.classList.contains('fullscreen-fallback');
+        button.textContent = isFullscreen ? '退出全屏' : '全屏';
+      });
+    }
+
+    if (document.addEventListener) {
+      document.addEventListener('fullscreenchange', refreshFullscreenButtons);
+      document.addEventListener('webkitfullscreenchange', refreshFullscreenButtons);
+      document.addEventListener('keydown', event => {
+        if (event.key !== 'Escape') return;
+        const fallbackCard = document.querySelector('.comparison-card.fullscreen-fallback');
+        if (fallbackCard) {
+          fallbackCard.classList.remove('fullscreen-fallback');
+          document.body.classList.remove('comparison-fullscreen-fallback');
+          refreshFullscreenButtons();
+        }
+      });
+    }
+
+    function renderGenericTable(headers, rows, options = {}) {
+      const thead = document.getElementById('active-table-head');
+      const tbody = document.getElementById('active-table-body');
+      const kw = window.auditStore.searchKeywords.toLowerCase();
+      const filtered = kw ? rows.filter(row => row.some(cell => String(cell).toLowerCase().includes(kw))) : rows;
+      const displayed = options.remarkColumnIndex !== undefined
+        ? [...filtered].sort((a, b) => Number(!a[options.remarkColumnIndex]) - Number(!b[options.remarkColumnIndex]))
+        : filtered;
+      thead.innerHTML = `<tr><th class="px-3 py-2.5 text-center text-slate-400 w-12 bg-slate-100/90">#</th>${headers.map(header => `<th class="px-4 py-2.5 text-slate-700 whitespace-nowrap bg-slate-100/90">${escapeHtml(header)}</th>`).join('')}</tr>`;
+      if (!filtered.length) {
+        tbody.innerHTML = `<tr><td colspan="${headers.length + 1}" class="px-6 py-20 text-center text-slate-400">暂无数据</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = displayed.map((row, index) => {
+        const hasRemark = options.remarkColumnIndex !== undefined && Boolean(row[options.remarkColumnIndex]);
+        const rowClass = hasRemark ? 'bg-orange-100/80' : index % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
+        return `<tr class="${rowClass} ${hasRemark ? 'hover:bg-orange-200/70' : 'hover:bg-indigo-50/60'}"><td class="px-3 py-2 text-center text-slate-400 text-[11px]">${index + 1}</td>${row.map((cell, cellIndex) => {
+          const isRemarkCell = cellIndex === options.remarkColumnIndex && cell;
+          return `<td class="px-4 py-2 whitespace-nowrap text-xs text-slate-700">${isRemarkCell ? `<span class="inline-flex rounded-full border border-orange-300 bg-orange-50 px-2 py-0.5 font-bold text-orange-700">${escapeHtml(String(cell))}</span>` : escapeHtml(String(cell ?? ''))}</td>`;
+        }).join('')}</tr>`;
+      }).join('');
+    }
+
+    function renderIgnoredTableView() {
+      const tbody = document.getElementById('ignored-table-body');
+      const summary = document.getElementById('ignored-view-summary');
+      if (!tbody) return;
+
+      const allLogs = window.auditStore.anomalyLogs || [];
+      const ignoredItems = allLogs.filter(item => !item.hasCorrection || item.actionTaken === '过滤跳过');
+
+      const kw = (window.auditStore.searchKeywords || '').toLowerCase().trim();
+      const filtered = kw ? ignoredItems.filter(item => {
+        return (item.sourceName || '').toLowerCase().includes(kw) ||
+          (item.fileName || '').toLowerCase().includes(kw) ||
+          (item.sheetName || '').toLowerCase().includes(kw) ||
+          (item.issueType || '').toLowerCase().includes(kw) ||
+          (item.issueDesc || '').toLowerCase().includes(kw) ||
+          (item.rawValue || '').toLowerCase().includes(kw) ||
+          (item.rawRowData && JSON.stringify(item.rawRowData).toLowerCase().includes(kw));
+      }) : ignoredItems;
+
+      if (summary) {
+        summary.textContent = `共 ${ignoredItems.length} 条已忽略行` + (kw ? ` (搜索匹配 ${filtered.length} 条)` : '');
+      }
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = ignoredItems.length === 0
+          ? `<tr><td colspan="8" class="px-6 py-20 text-center text-slate-400">
+               <div class="flex flex-col items-center justify-center">
+                 <div class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mb-2">
+                   <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                 </div>
+                 <p class="text-sm font-bold text-slate-600">暂无被忽略的数据行</p>
+                 <p class="text-xs text-slate-400 mt-1">当前导入的所有数据行结构完整或已全部完成自动纠错，未丢弃任何行。</p>
+               </div>
+             </td></tr>`
+          : `<tr><td colspan="8" class="px-6 py-16 text-center text-slate-400">未找到包含 "${escapeHtml(kw)}" 的已忽略行</td></tr>`;
+        return;
+      }
+
+      const html = filtered.map((item, idx) => {
+        let rawSnapshotText = '';
+        if (Array.isArray(item.rawRowData)) {
+          if (item.rawRowData.length > 0 && Array.isArray(item.rawRowData[0])) {
+            rawSnapshotText = item.rawRowData.map(row => row.join(' | ')).join(' / ');
+          } else {
+            rawSnapshotText = item.rawRowData.map((value, columnIndex) => {
+              const text = String(value ?? '').trim();
+              return text ? `#${columnIndex + 1} ${text}` : '';
+            }).filter(Boolean).join(' · ') || '整行为空';
+          }
+        } else if (item.rawValue) {
+          rawSnapshotText = String(item.rawValue);
+        } else {
+          rawSnapshotText = '无数据快照';
+        }
+
+        const sourceBadgeClass = item.sourceName.includes('标准') || item.sourceName.includes('核心')
+          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+          : 'bg-indigo-50 text-indigo-700 border-indigo-200';
+
+        return `
+          <tr class="hover:bg-rose-50/40 transition-colors">
+            <td class="px-2 py-2 text-center text-slate-400 font-mono">${idx + 1}</td>
+            <td class="px-2 py-2">
+              <div class="flex items-center gap-1.5 min-w-0" title="${escapeAttribute(`${item.sourceName} · ${item.fileName}`)}">
+                <span class="shrink-0 inline-block px-1.5 py-0.5 font-semibold rounded border ${sourceBadgeClass}">${escapeHtml(item.sourceName)}</span>
+                <span class="ignored-cell-one-line text-slate-500">${escapeHtml(item.fileName)}</span>
+              </div>
+            </td>
+            <td class="px-2 py-2 font-medium text-slate-700"><span class="ignored-cell-one-line" title="${escapeAttribute(item.sheetName)}">${escapeHtml(item.sheetName)}</span></td>
+            <td class="px-2 py-2 text-center font-mono font-bold text-rose-700 whitespace-nowrap">
+              <span class="bg-rose-100/70 px-1.5 py-0.5 rounded border border-rose-200">${escapeHtml(typeof item.rowNumber === 'number' ? `第${item.rowNumber}行` : String(item.rowNumber))}</span>
+            </td>
+            <td class="px-2 py-2" title="${escapeAttribute([item.issueType, item.colName].filter(Boolean).join(' · '))}">
+              <div class="ignored-cell-one-line">
+                <span class="inline-flex items-center px-1.5 py-0.5 rounded font-bold bg-rose-100 text-rose-800 border border-rose-200">${escapeHtml(item.issueType)}</span>
+                ${item.colName ? `<span class="text-slate-400 ml-1">· ${escapeHtml(item.colName)}</span>` : ''}
+              </div>
+            </td>
+            <td class="px-2 py-2 text-slate-600" title="${escapeAttribute(item.issueDesc)}">
+              <span class="ignored-cell-one-line">${escapeHtml(item.issueDesc)}</span>
+            </td>
+            <td class="px-2 py-2 font-mono text-slate-700" title="${escapeAttribute(rawSnapshotText)}">
+              <span class="ignored-cell-one-line rounded bg-slate-100 px-1.5 py-0.5 border border-slate-200">${escapeHtml(rawSnapshotText)}</span>
+            </td>
+            <td class="px-2 py-2 text-center">
+              <span class="inline-flex items-center px-2 py-0.5 rounded font-semibold bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap" title="已安全过滤剔除">
+                已过滤
+              </span>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      tbody.innerHTML = html;
+    }
+
+    function exportIgnoredRowsCSV() {
+      const allLogs = window.auditStore.anomalyLogs || [];
+      const ignoredItems = allLogs.filter(item => !item.hasCorrection || item.actionTaken === '过滤跳过');
+      if (ignoredItems.length === 0) {
+        alert('当前暂无已忽略的数据行');
+        return;
+      }
+      const headers = ['序号', '来源表格', '所属文件', '工作表', '行号/位置', '异常字段', '忽略原因/异常类型', '详细说明', '原始快照', '处理状态'];
+      const rows = ignoredItems.map((item, idx) => [
+        idx + 1,
+        item.sourceName,
+        item.fileName,
+        item.sheetName,
+        typeof item.rowNumber === 'number' ? `第${item.rowNumber}行` : item.rowNumber,
+        item.colName,
+        item.issueType,
+        item.issueDesc,
+        Array.isArray(item.rawRowData) ? item.rawRowData.join(' | ') : item.rawValue,
+        '已安全过滤剔除'
+      ]);
+      const csvContent = '\uFEFF' + [headers, ...rows].map(e => e.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `已忽略数据行审计清单_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // ===== 导入质检诊断与异常纠错弹窗引擎 =====
+    function requestAnomalyConfirmation(anomalies, onConfirm, onCancel) {
+      if (!anomalies || anomalies.length === 0) {
+        if (onConfirm) onConfirm();
+        return;
+      }
+
+      window.auditStore.pendingImportAction = onConfirm;
+      window.auditStore.pendingCancelAction = onCancel;
+      window.auditStore.currentModalAnomalies = anomalies;
+      window.auditStore.anomalyFilter = 'all';
+
+      const title = document.getElementById('anomaly-modal-title');
+      if (title) title.textContent = '导入数据智能质检与自动纠错核查';
+      const badge = document.getElementById('anomaly-modal-count-badge');
+      if (badge) badge.textContent = `共 ${anomalies.length} 项待确认`;
+
+      const cancelBtn = document.getElementById('btn-anomaly-cancel');
+      if (cancelBtn) cancelBtn.classList.remove('hidden');
+
+      const confirmBtn = document.getElementById('btn-anomaly-confirm');
+      if (confirmBtn) {
+        confirmBtn.innerHTML = `<svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>按照自动纠错机制强制继续`;
+      }
+
+      renderAnomalyTable();
+      document.getElementById('anomaly-modal').classList.remove('hidden');
+    }
+
+    function openAnomalyModal(isHistoryView = false) {
+      const logs = window.auditStore.anomalyLogs || [];
+      window.auditStore.currentModalAnomalies = logs;
+      window.auditStore.anomalyFilter = 'all';
+      window.auditStore.pendingImportAction = null;
+      window.auditStore.pendingCancelAction = null;
+
+      const title = document.getElementById('anomaly-modal-title');
+      if (title) title.textContent = '数据质检与自动纠错明细记录';
+      const badge = document.getElementById('anomaly-modal-count-badge');
+      if (badge) badge.textContent = `共记录 ${logs.length} 项处理明细`;
+
+      const cancelBtn = document.getElementById('btn-anomaly-cancel');
+      if (cancelBtn) cancelBtn.classList.add('hidden');
+
+      const confirmBtn = document.getElementById('btn-anomaly-confirm');
+      if (confirmBtn) confirmBtn.innerHTML = '关闭';
+
+      renderAnomalyTable();
+      document.getElementById('anomaly-modal').classList.remove('hidden');
+    }
+
+    function closeAnomalyModal(confirmed = false) {
+      document.getElementById('anomaly-modal').classList.add('hidden');
+      if (!confirmed && window.auditStore.pendingCancelAction) {
+        const cancelAction = window.auditStore.pendingCancelAction;
+        window.auditStore.pendingCancelAction = null;
+        window.auditStore.pendingImportAction = null;
+        cancelAction();
+      }
+    }
+
+    function confirmAnomalyAction() {
+      const action = window.auditStore.pendingImportAction;
+      const current = window.auditStore.currentModalAnomalies || [];
+      if (action) {
+        window.auditStore.pendingImportAction = null;
+        window.auditStore.pendingCancelAction = null;
+
+        const existingIds = new Set((window.auditStore.anomalyLogs || []).map(x => x.id));
+        const newItems = current.filter(x => !existingIds.has(x.id));
+        window.auditStore.anomalyLogs = [...(window.auditStore.anomalyLogs || []), ...newItems];
+        updateAnomalyBadge();
+        updateAllBadges();
+
+        document.getElementById('anomaly-modal').classList.add('hidden');
+        action();
+      } else {
+        document.getElementById('anomaly-modal').classList.add('hidden');
+      }
+    }
+
+    function updateAnomalyBadge() {
+      const count = (window.auditStore.anomalyLogs || []).length;
+      const btn = document.getElementById('btn-view-anomalies');
+      const badge = document.getElementById('anomaly-badge-count');
+      if (btn && badge) {
+        badge.textContent = count;
+        if (count > 0) btn.classList.remove('hidden');
+        else btn.classList.add('hidden');
+      }
+    }
+
+    function setAnomalyFilter(filterType) {
+      window.auditStore.anomalyFilter = filterType;
+      document.querySelectorAll('.anomaly-filter-btn').forEach(btn => {
+        const isActive = btn.dataset.filter === filterType;
+        btn.classList.toggle('bg-slate-900', isActive);
+        btn.classList.toggle('text-white', isActive);
+        btn.classList.toggle('shadow-xs', isActive);
+        btn.classList.toggle('bg-slate-100', !isActive);
+        btn.classList.toggle('text-slate-600', !isActive);
+      });
+      renderAnomalyTable();
+    }
+
+    function renderAnomalyTable() {
+      const items = window.auditStore.currentModalAnomalies || [];
+      const filter = window.auditStore.anomalyFilter || 'all';
+      const searchInput = document.getElementById('anomaly-search-input');
+      const kw = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+      const correctedCount = items.filter(i => i.hasCorrection).length;
+      const noneCount = items.filter(i => !i.hasCorrection).length;
+
+      const cntAll = document.getElementById('anomaly-cnt-all');
+      const cntCorrected = document.getElementById('anomaly-cnt-corrected');
+      const cntNone = document.getElementById('anomaly-cnt-none');
+      if (cntAll) cntAll.textContent = items.length;
+      if (cntCorrected) cntCorrected.textContent = correctedCount;
+      if (cntNone) cntNone.textContent = noneCount;
+
+      let filtered = items;
+      if (filter === 'corrected') filtered = filtered.filter(i => i.hasCorrection);
+      else if (filter === 'no-correction') filtered = filtered.filter(i => !i.hasCorrection);
+
+      if (kw) {
+        filtered = filtered.filter(i =>
+          i.sourceName.toLowerCase().includes(kw) ||
+          i.fileName.toLowerCase().includes(kw) ||
+          i.sheetName.toLowerCase().includes(kw) ||
+          i.colName.toLowerCase().includes(kw) ||
+          i.rawValue.toLowerCase().includes(kw) ||
+          i.issueType.toLowerCase().includes(kw) ||
+          i.issueDesc.toLowerCase().includes(kw) ||
+          i.correctionRule.toLowerCase().includes(kw)
+        );
+      }
+
+      const tbody = document.getElementById('anomaly-table-body');
+      if (!tbody) return;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-12 text-center text-slate-400">没有匹配的质检异常记录</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map((item, idx) => {
+        const correctionHtml = item.hasCorrection
+          ? `<div class="flex items-start gap-2"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 shrink-0 whitespace-nowrap">✅ 有纠错机制</span><span class="text-emerald-950 font-medium text-xs leading-relaxed break-words">${escapeHtml(item.correctionRule)}</span></div>`
+          : `<div class="flex items-start gap-2"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 shrink-0 whitespace-nowrap">❌ 无纠错机制</span><span class="text-slate-500 text-xs leading-relaxed break-words">${escapeHtml(item.correctionRule)}</span></div>`;
+
+        return `<tr class="hover:bg-indigo-50/40 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}">
+          <td class="px-3 py-3 text-center text-slate-400 text-[11px] font-mono">${idx + 1}</td>
+          <td class="px-4 py-3 whitespace-nowrap">
+            <span class="px-2 py-0.5 rounded bg-slate-100 font-semibold text-slate-800 text-xs">${escapeHtml(item.sourceName)}</span>
+            <div class="text-[11px] text-slate-500 mt-0.5 font-mono truncate max-w-[220px]" title="${escapeHtml(item.fileName)}">${escapeHtml(item.fileName)}</div>
+          </td>
+          <td class="px-3 py-3 whitespace-nowrap">
+            <span class="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 text-xs font-mono font-medium">${escapeHtml(item.sheetName)}</span>
+          </td>
+          <td class="px-3 py-3 whitespace-nowrap">
+            <span class="font-mono text-slate-700 font-semibold">${typeof item.rowNumber === 'number' ? `第 ${item.rowNumber} 行` : item.rowNumber}</span>
+            <span class="text-slate-400 mx-1">·</span>
+            <span class="font-medium text-slate-800">${escapeHtml(item.colName)}</span>
+          </td>
+          <td class="px-4 py-3">
+            <span class="px-2 py-1 bg-slate-100 border border-slate-200 rounded font-mono text-slate-800 text-xs select-all break-words inline-block max-w-[260px]" title="${escapeHtml(item.rawValue || '（空）')}">${escapeHtml(item.rawValue || '（空）')}</span>
+          </td>
+          <td class="px-4 py-3 min-w-[240px]">
+            <span class="inline-block font-semibold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 text-xs">${escapeHtml(item.issueType)}</span>
+            <div class="text-xs text-slate-600 mt-1 leading-relaxed">${escapeHtml(item.issueDesc)}</div>
+          </td>
+          <td class="px-5 py-3 min-w-[380px]">
+            ${correctionHtml}
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    // ===== 演示与工具 =====
+    function loadSampleData() {
+      const collector = [];
+
+      // 1. 标准核心源数据（包含：多重大分类去重、日期代码转换、品名空缺补全、品名单位反转、全空行过滤、品名分类皆空过滤、无表头异常表、跨天送货）
+      const mockRawGrid1 = [
+        ['无效列', 'DATE', 'BIG SERIES', 'BIG SERIES', 'DESCRIPTION OF GOODS', 'UNIT', '采购量', '厨师备注', '总价'],
+        ['-', 46002, '干货类', '南北干货', '干海带', '公斤', '4', '多重大类合并去重测试', '100'],
+        ['-', 46002, '调料类', '调料类', '', '斤', '5', '品名空缺自动以大分类补全测试', '30'],
+        ['-', 46002, '蔬菜类', '蔬菜类', '公斤', '花菜', '15', '品名与单位反转调换测试', '60'],
+        ['', '', '', '', '', '', '', '', ''],
+        ['-', 46002, '', '', '', '斤', '10', '品名与分类皆空不可纠错测试', '50'],
+      ];
+
+      const mockRawGrid2 = [
+        ['DATE', 'BIG SERIES', 'DESCRIPTION OF GOODS', 'UNIT', '采购量', '厨师备注'],
+        ['2026/9/9', '蔬菜', '土豆', '斤', '10', '单据跨天送货测试 1'],
+        ['2026/9/10', '蔬菜', '番茄', '斤', '5', '单据跨天送货测试 2'],
+        ['2026/9/11', '蔬菜', '黄瓜', '斤', '2', '单据跨天送货测试 3'],
+      ];
+
+      const mockRawGrid3 = [
+        ['【档口须知】生鲜需检查验收合格单，退换货需随车返回'],
+        ['本说明页签无常规采购数据列头，测试未识别关键列头场景']
+      ];
+
+      const cleanedGrid1 = cleanAndFilterData(mockRawGrid1, false, { sourceName: '标准源表格', fileName: '模拟多日期源数据.xlsx', sheetName: '正常单日单据' }, collector);
+      const cleanedGrid2 = cleanAndFilterData(mockRawGrid2, false, { sourceName: '标准源表格', fileName: '模拟多日期源数据.xlsx', sheetName: '异常跨天单据' }, collector);
+      const cleanedGrid3 = cleanAndFilterData(mockRawGrid3, false, { sourceName: '标准源表格', fileName: '模拟多日期源数据.xlsx', sheetName: '说明须知(无列头表)' }, collector);
+      checkSheetDateAnomalies(['正常单日单据', '异常跨天单据', '说明须知(无列头表)'], { '正常单日单据': cleanedGrid1, '异常跨天单据': cleanedGrid2, '说明须知(无列头表)': cleanedGrid3 }, { sourceName: '标准源表格', fileName: '模拟多日期源数据.xlsx' }, collector);
+
+      // 2. 待核对源 1 (蔬菜生鲜类：包含数量含单位正则拆解、非有效数值非法行过滤)
+      const mockRawTarget1 = [
+        ['SUPPLIER NAME', 'DATE', 'BIG SERIES', 'DESCRIPTION OF GOODS', 'UNIT', '采购量', '厨师备注'],
+        ['晨光蔬菜配送', '2026/9/9', '蔬菜类', '土豆', '斤', '10斤', '数量夹带单位拆解测试 (10斤)'],
+        ['晨光蔬菜配送', '2026/9/10', '蔬菜类', '番茄', '斤', '6斤', '包装规格超发补足测试 (+1斤)'],
+        ['晨光蔬菜配送', '2026/9/9', '蔬菜类', '洋葱', '斤', '8斤', '核心源未下单新入库测试'],
+        ['晨光蔬菜配送', '2026/9/9', '蔬菜类', '大蒜', '斤', '待确定', '非数值采购量过滤测试'],
+      ];
+      const cleanedTargetGrid1 = cleanAndFilterData(mockRawTarget1, true, { sourceName: '待核对源 1', fileName: '测试待核对表1-晨光蔬菜配送.xlsx', sheetName: '蔬菜配送清单' }, collector);
+
+      // 3. 待核对源 2 (粮油干货类：特别测试“表头缺少UNIT单位列，自动补充虚拟列并拆解单位”)
+      const mockRawTarget2 = [
+        ['SUPPLIER NAME', 'DATE', 'BIG SERIES', 'DESCRIPTION OF GOODS', '采购量', '厨师备注'],
+        ['丰润粮油', '2026/9/9', '干货类', '腐竹', '15包', '缺UNIT列自动补全+15包拆解'],
+        ['丰润粮油', '2026/9/9', '干货类', '地皮菜', '8斤', '缺UNIT列自动补全+8斤拆解 (少2斤)'],
+        ['丰润粮油', '2026/9/9', '干货类', '木耳', '5袋', '缺UNIT列自动补全+5袋拆解'],
+      ];
+      const cleanedTargetGrid2 = cleanAndFilterData(mockRawTarget2, true, { sourceName: '待核对源 2', fileName: '测试待核对表2-丰润粮油干货.xlsx', sheetName: '粮油干货配送单' }, collector);
+
+      // 4. 待核对源 3 (副食调味品类：包含数量单位拆解、采购量为0过滤)
+      const mockRawTarget3 = [
+        ['SUPPLIER NAME', 'DATE', 'BIG SERIES', 'DESCRIPTION OF GOODS', 'UNIT', '采购量', '厨师备注'],
+        ['海纳调料', '2026/9/9', '调味类', '鸡精', '件', '1件', '匹配文本源鸡精测试'],
+        ['海纳调料', '2026/9/9', '厨房用品', '火枪头', '个', '2个', '耗材多送测试'],
+        ['海纳调料', '2026/9/9', '调味类', '生抽', '桶', '3桶', '生抽多送测试'],
+        ['海纳调料', '2026/9/9', '调味类', '白醋', '瓶', '0', '零采购量过滤测试'],
+      ];
+      const cleanedTargetGrid3 = cleanAndFilterData(mockRawTarget3, true, { sourceName: '待核对源 3', fileName: '测试待核对表3-海纳副食调料.xlsx', sheetName: '副食调料送货单' }, collector);
+
+      const applyDemo = () => {
+        window.auditStore.anomalyLogs = collector ? [...collector] : [];
+        updateAnomalyBadge();
+
+        // 1. 标准核心 Excel 源
+        window.auditStore.benchmark.excel = {
+          fileName: '模拟多日期源数据.xlsx',
+          sheetNames: ['正常单日单据', '异常跨天单据', '说明须知(无列头表)'],
+          activeSheet: '正常单日单据',
+          dataBySheet: { '正常单日单据': cleanedGrid1, '异常跨天单据': cleanedGrid2, '说明须知(无列头表)': cleanedGrid3 }
+        };
+        document.getElementById('label-std-excel').textContent = '模拟多日期源数据.xlsx';
+        const statusStdExcel = document.getElementById('status-std-excel');
+        statusStdExcel.querySelector('.detail-text').textContent = "已补全、清洗与过滤";
+        statusStdExcel.querySelector('.status-indicator').classList.add('bg-emerald-500');
+
+        // 2. 标准文本
+        const sampleTxt = `鸡精1件\n干海带4公斤\n腐竹15包，\n地皮菜10\n火枪头  ；`;
+        document.getElementById('txt-std-content').value = sampleTxt.replace(/\\n/g, '\n');
+        handleTxtInput();
+
+        // 3. 动态待核对源（演示数据仍提供三份，实际导入不限数量）
+        window.auditStore.targets = [
+          { fileName: '测试待核对表1-晨光蔬菜配送.xlsx', sheetNames: ['蔬菜配送清单'], activeSheet: '蔬菜配送清单', dataBySheet: { '蔬菜配送清单': cleanedTargetGrid1 } },
+          { fileName: '测试待核对表2-丰润粮油干货.xlsx', sheetNames: ['粮油干货配送单'], activeSheet: '粮油干货配送单', dataBySheet: { '粮油干货配送单': cleanedTargetGrid2 } },
+          { fileName: '测试待核对表3-海纳副食调料.xlsx', sheetNames: ['副食调料送货单'], activeSheet: '副食调料送货单', dataBySheet: { '副食调料送货单': cleanedTargetGrid3 } }
+        ];
+        renderTargetNavigation();
+
+        const labelBatch = document.getElementById('label-target-batch');
+        if (labelBatch) labelBatch.textContent = '已载入 3 个测试表';
+
+        updateAllBadges();
+        switchToComparisonIfReady('tab-std-excel');
+      };
+
+      requestAnomalyConfirmation(collector, applyDemo, () => { });
+    }
+
+    function resetAllData() { location.reload(); }
+    function getExcelSourceByTab(tabId) {
+      if (tabId === 'tab-std-excel') return window.auditStore.benchmark.excel;
+      const targetMatch = tabId.match(/^tab-target-(\d+)$/);
+      return targetMatch ? window.auditStore.targets[Number(targetMatch[1]) - 1] : null;
+    }
+    function updateTargetTabLabel(num, src) {
+      const label = document.getElementById(`tab-label-target-${num}`);
+      if (!label) return;
+
+      const grid = src.activeSheet ? src.dataBySheet[src.activeSheet] : null;
+      if (!grid || grid.length < 2) {
+        label.textContent = `核对${num}`;
+        label.title = `待核对 ${num}`;
+        return;
+      }
+
+      const supplierIdx = grid[0].indexOf('SUPPLIER NAME');
+      const suppliers = supplierIdx === -1 ? [] : [...new Set(
+        grid.slice(1).map(row => String(row[supplierIdx] ?? '').trim()).filter(Boolean)
+      )];
+      const supplierText = suppliers.length ? suppliers.join(' / ') : '未识别供应商';
+      label.textContent = `核对${num}·${supplierText}`;
+      label.title = `待核对 ${num} · ${supplierText}`;
+    }
+
+    function renderTargetNavigation() {
+      const targets = window.auditStore.targets;
+      const tabs = document.getElementById('target-tabs');
+      tabs.innerHTML = targets.map((src, index) => {
+        const num = index + 1;
+        return `<button onclick="switchMainTab('tab-target-${num}')" class="tab-btn px-4 py-2.5 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 flex items-center focus:outline-none" data-tab="tab-target-${num}"><span id="tab-label-target-${num}">核对${num}</span><span id="tab-badge-target-${num}" class="text-[10px] bg-slate-200 px-1 rounded-full ml-1">0条</span></button>`;
+      }).join('');
+
+      targets.forEach((src, index) => updateTargetTabLabel(index + 1, src));
+      scheduleTabLineageDraw();
+
+      const status = document.getElementById('status-targets');
+      status.querySelector('.target-count-text').textContent = targets.length ? `已导入 ${targets.length} 个表格` : '支持 1 个或多个表格';
+      status.querySelector('.detail-text').textContent = targets.length ? '已清洗、合并并准备核对' : '未导入';
+      status.querySelector('.status-indicator').classList.toggle('bg-slate-300', targets.length === 0);
+      status.querySelector('.status-indicator').classList.toggle('bg-indigo-500', targets.length > 0);
+
+      const fileList = document.getElementById('target-import-list');
+      fileList.innerHTML = targets.length
+        ? targets.map((src, index) => `<span class="shrink-0 rounded bg-white border border-indigo-100 px-2 py-1" title="${escapeAttribute(src.fileName)}">${index + 1}. ${escapeHtml(src.fileName)}</span>`).join('')
+        : '<span class="rounded bg-white/80 border border-indigo-100 px-2 py-1">尚未导入文件</span>';
+    }
+    function formatNumber(value) {
+      return Number.isInteger(value) ? String(value) : String(Number(value.toFixed(6)));
+    }
+    function escapeHtml(text) { return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+    function escapeAttribute(text) { return escapeHtml(String(text ?? '')).replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+
+    window.addEventListener('resize', scheduleTabLineageDraw);
+    document.getElementById('main-tabs')?.addEventListener('scroll', scheduleTabLineageDraw, { passive: true });
+    scheduleTabLineageDraw();
+  </script>
+  <!-- 质检诊断与自动纠错弹窗 (Wide Modal) -->
+  <div id="anomaly-modal"
+    class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-6 hidden transition-all">
+    <div
+      class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-[95vw] max-w-[1600px] max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-slate-200 bg-slate-50/80 flex items-center justify-between shrink-0">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shadow-xs">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+              </path>
+            </svg>
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <h3 class="text-base font-bold text-slate-900" id="anomaly-modal-title">导入数据智能质检与自动纠错核查</h3>
+              <span id="anomaly-modal-count-badge"
+                class="px-2 py-0.5 text-xs font-semibold rounded-full bg-amber-100 text-amber-800">共 0 项待确认</span>
+            </div>
+            <p class="text-xs text-slate-500 mt-0.5">系统已对导入数据进行规则扫描，请核对识别到的异常与纠错机制后确认是否继续导入。</p>
+          </div>
+        </div>
+        <button onclick="closeAnomalyModal(false)"
+          class="text-slate-400 hover:text-slate-600 p-2 rounded-lg hover:bg-slate-200/50 transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Filter & Search Toolbar -->
+      <div
+        class="px-6 py-3 border-b border-slate-200/80 bg-white flex flex-wrap items-center justify-between gap-3 shrink-0">
+        <div class="flex items-center space-x-2 text-xs" id="anomaly-filter-tabs">
+          <button onclick="setAnomalyFilter('all')"
+            class="anomaly-filter-btn px-3 py-1.5 rounded-lg font-medium bg-slate-900 text-white shadow-xs"
+            data-filter="all">全部 (<span id="anomaly-cnt-all">0</span>)</button>
+          <button onclick="setAnomalyFilter('corrected')"
+            class="anomaly-filter-btn px-3 py-1.5 rounded-lg font-medium bg-slate-100 text-slate-600 hover:bg-slate-200"
+            data-filter="corrected">✅ 已自动纠错 (<span id="anomaly-cnt-corrected">0</span>)</button>
+          <button onclick="setAnomalyFilter('no-correction')"
+            class="anomaly-filter-btn px-3 py-1.5 rounded-lg font-medium bg-slate-100 text-slate-600 hover:bg-slate-200"
+            data-filter="no-correction">❌ 无纠错/已过滤 (<span id="anomaly-cnt-none">0</span>)</button>
+        </div>
+        <div class="relative w-72">
+          <input type="text" id="anomaly-search-input" oninput="renderAnomalyTable()" placeholder="搜索表、页签、品名或问题..."
+            class="w-full text-xs pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500">
+          <svg class="w-3.5 h-3.5 absolute left-2.5 top-2 text-slate-400" fill="none" stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Table Content -->
+      <div class="flex-1 overflow-auto bg-slate-50/40 p-4">
+        <div class="bg-white rounded-xl border border-slate-200 overflow-x-auto shadow-xs">
+          <table class="w-full min-w-[1360px] text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200">
+                <th class="px-3 py-3 text-center w-12">#</th>
+                <th class="px-4 py-3 w-52 whitespace-nowrap">所属表格</th>
+                <th class="px-3 py-3 w-40 whitespace-nowrap">工作表(页签)</th>
+                <th class="px-3 py-3 w-48 whitespace-nowrap">行列位置</th>
+                <th class="px-4 py-3 w-64 whitespace-nowrap">原始输入数据</th>
+                <th class="px-4 py-3 w-80 whitespace-nowrap">识别到的异常问题</th>
+                <th class="px-5 py-3 min-w-[400px] whitespace-nowrap">自动纠错机制与处理方式</th>
+              </tr>
+            </thead>
+            <tbody id="anomaly-table-body" class="divide-y divide-slate-100 font-normal">
+              <!-- Dynamically populated rows -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-6 py-3.5 border-t border-slate-200 bg-slate-50/80 flex items-center justify-between shrink-0">
+        <div class="text-xs text-slate-500 flex items-center">
+          <svg class="w-4 h-4 mr-1 text-indigo-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <span>核对无误后，点击右侧按钮将按纠错机制生效并正式导入数据。</span>
+        </div>
+        <div class="flex items-center space-x-3">
+          <button id="btn-anomaly-cancel" onclick="closeAnomalyModal(false)"
+            class="px-4 py-2 text-xs font-medium text-slate-600 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl transition-colors shadow-xs">取消导入</button>
+          <button id="btn-anomaly-confirm" onclick="confirmAnomalyAction()"
+            class="px-5 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors shadow-md flex items-center">
+            <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            按照自动纠错机制强制继续
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</body>
+
+</html>
