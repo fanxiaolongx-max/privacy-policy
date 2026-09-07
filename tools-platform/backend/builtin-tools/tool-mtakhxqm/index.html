@@ -307,21 +307,23 @@
         .joining-compare > div { padding: 12px; border-radius: 10px; background: rgba(255,255,255,.72); text-align: center; }
         .joining-compare small { display: block; margin-top: 5px; color: #6b7280; }
         .starter-flashcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 18px; grid-auto-flow: dense; }
-        .starter-flip-card { height: 184px; border: 0; background: transparent; cursor: pointer; perspective: 1000px; position: relative; transition: all .25s ease; content-visibility: auto; contain-intrinsic-size: 190px 184px; }
+        .starter-flip-card { height: 204px; border: 0; background: transparent; cursor: pointer; perspective: 1000px; position: relative; transition: all .25s ease; content-visibility: auto; contain-intrinsic-size: 190px 204px; }
         .starter-flip-card.span-2 { grid-column: span 2; }
         .starter-flip-inner { position: relative; width: 100%; height: 100%; transition: transform .6s cubic-bezier(.2,.75,.2,1); transform-style: preserve-3d; }
         .starter-flip-card.flipped .starter-flip-inner { transform: rotateY(180deg); }
+        /* 部分浏览器会把彩色 emoji 单独合成，导致正面分类图标穿透 3D 背面。 */
+        .starter-flip-card.flipped .starter-flip-front .card-shift-actions { display: none; }
         .starter-flip-face { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 12px 10px 10px; border-radius: 15px; box-shadow: 0 8px 20px rgba(31,41,55,.12); backface-visibility: hidden; }
         .starter-flip-front { background: linear-gradient(145deg, #5b55e8, #4338ca); color: #fff; }
         .starter-flip-back { border: 2px solid var(--starter); background: #fff; color: #312e81; transform: rotateY(180deg); }
-        .starter-word { direction: rtl; font-family: "Amiri", "Traditional Arabic", serif; font-size: 34px; font-weight: 700; line-height: 1.2; text-align: center; max-width: 95%; overflow: hidden; text-overflow: ellipsis; }
-        .starter-back-word-wrap { margin-top: 3px; margin-bottom: 4px; display: flex; align-items: center; justify-content: center; width: 100%; }
-        .starter-back-word { direction: rtl; font-family: "Amiri", "Traditional Arabic", serif; font-size: 21px; font-weight: 700; color: #4338ca; line-height: 1.15; cursor: pointer; padding: 1px 10px; border-radius: 8px; transition: all .15s ease; border: 1px solid rgba(99, 102, 241, 0.18); background: #f8fafc; }
+        .starter-word { display: block; direction: rtl; font-family: "Amiri", "Traditional Arabic", serif; font-size: 34px; font-weight: 700; line-height: 1.45; text-align: center; max-width: 95%; padding: .28em .2em .18em; overflow: visible; }
+        .starter-back-word-wrap { margin-top: 3px; margin-bottom: 4px; display: flex; align-items: center; justify-content: center; width: 100%; overflow: visible; }
+        .starter-back-word { direction: rtl; font-family: "Amiri", "Traditional Arabic", serif; font-size: 21px; font-weight: 700; color: #4338ca; line-height: 1.4; cursor: pointer; padding: .28em 10px .18em; overflow: visible; border-radius: 8px; transition: all .15s ease; border: 1px solid rgba(99, 102, 241, 0.18); background: #f8fafc; }
         .starter-back-word:hover { background: #e0e7ff; color: #3730a3; border-color: #c7d2fe; transform: scale(1.05); }
         .starter-word.playing, .starter-back-word.playing, .starter-breakdown-letter.playing { border-radius: 8px; background: #dcf4ff; color: #1476a5; }
         .starter-meaning { margin-top: 4px; font-size: 13.5px; font-weight: 600; text-align: center; max-width: 95%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .starter-breakdown { display: flex; flex-wrap: nowrap; align-items: center; justify-content: center; gap: 4px; direction: rtl; width: 100%; max-width: 100%; white-space: nowrap; margin-bottom: 2px; }
-        .starter-breakdown-letter { display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 35px; padding: 2px 5px; border: 1px solid #d7d9f9; border-radius: 8px; background: var(--starter-soft); color: #3730a3; font-family: "Amiri", "Traditional Arabic", serif; font-size: 22px; line-height: 1; cursor: pointer; flex-shrink: 0; box-shadow: 0 1px 3px rgba(79, 70, 229, .08); transition: transform .15s ease, background .15s ease, box-shadow .15s ease; }
+        .starter-breakdown-letter { display: inline-flex; align-items: center; justify-content: center; min-width: 30px; min-height: 43px; padding: 6px 5px 4px; overflow: visible; border: 1px solid #d7d9f9; border-radius: 8px; background: var(--starter-soft); color: #3730a3; font-family: "Amiri", "Traditional Arabic", serif; font-size: 22px; line-height: 1.35; cursor: pointer; flex-shrink: 0; box-shadow: 0 1px 3px rgba(79, 70, 229, .08); transition: transform .15s ease, background .15s ease, box-shadow .15s ease; }
         .starter-breakdown-letter:hover { transform: translateY(-1px); background: #e0e7ff; box-shadow: 0 3px 8px rgba(79, 70, 229, .15); }
         .starter-breakdown-letter:active { transform: scale(0.96); }
         .starter-breakdown-letter.is-key-letter { background: linear-gradient(145deg, #fff7ed, #ffedd5); border: 1.5px solid #f97316; color: #c2410c; font-weight: 700; box-shadow: 0 2px 6px rgba(249, 115, 22, 0.22); transform: scale(1.04); z-index: 2; }
@@ -1700,10 +1702,10 @@
             .starter-grid,
             .joining-compare { grid-template-columns: 1fr; }
             .starter-flashcards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; grid-auto-flow: dense; }
-            .starter-flip-card { height: 200px; }
+            .starter-flip-card { height: 220px; }
             .starter-flip-card.span-2 { grid-column: span 2; }
             .starter-word { font-size: 34px; }
-            .starter-breakdown-letter { min-width: 28px; height: 34px; font-size: 21px; padding: 2px 4px; }
+            .starter-breakdown-letter { min-width: 29px; min-height: 42px; font-size: 21px; padding: 6px 4px 4px; }
             .starter-breakdown-plus { font-size: 13px; }
             .starter-breakdown { gap: 3px; }
 
@@ -1932,8 +1934,8 @@
                         <thead><tr><th>发音分类</th><th>词首 بــ</th><th>词中 ــبــ</th><th>词尾 ــب / 末音节</th></tr></thead>
                         <tbody>
                             <tr><td><span class="vocab-badge">بَ</span><br>短音 ba</td><td class="vocab-example"><b>بَاب</b><small>bāb · 门 · 已学</small></td><td class="vocab-example"><b>لَبَن</b><small>laban · 牛奶/酸奶 · 已学</small></td><td class="vocab-example"><b>كَتَبَ</b><small>kataba · 他写了 · 新词</small></td></tr>
-                            <tr><td><span class="vocab-badge">بِ</span><br>短音 bi</td><td class="vocab-example"><b>بِنْت</b><small>bint · 女孩 · 已学</small></td><td class="vocab-example"><b>كَبِير</b><small>kabīr · 大的 · 新词</small></td><td class="vocab-example"><b>بِقَلْبِ</b><small>bi-qalbi · 在我的心中 · 新词</small></td></tr>
-                            <tr><td><span class="vocab-badge">بُ</span><br>短音 bu</td><td class="vocab-example"><b>بُرْتُقَال</b><small>burtuqāl · 橙子 · 已学</small></td><td class="vocab-example"><b>خُبُز</b><small>khubuz · 面包 · 新词</small></td><td class="vocab-example"><b>كُتُبُ</b><small>kutubu · 书（主格）· 新词</small></td></tr>
+                            <tr><td><span class="vocab-badge">بِ</span><br>短音 bi</td><td class="vocab-example"><b>بِنْت</b><small>bint · 女孩 · 已学</small></td><td class="vocab-example"><b>كَبِير</b><small>kabīr · 大的 · 新词</small></td><td class="vocab-example"><b>بِقَلْبِي</b><small>bi-qalbī · 在我的心中 · 新词</small></td></tr>
+                            <tr><td><span class="vocab-badge">بُ</span><br>短音 bu</td><td class="vocab-example"><b>بُرْتُقَال</b><small>burtuqāl · 橙子 · 已学</small></td><td class="vocab-example"><b>خُبْز</b><small>khubz · 面包 · 新词</small></td><td class="vocab-example"><b>كُتُبٌ</b><small>kutubun · 书（不定主格）· 新词</small></td></tr>
                             <tr><td><span class="vocab-badge">بَا</span><br>长音 bā</td><td class="vocab-example"><b>بَاب</b><small>bāb · 门 · 已学</small></td><td class="vocab-example"><b>شَبَاب</b><small>shabāb · 青年 · 新词</small></td><td class="vocab-example"><b>رِبَا</b><small>ribā · 利息 · 新词</small></td></tr>
                             <tr><td><span class="vocab-badge">بِي</span><br>长音 bī</td><td class="vocab-example"><b>بِيئَة</b><small>bīʾah · 环境 · 新词</small></td><td class="vocab-example"><b>طَبِيب</b><small>ṭabīb · 医生 · 已学</small></td><td class="vocab-example"><b>حَبِيب</b><small>ḥabīb · 亲爱的 · 新词</small></td></tr>
                             <tr><td><span class="vocab-badge">بُو</span><br>长音 bū</td><td class="vocab-example"><b>بُومَة</b><small>būmah · 猫头鹰 · 新词</small></td><td class="vocab-example"><b>عَبُوس</b><small>ʿabūs · 愁眉苦脸的 · 新词</small></td><td class="vocab-example"><b>أَبُو</b><small>abū · ……之父 · 已学词根</small></td></tr>
@@ -1947,9 +1949,9 @@
                     <table class="vocab-classified-table">
                         <thead><tr><th>发音分类</th><th>词首 تــ</th><th>词中 ــتــ</th><th>词尾 ــت / 末音节</th></tr></thead>
                         <tbody>
-                            <tr><td><span class="vocab-badge">تَ</span><br>短音 ta</td><td class="vocab-example"><b>تَمْر</b><small>tamr · 椰枣 · 已学</small></td><td class="vocab-example"><b>كِتَاب</b><small>kitāb · 书 · 已学</small></td><td class="vocab-example"><b>بَيْتَ</b><small>bayta · 房子（宾格）· 已学词</small></td></tr>
-                            <tr><td><span class="vocab-badge">تِ</span><br>短音 ti</td><td class="vocab-example"><b>تِمْسَاح</b><small>timsāḥ · 鳄鱼 · 已学</small></td><td class="vocab-example"><b>عَتِيق</b><small>ʿatīq · 古老的 · 新词</small></td><td class="vocab-example"><b>بَيْتِ</b><small>bayti · 房子（属格）· 已学词</small></td></tr>
-                            <tr><td><span class="vocab-badge">تُ</span><br>短音 tu</td><td class="vocab-example"><b>تُفَّاح</b><small>tuffāḥ · 苹果 · 已学</small></td><td class="vocab-example"><b>كُتُب</b><small>kutub · 书（复数）· 新词</small></td><td class="vocab-example"><b>بَيْتُ</b><small>baytu · 房子（主格）· 已学词</small></td></tr>
+                            <tr><td><span class="vocab-badge">تَ</span><br>短音 ta</td><td class="vocab-example"><b>تَمْر</b><small>tamr · 椰枣 · 已学</small></td><td class="vocab-example"><b>كِتَاب</b><small>kitāb · 书 · 已学</small></td><td class="vocab-example"><b>بَيْتًا</b><small>baytan · 房子（不定宾格）· 已学词</small></td></tr>
+                            <tr><td><span class="vocab-badge">تِ</span><br>短音 ti</td><td class="vocab-example"><b>تِمْسَاح</b><small>timsāḥ · 鳄鱼 · 已学</small></td><td class="vocab-example"><b>عَتِيق</b><small>ʿatīq · 古老的 · 新词</small></td><td class="vocab-example"><b>بَيْتٍ</b><small>baytin · 房子（不定属格）· 已学词</small></td></tr>
+                            <tr><td><span class="vocab-badge">تُ</span><br>短音 tu</td><td class="vocab-example"><b>تُفَّاح</b><small>tuffāḥ · 苹果 · 已学</small></td><td class="vocab-example"><b>كُتُب</b><small>kutub · 书（复数）· 新词</small></td><td class="vocab-example"><b>بَيْتٌ</b><small>baytun · 房子（不定主格）· 已学词</small></td></tr>
                             <tr><td><span class="vocab-badge">تَا</span><br>长音 tā</td><td class="vocab-example"><b>تَاج</b><small>tāj · 皇冠 · 已学</small></td><td class="vocab-example"><b>كِتَاب</b><small>kitāb · 书 · 已学</small></td><td class="vocab-example"><b>فَتَى</b><small>fatā · 少年 · 新词（末尾 ى）</small></td></tr>
                             <tr><td><span class="vocab-badge">تِي</span><br>长音 tī</td><td class="vocab-example"><b>تِين</b><small>tīn · 无花果 · 已学</small></td><td class="vocab-example"><b>يَتِيم</b><small>yatīm · 孤儿 · 新词</small></td><td class="vocab-example"><b>تَلَاتِين</b><small>talatīn · 三十 · 已学（埃及口语）</small></td></tr>
                             <tr><td><span class="vocab-badge">تُو</span><br>长音 tū</td><td class="vocab-example"><b>تُوت</b><small>tūt · 桑葚/浆果 · 已学</small></td><td class="vocab-example"><b>زَيْتُون</b><small>zaytūn · 橄榄 · 新词</small></td><td class="vocab-example"><b>سَكَتُوا</b><small>sakatū · 他们沉默了 · 新词</small></td></tr>
@@ -1967,7 +1969,7 @@
                             <tr><td><span class="vocab-badge">ثِ</span><br>短音 thi</td><td class="vocab-example"><b>ثِقَة</b><small>thiqah · 信任 · 新词</small></td><td class="vocab-example"><b>كَثِير</b><small>kathīr · 很多 · 新词</small></td><td class="vocab-example"><b>بِالْإِرْثِ</b><small>bil-irthi · 通过继承 · 新词</small></td></tr>
                             <tr><td><span class="vocab-badge">ثُ</span><br>短音 thu</td><td class="vocab-example"><b>ثُعْبَان</b><small>thuʿbān · 蛇 · 本课新学</small></td><td class="vocab-example"><b>مَثُلَ</b><small>mathula · 成为典范 · 新词</small></td><td class="vocab-example"><b>يَلْبَثُ</b><small>yalbathu · 他停留 · 新词</small></td></tr>
                             <tr><td><span class="vocab-badge">ثَا</span><br>长音 thā</td><td class="vocab-example"><b>ثَانِيَة</b><small>thāniyah · 第二/一秒 · 新词</small></td><td class="vocab-example"><b>مِثَال</b><small>mithāl · 例子 · 新词</small></td><td class="vocab-example"><b>أَثَاث</b><small>athāth · 家具 · 新词</small></td></tr>
-                            <tr><td><span class="vocab-badge">ثِي</span><br>长音 thī</td><td class="vocab-example"><b>ثِيرَان</b><small>thīrān · 公牛（复数）· 新词</small></td><td class="vocab-example"><b>وَثِيقَة</b><small>wathīqah · 文件/文书 · 新词</small></td><td class="vocab-example"><b>مِثِيل</b><small>mathīl · 相似者 · 新词</small></td></tr>
+                            <tr><td><span class="vocab-badge">ثِي</span><br>长音 thī</td><td class="vocab-example"><b>ثِيرَان</b><small>thīrān · 公牛（复数）· 新词</small></td><td class="vocab-example"><b>وَثِيقَة</b><small>wathīqah · 文件/文书 · 新词</small></td><td class="vocab-example"><b>مَثِيل</b><small>mathīl · 相似者 · 新词</small></td></tr>
                             <tr><td><span class="vocab-badge">ثُو</span><br>长音 thū</td><td class="vocab-example"><b>ثُوم</b><small>thūm · 大蒜 · 本课新学</small></td><td class="vocab-example"><b>مَثُوبَة</b><small>mathūbah · 奖赏 · 新词</small></td><td class="vocab-example"><b>يَرِثُون</b><small>yarithūn · 他们继承 · 新词</small></td></tr>
                             <tr><td><span class="vocab-badge">ثْ</span><br>静音 th</td><td class="vocab-example"><b>ثَعْلَب</b><small>thaʿlab · 狐狸 · 本课新学</small></td><td class="vocab-example"><b>مِثْل</b><small>mithl · 像/例如 · 新词</small></td><td class="vocab-example"><b>إِرْث</b><small>irth · 遗产 · 新词</small></td></tr>
                         </tbody>
@@ -1982,7 +1984,7 @@
                         <tbody>
                             <tr><td><span class="vocab-badge">وَ</span><br>短音 wa</td><td class="vocab-example"><b>وَرْدَة</b><small>wardah · 花/玫瑰 · 本课新学</small></td><td class="vocab-example"><b>دَوَاء</b><small>dawāʾ · 药 · 本课新学</small></td><td class="vocab-example"><b>هُوَ</b><small>huwa · 他 · 新词</small></td></tr>
                             <tr><td><span class="vocab-badge">وِ</span><br>短音 wi</td><td class="vocab-example"><b>وِسَادَة</b><small>wisādah · 枕头 · 新词</small></td><td class="vocab-example"><b>طَوِيل</b><small>ṭawīl · 长的/高的 · 新词</small></td><td class="vocab-example"><b>اِرْوِ</b><small>irwi · 讲述吧/浇灌吧 · 新词</small></td></tr>
-                            <tr><td><span class="vocab-badge">وُ</span><br>短音 wu</td><td class="vocab-example"><b>وُجُود</b><small>wujūd · 存在 · 新词</small></td><td class="vocab-example"><b>طَاوُوس</b><small>ṭāwūs · 孔雀 · 新词</small></td><td class="vocab-example"><b>عُضْوُ</b><small>ʿuḍwu · 成员（主格）· 新词</small></td></tr>
+                            <tr><td><span class="vocab-badge">وُ</span><br>短音 wu</td><td class="vocab-example"><b>وُجُود</b><small>wujūd · 存在 · 新词</small></td><td class="vocab-example"><b>طَاوُوس</b><small>ṭāwūs · 孔雀 · 新词</small></td><td class="vocab-example"><b>عُضْوٌ</b><small>ʿuḍwun · 成员（不定主格）· 新词</small></td></tr>
                             <tr><td><span class="vocab-badge">وَا</span><br>长音 wā</td><td class="vocab-example"><b>وَاحِد</b><small>wāḥid · 一/一个 · 本课新学</small></td><td class="vocab-example"><b>دَوَاء</b><small>dawāʾ · 药 · 本课新学</small></td><td class="vocab-example"><b>هَوَاء</b><small>hawāʾ · 空气 · 新词</small></td></tr>
                             <tr><td><span class="vocab-badge">ـُو</span><br>长音 ū</td><td class="vocab-impossible">长音不能脱离辅音直接开头；词首通常先写 hamza，如 أُولَى。</td><td class="vocab-example"><b>يُوسُف</b><small>yūsuf · 优素福 · 本课新学</small></td><td class="vocab-example"><b>يَدْعُو</b><small>yadʿū · 他呼唤 · 新词</small></td></tr>
                             <tr><td><span class="vocab-badge">ـَوْ</span><br>双元音 aw</td><td class="vocab-impossible">aw 前面必须先有带 fatḥah 的辅音，因此 و 不能作为该音节的首字母。</td><td class="vocab-example"><b>مَوْزَة</b><small>mawzah · 香蕉 · 本课新学</small></td><td class="vocab-example"><b>نَوْم</b><small>nawm · 睡眠；另见 يَوْم（一天）· 本课新学</small></td></tr>
@@ -1997,7 +1999,7 @@
                         <thead><tr><th>发音分类</th><th>词首 يــ</th><th>词中 ــيــ</th><th>词尾 ــي / ــى</th></tr></thead>
                         <tbody>
                             <tr><td><span class="vocab-badge">يَ</span><br>短音 ya</td><td class="vocab-example"><b>يَمِين</b><small>yamīn · 右边 · 本课新学</small></td><td class="vocab-example"><b>بَيَان</b><small>bayān · 说明/声明 · 新词</small></td><td class="vocab-example"><b>هِيَ</b><small>hiya · 她 · 新词</small></td></tr>
-                            <tr><td><span class="vocab-badge">يُ</span><br>短音 yu</td><td class="vocab-example"><b>يُوسُف</b><small>yūsuf · 优素福 · 本课新学</small></td><td class="vocab-example"><b>بُيُوت</b><small>buyūt · 房子（复数）· 已学词</small></td><td class="vocab-example"><b>هَدْيُ</b><small>hadyu · 指引（主格）· 新词</small></td></tr>
+                            <tr><td><span class="vocab-badge">يُ</span><br>短音 yu</td><td class="vocab-example"><b>يُوسُف</b><small>yūsuf · 优素福 · 本课新学</small></td><td class="vocab-example"><b>بُيُوت</b><small>buyūt · 房子（复数）· 已学词</small></td><td class="vocab-example"><b>هَدْيٌ</b><small>hadyun · 指引（不定主格）· 新词</small></td></tr>
                             <tr><td><span class="vocab-badge">ـَيْ</span><br>双元音 ay</td><td class="vocab-impossible">ay 前面必须先有带 fatḥah 的辅音，因此 ي 不能作为该音节的首字母。</td><td class="vocab-example"><b>بَيْت</b><small>bayt · 房子 · 本课新学</small></td><td class="vocab-example"><b>شَيْء</b><small>shayʾ · 东西/事物 · 新词</small></td></tr>
                             <tr><td><span class="vocab-badge">ـِي</span><br>长音 ī</td><td class="vocab-example"><b>إِيمَان</b><small>īmān · 信念 · 新词</small></td><td class="vocab-example"><b>لِيمُونَة</b><small>līmūnah · 柠檬 · 本课新学</small></td><td class="vocab-example"><b>فِي</b><small>fī · 在……里面 · 新词</small></td></tr>
                             <tr><td><span class="vocab-badge">يَا</span><br>长音 yā</td><td class="vocab-example"><b>يَاسِر</b><small>yāsir · 亚西尔（人名）· 新词</small></td><td class="vocab-example"><b>رِيَاضَة</b><small>riyāḍah · 运动 · 新词</small></td><td class="vocab-example"><b>دُنْيَا</b><small>dunyā · 世界/今世 · 新词</small></td></tr>
@@ -2012,9 +2014,9 @@
                     <table class="vocab-classified-table">
                         <thead><tr><th>发音分类</th><th>词首 ا</th><th>词中 ــا</th><th>词尾 ــا / 说明</th></tr></thead>
                         <tbody>
-                            <tr><td><span class="vocab-badge">أَ</span><br>短音 ʾa</td><td class="vocab-example"><b>أَنَا</b><small>anā · 我 · 已学</small></td><td class="vocab-example"><b>سَأَلَ</b><small>saʾala · 他问了 · 新词</small></td><td class="vocab-example"><b>مَبْدَأَ</b><small>mabdaʾa · 原则（宾格）· 新词</small></td></tr>
+                            <tr><td><span class="vocab-badge">أَ</span><br>短音 ʾa</td><td class="vocab-example"><b>أَنَا</b><small>anā · 我 · 已学</small></td><td class="vocab-example"><b>سَأَلَ</b><small>saʾala · 他问了 · 新词</small></td><td class="vocab-example"><b>مَبْدَأً</b><small>mabdaʾan · 原则（不定宾格）· 新词</small></td></tr>
                             <tr><td><span class="vocab-badge">إِ</span><br>短音 ʾi</td><td class="vocab-example"><b>إِبْرَة</b><small>ibrah · 针 · 已学</small></td><td class="vocab-example"><b>سُئِلَ</b><small>suʾila · 他被问 · 新词</small></td><td class="vocab-impossible">词中/词尾 hamza 会按前后元音换“座位”，不一定仍写成 إ。</td></tr>
-                            <tr><td><span class="vocab-badge">أُ</span><br>短音 ʾu</td><td class="vocab-example"><b>أُمّ</b><small>umm · 妈妈 · 已学</small></td><td class="vocab-example"><b>يَؤُمُّ</b><small>yaʾummu · 他带领 · 新词</small></td><td class="vocab-example"><b>تَبَاطُؤُ</b><small>tabāṭuʾu · 迟缓（主格）· 新词</small></td></tr>
+                            <tr><td><span class="vocab-badge">أُ</span><br>短音 ʾu</td><td class="vocab-example"><b>أُمّ</b><small>umm · 妈妈 · 已学</small></td><td class="vocab-example"><b>يَؤُمُّ</b><small>yaʾummu · 他带领 · 新词</small></td><td class="vocab-example"><b>تَبَاطُؤٌ</b><small>tabāṭuʾun · 迟缓（不定主格）· 新词</small></td></tr>
                             <tr><td><span class="vocab-badge">ا / آ</span><br>长音 ā</td><td class="vocab-example"><b>آسِف</b><small>āsif · 对不起 · 已学</small></td><td class="vocab-example"><b>بَاب</b><small>bāb · 门 · 已学</small></td><td class="vocab-example"><b>أَنَا</b><small>anā · 我 · 已学</small></td></tr>
                             <tr><td>长音 ī / ū</td><td class="vocab-example"><b>تِين</b><small>tīn · ي 承担 ī</small></td><td class="vocab-example"><b>تُوت</b><small>tūt · و 承担 ū</small></td><td class="vocab-impossible">这两种长音不用 ا，因此不归入 alif 的位置变化。</td></tr>
                         </tbody>
@@ -2441,7 +2443,7 @@
                     <i class="fa-solid fa-box-open"></i>
                     <div>
                         <h4>万能量词速记 📦</h4>
-                        <p><strong>kīs (袋)</strong>, <strong>bormān (罐)</strong>, <strong>izāza (瓶)</strong>,
+                        <p><strong>kīs (袋)</strong>, <strong>barṭamān (罐)</strong>, <strong>izāza (瓶)</strong>,
                             <strong>'elba (一盒/一罐)</strong>, <strong>kartōna (纸盒/箱)</strong>, <strong>kīlo (公斤)</strong>
                         </p>
                         <p>句型：我要买XX = 'āyez (男) / 'āyza (女) ashtiri XX。</p>
@@ -2643,12 +2645,12 @@
             // 3. 超市商品
             supermarket: [
                 { zh: "一袋", ar: "كيس", py: "kīs", hz: "基斯", group: "量词" },
-                { zh: "一罐(玻璃)", ar: "برطمان", py: "bormān", hz: "博尔曼", group: "量词" },
+                { zh: "一罐(玻璃)", ar: "برطمان", py: "barṭamān", hz: "巴尔塔曼", group: "量词" },
                 { zh: "一瓶", ar: "قزازة", py: "izāza", hz: "伊扎扎", group: "量词" },
                 { zh: "一盒/纸箱", ar: "كرتونة", py: "kartōna", hz: "卡尔图纳", group: "量词" },
                 { zh: "一盒/一罐(马口铁)", ar: "علبة", py: "elba", hz: "艾勒巴", group: "量词" },
                 { zh: "一公斤大米", ar: "كيلو رز", py: "kīlo rozz", hz: "基洛 鲁兹", group: "商品" },
-                { zh: "一罐果酱", ar: "برطمان مربى", py: "bormān morabba", hz: "博尔曼 莫拉巴", group: "商品" },
+                { zh: "一罐果酱", ar: "برطمان مربى", py: "barṭamān morabba", hz: "巴尔塔曼 莫拉巴", group: "商品" },
                 { zh: "一瓶食用油", ar: "قزازة زيت", py: "izāzit zēt", hz: "伊扎泽特 泽特", group: "商品" },
                 { zh: "一盒鸡蛋", ar: "كرتونة بيض", py: "kartōnit bēḍ", hz: "卡尔图内特 贝德", group: "商品" },
                 { zh: "一袋糖", ar: "كيس سكر", py: "kīs sukkar", hz: "基斯 苏卡尔", group: "商品" },
@@ -2657,7 +2659,7 @@
                 { zh: "一瓶水", ar: "قزازة مية", py: "izāzit mayya", hz: "伊扎泽特 玛亚", group: "商品" },
                 { zh: "一箱水", ar: "صندوق مية", py: "ṣandū' mayya", hz: "桑杜 玛亚", group: "商品" },
                 { zh: "一盒饼干", ar: "علبة بسكوت", py: "'elbit baskōt", hz: "艾勒比特 巴斯库特", group: "商品" },
-                { zh: "一罐蜂蜜", ar: "برطمان عسل", py: "bormān 'asal", hz: "博尔曼 阿萨勒", group: "商品" },
+                { zh: "一罐蜂蜜", ar: "برطمان عسل", py: "barṭamān 'asal", hz: "巴尔塔曼 阿萨勒", group: "商品" },
                 { zh: "一杯酸奶", ar: "علبة زبادي", py: "'elbit zabādi", hz: "艾勒比特 扎巴迪", group: "商品" },
                 { zh: "一盒奶酪", ar: "علبة جبنة", py: "'elbit gibna", hz: "艾勒比特 吉布纳", group: "商品" },
                 { zh: "一罐鱼(金枪鱼)", ar: "علبة سمك", py: "'elbit samak", hz: "艾勒比特 萨马克", group: "商品" }
@@ -3803,7 +3805,12 @@
 
         /* ================= 全局词汇汇总与单词卡片记忆库 ================= */
         const VOCAB_STORAGE_KEY = 'arabic_deck_categories_v1';
+        const VOCAB_SERVER_STATE_KEY = 'vocabularyCategories';
+        const VOCAB_TOOL_SLUG = location.pathname.split('/').filter(Boolean)[1] || 'tool-mtakhxqm';
         let wordCategoryState = {};
+        let vocabServerState = {};
+        let vocabRemoteSyncEnabled = false;
+        let vocabRemoteSaveChain = Promise.resolve();
         let activeDeckView = 'all'; // 'all' | 'new' | 'mastered' | 'review'
         let activeTagFilter = 'all'; // 'all' | 'starter' | 'symbol-vocab' | 'family' | ...
         let activeVowelFilter = 'all'; // 'all' | 'long-a' | 'long-i' | 'long-u' | 'short' | 'diphthong' | 'sukun' | 'shaddah'
@@ -3956,6 +3963,118 @@
             };
         }
 
+        // 卡片音性必须只描述当前关键字母（及其紧邻的长音载体），不能扫描整词。
+        // 例如 تُفَّاح 的关键字母 ت 是 تُ（短音 u）；后面的 فّ 和 ا 不应污染该标签。
+        function analyzeKeyLetterPhonetics(arText, targetLetter, targetPosition = 'all') {
+            const units = graphemeParts((arText || '').replace(/[.؟،!…0-9\s]/g, ''));
+            const matchingIndexes = units
+                .map((unit, unitIndex) => isKeyLetterMatch(unit.key, targetLetter) ? unitIndex : -1)
+                .filter(unitIndex => unitIndex >= 0);
+            const positionForIndex = unitIndex => unitIndex === 0
+                ? 'initial'
+                : (unitIndex === units.length - 1 ? 'final' : 'medial');
+            const index = targetPosition === 'all'
+                ? matchingIndexes[0]
+                : (matchingIndexes.find(unitIndex => positionForIndex(unitIndex) === targetPosition) ?? matchingIndexes[0]);
+            if (!Number.isInteger(index) || index < 0) {
+                return {
+                    vowelType: 'short',
+                    vowelLabel: '待标音',
+                    vowelDetail: '待标音',
+                    vowelClass: 'vowel-short',
+                    phoneticTypes: []
+                };
+            }
+
+            const current = units[index];
+            const previous = units[index - 1];
+            const next = units[index + 1];
+            const currentText = current.display || '';
+            const previousText = previous?.display || '';
+            const nextText = next?.display || '';
+            const currentBase = current.key || '';
+            const nextBase = next?.key || '';
+            const has = (text, mark) => text.includes(mark);
+            const hasFatha = text => has(text, '\u064e') || has(text, '\u064b');
+            const hasKasra = text => has(text, '\u0650') || has(text, '\u064d');
+            const hasDamma = text => has(text, '\u064f') || has(text, '\u064c');
+            const hasSukun = text => has(text, '\u0652');
+            const hasShaddah = has(currentText, '\u0651');
+
+            let vowelType = 'short';
+            let vowelLabel = '短音';
+            let vowelDetail = '待标音';
+            let vowelClass = 'vowel-short';
+
+            const setLong = vowel => {
+                vowelType = `long-${vowel}`;
+                vowelLabel = `长音 ${vowel === 'a' ? 'ā' : vowel === 'i' ? 'ī' : 'ū'}`;
+                vowelDetail = vowelLabel;
+                vowelClass = `vowel-long-${vowel}`;
+            };
+            const setDiphthong = sound => {
+                vowelType = 'diphthong';
+                vowelLabel = '双元音';
+                vowelDetail = `双元音 ${sound}`;
+                vowelClass = 'vowel-diph';
+            };
+
+            // 关键字母本身是长音字母时，读取前一个辅音上的短元音。
+            if (currentBase === 'ة' && hasFatha(previousText)) {
+                vowelDetail = '短音 a';
+            } else if (['ا', 'آ', 'ى'].includes(currentBase) && (hasFatha(previousText) || currentBase === 'آ')) {
+                setLong('a');
+            } else if (currentBase === 'ي' && hasKasra(previousText)) {
+                setLong('i');
+            } else if (currentBase === 'و' && hasDamma(previousText)) {
+                setLong('u');
+            } else if (currentBase === 'ي' && hasFatha(previousText) && hasSukun(currentText)) {
+                setDiphthong('ay');
+            } else if (currentBase === 'و' && hasFatha(previousText) && hasSukun(currentText)) {
+                setDiphthong('aw');
+            // 关键辅音后紧跟长音字母或双元音载体时，把它们视为同一个音节。
+            } else if (hasFatha(currentText) && ['ا', 'آ', 'ى'].includes(nextBase)) {
+                setLong('a');
+            } else if (hasKasra(currentText) && nextBase === 'ي' && !hasSukun(nextText)) {
+                setLong('i');
+            } else if (hasDamma(currentText) && nextBase === 'و' && !hasSukun(nextText)) {
+                setLong('u');
+            } else if (hasFatha(currentText) && nextBase === 'ي' && hasSukun(nextText)) {
+                setDiphthong('ay');
+            } else if (hasFatha(currentText) && nextBase === 'و' && hasSukun(nextText)) {
+                setDiphthong('aw');
+            } else if (hasFatha(currentText)) {
+                vowelDetail = '短音 a';
+            } else if (hasKasra(currentText)) {
+                vowelDetail = '短音 i';
+            } else if (hasDamma(currentText)) {
+                vowelDetail = '短音 u';
+            } else if (hasSukun(currentText)) {
+                vowelType = 'sukun';
+                vowelLabel = '静音';
+                vowelDetail = '静音 ْ';
+                vowelClass = 'vowel-sukun';
+            } else if (hasShaddah) {
+                vowelType = 'shaddah';
+                vowelLabel = '重音';
+                vowelDetail = '重音 ّ';
+                vowelClass = 'vowel-shaddah';
+            } else {
+                vowelType = 'sukun';
+                vowelLabel = '停顿辅音';
+                vowelDetail = '停顿辅音';
+                vowelClass = 'vowel-sukun';
+            }
+
+            if (hasShaddah && vowelType !== 'shaddah') {
+                vowelDetail += ' · 重音';
+            }
+            const phoneticTypes = [vowelType];
+            if (hasShaddah && !phoneticTypes.includes('shaddah')) phoneticTypes.push('shaddah');
+
+            return { vowelType, vowelLabel, vowelDetail, vowelClass, phoneticTypes };
+        }
+
         // 关键字母在词前 (词首)、词中、词后 (词尾) 位置深度分析
         function analyzeWordLetterPositions(cleanAr) {
             const text = (cleanAr || '').replace(/[.؟،!…0-9\s]/g, '');
@@ -4027,16 +4146,22 @@
             };
         }
 
-        function loadWordCategoryState() {
+        function readLocalWordCategoryState() {
             try {
                 const raw = localStorage.getItem(VOCAB_STORAGE_KEY);
-                wordCategoryState = raw ? JSON.parse(raw) : {};
+                const parsed = raw ? JSON.parse(raw) : {};
+                return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
             } catch (e) {
-                wordCategoryState = {};
+                return {};
             }
         }
 
-        function saveWordCategoryState() {
+        function vocabAuthHeaders() {
+            const token = localStorage.getItem('tools_token');
+            return token ? { Authorization: `Bearer ${token}` } : {};
+        }
+
+        function saveLocalWordCategoryState() {
             try {
                 localStorage.setItem(VOCAB_STORAGE_KEY, JSON.stringify(wordCategoryState));
             } catch (e) {
@@ -4044,10 +4169,81 @@
             }
         }
 
+        async function writeWordCategoryStateToServer(reason) {
+            const response = await fetch(`/api/custom-tools/${encodeURIComponent(VOCAB_TOOL_SLUG)}/state`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', ...vocabAuthHeaders() },
+                body: JSON.stringify({
+                    data: { ...vocabServerState, [VOCAB_SERVER_STATE_KEY]: wordCategoryState },
+                    reason,
+                    createSnapshot: false
+                })
+            });
+            const body = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(body.error || `HTTP ${response.status}`);
+            vocabServerState = { ...vocabServerState, [VOCAB_SERVER_STATE_KEY]: { ...wordCategoryState } };
+        }
+
+        function saveWordCategoryState() {
+            saveLocalWordCategoryState();
+            if (!vocabRemoteSyncEnabled) return;
+            vocabRemoteSaveChain = vocabRemoteSaveChain
+                .catch(() => {})
+                .then(() => writeWordCategoryStateToServer('更新单词记忆状态'))
+                .catch(error => console.warn('服务端保存生词状态失败，已保留本地副本:', error));
+        }
+
+        async function loadWordCategoryState() {
+            const localState = readLocalWordCategoryState();
+            wordCategoryState = localState;
+            try {
+                const response = await fetch(`/api/custom-tools/${encodeURIComponent(VOCAB_TOOL_SLUG)}/state`, {
+                    headers: vocabAuthHeaders()
+                });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const state = await response.json();
+                vocabServerState = state.data && typeof state.data === 'object' ? state.data : {};
+                vocabRemoteSyncEnabled = true;
+                const remoteCategories = vocabServerState[VOCAB_SERVER_STATE_KEY];
+                if (remoteCategories && typeof remoteCategories === 'object' && !Array.isArray(remoteCategories)) {
+                    wordCategoryState = remoteCategories;
+                    saveLocalWordCategoryState();
+                } else if (Object.keys(localState).length) {
+                    await writeWordCategoryStateToServer('首次从浏览器迁移单词记忆状态');
+                }
+            } catch (error) {
+                vocabRemoteSyncEnabled = false;
+                console.warn('服务端生词状态不可用，已使用本地副本:', error);
+            }
+        }
+
         function buildAggregatedWordList() {
             const list = [];
             const seenDedupe = new Set();
             const LEARNED_LETTERS = new Set(['ا', 'أ', 'إ', 'آ', 'ء', 'ئ', 'ؤ', 'ب', 'ت', 'ة', 'ث', 'و', 'ي', 'ى']);
+            // 初学者卡片使用的完整标音形式。保留原文作为音频和记忆状态的稳定键，
+            // 只在显示层补齐短元音、静音和叠音，避免升级后丢失用户的熟悉度标记。
+            const BEGINNER_DIACRITIZED_WORDS = {
+                'أبي': 'أَبِي', 'أمي': 'أُمِّي', 'ابن': 'اِبْن', 'بنت': 'بِنْت',
+                'عم': 'عَمّ', 'عمة': 'عَمَّة', 'عمي': 'عَمِّي', 'عمتي': 'عَمَّتِي',
+                'خال': 'خَال', 'خالة': 'خَالَة', 'خالي': 'خَالِي', 'خالتي': 'خَالَتِي',
+                'عايز': 'عَايِز', 'عايزة': 'عَايْزَة', 'موجود': 'مَوْجُود', 'مفيش': 'مَفِيش',
+                'آسف': 'آسِف', 'اتفضل': 'اِتْفَضَّل', 'هات': 'هَات', 'شوف': 'شُوف',
+                'اسمع': 'اِسْمَع', 'قول': 'قُول', 'كيس': 'كِيس', 'برطمان': 'بَرْطَمَان',
+                'قزازة': 'إِزَازَة', 'كرتونة': 'كَرْتُونَة', 'علبة': 'عِلْبَة',
+                'عشرة': 'عَشَرَة', 'خمستاشر': 'خَمَسْتَاشَر', 'عشرين': 'عِشْرِين',
+                'تلاتين': 'تَلَاتِين', 'أربعين': 'أَرْبَعِين', 'الحساب': 'اِلْحِسَاب',
+                'كام': 'كَام', 'معاك': 'مَعَاك', 'فكة': 'فَكَّة', 'الباقي': 'اِلْبَاقِي',
+                'حاجة': 'حَاجَة', 'تانية': 'تَانْيَة', 'بس': 'بَسّ', 'كده': 'كِدَه', 'خلاص': 'خَلَاص',
+                'أرخص': 'أَرْخَص', 'أكتر': 'أَكْتَر', 'أقل': 'أَقَلّ'
+            };
+
+            function beginnerVocalizedArabic(ar) {
+                const normalized = String(ar || '').replace(/[\u064b-\u065f\u0670]/g, '');
+                const mapped = BEGINNER_DIACRITIZED_WORDS[normalized];
+                if (mapped) return mapped;
+                return String(ar || '');
+            }
 
             function normalizeArabicRoot(text) {
                 return (text || '')
@@ -4136,6 +4332,7 @@
                 const finalEmoji = item.emoji || (emojiMatch && emojiMatch[2] ? emojiMatch[1] : fallbackEmoji);
                 const finalZh = (emojiMatch && emojiMatch[2]) ? emojiMatch[2] : translation;
                 const phonetics = analyzeWordPhonetics(cleanAr, item.pron || item.py);
+                const displayAr = beginnerVocalizedArabic(cleanAr);
 
                 const targetLetters = extractWordTargetLetters(cleanAr, explicitLetters);
                 if (targetLetters.length === 0 && phonetics.initialLetter) {
@@ -4144,6 +4341,10 @@
                 const primaryLetter = explicitLetters.length > 0 
                     ? explicitLetters[0] 
                     : (targetLetters.find(l => l === phonetics.initialLetter) || targetLetters[0] || phonetics.initialLetter || 'ا');
+                const keyPhonetics = Object.fromEntries(targetLetters.map(letter => [
+                    letter,
+                    analyzeKeyLetterPhonetics(displayAr, letter)
+                ]));
 
                 const posData = analyzeWordLetterPositions(cleanAr);
                 const posMapZh = { initial: '词首', medial: '词中', final: '词尾' };
@@ -4155,6 +4356,7 @@
                 list.push({
                     id: sourceTag + '_' + dedupeKey,
                     ar: cleanAr,
+                    displayAr: displayAr,
                     emoji: finalEmoji,
                     translation: finalZh,
                     pron: item.pron || item.py || '',
@@ -4168,6 +4370,7 @@
                     primaryPositions: primaryPositions,
                     primaryPosShort: primaryPosShort,
                     positionSummaryZh: primaryPosZh ? `${primaryLetter}(${primaryPosZh})` : '',
+                    keyPhonetics: keyPhonetics,
                     ...phonetics
                 });
             }
@@ -4299,7 +4502,7 @@
                 { ar: 'دَقِيق', pron: 'daʾīʾ', zh: '面粉', emoji: '🌾', tag: 'supermarket', name: '超市购物' },
                 { ar: 'مَكَرُونَة', pron: 'makarōna', zh: '意大利面/通心粉', emoji: '🍝', tag: 'supermarket', name: '超市购物' },
                 { ar: 'مَيَّة', pron: 'mayya', zh: '水', emoji: '💧', tag: 'supermarket', name: '超市购物' },
-                { ar: 'صُنْدُوق', pron: 'ṣandūʾ', zh: '箱子/盒子', emoji: '📦', tag: 'supermarket', name: '超市购物' },
+                { ar: 'صَنْدُوق', pron: 'ṣandūʾ', zh: '箱子/盒子', emoji: '📦', tag: 'supermarket', name: '超市购物' },
                 { ar: 'بَسْكُوت', pron: 'baskōt', zh: '饼干', emoji: '🍪', tag: 'supermarket', name: '超市购物' },
                 { ar: 'عَسَل', pron: 'ʿasal', zh: '蜂蜜', emoji: '🍯', tag: 'supermarket', name: '超市购物' },
                 { ar: 'زَبَادِي', pron: 'zabādī', zh: '酸奶', emoji: '🥛', tag: 'supermarket', name: '超市购物' },
@@ -4444,6 +4647,28 @@
             }, 120);
         }
 
+        function resolveCardKeyLetter(word) {
+            let keyLetter = word.primaryLetter || word.initialLetter;
+            if (activeLetterFilter !== 'all' && word.targetLetters?.includes(activeLetterFilter)) {
+                keyLetter = activeLetterFilter;
+            } else if (activePositionFilter !== 'all') {
+                const positionLetter = word.targetLetters?.find(letter =>
+                    (word.letterPositions?.[letter] || []).includes(activePositionFilter)
+                );
+                if (positionLetter) keyLetter = positionLetter;
+            }
+            return keyLetter;
+        }
+
+        function getCardKeyPhonetics(word) {
+            const keyLetter = resolveCardKeyLetter(word);
+            if (activePositionFilter !== 'all') {
+                return analyzeKeyLetterPhonetics(word.displayAr || word.ar, keyLetter, activePositionFilter);
+            }
+            return word.keyPhonetics?.[keyLetter]
+                || analyzeKeyLetterPhonetics(word.displayAr || word.ar, keyLetter);
+        }
+
         function createUnifiedWordCard(word, currentCategory) {
             const card = document.createElement('article');
             card.className = 'starter-flip-card';
@@ -4452,26 +4677,18 @@
             card.setAttribute('aria-label', `${word.translation}，点击翻转卡片`);
 
             // 卡片右上角音性、位置与关键字母标签：动态根据当前选中的字母或位置优先展示
-            let badgeLetter = word.primaryLetter || word.initialLetter;
-            if (activeLetterFilter !== 'all' && word.targetLetters && word.targetLetters.includes(activeLetterFilter)) {
-                badgeLetter = activeLetterFilter;
-            } else if (activePositionFilter !== 'all') {
-                const matchedPosLetter = word.targetLetters && word.targetLetters.find(l => (word.letterPositions?.[l] || []).includes(activePositionFilter));
-                if (matchedPosLetter) badgeLetter = matchedPosLetter;
-            }
+            const badgeLetter = resolveCardKeyLetter(word);
+            const keyPhonetics = getCardKeyPhonetics(word);
             const posList = word.letterPositions?.[badgeLetter] || word.primaryPositions || [];
             const posMapShort = { initial: '首', medial: '中', final: '尾' };
             const posMapZh = { initial: '词首', medial: '词中', final: '词尾' };
             const badgePosShort = posList.map(p => posMapShort[p]).join('/');
             const badgePosZh = posList.map(p => posMapZh[p]).join('、');
-            const targetLettersStr = (word.targetLetters && word.targetLetters.length) 
-                ? word.targetLetters.join('、') 
-                : (word.primaryLetter || word.initialLetter);
             const badgePosTagHtml = badgePosShort 
                 ? `<span class="badge-pos-tag" title="字母位置: ${escapeHtml(badgeLetter)} (${badgePosZh})">${escapeHtml(badgePosShort)}</span>` 
                 : '';
 
-            const units = graphemeParts(word.ar);
+            const units = graphemeParts(word.displayAr || word.ar);
             const breakdownHtml = units.map(({ display, key }) => {
                 const isKey = isKeyLetterMatch(key, badgeLetter);
                 const keyClass = isKey ? ' is-key-letter' : '';
@@ -4487,8 +4704,8 @@
                 </div>
             `;
             const badgeTagHtml = `
-                <span class="starter-card-phonetic-badge ${escapeHtml(word.vowelClass)}" title="关键字母: ${escapeHtml(targetLettersStr)} | ${escapeHtml(word.vowelDetail)}">
-                    <span class="badge-letter">${escapeHtml(badgeLetter)}</span>${badgePosTagHtml} · <span>${escapeHtml(word.vowelDetail)}</span>
+                <span class="starter-card-phonetic-badge ${escapeHtml(keyPhonetics.vowelClass)}" title="当前关键字母: ${escapeHtml(badgeLetter)} | ${escapeHtml(keyPhonetics.vowelDetail)}">
+                    <span class="badge-letter">${escapeHtml(badgeLetter)}</span>${badgePosTagHtml} · <span>${escapeHtml(keyPhonetics.vowelDetail)}</span>
                 </span>
             `;
 
@@ -4497,7 +4714,7 @@
                     <div class="starter-flip-face starter-flip-front">
                         <span class="starter-card-source">${escapeHtml(word.sourceName)}</span>
                         ${badgeTagHtml}
-                        <span class="starter-word" lang="ar" role="button" tabindex="0" title="点击播放整词">${escapeHtml(word.ar)}</span>
+                        <span class="starter-word" lang="ar" role="button" tabindex="0" title="点击播放整词">${escapeHtml(word.displayAr || word.ar)}</span>
                         <span class="starter-meaning">${word.emoji} ${escapeHtml(word.translation)}</span>
                         <span class="starter-card-hint">点击单词发音 · 点击空白处翻转</span>
                         ${categoryButtonsHtml}
@@ -4506,12 +4723,11 @@
                         <span class="starter-card-source">${escapeHtml(word.sourceName)}</span>
                         ${badgeTagHtml}
                         <div class="starter-back-word-wrap">
-                            <span class="starter-back-word" lang="ar" role="button" tabindex="0" title="点击朗读整词">${escapeHtml(word.ar)}</span>
+                            <span class="starter-back-word" lang="ar" role="button" tabindex="0" title="点击朗读整词">${escapeHtml(word.displayAr || word.ar)}</span>
                         </div>
                         <div class="starter-breakdown" aria-label="逐字母点读">${breakdownHtml}</div>
                         <span class="starter-pron">/${escapeHtml(word.pron || '')}/</span>
                         <span class="starter-meaning">${word.emoji} ${escapeHtml(word.translation)}</span>
-                        ${categoryButtonsHtml}
                     </div>
                 </div>`;
 
@@ -4613,7 +4829,8 @@
             let filteredWords = aggregatedWordList.filter(w => {
                 if (activeTagFilter !== 'all' && w.sourceTag !== activeTagFilter) return false;
                 if (activeVowelFilter !== 'all') {
-                    if (!w.phoneticTypes || !w.phoneticTypes.includes(activeVowelFilter)) return false;
+                    const keyPhonetics = getCardKeyPhonetics(w);
+                    if (!keyPhonetics.phoneticTypes.includes(activeVowelFilter)) return false;
                 }
                 if (activeLetterFilter !== 'all' && (!w.targetLetters || !w.targetLetters.includes(activeLetterFilter))) return false;
                 if (activePositionFilter !== 'all') {
@@ -4632,7 +4849,7 @@
                     const matchLetter = (w.primaryLetter || '').includes(deckSearchKeyword) ||
                                         (w.initialLetter || '').includes(deckSearchKeyword) ||
                                         (w.targetLetters && w.targetLetters.includes(deckSearchKeyword));
-                    const matchVowel = (w.vowelDetail || '').toLowerCase().includes(deckSearchKeyword);
+                    const matchVowel = getCardKeyPhonetics(w).vowelDetail.toLowerCase().includes(deckSearchKeyword);
                     const matchPos = (w.positionSummaryZh || '').includes(deckSearchKeyword);
                     if (!matchAr && !matchZh && !matchPy && !matchLetter && !matchVowel && !matchPos) return false;
                 }
@@ -4660,12 +4877,12 @@
                 } else if (activeDeckSort === 'pron-desc') {
                     return b.pronSortKey.localeCompare(a.pronSortKey);
                 } else if (activeDeckSort === 'vowel-long-first') {
-                    const weight = { 'long': 1, 'diphthong': 2, 'short': 3 };
-                    const diff = (weight[a.vowelType] || 9) - (weight[b.vowelType] || 9);
+                    const weight = { 'long-a': 1, 'long-i': 1, 'long-u': 1, 'diphthong': 2, 'short': 3, 'shaddah': 4, 'sukun': 5 };
+                    const diff = (weight[getCardKeyPhonetics(a).vowelType] || 9) - (weight[getCardKeyPhonetics(b).vowelType] || 9);
                     return diff !== 0 ? diff : (a.primaryLetterRank || a.initialLetterRank) - (b.primaryLetterRank || b.initialLetterRank);
                 } else if (activeDeckSort === 'vowel-short-first') {
-                    const weight = { 'short': 1, 'diphthong': 2, 'long': 3 };
-                    const diff = (weight[a.vowelType] || 9) - (weight[b.vowelType] || 9);
+                    const weight = { 'short': 1, 'diphthong': 2, 'long-a': 3, 'long-i': 3, 'long-u': 3, 'shaddah': 4, 'sukun': 5 };
+                    const diff = (weight[getCardKeyPhonetics(a).vowelType] || 9) - (weight[getCardKeyPhonetics(b).vowelType] || 9);
                     return diff !== 0 ? diff : (a.primaryLetterRank || a.initialLetterRank) - (b.primaryLetterRank || b.initialLetterRank);
                 }
                 return 0; // default 默认按聚合顺序
@@ -4750,7 +4967,7 @@
             );
         }
 
-        function renderStarterLessons() {
+        async function renderStarterLessons() {
             const letterList = document.getElementById('starter-letter-list');
             if (letterList) {
                 letterList.replaceChildren(...STARTER_LETTER_FORMS.map(letter => {
@@ -4765,7 +4982,7 @@
                 }));
             }
 
-            loadWordCategoryState();
+            await loadWordCategoryState();
             renderAggregatedFlashcards();
 
             const formsBody = document.getElementById('starter-forms-body');
@@ -4896,7 +5113,7 @@
             initVocabularyWordToggle();
             initVocabularyLearningStatus();
             await loadLocalAudioManifest();
-            renderStarterLessons();
+            await renderStarterLessons();
             initSceneDialogueAudio();
             document.querySelectorAll('[data-close-grammar]').forEach(element => {
                 element.addEventListener('click', closeGrammarDetail);

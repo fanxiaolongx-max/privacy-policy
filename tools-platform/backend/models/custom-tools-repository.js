@@ -329,6 +329,15 @@ async function markToolsUpdated(slugValues, updatedAt = new Date().toISOString()
 function normalizeToolState(value) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
     const result = {};
+    if (value.vocabularyCategories && typeof value.vocabularyCategories === 'object' && !Array.isArray(value.vocabularyCategories)) {
+        result.vocabularyCategories = {};
+        Object.entries(value.vocabularyCategories).slice(0, 5000).forEach(([word, category]) => {
+            const normalizedWord = String(word || '').trim().slice(0, 200);
+            if (normalizedWord && ['new', 'mastered', 'review'].includes(category)) {
+                result.vocabularyCategories[normalizedWord] = category;
+            }
+        });
+    }
     Object.entries(value).slice(0, 5000).forEach(([date, events]) => {
         if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !Array.isArray(events)) return;
         result[date] = events.slice(0, 500).map(event => ({
