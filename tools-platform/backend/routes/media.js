@@ -6,7 +6,10 @@ const { exec, execSync } = require('child_process');
 const { checkAuth, requireAdmin } = require('../middleware/auth');
 
 const FRONTEND_DIR = path.resolve(__dirname, '../../frontend');
-const VIDEOS_DIR = path.join(FRONTEND_DIR, 'assets/videos');
+const configuredMediaDir = String(process.env.TOOLS_MEDIA_DIR || '').trim();
+const VIDEOS_DIR = configuredMediaDir
+    ? path.resolve(configuredMediaDir)
+    : path.join(FRONTEND_DIR, 'assets/videos');
 const MANIFEST_PATH = path.join(VIDEOS_DIR, 'media-manifest.json');
 const VIDEO_EXTS = new Set(['.mp4', '.webm', '.mkv', '.mov', '.m4v']);
 const multer = require('multer');

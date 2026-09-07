@@ -56,6 +56,7 @@ const slaRoutes = require('./routes/sla');
 const uploadRoutes = require('./routes/upload');
 const authRoutes = require('./routes/auth');
 const requirementsRoutes = require('./routes/requirements');
+const { router: mediaRoutes, VIDEOS_DIR } = require('./routes/media');
 const aiRoutes = require('./routes/ai');
 const storageRoutes = require('./routes/storage');
 const frtRoutes = require('./routes/frt');
@@ -288,6 +289,9 @@ app.use((req, res, next) => {
     return checkHtmlAuth(req, res, next);
 });
 
+// Desktop builds keep uploaded media outside app.asar. Preserve the public URL
+// used by the cinema page while serving files from the writable runtime folder.
+app.use('/assets/videos', express.static(VIDEOS_DIR, { index: false }));
 app.use(express.static(FRONTEND_DIR, { index: false }));
 app.get('/favicon.ico', (req, res) => {
     res.sendFile(path.join(FRONTEND_DIR, 'assets/icon.ico'));
@@ -324,7 +328,6 @@ app.use('/api/uiv-auto-import', uivAutoImportRoutes);
 app.use('/api/public/f12-license', f12LicensePublicRoutes);
 
 // 媒体资源管理与公开点播路由
-const { router: mediaRoutes } = require('./routes/media');
 app.use('/api/media', mediaRoutes);
 app.get('/api/public/videos', (req, res, next) => {
     req.url = '/public/list' + (req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '');

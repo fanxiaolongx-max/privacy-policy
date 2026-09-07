@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "tool": {
+    "slug": "supplier-quotation-comparison",
+    "name": "供应商报价比价",
+    "nameEn": "Supplier Quotation Comparison",
+    "icon": "🧾",
+    "description": "导入含 Week1 基础表和多个供应商报价页的 Excel，自动匹配商品、折算含税可比单价并生成推荐比价表。",
+    "descriptionEn": "Import an Excel workbook with a Week1 base sheet and supplier quote sheets, match products, normalize tax-inclusive unit prices, and generate a recommendation table.",
+    "tags": ["采购", "Excel", "供应商", "比价"],
+    "href": "/tools/supplier-quotation-comparison",
+    "filePath": "/custom-tools/supplier-quotation-comparison/index.html",
+    "publicAccess": false,
+    "createdAt": "2026-09-07T00:00:00.000Z",
+    "updatedAt": "2026-09-07T00:00:00.000Z"
+  },
+  "history": null
+}

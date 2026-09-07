@@ -9,6 +9,9 @@ const http = require('http');
 // IMPORTANT: Set the data directory to the OS's native user data path BEFORE requiring server.js
 const userDataPath = app.getPath('userData');
 process.env.TOOLS_DATA_DIR = path.join(userDataPath, 'data');
+if (app.isPackaged) {
+    process.env.TOOLS_MEDIA_DIR = path.join(userDataPath, 'media');
+}
 process.env.TOOLS_DESKTOP_RUNTIME = '1';
 const electronLogRoot = path.join(userDataPath, 'logs');
 const desktopLicenseStatePath = path.join(userDataPath, 'desktop-license.json');
