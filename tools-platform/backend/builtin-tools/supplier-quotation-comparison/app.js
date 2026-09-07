@@ -2,19 +2,30 @@
   'use strict';
 
   const core = window.SupplierQuoteCore;
+  const STORAGE_KEY = 'supplier_quote_comparison_saved_schema_v1';
   const palette = [
-    { dark: '#175CD3', light: '#EAF2FF' },
-    { dark: '#7A5AF8', light: '#F1EDFF' },
-    { dark: '#B54708', light: '#FFF3E0' },
-    { dark: '#067647', light: '#E9F8EF' },
-    { dark: '#C11574', light: '#FCE7F3' },
-    { dark: '#475467', light: '#EEF2F6' }
+    { dark: '#1e40af', light: '#f0f7ff', border: '#bfdbfe' },
+    { dark: '#4338ca', light: '#f5f3ff', border: '#c7d2fe' },
+    { dark: '#b45309', light: '#fffbeb', border: '#fde68a' },
+    { dark: '#047857', light: '#f0fdf4', border: '#a7f3d0' },
+    { dark: '#be185d', light: '#fdf2f8', border: '#fbcfe8' },
+    { dark: '#334155', light: '#f8fafc', border: '#cbd5e1' }
   ];
-  const state = { fileName: '', configs: [], suppliers: [], rows: [] };
+  const state = {
+    fileName: '',
+    configs: [],
+    defaultConfigs: [],
+    currentFingerprint: null,
+    isAppliedFromSaved: false,
+    suppliers: [],
+    rows: [],
+    viewMode: 'compact'
+  };
   const $ = selector => document.querySelector(selector);
   const elements = {
     input: $('#fileInput'), drop: $('#dropZone'), status: $('#status'), config: $('#configCard'), result: $('#resultCard'),
-    sheets: $('#sheetList'), preview: $('#preview'), summary: $('#summary'), tax: $('#taxRate'), threshold: $('#matchThreshold'), exportName: $('#exportName')
+    sheets: $('#sheetList'), preview: $('#preview'), summary: $('#summary'), tax: $('#taxRate'), threshold: $('#matchThreshold'), exportName: $('#exportName'),
+    fullscreenBtn: $('#fullscreenBtn'), viewModeBtn: $('#viewModeBtn'), schemaMatchAlert: $('#schemaMatchAlert'), resetConfigBtn: $('#resetConfigBtn'), saveSchemaBtn: $('#saveSchemaBtn')
   };
 
   function escapeHtml(value) {
@@ -38,16 +49,72 @@
     loadSheets(workbook.SheetNames.map(name => ({ name, matrix: sheetToMatrix(workbook, name) })), file.name);
   }
 
+  function saveCurrentSchemaConfig(showNotice = false) {
+    if (!state.currentFingerprint || !state.configs.length) return;
+    syncConfigFromControls();
+    const payload = {
+      fingerprint: state.currentFingerprint,
+      config: {
+        taxRate: Number(elements.tax.value || 14),
+        matchThreshold: Number(elements.threshold.value || 0.58),
+        exportName: elements.exportName.value || '供应商比价表',
+        sheets: state.configs.map(c => ({
+          name: c.name,
+          role: c.role,
+          supplier: c.supplier,
+          headerRow: c.headerRow,
+          taxMode: c.taxMode,
+          columns: { ...c.columns }
+        }))
+      },
+      savedAt: new Date().toISOString()
+    };
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      if (showNotice) {
+        showStatus('已成功保存当前表格与字段设置！下次导入同格式文件时将自动应用。', 'success');
+      }
+    } catch (e) {
+      console.warn('保存表格配置预设失败', e);
+    }
+  }
+
   function loadSheets(sheets, fileName) {
     state.fileName = fileName;
+    state.currentFingerprint = core.buildWorkbookFingerprint(sheets);
     state.configs = core.analyzeSheets(sheets);
+    state.defaultConfigs = JSON.parse(JSON.stringify(state.configs));
     state.rows = [];
+
+    let isMatch = false;
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+      if (saved && saved.fingerprint && core.isSchemaMatch(state.currentFingerprint, saved.fingerprint)) {
+        const applied = core.applySavedConfig(state.configs, saved.config);
+        if (applied) {
+          isMatch = true;
+          if (saved.config.taxRate !== undefined) elements.tax.value = saved.config.taxRate;
+          if (saved.config.matchThreshold !== undefined) elements.threshold.value = saved.config.matchThreshold;
+          if (saved.config.exportName !== undefined && saved.config.exportName) elements.exportName.value = saved.config.exportName;
+        }
+      }
+    } catch (e) {
+      console.warn('检测并应用上次表格配置失败', e);
+    }
+
+    state.isAppliedFromSaved = isMatch;
+    if (elements.schemaMatchAlert) {
+      if (isMatch) elements.schemaMatchAlert.classList.remove('hidden');
+      else elements.schemaMatchAlert.classList.add('hidden');
+    }
+
     renderSheetConfig();
     elements.config.classList.remove('hidden');
     elements.result.classList.add('hidden');
     const base = state.configs.find(item => item.role === 'base');
     const supplierCount = state.configs.filter(item => item.role === 'supplier').length;
-    showStatus(`已读取 ${state.configs.length} 个工作表；基础表：${base ? base.name : '未识别'}；报价表：${supplierCount} 个`, 'success');
+    const matchTip = isMatch ? '；【已自动匹配并应用上次配置】' : '';
+    showStatus(`已读取 ${state.configs.length} 个工作表；基础表：${base ? base.name : '未识别'}；报价表：${supplierCount} 个${matchTip}`, 'success');
     elements.config.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
@@ -119,6 +186,7 @@
   function generateComparison() {
     syncConfigFromControls();
     validateConfig();
+    saveCurrentSchemaConfig(false);
     const baseConfig = state.configs.find(config => config.role === 'base');
     const baseRows = core.recordsFromSheet(baseConfig);
     if (!baseRows.length) throw new Error('基础需求表中没有识别到商品行');
@@ -152,43 +220,250 @@
   function formatMoney(value) { return value === null || value === undefined ? '—' : Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
   function basisLabel(value) { return value === 'kg' ? '公斤' : value === 'l' ? '升' : value || '单位'; }
 
-  function quoteCell(rowIndex, quote, supplierIndex) {
+  function quoteCompactCell(rowIndex, quote, supplierIndex, isLowest, rowEval) {
     const record = selectedRecord(quote);
     const chosen = quote.candidates.find(candidate => candidate.record.id === quote.selectedId);
     const details = record ? core.quoteDetails(record, Number(elements.tax.value || 14)) : null;
-    const options = [`<option value="">未找到 / 不采用</option>`].concat(quote.candidates.map(candidate => `<option value="${escapeHtml(candidate.record.id)}"${candidate.record.id === quote.selectedId ? ' selected' : ''}>${escapeHtml(candidate.record.item)} (${Math.round(candidate.score * 100)}%)</option>`));
     const bg = palette[supplierIndex % palette.length].light;
-    const quoteValue = details && details.finalPrice !== null ? formatMoney(details.finalPrice) : '—';
-    const rawHint = record && core.text(record.priceRaw) && String(record.priceRaw) !== String(details.finalPrice) ? `原报价：${core.text(record.priceRaw)}` : '';
-    const unitSpec = record ? [record.unit, record.spec || (details.measure && details.measure.raw)].filter(Boolean).join(' / ') : '—';
-    const normalized = details && details.normalizedPrice !== null ? `${formatMoney(details.normalizedPrice)} / ${basisLabel(details.basis)}` : '—';
-    const notes = record ? [record.remark, record.stock, details.taxApplied ? '已按税率加税' : '', details.unavailable ? '无货' : ''].filter(Boolean).join('；') : '—';
+
+    const options = [`<option value="">未找到 / 不采用</option>`].concat(
+      quote.candidates.map(candidate => `<option value="${escapeHtml(candidate.record.id)}"${candidate.record.id === quote.selectedId ? ' selected' : ''}>${escapeHtml(candidate.record.item)}</option>`)
+    );
+
+    const matchDot = chosen
+      ? (chosen.score >= 0.7
+        ? `<span class="status-dot green" title="高置信度匹配: ${Math.round(chosen.score * 100)}%"></span>`
+        : `<span class="status-dot orange" title="低置信度匹配: ${Math.round(chosen.score * 100)}%"></span>`)
+      : '<span class="status-dot gray" title="未找到商品匹配"></span>';
+
+    if (!record || !details || details.finalPrice === null) {
+      return `
+        <td class="col-supplier-compact" style="background:${bg}">
+          <div class="supplier-card card-unquoted">
+            <div class="supplier-card-top">
+              ${matchDot}
+              <select class="quote-select" data-row="${rowIndex}" data-supplier="${supplierIndex}" data-action="match" title="未匹配商品，点击可手动选择">${options.join('')}</select>
+            </div>
+            <div class="card-empty-placeholder">
+              <span class="empty-dash">—</span>
+              <span class="empty-txt">未报价 / 不采用</span>
+            </div>
+          </div>
+        </td>`;
+    }
+
+    const quoteValue = `¥${formatMoney(details.finalPrice)}`;
+    const rawHint = (core.text(record.priceRaw) && String(record.priceRaw) !== String(details.finalPrice))
+      ? `(原:${core.text(record.priceRaw)})` : '';
+    const unitSpec = [record.unit, record.spec || (details.measure && details.measure.raw)].filter(Boolean).join(' / ');
+    const normalized = details.normalizedPrice !== null ? `${formatMoney(details.normalizedPrice)}/${basisLabel(details.basis)}` : '—';
+    const notes = [record.remark, record.stock, details.taxApplied ? '加税' : '', details.unavailable ? '无货' : ''].filter(Boolean).join(' · ');
+
+    const isDirectWinner = Boolean(rowEval && rowEval.extremeDeviation && rowEval.directWinner && rowEval.directWinner.supplier === record.supplier);
+
+    let normalizedHtml = '';
+    if (rowEval && rowEval.unitMismatch) {
+      normalizedHtml = `<span class="norm-pill dimmed" title="不同供应商报价单位不一致，折算单价不作为比价依据"><span class="norm-lbl">折算:</span>${escapeHtml(normalized)} <span class="dimmed-tag">(单位不同)</span></span>`;
+    } else if (rowEval && rowEval.extremeDeviation) {
+      normalizedHtml = `<span class="norm-pill warn-anomaly" title="各供应商折算单价相差超过 3 倍，疑折算或填写有误，不作为比价依据"><span class="norm-lbl">折算:</span>${escapeHtml(normalized)} <span class="anomaly-badge">偏差大</span></span>`;
+    } else if (isLowest && details.normalizedPrice !== null && rowEval && rowEval.canCompareByNormalized) {
+      normalizedHtml = `<span class="norm-pill lowest" title="折算单价全场最低"><span class="norm-lbl">折算:</span><b>${escapeHtml(normalized)}</b><span class="lowest-badge">最低</span></span>`;
+    } else {
+      normalizedHtml = `<span class="norm-pill" title="折算单价"><span class="norm-lbl">折算:</span><span>${escapeHtml(normalized)}</span></span>`;
+    }
+
+    const isLowestStyle = Boolean(isLowest && rowEval && rowEval.canCompareByNormalized && details.normalizedPrice !== null);
+    const metaTitle = [unitSpec ? `规格: ${unitSpec}` : '', notes ? `备注: ${notes}` : ''].filter(Boolean).join(' | ');
+
     return `
-      <td style="background:${bg}"><select data-row="${rowIndex}" data-supplier="${supplierIndex}" data-action="match">${options.join('')}</select><div class="quote-value">${quoteValue}</div><div class="small">${escapeHtml(rawHint)}</div>${chosen && chosen.score < .7 ? '<span class="badge warn">低置信度</span>' : chosen ? '<span class="badge good">已匹配</span>' : ''}</td>
-      <td style="background:${bg}">${escapeHtml(unitSpec || '—')}</td>
-      <td style="background:${bg}" class="${normalized === '—' ? 'warn' : ''}">${escapeHtml(normalized)}</td>
-      <td style="background:${bg}" class="small">${escapeHtml(notes || '—')}</td>`;
+      <td class="col-supplier-compact ${isLowestStyle ? 'cell-lowest' : ''}" style="background:${isLowestStyle ? '#f0fdf4' : bg}">
+        <div class="supplier-card">
+          <div class="supplier-card-top">
+            ${matchDot}
+            <select class="quote-select" data-row="${rowIndex}" data-supplier="${supplierIndex}" data-action="match" title="${escapeHtml(record.item)}">${options.join('')}</select>
+          </div>
+          <div class="supplier-card-pricing">
+            <div class="card-tax-price">
+              <span class="tax-lbl">含税</span>
+              <span class="tax-val">${quoteValue}</span>
+              ${rawHint ? `<span class="tax-raw" title="原报价">${escapeHtml(rawHint)}</span>` : ''}
+              ${isDirectWinner ? '<span class="direct-lowest-badge" title="单价偏差过大，已转为直接按含税报价比对最低">直接最低</span>' : ''}
+            </div>
+            <div class="card-norm-price">
+              ${normalizedHtml}
+            </div>
+          </div>
+          <div class="supplier-card-meta" title="${escapeHtml(metaTitle)}">
+            ${unitSpec ? `<span class="meta-item"><span class="meta-lbl">规格:</span><span class="meta-txt">${escapeHtml(unitSpec)}</span></span>` : ''}
+            ${notes ? `<span class="meta-item note"><span class="meta-lbl">备注:</span><span class="meta-txt">${escapeHtml(notes)}</span></span>` : ''}
+            ${(!unitSpec && !notes) ? `<span class="meta-item muted-txt">常规规格</span>` : ''}
+          </div>
+        </div>
+      </td>`;
+  }
+
+  function quoteCell(rowIndex, quote, supplierIndex, isLowest, rowEval) {
+    const record = selectedRecord(quote);
+    const chosen = quote.candidates.find(candidate => candidate.record.id === quote.selectedId);
+    const details = record ? core.quoteDetails(record, Number(elements.tax.value || 14)) : null;
+    const options = [`<option value="">未找到 / 不采用</option>`].concat(
+      quote.candidates.map(candidate => `<option value="${escapeHtml(candidate.record.id)}"${candidate.record.id === quote.selectedId ? ' selected' : ''}>${escapeHtml(candidate.record.item)}</option>`)
+    );
+    const bg = palette[supplierIndex % palette.length].light;
+    const quoteValue = details && details.finalPrice !== null ? `¥${formatMoney(details.finalPrice)}` : '—';
+    const rawHint = (record && core.text(record.priceRaw) && String(record.priceRaw) !== String(details.finalPrice))
+      ? `(原:${core.text(record.priceRaw)})` : '';
+    const unitSpec = record ? [record.unit, record.spec || (details.measure && details.measure.raw)].filter(Boolean).join('/') : '—';
+    const normalized = details && details.normalizedPrice !== null ? `${formatMoney(details.normalizedPrice)}/${basisLabel(details.basis)}` : '—';
+    const notes = record ? [record.remark, record.stock, details.taxApplied ? '加税' : '', details.unavailable ? '无货' : ''].filter(Boolean).join(' ') : '—';
+
+    const matchDot = chosen
+      ? (chosen.score >= 0.7
+        ? `<span class="status-dot green" title="高置信度匹配: ${Math.round(chosen.score * 100)}%"></span>`
+        : `<span class="status-dot orange" title="低置信度匹配: ${Math.round(chosen.score * 100)}%"></span>`)
+      : '<span class="status-dot gray" title="未找到商品匹配"></span>';
+
+    const isDirectWinner = Boolean(rowEval && rowEval.extremeDeviation && rowEval.directWinner && rowEval.directWinner.supplier === record?.supplier);
+
+    let normalizedHtml = '';
+    if (rowEval && rowEval.unitMismatch) {
+      normalizedHtml = `<span class="col-normalized-pill dimmed" title="不同供应商报价单位不一致，折算单价不作为比价依据">${escapeHtml(normalized)} <span class="dimmed-tag">(单位不同)</span></span>`;
+    } else if (rowEval && rowEval.extremeDeviation) {
+      normalizedHtml = `<span class="col-normalized-pill warn-anomaly" title="折算单价偏差过大，不作为比价依据">${escapeHtml(normalized)} <span class="anomaly-badge">偏差大</span></span>`;
+    } else if (isLowest && details && details.normalizedPrice !== null && rowEval && rowEval.canCompareByNormalized) {
+      normalizedHtml = `<span class="col-normalized-pill lowest" title="折算单价全场最低">${escapeHtml(normalized)} <span class="lowest-tag">最低</span></span>`;
+    } else {
+      normalizedHtml = `<span class="col-normalized-pill">${escapeHtml(normalized)}</span>`;
+    }
+
+    const isLowestStyle = Boolean(isLowest && rowEval && rowEval.canCompareByNormalized && details && details.normalizedPrice !== null);
+
+    return `
+      <td class="col-quote" style="background:${bg}">
+        <div class="quote-compact-cell">
+          <div class="quote-select-row">
+            ${matchDot}
+            <select class="quote-select" data-row="${rowIndex}" data-supplier="${supplierIndex}" data-action="match" title="${chosen ? escapeHtml(chosen.record.item) : '选择匹配商品'}">${options.join('')}</select>
+          </div>
+          <div class="quote-price-row">
+            <span class="quote-value">${quoteValue}</span>
+            ${rawHint ? `<span class="quote-raw-hint" title="原始报价">${escapeHtml(rawHint)}</span>` : ''}
+            ${isDirectWinner ? '<span class="direct-lowest-badge">直接最低</span>' : ''}
+          </div>
+        </div>
+      </td>
+      <td class="col-unit" style="background:${bg}" title="${escapeHtml(unitSpec)}">${escapeHtml(unitSpec || '—')}</td>
+      <td class="col-normalized ${isLowestStyle ? 'cell-lowest' : ''}" style="background:${isLowestStyle ? '#f0fdf4' : bg}" title="${escapeHtml(normalized)}">${normalizedHtml}</td>
+      <td class="col-remark" style="background:${bg}" title="${escapeHtml(notes || '—')}">${escapeHtml(notes || '—')}</td>`;
   }
 
   function renderResults() {
-    const headerGroups = state.suppliers.map((group, index) => `<th colspan="4" style="background:${palette[index % palette.length].dark};color:#fff">${escapeHtml(group.name)}<div class="small" style="color:rgba(255,255,255,.82)">${escapeHtml(group.sheets.join(' + '))}</div></th>`).join('');
-    const headerFields = state.suppliers.map((group, index) => {
-      const color = palette[index % palette.length].light;
-      return `<th style="background:${color}">含税报价</th><th style="background:${color}">单位 / 规格</th><th style="background:${color}">折算单价</th><th style="background:${color}">备注</th>`;
-    }).join('');
+    const isCompact = state.viewMode !== 'expanded';
+    const taxRate = Number(elements.tax.value || 14);
+
+    let headerGroups = '';
+    let headerFields = '';
+
+    if (isCompact) {
+      headerGroups = state.suppliers.map((group, index) => {
+        return `<th class="col-supplier-compact-th" style="background:${palette[index % palette.length].dark};color:#fff;border-right:1px solid rgba(255,255,255,0.2)">${escapeHtml(group.name)}<div class="small" style="color:rgba(255,255,255,.82);font-weight:400">${escapeHtml(group.sheets.join(' + '))}</div></th>`;
+      }).join('');
+      headerFields = state.suppliers.map(() => {
+        return `<th class="col-supplier-compact-subth">报价与折算 (含税 / 规格 / 备注)</th>`;
+      }).join('');
+    } else {
+      headerGroups = state.suppliers.map((group, index) => {
+        return `<th colspan="4" style="background:${palette[index % palette.length].dark};color:#fff;border-right:1px solid rgba(255,255,255,0.2)">${escapeHtml(group.name)}<div class="small" style="color:rgba(255,255,255,.82);font-weight:400">${escapeHtml(group.sheets.join(' + '))}</div></th>`;
+      }).join('');
+      headerFields = state.suppliers.map(() => {
+        return `<th class="col-quote-th">含税报价</th><th class="col-unit-th">单位/规格</th><th class="col-normalized-th">折算单价</th><th class="col-remark-th">备注</th>`;
+      }).join('');
+    }
+
     const body = state.rows.map((row, rowIndex) => {
-      const supplierCells = row.quotes.map((quote, supplierIndex) => quoteCell(rowIndex, quote, supplierIndex)).join('');
+      // 评估行级报价一致性与异常
+      const rowEval = core.evaluateRowComparison(row.base, row.quotes.map(q => ({ record: selectedRecord(q) })), taxRate);
+      if (!row.manuallyEdited) {
+        row.recommendation = rowEval.recommendation;
+      }
+
+      // 找出最低单价（仅在单位一致且无极端偏差时有效）
+      const prices = row.quotes.map(q => {
+        const rec = selectedRecord(q);
+        if (!rec) return null;
+        const d = core.quoteDetails(rec, taxRate);
+        return (d && typeof d.normalizedPrice === 'number' && d.normalizedPrice > 0) ? d.normalizedPrice : null;
+      }).filter(p => p !== null);
+      const minPrice = prices.length > 0 ? Math.min(...prices) : null;
+
+      const supplierCells = row.quotes.map((quote, supplierIndex) => {
+        const rec = selectedRecord(quote);
+        const d = rec ? core.quoteDetails(rec, taxRate) : null;
+        const isLowest = Boolean(minPrice !== null && d && typeof d.normalizedPrice === 'number' && Math.abs(d.normalizedPrice - minPrice) < 0.005);
+        return isCompact
+          ? quoteCompactCell(rowIndex, quote, supplierIndex, isLowest, rowEval)
+          : quoteCell(rowIndex, quote, supplierIndex, isLowest, rowEval);
+      }).join('');
+
       const supplierOptions = ['<option value="">待人工确认</option>'].concat(state.suppliers.map(group => `<option value="${escapeHtml(group.name)}"${group.name === row.recommendation.supplier ? ' selected' : ''}>${escapeHtml(group.name)}</option>`));
-      const comparison = core.compareSupplier(row.base.baseSupplier, row.recommendation.supplier);
-      return `<tr><td>${rowIndex + 1}</td><td>${escapeHtml(row.base.category || '—')}</td><td><strong>${escapeHtml(row.base.item)}</strong></td><td>${escapeHtml([row.base.quantity, row.base.unit].filter(value => value !== null && value !== '').join(' ') || '—')}</td><td>${escapeHtml(row.base.baseSupplier || '—')}</td>${supplierCells}<td style="background:#ecfdf3"><select data-row="${rowIndex}" data-action="recommend">${supplierOptions.join('')}</select></td><td style="background:#ecfdf3"><span class="compare-status ${comparison.code}">${escapeHtml(comparison.label)}</span></td><td style="background:#f0fdf4"><input class="reason" data-row="${rowIndex}" data-action="reason" value="${escapeHtml(row.recommendation.reason)}"></td></tr>`;
+      const isAnomaly = Boolean(rowEval.extremeDeviation || (row.recommendation && row.recommendation.isAnomaly));
+      const comparison = core.compareSupplier(row.base.baseSupplier, row.recommendation.supplier, isAnomaly);
+
+      return `<tr>
+        <td class="col-index">${rowIndex + 1}</td>
+        <td class="col-cat" title="${escapeHtml(row.base.category || '')}">${escapeHtml(row.base.category || '—')}</td>
+        <td class="col-item" title="${escapeHtml(row.base.item)}"><strong>${escapeHtml(row.base.item)}</strong></td>
+        <td class="col-qty">${escapeHtml([row.base.quantity, row.base.unit].filter(value => value !== null && value !== '').join(' ') || '—')}</td>
+        <td class="col-basesup" title="${escapeHtml(row.base.baseSupplier || '')}">${escapeHtml(row.base.baseSupplier || '—')}</td>
+        ${supplierCells}
+        <td class="col-recsup ${isAnomaly ? 'anomaly' : ''}" style="background:${isAnomaly ? '#fff7ed' : '#f0fdf4'}"><select data-row="${rowIndex}" data-action="recommend" title="${isAnomaly ? '单价偏差过大，需人工复核' : ''}">${supplierOptions.join('')}</select></td>
+        <td class="col-status" style="background:${isAnomaly ? '#fff7ed' : '#f0fdf4'}"><span class="compare-status ${comparison.code}">${escapeHtml(comparison.label)}</span></td>
+        <td class="col-reason ${isAnomaly ? 'anomaly' : ''}" style="background:#f8fafc"><input class="reason ${isAnomaly ? 'anomaly' : ''}" data-row="${rowIndex}" data-action="reason" value="${escapeHtml(row.recommendation.reason)}" title="${escapeHtml(row.recommendation.reason)}"></td>
+      </tr>`;
     }).join('');
-    elements.preview.innerHTML = `<table class="compare"><thead><tr><th colspan="5" style="background:#1f4e78;color:#fff">基础需求</th>${headerGroups}<th colspan="3" style="background:#067647;color:#fff">推荐结果</th></tr><tr><th>序号</th><th>类别</th><th>商品</th><th>需求量</th><th>基础表供应商</th>${headerFields}<th>推荐供应商</th><th>是否一致</th><th>推荐理由</th></tr></thead><tbody>${body}</tbody></table>`;
+
+    const colgroup = isCompact
+      ? `<colgroup>
+          <col style="width:38px">
+          <col style="width:86px">
+          <col style="width:125px">
+          <col style="width:72px">
+          <col style="width:92px">
+          ${state.suppliers.map(() => '<col style="min-width:240px">').join('')}
+          <col style="width:105px">
+          <col style="width:88px">
+          <col style="width:180px">
+        </colgroup>`
+      : `<colgroup>
+          <col style="width:38px">
+          <col style="width:86px">
+          <col style="width:125px">
+          <col style="width:72px">
+          <col style="width:92px">
+          ${state.suppliers.map(() => '<col style="width:125px"><col style="width:68px"><col style="width:88px"><col style="width:75px">').join('')}
+          <col style="width:105px">
+          <col style="width:88px">
+          <col style="width:180px">
+        </colgroup>`;
+
+    const tableClass = isCompact ? 'compare mode-compact' : 'compare mode-expanded';
+    elements.preview.innerHTML = `<table class="${tableClass}">${colgroup}<thead><tr><th colspan="5" style="background:#0f172a;color:#fff;border-right:1px solid rgba(255,255,255,0.2)">基础需求</th>${headerGroups}<th colspan="3" style="background:#065f46;color:#fff">推荐结果</th></tr><tr><th class="col-index">#</th><th class="col-cat">类别</th><th class="col-item">商品</th><th class="col-qty">需求量</th><th class="col-basesup">基础表供应商</th>${headerFields}<th class="col-recsup-th">推荐供应商</th><th class="col-status-th">是否一致</th><th class="col-reason-th">推荐理由</th></tr></thead><tbody>${body}</tbody></table>`;
     const matched = state.rows.reduce((sum, row) => sum + row.quotes.filter(quote => selectedRecord(quote)).length, 0);
     const total = state.rows.length * state.suppliers.length;
     const recommended = state.rows.filter(row => row.recommendation.supplier).length;
     const sameCount = state.rows.filter(row => core.compareSupplier(row.base.baseSupplier, row.recommendation.supplier).code === 'same').length;
     const differentCount = state.rows.filter(row => core.compareSupplier(row.base.baseSupplier, row.recommendation.supplier).code === 'different').length;
-    elements.summary.innerHTML = `<div class="metric"><span class="muted">基础商品</span><b>${state.rows.length}</b></div><div class="metric"><span class="muted">供应商</span><b>${state.suppliers.length}</b></div><div class="metric"><span class="muted">已匹配报价</span><b>${matched} / ${total}</b></div><div class="metric"><span class="muted">已生成推荐</span><b>${recommended}</b></div><div class="metric"><span class="muted">与基础表一致</span><b>${sameCount}</b></div><div class="metric"><span class="muted">与基础表不一致</span><b>${differentCount}</b></div>`;
+    elements.summary.innerHTML = `
+      <div class="metric"><span class="muted">基础商品</span><b>${state.rows.length}</b></div>
+      <div class="metric"><span class="muted">供应商数量</span><b>${state.suppliers.length}</b></div>
+      <div class="metric"><span class="muted">已匹配报价</span><b>${matched} / ${total}</b></div>
+      <div class="metric"><span class="muted">已生成推荐</span><b>${recommended}</b></div>
+      <div class="metric"><span class="muted">与基础表一致</span><b style="color:#059669">${sameCount}</b></div>
+      <div class="metric"><span class="muted">与基础表不一致</span><b style="color:#dc2626">${differentCount}</b></div>`;
+
+    if (elements.viewModeBtn) {
+      elements.viewModeBtn.textContent = isCompact ? '展开4列明细' : '合并紧凑视图';
+    }
   }
 
   function recalculateAll() {
@@ -233,7 +508,8 @@
         const notes = record ? [record.remark, record.stock, core.text(record.priceRaw) ? `原报价：${core.text(record.priceRaw)}` : '', details.taxApplied ? '已按税率加税' : '', details.unavailable ? '无货' : ''].filter(Boolean).join('；') : '';
         output.push({ v: details && details.finalPrice, s: style }, { v: unitSpec, s: style }, { v: details && details.normalizedPrice, s: style }, { v: notes, s: style });
       });
-      const comparison = core.compareSupplier(row.base.baseSupplier, row.recommendation.supplier);
+      const isAnomaly = Boolean(row.recommendation && row.recommendation.isAnomaly);
+      const comparison = core.compareSupplier(row.base.baseSupplier, row.recommendation.supplier, isAnomaly);
       output.push({ v: row.recommendation.supplier, s: 16 }, { v: comparison.label, s: 16 }, { v: row.recommendation.reason, s: 16 });
       rows.push(output);
     });
@@ -283,6 +559,57 @@
     setTimeout(() => URL.revokeObjectURL(link.href), 1200);
   }
 
+  function isFullscreenActive() {
+    return document.fullscreenElement === elements.result ||
+      document.webkitFullscreenElement === elements.result ||
+      (elements.result && elements.result.classList.contains('is-fullscreen'));
+  }
+
+  function updateFullscreenBtnText() {
+    if (elements.fullscreenBtn) {
+      const active = isFullscreenActive();
+      elements.fullscreenBtn.textContent = active ? '退出全屏 (ESC)' : '全屏展示';
+      if (active) {
+        elements.fullscreenBtn.classList.add('danger');
+      } else {
+        elements.fullscreenBtn.classList.remove('danger');
+      }
+    }
+  }
+
+  async function toggleFullscreen() {
+    if (!elements.result) return;
+    if (isFullscreenActive()) {
+      elements.result.classList.remove('is-fullscreen');
+      document.body.classList.remove('comparison-fullscreen-active');
+      if (document.fullscreenElement || document.webkitFullscreenElement) {
+        try {
+          if (document.exitFullscreen) await document.exitFullscreen();
+          else if (document.webkitExitFullscreen) await document.webkitExitFullscreen();
+        } catch (_) {}
+      }
+      updateFullscreenBtnText();
+      return;
+    }
+
+    // 立即激活视口顶层铺满类（在 iframe 或受限环境绝对 100% 生效）
+    elements.result.classList.add('is-fullscreen');
+    document.body.classList.add('comparison-fullscreen-active');
+    updateFullscreenBtnText();
+
+    // 尝试触发原生全屏
+    try {
+      if (elements.result.requestFullscreen) {
+        await elements.result.requestFullscreen();
+      } else if (elements.result.webkitRequestFullscreen) {
+        await elements.result.webkitRequestFullscreen();
+      }
+    } catch (_) {
+      // 忽略被拒绝异常，顶层样式已成功占满视口
+    }
+    updateFullscreenBtnText();
+  }
+
   elements.input.addEventListener('change', event => { const file = event.target.files[0]; if (file) readFile(file).catch(error => showStatus(error.message, 'error')); });
   ['dragenter', 'dragover'].forEach(name => elements.drop.addEventListener(name, event => { event.preventDefault(); elements.drop.classList.add('drag'); }));
   ['dragleave', 'drop'].forEach(name => elements.drop.addEventListener(name, event => { event.preventDefault(); elements.drop.classList.remove('drag'); }));
@@ -291,6 +618,51 @@
   $('#generateBtn').addEventListener('click', () => { try { generateComparison(); } catch (error) { showStatus(error.message, 'error'); } });
   $('#regenerateBtn').addEventListener('click', recalculateAll);
   $('#exportBtn').addEventListener('click', () => exportStyledWorkbook().catch(error => showStatus(error.message, 'error')));
+  if (elements.fullscreenBtn) elements.fullscreenBtn.addEventListener('click', toggleFullscreen);
+  if (elements.viewModeBtn) {
+    elements.viewModeBtn.addEventListener('click', () => {
+      state.viewMode = state.viewMode === 'compact' ? 'expanded' : 'compact';
+      renderResults();
+    });
+  }
+  if (elements.saveSchemaBtn) elements.saveSchemaBtn.addEventListener('click', () => saveCurrentSchemaConfig(true));
+  if (elements.resetConfigBtn) elements.resetConfigBtn.addEventListener('click', () => {
+    if (!state.defaultConfigs.length) return;
+    state.configs = JSON.parse(JSON.stringify(state.defaultConfigs));
+    state.isAppliedFromSaved = false;
+    if (elements.schemaMatchAlert) elements.schemaMatchAlert.classList.add('hidden');
+    renderSheetConfig();
+    showStatus('已恢复为系统默认自动识别的表格与字段配置', 'success');
+  });
+
+  document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      elements.result?.classList.remove('is-fullscreen');
+      document.body.classList.remove('comparison-fullscreen-active');
+    }
+    updateFullscreenBtnText();
+  });
+  document.addEventListener('webkitfullscreenchange', () => {
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      elements.result?.classList.remove('is-fullscreen');
+      document.body.classList.remove('comparison-fullscreen-active');
+    }
+    updateFullscreenBtnText();
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && isFullscreenActive()) {
+      elements.result?.classList.remove('is-fullscreen');
+      document.body.classList.remove('comparison-fullscreen-active');
+      if (document.fullscreenElement || document.webkitFullscreenElement) {
+        try {
+          if (document.exitFullscreen) document.exitFullscreen();
+          else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        } catch (_) {}
+      }
+      updateFullscreenBtnText();
+    }
+  });
+
   elements.sheets.addEventListener('change', event => {
     if (event.target.dataset.prop === 'role') {
       const card = event.target.closest('.sheet-card');

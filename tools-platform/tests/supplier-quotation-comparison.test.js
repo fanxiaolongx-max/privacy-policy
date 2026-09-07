@@ -92,3 +92,77 @@ test('reads the base-sheet supplier and compares it with the recommendation', ()
     assert.deepEqual(core.compareSupplier('yummy', '金字塔'), { code: 'different', label: '不一致' });
     assert.equal(core.compareSupplier('没有', '罗葛家').code, 'missing-base');
 });
+
+test('generates fingerprint and matches identical schema', () => {
+    const sheetsA = sampleSheets();
+    const sheetsB = sampleSheets();
+    const fpA = core.buildWorkbookFingerprint(sheetsA);
+    const fpB = core.buildWorkbookFingerprint(sheetsB);
+    assert.equal(core.isSchemaMatch(fpA, fpB), true);
+
+    const changedSheets = sampleSheets();
+    changedSheets[1].name = '食材-新金字塔';
+    const fpChanged = core.buildWorkbookFingerprint(changedSheets);
+    assert.equal(core.isSchemaMatch(fpA, fpChanged), false);
+});
+
+test('applies saved sheet configurations when schema matches', () => {
+    const sheets = sampleSheets();
+    const configs = core.analyzeSheets(sheets);
+    const savedConfig = {
+        sheets: [
+            {
+                name: 'Week1 (9.5-9.9)',
+                role: 'base',
+                headerRow: 1,
+                columns: { item: 2, quantity: 5, category: 3, unit: 4, baseSupplier: 1 }
+            },
+            {
+                name: '罗葛家',
+                role: 'supplier',
+                supplier: '罗葛精选',
+                headerRow: 0,
+                taxMode: 'inclusive',
+                columns: { item: 1, category: 0, spec: 2, price: 3, taxPrice: 4, remark: 6 }
+            }
+        ]
+    };
+    const success = core.applySavedConfig(configs, savedConfig);
+    assert.equal(success, true);
+    const luoConfig = configs.find(c => c.name === '罗葛家');
+    assert.equal(luoConfig.supplier, '罗葛精选');
+    assert.equal(luoConfig.taxMode, 'inclusive');
+});
+
+test('handles inconsistent units across suppliers by disabling normalized comparison', () => {
+    const base = { item: '鸡精', category: '调味品', unit: '件' };
+    const quotePiece = { supplier: '供应商A', item: '鸡精', category: '调味品', unit: '件', spec: '', priceRaw: 120, taxPriceRaw: 120, remark: '', stock: '' };
+    const quoteKg = { supplier: '供应商B', item: '鸡精', category: '调味品', unit: 'kg', spec: '1kg', priceRaw: 45, taxPriceRaw: 45, remark: '', stock: '' };
+
+    const evaluation = core.evaluateRowComparison(base, [{ record: quotePiece }, { record: quoteKg }], 14);
+    assert.equal(evaluation.unitMismatch, true);
+    assert.equal(evaluation.canCompareByNormalized, false);
+    assert.equal(evaluation.recommendation.supplier, '');
+    assert.match(evaluation.recommendation.reason, /不同供应商报价单位不一致/);
+});
+
+test('handles extreme normalized price deviation by directly comparing quote prices and flagging for review', () => {
+    const base = { item: '干海带', category: '干货', unit: 'kg' };
+    // 同样是 kg，但供应商A 20元/kg，供应商B 180元/kg，相差 9 倍（>= 3.0倍）
+    const quoteNormal = { supplier: '供应商A', item: '干海带', category: '干货', unit: 'kg', spec: '1kg', priceRaw: 20, taxPriceRaw: 20, remark: '', stock: '' };
+    const quoteExtreme = { supplier: '供应商B', item: '干海带', category: '干货', unit: 'kg', spec: '1kg', priceRaw: 180, taxPriceRaw: 180, remark: '', stock: '' };
+
+    const evaluation = core.evaluateRowComparison(base, [{ record: quoteNormal }, { record: quoteExtreme }], 14);
+    assert.equal(evaluation.extremeDeviation, true);
+    assert.equal(evaluation.canCompareByNormalized, false);
+    assert.equal(evaluation.winner.supplier, '供应商A');
+    assert.equal(evaluation.recommendation.supplier, '供应商A');
+    assert.equal(evaluation.recommendation.isAnomaly, true);
+    assert.match(evaluation.recommendation.reason, /需人工二次复核确认/);
+
+    const compStatus = core.compareSupplier('供应商B', '供应商A', true);
+    assert.equal(compStatus.code, 'anomaly-review');
+    assert.equal(compStatus.label, '⚠️ 需人工复核');
+});
+
+

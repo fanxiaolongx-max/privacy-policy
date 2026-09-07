@@ -763,6 +763,35 @@ router.post('/knowledge/refresh', checkAuth, async (_req, res) => {
     }
 });
 
+router.get('/knowledge/graph-stream', checkAuth, async (req, res) => {
+    const controller = new AbortController();
+    const writeEvent = payload => {
+        if (!res.writableEnded && !res.destroyed) res.write(`${JSON.stringify(payload)}\n`);
+    };
+    req.on('aborted', () => controller.abort());
+    res.on('close', () => {
+        if (!res.writableEnded) controller.abort();
+    });
+    res.status(200);
+    res.setHeader('Content-Type', 'application/x-ndjson; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('X-Accel-Buffering', 'no');
+    res.flushHeaders?.();
+    try {
+        const graph = await aiKnowledgeService.getGraph({
+            signal: controller.signal,
+            onProgress: progress => writeEvent({ type: 'progress', ...progress })
+        });
+        writeEvent({ type: 'result', data: graph });
+        res.end();
+    } catch (err) {
+        if (controller.signal.aborted) return;
+        console.error('[AI] knowledge graph stream failed:', err);
+        writeEvent({ type: 'error', error: '读取知识关系图谱失败: ' + err.message });
+        res.end();
+    }
+});
+
 router.get('/knowledge/graph', checkAuth, async (_req, res) => {
     try {
         res.json(await aiKnowledgeService.getGraph());

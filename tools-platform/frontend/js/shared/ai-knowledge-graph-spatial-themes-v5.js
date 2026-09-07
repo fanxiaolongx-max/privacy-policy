@@ -212,7 +212,12 @@
         .ai-kg-history-state.fail { color:#ff9a9a; background:rgba(190,57,72,.14); }
         .ai-kg-history-state.unknown { color:#8290aa; background:rgba(109,122,157,.12); }
         .ai-kg-loading { position:absolute; inset:0; display:grid; place-items:center; background:rgba(9,14,25,.72); z-index:3; }
-        .ai-kg-loading-card { padding:14px 18px; border-radius:12px; background:#151d31; border:1px solid #273452; color:#b9c3d8; font-size:12px; box-shadow:0 16px 44px rgba(0,0,0,.25); }
+        .ai-kg-loading-card { width:min(420px,82vw); padding:16px 18px; border-radius:12px; background:#151d31; border:1px solid #273452; color:#b9c3d8; font-size:12px; box-shadow:0 16px 44px rgba(0,0,0,.25); }
+        .ai-kg-loading-head { display:flex; align-items:center; justify-content:space-between; gap:14px; }
+        .ai-kg-loading-percent { color:#8496d8; font-variant-numeric:tabular-nums; }
+        .ai-kg-loading-track { height:6px; margin-top:11px; overflow:hidden; border-radius:999px; background:#26314a; }
+        .ai-kg-loading-bar { display:block; width:0; height:100%; border-radius:inherit; background:linear-gradient(90deg,#6378dc,#9a6ed4); transition:width .22s ease; }
+        .ai-kg-loading-log { margin-top:9px; color:#77859f; font-size:10px; line-height:1.5; }
         .ai-kg-loading[hidden] { display:none; }
         .ai-kg-chat-dialog { position:absolute; z-index:30; inset:0; display:grid; place-items:center; padding:24px; background:rgba(3,7,16,.68); backdrop-filter:blur(5px); }
         .ai-kg-chat-dialog[hidden] { display:none; }
@@ -318,7 +323,7 @@
                     </div>
                 </div>
                 <div class="ai-kg-hint" id="aiKgHint"><span>拖动画布</span><span>滚轮缩放</span><span>放大显示文件名</span><span>点击节点查看</span><span>拖动节点可拉扯关系</span><span>松手保留惯性</span></div>
-                <div class="ai-kg-loading" id="aiKgLoading"><div class="ai-kg-loading-card">正在构建知识关系…</div></div>
+                <div class="ai-kg-loading" id="aiKgLoading"><div class="ai-kg-loading-card"><div class="ai-kg-loading-head"><strong data-loading-text>正在构建知识关系…</strong><span class="ai-kg-loading-percent" data-loading-percent></span></div><div class="ai-kg-loading-track" data-loading-track hidden><i class="ai-kg-loading-bar" data-loading-bar></i></div><div class="ai-kg-loading-log" data-loading-log></div></div></div>
             </div>
             <aside class="ai-kg-sidebar" id="aiKgSidebar"><div class="ai-kg-side-empty">点击图谱中的模块或文件，可查看索引时间、知识片段和文件关系。</div></aside>
             <button class="ai-kg-sidebar-toggle" id="aiKgSidebarToggle" type="button" aria-expanded="true">›</button>
@@ -424,6 +429,7 @@
         alphaTarget: 0.035,
         lastFrameTime: 0,
         loadSequence: 0,
+        loadController: null,
         searchMatches: new Set(),
         answerFocus: null,
         pendingFocus: null,
@@ -634,9 +640,14 @@
         return `${sign} ${value}${suffix}`;
     }
 
-    function setLoading(text, visible = true) {
+    function setLoading(text, visible = true, progress = null, detail = '') {
         loading.hidden = !visible;
-        loading.querySelector('.ai-kg-loading-card').textContent = text;
+        loading.querySelector('[data-loading-text]').textContent = text;
+        const hasProgress = visible && Number.isFinite(progress);
+        loading.querySelector('[data-loading-track]').hidden = !hasProgress;
+        loading.querySelector('[data-loading-bar]').style.width = `${hasProgress ? Math.max(0, Math.min(100, progress)) : 0}%`;
+        loading.querySelector('[data-loading-percent]').textContent = hasProgress ? `${Math.round(progress)}%` : '';
+        loading.querySelector('[data-loading-log]').textContent = detail || '';
     }
 
     function showError(message) {
@@ -945,6 +956,36 @@
         scheduleFrame();
     }
 
+    function forEachNearbyNodePair(nodes, callback) {
+        const cellSize = state.dimension === '3d' ? 200 : 160;
+        const cells = new Map();
+        const cellKey = (x, y, z) => `${x}:${y}:${z}`;
+        nodes.forEach((node, index) => {
+            const x = Math.floor(node.x / cellSize);
+            const y = Math.floor(node.y / cellSize);
+            const z = state.dimension === '3d' ? Math.floor(node.z / cellSize) : 0;
+            const key = cellKey(x, y, z);
+            if (!cells.has(key)) cells.set(key, []);
+            cells.get(key).push(index);
+        });
+        nodes.forEach((node, index) => {
+            const baseX = Math.floor(node.x / cellSize);
+            const baseY = Math.floor(node.y / cellSize);
+            const baseZ = state.dimension === '3d' ? Math.floor(node.z / cellSize) : 0;
+            for (let dx = -1; dx <= 1; dx += 1) {
+                for (let dy = -1; dy <= 1; dy += 1) {
+                    const zStart = state.dimension === '3d' ? -1 : 0;
+                    const zEnd = state.dimension === '3d' ? 1 : 0;
+                    for (let dz = zStart; dz <= zEnd; dz += 1) {
+                        for (const otherIndex of cells.get(cellKey(baseX + dx, baseY + dy, baseZ + dz)) || []) {
+                            if (otherIndex > index) callback(node, nodes[otherIndex]);
+                        }
+                    }
+                }
+            }
+        });
+    }
+
     function simulate(elapsed = 1) {
         const nodes = state.nodes;
         const alpha = state.alpha;
@@ -973,15 +1014,12 @@
             if (!a.fixed) { a.vx += fx; a.vy += fy; if (state.dimension === '3d') a.vz += fz; }
             if (!b.fixed) { b.vx -= fx; b.vy -= fy; if (state.dimension === '3d') b.vz -= fz; }
         }
-        for (let i = 0; i < nodes.length; i += 1) {
-            const a = nodes[i];
-            for (let j = i + 1; j < nodes.length; j += 1) {
-                const b = nodes[j];
+        forEachNearbyNodePair(nodes, (a, b) => {
                 const dx = b.x - a.x;
                 const dy = b.y - a.y;
                 const dz = state.dimension === '3d' ? b.z - a.z : 0;
                 const distanceSq = dx * dx + dy * dy + dz * dz + 0.01;
-                if (distanceSq > (state.dimension === '3d' ? 40000 : 25600)) continue;
+                if (distanceSq > (state.dimension === '3d' ? 40000 : 25600)) return;
                 const distance = Math.sqrt(distanceSq);
                 const minDistance = nodePhysicsRadius(a) + nodePhysicsRadius(b) + (isLeafNode(a) && isLeafNode(b) ? 3 : 8);
                 const overlap = Math.max(0, minDistance - distance);
@@ -992,8 +1030,7 @@
                 const fz = dz / distance * (repel + collision) * elapsed;
                 if (!a.fixed) { a.vx -= fx; a.vy -= fy; if (state.dimension === '3d') a.vz -= fz; }
                 if (!b.fixed) { b.vx += fx; b.vy += fy; if (state.dimension === '3d') b.vz += fz; }
-            }
-        }
+        });
         for (const node of nodes) {
             if (node.fixed || node.dragging) continue;
             node.vx += -node.x * 0.000045 * state.settings.centerForce * alpha * elapsed;
@@ -1017,6 +1054,7 @@
             if (state.dimension === '3d') node.z += node.vz * elapsed;
         }
         state.alpha += (state.alphaTarget - state.alpha) * 0.035 * elapsed;
+        if (state.alpha < 0.045 && !nodes.some(node => node.dragging)) state.running = false;
     }
 
     function worldToScreen(node) {
@@ -2637,19 +2675,70 @@
         return true;
     }
 
+    async function loadKnowledgeGraphStream(signal, onProgress) {
+        const response = await fetch('/api/ai/knowledge/graph-stream', { headers: authHeaders(), signal });
+        if (!response.ok) return readJsonResponse(response, kgT('graphLoadFailed'));
+        if (!response.body || typeof response.body.getReader !== 'function') {
+            throw new Error(`${kgT('graphLoadFailed')}：${kgLang() === 'en' ? 'streaming response unavailable' : '浏览器不支持进度流'}`);
+        }
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let result = null;
+        const consumeLine = rawLine => {
+            const line = rawLine.trim();
+            if (!line) return;
+            let event;
+            try { event = JSON.parse(line); }
+            catch (_error) { throw new Error(`${kgT('graphLoadFailed')}：${kgLang() === 'en' ? 'invalid progress event' : '无法解析进度信息'}`); }
+            if (event.type === 'progress') onProgress?.(event);
+            else if (event.type === 'result') result = event.data;
+            else if (event.type === 'error') throw new Error(event.error || kgT('graphLoadFailed'));
+        };
+        while (true) {
+            const { value, done } = await reader.read();
+            buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+            lines.forEach(consumeLine);
+            if (done) break;
+        }
+        consumeLine(buffer);
+        if (!result) throw new Error(`${kgT('graphLoadFailed')}：${kgLang() === 'en' ? 'no graph result received' : '未收到图谱结果'}`);
+        return result;
+    }
+
     async function loadGraph() {
         const loadSequence = ++state.loadSequence;
-        setLoading(isMetricMode() ? kgT('loadingMetrics') : isChatMode() ? kgT('loadingChat') : kgT('loadingKnowledge'), true);
+        state.loadController?.abort();
+        const controller = new AbortController();
+        state.loadController = controller;
+        let timeoutTriggered = false;
+        const timeout = setTimeout(() => {
+            timeoutTriggered = true;
+            controller.abort();
+        }, 90000);
+        const progressLog = [];
+        setLoading(isMetricMode() ? kgT('loadingMetrics') : isChatMode() ? kgT('loadingChat') : kgT('loadingKnowledge'), true, 0);
         try {
             const endpoint = isMetricMode()
                 ? `/api/ai/knowledge/metric-graph${state.month ? `?month=${state.month}` : ''}`
                 : isChatMode()
                 ? '/api/chat-history/relationship-graph'
-                : '/api/ai/knowledge/graph';
-            const response = await fetch(endpoint, { headers: authHeaders() });
-            let data = await response.json();
+                : '/api/ai/knowledge/graph-stream';
+            let data;
+            if (!isMetricMode() && !isChatMode()) {
+                data = await loadKnowledgeGraphStream(controller.signal, event => {
+                    if (loadSequence !== state.loadSequence) return;
+                    const message = kgLang() === 'en' ? event.messageEn : event.message;
+                    if (message && progressLog.at(-1) !== message) progressLog.push(message);
+                    setLoading(message || kgT('loadingKnowledge'), true, Math.min(94, Number(event.progress)), progressLog.slice(-3).join(' · '));
+                });
+            } else {
+                const response = await fetch(endpoint, { headers: authHeaders(), signal: controller.signal });
+                data = await readJsonResponse(response, isMetricMode() ? kgT('metricLoadFailed') : kgT('graphLoadFailed'));
+            }
             if (loadSequence !== state.loadSequence) return;
-            if (!response.ok) throw new Error(data.error || (isMetricMode() ? kgT('metricLoadFailed') : kgT('graphLoadFailed')));
             state.chatFullData = isChatMode() ? data : null;
             updateModeChrome(data);
             renderStatuses(data);
@@ -2664,6 +2753,9 @@
                 state.chatView = { mode:'overview', nodeId:null };
                 data = buildChatViewData(state.chatView);
             }
+            setLoading(kgLang() === 'en' ? 'Laying out graph nodes…' : '正在布局图谱节点…', true, 96, progressLog.slice(-3).join(' · '));
+            await new Promise(resolve => requestAnimationFrame(resolve));
+            if (controller.signal.aborted) throw new DOMException('Aborted', 'AbortError');
             initializeLayout(data);
             setLoading('', false);
             if (applyMetricAnswerFocus(state.pendingFocus)) {
@@ -2685,7 +2777,16 @@
             render();
         } catch (error) {
             if (loadSequence !== state.loadSequence) return;
+            if (error.name === 'AbortError') {
+                if (timeoutTriggered && overlay.classList.contains('open')) showError(kgLang() === 'en' ? 'Graph loading timed out after 90 seconds. Please retry.' : '图谱加载超过 90 秒，已自动停止，请重试。');
+                else setLoading('', false);
+                return;
+            }
+            controller.abort();
             showError(error.message);
+        } finally {
+            clearTimeout(timeout);
+            if (state.loadController === controller) state.loadController = null;
         }
     }
 
@@ -3149,6 +3250,9 @@
             setTimeout(() => searchInput.focus(), 100);
         },
         close() {
+            state.loadController?.abort();
+            state.loadController = null;
+            state.loadSequence += 1;
             if (isGraphFullscreen()) {
                 const exit = document.exitFullscreen || document.webkitExitFullscreen;
                 if (exit) Promise.resolve(exit.call(document)).catch(() => {});

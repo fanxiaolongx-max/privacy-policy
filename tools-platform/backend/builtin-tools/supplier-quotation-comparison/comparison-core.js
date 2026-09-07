@@ -308,35 +308,151 @@
     return Array.from(groups.values());
   }
 
-  function recommendation(base, selectedQuotes, taxRate) {
-    const candidates = selectedQuotes.map(selection => {
+  function evaluateRowComparison(base, selectedQuotes, taxRate) {
+    const validQuotes = (selectedQuotes || []).map((selection, index) => {
       if (!selection || !selection.record) return null;
       const details = quoteDetails(selection.record, taxRate);
-      return { supplier: selection.record.supplier, details };
-    }).filter(candidate => candidate && candidate.details.normalizedPrice !== null);
-    if (!candidates.length) return { supplier: '', reason: '无有效报价，请人工确认' };
-    const baseBasis = inferUnit(base.unit);
-    let comparable = candidates;
-    if (baseBasis) {
-      const normalizedBaseBasis = baseBasis === 'g' || baseBasis === 'jin' ? 'kg' : baseBasis === 'ml' ? 'l' : baseBasis;
-      const matchingBasis = candidates.filter(candidate => candidate.details.basis === normalizedBaseBasis);
-      if (matchingBasis.length) comparable = matchingBasis;
+      return {
+        supplier: selection.record.supplier,
+        record: selection.record,
+        details,
+        index
+      };
+    }).filter(item => item && item.details && item.details.finalPrice !== null && item.details.finalPrice > 0 && !item.details.unavailable);
+
+    if (!validQuotes.length) {
+      return {
+        unitMismatch: false,
+        extremeDeviation: false,
+        canCompareByNormalized: false,
+        winner: null,
+        recommendation: { supplier: '', reason: '无有效报价，请人工确认' },
+        comparisonCode: 'missing-recommendation'
+      };
     }
-    const bases = new Set(comparable.map(candidate => candidate.details.basis).filter(Boolean));
-    if (bases.size > 1) return { supplier: '', reason: '规格/单位不一致，无法可靠比价' };
-    comparable.sort((a, b) => a.details.normalizedPrice - b.details.normalizedPrice);
-    const winner = comparable[0];
-    if (comparable.length === 1) return { supplier: winner.supplier, reason: '唯一有效且单位可识别的报价' };
-    const second = comparable[1];
+
+    if (validQuotes.length === 1) {
+      const single = validQuotes[0];
+      return {
+        unitMismatch: false,
+        extremeDeviation: false,
+        canCompareByNormalized: true,
+        winner: single,
+        recommendation: { supplier: single.supplier, reason: '唯一有效且可比价的供应商报价' },
+        comparisonCode: null
+      };
+    }
+
+    // 检查不同供应商的单位是否一致
+    const bases = new Set();
+    const unitNames = [];
+    validQuotes.forEach(q => {
+      const b = q.details.basis || inferUnit(q.record.unit || q.record.spec) || '未指定单位';
+      bases.add(b);
+      const displayUnit = q.record.unit || q.record.spec || b;
+      if (displayUnit && !unitNames.includes(displayUnit)) unitNames.push(displayUnit);
+    });
+
+    // 1. 同一商品不同供应商单位不一致：不作为比价依据，弱化单价显示
+    if (bases.size > 1) {
+      return {
+        unitMismatch: true,
+        extremeDeviation: false,
+        canCompareByNormalized: false,
+        unitNames,
+        winner: null,
+        recommendation: {
+          supplier: '',
+          reason: `不同供应商报价单位不一致（${unitNames.join(' vs ')}），折算单价不作为比价依据，请人工确认`
+        },
+        comparisonCode: 'unit-mismatch'
+      };
+    }
+
+    const normalizedPrices = validQuotes
+      .map(q => q.details.normalizedPrice)
+      .filter(p => typeof p === 'number' && p > 0);
+
+    // 若有报价未能有效折算单价，视为单位不全
+    if (normalizedPrices.length < validQuotes.length) {
+      const sortedByFinal = validQuotes.slice().sort((a, b) => a.details.finalPrice - b.details.finalPrice);
+      const directWinner = sortedByFinal[0];
+      return {
+        unitMismatch: true,
+        extremeDeviation: false,
+        canCompareByNormalized: false,
+        winner: directWinner,
+        recommendation: {
+          supplier: directWinner.supplier,
+          reason: `部分报价缺少折算规格，已按含税报价直接对比（最低¥${directWinner.details.finalPrice.toFixed(2)}），需人工核实`
+        },
+        comparisonCode: 'anomaly-review'
+      };
+    }
+
+    const minNorm = Math.min(...normalizedPrices);
+    const maxNorm = Math.max(...normalizedPrices);
+    const deviationRatio = minNorm > 0 ? (maxNorm / minNorm) : 1;
+
+    // 2. 单位一致，但自动折算的单价偏差非常大（>= 3.0倍）：疑似计算或表格填写有误，不作为比价依据，直接对比含税价格，并提示人工二次确认
+    if (deviationRatio >= 3.0) {
+      const sortedByFinal = validQuotes.slice().sort((a, b) => a.details.finalPrice - b.details.finalPrice);
+      const directWinner = sortedByFinal[0];
+      const ratioStr = deviationRatio.toFixed(1);
+      return {
+        unitMismatch: false,
+        extremeDeviation: true,
+        deviationRatio,
+        canCompareByNormalized: false,
+        directWinner,
+        winner: directWinner,
+        recommendation: {
+          supplier: directWinner.supplier,
+          reason: `折算单价偏差达 ${ratioStr} 倍（疑规格或填写有误）；暂按含税报价直接比对推荐（¥${directWinner.details.finalPrice.toFixed(2)}），需人工二次复核确认！`,
+          isAnomaly: true
+        },
+        comparisonCode: 'anomaly-review'
+      };
+    }
+
+    // 3. 正常情况：单位一致且偏差在合理范围内，按折算单价推荐最低
+    const sortedByNorm = validQuotes.slice().sort((a, b) => a.details.normalizedPrice - b.details.normalizedPrice);
+    const winner = sortedByNorm[0];
+    const second = sortedByNorm[1];
+
     if (Math.abs(winner.details.normalizedPrice - second.details.normalizedPrice) < 0.005) {
-      return { supplier: winner.supplier, reason: '含税折算单价并列最低，请结合质量、交期和付款条件确认' };
+      return {
+        unitMismatch: false,
+        extremeDeviation: false,
+        canCompareByNormalized: true,
+        winner,
+        recommendation: {
+          supplier: winner.supplier,
+          reason: '含税折算单价并列最低，请结合质量、交期和付款条件确认'
+        },
+        comparisonCode: null
+      };
     }
-    const saving = second.details.normalizedPrice > 0 ? (1 - winner.details.normalizedPrice / second.details.normalizedPrice) * 100 : 0;
+
+    const saving = second.details.normalizedPrice > 0
+      ? ((1 - winner.details.normalizedPrice / second.details.normalizedPrice) * 100)
+      : 0;
     const unitLabel = winner.details.basis === 'kg' ? '公斤' : winner.details.basis === 'l' ? '升' : '单位';
     return {
-      supplier: winner.supplier,
-      reason: `含税折算单价最低（${winner.details.normalizedPrice.toFixed(2)}/` + unitLabel + `），比次低价约低 ${Math.max(0, saving).toFixed(1)}%`
+      unitMismatch: false,
+      extremeDeviation: false,
+      canCompareByNormalized: true,
+      winner,
+      recommendation: {
+        supplier: winner.supplier,
+        reason: `含税折算单价最低（${winner.details.normalizedPrice.toFixed(2)}/${unitLabel}），比次低价约低 ${Math.max(0, saving).toFixed(1)}%`
+      },
+      comparisonCode: null
     };
+  }
+
+  function recommendation(base, selectedQuotes, taxRate) {
+    return evaluateRowComparison(base, selectedQuotes, taxRate).recommendation;
   }
 
   function normalizeSupplierName(value) {
@@ -346,13 +462,91 @@
     return source;
   }
 
-  function compareSupplier(baseSupplier, recommendedSupplier) {
+  function compareSupplier(baseSupplier, recommendedSupplier, isAnomaly) {
+    if (isAnomaly) {
+      return { code: 'anomaly-review', label: '⚠️ 需人工复核' };
+    }
     const base = normalizeSupplierName(baseSupplier);
     const recommended = normalizeSupplierName(recommendedSupplier);
     if (!base) return { code: 'missing-base', label: '基础表未填有效供应商' };
     if (!recommended) return { code: 'missing-recommendation', label: '未生成推荐' };
     if (base === recommended) return { code: 'same', label: '一致' };
     return { code: 'different', label: '不一致' };
+  }
+
+  function buildSheetFingerprint(sheet) {
+    if (!sheet) return null;
+    const name = text(sheet.name);
+    const matrix = sheet.matrix || [];
+    const rowSignatures = matrix.slice(0, 15).map(row => {
+      if (!Array.isArray(row)) return '';
+      return row.map(cell => compact(cell)).filter(Boolean).slice(0, 25).join('|');
+    }).filter(Boolean);
+    return {
+      name,
+      signature: rowSignatures.join(';;')
+    };
+  }
+
+  function buildWorkbookFingerprint(sheets) {
+    if (!Array.isArray(sheets)) return [];
+    return sheets.map(sheet => buildSheetFingerprint(sheet));
+  }
+
+  function isSchemaMatch(currentFingerprints, savedFingerprints) {
+    if (!Array.isArray(currentFingerprints) || !Array.isArray(savedFingerprints)) return false;
+    if (currentFingerprints.length === 0 || currentFingerprints.length !== savedFingerprints.length) return false;
+    for (let i = 0; i < currentFingerprints.length; i += 1) {
+      const cur = currentFingerprints[i];
+      const sav = savedFingerprints[i];
+      if (!cur || !sav) return false;
+      if (cur.name !== sav.name) return false;
+      if (cur.signature !== sav.signature) return false;
+    }
+    return true;
+  }
+
+  function applySavedConfig(currentConfigs, savedConfig) {
+    if (!Array.isArray(currentConfigs) || !savedConfig || !Array.isArray(savedConfig.sheets)) {
+      return false;
+    }
+    const savedMap = new Map();
+    savedConfig.sheets.forEach(s => {
+      if (s && s.name) savedMap.set(s.name, s);
+    });
+
+    let appliedCount = 0;
+    currentConfigs.forEach(config => {
+      const saved = savedMap.get(config.name);
+      if (!saved) return;
+      if (['base', 'supplier', 'ignore'].includes(saved.role)) {
+        config.role = saved.role;
+      }
+      if (typeof saved.supplier === 'string') {
+        config.supplier = saved.supplier;
+      }
+      if (typeof saved.headerRow === 'number' && saved.headerRow >= 0 && saved.headerRow < config.matrix.length) {
+        config.headerRow = saved.headerRow;
+      }
+      if (['auto', 'exclusive', 'inclusive'].includes(saved.taxMode)) {
+        config.taxMode = saved.taxMode;
+      }
+      if (saved.columns && typeof saved.columns === 'object') {
+        const rowLen = (config.matrix[config.headerRow] || []).length;
+        const validColumns = {};
+        Object.entries(saved.columns).forEach(([field, colIdx]) => {
+          if (typeof colIdx === 'number' && colIdx >= 0 && colIdx < rowLen) {
+            validColumns[field] = colIdx;
+          }
+        });
+        if (Object.keys(validColumns).length > 0) {
+          config.columns = validColumns;
+        }
+      }
+      appliedCount += 1;
+    });
+
+    return appliedCount > 0;
   }
 
   return {
@@ -374,7 +568,11 @@
     quoteDetails,
     groupSuppliers,
     recommendation,
+    evaluateRowComparison,
     normalizeSupplierName,
-    compareSupplier
+    compareSupplier,
+    buildWorkbookFingerprint,
+    isSchemaMatch,
+    applySavedConfig
   };
 });

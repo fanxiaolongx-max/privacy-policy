@@ -5860,7 +5860,7 @@ window.openToolsKnowledgeGraph = function (options = {}) {
             script.addEventListener('load', handleLoad, { once: true });
             script.addEventListener('error', handleError, { once: true });
             if (!existing) {
-                script.src = '/js/shared/ai-knowledge-graph-spatial-themes-v5.js?v=20260906-01';
+                script.src = '/js/shared/ai-knowledge-graph-spatial-themes-v5.js?v=20260907-01';
                 document.body.appendChild(script);
             }
         }).catch(error => {
@@ -5884,7 +5884,7 @@ window.openToolsAIAssistant = function (options = {}) {
             script.addEventListener('load', resolve, { once: true });
             script.addEventListener('error', () => reject(new Error('AI 助手组件加载失败')), { once: true });
             if (!existing) {
-                script.src = '/js/shared/ai-assistant.js?v=20260905-03';
+                script.src = '/js/shared/ai-assistant.js?v=20260907-01';
                 document.body.appendChild(script);
             }
         }).catch(error => {
@@ -5907,7 +5907,7 @@ window.openToolsAIAssistant = function (options = {}) {
     // 确保不重复加载
     if (!document.querySelector('script[src^="/js/shared/ai-assistant.js"]')) {
         const aiScript = document.createElement('script');
-        aiScript.src = '/js/shared/ai-assistant.js?v=20260905-03';
+        aiScript.src = '/js/shared/ai-assistant.js?v=20260907-01';
         document.body.appendChild(aiScript);
     }
 })();
@@ -6621,6 +6621,7 @@ function initBackToTopButton() {
 }
 
 let builtinToolsSyncChecking = false;
+const BUILTIN_TOOLS_SYNC_SESSION_KEY = 'tools_builtin_sync_checked_20260907';
 const BUILTIN_TOOLS_SYNC_SNOOZE_KEY = 'builtin_tools_sync_snooze_date_v1';
 
 function getBuiltinToolsSyncLocalDate() {
@@ -6853,6 +6854,7 @@ function openBuiltinToolsSyncModal(preview) {
 async function checkBuiltinToolsSync() {
     if (
         builtinToolsSyncChecking
+        || sessionStorage.getItem(BUILTIN_TOOLS_SYNC_SESSION_KEY) === '1'
         || localStorage.getItem('tools_role') !== 'admin'
         || isBuiltinToolsSyncSnoozedToday()
         || typeof API === 'undefined'
@@ -6862,6 +6864,7 @@ async function checkBuiltinToolsSync() {
     builtinToolsSyncChecking = true;
     try {
         const preview = await API.get('/api/custom-tools/builtin-sync/preview');
+        sessionStorage.setItem(BUILTIN_TOOLS_SYNC_SESSION_KEY, '1');
         if (preview && Array.isArray(preview.pending) && preview.pending.length) {
             openBuiltinToolsSyncModal(preview);
         }
@@ -6885,7 +6888,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     refreshAlertCenterBadge();
     setInterval(refreshAlertCenterBadge, 60000);
     setTimeout(checkServerStatus, 500);
-    setTimeout(checkBuiltinToolsSync, 900);
+    const scheduleBuiltinToolsSync = () => setTimeout(checkBuiltinToolsSync, 8000);
+    if (typeof requestIdleCallback === 'function') requestIdleCallback(scheduleBuiltinToolsSync, { timeout: 12000 });
+    else scheduleBuiltinToolsSync();
 });
 
 // EXE 授权角标在普通 Web 部署中会自动隐藏，仅桌面版本地服务显示。

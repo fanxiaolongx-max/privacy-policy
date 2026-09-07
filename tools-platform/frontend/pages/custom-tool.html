@@ -83,6 +83,29 @@
             color: #637083;
             font-size: 14px;
         }
+        .custom-tool-host { position: relative; min-height: 0; background: #fff; }
+        .custom-tool-frame[hidden] { display: none; }
+        .custom-tool-loader { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; padding: 24px; background: #eef3f8; }
+        .custom-tool-loader[hidden] { display: none; }
+        .custom-tool-loader-card { width: min(480px, 86vw); padding: 20px; border: 1px solid #d7e1ec; border-radius: 14px; background: #fff; box-shadow: 0 18px 48px rgba(42, 63, 86, .12); }
+        .custom-tool-loader-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; color: #26384d; font-weight: 800; }
+        .custom-tool-loader-percent { color: #3679bd; font-size: 12px; font-variant-numeric: tabular-nums; }
+        .custom-tool-progress { height: 7px; margin-top: 14px; overflow: hidden; border-radius: 999px; background: #e8eef5; }
+        .custom-tool-progress i { display: block; width: 4%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #4285cc, #64b5a8); transition: width .25s ease; }
+        .custom-tool-load-log { min-height: 38px; margin-top: 12px; color: #718096; font-size: 11px; line-height: 1.7; white-space: pre-line; }
+        .custom-tool-retry { display: none; margin-top: 12px; height: 32px; padding: 0 14px; border: 0; border-radius: 7px; background: #2878c7; color: #fff; font-weight: 700; cursor: pointer; }
+        .custom-tool-loader.is-error .custom-tool-loader-head { color: #b33a3a; }
+        .custom-tool-loader.is-error .custom-tool-progress i { background: #d45a5a; }
+        .custom-tool-loader.is-error .custom-tool-retry { display: inline-flex; align-items: center; }
+        @media (prefers-color-scheme: dark) {
+            body, .custom-tool-loader { background: #101827; }
+            .custom-tool-head { background: #151f30; border-color: #29364a; }
+            .custom-tool-title { color: #e7edf6; }
+            .tool-action { border-color: #34445b; background: #1b2739; color: #b9c8da; }
+            .custom-tool-loader-card { border-color: #2d3a4f; background: #182335; box-shadow: 0 18px 48px rgba(0, 0, 0, .25); }
+            .custom-tool-loader-head { color: #e4ebf5; }
+            .custom-tool-progress { background: #2b374a; }
+        }
     </style>
 </head>
 <body>
@@ -97,14 +120,26 @@
                 <button class="tool-action" id="refreshToolButton" onclick="location.reload()">刷新</button>
             </div>
         </div>
-        <div id="toolFrameHost" class="custom-tool-empty">正在加载自定义工具...</div>
+        <div id="toolFrameHost" class="custom-tool-host">
+            <div id="toolLoader" class="custom-tool-loader" role="status" aria-live="polite">
+                <div class="custom-tool-loader-card">
+                    <div class="custom-tool-loader-head"><span id="toolLoadStage">正在准备自定义工具…</span><span id="toolLoadPercent" class="custom-tool-loader-percent">4%</span></div>
+                    <div class="custom-tool-progress"><i id="toolLoadBar"></i></div>
+                    <div id="toolLoadLog" class="custom-tool-load-log">初始化工具容器</div>
+                    <button id="toolLoadRetry" class="custom-tool-retry" type="button">重试加载</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="/js/shared/api.js?v=20260824-01"></script>
     <script src="/js/shared/toast.js?v=20260530-03"></script>
-    <script src="/js/shared/navbar.js?v=20260906-06"></script>
+    <script src="/js/shared/navbar.js?v=20260907-01"></script>
     <script>
         let currentCustomTool = null;
+        let toolLoadSequence = 0;
+        let toolLoadController = null;
+        let toolLoadLogs = [];
 
         function isEnglishToolShell() {
             return (window.ToolsI18n?.getLanguage?.() || localStorage.getItem('tools_lang')) === 'en-US';
@@ -125,6 +160,7 @@
             document.getElementById('toolName').textContent = displayName;
             document.getElementById('openRawTool').textContent = shellText('新窗口打开', 'Open in New Window');
             document.getElementById('refreshToolButton').textContent = shellText('刷新', 'Refresh');
+            document.getElementById('toolLoadRetry').textContent = shellText('重试加载', 'Retry');
             const frame = document.querySelector('.custom-tool-frame');
             if (frame) {
                 frame.title = displayName;
@@ -137,21 +173,53 @@
             return parts[0] === 'tools' ? parts[1] : '';
         }
 
+        function setToolLoadState(stage, progress, detail, error = false) {
+            const loader = document.getElementById('toolLoader');
+            loader.hidden = false;
+            loader.classList.toggle('is-error', error);
+            document.getElementById('toolLoadStage').textContent = stage;
+            document.getElementById('toolLoadPercent').textContent = Number.isFinite(progress) ? `${Math.round(progress)}%` : '';
+            document.getElementById('toolLoadBar').style.width = `${Number.isFinite(progress) ? Math.max(0, Math.min(100, progress)) : 100}%`;
+            if (detail && toolLoadLogs.at(-1) !== detail) toolLoadLogs.push(detail);
+            document.getElementById('toolLoadLog').textContent = toolLoadLogs.slice(-3).join('\n');
+        }
+
+        async function fetchToolList(signal) {
+            const token = localStorage.getItem('tools_token');
+            const response = await fetch('/api/custom-tools', {
+                signal,
+                headers: token ? { Authorization: `Bearer ${token}` } : {}
+            });
+            const body = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(body.error || `HTTP ${response.status}`);
+            return { tools: body, requestId: response.headers.get('X-Request-Id') || '' };
+        }
+
         async function loadCustomTool() {
+            const sequence = ++toolLoadSequence;
+            toolLoadController?.abort();
+            toolLoadController = new AbortController();
+            toolLoadLogs = [];
             const slug = getToolSlug();
             const host = document.getElementById('toolFrameHost');
+            host.querySelector('.custom-tool-frame')?.remove();
+            setToolLoadState(shellText('正在读取工具清单…', 'Reading tool registry…'), 12, `GET /api/custom-tools · slug=${slug || '-'}`);
+            const listTimeout = setTimeout(() => toolLoadController?.abort(), 15000);
             try {
-                const tools = await API.get('/api/custom-tools');
+                const registry = await fetchToolList(toolLoadController.signal);
+                const tools = registry.tools;
+                clearTimeout(listTimeout);
+                if (sequence !== toolLoadSequence) return;
+                setToolLoadState(shellText('正在定位工具资源…', 'Locating tool assets…'), 42, `${shellText(`工具清单已返回，正在查找 ${slug}`, `Registry loaded; locating ${slug}`)}${registry.requestId ? ` · ${registry.requestId}` : ''}`);
                 const tool = (tools || []).find(item => item.slug === slug);
                 if (!tool) {
-                    host.textContent = shellText('未找到该自定义工具。', 'Custom tool not found.');
+                    setToolLoadState(shellText('未找到该自定义工具', 'Custom tool not found'), 100, shellText('工具清单中不存在当前 slug', 'The current slug is missing from the registry'), true);
                     return;
                 }
                 currentCustomTool = tool;
                 const displayName = getCustomToolDisplayName(tool);
                 document.getElementById('toolIcon').textContent = tool.icon || '🧩';
                 document.getElementById('openRawTool').href = tool.filePath;
-                host.className = '';
                 const allowedFeatures = tool.slug === 'optical-transfer'
                     ? 'camera; autoplay; fullscreen; microphone; display-capture'
                     : 'autoplay; fullscreen; microphone; display-capture';
@@ -160,11 +228,32 @@
                 frame.src = tool.filePath;
                 frame.title = displayName;
                 frame.allow = allowedFeatures;
-                frame.addEventListener('load', applyCustomToolShellLanguage, { once: true });
-                host.replaceChildren(frame);
+                frame.hidden = true;
+                const frameTimeout = setTimeout(() => {
+                    if (sequence !== toolLoadSequence || !document.getElementById('toolLoader')) return;
+                    setToolLoadState(shellText('工具页面加载超时', 'Tool page loading timed out'), 100, `${tool.filePath} · ${shellText('超过 30 秒', 'over 30 seconds')}`, true);
+                }, 30000);
+                frame.addEventListener('load', () => {
+                    clearTimeout(frameTimeout);
+                    if (sequence !== toolLoadSequence) return;
+                    setToolLoadState(shellText('工具已就绪', 'Tool is ready'), 100, `Loaded ${tool.filePath}`);
+                    frame.hidden = false;
+                    document.getElementById('toolLoader').hidden = true;
+                    applyCustomToolShellLanguage();
+                }, { once: true });
+                host.appendChild(frame);
+                setToolLoadState(shellText('正在加载工具页面与脚本…', 'Loading tool page and scripts…'), 68, `GET ${tool.filePath}`);
                 applyCustomToolShellLanguage();
             } catch (err) {
-                host.textContent = `${shellText('加载自定义工具失败', 'Failed to load custom tool')}：${err.message}`;
+                clearTimeout(listTimeout);
+                if (sequence !== toolLoadSequence) return;
+                const timedOut = err.name === 'AbortError';
+                setToolLoadState(
+                    shellText(timedOut ? '读取工具清单超时' : '加载自定义工具失败', timedOut ? 'Tool registry request timed out' : 'Failed to load custom tool'),
+                    100,
+                    timedOut ? shellText('GET /api/custom-tools 超过 15 秒', 'GET /api/custom-tools exceeded 15 seconds') : err.message,
+                    true
+                );
             }
         }
 
@@ -174,6 +263,8 @@
             window.ToolsI18n?.setLanguage?.(event.data.lang);
         });
         document.addEventListener('DOMContentLoaded', loadCustomTool);
+        document.getElementById('toolLoadRetry').addEventListener('click', loadCustomTool);
+        window.addEventListener('beforeunload', () => toolLoadController?.abort());
     </script>
 </body>
 </html>

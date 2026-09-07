@@ -19,6 +19,7 @@ const { requireAdmin } = require('../middleware/auth');
 const customToolI18nGenerator = require('../../scripts/generate-custom-tool-i18n');
 const customToolExportService = require('../models/custom-tool-export-service');
 const snapshotsRepo = require('../models/custom-tools-snapshots-repository');
+const { Worker } = require('node:worker_threads');
 
 const builtinToolsSourceDir = path.join(__dirname, '../builtin-tools');
 const backupUpload = multer({
@@ -32,6 +33,31 @@ const backupUpload = multer({
     }),
     limits: { fileSize: 512 * 1024 * 1024, files: 1 }
 });
+
+function previewBuiltinToolsOffMainThread(options) {
+    return new Promise((resolve, reject) => {
+        const worker = new Worker(path.join(__dirname, '../workers/builtin-tools-preview-worker.js'), { workerData: options });
+        const timeout = setTimeout(() => {
+            worker.terminate();
+            reject(Object.assign(new Error('读取系统工具差异超时'), { status: 504 }));
+        }, 60000);
+        worker.once('message', result => {
+            clearTimeout(timeout);
+            if (result?.ok) resolve(result.preview);
+            else reject(Object.assign(new Error(result?.error || '读取系统工具差异失败'), { status: result?.status || 500 }));
+        });
+        worker.once('error', error => {
+            clearTimeout(timeout);
+            reject(error);
+        });
+        worker.once('exit', code => {
+            if (code !== 0) {
+                clearTimeout(timeout);
+                reject(new Error(`系统工具差异扫描工作线程退出（${code}）`));
+            }
+        });
+    });
+}
 
 function parseAiJson(value) {
     const raw = String(value || '').trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
@@ -275,9 +301,9 @@ router.post('/ai-metadata', requireAdmin, async (req, res) => {
     }
 });
 
-router.get('/builtin-sync/preview', requireAdmin, (req, res) => {
+router.get('/builtin-sync/preview', requireAdmin, async (req, res) => {
     try {
-        const preview = builtinToolsSync.previewBuiltinTools({
+        const preview = await previewBuiltinToolsOffMainThread({
             sourceDir: builtinToolsSourceDir,
             targetDir: repo.CUSTOM_TOOLS_DIR,
             stateFile: path.join(getDataDir(), 'builtin-tools-sync-decisions.json'),

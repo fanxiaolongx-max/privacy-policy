@@ -16,6 +16,7 @@ const CHUNK_OVERLAP_LINES = 8;
 const MAX_ANALYSIS_CONTENT_CHARS = 200 * 1024;
 const MAX_SEARCH_CANDIDATES = 2500;
 const REFRESH_INTERVAL_MS = 5 * 60 * 1000;
+const GRAPH_CACHE_TTL_MS = 30 * 60 * 1000;
 const getKnowledgeDbPath = () => path.join(getDataDir(), 'ai-knowledge.db');
 
 ensureDataDir();
@@ -73,7 +74,24 @@ const SKIP_FILE_RE = /(?:^|\/)(?:test_|tmp|fix_|patch_|update_|reconstructed_|pa
 const initPromises = new Map();
 const refreshPromises = new Map();
 const lastRefreshCheckAt = new Map();
-let graphCache = null;
+const graphCaches = new Map();
+
+function reportProgress(onProgress, progress, stage, message, messageEn) {
+    if (typeof onProgress !== 'function') return;
+    onProgress({
+        progress: Math.max(0, Math.min(100, Math.round(Number(progress) || 0))),
+        stage,
+        message,
+        messageEn: messageEn || message
+    });
+}
+
+function throwIfAborted(signal) {
+    if (!signal?.aborted) return;
+    const error = new Error('图谱加载已取消');
+    error.name = 'AbortError';
+    throw error;
+}
 
 function sha256(value) {
     return crypto.createHash('sha256').update(value).digest('hex');
@@ -268,15 +286,23 @@ async function indexFile(filePath) {
     return { indexed: true, chunks: chunks.length };
 }
 
-async function refreshIndex({ force = false } = {}) {
+async function refreshIndex({ force = false, onProgress, signal } = {}) {
     await ensureReady();
+    throwIfAborted(signal);
     const tenantId = getTenantId();
-    if (refreshPromises.has(tenantId)) return refreshPromises.get(tenantId);
+    if (refreshPromises.has(tenantId)) {
+        reportProgress(onProgress, 12, 'index-wait', '正在等待已开始的知识索引检查…', 'Waiting for the active knowledge index check…');
+        return refreshPromises.get(tenantId);
+    }
     const now = Date.now();
-    if (!force && now - (lastRefreshCheckAt.get(tenantId) || 0) < REFRESH_INTERVAL_MS) return getStatus();
+    if (!force && now - (lastRefreshCheckAt.get(tenantId) || 0) < REFRESH_INTERVAL_MS) {
+        reportProgress(onProgress, 42, 'index-cached', '知识索引已是最新', 'Knowledge index is already current');
+        return getStatus();
+    }
     lastRefreshCheckAt.set(tenantId, now);
 
     const promise = (async () => {
+        reportProgress(onProgress, 8, 'index-scan', '正在扫描可索引文件…', 'Scanning indexable files…');
         const files = listSourceFiles();
         const activePaths = new Set(files.map(toProjectPath));
         let indexedFiles = 0;
@@ -286,7 +312,13 @@ async function refreshIndex({ force = false } = {}) {
         let removedFiles = 0;
         const errors = [];
 
-        for (const filePath of files) {
+        for (let fileIndex = 0; fileIndex < files.length; fileIndex += 1) {
+            throwIfAborted(signal);
+            const filePath = files[fileIndex];
+            if (fileIndex === 0 || fileIndex % 20 === 0 || fileIndex === files.length - 1) {
+                const progress = 10 + (fileIndex / Math.max(1, files.length)) * 32;
+                reportProgress(onProgress, progress, 'index-files', `正在检查知识文件 ${fileIndex + 1}/${files.length}`, `Checking knowledge files ${fileIndex + 1}/${files.length}`);
+            }
             try {
                 const result = await indexFile(filePath);
                 if (result.indexed) {
@@ -326,9 +358,12 @@ async function refreshIndex({ force = false } = {}) {
              ON CONFLICT(key_name) DO UPDATE SET value_json = excluded.value_json, updated_at = CURRENT_TIMESTAMP`,
             [JSON.stringify(summary)]
         );
-        graphCache = null;
+        graphCaches.delete(tenantId);
         return { ...status, ...summary };
-    })().finally(() => {
+    })().catch(error => {
+        if (error.name === 'AbortError') lastRefreshCheckAt.delete(tenantId);
+        throw error;
+    }).finally(() => {
         refreshPromises.delete(tenantId);
     });
     refreshPromises.set(tenantId, promise);
@@ -535,15 +570,18 @@ function readJsonFile(filePath) {
     try { return JSON.parse(fs.readFileSync(filePath, 'utf8')); } catch (_error) { return null; }
 }
 
-function listAssetFiles(rootDir, relativeDir = '', output = []) {
+async function listAssetFiles(rootDir, relativeDir = '', output = [], signal) {
+    throwIfAborted(signal);
     if (!fs.existsSync(path.join(rootDir, relativeDir)) || output.length >= 1200) return output;
-    for (const entry of fs.readdirSync(path.join(rootDir, relativeDir), { withFileTypes: true })) {
+    const entries = await fs.promises.readdir(path.join(rootDir, relativeDir), { withFileTypes: true });
+    for (const entry of entries) {
+        throwIfAborted(signal);
         if (output.length >= 1200 || entry.isSymbolicLink() || entry.name.startsWith('.')) continue;
         const relativePath = path.posix.join(relativeDir.split(path.sep).join('/'), entry.name);
         const absolutePath = path.join(rootDir, relativePath);
-        if (entry.isDirectory()) listAssetFiles(rootDir, relativePath, output);
+        if (entry.isDirectory()) await listAssetFiles(rootDir, relativePath, output, signal);
         else if (entry.isFile()) {
-            const stat = fs.statSync(absolutePath);
+            const stat = await fs.promises.stat(absolutePath);
             output.push({ path: relativePath, bytes: stat.size, mtimeMs: Math.round(stat.mtimeMs), absolutePath });
         }
     }
@@ -621,7 +659,7 @@ function extractRelativeAssetReferences(sourcePath, content, fileSet) {
     return [...references];
 }
 
-async function buildAssetGraph(contentByDocument, documentSet) {
+async function buildAssetGraph(contentByDocument, documentSet, { onProgress, signal } = {}) {
     const nodes = [];
     const edges = [];
     const edgeSet = new Set();
@@ -650,14 +688,23 @@ async function buildAssetGraph(contentByDocument, documentSet) {
     let assetFileCount = 0;
     let builtInToolCount = 0;
     let customToolCount = 0;
-    for (const tool of registeredTools) {
+    for (let toolIndex = 0; toolIndex < registeredTools.length; toolIndex += 1) {
+        throwIfAborted(signal);
+        const tool = registeredTools[toolIndex];
+        reportProgress(
+            onProgress,
+            55 + (toolIndex / Math.max(1, registeredTools.length)) * 25,
+            'asset-tools',
+            `正在分析工具资产 ${toolIndex + 1}/${registeredTools.length}：${tool.name || tool.slug}`,
+            `Analyzing tool assets ${toolIndex + 1}/${registeredTools.length}: ${tool.nameEn || tool.name || tool.slug}`
+        );
         const builtIn = builtInSlugs.has(tool.slug);
         if (builtIn) builtInToolCount += 1; else customToolCount += 1;
         const toolId = `tool:${builtIn ? 'builtin' : 'custom'}:${tool.slug}`;
         const categoryId = builtIn ? 'asset-category:builtin' : 'asset-category:custom';
         const toolDir = path.join(customToolsRepo.CUSTOM_TOOLS_DIR, tool.slug);
         const manifest = readJsonFile(path.join(toolDir, customToolsRepo.TOOL_MANIFEST_FILE));
-        const files = listAssetFiles(toolDir).filter(item => item.path !== customToolsRepo.TOOL_MANIFEST_FILE);
+        const files = (await listAssetFiles(toolDir, '', [], signal)).filter(item => item.path !== customToolsRepo.TOOL_MANIFEST_FILE);
         const assetPlan = collapseToolAssetFiles(files);
         nodes.push({
             id: toolId, type: 'tool', label: tool.name || tool.slug, labelEn: tool.nameEn || tool.name || tool.slug,
@@ -670,7 +717,10 @@ async function buildAssetGraph(contentByDocument, documentSet) {
         const fileSet = new Set(files.map(file => file.path));
         const fileNodeIds = new Map();
         assetFileCount += files.length;
-        for (const file of assetPlan.visibleFiles) {
+        for (let fileIndex = 0; fileIndex < assetPlan.visibleFiles.length; fileIndex += 1) {
+            if (fileIndex % 12 === 0) await new Promise(resolve => setImmediate(resolve));
+            throwIfAborted(signal);
+            const file = assetPlan.visibleFiles[fileIndex];
             const fileId = `tool-file:${builtIn ? 'builtin' : 'custom'}:${tool.slug}:${file.path}`;
             fileNodeIds.set(file.path, fileId);
             nodes.push({
@@ -705,11 +755,13 @@ async function buildAssetGraph(contentByDocument, documentSet) {
             });
             addEdge(toolId, fileId, 'contains');
         }
-        for (const file of assetPlan.visibleFiles) {
+        for (let fileIndex = 0; fileIndex < assetPlan.visibleFiles.length; fileIndex += 1) {
+            throwIfAborted(signal);
+            const file = assetPlan.visibleFiles[fileIndex];
             const fileId = fileNodeIds.get(file.path);
             if (file.bytes <= MAX_FILE_BYTES && /\.(?:html?|js|css|json|md|txt)$/i.test(file.path)) {
                 let content = '';
-                try { content = fs.readFileSync(file.absolutePath, 'utf8'); } catch (_error) {}
+                try { content = await fs.promises.readFile(file.absolutePath, 'utf8'); } catch (_error) {}
                 for (const target of extractRelativeAssetReferences(file.path, content, fileSet)) {
                     const targetId = fileNodeIds.get(target);
                     if (targetId) addEdge(fileId, targetId, 'depends');
@@ -731,6 +783,8 @@ async function buildAssetGraph(contentByDocument, documentSet) {
     let databaseCount = 0;
     let tableRelationCount = 0;
     for (const databasePath of databaseFiles) {
+        throwIfAborted(signal);
+        reportProgress(onProgress, 82, 'asset-databases', `正在读取数据库结构：${path.basename(databasePath)}`, `Reading database schema: ${path.basename(databasePath)}`);
         const databaseName = path.basename(databasePath);
         const databaseProjectPath = toProjectPath(databasePath);
         const tables = await queryDatabaseSchema(databasePath);
@@ -789,8 +843,23 @@ async function buildAssetGraph(contentByDocument, documentSet) {
     };
 }
 
-async function getGraph() {
-    await refreshIndex();
+async function getGraph({ onProgress, signal, preferCache = true } = {}) {
+    const tenantId = getTenantId();
+    const cached = graphCaches.get(tenantId);
+    if (preferCache && cached && Date.now() - cached.createdAt < GRAPH_CACHE_TTL_MS) {
+        reportProgress(onProgress, 100, 'cache-hit', '已从缓存读取图谱', 'Graph loaded from cache');
+        return cached.value;
+    }
+    reportProgress(onProgress, 3, 'start', '正在准备项目知识图谱…', 'Preparing the project knowledge graph…');
+    try {
+        await refreshIndex({ onProgress, signal });
+    } catch (error) {
+        if (error.name !== 'AbortError' || signal?.aborted) throw error;
+        reportProgress(onProgress, 8, 'index-retry', '正在重新启动知识索引检查…', 'Restarting the knowledge index check…');
+        await refreshIndex({ onProgress, signal });
+    }
+    throwIfAborted(signal);
+    reportProgress(onProgress, 47, 'documents', '正在读取知识文档和关系…', 'Reading indexed documents and relationships…');
     const status = await getStatus();
     const documents = await all(
         `SELECT path, size_bytes, chunk_count, indexed_at
@@ -809,9 +878,15 @@ async function getGraph() {
     for (const row of contentRows) {
         contentByDocument.set(row.document_path, `${contentByDocument.get(row.document_path) || ''}\n${row.content}`);
     }
-    const assets = await buildAssetGraph(contentByDocument, documentSet);
+    const assets = await buildAssetGraph(contentByDocument, documentSet, { onProgress, signal });
+    throwIfAborted(signal);
     const cacheKey = `${getTenantId()}:${status.documentCount}:${status.chunkCount}:${status.lastIndexedAt || ''}:${assets.signature}`;
-    if (graphCache && graphCache.key === cacheKey) return graphCache.value;
+    if (cached && cached.key === cacheKey) {
+        graphCaches.set(tenantId, { ...cached, createdAt: Date.now() });
+        reportProgress(onProgress, 100, 'complete', '图谱已就绪', 'Graph is ready');
+        return cached.value;
+    }
+    reportProgress(onProgress, 88, 'relationships', '正在生成节点与依赖关系…', 'Building graph nodes and dependency links…');
 
     const groupCounts = new Map();
     graphDocuments.forEach(document => {
@@ -869,7 +944,8 @@ async function getGraph() {
             ...assets.stats
         }
     };
-    graphCache = { key: cacheKey, value };
+    graphCaches.set(tenantId, { key: cacheKey, value, createdAt: Date.now() });
+    reportProgress(onProgress, 100, 'complete', '图谱已就绪', 'Graph is ready');
     return value;
 }
 
