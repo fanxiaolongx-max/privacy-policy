@@ -99,7 +99,7 @@
         toastTimer = setTimeout(() => { toast.className = 'toast'; }, 2800);
     }
 
-    function setLoading(visible, text = '正在处理…', progress = null) {
+    function setLoading(visible, text = '正在处理…', progress = null, detail = '') {
         $('loading').hidden = !visible;
         $('loadingText').textContent = text;
         const progressHost = $('loadingProgress');
@@ -109,6 +109,44 @@
         if (progressHost) progressHost.hidden = !hasProgress;
         if (progressBar) progressBar.style.width = `${hasProgress ? Math.max(0, Math.min(100, progress)) : 0}%`;
         if (progressLabel) progressLabel.textContent = hasProgress ? `${Math.round(progress)}%` : '';
+        const loadingLog = $('loadingLog');
+        if (loadingLog) {
+            loadingLog.hidden = !visible || !detail;
+            loadingLog.textContent = detail;
+        }
+    }
+
+    async function withServiceProgress(request, expectedType = '') {
+        let stopped = false;
+        let polling = false;
+        const poll = async () => {
+            if (stopped || polling) return;
+            polling = true;
+            try {
+                const status = await API.get(`/api/chat-history/status?_=${Date.now()}`);
+                let current = expectedType && status.operation?.type === expectedType && status.operation?.active !== false ? status.operation : null;
+                if (!current && !status.ready) current = status.initialization;
+                if (!current && status.maintenance?.active) current = status.maintenance;
+                if (current && current.message) {
+                    const sizeMb = Number(status.database?.size || 0) / 1024 / 1024;
+                    const elapsed = current.startedAt ? Math.max(0, Math.round((Date.now() - new Date(current.startedAt).getTime()) / 1000)) : 0;
+                    const detail = [current.message, elapsed > 0 ? `已用时 ${elapsed} 秒` : '', sizeMb > 0 ? `数据库 ${sizeMb.toFixed(1)} MB` : ''].filter(Boolean).join(' · ');
+                    setLoading(true, current.message, Number.isFinite(current.progress) ? current.progress : null, detail);
+                }
+            } catch (_error) {
+                // The primary request remains authoritative; status polling is best-effort only.
+            } finally {
+                polling = false;
+            }
+        };
+        await poll();
+        const timer = setInterval(poll, 700);
+        try {
+            return await request;
+        } finally {
+            stopped = true;
+            clearInterval(timer);
+        }
     }
 
     function yieldToBrowser() {
@@ -1138,7 +1176,7 @@
             resetAnalyticsPaging();
             setLoading(true, '正在读取会话概览…', 5);
             try {
-                const overview = await API.get('/api/chat-history/stats/overview');
+                const overview = await withServiceProgress(API.get('/api/chat-history/stats/overview'), 'overview');
                 renderOverview(overview);
                 setLoading(true, '正在统计参与人员…', 30);
                 await yieldToBrowser();
@@ -2072,7 +2110,10 @@
         setupAnalyticsLazyLoading();
         setLoading(true, '正在连接聊天记录服务…');
         try {
-            const [user, settings] = await Promise.all([API.get('/api/auth/me'), API.get('/api/chat-history/settings')]);
+            const [user, settings] = await Promise.all([
+                API.get('/api/auth/me'),
+                withServiceProgress(API.get('/api/chat-history/settings'))
+            ]);
             state.user = user;
             state.settings = settings;
             document.querySelectorAll('.admin-only').forEach(element => { element.hidden = user.role !== 'admin'; });

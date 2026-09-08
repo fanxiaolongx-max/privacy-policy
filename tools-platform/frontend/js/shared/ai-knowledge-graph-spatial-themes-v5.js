@@ -2708,6 +2708,46 @@
         return result;
     }
 
+    async function loadChatGraphWithProgress(signal, loadSequence) {
+        let stopped = false;
+        let polling = false;
+        const poll = async () => {
+            if (stopped || polling || signal.aborted) return;
+            polling = true;
+            try {
+                const response = await fetch(`/api/chat-history/status?_=${Date.now()}`, {
+                    headers: authHeaders(),
+                    cache: 'no-store',
+                    signal
+                });
+                if (!response.ok) return;
+                const status = await response.json();
+                if (loadSequence !== state.loadSequence) return;
+                let current = status.operation?.type === 'relationship-graph' && status.operation?.active !== false ? status.operation : null;
+                if (!current && !status.ready) current = status.initialization;
+                if (!current && status.maintenance?.active) current = status.maintenance;
+                if (!current?.message) return;
+                const sizeMb = Number(status.database?.size || 0) / 1024 / 1024;
+                const elapsed = current.startedAt ? Math.max(0, Math.round((Date.now() - new Date(current.startedAt).getTime()) / 1000)) : 0;
+                const details = [current.message, elapsed > 0 ? `已用时 ${elapsed} 秒` : '', sizeMb > 0 ? `数据库 ${sizeMb.toFixed(1)} MB` : ''].filter(Boolean);
+                setLoading(current.message, true, Number.isFinite(current.progress) ? current.progress : null, details.join(' · '));
+            } catch (error) {
+                if (error.name !== 'AbortError') console.debug('[chat-graph] status polling failed:', error.message);
+            } finally {
+                polling = false;
+            }
+        };
+        await poll();
+        const timer = setInterval(poll, 700);
+        try {
+            const response = await fetch('/api/chat-history/relationship-graph', { headers: authHeaders(), signal });
+            return await readJsonResponse(response, kgT('graphLoadFailed'));
+        } finally {
+            stopped = true;
+            clearInterval(timer);
+        }
+    }
+
     async function loadGraph() {
         const loadSequence = ++state.loadSequence;
         state.loadController?.abort();
@@ -2734,6 +2774,8 @@
                     if (message && progressLog.at(-1) !== message) progressLog.push(message);
                     setLoading(message || kgT('loadingKnowledge'), true, Math.min(94, Number(event.progress)), progressLog.slice(-3).join(' · '));
                 });
+            } else if (isChatMode()) {
+                data = await loadChatGraphWithProgress(controller.signal, loadSequence);
             } else {
                 const response = await fetch(endpoint, { headers: authHeaders(), signal: controller.signal });
                 data = await readJsonResponse(response, isMetricMode() ? kgT('metricLoadFailed') : kgT('graphLoadFailed'));

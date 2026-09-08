@@ -38,6 +38,13 @@ function asyncRoute(handler) {
     return (req, res, next) => Promise.resolve(handler(req, res, next)).catch(next);
 }
 
+// This endpoint deliberately does not call ensureReady(). It must stay responsive
+// while a long SQLite initialization or analytics query is still running.
+router.get('/status', (_req, res) => {
+    res.set('Cache-Control', 'no-store');
+    res.json(repo.getServiceStatus());
+});
+
 router.get('/settings', asyncRoute(async (req, res) => {
     const settings = await repo.getUserSettings(currentUser(req));
     res.json({ mySenderId: settings.my_sender_id || '', updatedAt: settings.updated_at || null });

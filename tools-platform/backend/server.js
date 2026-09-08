@@ -229,10 +229,11 @@ app.use((req, res, next) => {
         const querySummary = Object.keys(safeQuery).length ? ` query=${JSON.stringify(safeQuery)}` : '';
         const externalTag = safeUrl.startsWith('/api/external/metrics') ? ' [external-metrics]' : '';
         const isRuntimeLogViewerRequest = safeUrl.startsWith('/api/platform-metrics/service-status/logs');
-        if (!isRuntimeLogViewerRequest) {
+        const isChatProgressPoll = safeUrl.startsWith('/api/chat-history/status');
+        if (!isRuntimeLogViewerRequest && !isChatProgressPoll) {
             console.log(`${color}[${ts}] ${req.method} ${safeUrl} #${req.requestId}${externalTag} → ${status} (${dur}ms) ${bodySize}${querySummary} ip=${client} ua="${userAgent.substring(0, 120)}"${reset}`);
         }
-        serviceStatusRepo.trackRequest({
+        if (!isChatProgressPoll) serviceStatusRepo.trackRequest({
             method: req.method,
             pathname: safeUrl,
             statusCode: status,

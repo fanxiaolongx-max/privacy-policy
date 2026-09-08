@@ -46,10 +46,11 @@ function exec(db, sql) {
     });
 }
 
-async function integrityCheck(dbPath) {
-    const rows = await withDatabase(dbPath, db => all(db, 'PRAGMA integrity_check'));
+async function integrityCheck(dbPath, options = {}) {
+    const pragma = options.quick === true ? 'PRAGMA quick_check(1)' : 'PRAGMA integrity_check';
+    const rows = await withDatabase(dbPath, db => all(db, pragma));
     const messages = rows
-        .map(row => row.integrity_check || row[Object.keys(row)[0]])
+        .map(row => row.integrity_check || row.quick_check || row[Object.keys(row)[0]])
         .filter(Boolean);
     return {
         ok: messages.length === 1 && messages[0] === 'ok',
@@ -61,7 +62,7 @@ async function vacuumInto(sourcePath, targetPath) {
     await withDatabase(sourcePath, db => exec(db, `VACUUM INTO ${quoteSqlString(targetPath)}`));
 }
 
-async function repairSqliteFile({ label, dbPath }) {
+async function repairSqliteFile({ label, dbPath, quickCheck = false }) {
     if (!fs.existsSync(dbPath)) {
         return { label, dbPath, status: 'missing' };
     }
@@ -71,7 +72,7 @@ async function repairSqliteFile({ label, dbPath }) {
         return { label, dbPath, status: 'skipped-empty' };
     }
 
-    const before = await integrityCheck(dbPath);
+    const before = await integrityCheck(dbPath, { quick: quickCheck });
     if (before.ok) {
         return { label, dbPath, status: 'ok' };
     }
@@ -85,6 +86,9 @@ async function repairSqliteFile({ label, dbPath }) {
     const repairedPath = path.join(backupDir, `${base}-auto-repaired-${stamp}.db`);
 
     fs.copyFileSync(dbPath, backupPath);
+    for (const suffix of ['-wal', '-shm']) {
+        if (fs.existsSync(`${dbPath}${suffix}`)) fs.copyFileSync(`${dbPath}${suffix}`, `${backupPath}${suffix}`);
+    }
     if (fs.existsSync(repairedPath)) fs.unlinkSync(repairedPath);
 
     await vacuumInto(dbPath, repairedPath);
@@ -101,6 +105,8 @@ async function repairSqliteFile({ label, dbPath }) {
         };
     }
 
+    fs.rmSync(`${dbPath}-wal`, { force: true });
+    fs.rmSync(`${dbPath}-shm`, { force: true });
     fs.copyFileSync(repairedPath, dbPath);
     const after = await integrityCheck(dbPath);
     if (!after.ok) {
@@ -132,12 +138,14 @@ async function repairStartupDatabases() {
     const databases = [
         { label: 'tools', dbPath: path.join(DATA_DIR, 'tools.db') },
         { label: 'requirements', dbPath: path.join(DATA_DIR, 'requirements.db') },
+        { label: 'chat-history', dbPath: path.join(DATA_DIR, 'chat-history.db'), quickCheck: true },
         { label: 'report', dbPath: path.join(REPORT_DATA_DIR, 'report.db') }
     ];
 
     const results = [];
     for (const item of databases) {
         try {
+            console.log(`[sqlite-repair] Checking ${item.label} database integrity...`);
             const result = await repairSqliteFile(item);
             results.push(result);
             if (result.status === 'repaired') {

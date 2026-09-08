@@ -199,8 +199,9 @@
         const selected = candidates[0] && candidates[0].score >= threshold ? candidates[0].record : null;
         return { supplier: group.name, candidates, selectedId: selected ? selected.id : '' };
       });
-      const row = { base, quotes, recommendation: { supplier: '', reason: '' } };
-      row.recommendation = calculateRecommendation(row, taxRate);
+      const row = { base, quotes, recommendation: { supplier: '', reason: '' }, manuallyEdited: false };
+      const rowEval = core.evaluateRowComparison(row.base, row.quotes.map(q => ({ record: selectedRecord(q) })), taxRate);
+      row.recommendation = rowEval.recommendation;
       return row;
     });
     renderResults();
@@ -276,7 +277,7 @@
     const metaTitle = [unitSpec ? `规格: ${unitSpec}` : '', notes ? `备注: ${notes}` : ''].filter(Boolean).join(' | ');
 
     return `
-      <td class="col-supplier-compact ${isLowestStyle ? 'cell-lowest' : ''}" style="background:${isLowestStyle ? '#f0fdf4' : bg}">
+      <td class="col-supplier-compact ${isLowestStyle ? 'cell-lowest' : ''}" style="background:${isLowestStyle ? 'var(--lowest-cell-bg)' : `var(--sup-${supplierIndex % 6}-bg)`}">
         <div class="supplier-card">
           <div class="supplier-card-top">
             ${matchDot}
@@ -339,7 +340,7 @@
     const isLowestStyle = Boolean(isLowest && rowEval && rowEval.canCompareByNormalized && details && details.normalizedPrice !== null);
 
     return `
-      <td class="col-quote" style="background:${bg}">
+      <td class="col-quote" style="background:var(--sup-${supplierIndex % 6}-bg)">
         <div class="quote-compact-cell">
           <div class="quote-select-row">
             ${matchDot}
@@ -352,9 +353,9 @@
           </div>
         </div>
       </td>
-      <td class="col-unit" style="background:${bg}" title="${escapeHtml(unitSpec)}">${escapeHtml(unitSpec || '—')}</td>
-      <td class="col-normalized ${isLowestStyle ? 'cell-lowest' : ''}" style="background:${isLowestStyle ? '#f0fdf4' : bg}" title="${escapeHtml(normalized)}">${normalizedHtml}</td>
-      <td class="col-remark" style="background:${bg}" title="${escapeHtml(notes || '—')}">${escapeHtml(notes || '—')}</td>`;
+      <td class="col-unit" style="background:var(--sup-${supplierIndex % 6}-bg)" title="${escapeHtml(unitSpec)}">${escapeHtml(unitSpec || '—')}</td>
+      <td class="col-normalized ${isLowestStyle ? 'cell-lowest' : ''}" style="background:${isLowestStyle ? 'var(--lowest-cell-bg)' : `var(--sup-${supplierIndex % 6}-bg)`}" title="${escapeHtml(normalized)}">${normalizedHtml}</td>
+      <td class="col-remark" style="background:var(--sup-${supplierIndex % 6}-bg)" title="${escapeHtml(notes || '—')}">${escapeHtml(notes || '—')}</td>`;
   }
 
   function renderResults() {
@@ -406,7 +407,7 @@
       }).join('');
 
       const supplierOptions = ['<option value="">待人工确认</option>'].concat(state.suppliers.map(group => `<option value="${escapeHtml(group.name)}"${group.name === row.recommendation.supplier ? ' selected' : ''}>${escapeHtml(group.name)}</option>`));
-      const isAnomaly = Boolean(rowEval.extremeDeviation || (row.recommendation && row.recommendation.isAnomaly));
+      const isAnomaly = Boolean(!row.manuallyEdited && (rowEval.extremeDeviation || (row.recommendation && row.recommendation.isAnomaly)));
       const comparison = core.compareSupplier(row.base.baseSupplier, row.recommendation.supplier, isAnomaly);
 
       return `<tr>
@@ -416,9 +417,9 @@
         <td class="col-qty">${escapeHtml([row.base.quantity, row.base.unit].filter(value => value !== null && value !== '').join(' ') || '—')}</td>
         <td class="col-basesup" title="${escapeHtml(row.base.baseSupplier || '')}">${escapeHtml(row.base.baseSupplier || '—')}</td>
         ${supplierCells}
-        <td class="col-recsup ${isAnomaly ? 'anomaly' : ''}" style="background:${isAnomaly ? '#fff7ed' : '#f0fdf4'}"><select data-row="${rowIndex}" data-action="recommend" title="${isAnomaly ? '单价偏差过大，需人工复核' : ''}">${supplierOptions.join('')}</select></td>
-        <td class="col-status" style="background:${isAnomaly ? '#fff7ed' : '#f0fdf4'}"><span class="compare-status ${comparison.code}">${escapeHtml(comparison.label)}</span></td>
-        <td class="col-reason ${isAnomaly ? 'anomaly' : ''}" style="background:#f8fafc"><input class="reason ${isAnomaly ? 'anomaly' : ''}" data-row="${rowIndex}" data-action="reason" value="${escapeHtml(row.recommendation.reason)}" title="${escapeHtml(row.recommendation.reason)}"></td>
+        <td class="col-recsup ${isAnomaly ? 'anomaly' : ''}" style="background:${isAnomaly ? 'var(--anomaly-cell-bg)' : 'var(--recsup-cell-bg)'}"><select data-row="${rowIndex}" data-action="recommend" title="${isAnomaly ? '单价偏差过大，需人工复核' : ''}">${supplierOptions.join('')}</select></td>
+        <td class="col-status" style="background:${isAnomaly ? 'var(--anomaly-cell-bg)' : 'var(--recsup-cell-bg)'}"><span class="compare-status ${comparison.code}">${escapeHtml(comparison.label)}</span></td>
+        <td class="col-reason ${isAnomaly ? 'anomaly' : ''}" style="background:var(--reason-cell-bg)"><input class="reason ${isAnomaly ? 'anomaly' : ''}" data-row="${rowIndex}" data-action="reason" value="${escapeHtml(row.recommendation.reason)}" title="${escapeHtml(row.recommendation.reason)}"></td>
       </tr>`;
     }).join('');
 
@@ -430,9 +431,9 @@
           <col style="width:72px">
           <col style="width:92px">
           ${state.suppliers.map(() => '<col style="min-width:240px">').join('')}
-          <col style="width:105px">
-          <col style="width:88px">
-          <col style="width:180px">
+          <col style="width:115px">
+          <col style="width:95px">
+          <col style="width:200px">
         </colgroup>`
       : `<colgroup>
           <col style="width:38px">
@@ -440,10 +441,10 @@
           <col style="width:125px">
           <col style="width:72px">
           <col style="width:92px">
-          ${state.suppliers.map(() => '<col style="width:125px"><col style="width:68px"><col style="width:88px"><col style="width:75px">').join('')}
-          <col style="width:105px">
-          <col style="width:88px">
-          <col style="width:180px">
+          ${state.suppliers.map(() => '<col style="width:140px"><col style="width:80px"><col style="width:125px"><col style="width:95px">').join('')}
+          <col style="width:115px">
+          <col style="width:95px">
+          <col style="width:200px">
         </colgroup>`;
 
     const tableClass = isCompact ? 'compare mode-compact' : 'compare mode-expanded';
@@ -458,8 +459,8 @@
       <div class="metric"><span class="muted">供应商数量</span><b>${state.suppliers.length}</b></div>
       <div class="metric"><span class="muted">已匹配报价</span><b>${matched} / ${total}</b></div>
       <div class="metric"><span class="muted">已生成推荐</span><b>${recommended}</b></div>
-      <div class="metric"><span class="muted">与基础表一致</span><b style="color:#059669">${sameCount}</b></div>
-      <div class="metric"><span class="muted">与基础表不一致</span><b style="color:#dc2626">${differentCount}</b></div>`;
+      <div class="metric"><span class="muted">与基础表一致</span><b style="color:var(--success)">${sameCount}</b></div>
+      <div class="metric"><span class="muted">与基础表不一致</span><b style="color:var(--danger)">${differentCount}</b></div>`;
 
     if (elements.viewModeBtn) {
       elements.viewModeBtn.textContent = isCompact ? '展开4列明细' : '合并紧凑视图';
@@ -468,7 +469,11 @@
 
   function recalculateAll() {
     const taxRate = Number(elements.tax.value || 14);
-    state.rows.forEach(row => { row.recommendation = calculateRecommendation(row, taxRate); });
+    state.rows.forEach(row => {
+      row.manuallyEdited = false;
+      const rowEval = core.evaluateRowComparison(row.base, row.quotes.map(q => ({ record: selectedRecord(q) })), taxRate);
+      row.recommendation = rowEval.recommendation;
+    });
     renderResults();
   }
 
@@ -508,7 +513,7 @@
         const notes = record ? [record.remark, record.stock, core.text(record.priceRaw) ? `原报价：${core.text(record.priceRaw)}` : '', details.taxApplied ? '已按税率加税' : '', details.unavailable ? '无货' : ''].filter(Boolean).join('；') : '';
         output.push({ v: details && details.finalPrice, s: style }, { v: unitSpec, s: style }, { v: details && details.normalizedPrice, s: style }, { v: notes, s: style });
       });
-      const isAnomaly = Boolean(row.recommendation && row.recommendation.isAnomaly);
+      const isAnomaly = Boolean(!row.manuallyEdited && row.recommendation && row.recommendation.isAnomaly);
       const comparison = core.compareSupplier(row.base.baseSupplier, row.recommendation.supplier, isAnomaly);
       output.push({ v: row.recommendation.supplier, s: 16 }, { v: comparison.label, s: 16 }, { v: row.recommendation.reason, s: 16 });
       rows.push(output);
@@ -681,15 +686,87 @@
     if (!row) return;
     if (event.target.dataset.action === 'match') {
       row.quotes[Number(event.target.dataset.supplier)].selectedId = event.target.value;
-      row.recommendation = calculateRecommendation(row, Number(elements.tax.value || 14));
+      row.manuallyEdited = false;
+      const taxRate = Number(elements.tax.value || 14);
+      const rowEval = core.evaluateRowComparison(row.base, row.quotes.map(q => ({ record: selectedRecord(q) })), taxRate);
+      row.recommendation = rowEval.recommendation;
       renderResults();
     } else if (event.target.dataset.action === 'recommend') {
-      row.recommendation.supplier = event.target.value;
+      row.manuallyEdited = true;
+      const chosenSupplier = event.target.value;
+      row.recommendation.supplier = chosenSupplier;
+      if (!chosenSupplier) {
+        row.recommendation.reason = '待人工确认';
+      } else {
+        const isAutoReason = !row.recommendation.reason ||
+          row.recommendation.reason.includes('折算单价') ||
+          row.recommendation.reason.includes('唯一有效') ||
+          row.recommendation.reason.includes('无有效报价') ||
+          row.recommendation.reason.includes('人工指定') ||
+          row.recommendation.reason.includes('待人工确认') ||
+          row.recommendation.reason.includes('疑规格或填写有误');
+        if (isAutoReason) {
+          row.recommendation.reason = `人工指定推荐为 ${chosenSupplier}`;
+        }
+      }
       renderResults();
     }
   });
   elements.preview.addEventListener('input', event => {
     const row = state.rows[Number(event.target.dataset.row)];
-    if (row && event.target.dataset.action === 'reason') row.recommendation.reason = event.target.value;
+    if (row && event.target.dataset.action === 'reason') {
+      row.manuallyEdited = true;
+      row.recommendation.reason = event.target.value;
+    }
   });
+
+  // 主题切换控制（浅色 / 深色 / 跟随系统）
+  const THEME_STORAGE_KEY = 'supplier_quote_theme';
+  function applyTheme(theme) {
+    const validTheme = (theme === 'light' || theme === 'dark' || theme === 'auto') ? theme : 'auto';
+    document.documentElement.setAttribute('data-theme', validTheme);
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, validTheme);
+    } catch (_) {}
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-theme-val') === validTheme);
+    });
+  }
+
+  function initThemeSwitcher() {
+    let savedTheme = 'auto';
+    try {
+      savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || 'auto';
+    } catch (_) {}
+    applyTheme(savedTheme);
+
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        applyTheme(btn.getAttribute('data-theme-val'));
+      });
+    });
+
+    try {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      if (mediaQuery && mediaQuery.addEventListener) {
+        mediaQuery.addEventListener('change', () => {
+          let currentMode = 'auto';
+          try {
+            currentMode = localStorage.getItem(THEME_STORAGE_KEY) || 'auto';
+          } catch (_) {}
+          if (currentMode === 'auto') {
+            document.documentElement.setAttribute('data-theme', 'auto');
+          }
+        });
+      }
+    } catch (_) {}
+
+    window.addEventListener('message', event => {
+      if (event.data && (event.data.type === 'THEME_CHANGE' || event.data.type === 'set-theme') && event.data.theme) {
+        applyTheme(event.data.theme);
+      }
+    });
+  }
+
+  initThemeSwitcher();
 })();

@@ -28,6 +28,8 @@ test('graph UI cancels stale loads, renders progress, and avoids all-pairs colli
     assert.match(graphSource, /\/api\/ai\/knowledge\/graph-stream/);
     assert.match(graphSource, /state\.loadController\?\.abort\(\)/);
     assert.match(graphSource, /ai-kg-loading-bar/);
+    assert.match(graphSource, /\/api\/chat-history\/status/);
+    assert.match(graphSource, /loadChatGraphWithProgress/);
     assert.match(graphSource, /function forEachNearbyNodePair/);
     assert.doesNotMatch(graphSource, /for \(let j = i \+ 1; j < nodes\.length; j \+= 1\)/);
     assert.match(graphSource, /state\.alpha < 0\.045/);
@@ -62,7 +64,7 @@ test('shared navbar defers the expensive built-in tool scan once per renderer se
         .map(filePath => fs.readFileSync(filePath, 'utf8').match(/navbar\.js\?v=([^"']+)/)?.[1])
         .filter(Boolean);
     assert.ok(navbarReferences.length > 1);
-    assert.deepEqual([...new Set(navbarReferences)], ['20260907-01']);
+    assert.deepEqual([...new Set(navbarReferences)], ['20260908-01']);
 });
 
 test('built-in tool preview worker returns a serializable preview off the main thread', async t => {

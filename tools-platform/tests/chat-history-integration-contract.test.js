@@ -13,12 +13,15 @@ function routeLayer(routePath, method) {
 }
 
 test('shared chat mutations keep imports and deletion admin-only', () => {
+    const statusLayer = routeLayer('/status', 'get');
     const importLayer = routeLayer('/import', 'post');
     const deleteLayer = routeLayer('/sources/:sourceId', 'delete');
     const refreshStatsLayer = routeLayer('/stats/refresh', 'post');
     const settingsLayer = routeLayer('/settings', 'put');
     const favoriteLayer = routeLayer('/favorites/:stableKey', 'put');
     assert.ok(importLayer);
+    assert.ok(statusLayer);
+    assert.equal(statusLayer.route.stack.some(layer => layer.handle.name === 'requireAdmin'), false);
     assert.ok(deleteLayer);
     assert.ok(refreshStatsLayer);
     assert.ok(importLayer.route.stack.some(layer => layer.handle.name === 'requireAdmin'));
@@ -56,6 +59,8 @@ test('chat history center is a valid bundled platform-only HTML tool', () => {
     assert.match(js, /offset: ANALYTICS_PAGE_SIZE|limit: ANALYTICS_PAGE_SIZE/);
     assert.match(js, /\/api\/chat-history\/stats\/refresh/);
     assert.match(js, /正在读取会话概览/);
+    assert.match(js, /\/api\/chat-history\/status/);
+    assert.match(js, /withServiceProgress/);
     assert.match(js, /peopleDebounce = setTimeout\(loadPeopleOnly/);
     assert.doesNotMatch(js, /peopleDebounce = setTimeout\(loadStats/);
     const css = fs.readFileSync(path.join(sourceDir, 'chat-history-center/chat-viewer.css'), 'utf8');

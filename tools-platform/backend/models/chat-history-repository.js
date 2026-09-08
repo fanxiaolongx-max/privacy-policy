@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
+const sqlite3 = require('sqlite3').verbose();
 const tenantPool = require('./tenant-sqlite-pool');
 
 const DB_FILENAME = 'chat-history.db';
@@ -26,6 +27,53 @@ const DEFAULT_PARSER_EXCLUSION_RULES = [
 const readyByPath = new Map();
 const ftsByPath = new Map();
 const importQueues = new Map();
+const initializationByPath = new Map();
+const maintenanceByPath = new Map();
+const operationByPath = new Map();
+const ftsMaintenanceTimers = new Map();
+
+function statusRecord(phase, progress, message, extra = {}) {
+    return { phase, progress, message, updatedAt: new Date().toISOString(), ...extra };
+}
+
+function setInitialization(filePath, phase, progress, message, extra) {
+    const previous = initializationByPath.get(filePath);
+    const startedAt = previous && !['ready', 'error'].includes(previous.phase) ? previous.startedAt : new Date().toISOString();
+    initializationByPath.set(filePath, statusRecord(phase, progress, message, { startedAt, ...extra }));
+}
+
+function setMaintenance(filePath, phase, progress, message, extra) {
+    const previous = maintenanceByPath.get(filePath);
+    const willBeActive = extra?.active === true;
+    const startedAt = willBeActive && previous?.active === true ? previous.startedAt : new Date().toISOString();
+    maintenanceByPath.set(filePath, statusRecord(phase, progress, message, { startedAt, ...extra }));
+}
+
+function setOperation(filePath, type, phase, progress, message, extra) {
+    const previous = operationByPath.get(filePath);
+    const startedAt = previous?.type === type && previous?.active !== false ? previous.startedAt : new Date().toISOString();
+    operationByPath.set(filePath, statusRecord(phase, progress, message, { type, startedAt, ...extra }));
+}
+
+function finishOperation(filePath, type, message = '处理完成') {
+    const current = operationByPath.get(filePath);
+    if (!current || current.type !== type) return;
+    const durationMs = Math.max(0, Date.now() - new Date(current.startedAt || Date.now()).getTime());
+    operationByPath.set(filePath, statusRecord('complete', 100, message, { type, active: false, durationMs }));
+    console.log(`[chat-history] ${type} completed in ${durationMs}ms`);
+}
+
+function failOperation(filePath, type, error) {
+    const current = operationByPath.get(filePath);
+    const durationMs = Math.max(0, Date.now() - new Date(current?.startedAt || Date.now()).getTime());
+    operationByPath.set(filePath, statusRecord('error', null, error.message || String(error), {
+        type,
+        active: false,
+        durationMs,
+        error: error.message || String(error)
+    }));
+    console.error(`[chat-history] ${type} failed after ${durationMs}ms: ${error.message || error}`);
+}
 
 function dbPath() {
     return tenantPool.databasePath(DB_FILENAME);
@@ -50,6 +98,124 @@ function get(sql, params = []) {
 function all(sql, params = []) {
     const connection = db();
     return new Promise((resolve, reject) => connection.all(sql, params, (error, rows) => error ? reject(error) : resolve(rows)));
+}
+
+function runOn(connection, sql, params = []) {
+    return new Promise((resolve, reject) => connection.run(sql, params, function onRun(error) {
+        error ? reject(error) : resolve({ changes: this.changes, lastID: this.lastID });
+    }));
+}
+
+function getOn(connection, sql, params = []) {
+    return new Promise((resolve, reject) => connection.get(sql, params, (error, row) => error ? reject(error) : resolve(row)));
+}
+
+function closeConnection(connection) {
+    return new Promise(resolve => connection.close(() => resolve()));
+}
+
+function getServiceStatus() {
+    const filePath = dbPath();
+    const initialization = initializationByPath.get(filePath) || statusRecord('idle', 0, '等待首次读取');
+    const maintenance = maintenanceByPath.get(filePath) || statusRecord('idle', 0, '全文索引尚未检查');
+    const operation = operationByPath.get(filePath) || null;
+    let database = { exists: false, size: 0, walSize: 0 };
+    try {
+        database = {
+            exists: fs.existsSync(filePath),
+            size: fs.existsSync(filePath) ? fs.statSync(filePath).size : 0,
+            walSize: fs.existsSync(`${filePath}-wal`) ? fs.statSync(`${filePath}-wal`).size : 0
+        };
+    } catch (_error) {}
+    return {
+        ready: initialization.phase === 'ready',
+        ftsAvailable: ftsByPath.get(filePath) === true,
+        initialization,
+        maintenance,
+        operation,
+        database
+    };
+}
+
+async function maintainFtsIndex(filePath) {
+    ftsMaintenanceTimers.delete(filePath);
+    if (!fs.existsSync(filePath)) return;
+    const connection = new sqlite3.Database(filePath);
+    connection.configure('busyTimeout', 5000);
+    const startedAt = Date.now();
+    console.log(`[chat-history] Background database/index diagnosis started for ${path.basename(filePath)}`);
+    try {
+        setMaintenance(filePath, 'query-index', 3, '正在后台优化聊天关系查询索引', { active: true });
+        await runOn(connection, 'CREATE INDEX IF NOT EXISTS idx_chat_messages_conversation_sender ON chat_messages(conversation_id, sender_id, sender_name)');
+        setMaintenance(filePath, 'checking', 5, '正在核对全文索引数量', { active: true });
+        const counts = await getOn(connection, `SELECT
+            (SELECT COUNT(*) FROM chat_messages) AS message_count,
+            (SELECT COUNT(*) FROM chat_messages_fts) AS fts_count,
+            (SELECT COALESCE(MAX(id),0) FROM chat_messages) AS max_message_id`);
+        const messageCount = Number(counts && counts.message_count || 0);
+        const ftsCount = Number(counts && counts.fts_count || 0);
+        if (messageCount === ftsCount) {
+            ftsByPath.set(filePath, true);
+            setMaintenance(filePath, 'ready', 100, `全文索引正常（${messageCount} 条）`, { active: false, messageCount, ftsCount });
+            console.log(`[chat-history] Background index check completed in ${Date.now() - startedAt}ms; ${messageCount} rows are consistent`);
+            return;
+        }
+
+        ftsByPath.set(filePath, false);
+        setMaintenance(filePath, 'rebuilding', 10, `发现索引不完整，正在自动重建（0/${messageCount}）`, {
+            active: true, messageCount, ftsCount
+        });
+        await runOn(connection, 'DROP TABLE IF EXISTS chat_messages_fts');
+        await runOn(connection, `CREATE VIRTUAL TABLE chat_messages_fts USING fts5(
+            message_id UNINDEXED,
+            conversation_id UNINDEXED,
+            sender_name,
+            sender_id,
+            content,
+            tokenize='trigram'
+        )`);
+        const maxId = Number(counts && counts.max_message_id || 0);
+        const batchSize = 5000;
+        let cursor = 0;
+        while (cursor < maxId) {
+            const upper = Math.min(maxId, cursor + batchSize);
+            await runOn(connection, `INSERT INTO chat_messages_fts(message_id,conversation_id,sender_name,sender_id,content)
+                SELECT id,conversation_id,sender_name,sender_id,content FROM chat_messages
+                WHERE id>? AND id<=? ORDER BY id`, [cursor, upper]);
+            cursor = upper;
+            const progress = maxId ? 10 + Math.round((cursor / maxId) * 85) : 95;
+            setMaintenance(filePath, 'rebuilding', progress, `正在分批重建全文索引（索引 ID ${cursor}/${maxId}）`, {
+                active: true, messageCount, previousFtsCount: ftsCount
+            });
+            await new Promise(resolve => setImmediate(resolve));
+        }
+        const finalCounts = await getOn(connection, `SELECT
+            (SELECT COUNT(*) FROM chat_messages) AS message_count,
+            (SELECT COUNT(*) FROM chat_messages_fts) AS fts_count`);
+        const complete = Number(finalCounts.message_count) === Number(finalCounts.fts_count);
+        ftsByPath.set(filePath, complete);
+        setMaintenance(filePath, complete ? 'ready' : 'pending', complete ? 100 : 95,
+            complete ? `全文索引已自动修复（${finalCounts.message_count} 条）` : '重建期间数据发生变化，稍后将再次核对',
+            { active: false, messageCount: Number(finalCounts.message_count), ftsCount: Number(finalCounts.fts_count) });
+        console.log(`[chat-history] Background index rebuild finished in ${Date.now() - startedAt}ms; complete=${complete}`);
+        if (!complete) scheduleFtsMaintenance(filePath, 30000);
+    } catch (error) {
+        ftsByPath.set(filePath, false);
+        setMaintenance(filePath, 'error', null, `全文索引自动诊断失败：${error.message}`, {
+            active: false, error: error.message
+        });
+        console.warn(`[chat-history] FTS maintenance failed for ${path.basename(filePath)}: ${error.message}`);
+    } finally {
+        await closeConnection(connection);
+    }
+}
+
+function scheduleFtsMaintenance(filePath, delayMs = 30000) {
+    if (ftsMaintenanceTimers.has(filePath)) return;
+    setMaintenance(filePath, 'scheduled', 0, '全文索引将在后台自动核对', { active: false });
+    const timer = setTimeout(() => void maintainFtsIndex(filePath), delayMs);
+    if (typeof timer.unref === 'function') timer.unref();
+    ftsMaintenanceTimers.set(filePath, timer);
 }
 
 function cleanInline(value) {
@@ -119,9 +285,16 @@ async function ensureReady() {
     const filePath = dbPath();
     if (!readyByPath.has(filePath)) {
         readyByPath.set(filePath, (async () => {
+            const startedAt = Date.now();
+            console.log(`[chat-history] Database initialization started for ${path.basename(filePath)}`);
+            const connection = db();
+            connection.configure('busyTimeout', 5000);
+            setInitialization(filePath, 'connecting', 5, '正在打开聊天数据库');
+            await run('PRAGMA busy_timeout = 10000');
+            setInitialization(filePath, 'journal', 12, '正在恢复 SQLite 日志并启用 WAL');
             await run('PRAGMA journal_mode = WAL');
             await run('PRAGMA foreign_keys = ON');
-            await run('PRAGMA busy_timeout = 10000');
+            setInitialization(filePath, 'schema', 22, '正在检查聊天数据表');
             await run(`CREATE TABLE IF NOT EXISTS chat_sources (
                 id TEXT PRIMARY KEY,
                 relative_path TEXT NOT NULL UNIQUE,
@@ -227,12 +400,13 @@ async function ensureReady() {
             }
             await run('CREATE INDEX IF NOT EXISTS idx_chat_messages_conversation_time ON chat_messages(conversation_id, message_time, id)');
             await run('CREATE INDEX IF NOT EXISTS idx_chat_messages_sender ON chat_messages(sender_id, sender_name)');
+            setInitialization(filePath, 'indexes', 65, '正在检查基础查询索引');
             await run('CREATE INDEX IF NOT EXISTS idx_chat_messages_time ON chat_messages(message_time, id)');
             await run('CREATE INDEX IF NOT EXISTS idx_chat_conversations_type_time ON chat_conversations(conversation_type, last_message_time)');
             await run('CREATE INDEX IF NOT EXISTS idx_chat_person_directory_name ON chat_person_directory(sender_name)');
             await reclassifyStoredConversations();
-            let ftsAvailable = true;
             try {
+                setInitialization(filePath, 'fts-schema', 85, '正在检查全文索引结构');
                 const row = await get("SELECT sql FROM sqlite_master WHERE type='table' AND name='chat_messages_fts'");
                 if (row && !String(row.sql || '').toLowerCase().includes('trigram')) await run('DROP TABLE chat_messages_fts');
                 await run(`CREATE VIRTUAL TABLE IF NOT EXISTS chat_messages_fts USING fts5(
@@ -243,21 +417,25 @@ async function ensureReady() {
                     content,
                     tokenize='trigram'
                 )`);
-                const counts = await get(`SELECT
-                    (SELECT COUNT(*) FROM chat_messages) AS message_count,
-                    (SELECT COUNT(*) FROM chat_messages_fts) AS fts_count`);
-                if (Number(counts.message_count) !== Number(counts.fts_count)) {
-                    await run('DELETE FROM chat_messages_fts');
-                    await run(`INSERT INTO chat_messages_fts(message_id,conversation_id,sender_name,sender_id,content)
-                        SELECT id,conversation_id,sender_name,sender_id,content FROM chat_messages`);
-                }
             } catch (error) {
-                ftsAvailable = false;
                 console.warn(`[chat-history] FTS5 trigram unavailable, using LIKE search: ${error.message}`);
+                setMaintenance(filePath, 'error', null, `FTS5 全文索引不可用：${error.message}`, {
+                    active: false,
+                    error: error.message
+                });
             }
-            ftsByPath.set(filePath, ftsAvailable);
+            // Until the background count check completes, LIKE search is slower but
+            // guaranteed complete even when a previous process stopped mid-import.
+            ftsByPath.set(filePath, false);
+            setInitialization(filePath, 'ready', 100, '聊天记录服务已就绪', { active: false });
+            console.log(`[chat-history] Database initialization completed in ${Date.now() - startedAt}ms`);
+            if (maintenanceByPath.get(filePath)?.phase !== 'error') scheduleFtsMaintenance(filePath);
         })().catch(error => {
             readyByPath.delete(filePath);
+            setInitialization(filePath, 'error', null, `聊天数据库初始化失败：${error.message}`, {
+                active: false,
+                error: error.message
+            });
             throw error;
         }));
     }
@@ -590,6 +768,7 @@ async function importTxtFile(input) {
             await run('COMMIT');
             await syncPersonDirectory();
             await invalidateAnalyticsCache();
+            if (!isFtsAvailable()) scheduleFtsMaintenance(dbPath(), 30000);
             return { relativePath, skipped: false, conversationId, messageCount: ordinal, conversationType };
         } catch (error) {
             await run('ROLLBACK').catch(() => {});
@@ -915,35 +1094,52 @@ async function searchMessages(userId, filters = {}) {
 
 async function getOverviewStats(userId) {
     await ensureReady();
+    const filePath = dbPath();
     const settings = await getUserSettings(userId);
     const myId = settings.my_sender_id || '__not_configured__';
     const cacheKey = `overview:${digest(`${userId}\0${myId}`).slice(0, 32)}`;
-    return cachedAnalyticsResult(cacheKey, async () => {
+    setOperation(filePath, 'overview', 'cache', 5, '正在检查会话概览缓存', { active: true });
+    try {
+        const result = await cachedAnalyticsResult(cacheKey, async () => {
+    setOperation(filePath, 'overview', 'summary', 15, '正在统计消息总量、识别率和活跃天数', { active: true });
     const summary = await get(`SELECT
+        COUNT(*) AS message_count,
+        SUM(CASE WHEN sender_id<>'' AND sender_id IS NOT NULL THEN 1 ELSE 0 END) AS identified_messages,
+        SUM(CASE WHEN sender_id='' OR sender_id IS NULL THEN 1 ELSE 0 END) AS unidentified_messages,
+        COUNT(DISTINCT CASE WHEN sender_id<>'' THEN sender_id ELSE sender_name END) AS participant_count,
+        COUNT(DISTINCT CASE WHEN sender_id='' OR sender_id IS NULL THEN sender_name END) AS unidentified_senders_count,
+        COUNT(DISTINCT substr(message_time,1,10)) AS active_days,
+        SUM(CASE WHEN sender_id=? THEN 1 ELSE 0 END) AS my_messages
+        FROM chat_messages`, [myId]);
+    setOperation(filePath, 'overview', 'metadata', 48, '正在统计会话、人员映射和收藏', { active: true });
+    const metadata = await get(`SELECT
         (SELECT COUNT(*) FROM chat_conversations) AS conversation_count,
-        (SELECT COUNT(*) FROM chat_messages) AS message_count,
-        (SELECT COUNT(*) FROM chat_messages WHERE sender_id<>'' AND sender_id IS NOT NULL) AS identified_messages,
-        (SELECT COUNT(*) FROM chat_messages WHERE sender_id='' OR sender_id IS NULL) AS unidentified_messages,
-        (SELECT COUNT(DISTINCT CASE WHEN sender_id<>'' THEN sender_id ELSE sender_name END) FROM chat_messages) AS participant_count,
         (SELECT COUNT(*) FROM chat_person_directory) AS directory_person_count,
-        (SELECT COUNT(DISTINCT sender_name) FROM chat_messages WHERE sender_id='' OR sender_id IS NULL) AS unidentified_senders_count,
-        (SELECT COUNT(DISTINCT substr(message_time,1,10)) FROM chat_messages) AS active_days,
-        (SELECT COUNT(*) FROM chat_messages WHERE sender_id=?) AS my_messages,
-        (SELECT COUNT(*) FROM chat_favorites WHERE user_id=?) AS favorite_count`, [myId, userId]);
+        (SELECT COUNT(*) FROM chat_favorites WHERE user_id=?) AS favorite_count`, [userId]);
+    Object.assign(summary, metadata || {});
 
     const totalMsg = Number(summary && summary.message_count || 0);
     const identifiedMsg = Number(summary && summary.identified_messages || 0);
     const recognitionRate = totalMsg > 0 ? ((identifiedMsg / totalMsg) * 100).toFixed(1) : '100.0';
     summary.recognition_rate = `${recognitionRate}%`;
 
+    setOperation(filePath, 'overview', 'types', 62, '正在汇总会话类型', { active: true });
     const types = await all(`SELECT conversation_type AS type,COUNT(*) AS conversation_count,
         SUM(message_count) AS message_count FROM chat_conversations GROUP BY conversation_type ORDER BY message_count DESC`);
+    setOperation(filePath, 'overview', 'months', 74, '正在生成月度消息趋势', { active: true });
     const months = await all(`SELECT substr(message_time,1,7) AS month,COUNT(*) AS message_count
         FROM chat_messages GROUP BY substr(message_time,1,7) ORDER BY month DESC LIMIT 18`);
+    setOperation(filePath, 'overview', 'hours', 88, '正在生成 24 小时活跃分布', { active: true });
     const hours = await all(`SELECT substr(message_time,12,2) AS hour,COUNT(*) AS message_count
         FROM chat_messages GROUP BY substr(message_time,12,2) ORDER BY hour`);
         return { summary, types, months: months.reverse(), hours, mySenderId: settings.my_sender_id || '' };
-    });
+        });
+        finishOperation(filePath, 'overview', result.analyticsCache && result.analyticsCache.hit ? '已读取会话概览缓存' : '会话概览统计完成');
+        return result;
+    } catch (error) {
+        failOperation(filePath, 'overview', error);
+        throw error;
+    }
 }
 
 async function getPeopleStats(userId, options = {}) {
@@ -993,8 +1189,8 @@ async function getPeopleStats(userId, options = {}) {
     });
 }
 
-async function getRelationshipGraph(userId, options = {}) {
-    await ensureReady();
+async function buildRelationshipGraph(userId, options = {}) {
+    const filePath = dbPath();
     const settings = await getUserSettings(userId);
     const mySenderId = cleanInline(settings.my_sender_id || '');
     const conversationLimit = parsePositiveInt(options.limit, 120, 300);
@@ -1024,11 +1220,13 @@ async function getRelationshipGraph(userId, options = {}) {
         };
     }
 
+    setOperation(filePath, 'relationship-graph', 'conversations', 25, '正在筛选与我相关的会话', { active: true });
     const conversations = await all(`SELECT c.id,c.display_name,c.conversation_type,c.message_count,
             c.participant_count,c.first_message_time,c.last_message_time
         FROM chat_conversations c
+        JOIN (SELECT DISTINCT conversation_id FROM chat_messages WHERE sender_id=?) mine
+          ON mine.conversation_id=c.id
         WHERE c.conversation_type IN ('single','group','discussion')
-          AND EXISTS (SELECT 1 FROM chat_messages mine WHERE mine.conversation_id=c.id AND mine.sender_id=?)
         ORDER BY c.message_count DESC,c.last_message_time DESC
         LIMIT ?`, [mySenderId, conversationLimit]);
     if (!conversations.length) {
@@ -1040,6 +1238,7 @@ async function getRelationshipGraph(userId, options = {}) {
     }
 
     const conversationIds = conversations.map(item => item.id);
+    setOperation(filePath, 'relationship-graph', 'participants', 55, '正在统计会话参与人和发言频度', { active: true });
     const participants = await all(`SELECT m.conversation_id,MAX(m.sender_id) AS sender_id,
             COALESCE(MAX(NULLIF(d.sender_name,'')),MAX(m.sender_name)) AS sender_name,
             COUNT(*) AS message_count,MIN(m.message_time) AS first_message_time,MAX(m.message_time) AS last_message_time
@@ -1050,6 +1249,7 @@ async function getRelationshipGraph(userId, options = {}) {
           AND (m.sender_id<>'' OR m.sender_name<>'')
         GROUP BY m.conversation_id,CASE WHEN m.sender_id<>'' THEN 'id:'||m.sender_id ELSE 'name:'||m.sender_name END
         ORDER BY message_count DESC`, [...conversationIds, mySenderId]);
+    setOperation(filePath, 'relationship-graph', 'building', 84, '正在生成关系节点与连线', { active: true });
     const maxConversationMessages = Math.max(1, ...conversations.map(item => Number(item.message_count) || 0));
     const maxParticipantMessages = Math.max(1, ...participants.map(item => Number(item.message_count) || 0));
     const people = new Map();
@@ -1135,6 +1335,20 @@ async function getRelationshipGraph(userId, options = {}) {
         },
         generatedAt: new Date().toISOString()
     };
+}
+
+async function getRelationshipGraph(userId, options = {}) {
+    await ensureReady();
+    const filePath = dbPath();
+    setOperation(filePath, 'relationship-graph', 'settings', 8, '正在读取我的工号设置', { active: true });
+    try {
+        const result = await buildRelationshipGraph(userId, options);
+        finishOperation(filePath, 'relationship-graph', '聊天关系图数据已生成');
+        return result;
+    } catch (error) {
+        failOperation(filePath, 'relationship-graph', error);
+        throw error;
+    }
 }
 
 async function getGroupStats(options = {}) {
@@ -1565,6 +1779,7 @@ module.exports = {
     getOverviewStats,
     getPeopleStats,
     getRelationshipGraph,
+    getServiceStatus,
     getUnidentifiedMessages,
     getUserSettings,
     importTxtFile,

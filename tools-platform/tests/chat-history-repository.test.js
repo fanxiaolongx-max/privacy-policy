@@ -70,6 +70,10 @@ test('chat history imports, searches, preserves personal state and isolates tena
     assert.equal((await repo.getConversation(imported.conversationId, 'alice')).conversation_type, 'single');
 
     await repo.saveUserSettings('alice', { mySenderId: 'my001' });
+    const serviceStatus = repo.getServiceStatus();
+    assert.equal(serviceStatus.ready, true);
+    assert.equal(serviceStatus.initialization.phase, 'ready');
+    assert.equal(serviceStatus.database.exists, true);
     const conversations = await repo.listConversations('alice');
     assert.equal(conversations.total, 1);
     assert.equal(conversations.items[0].unread_count, 2);
