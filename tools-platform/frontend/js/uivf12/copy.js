@@ -2539,6 +2539,10 @@ function wrapMasterScriptWithFloatingLauncher(masterCode, options = {}) {
         || (window.UIVNetCareAnalysis && typeof window.UIVNetCareAnalysis.getRuntimeSource === 'function'
             ? window.UIVNetCareAnalysis.getRuntimeSource()
             : ''));
+    const dataFabRuntimeSource = expectedOrigin === 'https://datafab-pro.gtsdata.huawei.com' && (options.dataFabRuntimeSource
+        || (window.UIVDataFabAnalysis && typeof window.UIVDataFabAnalysis.getRuntimeSource === 'function'
+            ? window.UIVDataFabAnalysis.getRuntimeSource()
+            : ''));
     return `(function () {
     const TOOL_ID = 'uivf12-floating-capture-tool';
     const oldTool = document.getElementById(TOOL_ID);
@@ -2551,6 +2555,7 @@ function wrapMasterScriptWithFloatingLauncher(masterCode, options = {}) {
     const taskMeta = ${JSON.stringify(taskMeta)};
     const ruleBundle = ${JSON.stringify(ruleBundle)};
     const installNetCareAnalysisRuntime = ${netCareRuntimeSource || 'null'};
+    const installDataFabAnalysisRuntime = ${dataFabRuntimeSource || 'null'};
     const originMatched = !expectedOrigin || window.location.origin === expectedOrigin;
     const capturedFiles = [];
     const taskStates = new Map(taskMeta.map(function (task) { return [task.index, 'pending']; }));
@@ -2668,6 +2673,14 @@ function wrapMasterScriptWithFloatingLauncher(masterCode, options = {}) {
             netCareController = installNetCareAnalysisRuntime(root, { isCaptureActive: function () { return captureActive; } });
         } catch (error) {
             console.error('[UIVF12] NetCare 专题模块初始化失败', error);
+        }
+    }
+    let dataFabController = null;
+    if (typeof installDataFabAnalysisRuntime === 'function') {
+        try {
+            dataFabController = installDataFabAnalysisRuntime(root, { isCaptureActive: function () { return captureActive; } });
+        } catch (error) {
+            console.error('[UIVF12] DataFab 专题模块初始化失败', error);
         }
     }
     title.textContent = ${JSON.stringify(siteName)} + ' · 数据抓取浮窗';
@@ -3826,6 +3839,7 @@ function wrapMasterScriptWithFloatingLauncher(masterCode, options = {}) {
         closeChoice.style.display = 'none';
         window.removeEventListener('resize', syncHostWidth);
         if (netCareController && typeof netCareController.destroy === 'function') netCareController.destroy();
+        if (dataFabController && typeof dataFabController.destroy === 'function') dataFabController.destroy();
         host.remove();
         if (!captureActive) {
             try { delete window.__uivf12FloatingCaptureBridge; } catch (error) { window.__uivf12FloatingCaptureBridge = null; }
@@ -3912,7 +3926,13 @@ function wrapMasterScriptWithFloatingLauncher(masterCode, options = {}) {
             notice.textContent = 'NetCare 专题数据仍在获取中，请等待专题刷新完成后再启动 CSV 抓取。';
             return;
         }
+        if (dataFabController && typeof dataFabController.isLoading === 'function' && dataFabController.isLoading()) {
+            notice.className = 'notice bad';
+            notice.textContent = 'DataFab 专题数据仍在获取中，请等待专题刷新完成后再启动 CSV 抓取。';
+            return;
+        }
         if (netCareController && typeof netCareController.showCsv === 'function') netCareController.showCsv();
+        if (dataFabController && typeof dataFabController.showCsv === 'function') dataFabController.showCsv();
         terminated = false;
         window.__uivf12FloatingCaptureStopRequested = false;
         startButton.disabled = true;
@@ -4004,7 +4024,8 @@ function buildAndCopyMasterScript(scriptsToRun, groupName, options = {}) {
             taskCount: scriptsToRun.length,
             taskMeta,
             ruleBundle: options.ruleBundle,
-            netCareRuntimeSource: options.netCareRuntimeSource
+            netCareRuntimeSource: options.netCareRuntimeSource,
+            dataFabRuntimeSource: options.dataFabRuntimeSource
         })
         : masterCode;
     copyFromMemory(copyCode, options.floatingLauncher

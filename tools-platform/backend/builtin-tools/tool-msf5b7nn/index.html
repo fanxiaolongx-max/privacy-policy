@@ -1675,18 +1675,28 @@
       const CATEGORIES = [
         { id: 'qr', name: 'QR 必须参会名单', enName: 'QR Required Attendees', short: 'QR', type: 'required', desc: '系统根据 Task ID 列中的 QR 编号自动识别。', enDesc: 'Detected by QR-prefixed values in the Task ID column.' },
         { id: 'rfc', name: 'RFC 必须参会名单', enName: 'RFC Required Attendees', short: 'RFC', type: 'required', desc: '系统根据作业单号或 Ticket ID 列中的 NC 编号自动识别。', enDesc: 'Detected by NC-prefixed values in the Ticket ID column.' },
-        { id: 'wfm', name: 'WFM 必须参会名单', enName: 'WFM Required Attendees', short: 'WFM', type: 'required', desc: '系统根据 Task ID 列中的 TK 编号自动识别。', enDesc: 'Detected by TK-prefixed values in the Task ID column.' },
+        { id: 'wfm', name: 'WFM 必须参会名单', enName: 'WFM Required Attendees', short: 'WFM', type: 'required', desc: '系统根据 Task ID 或实施任务单号列中的 TK 编号自动识别。', enDesc: 'Detected by TK-prefixed values in Task ID or Implementation Task No columns.' },
         { id: 'offline', name: '离线扫描签到', enName: 'On-site Scan Records', short: '离线签到', type: 'offline', desc: '系统根据“工号、姓名、签到时间”三列自动识别。', enDesc: 'Detected by Employee ID, Name and Check-in Time columns.' },
         { id: 'online', name: '在线参会记录', enName: 'Online Meeting Records', short: '在线参会', type: 'online', desc: '系统根据 meeting_title、user_id、join_time 三列自动识别，并且只保留“入会记录”Sheet。', enDesc: 'Detected by meeting_title, user_id and join_time; only the 入会记录 sheet is used.' }
       ];
       const DEFAULT_COLUMNS = {
         qr: [['Task ID'], ['Apply Accountid', 'Apply Account ID'], ['Apply Fullname', 'Apply Full Name'], ['L4 Name EN'], ['L4 Name CN'], ['TD', 'Td'], ['TD Fullname', 'Td Fullname', 'TD Full Name'], ['BU'], ['Customer Group'], ['Service Type']],
         rfc: [['作业单号/Ticket ID', '作业单号', 'Ticket ID'], ['产品线/Product Line', '产品线', 'Product Line'], ['客户群/Customer Group', '客户群', 'Customer Group'], ['服务类别/Service Type', '服务类别', 'Service Type'], ['BU'], ['建单人/Originator', '建单人', 'Originator'], ['Owner'], ['方案制作人/Solution Developer', '方案制作人', 'Solution Developer'], ['TD'], ['PM'], ['L1评审人/L1 Solution Reviewer', 'L1评审人', 'L1 Solution Reviewer']],
-        wfm: [['Task ID'], ['FME Name'], ['Customer Group'], ['BU'], ['Product Line'], ['Service Type'], ['TD'], ['PM']]
+        wfm: [
+          ['Task ID', '实施任务单号/Implementation Task No', '实施任务单号', 'Implementation Task No', '实施任务单', '任务单号', 'Task No'],
+          ['FME Name', 'FME', '实施人/Oprator', '实施人/Operator', '实施人', 'Operator', 'Oprator'],
+          ['建单人/Creator', '建单人/Originator', '建单人', 'Creator', 'Originator'],
+          ['Customer Group', '客户群/Customer Group', '客户群', '网络/Network', '网络', 'Network', '客户名称/Customer Name', '客户名称', 'Customer Name'],
+          ['BU', 'BU/Service Type'],
+          ['Product Line', '产品线 / Product Line', '产品线/Product Line', '产品线', 'Product Line - Ticket', '产品线-作业单 / Product Line - Ticket'],
+          ['Service Type', '服务类别/Service Type', '服务类别', '操作类型/Operation Type', '操作类型', 'Operation Type'],
+          ['TD', 'Td'],
+          ['PM', 'Pm']
+        ]
       };
       const DEFAULT_CUSTOMER_MAPPINGS = [
         { from: 'ET (Etisalat)', to: 'ET' }, { from: 'EG-Egypt ET', to: 'ET' }, { from: 'EG-Egypt Orange', to: 'ORG' },
-        { from: 'EG-Egypt Telecom', to: 'TE' }, { from: 'Single-country Account', to: 'TE' }, { from: 'Orange', to: 'ORG' }
+        { from: 'EG-Egypt Telecom', to: 'TE' }, { from: 'Telecom Egypt', to: 'TE' }, { from: 'Single-country Account', to: 'TE' }, { from: 'Orange', to: 'ORG' }
       ];
       const MAPPING_STORAGE_KEY = 'meetingAttendance.customerGroupMappings.v1';
       const DEFAULT_ATTENDANCE_RULES = { onTime: '10:00', fake: '11:00' };
@@ -1767,7 +1777,7 @@
       function personSearchResultCount() { const r = state.personSearch.result; return r ? r.qr.length + r.rfc.length + r.wfm.length + r.offline.length + r.online.length : 0; }
       function updateGlobalSearchButton() { const count = personSearchResultCount(); $('#globalSearchText').textContent = `${bi('人员搜索', 'People Search')}${count ? ` · ${count}` : ''}`; $('#globalSearchBtn').title = bi('随时按姓名或工号搜索完整记录', 'Search complete records by name or employee ID at any time'); }
       function renderToolIntro() {
-        $('#toolIntro').innerHTML = state.lang === 'en' ? `<b>About this tool</b><p>Batch-import five table types, extract required attendees, deduplicate people and determine attendance.</p><b>Recognition</b><ul class="intro-list"><li>QR: Task ID starts with QR</li><li>RFC: Ticket ID starts with NC</li><li>WFM: Task ID starts with TK</li><li>On-site: Employee ID + Name + Check-in Time</li><li>Online: meeting_title + user_id + join_time; only 入会记录</li></ul><div class="intro-note">On-site Beijing time is converted to Cairo time; the earliest on-site/online record is used.</div>` : `<b>工具简介</b><p>批量导入五类表；自动提取必参人员、合并去重并判断考勤。</p><b>识别逻辑</b><ul class="intro-list"><li>QR：Task ID 以 QR 开头</li><li>RFC：Ticket ID 以 NC 开头</li><li>WFM：Task ID 以 TK 开头</li><li>现场：工号＋姓名＋签到时间</li><li>线上：meeting_title＋user_id＋join_time；仅取“入会记录”</li></ul><div class="intro-note">现场北京时间自动转开罗时间；现场与线上取最早有效记录。</div>`;
+        $('#toolIntro').innerHTML = state.lang === 'en' ? `<b>About this tool</b><p>Batch-import five table types, extract required attendees, deduplicate people and determine attendance.</p><b>Recognition</b><ul class="intro-list"><li>QR: Task ID starts with QR</li><li>RFC: Ticket ID starts with NC</li><li>WFM: Task ID / Implementation Task No starts with TK</li><li>On-site: Employee ID + Name + Check-in Time</li><li>Online: meeting_title + user_id + join_time; only 入会记录</li></ul><div class="intro-note">On-site Beijing time is converted to Cairo time; the earliest on-site/online record is used.</div>` : `<b>工具简介</b><p>批量导入五类表；自动提取必参人员、合并去重并判断考勤。</p><b>识别逻辑</b><ul class="intro-list"><li>QR：Task ID 以 QR 开头</li><li>RFC：Ticket ID 以 NC 开头</li><li>WFM：Task ID 或实施任务单号以 TK 开头</li><li>现场：工号＋姓名＋签到时间</li><li>线上：meeting_title＋user_id＋join_time；仅取“入会记录”</li></ul><div class="intro-note">现场北京时间自动转开罗时间；现场与线上取最早有效记录。</div>`;
       }
       function applyStaticLanguage() {
         document.documentElement.lang = state.lang === 'en' ? 'en' : 'zh-CN'; document.title = t('brand'); $('#brandTitle').textContent = t('brand'); $('#langBtn').textContent = state.lang === 'en' ? '中文' : 'English'; $('#clearAllBtn').textContent = t('clear'); $('#chooseBtn').textContent = t('import'); $('#exportBtn').textContent = bi('⇩ 一键导出分析结果', '⇩ Export Analysis'); $('#dataInputTitle').textContent = t('dataInput'); $('#pageSizeText').textContent = t('pageSize'); updateGlobalSearchButton(); applyDeveloperMode(); renderToolIntro();
@@ -1865,7 +1875,15 @@
       function defaultColumnIndices(category, headers) {
         const groups = DEFAULT_COLUMNS[category]; if (!groups) return headers.map((_, i) => i);
         const normalized = headers.map(headerKey), result = [];
-        groups.forEach(aliases => { const keys = aliases.map(headerKey), i = normalized.findIndex(h => keys.includes(h)); if (i >= 0 && !result.includes(i)) result.push(i); });
+        groups.forEach(aliases => {
+          for (const alias of aliases) {
+            const idx = normalized.indexOf(headerKey(alias));
+            if (idx >= 0 && !result.includes(idx)) {
+              result.push(idx);
+              break;
+            }
+          }
+        });
         return result.length ? result : headers.map((_, i) => i);
       }
       function getDisplayColumns(s, headers = s.headers) {
@@ -2003,7 +2021,12 @@
       }
       const SEARCH_ROLE_CONFIG = {
         rfc: [{ role: 'Originator', aliases: ['建单人/Originator', '建单人', 'Originator'] }, { role: 'Owner', aliases: ['Owner'] }, { role: 'Solution Developer', aliases: ['方案制作人/Solution Developer', '方案制作人', 'Solution Developer'] }, { role: 'TD', aliases: ['TD'] }, { role: 'PM', aliases: ['PM'] }, { role: 'L1 Solution Reviewer', aliases: ['L1评审人/L1 Solution Reviewer', 'L1评审人', 'L1 Solution Reviewer'] }],
-        wfm: [{ role: 'FME', aliases: ['FME Name', 'FME'] }, { role: 'TD', aliases: ['TD'] }, { role: 'PM', aliases: ['PM'] }]
+        wfm: [
+          { role: 'FME', aliases: ['FME Name', 'FME', '实施人/Oprator', '实施人/Operator', '实施人', 'Operator', 'Oprator'] },
+          { role: 'Creator', aliases: ['建单人/Creator', '建单人/Originator', '建单人', 'Creator', 'Originator'] },
+          { role: 'TD', aliases: ['TD', 'Td'] },
+          { role: 'PM', aliases: ['PM', 'Pm'] }
+        ]
       };
       function searchRequiredRows(category, queryLower, ids) {
         const found = []; state.sheets.filter(s => s.category === category).forEach(s => {
@@ -2093,7 +2116,14 @@
         if (action === 'first') state.peoplePages[kind] = 1; if (action === 'prev') state.peoplePages[kind]--; if (action === 'next') state.peoplePages[kind]++; if (action === 'last') state.peoplePages[kind] = total;
         state.peoplePages[kind] = Math.min(Math.max(1, state.peoplePages[kind]), total); renderPeopleResults(data);
       }
-      function headerIndex(headers, ...aliases) { const keys = aliases.map(headerKey); return headers.map(headerKey).findIndex(h => keys.includes(h)); }
+      function headerIndex(headers, ...aliases) {
+        const normalized = headers.map(headerKey);
+        for (const alias of aliases) {
+          const i = normalized.indexOf(headerKey(alias));
+          if (i >= 0) return i;
+        }
+        return -1;
+      }
       function cellByAliases(row, headers, ...aliases) { const i = headerIndex(headers, ...aliases); return i >= 0 ? normalizeName(row[i]) : ''; }
       function cellAt(row, index) { return index >= 0 ? normalizeName(row[index]) : ''; }
       function extractQrPeople() {
@@ -2132,12 +2162,28 @@
         }); return finalizePeople(map);
       }
       function extractWfmPeople() {
-        const roles = [{ role: 'FME', aliases: ['FME Name', 'FME'] }, { role: 'TD', aliases: ['TD'] }, { role: 'PM', aliases: ['PM'] }];
+        const roles = [
+          { role: 'FME', aliases: ['FME Name', 'FME', '实施人/Oprator', '实施人/Operator', '实施人', 'Operator', 'Oprator'] },
+          { role: 'Creator', aliases: ['建单人/Creator', '建单人/Originator', '建单人', 'Creator', 'Originator'] },
+          { role: 'TD', aliases: ['TD', 'Td'] },
+          { role: 'PM', aliases: ['PM', 'Pm'] }
+        ];
         const map = new Map(); let sequence = 0; state.sheets.filter(s => s.category === 'wfm').forEach(s => {
-          const buIndex = headerIndex(s.headers, 'BU'), customerIndex = headerIndex(s.headers, 'Customer Group', '客户群/Customer Group', '客户群'), timeIndex = headerIndex(s.headers, 'Task Create Time', 'Create Time', '创建时间/Create Time', '创建时间'), roleIndexes = roles.map(cfg => ({ ...cfg, index: headerIndex(s.headers, ...cfg.aliases) }));
+          const buIndex = headerIndex(s.headers, 'BU', 'BU/Service Type'),
+                customerIndex = headerIndex(s.headers, 'Customer Group', '客户群/Customer Group', '客户群', '网络/Network', '网络', 'Network', '客户名称/Customer Name', '客户名称', 'Customer Name'),
+                timeIndex = headerIndex(s.headers, 'Task Create Time', 'Create Time', '创建时间/Create Time', '创建时间'),
+                roleIndexes = roles.map(cfg => ({ ...cfg, index: headerIndex(s.headers, ...cfg.aliases) }));
           s.rows.forEach(row => {
             const bu = cellAt(row, buIndex), customer = cellAt(row, customerIndex), orderTime = parseCreateTime(cellAt(row, timeIndex), ++sequence);
-            roleIndexes.forEach(cfg => { parsePeopleCell(cellAt(row, cfg.index)).forEach(p => addPerson(map, { role: cfg.role, name: p.name, account: p.account, bu, customer, orderTime })); });
+            const seenInRow = new Set();
+            roleIndexes.forEach(cfg => {
+              parsePeopleCell(cellAt(row, cfg.index)).forEach(p => {
+                const pKey = p.account ? `id:${p.account.replace(/\s+/g, '').toLowerCase()}` : `name:${p.name.toLowerCase()}`;
+                if (seenInRow.has(pKey)) return;
+                seenInRow.add(pKey);
+                addPerson(map, { role: cfg.role, name: p.name, account: p.account, bu, customer, orderTime });
+              });
+            });
           });
         }); return finalizePeople(map);
       }
@@ -2265,9 +2311,15 @@
         if (has('工号') && has('姓名') && has('签到时间')) return 'offline';
         const ticketIndex = indexOf('作业单号', 'Ticket ID', '作业单号/Ticket ID');
         if (ticketIndex >= 0 && columnHasPrefix(sheet.rows, ticketIndex, 'NC')) return 'rfc';
-        const taskIndex = indexOf('Task ID');
-        if (taskIndex >= 0 && columnHasPrefix(sheet.rows, taskIndex, 'QR')) return 'qr';
-        if (taskIndex >= 0 && columnHasPrefix(sheet.rows, taskIndex, 'TK')) return 'wfm';
+        const qrTaskIndex = indexOf('Task ID');
+        if (qrTaskIndex >= 0 && columnHasPrefix(sheet.rows, qrTaskIndex, 'QR')) return 'qr';
+        const wfmTaskIndex = headers.findIndex(h => {
+          const norm = normalizeHeader(h);
+          return ['task id', '实施任务单号/implementation task no', '实施任务单号', 'implementation task no', '实施任务单', '任务单号', 'task no'].includes(norm) ||
+            (norm.includes('实施任务') && norm.includes('单号')) ||
+            (norm.includes('implementation') && norm.includes('task'));
+        });
+        if (wfmTaskIndex >= 0 && columnHasPrefix(sheet.rows, wfmTaskIndex, 'TK')) return 'wfm';
         return null;
       }
       function columnHasPrefix(rows, index, prefix) {
@@ -2294,7 +2346,11 @@
       function normalizeRows(matrix) {
         const clean = matrix.map(r => r.map(v => v == null ? '' : String(v))).filter(r => r.some(v => v.trim() !== ''));
         if (!clean.length) return { headers: [], rows: [] };
-        const hints = new Set(['作业单号', 'ticket id', '作业单号/ticket id', 'task id', '工号', '姓名', '签到时间', 'meeting_title', 'user_id', 'join_time']);
+        const hints = new Set([
+          '作业单号', 'ticket id', '作业单号/ticket id', 'task id', '工号', '姓名', '签到时间', 'meeting_title', 'user_id', 'join_time',
+          '实施任务单号', 'implementation task no', '实施任务单号/implementation task no', '实施任务单', '任务单号', 'task no',
+          '变更单号', 'change number', '变更单号/change number', '建单人/creator', '实施人/oprator', '实施人/operator'
+        ]);
         let headerIndex = 0, bestScore = 0;
         clean.slice(0, 30).forEach((row, i) => { const score = row.reduce((n, v) => n + (hints.has(String(v).replace(/^\uFEFF/, '').trim().replace(/\s+/g, ' ').replace(/\s*\/\s*/g, '/').toLowerCase()) ? 1 : 0), 0); if (score > bestScore) { bestScore = score; headerIndex = i; } });
         const headers = clean[headerIndex].map((v, i) => v.trim() || `列 ${i + 1}`);

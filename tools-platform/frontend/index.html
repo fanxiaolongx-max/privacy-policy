@@ -795,12 +795,24 @@
         .tool-market-trust { padding:7px 10px; border-radius:999px; background:rgba(16,185,129,.12); color:#86efac; }
         .tool-market-trust.unverified { background:rgba(245,158,11,.12); color:#fcd34d; }
         .tool-market-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-content:start; gap:8px; min-height:0; flex:1; overflow:auto; padding-right:4px; }
-        .tool-market-card { display:grid; grid-template-columns:auto 36px minmax(0,1fr) auto; align-items:start; gap:9px; padding:11px 12px; border:1px solid rgba(148,163,184,.16); border-radius:12px; background:rgba(2,6,23,.3); }
+        .tool-market-card { display:grid; grid-template-columns:auto 36px minmax(0,1fr) auto; align-items:start; gap:9px; padding:11px 12px; border:1px solid rgba(148,163,184,.16); border-radius:12px; background:rgba(2,6,23,.3); transition: opacity .25s ease, filter .25s ease, border-color .25s ease, background .25s ease, transform .25s ease, box-shadow .25s ease; }
+        .tool-market-card.is-actionable { border-color:rgba(52,211,153,.45); background:linear-gradient(135deg,rgba(16,185,129,.1) 0%,rgba(2,6,23,.45) 100%); box-shadow:0 0 16px rgba(16,185,129,.08), inset 0 0 0 1px rgba(52,211,153,.12); }
+        .tool-market-card.is-actionable:hover { border-color:rgba(52,211,153,.7); box-shadow:0 4px 20px rgba(16,185,129,.16), inset 0 0 0 1px rgba(52,211,153,.2); transform:translateY(-1px); }
+        .tool-market-card.is-dimmed { opacity:.48; border-color:rgba(148,163,184,.1); background:rgba(2,6,23,.2); }
+        .tool-market-card.is-dimmed:hover, .tool-market-card.is-dimmed:focus-within { opacity:1; filter:none; border-color:rgba(148,163,184,.35); background:rgba(15,23,42,.6); transform:translateY(-1px); box-shadow:0 4px 16px rgba(0,0,0,.25); }
         .tool-market-card.is-conflict, .tool-market-card.is-incompatible { border-color:rgba(251,191,36,.26); }
+        .tool-market-card.is-conflict.is-actionable { border-color:rgba(245,158,11,.48); background:linear-gradient(135deg,rgba(245,158,11,.1) 0%,rgba(2,6,23,.45) 100%); box-shadow:0 0 16px rgba(245,158,11,.08), inset 0 0 0 1px rgba(245,158,11,.15); }
         .tool-market-card input { margin-top:6px; accent-color:#34d399; }
         .tool-market-icon { display:grid; place-items:center; width:36px; height:36px; border-radius:10px; background:rgba(59,130,246,.12); font-size:19px; }
         .tool-market-copy { min-width:0; }
         .tool-market-title { display:flex; align-items:center; gap:8px; flex-wrap:wrap; color:#f8fafc; font-weight:850; }
+        .tool-market-badge { display:inline-flex; align-items:center; gap:3px; padding:1px 6px; border-radius:6px; font-size:10px; font-weight:800; line-height:1.3; vertical-align:middle; }
+        .tool-market-badge.update { background:rgba(16,185,129,.22); color:#34d399; border:1px solid rgba(52,211,153,.35); box-shadow:0 0 8px rgba(16,185,129,.14); }
+        .tool-market-badge.new { background:rgba(56,189,248,.18); color:#38bdf8; border:1px solid rgba(56,189,248,.32); }
+        .tool-market-badge.conflict { background:rgba(245,158,11,.18); color:#fcd34d; border:1px solid rgba(245,158,11,.32); }
+        .tool-market-divider { grid-column:1/-1; display:flex; align-items:center; gap:12px; margin:10px 0 4px; color:#64748b; font-size:11px; font-weight:700; }
+        .tool-market-divider::before, .tool-market-divider::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,transparent,rgba(148,163,184,.16),transparent); }
+        .tool-market-divider span { display:inline-flex; align-items:center; gap:6px; background:rgba(15,23,42,.7); padding:3px 12px; border-radius:999px; border:1px solid rgba(148,163,184,.12); color:#94a3b8; }
         .tool-market-copy p { margin:4px 0 0; color:#94a3b8; font-size:11px; line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
         .tool-market-meta { margin-top:5px; display:flex; gap:8px; flex-wrap:wrap; color:#64748b; font-size:9px; }
         .tool-market-fingerprint { max-width:170px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:monospace; }
@@ -2997,28 +3009,82 @@
 
             const render = data => {
                 preview = data;
-                const tools = Array.isArray(data?.tools) ? data.tools : [];
-                const actionable = tools.filter(tool => tool.recommended).length;
-                const selectable = tools.filter(tool => ['missing', 'update', 'conflict'].includes(tool.status)).length;
-                summary.textContent = text(`共 ${tools.length} 个工具，${actionable} 个建议安装/更新`, `${tools.length} tools, ${actionable} recommended updates`);
+                const rawTools = Array.isArray(data?.tools) ? data.tools : [];
+                const actionable = rawTools.filter(tool => tool.recommended).length;
+                const selectable = rawTools.filter(tool => ['missing', 'update', 'conflict'].includes(tool.status)).length;
+                const hasPendingUpdates = rawTools.some(tool => ['update', 'missing', 'conflict'].includes(tool.status));
+
+                const getSortScore = tool => {
+                    if (tool.status === 'update') return 0;   // 待更新最优先
+                    if (tool.status === 'missing') return 1;  // 可安装新工具次之
+                    if (tool.status === 'conflict') return 2; // 冲突次之
+                    if (tool.status === 'unchanged') return 3;// 已是最新
+                    return 4;                                 // incompatible 等其他
+                };
+
+                const tools = [...rawTools].map((tool, index) => ({ tool, index }))
+                    .sort((a, b) => {
+                        const scoreA = getSortScore(a.tool);
+                        const scoreB = getSortScore(b.tool);
+                        if (scoreA !== scoreB) return scoreA - scoreB;
+                        return a.index - b.index;
+                    })
+                    .map(item => item.tool);
+
+                const unchangedCount = tools.filter(t => t.status === 'unchanged').length;
+
+                summary.textContent = actionable > 0
+                    ? text(`共 ${tools.length} 个工具，${actionable} 个建议安装/更新（已优先置顶）`, `${tools.length} tools, ${actionable} recommended updates (pinned to top)`)
+                    : text(`共 ${tools.length} 个工具，全部已是最新版本`, `${tools.length} tools, all up to date`);
                 const trustState = data?.trust?.state || 'unsigned';
                 trust.className = `tool-market-trust${trustState === 'verified' ? '' : ' unverified'}`;
                 trust.textContent = trustState === 'verified'
                     ? text('✓ 目录签名已验证', '✓ Catalog signature verified')
                     : text('⚠ HTTPS + SHA-256 校验', '⚠ HTTPS + SHA-256 verification');
                 const statusLabels = labels();
-                list.innerHTML = tools.length ? tools.map(tool => {
+
+                let hasInsertedDivider = false;
+                const itemsHtml = [];
+                for (const tool of tools) {
+                    const isPending = ['update', 'missing', 'conflict'].includes(tool.status);
+                    const isActionable = isPending;
+                    const isDimmed = !isPending;
+
+                    if (hasPendingUpdates && !isPending && !hasInsertedDivider && unchangedCount > 0) {
+                        hasInsertedDivider = true;
+                        itemsHtml.push(`<div class="tool-market-divider"><span>${escapeHtml(text(`其余工具已是最新（${unchangedCount}）`, `Other tools up to date (${unchangedCount})`))}</span></div>`);
+                    }
+
                     const description = english() ? (tool.descriptionEn || tool.description) : tool.description;
                     const disabled = !['missing', 'update', 'conflict'].includes(tool.status);
                     const localModified = tool.localModified
                         ? `<p class="tool-market-warning">${text('检测到本地文件修改；更新前会自动备份。', 'Local file changes detected; a backup will be created before updating.')}</p>` : '';
                     const conflict = tool.status === 'conflict'
                         ? `<p class="tool-market-warning">${text('这是未关联的手动导入工具；只有主动勾选并二次确认才会接管。', 'This manually imported tool is not linked; it is adopted only after selection and confirmation.')}</p>` : '';
-                    return `<article class="tool-market-card is-${escapeHtml(tool.status)}">
+
+                    let badgeHtml = '';
+                    if (hasPendingUpdates && isPending) {
+                        if (tool.status === 'update') {
+                            badgeHtml = `<span class="tool-market-badge update">${text('待更新', 'Update')}</span>`;
+                        } else if (tool.status === 'missing') {
+                            badgeHtml = `<span class="tool-market-badge new">${text('新工具', 'New')}</span>`;
+                        } else if (tool.status === 'conflict') {
+                            badgeHtml = `<span class="tool-market-badge conflict">${text('冲突', 'Conflict')}</span>`;
+                        }
+                    }
+
+                    const cardClasses = [
+                        'tool-market-card',
+                        `is-${escapeHtml(tool.status)}`,
+                        isActionable ? 'is-actionable' : '',
+                        isDimmed ? 'is-dimmed' : ''
+                    ].filter(Boolean).join(' ');
+
+                    itemsHtml.push(`<article class="${cardClasses}">
                         <input type="checkbox" data-market-slug="${escapeHtml(tool.slug)}" ${tool.recommended ? 'checked' : ''} ${disabled ? 'disabled' : ''}>
                         <span class="tool-market-icon">${escapeHtml(tool.icon)}</span>
                         <div class="tool-market-copy">
-                            <div class="tool-market-title">${escapeHtml(english() ? (tool.nameEn || tool.name) : tool.name)}</div>
+                            <div class="tool-market-title">${escapeHtml(english() ? (tool.nameEn || tool.name) : tool.name)}${badgeHtml}</div>
                             <p>${escapeHtml(description || '')}</p>${localModified}${conflict}
                             <div class="tool-market-meta">
                                 <span>${text('本地', 'Local')} ${escapeHtml(tool.localVersion || (tool.localSource === 'bundled' ? text('随平台内置', 'Bundled') : '-'))} → ${escapeHtml(tool.releaseVersion)}</span>
@@ -3028,8 +3094,9 @@
                             </div>
                         </div>
                         <span class="tool-market-status ${escapeHtml(tool.status)}">${escapeHtml(statusLabels[tool.status] || tool.status)}</span>
-                    </article>`;
-                }).join('') : `<div class="tool-market-empty">${text('市场目录中暂无工具', 'No tools are currently listed')}</div>`;
+                    </article>`);
+                }
+                list.innerHTML = itemsHtml.length ? itemsHtml.join('') : `<div class="tool-market-empty">${text('市场目录中暂无工具', 'No tools are currently listed')}</div>`;
                 applyButton.disabled = selectable === 0;
                 applyButton.textContent = text('更新所选工具', 'Update selected tools');
                 refreshButton.textContent = text('刷新', 'Refresh');
@@ -3137,6 +3204,20 @@
                     refreshButton.disabled = false;
                 }
             });
+            window.__simulateToolMarketUpdates = () => {
+                if (!preview || !Array.isArray(preview.tools) || preview.tools.length < 2) {
+                    console.warn('请先点击打开工具市场加载目录数据');
+                    return;
+                }
+                const mock = JSON.parse(JSON.stringify(preview));
+                mock.tools[0].status = 'update';
+                mock.tools[0].recommended = true;
+                mock.tools[0].releaseVersion = '2026.10.01 (新版本)';
+                mock.tools[1].status = 'missing';
+                mock.tools[1].recommended = true;
+                render(mock);
+                console.log('已模拟有更新/新工具场景：已置顶并高亮待更新项，其余卡片保持弱化。点击“刷新”可恢复真实状态。');
+            };
         }
 
         async function downloadCustomTool(slug) {
