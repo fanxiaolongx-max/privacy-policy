@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const { fingerprintFiles } = require('./tool-content-fingerprint');
 
 const TOOL_MANIFEST_FILE = '.tool-manifest.json';
 const SYSTEM_MARKER = 'tools-platform';
@@ -38,17 +39,6 @@ function listFiles(rootDir, relativeDir = '') {
         }
     }
     return files.sort();
-}
-
-function fingerprintFiles(rootDir, files) {
-    const hash = crypto.createHash('sha256');
-    for (const relativePath of files) {
-        hash.update(relativePath);
-        hash.update('\0');
-        hash.update(fs.readFileSync(path.join(rootDir, relativePath)));
-        hash.update('\0');
-    }
-    return hash.digest('hex');
 }
 
 function fileDigest(filePath) {

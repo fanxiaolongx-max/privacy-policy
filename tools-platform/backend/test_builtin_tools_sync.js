@@ -8,6 +8,7 @@ const {
     initializeBuiltinTools,
     previewBuiltinTools
 } = require('./models/builtin-tools-sync');
+const { fingerprintFiles } = require('./models/tool-content-fingerprint');
 
 function writeFile(root, relativePath, content) {
     const target = path.join(root, relativePath);
@@ -43,6 +44,19 @@ function run() {
     const stateFile = path.join(tempRoot, 'data/builtin-tools-sync-decisions.json');
     const backupRoot = path.join(tempRoot, 'data/backups/builtin-tools');
     try {
+        const lfDir = path.join(tempRoot, 'lf');
+        const crlfDir = path.join(tempRoot, 'crlf');
+        writeFile(lfDir, 'index.html', '<html>\ntext\n</html>\n');
+        writeFile(crlfDir, 'index.html', '<html>\r\ntext\r\n</html>\r\n');
+        writeFile(lfDir, '.tool-manifest.json', '{"version":1,"tool":{"slug":"line-endings"}}\n');
+        writeFile(crlfDir, '.tool-manifest.json', '{\r\n  "tool": {"slug":"line-endings"},\r\n  "version": 1,\r\n  "builtIn": true,\r\n  "system": {"fingerprint":"legacy"}\r\n}\r\n');
+        const fingerprintFilesList = ['.tool-manifest.json', 'index.html'];
+        assert.strictEqual(
+            fingerprintFiles(lfDir, fingerprintFilesList),
+            fingerprintFiles(crlfDir, fingerprintFilesList),
+            'tool fingerprints should ignore platform line endings and runtime manifest metadata'
+        );
+
         writeBundledTool(sourceDir, 'system-tool', {
             'index.html': '<html>v1</html>',
             'assets/obsolete.js': 'obsolete'

@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const JSZip = require('jszip');
+const { fingerprintFiles } = require('../backend/models/tool-content-fingerprint');
 
 const projectRoot = path.resolve(__dirname, '..');
 const sourceRoot = path.join(projectRoot, 'backend', 'builtin-tools');
@@ -25,17 +26,6 @@ function listFiles(root, relative = '') {
         else if (entry.isFile()) result.push(item);
     }
     return result.sort();
-}
-
-function directoryFingerprint(root, files) {
-    const hash = crypto.createHash('sha256');
-    for (const file of files) {
-        hash.update(file);
-        hash.update('\0');
-        hash.update(fs.readFileSync(path.join(root, file)));
-        hash.update('\0');
-    }
-    return hash.digest('hex');
 }
 
 function releaseVersion(tool) {
@@ -121,7 +111,7 @@ async function main() {
                 url: `packages/${filename}`,
                 size: buffer.length,
                 sha256: packageDigest,
-                directoryFingerprint: directoryFingerprint(toolRoot, files),
+                directoryFingerprint: fingerprintFiles(toolRoot, files),
                 files: fileRecords
             }
         });

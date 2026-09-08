@@ -8,6 +8,7 @@ const path = require('path');
 const JSZip = require('jszip');
 const builtinToolsSync = require('./builtin-tools-sync');
 const repo = require('./custom-tools-repository');
+const { fingerprintFiles } = require('./tool-content-fingerprint');
 const { getDataDir } = require('./store');
 
 const DEFAULT_CATALOG_URL = 'https://raw.githubusercontent.com/fanxiaolongx-max/privacy-policy/tool-market/catalog.json';
@@ -227,7 +228,16 @@ function compareCatalogTool(item, { targetDir = repo.CUSTOM_TOOLS_DIR, platformV
     const managed = Boolean(manifest && manifest.system && manifest.system.managedBy === builtinToolsSync.SYSTEM_MARKER);
     const linked = Boolean(manifest && manifest.market && manifest.market.id === item.id) || managed;
     const compatible = versionAtLeast(platformVersion, item.minPlatformVersion);
-    const localFingerprint = manifest && manifest.system && manifest.system.fingerprint || null;
+    let localFingerprint = manifest && manifest.system && manifest.system.fingerprint || null;
+    if (managed && !manifest.market && Array.isArray(manifest.system.files)) {
+        const managedFiles = [repo.TOOL_MANIFEST_FILE, ...manifest.system.files]
+            .filter((file, index, files) => files.indexOf(file) === index);
+        try {
+            localFingerprint = managedFiles.every(file => fs.existsSync(path.join(toolDir, file)))
+                ? fingerprintFiles(toolDir, managedFiles)
+                : null;
+        } catch (_) { localFingerprint = null; }
+    }
     let status = 'unchanged';
     if (!compatible) status = 'incompatible';
     else if (!exists) status = 'missing';

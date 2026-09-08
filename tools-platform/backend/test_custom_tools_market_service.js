@@ -7,6 +7,7 @@ const os = require('os');
 const path = require('path');
 
 const market = require('./models/custom-tools-market-service');
+const { fingerprintFiles } = require('./models/tool-content-fingerprint');
 
 function writeManifest(root, slug, extra = {}) {
     const dir = path.join(root, slug);
@@ -63,6 +64,20 @@ function run() {
         });
         const update = market.compareCatalogTool(catalogTool('managed'), { targetDir: root, platformVersion: '1.0.209' });
         assert.strictEqual(update.status, 'update');
+
+        const bundledDir = writeManifest(root, 'line-ending-bundled', {
+            builtIn: true,
+            system: { managedBy: 'tools-platform', fingerprint: 'legacy-windows-fingerprint', files: ['index.html'] }
+        });
+        fs.writeFileSync(path.join(bundledDir, 'index.html'), '<html>\r\nlocal\r\n</html>\r\n');
+        const bundledFingerprint = fingerprintFiles(bundledDir, ['.tool-manifest.json', 'index.html']);
+        const bundled = market.compareCatalogTool(catalogTool('line-ending-bundled', {
+            package: {
+                ...catalogTool('line-ending-bundled').package,
+                directoryFingerprint: bundledFingerprint
+            }
+        }), { targetDir: root, platformVersion: '1.0.209' });
+        assert.strictEqual(bundled.status, 'unchanged', 'legacy bundled fingerprints should be recomputed canonically');
 
         writeManifest(root, 'current', {
             builtIn: true,
