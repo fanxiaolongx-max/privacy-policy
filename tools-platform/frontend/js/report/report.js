@@ -8,7 +8,6 @@ let standardTotalScore = 0;
 let metricGroups = []; // [{id, name, metrics:[label,...]}]
 let editingManualMetricLabel = null;
 const REPORT_TARGET_MONTH_KEY = 'report_target_month';
-const REPORT_ALL_SNAPSHOT_TREND_KEY = 'report_all_snapshot_trends';
 let metricCountTrendData = null;
 let metricCountTrendLoading = null;
 let expiringWarningTrendData = null;
@@ -668,6 +667,58 @@ function buildItemTrendTable(trends, kind) {
     }).join('');
 }
 
+function buildMonthlyTrendDetailsTable(trends, kind) {
+    const rows = Array.isArray(trends) ? trends : [];
+    if (!rows.length) return `<div class="data-source-note">${escapeHTML(rt('report.trend.noDetails'))}</div>`;
+
+    const dimensionNames = new Set();
+    rows.forEach(row => {
+        Object.keys(row.series || {}).forEach(name => {
+            if (name !== '整体' && name !== rt('report.trend.overall')) dimensionNames.add(name);
+        });
+    });
+    const dimensions = Array.from(dimensionNames).sort((a, b) => String(a).localeCompare(String(b), 'zh-Hans-CN'));
+    const formatValue = item => {
+        if (!item) return '--';
+        if (item.raw !== null && item.raw !== undefined && String(item.raw).trim()) return String(item.raw);
+        return Number.isFinite(Number(item.value)) ? String(+Number(item.value).toFixed(2)) : '--';
+    };
+    const header = dimensions.map(name => `<th title="${escapeHTML(name)}">${escapeHTML(name)}</th>`).join('');
+    const body = rows.map(row => {
+        const month = row.trend_month || String(row.created_at || '').slice(0, 7) || '--';
+        const overall = Number.isFinite(Number(row.total_value)) ? +Number(row.total_value).toFixed(2) : '--';
+        const scoreCell = kind === 'manual'
+            ? `<td>${Number.isFinite(Number(row.total_score)) ? +Number(row.total_score).toFixed(2) : '--'}</td>`
+            : '';
+        const detailCells = dimensions.map(name => `<td>${escapeHTML(formatValue(row.series?.[name]))}</td>`).join('');
+        return `
+            <tr>
+                <td class="metric-month-cell">${escapeHTML(month)}</td>
+                <td>${escapeHTML(formatReportDateTime(row.created_at))}</td>
+                <td>${escapeHTML(String(overall))}</td>
+                ${scoreCell}
+                ${detailCells}
+            </tr>
+        `;
+    }).join('');
+    return `
+        <div class="metric-monthly-table-wrap">
+            <table class="metric-monthly-table">
+                <thead>
+                    <tr>
+                        <th>${escapeHTML(rt('report.trend.dataMonth'))}</th>
+                        <th>${escapeHTML(rt('report.trend.snapshotDate'))}</th>
+                        <th>${escapeHTML(rt('report.trend.overallValue'))}</th>
+                        ${kind === 'manual' ? `<th>${escapeHTML(rt('report.trend.scoreImpact'))}</th>` : ''}
+                        ${header}
+                    </tr>
+                </thead>
+                <tbody>${body}</tbody>
+            </table>
+        </div>
+    `;
+}
+
 function renderMetricTrendLink(label, kind = 'metric') {
     const cleanLabel = String(label || '').trim();
     if (!cleanLabel) return '';
@@ -688,8 +739,7 @@ function openMetricItemTrendModal(label, kind = 'metric') {
     const cleanLabel = String(label || '').trim();
     if (!cleanLabel) return;
     const titleKind = kind === 'manual' ? rt('report.trend.manualItem') : rt('report.trend.assessmentMetric');
-    const includeAllSnapshots = localStorage.getItem(REPORT_ALL_SNAPSHOT_TREND_KEY) === 'true';
-    const url = `/api/db/metric_item_trend?days=90&all_snapshots=${includeAllSnapshots ? '1' : '0'}&kind=${encodeURIComponent(kind)}&label=${encodeURIComponent(cleanLabel)}`;
+    const url = `/api/db/metric_item_trend?months=6&kind=${encodeURIComponent(kind)}&label=${encodeURIComponent(cleanLabel)}`;
     API.get(url).then(data => {
         const trends = Array.isArray(data.trends) ? data.trends : [];
         const targets = data.targets || null;
@@ -716,7 +766,7 @@ function openMetricItemTrendModal(label, kind = 'metric') {
                 <div class="metric-trend-head" style="background:linear-gradient(135deg,#172554,#0f766e);">
                     <div>
                         <h3>${escapeHTML(rt('report.trend.itemModalTitle', { kind: titleKind }))}</h3>
-                        <p>${escapeHTML(cleanLabel)} · 最近 ${escapeHTML(String(data.days || 90))} 天 · ${data.all_snapshots ? '全部导入快照' : '每天最新快照'}</p>
+                        <p>${escapeHTML(cleanLabel)} · ${escapeHTML(rt('report.trend.monthlySamplingSummary', { months: data.months || 6 }))}</p>
                     </div>
                     <button class="metric-trend-close" onclick="document.getElementById('metric-item-trend-modal').classList.remove('open')">&times;</button>
                 </div>
@@ -725,10 +775,10 @@ function openMetricItemTrendModal(label, kind = 'metric') {
                         <div class="metric-trend-kpi">
                             <div class="label">${escapeHTML(rt('report.trend.latestOverallValue'))}</div>
                             <div class="value">${latestVal}</div>
-                            <div class="data-source-note">${escapeHTML(rt('report.trend.comparedWithPrevious', { delta: formatDelta(+delta.toFixed(2)) }))}</div>
+                            <div class="data-source-note">${escapeHTML(rt('report.trend.comparedWithPreviousMonth', { delta: formatDelta(+delta.toFixed(2)) }))}</div>
                         </div>
                         <div class="metric-trend-kpi">
-                            <div class="label">${escapeHTML(rt('report.trend.snapshotCoverage'))}</div>
+                            <div class="label">${escapeHTML(rt('report.trend.monthCoverage'))}</div>
                             <div class="value">${trends.length}</div>
                             <div class="data-source-note">${latest ? escapeHTML(rt('report.trend.latestSnapshotAt', { time: formatReportDateTime(latest.created_at) })) : escapeHTML(rt('report.trend.noSnapshot'))}</div>
                         </div>
@@ -741,7 +791,7 @@ function openMetricItemTrendModal(label, kind = 'metric') {
                     <div class="metric-trend-grid">
                         <div class="metric-chart-card">
                             <div class="metric-chart-title">
-                                <strong>${escapeHTML(rt('report.trend.last90LineChart'))}</strong>
+                                <strong>${escapeHTML(rt('report.trend.last6MonthLineChart'))}</strong>
                                 <span>${kind === 'manual' || !targets ? escapeHTML(rt('report.trend.overallAndTopChanges')) : `${escapeHTML(rt('report.trend.overallDimensionTargetPrefix'))} ${renderTargetSummaryInline(targets)}`}</span>
                             </div>
                             ${buildItemTrendChart(trends, { title: cleanLabel, targets })}
@@ -753,6 +803,13 @@ function openMetricItemTrendModal(label, kind = 'metric') {
                             </div>
                             <div class="category-change-list">${buildItemTrendTable(trends, kind)}</div>
                         </div>
+                    </div>
+                    <div class="metric-chart-card metric-monthly-detail-card">
+                        <div class="metric-chart-title">
+                            <strong>${escapeHTML(rt('report.trend.monthlyDetails'))}</strong>
+                            <span>${escapeHTML(rt('report.trend.monthlyDetailsNote'))}</span>
+                        </div>
+                        ${buildMonthlyTrendDetailsTable(trends, kind)}
                     </div>
                 </div>
             </div>
@@ -4457,18 +4514,6 @@ document.addEventListener('DOMContentLoaded', () => {
         modeSelect.addEventListener('change', () => {
             API.setSourceMode('report_sla_data', modeSelect.value);
             initReport();
-        });
-    }
-    const allSnapshotToggle = document.getElementById('allSnapshotTrendToggle');
-    if (allSnapshotToggle) {
-        allSnapshotToggle.checked = localStorage.getItem(REPORT_ALL_SNAPSHOT_TREND_KEY) === 'true';
-        allSnapshotToggle.addEventListener('change', () => {
-            localStorage.setItem(REPORT_ALL_SNAPSHOT_TREND_KEY, String(allSnapshotToggle.checked));
-            showToast(allSnapshotToggle.checked ? '指标趋势已切换为全部导入快照' : '指标趋势已切换为每天最新快照', 'success');
-            const openModal = document.getElementById('metric-item-trend-modal');
-            if (openModal?.classList.contains('open')) {
-                openMetricItemTrendModal(openModal.dataset.trendLabel, openModal.dataset.trendKind || 'metric');
-            }
         });
     }
     if (window.renderReportSourcePanel) window.renderReportSourcePanel();

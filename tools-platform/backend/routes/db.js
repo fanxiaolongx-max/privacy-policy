@@ -7,6 +7,7 @@ const zlib = require('zlib');
 const { ensureReportDataDir, getReportDataDir } = require('../models/report-store');
 const { createDatabaseProxy } = require('../models/tenant-sqlite-pool');
 const configChangeMonitor = require('../models/config-change-monitor');
+const { selectLatestSnapshotPerMonth } = require('../models/report-trend-utils');
 
 ensureReportDataDir();
 const db = createDatabaseProxy('report.db', 'report');
@@ -687,25 +688,19 @@ router.get('/expiring_warning_trends', (req, res) => {
     });
 });
 
-function getMetricTrendSnapshotRows(days, includeAll, callback) {
-    const sinceModifier = `-${days} days`;
-    const sql = includeAll ? `
-        SELECT id, snapshot_id, month, created_at, raw_data_json
+function getMetricTrendSnapshotRows(months, callback) {
+    const monthOffset = `-${Math.max(0, months - 1)} months`;
+    const sql = `
+        SELECT id, snapshot_id, month, created_at, raw_data_json,
+               strftime('%Y-%m', created_at) AS trend_month
         FROM ReportSnapshots
-        WHERE DATE(created_at) >= DATE('now', ?)
+        WHERE DATE(created_at) >= DATE('now', 'start of month', ?)
         ORDER BY datetime(created_at) ASC, id ASC
-    ` : `
-        SELECT s.id, s.snapshot_id, s.month, s.created_at, s.raw_data_json
-        FROM ReportSnapshots s
-        INNER JOIN (
-            SELECT DATE(created_at) AS d, MAX(id) AS max_id
-            FROM ReportSnapshots
-            WHERE DATE(created_at) >= DATE('now', ?)
-            GROUP BY DATE(created_at)
-        ) latest ON s.id = latest.max_id
-        ORDER BY datetime(s.created_at) ASC, s.id ASC
     `;
-    db.all(sql, [sinceModifier], callback);
+    db.all(sql, [monthOffset], (err, rows) => {
+        if (err) return callback(err);
+        callback(null, selectLatestSnapshotPerMonth(rows));
+    });
 }
 
 function calcManualAdjustScore(item, count) {
@@ -732,16 +727,15 @@ function parseMetricTargetValue(value) {
 router.get('/metric_item_trend', (req, res) => {
     const label = String(req.query.label || '').trim();
     const kind = String(req.query.kind || 'metric');
-    const daysRaw = parseInt(req.query.days, 10);
-    const days = Number.isFinite(daysRaw) && daysRaw > 0 ? Math.min(daysRaw, 365) : 90;
-    const includeAllSnapshots = ['1', 'true', 'all'].includes(String(req.query.all_snapshots || '').toLowerCase());
+    const monthsRaw = parseInt(req.query.months, 10);
+    const months = Number.isFinite(monthsRaw) && monthsRaw > 0 ? Math.min(monthsRaw, 24) : 6;
     if (!label) return res.status(400).json({ error: 'Missing label' });
 
-    getMetricTrendSnapshotRows(days, includeAllSnapshots, (err, snapshots) => {
+    getMetricTrendSnapshotRows(months, (err, snapshots) => {
         if (err) return res.status(500).json({ error: err.message });
         if (!snapshots.length) {
             markSqliteSource(res, 'GET /api/db/metric_item_trend');
-            return res.json({ label, kind, days, all_snapshots: includeAllSnapshots, trends: [] });
+            return res.json({ label, kind, months, sampling: 'monthly_latest', trends: [] });
         }
 
         if (kind === 'manual') {
@@ -772,6 +766,7 @@ router.get('/metric_item_trend', (req, res) => {
                 return {
                     snapshot_id: row.snapshot_id,
                     month: row.month,
+                    trend_month: row.trend_month,
                     created_at: row.created_at,
                     total_value: totalValue,
                     total_score: totalScore,
@@ -779,7 +774,7 @@ router.get('/metric_item_trend', (req, res) => {
                 };
             });
             markSqliteSource(res, 'GET /api/db/metric_item_trend');
-            return res.json({ label, kind, days, all_snapshots: includeAllSnapshots, trends });
+            return res.json({ label, kind, months, sampling: 'monthly_latest', trends });
         }
 
         const snapshotIds = snapshots.map(row => row.snapshot_id);
@@ -822,6 +817,7 @@ router.get('/metric_item_trend', (req, res) => {
                 return {
                     snapshot_id: row.snapshot_id,
                     month: row.month,
+                    trend_month: row.trend_month,
                     created_at: row.created_at,
                     total_value: totalValue,
                     total_score: null,
@@ -855,8 +851,8 @@ router.get('/metric_item_trend', (req, res) => {
             res.json({
                 label,
                 kind: 'metric',
-                days,
-                all_snapshots: includeAllSnapshots,
+                months,
+                sampling: 'monthly_latest',
                 trends,
                 targets: {
                     current: Number.isFinite(currentMonth) ? monthTargets[currentMonth] || null : null,

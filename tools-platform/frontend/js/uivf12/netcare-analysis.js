@@ -19,11 +19,24 @@
         const EOS_SETTINGS_KEY = 'uivf12-netcare-eos-settings-v1';
         const LANGUAGE_KEY = 'uivf12-netcare-language-v1';
         const CHANGE_BU_KEY = 'uivf12-netcare-change-bu-v1';
+        const CHANGE_PRODUCT_LINE_KEY = 'uivf12-netcare-change-product-lines-v1';
         const SR_TYPE_FILTER_KEY = 'uivf12-netcare-sr-types-v1';
+        const SR_PRODUCT_LINE_KEY = 'uivf12-netcare-sr-product-lines-v1';
         const CHANGE_BU_OPTIONS = ['NIS', 'CS', 'AMS', 'NIS-ITS', 'Software', 'SEC', '专业服务', 'PS', 'NRO', '工程服务'];
+        const CHANGE_PRODUCT_LINE_OPTIONS = ['data_storage', 'wireless', 'cloud_core_network', 'data_communication', 'software_business', 'optical_business', 'computing', 'service_product', 'opmt', 'digital_power'];
+        const SR_PRODUCT_LINE_OPTIONS = ['wireless', 'opmt', 'digital_power', 'service_product', 'optical_business', 'computing', 'data_storage', 'cloud_core_network', 'data_communication', 'industry_consulting', 'software_business'];
         let uiLanguage = 'zh';
         try { uiLanguage = localStorage.getItem(LANGUAGE_KEY) === 'en' ? 'en' : 'zh'; } catch (error) {}
         function tr(zh, en) { return uiLanguage === 'en' ? en : zh; }
+        function productLineLabel(value) {
+            const labels = {
+                data_storage: tr('数据存储', 'Data Storage'), wireless: tr('无线', 'Wireless'), cloud_core_network: tr('云核心网', 'Cloud Core Network'),
+                data_communication: tr('数据通信', 'Data Communication'), software_business: tr('软件业务', 'Software Business'), optical_business: tr('光业务', 'Optical Business'),
+                computing: tr('计算', 'Computing'), service_product: tr('服务产品', 'Service Product'), opmt: 'OPMT', digital_power: tr('数字能源', 'Digital Power'),
+                industry_consulting: tr('行业咨询', 'Industry Consulting')
+            };
+            return labels[value] || value;
+        }
         const API_URLS = {
             certificate: 'https://netcare.huawei.com/adc-service/web/rest/v1/services/NetCareOperationCenter/cs_nc_operation_center_extend/op_ex_digital_certificate_l3_grid_get_list',
             eos: 'https://netcare.huawei.com/adc-service/web/rest/v1/services/NetCareOperationCenter/cs_nc_operation_center_extend/op_ex_eos_detail_get_list',
@@ -66,7 +79,9 @@
             .nc-status{padding:7px 10px;border-bottom:1px solid rgba(148,163,184,.12);color:#94a3b8;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.nc-content{min-height:0;flex:1;overflow:auto;padding:10px}.nc-view{display:none}.nc-view.active{display:block}
             .nc-card{margin-bottom:10px;border:1px solid rgba(148,163,184,.2);border-radius:9px;overflow:hidden;background:rgba(15,23,42,.74)}.nc-card-title{display:flex;justify-content:space-between;gap:10px;padding:9px 10px;border-bottom:1px solid rgba(148,163,184,.16);color:#f8fafc;font-size:11px;font-weight:850}.nc-card-title small{color:#94a3b8;font-size:8px;font-weight:500}.nc-table-wrap{overflow:auto}.nc-table{width:max-content;min-width:100%;border-collapse:collapse;font-size:9px}.nc-table th,.nc-table td{padding:6px 7px;border-right:1px solid rgba(148,163,184,.13);border-bottom:1px solid rgba(148,163,184,.13);white-space:nowrap;text-align:center}.nc-table th{position:sticky;top:0;background:#172033;color:#bae6fd}.nc-table td{color:#cbd5e1}.nc-table .nc-name{text-align:left;font-weight:800}.nc-table .nc-child{padding-left:22px;color:#94a3b8;font-weight:500}.nc-table .nc-total td{background:rgba(14,116,144,.2);font-weight:850}.nc-table .nc-bg td{background:rgba(30,41,59,.75);font-weight:800}.nc-good{color:#86efac!important;font-weight:850}.nc-bad{color:#fca5a5!important;font-weight:850}.nc-muted{color:#64748b!important}.nc-target{color:#7dd3fc}.nc-note{padding:8px 10px;color:#64748b;font-size:8px;line-height:1.55}.nc-loading,.nc-error,.nc-empty{padding:36px 12px;text-align:center;color:#94a3b8;font-size:10px}.nc-error{color:#fca5a5}.nc-option{display:flex;align-items:center;gap:7px;margin-bottom:9px;padding:8px 10px;border:1px solid rgba(148,163,184,.2);border-radius:8px;background:rgba(15,23,42,.7);color:#cbd5e1;font-size:9px}.nc-option input{accent-color:#06b6d4}
             .nc-eos-settings{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-bottom:10px;padding:8px 10px;border:1px solid rgba(34,211,238,.24);border-radius:9px;background:rgba(8,47,73,.36);color:#bae6fd;font-size:9px}.nc-eos-settings label{display:flex;align-items:center;gap:5px}.nc-eos-settings input,.nc-eos-settings select,.nc-plan-input{box-sizing:border-box;border:1px solid rgba(148,163,184,.34);border-radius:5px;background:#0f172a;color:#f8fafc;font:inherit}.nc-eos-settings input{width:54px;padding:4px 5px;text-align:right}.nc-eos-settings select{padding:4px 6px}.nc-top-n-control{display:inline-flex;align-items:center;gap:3px}.nc-top-n-control input{width:40px!important;height:25px;padding:2px 4px!important;text-align:center!important;-moz-appearance:textfield}.nc-top-n-control input::-webkit-inner-spin-button,.nc-top-n-control input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}.nc-top-n-step{width:24px;height:25px;padding:0;border:1px solid rgba(251,191,36,.38);border-radius:5px;background:rgba(146,64,14,.3);color:#fde68a;font-size:12px;font-weight:900;cursor:pointer}.nc-top-n-step:hover{filter:brightness(1.2)}.nc-export-button{margin-left:auto;height:27px;padding:0 10px;border:1px solid rgba(74,222,128,.45);border-radius:6px;background:linear-gradient(135deg,rgba(22,101,52,.7),rgba(6,78,59,.72));color:#dcfce7;font-size:9px;font-weight:900;cursor:pointer;box-shadow:0 3px 10px rgba(16,185,129,.12)}.nc-export-button:hover{filter:brightness(1.14)}.nc-export-button:disabled{opacity:.55;cursor:wait}.nc-plan-control{display:inline-flex;align-items:center;justify-content:center;gap:3px}.nc-plan-input{width:48px;height:25px;padding:3px 4px;text-align:center;border-radius:4px!important;-moz-appearance:textfield}.nc-plan-input::-webkit-inner-spin-button,.nc-plan-input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}.nc-plan-step,.nc-plan-preset,.nc-bulk-button{height:25px;border:1px solid rgba(148,163,184,.3);border-radius:5px;color:#e2e8f0;font-size:8px;font-weight:800;cursor:pointer;transition:background .15s,border-color .15s,transform .15s}.nc-plan-step{width:25px;padding:0;background:#1e293b;color:#a5f3fc;font-size:13px}.nc-plan-step:hover{border-color:#22d3ee;background:#164e63}.nc-plan-preset{padding:0 7px;background:rgba(30,64,175,.28);color:#bfdbfe;border-color:rgba(96,165,250,.38)}.nc-plan-preset[data-plan-action="all"]{background:rgba(22,101,52,.3);color:#bbf7d0;border-color:rgba(74,222,128,.38)}.nc-plan-preset[data-plan-action="clear"]{background:rgba(127,29,29,.25);color:#fecaca;border-color:rgba(248,113,113,.32)}.nc-plan-preset:hover,.nc-bulk-button:hover{filter:brightness(1.2)}.nc-plan-step:active,.nc-plan-preset:active,.nc-bulk-button:active{transform:translateY(1px)}.nc-card-title-main{display:flex;align-items:baseline;gap:8px}.nc-bulk-actions{display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;gap:4px}.nc-bulk-button{padding:0 8px;background:rgba(30,64,175,.28);color:#bfdbfe;border-color:rgba(96,165,250,.38)}.nc-bulk-button[data-bulk-action="all"]{background:rgba(22,101,52,.3);color:#bbf7d0;border-color:rgba(74,222,128,.38)}.nc-bulk-button[data-bulk-action="topn"]{background:rgba(146,64,14,.3);color:#fde68a;border-color:rgba(251,191,36,.38)}.nc-bulk-button[data-bulk-action="clear"]{background:rgba(127,29,29,.25);color:#fecaca;border-color:rgba(248,113,113,.32)}.nc-collapse-button{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;margin-right:6px;border:1px solid rgba(103,232,249,.3);border-radius:5px;background:rgba(8,145,178,.18);color:#a5f3fc;font-size:10px;font-weight:900;cursor:pointer;vertical-align:middle;transition:background .15s,transform .15s}.nc-collapse-button:hover{background:rgba(8,145,178,.38)}.nc-collapse-button:active{transform:scale(.94)}.nc-merged-row td{background:rgba(15,23,42,.88)!important}.nc-merged-row.customer td{border-top:1px solid rgba(103,232,249,.25)}.nc-merged-row.line td{background:rgba(30,41,59,.55)!important}.nc-merged-label{color:#e2e8f0!important;text-align:left!important;font-weight:850}.nc-merged-hint{color:#64748b!important;font-size:7px}.nc-readonly-plan{color:#cbd5e1;font-weight:800}.nc-bg-divider td{background:rgba(8,47,73,.48)!important;color:#67e8f9!important;font-weight:850;text-align:left!important}.nc-customer-divider td{background:rgba(30,41,59,.68)!important;color:#e2e8f0!important;font-weight:800;text-align:left!important;padding-left:16px!important}.nc-line-divider td{background:rgba(30,41,59,.34)!important;color:#94a3b8!important;font-weight:750;text-align:left!important;padding-left:28px!important}.nc-product-divider td{color:#7dd3fc!important;font-weight:750;text-align:left!important;padding-left:40px!important}.nc-item-label{text-align:left!important;padding-left:40px!important}.nc-version-label{text-align:left!important;padding-left:52px!important}.nc-top-list{min-width:180px;max-width:300px;text-align:left;font-size:7px;line-height:1.45;color:#cbd5e1}.nc-top-customer+.nc-top-customer{margin-top:5px;padding-top:4px;border-top:1px dashed rgba(148,163,184,.2)}.nc-top-customer-title{display:block;margin-bottom:1px;color:#67e8f9;font-size:7px;font-weight:900}.nc-top-list span{display:block}.nc-top-list b{color:#f8fafc}.nc-top-empty{color:#64748b;text-align:center}.nc-eos-briefs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:-1px 0 10px}.nc-eos-brief{position:relative;padding:10px 11px 10px 14px;border:1px solid rgba(148,163,184,.18);border-radius:9px;background:linear-gradient(135deg,rgba(15,23,42,.94),rgba(8,47,73,.42));color:#cbd5e1;font-size:8px;line-height:1.7}.nc-eos-brief:before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:3px;background:#22d3ee}.nc-eos-brief.version:before{background:#a78bfa}.nc-eos-brief-title{margin-bottom:3px;color:#f8fafc;font-size:10px;font-weight:900}.nc-eos-brief p{margin:0}.nc-eos-brief p+p{margin-top:3px}.nc-eos-brief strong{color:#67e8f9;font-weight:900}.nc-eos-brief.version strong{color:#c4b5fd}.nc-eos-brief .nc-brief-focus{color:#fbbf24}.nc-eos-brief .nc-brief-good{color:#86efac}.nc-eos-brief .nc-brief-gap{color:#fca5a5}@media(max-width:760px){.nc-eos-briefs{grid-template-columns:1fr}.nc-card-title{align-items:flex-start;flex-direction:column}.nc-bulk-actions{justify-content:flex-start}.nc-export-button{margin-left:0}}
-            .nc-change-filter{margin-bottom:10px;padding:10px;border:1px solid rgba(56,189,248,.25);border-radius:9px;background:linear-gradient(135deg,rgba(8,47,73,.48),rgba(15,23,42,.78))}.nc-change-filter-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}.nc-change-filter-head strong{color:#f8fafc;font-size:11px}.nc-change-filter-head small{color:#94a3b8;font-size:8px}.nc-bu-controls{display:flex;align-items:center;flex-wrap:wrap;gap:5px}.nc-bu-all,.nc-bu-chip,.nc-bu-apply{height:27px;box-sizing:border-box;border:1px solid rgba(148,163,184,.28);border-radius:6px;background:#1e293b;color:#cbd5e1;font-size:8px;font-weight:800}.nc-bu-all,.nc-bu-apply{padding:0 9px;cursor:pointer}.nc-bu-all.active{border-color:#22d3ee;background:#0e7490;color:#fff}.nc-bu-chip{display:inline-flex;align-items:center;gap:4px;padding:0 8px;cursor:pointer}.nc-bu-chip:has(input:checked){border-color:#60a5fa;background:rgba(30,64,175,.55);color:#dbeafe}.nc-bu-chip input{width:11px;height:11px;margin:0;accent-color:#38bdf8}.nc-bu-apply{margin-left:auto;border-color:rgba(74,222,128,.48);background:linear-gradient(135deg,rgba(22,101,52,.7),rgba(6,78,59,.72));color:#dcfce7}.nc-bu-apply:disabled{opacity:.5;cursor:wait}.nc-bu-note{margin-top:7px;color:#64748b;font-size:8px;line-height:1.45}@media(max-width:760px){.nc-change-filter-head{align-items:flex-start;flex-direction:column}.nc-bu-apply{margin-left:0}}
+            .nc-progress-note{display:block;box-sizing:border-box;width:190px;min-width:150px;height:42px;padding:6px 7px;resize:vertical;border:1px solid rgba(56,189,248,.28);border-radius:6px;background:rgba(8,47,73,.28);color:#e2e8f0;font:inherit;line-height:1.4;white-space:pre-wrap}.nc-progress-note::placeholder{color:#64748b}.nc-progress-note:focus{outline:none;border-color:#38bdf8;background:rgba(8,47,73,.5);box-shadow:0 0 0 2px rgba(56,189,248,.1)}.nc-bulk-button[data-collapse-action]{background:rgba(88,28,135,.28);color:#e9d5ff;border-color:rgba(192,132,252,.35)}.nc-bulk-button[data-collapse-action="expand"]{background:rgba(14,116,144,.24);color:#a5f3fc;border-color:rgba(34,211,238,.32)}
+            .nc-eos-table-wrap{position:relative;max-height:min(64vh,620px);overscroll-behavior:contain;scrollbar-gutter:stable}.nc-eos-detail-table th{z-index:30;box-shadow:0 2px 7px rgba(2,6,23,.42)}.nc-eos-sticky-context{position:sticky;left:0;z-index:25;height:0;pointer-events:none}.nc-eos-sticky-item{display:flex;align-items:center;box-sizing:border-box;min-height:25px;padding:4px 10px;border-bottom:1px solid rgba(148,163,184,.18);font-size:8px;font-weight:850;line-height:1.35;white-space:normal;backdrop-filter:blur(8px);box-shadow:0 3px 8px rgba(2,6,23,.26);animation:ncStickyIn .14s ease-out}.nc-eos-sticky-item.bg{background:rgba(8,47,73,.96);color:#67e8f9}.nc-eos-sticky-item.customer{padding-left:18px;background:rgba(30,41,59,.96);color:#e2e8f0}.nc-eos-sticky-item.line{padding-left:30px;background:rgba(30,41,59,.92);color:#94a3b8}.nc-eos-sticky-item.product{padding-left:42px;background:rgba(15,23,42,.94);color:#7dd3fc}.nc-table-fullscreen-button{background:rgba(67,56,202,.3)!important;color:#ddd6fe!important;border-color:rgba(167,139,250,.45)!important}.nc-eos-card.nc-eos-fullscreen{position:fixed;inset:10px;z-index:2147483646;display:flex;flex-direction:column;margin:0;border-color:rgba(103,232,249,.48);background:#020617;box-shadow:0 0 0 100vmax rgba(2,6,23,.84),0 24px 70px rgba(0,0,0,.62)}.nc-eos-card.nc-eos-fullscreen .nc-card-title{flex:0 0 auto;background:linear-gradient(135deg,#0f172a,#164e63)}.nc-eos-card.nc-eos-fullscreen .nc-eos-table-wrap{flex:1;min-height:0;max-height:none}.nc-eos-card.nc-eos-fullscreen .nc-table-fullscreen-button{background:rgba(127,29,29,.55)!important;color:#fecaca!important;border-color:rgba(248,113,113,.5)!important}.nc-eos-fullscreen-open{overflow:hidden!important}@keyframes ncStickyIn{from{opacity:.4;transform:translateY(-3px)}to{opacity:1;transform:translateY(0)}}
+            .nc-change-filter{margin-bottom:10px;padding:10px;border:1px solid rgba(56,189,248,.25);border-radius:9px;background:linear-gradient(135deg,rgba(8,47,73,.48),rgba(15,23,42,.78))}.nc-change-filter-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}.nc-change-filter-head strong{color:#f8fafc;font-size:11px}.nc-change-filter-head small{color:#94a3b8;font-size:8px}.nc-filter-row{display:grid;grid-template-columns:70px minmax(0,1fr);align-items:start;gap:7px;padding:5px 0}.nc-filter-row+.nc-filter-row{border-top:1px dashed rgba(148,163,184,.16)}.nc-filter-label{padding-top:7px;color:#7dd3fc;font-size:8px;font-weight:900}.nc-bu-controls{display:flex;align-items:center;flex-wrap:wrap;gap:5px}.nc-bu-all,.nc-bu-chip,.nc-bu-apply{height:27px;box-sizing:border-box;border:1px solid rgba(148,163,184,.28);border-radius:6px;background:#1e293b;color:#cbd5e1;font-size:8px;font-weight:800}.nc-bu-all,.nc-bu-apply{padding:0 9px;cursor:pointer}.nc-bu-all.active{border-color:#22d3ee;background:#0e7490;color:#fff}.nc-bu-chip{display:inline-flex;align-items:center;gap:4px;padding:0 8px;cursor:pointer}.nc-bu-chip:has(input:checked){border-color:#60a5fa;background:rgba(30,64,175,.55);color:#dbeafe}.nc-bu-chip input{width:11px;height:11px;margin:0;accent-color:#38bdf8}.nc-bu-apply{margin-left:auto;border-color:rgba(74,222,128,.48);background:linear-gradient(135deg,rgba(22,101,52,.7),rgba(6,78,59,.72));color:#dcfce7}.nc-bu-apply:disabled{opacity:.5;cursor:wait}.nc-bu-note{margin-top:7px;color:#64748b;font-size:8px;line-height:1.45}@media(max-width:760px){.nc-change-filter-head{align-items:flex-start;flex-direction:column}.nc-filter-row{grid-template-columns:1fr}.nc-filter-label{padding-top:0}.nc-bu-apply{margin-left:0}}
             .nc-sr-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:7px;margin-bottom:10px}.nc-sr-kpi{min-height:70px;padding:10px;border:1px solid rgba(148,163,184,.18);border-radius:9px;background:linear-gradient(145deg,rgba(15,23,42,.92),rgba(30,41,59,.72))}.nc-sr-kpi-label{color:#94a3b8;font-size:8px;font-weight:750}.nc-sr-kpi-value{margin-top:5px;color:#f8fafc;font-size:19px;font-weight:900;letter-spacing:-.3px}.nc-sr-kpi-meta{margin-top:3px;color:#64748b;font-size:7px}.nc-sr-kpi.good .nc-sr-kpi-value{color:#86efac}.nc-sr-kpi.warn .nc-sr-kpi-value{color:#fbbf24}.nc-sr-kpi.bad .nc-sr-kpi-value{color:#fca5a5}.nc-sr-severity{display:flex;height:9px;margin:9px 10px 2px;border-radius:9px;overflow:hidden;background:#1e293b}.nc-sr-severity span{min-width:2px}.nc-sr-minor{background:#38bdf8}.nc-sr-major{background:#fbbf24}.nc-sr-critical{background:#f87171}.nc-sr-legend{display:flex;flex-wrap:wrap;gap:10px;padding:3px 10px 9px;color:#94a3b8;font-size:8px}.nc-sr-dot{display:inline-block;width:7px;height:7px;margin-right:4px;border-radius:50%}.nc-sr-section-note{padding:7px 10px;color:#64748b;font-size:8px;line-height:1.5}
             .nc-sr-analysis-grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(270px,.8fr);align-items:stretch}.nc-sr-analysis-grid>.nc-table-wrap{min-width:0}.nc-sr-chart{min-width:0;padding:7px;border-left:1px solid rgba(148,163,184,.15);background:rgba(2,6,23,.24)}.nc-sr-chart svg{display:block;width:100%;height:auto;max-height:225px}.nc-sr-chart text{font-family:Arial,sans-serif}.nc-sr-chart-title{fill:#e2e8f0;font-size:9px;font-weight:700}.nc-sr-chart-axis{fill:#64748b;font-size:7px}.nc-sr-chart-value{fill:#cbd5e1;font-size:7px;font-weight:700}.nc-sr-chart-grid{stroke:rgba(148,163,184,.16);stroke-width:1}.nc-sr-chart-legend{fill:#94a3b8;font-size:7px}@media(max-width:900px){.nc-sr-analysis-grid{grid-template-columns:1fr}.nc-sr-chart{border-top:1px solid rgba(148,163,184,.15);border-left:0}}
         `;
@@ -120,8 +135,11 @@
         let dashboardCache = null;
         let changeLoading = false;
         let srLoading = false;
+        let eosFullscreenType = null;
         let changeBuSelection = [];
+        let changeProductLineSelection = [];
         let srTypeSelection = [];
+        let srProductLineSelection = [];
         try {
             const savedBus = JSON.parse(localStorage.getItem(CHANGE_BU_KEY) || '[]');
             if (Array.isArray(savedBus)) changeBuSelection = CHANGE_BU_OPTIONS.filter(value => savedBus.includes(value));
@@ -130,15 +148,29 @@
             try { localStorage.setItem(CHANGE_BU_KEY, JSON.stringify(changeBuSelection)); } catch (error) {}
         }
         try {
+            const savedProductLines = JSON.parse(localStorage.getItem(CHANGE_PRODUCT_LINE_KEY) || '[]');
+            if (Array.isArray(savedProductLines)) changeProductLineSelection = CHANGE_PRODUCT_LINE_OPTIONS.filter(value => savedProductLines.includes(value));
+        } catch (error) {}
+        function saveChangeProductLineSelection() {
+            try { localStorage.setItem(CHANGE_PRODUCT_LINE_KEY, JSON.stringify(changeProductLineSelection)); } catch (error) {}
+        }
+        try {
             const savedSrTypes = JSON.parse(localStorage.getItem(SR_TYPE_FILTER_KEY) || '[]');
             if (Array.isArray(savedSrTypes)) srTypeSelection = SR_TYPE_NAMES.filter(value => savedSrTypes.includes(value));
         } catch (error) {}
         function saveSrTypeSelection() {
             try { localStorage.setItem(SR_TYPE_FILTER_KEY, JSON.stringify(srTypeSelection)); } catch (error) {}
         }
+        try {
+            const savedProductLines = JSON.parse(localStorage.getItem(SR_PRODUCT_LINE_KEY) || '[]');
+            if (Array.isArray(savedProductLines)) srProductLineSelection = SR_PRODUCT_LINE_OPTIONS.filter(value => savedProductLines.includes(value));
+        } catch (error) {}
+        function saveSrProductLineSelection() {
+            try { localStorage.setItem(SR_PRODUCT_LINE_KEY, JSON.stringify(srProductLineSelection)); } catch (error) {}
+        }
 
         function loadEosSettings() {
-            const fallback = { targets: { product: CONFIG.targets.product, version: CONFIG.targets.version }, topN: { product: 3, version: 3 }, sortMode: 'quantity-desc', plans: { product: {}, version: {} }, collapsed: {} };
+            const fallback = { targets: { product: CONFIG.targets.product, version: CONFIG.targets.version }, topN: { product: 3, version: 3 }, sortMode: 'quantity-desc', plans: { product: {}, version: {} }, notes: { product: {}, version: {} }, collapsed: {} };
             try {
                 const saved = JSON.parse(localStorage.getItem(EOS_SETTINGS_KEY) || 'null');
                 if (!saved || typeof saved !== 'object') return fallback;
@@ -146,6 +178,7 @@
                     const target = Number(saved.targets && saved.targets[type]);
                     if (Number.isFinite(target) && target >= 0 && target <= 100) fallback.targets[type] = target;
                     if (saved.plans && saved.plans[type] && typeof saved.plans[type] === 'object') fallback.plans[type] = saved.plans[type];
+                    if (saved.notes && saved.notes[type] && typeof saved.notes[type] === 'object') fallback.notes[type] = saved.notes[type];
                 }
                 if (saved.topN && typeof saved.topN === 'object') {
                     for (const type of ['product', 'version']) { const value = Math.floor(num(saved.topN[type])); if (value >= 1 && value <= 99) fallback.topN[type] = value; }
@@ -165,6 +198,11 @@
 
         function setMode(nextActive) {
             active = nextActive;
+            if (!active) {
+                eosFullscreenType = null;
+                document.body.classList.remove('nc-eos-fullscreen-open');
+                applyEosFullscreen();
+            }
             button.classList.toggle('active', active);
             body.classList.toggle('nc-active', active);
             button.textContent = active ? tr('返回 CSV', 'Back to CSV') : tr('NetCare 专题', 'NetCare Insights');
@@ -284,10 +322,10 @@
             const last = new Date(Date.UTC(year, month, 0)).getUTCDate();
             return { start: year + '-' + pad2(month) + '-01', end: year + '-' + pad2(month) + '-' + pad2(last) };
         }
-        async function postChangeSummary(year, month, scope, token, selectedBus) {
+        async function postChangeSummary(year, month, scope, token, selectedBus, selectedProductLines) {
             const range = monthRange(year, month);
             const raw = await postJson(API_URLS.change, '', {
-                bg: scope === 'TOTAL' ? [] : [scope], region: '', rep_office: '', product_line: [], network_id: [], bu: selectedBus, t1_operator: [],
+                bg: scope === 'TOTAL' ? [] : [scope], region: '', rep_office: '', product_line: selectedProductLines, network_id: [], bu: selectedBus, t1_operator: [],
                 na_type: [], network_level: '', operate_level: [], wo_type: [], region_code: [CONFIG.regionCode], office_code: [CONFIG.officeCode],
                 start_date: range.start, end_date: range.end, country_code: [], key_ne: []
             }, token, true);
@@ -300,13 +338,14 @@
             await Promise.all(Array.from({ length: Math.min(limit, items.length) }, runner));
             return output;
         }
-        async function loadChangeData(token, requestedBus) {
+        async function loadChangeData(token, requestedBus, requestedProductLines) {
             const now = new Date(); const currentYear = now.getFullYear(); const previousYear = currentYear - 1; const jobs = [];
             const selectedBus = CHANGE_BU_OPTIONS.filter(value => Array.isArray(requestedBus) && requestedBus.includes(value));
+            const selectedProductLines = CHANGE_PRODUCT_LINE_OPTIONS.filter(value => Array.isArray(requestedProductLines) && requestedProductLines.includes(value));
             for (const year of [previousYear, currentYear]) for (let month = 1; month <= 12; month++) for (const scope of ['TOTAL', 'CNBG', 'EBG']) jobs.push({ year, month, scope });
             let completed = 0;
-            const rows = await runConcurrent(jobs, 6, async job => { const row = await postChangeSummary(job.year, job.month, job.scope, token, selectedBus); modeStatus.textContent = tr('变更数量：', 'Change volume: ') + (++completed) + '/' + jobs.length; return row; });
-            return { rows, currentYear, previousYear, currentMonth: now.getMonth() + 1, bus: selectedBus };
+            const rows = await runConcurrent(jobs, 6, async job => { const row = await postChangeSummary(job.year, job.month, job.scope, token, selectedBus, selectedProductLines); modeStatus.textContent = tr('变更数量：', 'Change volume: ') + (++completed) + '/' + jobs.length; return row; });
+            return { rows, currentYear, previousYear, currentMonth: now.getMonth() + 1, bus: selectedBus, productLines: selectedProductLines };
         }
         function normalizeSrRow(data, meta) {
             const stat = data.statResults || {};
@@ -322,18 +361,19 @@
                 stat: { authed_cnt: num(stat.authed_cnt), sn_auth_cnt: num(stat.sn_auth_cnt), auth_out_warranty_cnt: num(stat.auth_out_warranty_cnt), sr_frt_c: num(stat.sr_frt_c), sr_frt_d: num(stat.sr_frt_d), report_to_resolve_dura: num(stat.report_to_resolve_dura), e2e_sr_total: num(stat.e2e_sr_total) }
             });
         }
-        async function postSrSummary(startDate, endDate, scope, token, meta, selectedSrTypes) {
+        async function postSrSummary(startDate, endDate, scope, token, meta, selectedSrTypes, selectedProductLines) {
             const raw = await postJson(API_URLS.sr, '', {
-                product_line: [], network_id: [], region_code: [CONFIG.regionCode], office_code: [CONFIG.officeCode], t1_operator: [], na_type: [],
+                product_line: selectedProductLines, network_id: [], region_code: [CONFIG.regionCode], office_code: [CONFIG.officeCode], t1_operator: [], na_type: [],
                 sr_type_name: selectedSrTypes.length ? selectedSrTypes : SR_TYPE_NAMES, level: [], start_date: startDate, end_date: endDate, bg: scope === 'TOTAL' ? ['CNBG', 'EBG'] : [scope],
                 resolution_name: [], country_code: [], sr_tac: [], tac_2bg: [], market_type: [], sr_status_name: [], bu_name: [],
                 esc_to_pse_flag: [], esc_to_pse_org: [], esc_to_rde_flag: [], customer_name: [], product_class: [], product: [], sr_num: []
             }, token, true);
             return normalizeSrRow(raw.data || raw.result || raw, Object.assign({ scope }, meta));
         }
-        async function loadSrData(token, requestedTypes) {
+        async function loadSrData(token, requestedTypes, requestedProductLines) {
             const now = new Date(); const currentYear = now.getFullYear(); const previousYear = currentYear - 1; const currentMonth = now.getMonth() + 1;
             const selectedSrTypes = SR_TYPE_NAMES.filter(value => Array.isArray(requestedTypes) && requestedTypes.includes(value));
+            const selectedProductLines = SR_PRODUCT_LINE_OPTIONS.filter(value => Array.isArray(requestedProductLines) && requestedProductLines.includes(value));
             const currentEnd = monthRange(currentYear, currentMonth).end; const previousYtdEnd = monthRange(previousYear, currentMonth).end; const jobs = [];
             for (const scope of ['TOTAL', 'CNBG', 'EBG']) {
                 jobs.push({ kind: 'summary', period: 'previousFull', scope, start: previousYear + '-01-01', end: previousYear + '-12-31' });
@@ -346,10 +386,10 @@
             }
             let completed = 0;
             const rows = await runConcurrent(jobs, 6, async job => {
-                const row = await postSrSummary(job.start, job.end, job.scope, token, job.kind === 'summary' ? { period: job.period } : { year: job.year, month: job.month }, selectedSrTypes);
+                const row = await postSrSummary(job.start, job.end, job.scope, token, job.kind === 'summary' ? { period: job.period } : { year: job.year, month: job.month }, selectedSrTypes, selectedProductLines);
                 modeStatus.textContent = tr('SR 问题单：', 'SR tickets: ') + (++completed) + '/' + jobs.length; return row;
             });
-            return { summary: rows.filter(row => row.period), monthly: rows.filter(row => row.year), currentYear, previousYear, currentMonth, srTypes: selectedSrTypes };
+            return { summary: rows.filter(row => row.period), monthly: rows.filter(row => row.year), currentYear, previousYear, currentMonth, srTypes: selectedSrTypes, productLines: selectedProductLines };
         }
         function aggregateSrRows(rows) {
             const result = normalizeSrRow({}, {}); const countFields = ['sr_total', 'due_within_5days_sr_cnt', 'overdue_unclose_sr_cnt', 'over_10days_sr_cnt', 'overdue_sr_cnt', 'emergency_recovery_cnt', 'unrecovered_emergency_cnt', 'overlong_sr_cnt', 'non_fault_inquiry_sr_cnt', 'minor_sr_cnt', 'major_sr_cnt', 'critical_sr_cnt', 'low_score_cnt'];
@@ -381,7 +421,7 @@
             const rate = base ? ' (' + sign + ((delta / base) * 100).toFixed(1) + '%)' : (current ? tr(' (新增)', ' (new)') : ' (0%)');
             return sign + delta.toLocaleString('zh-CN') + rate;
         }
-        function emptyEosMetric() { return { quantity: 0, incorporated: 0, pending: 0, noPlan: 0, annualPlan: 0, pendingItems: {}, pendingItemsByCustomer: {} }; }
+        function emptyEosMetric() { return { quantity: 0, incorporated: 0, pending: 0, noPlan: 0, annualPlan: 0, noPlanItems: {}, noPlanItemsByCustomer: {} }; }
         function createEosBucket() { return { product: emptyEosMetric(), version: emptyEosMetric() }; }
         function eosIncorporated(row, type, quantity) {
             const normal = type === 'product' ? firstNumber(row, ['before_urgent_incorporated_nes_dtl', 'incorporated_nes']) : firstNumber(row, ['nc_urgent_incorp_complet_rate_dtl', 'incorporated_nes']);
@@ -391,11 +431,11 @@
         function addEosMetric(target, source) {
             target.quantity += num(source.quantity); target.incorporated += num(source.incorporated); target.pending += num(source.pending);
             target.noPlan += num(source.noPlan); target.annualPlan += num(source.annualPlan);
-            if (source.pending > 0 && source.pendingLabel) {
-                target.pendingItems[source.pendingLabel] = num(target.pendingItems[source.pendingLabel]) + source.pending;
+            if (source.noPlan > 0 && source.pendingLabel) {
+                target.noPlanItems[source.pendingLabel] = num(target.noPlanItems[source.pendingLabel]) + source.noPlan;
                 const customer = source.customer || tr('未分类客户', 'Uncategorized customer');
-                if (!target.pendingItemsByCustomer[customer]) target.pendingItemsByCustomer[customer] = {};
-                target.pendingItemsByCustomer[customer][source.pendingLabel] = num(target.pendingItemsByCustomer[customer][source.pendingLabel]) + source.pending;
+                if (!target.noPlanItemsByCustomer[customer]) target.noPlanItemsByCustomer[customer] = {};
+                target.noPlanItemsByCustomer[customer][source.pendingLabel] = num(target.noPlanItemsByCustomer[customer][source.pendingLabel]) + source.noPlan;
             }
         }
         function eosItemLabel(row, type) {
@@ -421,6 +461,7 @@
                 const saved = Math.max(0, Math.floor(num(eosSettings.plans[type][item.key])));
                 item.annualPlan = Math.min(item.pending, saved);
                 item.noPlan = Math.max(0, item.pending - item.annualPlan);
+                item.progressNote = String(eosSettings.notes && eosSettings.notes[type] && eosSettings.notes[type][item.key] || '').slice(0, 500);
                 const lineLabel = item.productLine || tr('未分类产品线', 'Uncategorized line');
                 item.pendingLabel = type === 'product' ? lineLabel + ' · ' + item.label : lineLabel + ' · ' + item.product + ' / ' + item.label;
                 if (saved !== item.annualPlan) eosSettings.plans[type][item.key] = item.annualPlan;
@@ -433,21 +474,23 @@
             consume(productItems, 'product'); consume(versionItems, 'version'); return data;
         }
         function eosRate(metric, includePlan) { return metric.quantity ? Math.min(metric.quantity, metric.incorporated + (includePlan ? metric.annualPlan : 0)) / metric.quantity * 100 : 0; }
+        function eosSuggestedRate(metric, continuedNoPlan) { return metric.quantity ? Math.min(metric.quantity, metric.incorporated + metric.annualPlan + num(continuedNoPlan)) / metric.quantity * 100 : 0; }
         function rateCell(metric, target, includePlan) {
             const value = eosRate(metric, includePlan); const hasValue = metric.quantity > 0;
             return '<td class="' + (hasValue ? (value >= target ? 'nc-good' : 'nc-bad') : 'nc-muted') + '">' + (hasValue ? value.toFixed(1) + '%' : '-') + '</td>';
         }
-        function topPendingGroups(metric, type) {
+        function topNoPlanGroups(metric, type) {
             const topN = eosSettings.topN[type];
-            return Object.entries(metric.pendingItemsByCustomer || {}).map(entry => {
+            return Object.entries(metric.noPlanItemsByCustomer || {}).map(entry => {
                 const items = Object.entries(entry[1] || {}).filter(item => item[1] > 0).sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0], 'zh-CN'));
-                return { customer: entry[0], pending: items.reduce((total, item) => total + item[1], 0), items: items.slice(0, topN) };
-            }).filter(group => group.pending > 0).sort((left, right) => right.pending - left.pending || left.customer.localeCompare(right.customer, 'zh-CN'));
+                const topItems = items.slice(0, topN);
+                return { customer: entry[0], noPlan: items.reduce((total, item) => total + item[1], 0), continueCount: topItems.reduce((total, item) => total + item[1], 0), items: topItems };
+            }).filter(group => group.noPlan > 0).sort((left, right) => right.noPlan - left.noPlan || left.customer.localeCompare(right.customer, 'zh-CN'));
         }
-        function topPendingCell(metric, type) {
-            const groups = topPendingGroups(metric, type);
-            if (!groups.length || !metric.pending) return '<td class="nc-top-empty">-</td>';
-            return '<td><div class="nc-top-list">' + groups.map(group => '<div class="nc-top-customer"><strong class="nc-top-customer-title">' + escapeHtml(group.customer) + ' · ' + tr('待收编 ', 'Pending ') + group.pending + '</strong>' + group.items.map((entry, index) => '<span><b>' + (index + 1) + '.</b> ' + escapeHtml(entry[0]) + ' · ' + entry[1] + (uiLanguage === 'en' ? ' (' : '（') + (entry[1] / group.pending * 100).toFixed(1) + '%' + (uiLanguage === 'en' ? ')' : '）') + '</span>').join('') + '</div>').join('') + '</div></td>';
+        function topNoPlanCell(metric, type) {
+            const groups = topNoPlanGroups(metric, type);
+            if (!groups.length || !metric.noPlan) return '<td class="nc-top-empty">-</td>';
+            return '<td><div class="nc-top-list">' + groups.map(group => '<div class="nc-top-customer"><strong class="nc-top-customer-title">' + escapeHtml(group.customer) + ' · ' + tr('无计划中继续收编 ', 'Continue from No Plan ') + group.continueCount + '</strong>' + group.items.map((entry, index) => '<span><b>' + (index + 1) + '.</b> ' + escapeHtml(entry[0]) + ' · ' + entry[1] + (uiLanguage === 'en' ? ' (' : '（') + (entry[1] / group.noPlan * 100).toFixed(1) + '%' + (uiLanguage === 'en' ? ')' : '）') + '</span>').join('') + '</div>').join('') + '</div></td>';
         }
         function briefGap(rate, target) {
             const difference = rate - target;
@@ -457,28 +500,23 @@
         }
         function renderEosBrief(items, metric, type) {
             const isProduct = type === 'product'; const target = eosSettings.targets[type]; const topN = eosSettings.topN[type]; const currentRate = eosRate(metric, false); const projectedRate = eosRate(metric, true);
-            const pendingItems = items.filter(item => item.pending > 0); const topItems = [...pendingItems].sort((left, right) => right.pending - left.pending || left.label.localeCompare(right.label, 'zh-CN')).slice(0, topN);
-            const topPending = topItems.reduce((total, item) => total + item.pending, 0); const topRate = metric.quantity ? Math.min(metric.quantity, metric.incorporated + topPending) / metric.quantity * 100 : 0;
-            const customerTotals = new Map(); pendingItems.forEach(item => customerTotals.set(item.customer, num(customerTotals.get(item.customer)) + item.pending));
+            const noPlanGroups = topNoPlanGroups(metric, type); const continuedNoPlan = noPlanGroups.reduce((total, group) => total + group.continueCount, 0);
+            const topRate = eosSuggestedRate(metric, continuedNoPlan);
             const openParen = uiLanguage === 'en' ? ' (' : '（'; const closeParen = uiLanguage === 'en' ? ')' : '）';
-            const focusCustomers = [...customerTotals.entries()].sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0], 'zh-CN')).slice(0, 3).map(entry => '<span class="nc-brief-focus">' + escapeHtml(entry[0]) + openParen + entry[1] + closeParen + '</span>').join(tr('、', ', ')) || tr('暂无', 'None');
-            const requirements = topItems.map(item => {
-                const line = item.productLine || tr('未分类产品线', 'Uncategorized line');
-                const subject = isProduct ? item.product : item.product + ' / ' + item.label;
-                return '<span class="nc-brief-focus">' + escapeHtml(item.customer) + '—' + escapeHtml(line) + '—' + escapeHtml(subject) + openParen + item.pending + closeParen + '</span>';
-            }).join(tr('；', '; ')) || tr('暂无待收编重点项', 'No priority pending items');
+            const focusCustomers = noPlanGroups.slice(0, 3).map(group => '<span class="nc-brief-focus">' + escapeHtml(group.customer) + openParen + group.noPlan + closeParen + '</span>').join(tr('、', ', ')) || tr('暂无', 'None');
+            const requirements = noPlanGroups.flatMap(group => group.items.map(entry => '<span class="nc-brief-focus">' + escapeHtml(group.customer) + '—' + escapeHtml(entry[0]) + openParen + entry[1] + closeParen + '</span>')).join(tr('；', '; ')) || tr('暂无无计划重点项', 'No priority No Plan items');
             const title = tr(isProduct ? '产品收编建议' : '版本收编建议', isProduct ? 'Product Incorporation Brief' : 'Version Incorporation Brief');
             const progress = uiLanguage === 'en'
-                ? 'Overall progress is <strong>' + metric.incorporated + ' / ' + metric.quantity + ' (' + currentRate.toFixed(1) + '%)</strong>, with <strong>' + metric.pending + '</strong> pending. Priority customers: ' + focusCustomers + '.'
-                : '整体已收编 <strong>' + metric.incorporated + ' / ' + metric.quantity + '（' + currentRate.toFixed(1) + '%）</strong>，待收编 <strong>' + metric.pending + '</strong>；重点跟进客户：' + focusCustomers + '。';
+                ? 'Overall progress is <strong>' + metric.incorporated + ' / ' + metric.quantity + ' (' + currentRate.toFixed(1) + '%)</strong>, with plan <strong>' + metric.annualPlan + '</strong> and No Plan <strong>' + metric.noPlan + '</strong>. Priority No Plan customers: ' + focusCustomers + '.'
+                : '整体已收编 <strong>' + metric.incorporated + ' / ' + metric.quantity + '（' + currentRate.toFixed(1) + '%）</strong>，今年计划 <strong>' + metric.annualPlan + '</strong>，无计划 <strong>' + metric.noPlan + '</strong>；重点跟进无计划客户：' + focusCustomers + '。';
             const action = uiLanguage === 'en'
-                ? 'Top ' + topN + ' actions: ' + requirements + '. Completing them would lift the rate to <strong>' + topRate.toFixed(1) + '%</strong> versus the <strong>' + target + '%</strong> target (' + briefGap(topRate, target) + '). The entered annual plan is <strong>' + metric.annualPlan + '</strong>, projecting <strong>' + projectedRate.toFixed(1) + '%</strong> (' + briefGap(projectedRate, target) + ').'
-                : 'Top ' + topN + ' 推进要求：' + requirements + '；全部完成后预计达到 <strong>' + topRate.toFixed(1) + '%</strong>，目标 <strong>' + target + '%</strong>（' + briefGap(topRate, target) + '）。当前已录入今年计划 <strong>' + metric.annualPlan + '</strong>，预计达到 <strong>' + projectedRate.toFixed(1) + '%</strong>（' + briefGap(projectedRate, target) + '）。';
+                ? 'Each customer’s No Plan Top ' + topN + ': ' + requirements + '. Based on <strong>' + metric.incorporated + '</strong> incorporated and completing the entered plan of <strong>' + metric.annualPlan + '</strong>, continuing with <strong>' + continuedNoPlan + '</strong> from No Plan would lift the rate from the plan-only <strong>' + projectedRate.toFixed(1) + '%</strong> to <strong>' + topRate.toFixed(1) + '%</strong> versus the <strong>' + target + '%</strong> target (' + briefGap(topRate, target) + ').'
+                : '各客户无计划 Top ' + topN + ' 推进要求：' + requirements + '；在已收编 <strong>' + metric.incorporated + '</strong>、完成已录入今年计划 <strong>' + metric.annualPlan + '</strong> 的基础上，再从无计划中继续收编 <strong>' + continuedNoPlan + '</strong>，预计收编率由仅完成计划时的 <strong>' + projectedRate.toFixed(1) + '%</strong> 提升至 <strong>' + topRate.toFixed(1) + '%</strong>，目标 <strong>' + target + '%</strong>（' + briefGap(topRate, target) + '）。';
             return '<section class="nc-eos-brief ' + (isProduct ? 'product' : 'version') + '"><div class="nc-eos-brief-title">' + title + '</div><p>' + progress + '</p><p>' + action + '</p></section>';
         }
         function eosRow(name, bucket, kind) {
-            const productTop = kind === 'child' ? topPendingCell(bucket.product, 'product') : '<td class="nc-top-empty">—</td>';
-            const versionTop = kind === 'child' ? topPendingCell(bucket.version, 'version') : '<td class="nc-top-empty">—</td>';
+            const productTop = kind === 'child' ? topNoPlanCell(bucket.product, 'product') : '<td class="nc-top-empty">—</td>';
+            const versionTop = kind === 'child' ? topNoPlanCell(bucket.version, 'version') : '<td class="nc-top-empty">—</td>';
             return '<tr class="' + (kind === 'total' ? 'nc-total' : kind === 'bg' ? 'nc-bg' : '') + '"><td class="nc-name ' + (kind === 'child' ? 'nc-child' : '') + '">' + (kind === 'child' ? '└ ' : '') + escapeHtml(name) + '</td><td>' + bucket.product.quantity + '</td>' + rateCell(bucket.product, eosSettings.targets.product, false) + '<td>' + bucket.product.pending + '</td><td>' + bucket.product.annualPlan + '</td><td>' + bucket.product.noPlan + '</td>' + rateCell(bucket.product, eosSettings.targets.product, true) + productTop + '<td>' + bucket.version.quantity + '</td>' + rateCell(bucket.version, eosSettings.targets.version, false) + '<td>' + bucket.version.pending + '</td><td>' + bucket.version.annualPlan + '</td><td>' + bucket.version.noPlan + '</td>' + rateCell(bucket.version, eosSettings.targets.version, true) + versionTop + '</tr>';
         }
         function sortEosItems(items) {
@@ -499,44 +537,51 @@
         function eosCollapseButton(key, collapsed) {
             return '<button class="nc-collapse-button" type="button" data-collapse-key="' + escapeHtml(key) + '" title="' + tr(collapsed ? '展开分组' : '折叠分组', collapsed ? 'Expand group' : 'Collapse group') + '">' + (collapsed ? '▸' : '▾') + '</button>';
         }
+        function eosStickyAttrs(level, label) { return ' data-sticky-level="' + level + '" data-sticky-label="' + escapeHtml(label) + '"'; }
         function aggregateEosItems(items) { const metric = emptyEosMetric(); items.forEach(item => addEosMetric(metric, item)); return metric; }
         function mergedEosRow(items, type, level, label, key) {
             const isProduct = type === 'product'; const metric = aggregateEosItems(items); const countHint = tr('合并 ', 'Merged ') + items.length + tr(' 项', ' items');
             const descriptors = level === 'customer'
                 ? '<td></td><td class="nc-merged-label">' + eosCollapseButton(key, true) + escapeHtml(label) + '</td><td class="nc-merged-hint">' + countHint + '</td><td>—</td>' + (isProduct ? '' : '<td>—</td>')
                 : '<td></td><td></td><td class="nc-merged-label">' + eosCollapseButton(key, true) + escapeHtml(label) + '</td><td class="nc-merged-hint">' + countHint + '</td>' + (isProduct ? '' : '<td>—</td>');
-            return '<tr class="nc-merged-row ' + level + '">' + descriptors + '<td>' + metric.quantity + '</td><td>' + metric.incorporated + '</td>' + rateCell(metric, eosSettings.targets[type], false) + '<td>' + metric.pending + '</td><td class="nc-readonly-plan" title="' + tr('合并行只读', 'Merged row is read-only') + '">' + metric.annualPlan + '</td><td>' + metric.noPlan + '</td>' + rateCell(metric, eosSettings.targets[type], true) + '</tr>';
+            return '<tr class="nc-merged-row ' + level + '"' + eosStickyAttrs(level, label + ' · ' + countHint) + '>' + descriptors + '<td>' + metric.quantity + '</td><td>' + metric.incorporated + '</td>' + rateCell(metric, eosSettings.targets[type], false) + '<td>' + metric.pending + '</td><td class="nc-readonly-plan" title="' + tr('合并行只读', 'Merged row is read-only') + '">' + metric.annualPlan + '</td><td>' + metric.noPlan + '</td>' + rateCell(metric, eosSettings.targets[type], true) + '<td class="nc-muted">—</td></tr>';
         }
         function renderEosItemTable(items, type) {
-            const isProduct = type === 'product'; const target = eosSettings.targets[type]; const rows = []; const visibleItems = items; const columnCount = isProduct ? 11 : 12;
+            const isProduct = type === 'product'; const target = eosSettings.targets[type]; const rows = []; const visibleItems = items; const columnCount = isProduct ? 12 : 13;
             for (const bg of ['CNBG', 'EBG']) {
                 const bgItems = visibleItems.filter(item => item.bg === bg);
                 if (!bgItems.length) continue;
-                rows.push('<tr class="nc-bg-divider"><td colspan="' + columnCount + '">' + bg + ' · ' + bgItems.length + tr(' 项待收编', ' pending items') + '</td></tr>');
+                const bgLabel = bg + ' · ' + bgItems.length + tr(' 项', ' items');
+                rows.push('<tr class="nc-bg-divider"' + eosStickyAttrs('bg', bgLabel) + '><td colspan="' + columnCount + '">' + bgLabel + '</td></tr>');
                 groupEosItems(bgItems, 'customer').forEach(customerGroup => {
-                    const customerKey = eosCollapseKey(type, bg, customerGroup[0]); const customerCollapsed = Boolean(eosSettings.collapsed[customerKey]);
+                    const customerKey = eosCollapseKey(type, bg, customerGroup[0]); const customerCollapsed = eosSettings.collapsed[customerKey] !== false;
                     if (customerCollapsed) { rows.push(mergedEosRow(customerGroup[1], type, 'customer', customerGroup[0], customerKey)); return; }
-                    rows.push('<tr class="nc-customer-divider"><td colspan="' + columnCount + '">' + eosCollapseButton(customerKey, false) + tr('客户：', 'Customer: ') + escapeHtml(customerGroup[0]) + ' · ' + tr('待收编 ', 'Pending ') + eosPendingTotal(customerGroup[1]) + '</td></tr>');
+                    const customerLabel = tr('客户：', 'Customer: ') + customerGroup[0] + ' · ' + tr('待收编 ', 'Pending ') + eosPendingTotal(customerGroup[1]);
+                    rows.push('<tr class="nc-customer-divider"' + eosStickyAttrs('customer', customerLabel) + '><td colspan="' + columnCount + '">' + eosCollapseButton(customerKey, false) + escapeHtml(customerLabel) + '</td></tr>');
                     groupEosItems(customerGroup[1], 'productLine').forEach(lineGroup => {
-                        const lineKey = eosCollapseKey(type, bg, customerGroup[0], lineGroup[0]); const lineCollapsed = Boolean(eosSettings.collapsed[lineKey]);
+                        const lineKey = eosCollapseKey(type, bg, customerGroup[0], lineGroup[0]); const lineCollapsed = eosSettings.collapsed[lineKey] !== false;
                         if (lineCollapsed) { rows.push(mergedEosRow(lineGroup[1], type, 'line', lineGroup[0], lineKey)); return; }
-                        rows.push('<tr class="nc-line-divider"><td colspan="' + columnCount + '">' + eosCollapseButton(lineKey, false) + tr('产品线：', 'Product line: ') + escapeHtml(lineGroup[0]) + ' · ' + tr('待收编 ', 'Pending ') + eosPendingTotal(lineGroup[1]) + '</td></tr>');
+                        const lineLabel = tr('产品线：', 'Product line: ') + lineGroup[0] + ' · ' + tr('待收编 ', 'Pending ') + eosPendingTotal(lineGroup[1]);
+                        rows.push('<tr class="nc-line-divider"' + eosStickyAttrs('line', lineLabel) + '><td colspan="' + columnCount + '">' + eosCollapseButton(lineKey, false) + escapeHtml(lineLabel) + '</td></tr>');
                         const appendItem = item => {
                             const globalIndex = items.indexOf(item); const dataAttrs = ' data-eos-type="' + type + '" data-eos-index="' + globalIndex + '"';
+                            const noteDataAttrs = ' data-note-type="' + type + '" data-note-index="' + globalIndex + '"';
                             const input = '<div class="nc-plan-control"><button class="nc-plan-step" type="button" data-plan-action="minus"' + dataAttrs + ' title="' + tr('减少 1', 'Decrease by 1') + '">−</button><input class="nc-plan-input" type="number" min="0" max="' + item.pending + '" step="1" value="' + item.annualPlan + '"' + dataAttrs + ' title="' + tr('不得大于待收编数量 ', 'Cannot exceed pending count ') + item.pending + '"><button class="nc-plan-step" type="button" data-plan-action="plus"' + dataAttrs + ' title="' + tr('增加 1', 'Increase by 1') + '">+</button><button class="nc-plan-preset" type="button" data-plan-action="half"' + dataAttrs + '>' + tr('半数', 'Half') + '</button><button class="nc-plan-preset" type="button" data-plan-action="all"' + dataAttrs + '>' + tr('全部', 'All') + '</button><button class="nc-plan-preset" type="button" data-plan-action="clear"' + dataAttrs + '>' + tr('清空', 'Clear') + '</button></div>';
-                            if (isProduct) rows.push('<tr><td></td><td></td><td></td><td class="nc-item-label">' + escapeHtml(item.label) + '</td><td>' + item.quantity + '</td><td>' + item.incorporated + '</td>' + rateCell(item, target, false) + '<td>' + item.pending + '</td><td>' + input + '</td><td>' + item.noPlan + '</td>' + rateCell(item, target, true) + '</tr>');
-                            else rows.push('<tr><td></td><td></td><td></td><td></td><td class="nc-version-label">' + escapeHtml(item.label) + '</td><td>' + item.quantity + '</td><td>' + item.incorporated + '</td>' + rateCell(item, target, false) + '<td>' + item.pending + '</td><td>' + input + '</td><td>' + item.noPlan + '</td>' + rateCell(item, target, true) + '</tr>');
+                            const note = '<textarea class="nc-progress-note" maxlength="500" placeholder="' + tr('填写进展备注', 'Add progress note') + '"' + noteDataAttrs + '>' + escapeHtml(item.progressNote) + '</textarea>';
+                            if (isProduct) rows.push('<tr><td></td><td></td><td></td><td class="nc-item-label">' + escapeHtml(item.label) + '</td><td>' + item.quantity + '</td><td>' + item.incorporated + '</td>' + rateCell(item, target, false) + '<td>' + item.pending + '</td><td>' + input + '</td><td>' + item.noPlan + '</td>' + rateCell(item, target, true) + '<td>' + note + '</td></tr>');
+                            else rows.push('<tr><td></td><td></td><td></td><td></td><td class="nc-version-label">' + escapeHtml(item.label) + '</td><td>' + item.quantity + '</td><td>' + item.incorporated + '</td>' + rateCell(item, target, false) + '<td>' + item.pending + '</td><td>' + input + '</td><td>' + item.noPlan + '</td>' + rateCell(item, target, true) + '<td>' + note + '</td></tr>');
                         };
                         if (isProduct) sortEosItems(lineGroup[1]).forEach(appendItem);
                         else groupEosItems(lineGroup[1], 'product').forEach(productGroup => {
-                            rows.push('<tr class="nc-product-divider"><td colspan="' + columnCount + '">' + tr('产品：', 'Product: ') + escapeHtml(productGroup[0]) + ' · ' + tr('待收编 ', 'Pending ') + eosPendingTotal(productGroup[1]) + '</td></tr>');
+                            const productLabel = tr('产品：', 'Product: ') + productGroup[0] + ' · ' + tr('待收编 ', 'Pending ') + eosPendingTotal(productGroup[1]);
+                            rows.push('<tr class="nc-product-divider"' + eosStickyAttrs('product', productLabel) + '><td colspan="' + columnCount + '">' + escapeHtml(productLabel) + '</td></tr>');
                             sortEosItems(productGroup[1]).forEach(appendItem);
                         });
                     });
                 });
             }
-            const bulkActions = '<div class="nc-bulk-actions"><button class="nc-bulk-button" type="button" data-bulk-action="all" data-bulk-type="' + type + '">' + tr('全部填满', 'Fill All') + '</button><button class="nc-bulk-button" type="button" data-bulk-action="topn" data-bulk-type="' + type + '">' + tr('填各客户 Top ', 'Fill Each Customer Top ') + eosSettings.topN[type] + '</button><button class="nc-bulk-button" type="button" data-bulk-action="clear" data-bulk-type="' + type + '">' + tr('清空全部', 'Clear All') + '</button></div>';
-            return '<div class="nc-card"><div class="nc-card-title"><div class="nc-card-title-main"><span>' + tr('EOS ' + (isProduct ? '产品' : '版本') + '表', 'EOS ' + (isProduct ? 'Product' : 'Version') + ' Table') + '</span><small>' + tr('显示全部数据 · ', 'All records · ') + visibleItems.length + tr(' 项 · 目标 ', ' items · Target ') + target + '%</small></div>' + bulkActions + '</div><div class="nc-table-wrap"><table class="nc-table"><thead><tr><th>BG</th><th>' + tr('客户', 'Customer') + '</th><th>' + tr('产品线', 'Product Line') + '</th>' + (isProduct ? '<th>' + tr('产品', 'Product') + '</th>' : '<th>' + tr('产品', 'Product') + '</th><th>' + tr('版本', 'Version') + '</th>') + '<th>' + tr('数量', 'Quantity') + '</th><th>' + tr('已收编', 'Incorporated') + '</th><th>' + tr('收编率', 'Rate') + '</th><th>' + tr('待收编', 'Pending') + '</th><th>' + tr('今年计划完成数量', 'Planned This Year') + '</th><th>' + tr('无计划', 'No Plan') + '</th><th>' + tr('今年预计达成收编率', 'Projected Rate This Year') + '</th></tr></thead><tbody>' + (rows.join('') || '<tr><td colspan="' + columnCount + '" class="nc-muted">' + tr('暂无 EOS 数据', 'No EOS data') + '</td></tr>') + '</tbody></table></div></div>';
+            const bulkActions = '<div class="nc-bulk-actions"><button class="nc-bulk-button" type="button" data-collapse-action="expand" data-collapse-type="' + type + '">' + tr('全部展开', 'Expand All') + '</button><button class="nc-bulk-button nc-table-fullscreen-button" type="button" data-table-fullscreen="' + type + '">' + tr('全屏', 'Fullscreen') + '</button><button class="nc-bulk-button" type="button" data-collapse-action="collapse" data-collapse-type="' + type + '">' + tr('全部折叠', 'Collapse All') + '</button><button class="nc-bulk-button" type="button" data-bulk-action="all" data-bulk-type="' + type + '">' + tr('全部填满', 'Fill All') + '</button><button class="nc-bulk-button" type="button" data-bulk-action="topn" data-bulk-type="' + type + '">' + tr('填各客户 Top ', 'Fill Each Customer Top ') + eosSettings.topN[type] + '</button><button class="nc-bulk-button" type="button" data-bulk-action="clear" data-bulk-type="' + type + '">' + tr('清空全部', 'Clear All') + '</button></div>';
+            return '<div class="nc-card nc-eos-card" data-eos-card-type="' + type + '"><div class="nc-card-title"><div class="nc-card-title-main"><span>' + tr('EOS ' + (isProduct ? '产品' : '版本') + '表', 'EOS ' + (isProduct ? 'Product' : 'Version') + ' Table') + '</span><small>' + tr('显示全部数据 · ', 'All records · ') + visibleItems.length + tr(' 项 · 目标 ', ' items · Target ') + target + '%</small></div>' + bulkActions + '</div><div class="nc-table-wrap nc-eos-table-wrap" data-eos-table-type="' + type + '"><div class="nc-eos-sticky-context" aria-hidden="true"></div><table class="nc-table nc-eos-detail-table"><thead><tr><th>BG</th><th>' + tr('客户', 'Customer') + '</th><th>' + tr('产品线', 'Product Line') + '</th>' + (isProduct ? '<th>' + tr('产品', 'Product') + '</th>' : '<th>' + tr('产品', 'Product') + '</th><th>' + tr('版本', 'Version') + '</th>') + '<th>' + tr('数量', 'Quantity') + '</th><th>' + tr('已收编', 'Incorporated') + '</th><th>' + tr('收编率', 'Rate') + '</th><th>' + tr('待收编', 'Pending') + '</th><th>' + tr('今年计划完成数量', 'Planned This Year') + '</th><th>' + tr('无计划', 'No Plan') + '</th><th>' + tr('今年预计达成收编率', 'Projected Rate This Year') + '</th><th>' + tr('进展备注', 'Progress Note') + '</th></tr></thead><tbody>' + (rows.join('') || '<tr><td colspan="' + columnCount + '" class="nc-muted">' + tr('暂无 EOS 数据', 'No EOS data') + '</td></tr>') + '</tbody></table></div></div>';
         }
         function xlsxXml(value) { return String(value == null ? '' : value).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' })[char]); }
         function xlsxColumn(index) { let name = ''; for (let value = index + 1; value; value = Math.floor((value - 1) / 26)) name = String.fromCharCode(65 + (value - 1) % 26) + name; return name; }
@@ -582,12 +627,12 @@
             })));
             return ordered;
         }
-        function xlsxTopPending(metric, type) {
-            if (!metric.pending) return '-';
-            return topPendingGroups(metric, type).map(group => '[' + group.customer + ' · ' + tr('待收编 ', 'Pending ') + group.pending + ']\n' + group.items.map((entry, index) => (index + 1) + '. ' + entry[0] + ' · ' + entry[1] + ' (' + (entry[1] / group.pending * 100).toFixed(1) + '%)').join('\n')).join('\n') || '-';
+        function xlsxTopNoPlan(metric, type) {
+            if (!metric.noPlan) return '-';
+            return topNoPlanGroups(metric, type).map(group => '[' + group.customer + ' · ' + tr('无计划中继续收编 ', 'Continue from No Plan ') + group.continueCount + ']\n' + group.items.map((entry, index) => (index + 1) + '. ' + entry[0] + ' · ' + entry[1] + ' (' + (entry[1] / group.noPlan * 100).toFixed(1) + '%)').join('\n')).join('\n') || '-';
         }
-        function xlsxTopPendingHeight(metric, type) {
-            const lines = topPendingGroups(metric, type).reduce((total, group) => total + 1 + group.items.length, 0);
+        function xlsxTopNoPlanHeight(metric, type) {
+            const lines = topNoPlanGroups(metric, type).reduce((total, group) => total + 1 + group.items.length, 0);
             return Math.min(240, Math.max(36, 10 + lines * 12));
         }
         function exportEosWorkbook(productRows, versionRows, productItems, versionItems, summary) {
@@ -599,12 +644,12 @@
                 { cells: [cell(tr('目标设置', 'Targets') + ': ' + tr('产品 ', 'Product ') + eosSettings.targets.product + '% · ' + tr('版本 ', 'Version ') + eosSettings.targets.version + '% · ' + tr('产品 Top ', 'Product Top ') + eosSettings.topN.product + ' · ' + tr('版本 Top ', 'Version Top ') + eosSettings.topN.version, 7)] },
                 { cells: [''] },
                 { cells: [cell(tr('客户 / BG', 'Customer / BG'), 2), cell(tr('产品', 'Product'), 2), '', '', '', '', '', '', cell(tr('版本', 'Version'), 8)] },
-                { cells: [cell(tr('客户 / BG', 'Customer / BG'), 2), cell(tr('数量', 'Quantity'), 2), cell(tr('收编率', 'Rate'), 2), cell(tr('待收编', 'Pending'), 2), cell(tr('今年计划', 'Plan This Year'), 2), cell(tr('无计划', 'No Plan'), 2), cell(tr('预计收编率', 'Projected Rate'), 2), cell(tr('各客户待收编 Top ', 'Each Customer Pending Top ') + eosSettings.topN.product, 2), cell(tr('数量', 'Quantity'), 2), cell(tr('收编率', 'Rate'), 2), cell(tr('待收编', 'Pending'), 2), cell(tr('今年计划', 'Plan This Year'), 2), cell(tr('无计划', 'No Plan'), 2), cell(tr('预计收编率', 'Projected Rate'), 2), cell(tr('各客户待收编 Top ', 'Each Customer Pending Top ') + eosSettings.topN.version, 2)] }
+                { cells: [cell(tr('客户 / BG', 'Customer / BG'), 2), cell(tr('数量', 'Quantity'), 2), cell(tr('收编率', 'Rate'), 2), cell(tr('待收编', 'Pending'), 2), cell(tr('今年计划', 'Plan This Year'), 2), cell(tr('无计划', 'No Plan'), 2), cell(tr('预计收编率', 'Projected Rate'), 2), cell(tr('各客户无计划 Top ', 'Each Customer No Plan Top ') + eosSettings.topN.product, 2), cell(tr('数量', 'Quantity'), 2), cell(tr('收编率', 'Rate'), 2), cell(tr('待收编', 'Pending'), 2), cell(tr('今年计划', 'Plan This Year'), 2), cell(tr('无计划', 'No Plan'), 2), cell(tr('预计收编率', 'Projected Rate'), 2), cell(tr('各客户无计划 Top ', 'Each Customer No Plan Top ') + eosSettings.topN.version, 2)] }
             ];
             function appendProgress(name, bucket, style) {
                 const topStyle = style === 3 ? 12 : style === 9 ? 13 : 11;
-                const isCustomer = style === 10; const productTop = isCustomer ? xlsxTopPending(bucket.product, 'product') : '—'; const versionTop = isCustomer ? xlsxTopPending(bucket.version, 'version') : '—';
-                const height = isCustomer ? Math.max(xlsxTopPendingHeight(bucket.product, 'product'), xlsxTopPendingHeight(bucket.version, 'version')) : 36;
+                const isCustomer = style === 10; const productTop = isCustomer ? xlsxTopNoPlan(bucket.product, 'product') : '—'; const versionTop = isCustomer ? xlsxTopNoPlan(bucket.version, 'version') : '—';
+                const height = isCustomer ? Math.max(xlsxTopNoPlanHeight(bucket.product, 'product'), xlsxTopNoPlanHeight(bucket.version, 'version')) : 36;
                 progressRows.push({ height, cells: [cell(name, style), cell(bucket.product.quantity, style), cell(rate(bucket.product, false), rateStyle(bucket.product, 'product', false)), cell(bucket.product.pending, style), cell(bucket.product.annualPlan, 4), cell(bucket.product.noPlan, style), cell(rate(bucket.product, true), rateStyle(bucket.product, 'product', true)), cell(productTop, topStyle), cell(bucket.version.quantity, style), cell(rate(bucket.version, false), rateStyle(bucket.version, 'version', false)), cell(bucket.version.pending, style), cell(bucket.version.annualPlan, 4), cell(bucket.version.noPlan, style), cell(rate(bucket.version, true), rateStyle(bucket.version, 'version', true)), cell(versionTop, topStyle)] });
             }
             ['CNBG', 'EBG'].forEach(bg => {
@@ -619,16 +664,17 @@
             progressRows.push({ cells: [''] }, { cells: [cell(tr('产品收编总结与要求', 'Product Summary & Actions'), 8)] }, { height: 54, cells: [cell(briefTexts[0] || '', 7)] }, { cells: [cell(tr('版本收编总结与要求', 'Version Summary & Actions'), 8)] }, { height: 54, cells: [cell(briefTexts[1] || '', 7)] });
             function detailSheet(items, type) {
                 const isProduct = type === 'product'; const headers = isProduct
-                    ? ['BG', tr('客户', 'Customer'), tr('产品线', 'Product Line'), tr('产品', 'Product'), tr('数量', 'Quantity'), tr('已收编', 'Incorporated'), tr('收编率', 'Rate'), tr('待收编', 'Pending'), tr('今年计划完成数量', 'Planned This Year'), tr('无计划', 'No Plan'), tr('今年预计达成收编率', 'Projected Rate This Year')]
-                    : ['BG', tr('客户', 'Customer'), tr('产品线', 'Product Line'), tr('产品', 'Product'), tr('版本', 'Version'), tr('数量', 'Quantity'), tr('已收编', 'Incorporated'), tr('收编率', 'Rate'), tr('待收编', 'Pending'), tr('今年计划完成数量', 'Planned This Year'), tr('无计划', 'No Plan'), tr('今年预计达成收编率', 'Projected Rate This Year')];
-                const rows = [{ height: 28, cells: [cell(tr(isProduct ? 'EOS 产品表' : 'EOS 版本表', isProduct ? 'EOS Product Table' : 'EOS Version Table'), 1)] }, { cells: [cell(tr('包含全部数据；浅黄色为用户录入的今年计划，无计划由待收编减今年计划自动计算。', 'Includes all records. Pale yellow highlights the user-entered annual plan; No Plan is calculated as Pending minus Planned This Year.'), 7)] }, { cells: headers.map(value => cell(value, 2)) }];
+                    ? ['BG', tr('客户', 'Customer'), tr('产品线', 'Product Line'), tr('产品', 'Product'), tr('数量', 'Quantity'), tr('已收编', 'Incorporated'), tr('收编率', 'Rate'), tr('待收编', 'Pending'), tr('今年计划完成数量', 'Planned This Year'), tr('无计划', 'No Plan'), tr('今年预计达成收编率', 'Projected Rate This Year'), tr('进展备注', 'Progress Note')]
+                    : ['BG', tr('客户', 'Customer'), tr('产品线', 'Product Line'), tr('产品', 'Product'), tr('版本', 'Version'), tr('数量', 'Quantity'), tr('已收编', 'Incorporated'), tr('收编率', 'Rate'), tr('待收编', 'Pending'), tr('今年计划完成数量', 'Planned This Year'), tr('无计划', 'No Plan'), tr('今年预计达成收编率', 'Projected Rate This Year'), tr('进展备注', 'Progress Note')];
+                const rows = [{ height: 28, cells: [cell(tr(isProduct ? 'EOS 产品表' : 'EOS 版本表', isProduct ? 'EOS Product Table' : 'EOS Version Table'), 1)] }, { cells: [cell(tr('包含全部数据；浅黄色为用户录入的今年计划，无计划由待收编减今年计划自动计算；最后一列为用户填写的进展备注。', 'Includes all records. Pale yellow highlights the user-entered annual plan; No Plan is calculated as Pending minus Planned This Year; the final column contains user-entered progress notes.'), 7)] }, { cells: headers.map(value => cell(value, 2)) }];
                 orderedEosItems(items, type).forEach(item => {
                     const base = [item.bg, item.customer, item.productLine, item.product].map(value => cell(value, 10)); if (!isProduct) base.push(cell(item.label, 10));
                     base.push(cell(item.quantity, 10), cell(item.incorporated, 10), cell(rate(item, false), rateStyle(item, type, false)), cell(item.pending, 10));
-                    base.push(cell(item.annualPlan, item.annualPlan > 0 ? 4 : 10), cell(item.noPlan, 10), cell(rate(item, true), rateStyle(item, type, true)));
-                    rows.push({ cells: base });
+                    base.push(cell(item.annualPlan, item.annualPlan > 0 ? 4 : 10), cell(item.noPlan, 10), cell(rate(item, true), rateStyle(item, type, true)), cell(item.progressNote, 7));
+                    const noteLines = Math.max(1, String(item.progressNote || '').split('\n').reduce((total, line) => total + Math.max(1, Math.ceil(line.length / 28)), 0));
+                    rows.push({ height: Math.min(90, Math.max(22, 8 + noteLines * 13)), cells: base });
                 });
-                return { rows, widths: isProduct ? [10, 18, 22, 28, 11, 11, 12, 11, 18, 11, 22] : [10, 18, 22, 26, 26, 11, 11, 12, 11, 18, 11, 22] };
+                return { rows, widths: isProduct ? [10, 18, 22, 28, 11, 11, 12, 11, 18, 11, 22, 38] : [10, 18, 22, 26, 26, 11, 11, 12, 11, 18, 11, 22, 38] };
             }
             const productSheet = detailSheet(productItems, 'product'); const versionSheet = detailSheet(versionItems, 'version');
             const rawHeaders = [tr('类型', 'Type'), tr('客户', 'Customer'), 'BG', tr('产品线', 'Product Line'), tr('产品', 'Product'), tr('版本', 'Version'), tr('数量', 'Quantity'), tr('已收编', 'Incorporated'), tr('待收编', 'Pending'), tr('阶段', 'Phase')];
@@ -654,8 +700,8 @@
                 .replace('<xf numFmtId="0" fontId="2" fillId="2" borderId="1" xfId="0" applyFill="1" applyFont="1" applyBorder="1"/>', '<xf numFmtId="0" fontId="2" fillId="2" borderId="1" xfId="0" applyFill="1" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>')
                 .replace('<alignment vertical="center" wrapText="1"/></xf></cellXfs>', '<alignment horizontal="center" vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="6" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="7" fillId="4" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="7" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center" wrapText="1"/></xf></cellXfs>');
             files['xl/worksheets/sheet1.xml'] = buildXlsxSheet(progressRows, { widths: [22, 10, 12, 10, 13, 10, 14, 42, 10, 12, 10, 13, 10, 14, 42], merges: ['A1:O1', 'A2:O2', 'A3:O3', 'A5:A6', 'B5:H5', 'I5:O5', 'A' + (progressRows.length - 3) + ':O' + (progressRows.length - 3), 'A' + (progressRows.length - 2) + ':O' + (progressRows.length - 2), 'A' + (progressRows.length - 1) + ':O' + (progressRows.length - 1), 'A' + progressRows.length + ':O' + progressRows.length], freezeRows: 6 });
-            files['xl/worksheets/sheet2.xml'] = buildXlsxSheet(productSheet.rows, { widths: productSheet.widths, merges: ['A1:K1', 'A2:K2'], freezeRows: 3, autoFilter: 'A3:K' + productSheet.rows.length });
-            files['xl/worksheets/sheet3.xml'] = buildXlsxSheet(versionSheet.rows, { widths: versionSheet.widths, merges: ['A1:L1', 'A2:L2'], freezeRows: 3, autoFilter: 'A3:L' + versionSheet.rows.length });
+            files['xl/worksheets/sheet2.xml'] = buildXlsxSheet(productSheet.rows, { widths: productSheet.widths, merges: ['A1:L1', 'A2:L2'], freezeRows: 3, autoFilter: 'A3:L' + productSheet.rows.length });
+            files['xl/worksheets/sheet3.xml'] = buildXlsxSheet(versionSheet.rows, { widths: versionSheet.widths, merges: ['A1:M1', 'A2:M2'], freezeRows: 3, autoFilter: 'A3:M' + versionSheet.rows.length });
             files['xl/worksheets/sheet4.xml'] = buildXlsxSheet(rawSheetRows, { widths: [12, 18, 10, 22, 28, 28, 11, 11, 11, 22], merges: ['A1:J1'], freezeRows: 2, autoFilter: 'A2:J' + rawSheetRows.length });
             const blob = new Blob([createXlsxZip(files)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }); const link = document.createElement('a'); const url = URL.createObjectURL(blob); const stamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
             link.href = url; link.download = (uiLanguage === 'en' ? 'EOS_Incorporation_Analysis_' : 'EOS收编分析_') + stamp + '.xlsx'; document.body.appendChild(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
@@ -663,6 +709,44 @@
         function renderOriginalEosTable(productRows, versionRows) {
             const details = function (rows, kind) { return rows.map(row => { const quantity = firstNumber(row, ['incorporation_total_nes', 'annual_storage', 'capacities', 'current_inventory']); return '<tr><td>' + tr(kind === 'product' ? '产品' : '版本', kind === 'product' ? 'Product' : 'Version') + '</td><td>' + escapeHtml(normalizeCustomer(row.customer_name)) + '</td><td>' + customerBG(row.customer_name) + '</td><td>' + escapeHtml(row.product_line_name || row.product_line_map || '') + '</td><td>' + escapeHtml(row.product_name || '') + '</td><td>' + escapeHtml(row.software_version || '') + '</td><td>' + quantity + '</td><td>' + eosIncorporated(row, kind, quantity) + '</td><td>' + num(row.to_be_incorporated_nes) + '</td><td>' + escapeHtml(row.current_phase_name || row.current_phase || '') + '</td></tr>'; }).join(''); };
             return '<div class="nc-card"><div class="nc-card-title"><span>' + tr('EOS 原始明细', 'EOS Raw Details') + '</span><small>' + tr('产品 ', 'Products ') + productRows.length + tr(' 条 · 版本 ', ' rows · Versions ') + versionRows.length + tr(' 条', ' rows') + '</small></div><div class="nc-table-wrap"><table class="nc-table"><thead><tr><th>' + tr('类型', 'Type') + '</th><th>' + tr('客户', 'Customer') + '</th><th>BG</th><th>' + tr('产品线', 'Product Line') + '</th><th>' + tr('产品', 'Product') + '</th><th>' + tr('版本', 'Version') + '</th><th>' + tr('数量', 'Quantity') + '</th><th>' + tr('已收编', 'Incorporated') + '</th><th>' + tr('待收编', 'Pending') + '</th><th>' + tr('阶段', 'Phase') + '</th></tr></thead><tbody>' + details(productRows, 'product') + details(versionRows, 'version') + '</tbody></table></div></div>';
+        }
+        function bindEosStickyContexts() {
+            views.eos.querySelectorAll('.nc-eos-table-wrap').forEach(wrapper => {
+                const table = wrapper.querySelector('.nc-eos-detail-table'); const sticky = wrapper.querySelector('.nc-eos-sticky-context');
+                if (!table || !sticky) return;
+                const wrapperTop = wrapper.getBoundingClientRect().top;
+                const hierarchyRows = [...table.querySelectorAll('tbody tr[data-sticky-level]')].map(row => ({ row, top: row.getBoundingClientRect().top - wrapperTop + wrapper.scrollTop })); let lastSignature = '';
+                function updateStickyContext() {
+                    const headerHeight = Math.ceil((table.tHead && table.tHead.getBoundingClientRect().height) || 29);
+                    sticky.style.top = headerHeight + 'px'; sticky.style.width = wrapper.clientWidth + 'px';
+                    const threshold = wrapper.scrollTop + headerHeight; const current = {};
+                    hierarchyRows.forEach(entry => {
+                        if (entry.top >= threshold) return;
+                        const row = entry.row;
+                        const level = row.dataset.stickyLevel; const label = row.dataset.stickyLabel || '';
+                        if (level === 'bg') { current.bg = label; delete current.customer; delete current.line; delete current.product; }
+                        else if (level === 'customer') { current.customer = label; delete current.line; delete current.product; }
+                        else if (level === 'line') { current.line = label; delete current.product; }
+                        else if (level === 'product') current.product = label;
+                    });
+                    const levels = ['bg', 'customer', 'line', 'product'].filter(level => current[level]); const signature = levels.map(level => level + ':' + current[level]).join('|');
+                    if (signature === lastSignature) return;
+                    lastSignature = signature; sticky.innerHTML = levels.map(level => '<div class="nc-eos-sticky-item ' + level + '">' + escapeHtml(current[level]) + '</div>').join('');
+                }
+                wrapper.addEventListener('scroll', updateStickyContext, { passive: true }); updateStickyContext();
+            });
+        }
+        function applyEosFullscreen() {
+            views.eos.querySelectorAll('.nc-eos-card').forEach(card => {
+                const isFullscreen = card.dataset.eosCardType === eosFullscreenType;
+                card.classList.toggle('nc-eos-fullscreen', isFullscreen);
+                const control = card.querySelector('[data-table-fullscreen]');
+                if (!control) return;
+                control.textContent = isFullscreen ? tr('退出全屏', 'Exit Fullscreen') : tr('全屏', 'Fullscreen');
+                control.setAttribute('aria-pressed', String(isFullscreen));
+                control.title = isFullscreen ? tr('退出表格全屏', 'Exit table fullscreen') : tr('全屏查看表格', 'View table fullscreen');
+            });
+            document.body.classList.toggle('nc-eos-fullscreen-open', Boolean(eosFullscreenType));
         }
         function renderEos(productRows, versionRows) {
             const productItems = buildEosItems(productRows, 'product'); const versionItems = buildEosItems(versionRows, 'version');
@@ -672,13 +756,24 @@
             for (const bg of ['CNBG', 'EBG']) childrenByBg[bg] = customerNames.filter(name => customerBG(name) === bg).sort((a, b) => a.localeCompare(b, 'zh-CN')).map(name => eosRow(name, summary.customers[name], 'child')).join('');
             const topNControl = type => '<label>' + tr(type === 'product' ? '产品 Top N' : '版本 Top N', type === 'product' ? 'Product Top N' : 'Version Top N') + '<span class="nc-top-n-control"><button class="nc-top-n-step" type="button" data-eos-top-type="' + type + '" data-eos-top-step="-1">−</button><input class="nc-top-n-input" data-eos-top-type="' + type + '" type="number" min="1" max="99" step="1" value="' + eosSettings.topN[type] + '"><button class="nc-top-n-step" type="button" data-eos-top-type="' + type + '" data-eos-top-step="1">+</button></span></label>';
             const settingsHtml = '<div class="nc-eos-settings"><strong>' + tr('EOS 目标与排序', 'EOS Targets & Sorting') + '</strong><label>' + tr('产品目标 ', 'Product target ') + '<input class="nc-target-input" data-eos-target="product" type="number" min="0" max="100" step="0.1" value="' + eosSettings.targets.product + '">%</label><label>' + tr('版本目标 ', 'Version target ') + '<input class="nc-target-input" data-eos-target="version" type="number" min="0" max="100" step="0.1" value="' + eosSettings.targets.version + '">%</label>' + topNControl('product') + topNControl('version') + '<label>' + tr('待收编优先，同量时 ', 'Pending first; when tied ') + '<select class="nc-sort-select"><option value="quantity-desc"' + (eosSettings.sortMode === 'quantity-desc' ? ' selected' : '') + '>' + tr('数量由大到小', 'Quantity: high to low') + '</option><option value="rate-asc"' + (eosSettings.sortMode === 'rate-asc' ? ' selected' : '') + '>' + tr('收编率由低到高', 'Rate: low to high') + '</option></select></label><button class="nc-export-button" type="button" title="' + tr('导出进展、产品、版本及原始数据', 'Export progress, product, version, and raw data') + '">↗ ' + tr('导出 Excel', 'Export Excel') + '</button></div>';
-            const overviewHtml = '<div class="nc-card"><div class="nc-card-title"><span>' + tr('EOS 产品及版本收编进展', 'EOS Product & Version Progress') + '</span><small>' + tr('产品 ', 'Products ') + productItems.length + tr(' 项 · 版本 ', ' items · Versions ') + versionItems.length + tr(' 项', ' items') + '</small></div><div class="nc-table-wrap"><table class="nc-table"><thead><tr><th rowspan="2">' + tr('客户 / BG', 'Customer / BG') + '</th><th colspan="7">' + tr('产品', 'Product') + ' <span class="nc-target">' + tr('目标 ', 'Target ') + eosSettings.targets.product + '%</span></th><th colspan="7">' + tr('版本', 'Version') + ' <span class="nc-target">' + tr('目标 ', 'Target ') + eosSettings.targets.version + '%</span></th></tr><tr><th>' + tr('数量', 'Quantity') + '</th><th>' + tr('收编率', 'Rate') + '</th><th>' + tr('待收编', 'Pending') + '</th><th>' + tr('今年计划', 'Plan This Year') + '</th><th>' + tr('无计划', 'No Plan') + '</th><th>' + tr('预计收编率', 'Projected Rate') + '</th><th>' + tr('各客户待收编 Top ', 'Each Customer Pending Top ') + eosSettings.topN.product + '</th><th>' + tr('数量', 'Quantity') + '</th><th>' + tr('收编率', 'Rate') + '</th><th>' + tr('待收编', 'Pending') + '</th><th>' + tr('今年计划', 'Plan This Year') + '</th><th>' + tr('无计划', 'No Plan') + '</th><th>' + tr('预计收编率', 'Projected Rate') + '</th><th>' + tr('各客户待收编 Top ', 'Each Customer Pending Top ') + eosSettings.topN.version + '</th></tr></thead><tbody>' + eosRow('CNBG', summary.CNBG, 'bg') + childrenByBg.CNBG + eosRow('EBG', summary.EBG, 'bg') + childrenByBg.EBG + eosRow('TOTAL', summary.TOTAL, 'total') + '</tbody></table></div><div class="nc-note">' + tr('产品与版本 Top N 独立设置，并按每个客户分别计算；单项占比以该客户待收编总量为分母。无计划 = 待收编 − 今年计划完成数量。计划数量按“客户 + 产品/版本”保存，范围为 0 至待收编数量；预计收编率 =（已收编 + 今年计划完成）÷ 数量。已退网网元计入已收编。', 'Product and version Top N values are configured independently and calculated separately for each customer; item share is based on that customer’s pending total. No Plan = Pending − Planned This Year. Plans are saved by customer and product/version, from 0 up to the pending count. Projected rate = (incorporated + planned this year) ÷ quantity. Deactivated NEs count as incorporated.') + '</div></div>';
+            const overviewHtml = '<div class="nc-card"><div class="nc-card-title"><span>' + tr('EOS 产品及版本收编进展', 'EOS Product & Version Progress') + '</span><small>' + tr('产品 ', 'Products ') + productItems.length + tr(' 项 · 版本 ', ' items · Versions ') + versionItems.length + tr(' 项', ' items') + '</small></div><div class="nc-table-wrap"><table class="nc-table"><thead><tr><th rowspan="2">' + tr('客户 / BG', 'Customer / BG') + '</th><th colspan="7">' + tr('产品', 'Product') + ' <span class="nc-target">' + tr('目标 ', 'Target ') + eosSettings.targets.product + '%</span></th><th colspan="7">' + tr('版本', 'Version') + ' <span class="nc-target">' + tr('目标 ', 'Target ') + eosSettings.targets.version + '%</span></th></tr><tr><th>' + tr('数量', 'Quantity') + '</th><th>' + tr('收编率', 'Rate') + '</th><th>' + tr('待收编', 'Pending') + '</th><th>' + tr('今年计划', 'Plan This Year') + '</th><th>' + tr('无计划', 'No Plan') + '</th><th>' + tr('预计收编率', 'Projected Rate') + '</th><th>' + tr('各客户无计划 Top ', 'Each Customer No Plan Top ') + eosSettings.topN.product + '</th><th>' + tr('数量', 'Quantity') + '</th><th>' + tr('收编率', 'Rate') + '</th><th>' + tr('待收编', 'Pending') + '</th><th>' + tr('今年计划', 'Plan This Year') + '</th><th>' + tr('无计划', 'No Plan') + '</th><th>' + tr('预计收编率', 'Projected Rate') + '</th><th>' + tr('各客户无计划 Top ', 'Each Customer No Plan Top ') + eosSettings.topN.version + '</th></tr></thead><tbody>' + eosRow('CNBG', summary.CNBG, 'bg') + childrenByBg.CNBG + eosRow('EBG', summary.EBG, 'bg') + childrenByBg.EBG + eosRow('TOTAL', summary.TOTAL, 'total') + '</tbody></table></div><div class="nc-note">' + tr('产品与版本 Top N 独立设置，并从每个客户的无计划项中分别提取；单项占比以该客户无计划总量为分母。无计划 = 待收编 − 今年计划完成数量。计划数量按“客户 + 产品/版本”保存，范围为 0 至待收编数量；预计收编率 =（已收编 + 今年计划完成）÷ 数量。建议场景收编率 =（已收编 + 今年计划完成 + 无计划 Top N 继续收编数量）÷ 数量。已退网网元计入已收编。', 'Product and version Top N values are configured independently and selected from each customer’s No Plan items; item share is based on that customer’s total No Plan count. No Plan = Pending − Planned This Year. Plans are saved by customer and product/version, from 0 up to the pending count. Projected rate = (incorporated + planned this year) ÷ quantity. Suggested scenario rate = (incorporated + planned this year + continued incorporation from No Plan Top N) ÷ quantity. Deactivated NEs count as incorporated.') + '</div></div>';
             const briefsHtml = '<div class="nc-eos-briefs">' + renderEosBrief(productItems, summary.TOTAL.product, 'product') + renderEosBrief(versionItems, summary.TOTAL.version, 'version') + '</div>';
             views.eos.innerHTML = settingsHtml + overviewHtml + briefsHtml + renderEosItemTable(productItems, 'product') + renderEosItemTable(versionItems, 'version') + renderOriginalEosTable(productRows, versionRows);
+            applyEosFullscreen();
+            bindEosStickyContexts();
             views.eos.querySelectorAll('.nc-collapse-button').forEach(control => control.addEventListener('click', event => {
                 const key = event.currentTarget.dataset.collapseKey;
-                if (eosSettings.collapsed[key]) delete eosSettings.collapsed[key]; else eosSettings.collapsed[key] = true;
+                const wasCollapsed = eosSettings.collapsed[key] !== false;
+                eosSettings.collapsed[key] = !wasCollapsed;
+                if (wasCollapsed) {
+                    try { eosFullscreenType = JSON.parse(key)[0]; } catch (error) {}
+                }
                 saveEosSettings(); renderEos(productRows, versionRows);
+            }));
+            views.eos.querySelectorAll('[data-table-fullscreen]').forEach(control => control.addEventListener('click', event => {
+                const type = event.currentTarget.dataset.tableFullscreen;
+                eosFullscreenType = eosFullscreenType === type ? null : type;
+                renderEos(productRows, versionRows);
             }));
             views.eos.querySelectorAll('.nc-target-input').forEach(input => input.addEventListener('change', event => { const type = event.target.dataset.eosTarget; const value = Math.min(100, Math.max(0, num(event.target.value))); eosSettings.targets[type] = value; saveEosSettings(); renderEos(productRows, versionRows); }));
             function updateTopN(type, value) { eosSettings.topN[type] = Math.min(99, Math.max(1, Math.floor(num(value) || 1))); saveEosSettings(); renderEos(productRows, versionRows); }
@@ -698,6 +793,14 @@
                 saveEosSettings(); renderEos(productRows, versionRows);
             }
             views.eos.querySelectorAll('.nc-plan-input').forEach(input => input.addEventListener('change', event => updatePlan(event.target.dataset.eosType, event.target.dataset.eosIndex, event.target.value)));
+            views.eos.querySelectorAll('.nc-progress-note').forEach(input => input.addEventListener('input', event => {
+                const type = event.target.dataset.noteType; const items = type === 'product' ? productItems : versionItems; const item = items[num(event.target.dataset.noteIndex)];
+                if (!item) return;
+                const value = String(event.target.value || '').slice(0, 500); item.progressNote = value;
+                if (!eosSettings.notes[type]) eosSettings.notes[type] = {};
+                if (value) eosSettings.notes[type][item.key] = value; else delete eosSettings.notes[type][item.key];
+                saveEosSettings();
+            }));
             views.eos.querySelectorAll('[data-plan-action]').forEach(control => control.addEventListener('click', event => {
                 const type = event.currentTarget.dataset.eosType; const items = type === 'product' ? productItems : versionItems; const item = items[num(event.currentTarget.dataset.eosIndex)];
                 if (!item) return;
@@ -708,6 +811,16 @@
                 else if (action === 'all') nextValue = item.pending;
                 else if (action === 'clear') nextValue = 0;
                 updatePlan(type, event.currentTarget.dataset.eosIndex, nextValue);
+            }));
+            views.eos.querySelectorAll('[data-collapse-action]').forEach(control => control.addEventListener('click', event => {
+                const type = event.currentTarget.dataset.collapseType; const collapse = event.currentTarget.dataset.collapseAction === 'collapse';
+                const items = type === 'product' ? productItems : versionItems;
+                items.forEach(item => {
+                    eosSettings.collapsed[eosCollapseKey(type, item.bg, item.customer)] = collapse;
+                    eosSettings.collapsed[eosCollapseKey(type, item.bg, item.customer, item.productLine || tr('未分类', 'Uncategorized'))] = collapse;
+                });
+                if (!collapse) eosFullscreenType = type;
+                saveEosSettings(); renderEos(productRows, versionRows);
             }));
             views.eos.querySelectorAll('[data-bulk-action]').forEach(control => control.addEventListener('click', event => {
                 const type = event.currentTarget.dataset.bulkType; const action = event.currentTarget.dataset.bulkAction;
@@ -748,7 +861,12 @@
             const scopes = [{ key: 'TOTAL', name: tr('总体', 'Overall') }, { key: 'CNBG', name: tr('CNBG（运营商）', 'CNBG (Carrier)') }, { key: 'EBG', name: 'EBG' }];
             const currentBus = Array.isArray(data.bus) ? data.bus : [];
             const currentBusLabel = currentBus.length ? currentBus.join(uiLanguage === 'en' ? ', ' : '、') : tr('全部 BU', 'All BUs');
-            const filterHtml = '<div class="nc-change-filter"><div class="nc-change-filter-head"><strong>' + tr('按 BU 筛选变更数据', 'Filter Change Data by BU') + '</strong><small>' + tr('当前数据范围：', 'Current data: ') + escapeHtml(currentBusLabel) + '</small></div><div class="nc-bu-controls"><button class="nc-bu-all' + (!changeBuSelection.length ? ' active' : '') + '" type="button">' + tr('全部 BU', 'All BUs') + '</button>' + CHANGE_BU_OPTIONS.map(value => '<label class="nc-bu-chip"><input type="checkbox" data-change-bu="' + escapeHtml(value) + '"' + (changeBuSelection.includes(value) ? ' checked' : '') + '> ' + escapeHtml(value) + '</label>').join('') + '<button class="nc-bu-apply" type="button">' + tr('按所选 BU 查询', 'Query Selected BUs') + '</button></div><div class="nc-bu-note">' + tr('可单选或多选；未选择时查询全部 BU。多个 BU 将作为同一个筛选条件合并统计。', 'Select one or multiple BUs. With none selected, all BUs are queried. Multiple BUs are aggregated as one filter.') + '</div></div>';
+            const currentProductLines = Array.isArray(data.productLines) ? data.productLines : [];
+            const currentProductLineLabel = currentProductLines.length ? currentProductLines.map(productLineLabel).join(uiLanguage === 'en' ? ', ' : '、') : tr('全部产品线', 'All Product Lines');
+            const filterHtml = '<div class="nc-change-filter"><div class="nc-change-filter-head"><strong>' + tr('筛选变更数据', 'Filter Change Data') + '</strong><small>' + tr('当前数据范围：', 'Current data: ') + escapeHtml(currentBusLabel + ' · ' + currentProductLineLabel) + '</small></div>'
+                + '<div class="nc-filter-row"><div class="nc-filter-label">BU</div><div class="nc-bu-controls"><button class="nc-bu-all nc-change-bu-all' + (!changeBuSelection.length ? ' active' : '') + '" type="button">' + tr('全部 BU', 'All BUs') + '</button>' + CHANGE_BU_OPTIONS.map(value => '<label class="nc-bu-chip"><input type="checkbox" data-change-bu="' + escapeHtml(value) + '"' + (changeBuSelection.includes(value) ? ' checked' : '') + '> ' + escapeHtml(value) + '</label>').join('') + '</div></div>'
+                + '<div class="nc-filter-row"><div class="nc-filter-label">' + tr('产品线', 'Product Line') + '</div><div class="nc-bu-controls"><button class="nc-bu-all nc-change-product-line-all' + (!changeProductLineSelection.length ? ' active' : '') + '" type="button">' + tr('全部产品线', 'All Product Lines') + '</button>' + CHANGE_PRODUCT_LINE_OPTIONS.map(value => '<label class="nc-bu-chip" title="' + escapeHtml(value) + '"><input type="checkbox" data-change-product-line="' + escapeHtml(value) + '"' + (changeProductLineSelection.includes(value) ? ' checked' : '') + '> ' + escapeHtml(productLineLabel(value)) + '</label>').join('') + '<button class="nc-bu-apply" type="button">' + tr('按所选条件查询', 'Query Selected Filters') + '</button></div></div>'
+                + '<div class="nc-bu-note">' + tr('BU 与产品线均可单选或多选；某一项未选择表示该维度全部，两个维度会联合过滤。', 'Select one or multiple BUs and product lines. No selection means all values in that dimension; both dimensions are combined.') + '</div></div>';
             const value = (scope, year, month) => num((map.get(scope + '|' + year + '|' + month) || {}).task_count);
             const sum = (scope, year, months) => months.reduce((total, month) => total + value(scope, year, month), 0);
             const ytd = Array.from({ length: data.currentMonth }, (_, index) => index + 1);
@@ -776,13 +894,20 @@
             ]);
             const changeCards = [...views.change.querySelectorAll('.nc-card')];
             [[changeCards[0], annualChart], [changeCards[1], quarterChart], [changeCards[2], monthlyChart]].forEach(entry => { const card = entry[0]; if (!card) return; const tableWrap = card.querySelector('.nc-table-wrap'); if (!tableWrap) return; const grid = document.createElement('div'); grid.className = 'nc-sr-analysis-grid'; tableWrap.parentNode.insertBefore(grid, tableWrap); grid.appendChild(tableWrap); grid.insertAdjacentHTML('beforeend', entry[1]); });
-            const allButton = views.change.querySelector('.nc-bu-all'); const buInputs = [...views.change.querySelectorAll('[data-change-bu]')];
+            const allButton = views.change.querySelector('.nc-change-bu-all'); const buInputs = [...views.change.querySelectorAll('[data-change-bu]')];
+            const productLineAllButton = views.change.querySelector('.nc-change-product-line-all'); const productLineInputs = [...views.change.querySelectorAll('[data-change-product-line]')];
             function syncBuDraft() {
                 changeBuSelection = buInputs.filter(input => input.checked).map(input => input.dataset.changeBu);
                 allButton.classList.toggle('active', !changeBuSelection.length); saveChangeBuSelection();
             }
+            function syncProductLineDraft() {
+                changeProductLineSelection = productLineInputs.filter(input => input.checked).map(input => input.dataset.changeProductLine);
+                productLineAllButton.classList.toggle('active', !changeProductLineSelection.length); saveChangeProductLineSelection();
+            }
             buInputs.forEach(input => input.addEventListener('change', syncBuDraft));
             allButton.addEventListener('click', () => { buInputs.forEach(input => { input.checked = false; }); syncBuDraft(); });
+            productLineInputs.forEach(input => input.addEventListener('change', syncProductLineDraft));
+            productLineAllButton.addEventListener('click', () => { productLineInputs.forEach(input => { input.checked = false; }); syncProductLineDraft(); });
             views.change.querySelector('.nc-bu-apply').addEventListener('click', reloadChangeData);
         }
         async function reloadChangeData() {
@@ -791,18 +916,18 @@
             if (!token) { modeStatus.textContent = tr('未找到 csrfToken，请刷新 NetCare 页面后重试。', 'csrfToken not found. Refresh the NetCare page and try again.'); return; }
             changeLoading = true; const applyButton = views.change.querySelector('.nc-bu-apply');
             if (applyButton) { applyButton.disabled = true; applyButton.textContent = tr('正在查询…', 'Querying…'); }
-            modeStatus.textContent = tr('正在按所选 BU 获取变更数量…', 'Loading change volume for selected BUs…');
+            modeStatus.textContent = tr('正在按所选 BU 和产品线获取变更数量…', 'Loading change volume for selected BUs and product lines…');
             try {
-                const result = await loadChangeData(token, changeBuSelection);
+                const result = await loadChangeData(token, changeBuSelection, changeProductLineSelection);
                 if (destroyed) return;
                 if (dashboardCache) dashboardCache[3] = result;
                 renderChange(result);
                 modeStatus.textContent = dashboardCache ? dashboardStatus(dashboardCache) : tr('变更数量已更新', 'Change volume updated');
             } catch (error) {
-                modeStatus.textContent = tr('BU 变更数据获取失败：', 'Failed to load BU change data: ') + (error && error.message || String(error));
-                console.error('[NetCare] BU change data request failed:', error);
+                modeStatus.textContent = tr('变更筛选数据获取失败：', 'Failed to load filtered change data: ') + (error && error.message || String(error));
+                console.error('[NetCare] Filtered change data request failed:', error);
             } finally {
-                changeLoading = false; const currentButton = views.change.querySelector('.nc-bu-apply'); if (currentButton) { currentButton.disabled = false; currentButton.textContent = tr('按所选 BU 查询', 'Query Selected BUs'); }
+                changeLoading = false; const currentButton = views.change.querySelector('.nc-bu-apply'); if (currentButton) { currentButton.disabled = false; currentButton.textContent = tr('按所选条件查询', 'Query Selected Filters'); }
             }
         }
         function renderInterception(data) {
@@ -889,7 +1014,11 @@
                 + '<div class="nc-card"><div class="nc-card-title"><span>' + tr('完整季度同比', 'Completed-quarter YoY') + '</span><small>' + tr('总体口径', 'Overall scope') + '</small></div><div class="nc-table-wrap"><table class="nc-table"><thead><tr><th>' + tr('季度', 'Quarter') + '</th><th>' + tr('上年同期', 'Prior Year') + '</th><th>' + tr('本年', 'Current Year') + '</th><th>' + tr('同比', 'YoY') + '</th><th>FRT</th><th>' + tr('逾期', 'Overdue') + '</th><th>Critical</th><th>' + tr('解决时长', 'Resolution Time') + '</th></tr></thead><tbody>' + (quarterRows.join('') || '<tr><td colspan="8" class="nc-muted">' + tr('暂无完整季度', 'No completed quarter') + '</td></tr>') + '</tbody></table></div></div>'
                 + '<div class="nc-card"><div class="nc-card-title"><span>' + tr('月度 SR 明细', 'Monthly SR Details') + '</span><small>' + tr('总体口径', 'Overall scope') + '</small></div><div class="nc-table-wrap"><table class="nc-table"><thead><tr><th>' + tr('月份', 'Month') + '</th><th>SR</th><th>Minor</th><th>Major</th><th>Critical</th><th>FRT</th><th>' + tr('未关闭', 'Open') + '</th><th>' + tr('逾期', 'Overdue') + '</th><th>' + tr('紧急恢复', 'Emergency Recovery') + '</th><th>' + tr('授权率', 'Auth Rate') + '</th><th>' + tr('解决时长', 'Resolution Time') + '</th></tr></thead><tbody>' + monthlyRows + '</tbody></table></div></div>';
             const dataTypes = Array.isArray(data.srTypes) ? data.srTypes : []; const dataTypeLabel = dataTypes.length ? dataTypes.map(srTypeShortName).join(uiLanguage === 'en' ? ', ' : '、') : tr('全部 SR 类型', 'All SR Types');
-            const srFilterHtml = '<div class="nc-change-filter"><div class="nc-change-filter-head"><strong>' + tr('按 SR 类型筛选', 'Filter by SR Type') + '</strong><small>' + tr('当前数据范围：', 'Current data: ') + escapeHtml(dataTypeLabel) + '</small></div><div class="nc-bu-controls"><button class="nc-bu-all' + (!srTypeSelection.length ? ' active' : '') + '" type="button">' + tr('全部类型', 'All Types') + '</button>' + SR_TYPE_NAMES.map(value => '<label class="nc-bu-chip" title="' + escapeHtml(value) + '"><input type="checkbox" data-sr-type="' + escapeHtml(value) + '"' + (srTypeSelection.includes(value) ? ' checked' : '') + '> ' + escapeHtml(srTypeShortName(value)) + '</label>').join('') + '<button class="nc-bu-apply" type="button">' + tr('按所选类型查询', 'Query Selected Types') + '</button></div><div class="nc-bu-note">' + tr('可单选或多选；未选择时查询样例中的全部 9 类 SR。查询只刷新 SR 专题。', 'Select one or multiple types. With none selected, all 9 SR types from the source request are queried. Only the SR view is refreshed.') + '</div></div>';
+            const dataProductLines = Array.isArray(data.productLines) ? data.productLines : []; const dataProductLineLabel = dataProductLines.length ? dataProductLines.map(productLineLabel).join(uiLanguage === 'en' ? ', ' : '、') : tr('全部产品线', 'All Product Lines');
+            const srFilterHtml = '<div class="nc-change-filter"><div class="nc-change-filter-head"><strong>' + tr('筛选 SR 数据', 'Filter SR Data') + '</strong><small>' + tr('当前数据范围：', 'Current data: ') + escapeHtml(dataTypeLabel + ' · ' + dataProductLineLabel) + '</small></div>'
+                + '<div class="nc-filter-row"><div class="nc-filter-label">' + tr('SR 类型', 'SR Type') + '</div><div class="nc-bu-controls"><button class="nc-bu-all nc-sr-type-all' + (!srTypeSelection.length ? ' active' : '') + '" type="button">' + tr('全部类型', 'All Types') + '</button>' + SR_TYPE_NAMES.map(value => '<label class="nc-bu-chip" title="' + escapeHtml(value) + '"><input type="checkbox" data-sr-type="' + escapeHtml(value) + '"' + (srTypeSelection.includes(value) ? ' checked' : '') + '> ' + escapeHtml(srTypeShortName(value)) + '</label>').join('') + '</div></div>'
+                + '<div class="nc-filter-row"><div class="nc-filter-label">' + tr('产品线', 'Product Line') + '</div><div class="nc-bu-controls"><button class="nc-bu-all nc-sr-product-line-all' + (!srProductLineSelection.length ? ' active' : '') + '" type="button">' + tr('全部产品线', 'All Product Lines') + '</button>' + SR_PRODUCT_LINE_OPTIONS.map(value => '<label class="nc-bu-chip" title="' + escapeHtml(value) + '"><input type="checkbox" data-sr-product-line="' + escapeHtml(value) + '"' + (srProductLineSelection.includes(value) ? ' checked' : '') + '> ' + escapeHtml(productLineLabel(value)) + '</label>').join('') + '<button class="nc-bu-apply" type="button">' + tr('按所选条件查询', 'Query Selected Filters') + '</button></div></div>'
+                + '<div class="nc-bu-note">' + tr('SR 类型与产品线均可单选或多选；某一项未选择表示该维度全部，两个维度会联合过滤。本次查询只刷新 SR 专题。', 'Select one or multiple SR types and product lines. No selection means all values in that dimension; both dimensions are combined. Only the SR view is refreshed.') + '</div></div>';
             function changeValue(nowValue, priorValue) { const delta = num(nowValue) - num(priorValue); return { delta, text: (delta > 0 ? '+' : '') + delta.toLocaleString('zh-CN'), rate: priorValue ? (delta > 0 ? '+' : '') + (delta / priorValue * 100).toFixed(1) + '%' : (nowValue ? tr('新增', 'New') : '0%') }; }
             function renderVolumeChange(nowValue, priorValue) { const change = changeValue(nowValue, priorValue); return '<span class="' + (change.delta > 0 ? 'nc-bad' : change.delta < 0 ? 'nc-good' : 'nc-muted') + '">' + change.text + ' (' + change.rate + ')</span>'; }
             const annualChange = changeValue(current.sr_total, previous.sr_total); const volumeCompletedQuarters = Math.floor((data.currentMonth - 1) / 3); let latestQuarter = null; let latestQuarterPrior = null;
@@ -919,17 +1048,21 @@
             const quarterChart = renderSrBarChart(tr('季度同比与上季度对比', 'Quarter YoY & QoQ Comparison'), quarterLabels, [{ name: tr('上年同期', 'Prior year'), color: '#64748b', values: quarterPriorYearValues }, { name: tr('本年', 'Current'), color: '#38bdf8', values: quarterCurrentValues }, { name: tr('上季度', 'Prior quarter'), color: '#fbbf24', values: quarterPriorValues }]);
             const monthlyChart = renderSrLineChart(tr('月度 SR 趋势', 'Monthly SR Trend'), monthLabels, [{ name: String(data.previousYear), color: '#64748b', values: monthPriorValues }, { name: String(data.currentYear), color: '#38bdf8', values: monthCurrentValues }]);
             [[srCards[1], annualChart], [srCards[2], quarterChart], [srCards[3], monthlyChart]].forEach(entry => { const card = entry[0]; if (!card) return; const tableWrap = card.querySelector('.nc-table-wrap'); if (!tableWrap) return; const grid = document.createElement('div'); grid.className = 'nc-sr-analysis-grid'; tableWrap.parentNode.insertBefore(grid, tableWrap); grid.appendChild(tableWrap); grid.insertAdjacentHTML('beforeend', entry[1]); });
-            const srAllButton = views.sr.querySelector('.nc-bu-all'); const srInputs = [...views.sr.querySelectorAll('[data-sr-type]')];
+            const srAllButton = views.sr.querySelector('.nc-sr-type-all'); const srInputs = [...views.sr.querySelectorAll('[data-sr-type]')];
+            const srProductLineAllButton = views.sr.querySelector('.nc-sr-product-line-all'); const srProductLineInputs = [...views.sr.querySelectorAll('[data-sr-product-line]')];
             function syncSrTypeDraft() { srTypeSelection = srInputs.filter(input => input.checked).map(input => input.dataset.srType); srAllButton.classList.toggle('active', !srTypeSelection.length); saveSrTypeSelection(); }
-            srInputs.forEach(input => input.addEventListener('change', syncSrTypeDraft)); srAllButton.addEventListener('click', () => { srInputs.forEach(input => { input.checked = false; }); syncSrTypeDraft(); }); views.sr.querySelector('.nc-bu-apply').addEventListener('click', reloadSrData);
+            function syncSrProductLineDraft() { srProductLineSelection = srProductLineInputs.filter(input => input.checked).map(input => input.dataset.srProductLine); srProductLineAllButton.classList.toggle('active', !srProductLineSelection.length); saveSrProductLineSelection(); }
+            srInputs.forEach(input => input.addEventListener('change', syncSrTypeDraft)); srAllButton.addEventListener('click', () => { srInputs.forEach(input => { input.checked = false; }); syncSrTypeDraft(); });
+            srProductLineInputs.forEach(input => input.addEventListener('change', syncSrProductLineDraft)); srProductLineAllButton.addEventListener('click', () => { srProductLineInputs.forEach(input => { input.checked = false; }); syncSrProductLineDraft(); });
+            views.sr.querySelector('.nc-bu-apply').addEventListener('click', reloadSrData);
         }
         async function reloadSrData() {
             if (loading || changeLoading || srLoading || destroyed) return;
             const token = findCsrfToken(); if (!token) { modeStatus.textContent = tr('未找到 csrfToken，请刷新 NetCare 页面后重试。', 'csrfToken not found. Refresh the NetCare page and try again.'); return; }
-            srLoading = true; const applyButton = views.sr.querySelector('.nc-bu-apply'); if (applyButton) { applyButton.disabled = true; applyButton.textContent = tr('正在查询…', 'Querying…'); } modeStatus.textContent = tr('正在按所选 SR 类型获取数据…', 'Loading data for selected SR types…');
-            try { const result = await loadSrData(token, srTypeSelection); if (destroyed) return; if (dashboardCache) dashboardCache[5] = result; renderSr(result); modeStatus.textContent = dashboardCache ? dashboardStatus(dashboardCache) : tr('SR 数据已更新', 'SR data updated'); }
-            catch (error) { modeStatus.textContent = tr('SR 类型筛选数据获取失败：', 'Failed to load filtered SR data: ') + (error && error.message || String(error)); console.error('[NetCare] SR type request failed:', error); }
-            finally { srLoading = false; const currentButton = views.sr.querySelector('.nc-bu-apply'); if (currentButton) { currentButton.disabled = false; currentButton.textContent = tr('按所选类型查询', 'Query Selected Types'); } }
+            srLoading = true; const applyButton = views.sr.querySelector('.nc-bu-apply'); if (applyButton) { applyButton.disabled = true; applyButton.textContent = tr('正在查询…', 'Querying…'); } modeStatus.textContent = tr('正在按所选 SR 类型和产品线获取数据…', 'Loading data for selected SR types and product lines…');
+            try { const result = await loadSrData(token, srTypeSelection, srProductLineSelection); if (destroyed) return; if (dashboardCache) dashboardCache[5] = result; renderSr(result); modeStatus.textContent = dashboardCache ? dashboardStatus(dashboardCache) : tr('SR 数据已更新', 'SR data updated'); }
+            catch (error) { modeStatus.textContent = tr('SR 筛选数据获取失败：', 'Failed to load filtered SR data: ') + (error && error.message || String(error)); console.error('[NetCare] Filtered SR request failed:', error); }
+            finally { srLoading = false; const currentButton = views.sr.querySelector('.nc-bu-apply'); if (currentButton) { currentButton.disabled = false; currentButton.textContent = tr('按所选条件查询', 'Query Selected Filters'); } }
         }
         let cachedInterception = null;
         async function loadDashboard() {
@@ -943,7 +1076,7 @@
                     loadAllPages(tr('证书', 'Certificates'), API_URLS.certificate, SOURCE_PAGE.certificate, Object.assign({}, CERT_BODY, { limit: 50 }), token),
                     loadAllPages(tr('产品 EOS', 'Product EOS'), API_URLS.eos, SOURCE_PAGE.eos, PRODUCT_BODY, token),
                     loadAllPages(tr('版本 EOS', 'Version EOS'), API_URLS.eos, SOURCE_PAGE.eos, VERSION_BODY, token),
-                    loadChangeData(token, changeBuSelection), loadInterceptionData(token), loadSrData(token, srTypeSelection)
+                    loadChangeData(token, changeBuSelection, changeProductLineSelection), loadInterceptionData(token), loadSrData(token, srTypeSelection, srProductLineSelection)
                 ]);
                 if (destroyed) return;
                 dashboardCache = result;
@@ -961,7 +1094,7 @@
         return {
             showCsv: function () { if (active) setMode(false); },
             isLoading: function () { return loading || changeLoading || srLoading; },
-            destroy: function () { destroyed = true; style.remove(); mode.remove(); button.remove(); }
+            destroy: function () { destroyed = true; document.body.classList.remove('nc-eos-fullscreen-open'); style.remove(); mode.remove(); button.remove(); }
         };
     }
 

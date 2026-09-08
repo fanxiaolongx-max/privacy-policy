@@ -34,7 +34,7 @@ test('NetCare EOS planning UI keeps its calculation and input constraints', () =
     assert.match(source, /今年预计达成收编率/);
     assert.doesNotMatch(source, /距目标/);
     assert.doesNotMatch(source, /达标 \+/);
-    assert.match(source, /const visibleItems = items; const columnCount = isProduct \? 11 : 12/);
+    assert.match(source, /const visibleItems = items; const columnCount = isProduct \? 12 : 13/);
     assert.match(source, /显示全部数据/);
     assert.match(source, /renderOriginalEosTable\(productRows, versionRows\)/);
     assert.match(source, /产品 Top N/);
@@ -43,10 +43,10 @@ test('NetCare EOS planning UI keeps its calculation and input constraints', () =
     assert.match(source, /class="nc-top-n-input"/);
     assert.match(source, /topN: \{ product: 3, version: 3 \}/);
     assert.match(source, /legacyTopN/);
-    assert.match(source, /topPendingGroups/);
-    assert.match(source, /pendingItemsByCustomer/);
-    assert.match(source, /entry\[1\] \/ group\.pending/);
-    assert.match(source, /kind === 'child' \? topPendingCell\(bucket\.product, 'product'\)/);
+    assert.match(source, /topNoPlanGroups/);
+    assert.match(source, /noPlanItemsByCustomer/);
+    assert.match(source, /entry\[1\] \/ group\.noPlan/);
+    assert.match(source, /kind === 'child' \? topNoPlanCell\(bucket\.product, 'product'\)/);
     assert.match(source, /const isCustomer = style === 10/);
     assert.match(source, /right\.pending - left\.pending/);
     assert.match(source, /eosPendingTotal\(right\[1\]\) - eosPendingTotal\(left\[1\]\)/);
@@ -58,7 +58,10 @@ test('NetCare EOS planning UI keeps its calculation and input constraints', () =
     assert.match(source, /Math\.ceil\(item\.pending \/ 2\)/);
     assert.match(source, /lineLabel \+ ' · ' \+ item\.label/);
     assert.match(source, /function renderEosBrief/);
-    assert.match(source, /metric\.incorporated \+ topPending/);
+    assert.match(source, /function eosSuggestedRate/);
+    assert.match(source, /metric\.incorporated \+ metric\.annualPlan \+ num\(continuedNoPlan\)/);
+    assert.match(source, /无计划中继续收编/);
+    assert.match(source, /各客户无计划 Top /);
     assert.match(source, /Product Incorporation Brief/);
     assert.match(source, /Version Incorporation Brief/);
     assert.match(source, /data-bulk-action="all"/);
@@ -67,6 +70,25 @@ test('NetCare EOS planning UI keeps its calculation and input constraints', () =
     assert.match(source, /填各客户 Top /);
     assert.match(source, /data-bulk-action="clear"/);
     assert.match(source, /eosSettings\.plans\[type\] = \{\}/);
+    assert.match(source, /data-collapse-action="expand"/);
+    assert.match(source, /data-collapse-action="collapse"/);
+    assert.match(source, /全部展开/);
+    assert.match(source, /全部折叠/);
+    assert.match(source, /eosSettings\.collapsed\[customerKey\] !== false/);
+    assert.match(source, /eosSettings\.collapsed\[lineKey\] !== false/);
+    assert.match(source, /data-table-fullscreen=/);
+    assert.match(source, /退出全屏/);
+    assert.match(source, /function applyEosFullscreen/);
+    assert.match(source, /nc-eos-card\.nc-eos-fullscreen/);
+    assert.match(source, /if \(!collapse\) eosFullscreenType = type/);
+    assert.match(source, /if \(wasCollapsed\)/);
+    assert.match(source, /class="nc-table-wrap nc-eos-table-wrap"/);
+    assert.match(source, /class="nc-table nc-eos-detail-table"/);
+    assert.match(source, /function bindEosStickyContexts/);
+    assert.match(source, /data-sticky-level=/);
+    assert.match(source, /const levels = \['bg', 'customer', 'line', 'product'\]/);
+    assert.match(source, /wrapper\.addEventListener\('scroll', updateStickyContext/);
+    assert.match(source, /max-height:min\(64vh,620px\)/);
     assert.match(source, /function mergedEosRow/);
     assert.match(source, /function aggregateEosItems/);
     assert.match(source, /class="nc-collapse-button"/);
@@ -80,18 +102,32 @@ test('NetCare EOS planning UI keeps its calculation and input constraints', () =
     assert.match(source, /浅黄色为用户录入的今年计划/);
     assert.match(source, /包含全部数据/);
     assert.match(source, /No Plan is calculated as Pending minus Planned This Year/);
+    assert.match(source, /notes: \{ product: \{\}, version: \{\} \}/);
+    assert.match(source, /saved\.notes/);
+    assert.match(source, /class="nc-progress-note"/);
+    assert.match(source, /data-note-type/);
+    assert.match(source, /进展备注/);
+    assert.match(source, /cell\(item\.progressNote, 7\)/);
     assert.match(source, /autoFilter: 'A3:L'/);
+    assert.match(source, /autoFilter: 'A3:M'/);
+    assert.match(source, /merges: \['A1:L1', 'A2:L2'\]/);
+    assert.match(source, /merges: \['A1:M1', 'A2:M2'\]/);
     assert.match(source, /merges: \['A1:O1'/);
     assert.match(source, /'<\/sheetData>' \+ filter \+ merges/);
     assert.match(source, /<sz val="8"\/>/);
     assert.match(source, /const topStyle = style === 3 \? 12 : style === 9 \? 13 : 11/);
     assert.match(source, /horizontal="center" vertical="center"/);
     assert.match(source, /CHANGE_BU_OPTIONS = \['NIS', 'CS', 'AMS', 'NIS-ITS', 'Software', 'SEC', '专业服务', 'PS', 'NRO', '工程服务'\]/);
+    assert.match(source, /CHANGE_PRODUCT_LINE_OPTIONS = \['data_storage', 'wireless', 'cloud_core_network', 'data_communication', 'software_business', 'optical_business', 'computing', 'service_product', 'opmt', 'digital_power'\]/);
+    assert.match(source, /SR_PRODUCT_LINE_OPTIONS = \['wireless', 'opmt', 'digital_power', 'service_product', 'optical_business', 'computing', 'data_storage', 'cloud_core_network', 'data_communication', 'industry_consulting', 'software_business'\]/);
     assert.match(source, /bu: selectedBus/);
+    assert.match(source, /product_line: selectedProductLines/);
     assert.match(source, /class="nc-bu-apply"/);
-    assert.match(source, /loadChangeData\(token, changeBuSelection\)/);
+    assert.match(source, /data-change-product-line=/);
+    assert.match(source, /loadChangeData\(token, changeBuSelection, changeProductLineSelection\)/);
     assert.match(source, /dashboardCache\[3\] = result/);
     assert.match(source, /uivf12-netcare-change-bu-v1/);
+    assert.match(source, /uivf12-netcare-change-product-lines-v1/);
     assert.match(source, /各范围年度同期对比/);
     assert.match(source, /总体季度同比与环比/);
     assert.match(source, /月度变更量同期趋势/);
@@ -116,8 +152,10 @@ test('NetCare EOS planning UI keeps its calculation and input constraints', () =
     assert.match(source, /sr_type_name: selectedSrTypes\.length \? selectedSrTypes : SR_TYPE_NAMES/);
     assert.match(source, /bu_name: \[\]/);
     assert.match(source, /data-sr-type=/);
-    assert.match(source, /loadSrData\(token, srTypeSelection\)/);
+    assert.match(source, /data-sr-product-line=/);
+    assert.match(source, /loadSrData\(token, srTypeSelection, srProductLineSelection\)/);
     assert.match(source, /dashboardCache\[5\] = result/);
+    assert.match(source, /uivf12-netcare-sr-product-lines-v1/);
     assert.match(source, /SR 数量变化总览/);
     assert.match(source, /年度 SR 数量同比/);
     assert.match(source, /季度 SR 数量同比 \/ 环比/);
@@ -129,7 +167,7 @@ test('NetCare EOS planning UI keeps its calculation and input constraints', () =
     assert.match(source, /月度 SR 趋势/);
 });
 
-test('NetCare EOS Top N is calculated independently for each customer', () => {
+test('NetCare EOS Top N is calculated from No Plan independently for each customer', () => {
     const source = fs.readFileSync(runtimePath, 'utf8');
     const start = source.indexOf('function emptyEosMetric');
     const end = source.indexOf('function briefGap', start);
@@ -139,25 +177,30 @@ test('NetCare EOS Top N is calculated independently for each customer', () => {
         const num = value => Number.isFinite(Number(value)) ? Number(value) : 0;
         const tr = (zh, en) => zh;
         ${source.slice(start, end)}
-        return { emptyEosMetric, addEosMetric, topPendingGroups };
+        return { emptyEosMetric, addEosMetric, topNoPlanGroups, eosSuggestedRate };
     })()`);
     const metric = helpers.emptyEosMetric();
     [
-        { customer: 'A', pendingLabel: 'Line 1 · P1', pending: 9 },
-        { customer: 'A', pendingLabel: 'Line 2 · P2', pending: 7 },
-        { customer: 'A', pendingLabel: 'Line 3 · P3', pending: 3 },
-        { customer: 'B', pendingLabel: 'Line 4 · P4', pending: 8 },
-        { customer: 'B', pendingLabel: 'Line 5 · P5', pending: 2 }
+        { customer: 'A', pendingLabel: 'Line 1 · P1', pending: 15, annualPlan: 6, noPlan: 9 },
+        { customer: 'A', pendingLabel: 'Line 2 · P2', pending: 10, annualPlan: 3, noPlan: 7 },
+        { customer: 'A', pendingLabel: 'Line 3 · P3', pending: 3, annualPlan: 0, noPlan: 3 },
+        { customer: 'A', pendingLabel: 'Line planned · P4', pending: 5, annualPlan: 5, noPlan: 0 },
+        { customer: 'B', pendingLabel: 'Line 4 · P5', pending: 12, annualPlan: 4, noPlan: 8 },
+        { customer: 'B', pendingLabel: 'Line 5 · P6', pending: 2, annualPlan: 0, noPlan: 2 }
     ].forEach(item => helpers.addEosMetric(metric, item));
-    const groups = helpers.topPendingGroups(metric, 'product');
+    const groups = helpers.topNoPlanGroups(metric, 'product');
     assert.equal(groups.length, 2);
     assert.deepEqual(Array.from(groups[0].items, item => item[1]), [9, 7]);
     assert.deepEqual(Array.from(groups[1].items, item => item[1]), [8, 2]);
-    assert.equal(groups[0].pending, 19);
-    assert.equal(groups[1].pending, 10);
-    const versionGroups = helpers.topPendingGroups(metric, 'version');
+    assert.equal(groups[0].noPlan, 19);
+    assert.equal(groups[0].continueCount, 16);
+    assert.equal(groups[1].noPlan, 10);
+    assert.equal(groups[1].continueCount, 10);
+    const versionGroups = helpers.topNoPlanGroups(metric, 'version');
     assert.deepEqual(Array.from(versionGroups[0].items, item => item[1]), [9]);
     assert.deepEqual(Array.from(versionGroups[1].items, item => item[1]), [8]);
+    assert.equal(helpers.eosSuggestedRate({ quantity: 100, incorporated: 40, annualPlan: 20 }, 15), 75);
+    assert.equal(helpers.eosSuggestedRate({ quantity: 100, incorporated: 70, annualPlan: 25 }, 20), 100);
 });
 
 test('NetCare EOS No Plan follows Pending minus Planned for product and version', () => {
@@ -166,7 +209,7 @@ test('NetCare EOS No Plan follows Pending minus Planned for product and version'
     const end = source.indexOf('function buildEos(', start);
     assert.ok(start > 0 && end > start);
     const helpers = vm.runInNewContext(`(() => {
-        const eosSettings = { plans: { product: {}, version: {} } };
+        const eosSettings = { plans: { product: {}, version: {} }, notes: { product: {}, version: {} } };
         const num = value => Number.isFinite(Number(value)) ? Number(value) : 0;
         const tr = (zh, en) => zh;
         const normalizeCustomer = value => String(value || '未知');
@@ -182,8 +225,12 @@ test('NetCare EOS No Plan follows Pending minus Planned for product and version'
     const productKey = 'A|P1|P1'; const versionKey = 'A|P1|V1';
     helpers.eosSettings.plans.product[productKey] = 2;
     helpers.eosSettings.plans.version[versionKey] = 4;
+    helpers.eosSettings.notes.product[productKey] = '等待客户确认窗口';
+    helpers.eosSettings.notes.version[versionKey] = 'Planned for Q4';
     assert.equal(helpers.buildEosItems([row], 'product')[0].noPlan, 3);
     assert.equal(helpers.buildEosItems([row], 'version')[0].noPlan, 1);
+    assert.equal(helpers.buildEosItems([row], 'product')[0].progressNote, '等待客户确认窗口');
+    assert.equal(helpers.buildEosItems([row], 'version')[0].progressNote, 'Planned for Q4');
 });
 
 test('NetCare SR metrics preserve source fields and weight ratio metrics', () => {
@@ -209,5 +256,5 @@ test('NetCare SR metrics preserve source fields and weight ratio metrics', () =>
 
 test('UIVF12 page cache-busts the enhanced NetCare runtime', () => {
     const html = fs.readFileSync(pagePath, 'utf8');
-    assert.match(html, /netcare-analysis\.js\?v=20260907-19/);
+    assert.match(html, /netcare-analysis\.js\?v=20260908-05/);
 });
