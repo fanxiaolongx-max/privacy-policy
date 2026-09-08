@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - 'tools-platform/backend/builtin-tools/**'
     tags:
       - 'v*' # Trigger build on version tags like v1.0.0
   workflow_dispatch: # Allow manual trigger from GitHub UI

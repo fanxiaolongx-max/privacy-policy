@@ -1264,6 +1264,14 @@ sequenceDiagram
    - 下载进度实时推送到 Windows 托盘与原生的 WinForms 进度监控窗口。
    - 下载完成后弹出“重启安装新版本”提示，用户点击后自动退出、平滑覆盖并重启恢复服务。
 
+### 13.3 HTML 工具市场与独立发布
+
+- 首页管理员区域提供“工具市场”，可比较本地版本、目录版本、包大小和 SHA-256 指纹，并支持按需安装或更新。
+- `.github/workflows/tools-market.yml` 在 `backend/builtin-tools/` 变化时独立生成每工具 ZIP 和 `catalog.json`，发布到 `tool-market` 分支，不递增桌面端版本、不重新构建 EXE。
+- 客户端默认读取官方仓库的 `tool-market` 分支；私有部署可用 `TOOLS_MARKET_CATALOG_URL` 替换目录地址，并用 `TOOLS_MARKET_ALLOWED_HOSTS` 增加逗号分隔的可信下载域名。
+- Actions 可通过 `TOOLS_MARKET_SIGNING_PRIVATE_KEY` Secret 使用 Ed25519 签名目录。客户端通过 `TOOLS_MARKET_PUBLIC_KEY` 验签；设置 `TOOLS_MARKET_REQUIRE_SIGNATURE=1` 后会拒绝未签名目录。密钥均使用 DER 格式的 Base64 文本（私钥 PKCS#8，公钥 SPKI）。
+- 工具更新仅替换受管理的程序文件，替换前备份到当前租户的 `backups/tool-market/`；未关联的手动导入工具遇到同名 slug 时不会被自动覆盖。
+
 ---
 
 ## 14. 开发约定与排障 FAQ

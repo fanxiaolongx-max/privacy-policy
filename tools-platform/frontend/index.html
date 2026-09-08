@@ -648,6 +648,8 @@
             background: rgba(100,255,218,0.18);
             border-color: rgba(100,255,218,0.42);
         }
+        .custom-tool-upload.market { border-color: rgba(96,165,250,.35); background: rgba(59,130,246,.14); color: #bfdbfe; }
+        .custom-tool-upload.market:hover { border-color: rgba(96,165,250,.55); background: rgba(59,130,246,.22); }
         .tool-import-overlay {
             position: fixed;
             inset: 0;
@@ -786,6 +788,28 @@
         .tool-import-btn.primary { border-color: rgba(100,255,218,.36); background: linear-gradient(135deg, rgba(16,185,129,.3), rgba(14,165,233,.25)); color: #cafff4; }
         .tool-import-btn:hover:not(:disabled) { filter: brightness(1.18); }
         .tool-import-btn:disabled { opacity: .55; cursor: wait; }
+        .tool-market-body { padding: 20px 24px 24px; }
+        .tool-market-toolbar, .tool-market-footer { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+        .tool-market-toolbar { margin-bottom:14px; color:#94a3b8; font-size:12px; }
+        .tool-market-trust { padding:7px 10px; border-radius:999px; background:rgba(16,185,129,.12); color:#86efac; }
+        .tool-market-trust.unverified { background:rgba(245,158,11,.12); color:#fcd34d; }
+        .tool-market-list { display:grid; gap:11px; max-height:56vh; overflow:auto; padding-right:3px; }
+        .tool-market-card { display:grid; grid-template-columns:auto 42px minmax(0,1fr) auto; align-items:start; gap:11px; padding:15px; border:1px solid rgba(148,163,184,.16); border-radius:14px; background:rgba(2,6,23,.3); }
+        .tool-market-card.is-conflict, .tool-market-card.is-incompatible { border-color:rgba(251,191,36,.26); }
+        .tool-market-card input { margin-top:6px; accent-color:#34d399; }
+        .tool-market-icon { display:grid; place-items:center; width:42px; height:42px; border-radius:12px; background:rgba(59,130,246,.12); font-size:22px; }
+        .tool-market-copy { min-width:0; }
+        .tool-market-title { display:flex; align-items:center; gap:8px; flex-wrap:wrap; color:#f8fafc; font-weight:850; }
+        .tool-market-copy p { margin:6px 0 0; color:#94a3b8; font-size:12px; line-height:1.55; }
+        .tool-market-meta { margin-top:7px; display:flex; gap:10px; flex-wrap:wrap; color:#64748b; font-size:10px; }
+        .tool-market-fingerprint { max-width:170px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:monospace; }
+        .tool-market-status { padding:5px 8px; border-radius:999px; background:rgba(100,116,139,.16); color:#cbd5e1; font-size:10px; font-weight:800; white-space:nowrap; }
+        .tool-market-status.missing, .tool-market-status.update { background:rgba(16,185,129,.14); color:#6ee7b7; }
+        .tool-market-status.conflict, .tool-market-status.incompatible { background:rgba(245,158,11,.14); color:#fcd34d; }
+        .tool-market-warning { color:#fbbf24 !important; }
+        .tool-market-message { min-height:18px; color:#93c5fd; font-size:12px; }
+        .tool-market-empty { padding:35px 15px; text-align:center; color:#94a3b8; }
+        .tool-market-footer { margin-top:16px; padding-top:16px; border-top:1px solid rgba(148,163,184,.12); }
         .custom-tool-actions {
             position: absolute;
             top: 14px;
@@ -863,6 +887,10 @@
             .tool-import-dialog { max-height: calc(100vh - 24px); border-radius: 20px 20px 12px 12px; }
             .tool-import-head, .tool-import-form { padding-left: 20px; padding-right: 20px; }
             .tool-import-fields { grid-template-columns: 76px 1fr; }
+            .tool-market-body { padding-left:14px; padding-right:14px; }
+            .tool-market-card { grid-template-columns:auto 38px minmax(0,1fr); padding:12px; }
+            .tool-market-icon { width:38px; height:38px; }
+            .tool-market-status { grid-column:3; justify-self:start; }
         }
     </style>
 </head>
@@ -914,6 +942,7 @@
 
         <div class="custom-tools-panel" id="customToolsPanel" style="display:none;">
             <span class="custom-tools-note">导入 HTML 或 ZIP 工具包后，会自动生成首页模块和顶部导航入口</span>
+            <button class="custom-tool-upload market" id="toolMarketBtn">🛍️ 工具市场</button>
             <button class="custom-tool-upload" id="customToolUploadBtn">导入 HTML / ZIP 工具</button>
         </div>
 
@@ -1342,6 +1371,32 @@
         </div>
     </div>
 
+    <div class="tool-import-overlay" id="toolMarketModal" role="dialog" aria-modal="true" aria-labelledby="toolMarketTitle">
+        <div class="tool-import-dialog" style="width:min(820px,100%);">
+            <div class="tool-import-head">
+                <div>
+                    <h2 class="tool-import-title" id="toolMarketTitle">工具市场</h2>
+                    <p class="tool-import-subtitle" id="toolMarketSubtitle">获取官方 HTML 工具，无需重新下载完整 EXE。</p>
+                </div>
+                <button type="button" class="tool-import-close" id="toolMarketClose" aria-label="关闭">×</button>
+            </div>
+            <div class="tool-market-body">
+                <div class="tool-market-toolbar">
+                    <span id="toolMarketSummary">正在加载最新工具目录…</span>
+                    <span class="tool-market-trust" id="toolMarketTrust"></span>
+                </div>
+                <div class="tool-market-list" id="toolMarketList"></div>
+                <div class="tool-market-footer">
+                    <span class="tool-market-message" id="toolMarketMessage" aria-live="polite"></span>
+                    <div class="tool-import-actions" style="margin-top:0;">
+                        <button type="button" class="tool-import-btn" id="toolMarketRefresh">刷新</button>
+                        <button type="button" class="tool-import-btn primary" id="toolMarketApply">更新所选工具</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="/js/shared/api.js?v=20260824-01"></script>
     <script src="/js/shared/migration-status.js?v=20260626-01"></script>
     <script src="/js/shared/toast.js?v=20260530-03"></script>
@@ -1438,6 +1493,9 @@
                 'home.apiRelay.saveBeforeInstall': '配置已修改，请先保存后再自动添加。',
                 'home.custom.note': '导入 HTML 或 ZIP 工具包后，会自动生成首页模块和顶部导航入口',
                 'home.custom.upload': '导入 HTML / ZIP 工具',
+                'home.market.button': '🛍️ 工具市场',
+                'home.market.title': '工具市场',
+                'home.market.subtitle': '获取官方 HTML 工具，无需重新下载完整 EXE。',
                 'home.import.title': '导入自定义工具',
                 'home.import.subtitle': '一次填写工具信息并上传 HTML 或 ZIP 工具包。',
                 'home.import.fileTitle': '选择 HTML / ZIP 文件',
@@ -1632,6 +1690,9 @@
                 'home.apiRelay.saveBeforeInstall': 'Save the modified setup before installing it.',
                 'home.custom.note': 'Import an HTML file or ZIP package to generate a home card and top navigation entry automatically.',
                 'home.custom.upload': 'Import HTML / ZIP Tool',
+                'home.market.button': '🛍️ Tool Market',
+                'home.market.title': 'Tool Market',
+                'home.market.subtitle': 'Get official HTML tools without downloading the complete EXE again.',
                 'home.import.title': 'Import Custom Tool',
                 'home.import.subtitle': 'Enter all tool details and select an HTML or ZIP package in one place.',
                 'home.import.fileTitle': 'Choose HTML / ZIP file',
@@ -2371,6 +2432,9 @@
             updateApiRelayRuntimeState();
             setText('.custom-tools-note', t('home.custom.note'));
             setText('#customToolUploadBtn', t('home.custom.upload'));
+            setText('#toolMarketBtn', t('home.market.button'));
+            setText('#toolMarketTitle', t('home.market.title'));
+            setText('#toolMarketSubtitle', t('home.market.subtitle'));
             setText('#customToolImportTitle', t('home.import.title'));
             setText('#customToolImportSubtitle', t('home.import.subtitle'));
             setText('#customToolFileTitle', t('home.import.fileTitle'));
@@ -2872,6 +2936,147 @@
             });
         }
 
+        function setupToolMarket() {
+            const button = document.getElementById('toolMarketBtn');
+            const modal = document.getElementById('toolMarketModal');
+            const list = document.getElementById('toolMarketList');
+            const summary = document.getElementById('toolMarketSummary');
+            const trust = document.getElementById('toolMarketTrust');
+            const message = document.getElementById('toolMarketMessage');
+            const applyButton = document.getElementById('toolMarketApply');
+            const refreshButton = document.getElementById('toolMarketRefresh');
+            if (!button || !modal || !list || !applyButton) return;
+            let preview = null;
+            let loading = false;
+
+            const english = () => (window.ToolsI18n?.getLanguage?.() || localStorage.getItem('tools_language')) === 'en-US';
+            const text = (zh, en) => english() ? en : zh;
+            const size = bytes => {
+                const value = Number(bytes) || 0;
+                if (value < 1024) return `${value} B`;
+                if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+                return `${(value / 1024 / 1024).toFixed(1)} MB`;
+            };
+            const labels = () => ({
+                unchanged: text('已是最新', 'Up to date'),
+                missing: text('可安装', 'Available'),
+                update: text('可更新', 'Update'),
+                conflict: text('本地同名冲突', 'Local conflict'),
+                incompatible: text('平台版本不兼容', 'Incompatible')
+            });
+
+            const render = data => {
+                preview = data;
+                const tools = Array.isArray(data?.tools) ? data.tools : [];
+                const actionable = tools.filter(tool => tool.recommended).length;
+                const selectable = tools.filter(tool => ['missing', 'update', 'conflict'].includes(tool.status)).length;
+                summary.textContent = text(`共 ${tools.length} 个工具，${actionable} 个建议安装/更新`, `${tools.length} tools, ${actionable} recommended updates`);
+                const trustState = data?.trust?.state || 'unsigned';
+                trust.className = `tool-market-trust${trustState === 'verified' ? '' : ' unverified'}`;
+                trust.textContent = trustState === 'verified'
+                    ? text('✓ 目录签名已验证', '✓ Catalog signature verified')
+                    : text('⚠ HTTPS + SHA-256 校验', '⚠ HTTPS + SHA-256 verification');
+                const statusLabels = labels();
+                list.innerHTML = tools.length ? tools.map(tool => {
+                    const description = english() ? (tool.descriptionEn || tool.description) : tool.description;
+                    const disabled = !['missing', 'update', 'conflict'].includes(tool.status);
+                    const localModified = tool.localModified
+                        ? `<p class="tool-market-warning">${text('检测到本地文件修改；更新前会自动备份。', 'Local file changes detected; a backup will be created before updating.')}</p>` : '';
+                    const conflict = tool.status === 'conflict'
+                        ? `<p class="tool-market-warning">${text('这是未关联的手动导入工具；只有主动勾选并二次确认才会接管。', 'This manually imported tool is not linked; it is adopted only after selection and confirmation.')}</p>` : '';
+                    return `<article class="tool-market-card is-${escapeHtml(tool.status)}">
+                        <input type="checkbox" data-market-slug="${escapeHtml(tool.slug)}" ${tool.recommended ? 'checked' : ''} ${disabled ? 'disabled' : ''}>
+                        <span class="tool-market-icon">${escapeHtml(tool.icon)}</span>
+                        <div class="tool-market-copy">
+                            <div class="tool-market-title">${escapeHtml(english() ? (tool.nameEn || tool.name) : tool.name)}</div>
+                            <p>${escapeHtml(description || '')}</p>${localModified}${conflict}
+                            <div class="tool-market-meta">
+                                <span>${text('本地', 'Local')} ${escapeHtml(tool.localVersion || (tool.localSource === 'bundled' ? text('随平台内置', 'Bundled') : '-'))} → ${escapeHtml(tool.releaseVersion)}</span>
+                                <span>${size(tool.packageSize)}</span>
+                                <span>${text('需平台', 'Requires')} ${escapeHtml(tool.minPlatformVersion)}+</span>
+                                <span class="tool-market-fingerprint" title="SHA-256 ${escapeHtml(tool.packageSha256)}">SHA-256 ${escapeHtml(tool.packageSha256.slice(0, 12))}…</span>
+                            </div>
+                        </div>
+                        <span class="tool-market-status ${escapeHtml(tool.status)}">${escapeHtml(statusLabels[tool.status] || tool.status)}</span>
+                    </article>`;
+                }).join('') : `<div class="tool-market-empty">${text('市场目录中暂无工具', 'No tools are currently listed')}</div>`;
+                applyButton.disabled = selectable === 0;
+                applyButton.textContent = text('更新所选工具', 'Update selected tools');
+                refreshButton.textContent = text('刷新', 'Refresh');
+            };
+
+            const load = async force => {
+                if (loading) return;
+                loading = true;
+                message.textContent = text('正在加载最新工具目录…', 'Loading the latest catalog…');
+                list.innerHTML = `<div class="tool-market-empty">${message.textContent}</div>`;
+                applyButton.disabled = true;
+                refreshButton.disabled = true;
+                try {
+                    const data = await API.get(`/api/custom-tools/market/preview${force ? '?refresh=1' : ''}`);
+                    render(data);
+                    message.textContent = '';
+                } catch (error) {
+                    preview = null;
+                    list.innerHTML = `<div class="tool-market-empty">${escapeHtml(error.message || text('市场加载失败', 'Failed to load market'))}</div>`;
+                    summary.textContent = text('无法连接工具市场', 'Unable to connect to the tool market');
+                    trust.textContent = '';
+                    message.textContent = text('可稍后刷新；不影响本地工具使用。', 'Try refreshing later; local tools remain available.');
+                } finally {
+                    loading = false;
+                    refreshButton.disabled = false;
+                }
+            };
+
+            const close = () => {
+                if (loading) return;
+                modal.classList.remove('open');
+                document.body.style.overflow = '';
+                button.focus();
+            };
+            button.addEventListener('click', () => {
+                modal.classList.add('open');
+                document.body.style.overflow = 'hidden';
+                void load(true);
+            });
+            document.getElementById('toolMarketClose')?.addEventListener('click', close);
+            modal.addEventListener('click', event => { if (event.target === modal) close(); });
+            refreshButton.addEventListener('click', () => void load(true));
+            applyButton.addEventListener('click', async () => {
+                if (!preview || loading) return;
+                const selected = [...list.querySelectorAll('[data-market-slug]:checked')].map(input => input.dataset.marketSlug);
+                if (!selected.length) {
+                    message.textContent = text('请先选择需要安装或更新的工具。', 'Select at least one tool to install or update.');
+                    return;
+                }
+                const adoptSlugs = preview.tools.filter(tool => selected.includes(tool.slug) && tool.status === 'conflict').map(tool => tool.slug);
+                if (adoptSlugs.length && !confirm(text(
+                    `将接管 ${adoptSlugs.length} 个同名本地工具。旧目录会先备份，确定继续吗？`,
+                    `Adopt ${adoptSlugs.length} local tools with matching slugs? Their current directories will be backed up first.`
+                ))) return;
+                loading = true;
+                applyButton.disabled = true;
+                refreshButton.disabled = true;
+                list.querySelectorAll('input').forEach(input => { input.disabled = true; });
+                message.textContent = text('正在下载、校验并备份旧版…', 'Downloading, verifying, and backing up current versions…');
+                try {
+                    const fingerprints = Object.fromEntries(preview.tools.map(tool => [tool.slug, tool.fingerprint]));
+                    const result = await API.post('/api/custom-tools/market/apply', { slugs: selected, adoptSlugs, expectedFingerprints: fingerprints });
+                    render(result.preview);
+                    const count = Array.isArray(result.changed) ? result.changed.length : 0;
+                    message.textContent = text(`已完成 ${count} 个工具的安装/更新。`, `Installed or updated ${count} tools.`);
+                    await loadCustomTools();
+                    if (window.refreshCustomToolNavLinks) await window.refreshCustomToolNavLinks();
+                } catch (error) {
+                    message.textContent = text(`更新失败：${error.message}`, `Update failed: ${error.message}`);
+                    if (preview) render(preview);
+                } finally {
+                    loading = false;
+                    refreshButton.disabled = false;
+                }
+            });
+        }
+
         async function downloadCustomTool(slug) {
             try {
                 const token = localStorage.getItem('tools_token');
@@ -2967,6 +3172,7 @@
             setupFriendLinks();
             setupApiRelay();
             setupCustomToolUpload();
+            setupToolMarket();
             loadCustomTools();
             loadStats();
             loadOperationHistory();

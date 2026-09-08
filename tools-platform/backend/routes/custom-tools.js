@@ -19,6 +19,7 @@ const { requireAdmin } = require('../middleware/auth');
 const customToolI18nGenerator = require('../../scripts/generate-custom-tool-i18n');
 const customToolExportService = require('../models/custom-tool-export-service');
 const snapshotsRepo = require('../models/custom-tools-snapshots-repository');
+const marketService = require('../models/custom-tools-market-service');
 const { Worker } = require('node:worker_threads');
 
 const builtinToolsSourceDir = path.join(__dirname, '../builtin-tools');
@@ -338,6 +339,34 @@ router.post('/builtin-sync/apply', requireAdmin, async (req, res) => {
         res.json({ success: result.invalid.length === 0, ...result, reconcile });
     } catch (err) {
         res.status(err.status || 500).json({ error: err.message || '处理系统工具更新失败' });
+    }
+});
+
+router.get('/market/preview', requireAdmin, async (req, res) => {
+    try {
+        res.setHeader('Cache-Control', 'no-store');
+        res.json(await marketService.previewMarket({ force: req.query.refresh === '1' }));
+    } catch (err) {
+        res.status(err.status || 502).json({ error: err.message || '读取工具市场失败' });
+    }
+});
+
+router.post('/market/apply', requireAdmin, async (req, res) => {
+    try {
+        const body = req.body || {};
+        const result = await marketService.applyMarketUpdates({
+            slugs: Array.isArray(body.slugs) ? body.slugs : [],
+            adoptSlugs: Array.isArray(body.adoptSlugs) ? body.adoptSlugs : [],
+            expectedFingerprints: body.expectedFingerprints && typeof body.expectedFingerprints === 'object'
+                ? body.expectedFingerprints : {}
+        });
+        if (result.changed.length) {
+            await repo.reconcileToolsFromDisk();
+            await repo.markToolsUpdated(result.changed);
+        }
+        res.json({ success: result.invalid.length === 0, ...result });
+    } catch (err) {
+        res.status(err.status || 500).json({ error: err.message || '安装工具市场更新失败' });
     }
 });
 
