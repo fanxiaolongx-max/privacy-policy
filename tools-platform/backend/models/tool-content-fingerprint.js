@@ -17,6 +17,7 @@ function canonicalContent(relativePath, content) {
         delete manifest.builtIn;
         delete manifest.system;
         delete manifest.market;
+        delete manifest.history;
         return Buffer.from(JSON.stringify(stableJson(manifest)), 'utf8');
     }
     if (content.includes(0)) return content;

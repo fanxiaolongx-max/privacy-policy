@@ -215,14 +215,26 @@ function compareBundledTool(source, targetDir) {
         || oldTool.icon !== newTool.icon
         || oldTool.description !== newTool.description
     ));
-    const metadataChanged = managed
+    const storedFingerprintChanged = managed
         ? targetManifest.system.fingerprint !== source.fingerprint
         : targetExists;
+    let canonicalContentMatches = false;
+    if (managed) {
+        const obsoleteManagedFiles = previousManagedFiles.filter(file => !sourceSet.has(file) && fs.existsSync(path.join(targetToolDir, file)));
+        try {
+            canonicalContentMatches = obsoleteManagedFiles.length === 0
+                && source.files.every(file => fs.existsSync(path.join(targetToolDir, file)))
+                && fingerprintFiles(targetToolDir, source.files) === source.fingerprint;
+        } catch (_) {
+            canonicalContentMatches = false;
+        }
+    }
+    const metadataChanged = managed ? !canonicalContentMatches : targetExists;
     let status = 'unchanged';
     if (!targetExists) status = 'missing';
     else if (!managed && legacyMatch) status = 'adopt';
     else if (!managed) status = 'conflict';
-    else if (counts.added || counts.modified || counts.removed || metadataChanged) status = 'update';
+    else if (!canonicalContentMatches) status = 'update';
 
     return {
         slug: source.slug,
@@ -238,6 +250,7 @@ function compareBundledTool(source, targetDir) {
         managed,
         legacyMatch,
         metadataChanged,
+        fingerprintMigrated: managed && storedFingerprintChanged && canonicalContentMatches,
         oldBytes: sumBytes(changes.filter(item => item.type !== 'added').map(item => ({ size: item.oldSize }))),
         newBytes: sumBytes(changes.filter(item => item.type !== 'removed' && item.type !== 'preserved').map(item => ({ size: item.newSize }))),
         counts,

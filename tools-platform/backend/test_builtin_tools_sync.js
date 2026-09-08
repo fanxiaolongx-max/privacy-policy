@@ -53,7 +53,7 @@ function run() {
         writeFile(lfDir, 'LICENSE', 'line one\nline two\n');
         writeFile(crlfDir, 'LICENSE', 'line one\r\nline two\r\n');
         writeFile(lfDir, '.tool-manifest.json', '{"version":1,"tool":{"slug":"line-endings"}}\n');
-        writeFile(crlfDir, '.tool-manifest.json', '{\r\n  "tool": {"slug":"line-endings"},\r\n  "version": 1,\r\n  "builtIn": true,\r\n  "system": {"fingerprint":"legacy"}\r\n}\r\n');
+        writeFile(crlfDir, '.tool-manifest.json', '{\r\n  "tool": {"slug":"line-endings"},\r\n  "version": 1,\r\n  "builtIn": true,\r\n  "system": {"fingerprint":"legacy"},\r\n  "history": {"action":"preserved local audit"}\r\n}\r\n');
         const fingerprintFilesList = ['.tool-manifest.json', 'LICENSE', 'app.webmanifest', 'index.html'];
         assert.strictEqual(
             fingerprintFiles(lfDir, fingerprintFilesList),
@@ -114,6 +114,16 @@ function run() {
         const third = previewBuiltinTools({ sourceDir, targetDir, stateFile });
         assert.deepStrictEqual(third.unchanged, ['system-tool']);
         assert.strictEqual(third.pending.length, 0);
+
+        const migratedManifestPath = path.join(targetDir, 'system-tool/.tool-manifest.json');
+        const migratedManifest = JSON.parse(fs.readFileSync(migratedManifestPath, 'utf8'));
+        migratedManifest.system.fingerprint = 'legacy-fingerprint-format';
+        fs.writeFileSync(migratedManifestPath, `${JSON.stringify(migratedManifest, null, 2)}\n`);
+        const legacyFingerprintPreview = previewBuiltinTools({ sourceDir, targetDir, stateFile, includeSkipped: true });
+        const equivalentTool = legacyFingerprintPreview.tools.find(tool => tool.slug === 'system-tool');
+        assert.strictEqual(equivalentTool.status, 'unchanged');
+        assert.strictEqual(equivalentTool.fingerprintMigrated, true);
+        assert.strictEqual(equivalentTool.metadataChanged, false);
 
         writeBundledTool(sourceDir, 'legacy-tool', { 'index.html': '<html>legacy</html>' });
         writeBundledTool(targetDir, 'legacy-tool', { 'index.html': '<html>legacy</html>' });
