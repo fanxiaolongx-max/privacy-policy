@@ -788,20 +788,21 @@
         .tool-import-btn.primary { border-color: rgba(100,255,218,.36); background: linear-gradient(135deg, rgba(16,185,129,.3), rgba(14,165,233,.25)); color: #cafff4; }
         .tool-import-btn:hover:not(:disabled) { filter: brightness(1.18); }
         .tool-import-btn:disabled { opacity: .55; cursor: wait; }
-        .tool-market-body { padding: 20px 24px 24px; }
+        .tool-market-dialog { width:min(1440px,calc(100vw - 28px)); height:min(920px,calc(100vh - 28px)); display:flex; flex-direction:column; }
+        .tool-market-body { min-height:0; padding:14px 18px 16px; display:flex; flex:1; flex-direction:column; }
         .tool-market-toolbar, .tool-market-footer { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
         .tool-market-toolbar { margin-bottom:14px; color:#94a3b8; font-size:12px; }
         .tool-market-trust { padding:7px 10px; border-radius:999px; background:rgba(16,185,129,.12); color:#86efac; }
         .tool-market-trust.unverified { background:rgba(245,158,11,.12); color:#fcd34d; }
-        .tool-market-list { display:grid; gap:11px; max-height:56vh; overflow:auto; padding-right:3px; }
-        .tool-market-card { display:grid; grid-template-columns:auto 42px minmax(0,1fr) auto; align-items:start; gap:11px; padding:15px; border:1px solid rgba(148,163,184,.16); border-radius:14px; background:rgba(2,6,23,.3); }
+        .tool-market-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-content:start; gap:8px; min-height:0; flex:1; overflow:auto; padding-right:4px; }
+        .tool-market-card { display:grid; grid-template-columns:auto 36px minmax(0,1fr) auto; align-items:start; gap:9px; padding:11px 12px; border:1px solid rgba(148,163,184,.16); border-radius:12px; background:rgba(2,6,23,.3); }
         .tool-market-card.is-conflict, .tool-market-card.is-incompatible { border-color:rgba(251,191,36,.26); }
         .tool-market-card input { margin-top:6px; accent-color:#34d399; }
-        .tool-market-icon { display:grid; place-items:center; width:42px; height:42px; border-radius:12px; background:rgba(59,130,246,.12); font-size:22px; }
+        .tool-market-icon { display:grid; place-items:center; width:36px; height:36px; border-radius:10px; background:rgba(59,130,246,.12); font-size:19px; }
         .tool-market-copy { min-width:0; }
         .tool-market-title { display:flex; align-items:center; gap:8px; flex-wrap:wrap; color:#f8fafc; font-weight:850; }
-        .tool-market-copy p { margin:6px 0 0; color:#94a3b8; font-size:12px; line-height:1.55; }
-        .tool-market-meta { margin-top:7px; display:flex; gap:10px; flex-wrap:wrap; color:#64748b; font-size:10px; }
+        .tool-market-copy p { margin:4px 0 0; color:#94a3b8; font-size:11px; line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+        .tool-market-meta { margin-top:5px; display:flex; gap:8px; flex-wrap:wrap; color:#64748b; font-size:9px; }
         .tool-market-fingerprint { max-width:170px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:monospace; }
         .tool-market-status { padding:5px 8px; border-radius:999px; background:rgba(100,116,139,.16); color:#cbd5e1; font-size:10px; font-weight:800; white-space:nowrap; }
         .tool-market-status.missing, .tool-market-status.update { background:rgba(16,185,129,.14); color:#6ee7b7; }
@@ -810,6 +811,13 @@
         .tool-market-message { min-height:18px; color:#93c5fd; font-size:12px; }
         .tool-market-empty { padding:35px 15px; text-align:center; color:#94a3b8; }
         .tool-market-footer { margin-top:16px; padding-top:16px; border-top:1px solid rgba(148,163,184,.12); }
+        .tool-market-progress { display:none; margin-top:10px; padding:10px 12px; border:1px solid rgba(96,165,250,.2); border-radius:11px; background:rgba(15,23,42,.72); }
+        .tool-market-progress.visible { display:block; }
+        .tool-market-progress-head { display:flex; justify-content:space-between; gap:12px; color:#bfdbfe; font-size:11px; }
+        .tool-market-progress-track { height:5px; margin-top:7px; overflow:hidden; border-radius:99px; background:rgba(148,163,184,.16); }
+        .tool-market-progress-bar { width:0; height:100%; border-radius:inherit; background:linear-gradient(90deg,#34d399,#38bdf8); transition:width .25s ease; }
+        .tool-market-log { max-height:92px; margin-top:7px; overflow:auto; color:#94a3b8; font:10px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace; white-space:pre-wrap; }
+        @media (max-width:900px) { .tool-market-list { grid-template-columns:1fr; } }
         .custom-tool-actions {
             position: absolute;
             top: 14px;
@@ -1372,7 +1380,7 @@
     </div>
 
     <div class="tool-import-overlay" id="toolMarketModal" role="dialog" aria-modal="true" aria-labelledby="toolMarketTitle">
-        <div class="tool-import-dialog" style="width:min(820px,100%);">
+        <div class="tool-import-dialog tool-market-dialog">
             <div class="tool-import-head">
                 <div>
                     <h2 class="tool-import-title" id="toolMarketTitle">工具市场</h2>
@@ -1386,6 +1394,11 @@
                     <span class="tool-market-trust" id="toolMarketTrust"></span>
                 </div>
                 <div class="tool-market-list" id="toolMarketList"></div>
+                <div class="tool-market-progress" id="toolMarketProgress">
+                    <div class="tool-market-progress-head"><span id="toolMarketProgressText"></span><span id="toolMarketProgressCount"></span></div>
+                    <div class="tool-market-progress-track"><div class="tool-market-progress-bar" id="toolMarketProgressBar"></div></div>
+                    <div class="tool-market-log" id="toolMarketLog" aria-live="polite"></div>
+                </div>
                 <div class="tool-market-footer">
                     <span class="tool-market-message" id="toolMarketMessage" aria-live="polite"></span>
                     <div class="tool-import-actions" style="margin-top:0;">
@@ -1401,7 +1414,7 @@
     <script src="/js/shared/migration-status.js?v=20260626-01"></script>
     <script src="/js/shared/toast.js?v=20260530-03"></script>
     <script src="/js/shared/i18n.js?v=20260610-01"></script>
-    <script src="/js/shared/navbar.js?v=20260908-01"></script>
+    <script src="/js/shared/navbar.js?v=20260908-02"></script>
     <script src="/js/shared/jszip.min.js?v=3.10.1"></script>
     <script>
         const historyState = {
@@ -2943,11 +2956,28 @@
             const summary = document.getElementById('toolMarketSummary');
             const trust = document.getElementById('toolMarketTrust');
             const message = document.getElementById('toolMarketMessage');
+            const progress = document.getElementById('toolMarketProgress');
+            const progressText = document.getElementById('toolMarketProgressText');
+            const progressCount = document.getElementById('toolMarketProgressCount');
+            const progressBar = document.getElementById('toolMarketProgressBar');
+            const log = document.getElementById('toolMarketLog');
             const applyButton = document.getElementById('toolMarketApply');
             const refreshButton = document.getElementById('toolMarketRefresh');
             if (!button || !modal || !list || !applyButton) return;
             let preview = null;
             let loading = false;
+
+            const resetProgress = () => {
+                progress.classList.remove('visible');
+                progressBar.style.width = '0%';
+                progressText.textContent = '';
+                progressCount.textContent = '';
+                log.textContent = '';
+            };
+            const appendLog = value => {
+                log.textContent += `${log.textContent ? '\n' : ''}${value}`;
+                log.scrollTop = log.scrollHeight;
+            };
 
             const english = () => (window.ToolsI18n?.getLanguage?.() || localStorage.getItem('tools_language')) === 'en-US';
             const text = (zh, en) => english() ? en : zh;
@@ -3007,6 +3037,7 @@
 
             const load = async force => {
                 if (loading) return;
+                resetProgress();
                 loading = true;
                 message.textContent = text('正在加载最新工具目录…', 'Loading the latest catalog…');
                 list.innerHTML = `<div class="tool-market-empty">${message.textContent}</div>`;
@@ -3058,13 +3089,44 @@
                 applyButton.disabled = true;
                 refreshButton.disabled = true;
                 list.querySelectorAll('input').forEach(input => { input.disabled = true; });
-                message.textContent = text('正在下载、校验并备份旧版…', 'Downloading, verifying, and backing up current versions…');
+                progress.classList.add('visible');
+                log.textContent = '';
+                let completed = 0;
+                let succeeded = 0;
+                const failures = [];
                 try {
                     const fingerprints = Object.fromEntries(preview.tools.map(tool => [tool.slug, tool.fingerprint]));
-                    const result = await API.post('/api/custom-tools/market/apply', { slugs: selected, adoptSlugs, expectedFingerprints: fingerprints });
-                    render(result.preview);
-                    const count = Array.isArray(result.changed) ? result.changed.length : 0;
-                    message.textContent = text(`已完成 ${count} 个工具的安装/更新。`, `Installed or updated ${count} tools.`);
+                    for (const slug of selected) {
+                        const tool = preview.tools.find(item => item.slug === slug);
+                        const displayName = english() ? (tool?.nameEn || tool?.name || slug) : (tool?.name || slug);
+                        progressText.textContent = text(`正在下载、校验并安装：${displayName}`, `Downloading, verifying, and installing: ${displayName}`);
+                        progressCount.textContent = `${completed + 1} / ${selected.length}`;
+                        appendLog(text(`→ ${displayName}：开始处理`, `→ ${displayName}: started`));
+                        try {
+                            const result = await API.post('/api/custom-tools/market/apply', {
+                                slugs: [slug],
+                                adoptSlugs: adoptSlugs.includes(slug) ? [slug] : [],
+                                expectedFingerprints: { [slug]: fingerprints[slug] }
+                            });
+                            succeeded += Array.isArray(result.changed) ? result.changed.length : 0;
+                            appendLog(text(`✓ ${displayName}：下载、SHA-256 校验和安装完成`, `✓ ${displayName}: downloaded, SHA-256 verified, and installed`));
+                        } catch (error) {
+                            failures.push({ name: displayName, message: error.message || text('未知错误', 'Unknown error') });
+                            appendLog(text(`✗ ${displayName}：${error.message}`, `✗ ${displayName}: ${error.message}`));
+                        }
+                        completed += 1;
+                        progressBar.style.width = `${Math.round(completed / selected.length * 100)}%`;
+                    }
+                    progressText.textContent = failures.length
+                        ? text('更新完成，部分工具失败', 'Update completed with some failures')
+                        : text('所选工具全部处理完成', 'All selected tools completed');
+                    message.textContent = failures.length
+                        ? text(`成功 ${succeeded} 个，失败 ${failures.length} 个；请查看日志。`, `${succeeded} succeeded, ${failures.length} failed; see the log.`)
+                        : text(`已完成 ${succeeded} 个工具的安装/更新。`, `Installed or updated ${succeeded} tools.`);
+                    const refreshed = await API.get('/api/custom-tools/market/preview?refresh=1');
+                    render(refreshed);
+                    progress.classList.add('visible');
+                    progressBar.style.width = '100%';
                     await loadCustomTools();
                     if (window.refreshCustomToolNavLinks) await window.refreshCustomToolNavLinks();
                 } catch (error) {

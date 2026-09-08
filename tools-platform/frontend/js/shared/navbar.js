@@ -6852,6 +6852,10 @@ function openBuiltinToolsSyncModal(preview) {
 }
 
 async function checkBuiltinToolsSync() {
+    if (document.getElementById('toolMarketBtn')) {
+        sessionStorage.setItem(BUILTIN_TOOLS_SYNC_SESSION_KEY, '1');
+        return;
+    }
     if (
         builtinToolsSyncChecking
         || sessionStorage.getItem(BUILTIN_TOOLS_SYNC_SESSION_KEY) === '1'

@@ -5,10 +5,6 @@ const fs = require('fs');
 const path = require('path');
 
 const MANIFEST_NAME = '.tool-manifest.json';
-const TEXT_EXTENSIONS = new Set([
-    '.css', '.csv', '.html', '.js', '.json', '.md', '.mjs', '.py', '.svg', '.txt', '.xml'
-]);
-
 function stableJson(value) {
     if (Array.isArray(value)) return value.map(stableJson);
     if (!value || typeof value !== 'object') return value;
@@ -16,7 +12,6 @@ function stableJson(value) {
 }
 
 function canonicalContent(relativePath, content) {
-    const extension = path.extname(relativePath).toLowerCase();
     if (relativePath === MANIFEST_NAME) {
         const manifest = JSON.parse(content.toString('utf8'));
         delete manifest.builtIn;
@@ -24,8 +19,13 @@ function canonicalContent(relativePath, content) {
         delete manifest.market;
         return Buffer.from(JSON.stringify(stableJson(manifest)), 'utf8');
     }
-    if (!TEXT_EXTENSIONS.has(extension)) return content;
-    return Buffer.from(content.toString('utf8').replace(/\r\n?/g, '\n'), 'utf8');
+    if (content.includes(0)) return content;
+    try {
+        const decoded = new TextDecoder('utf-8', { fatal: true }).decode(content);
+        return Buffer.from(decoded.replace(/\r\n?/g, '\n'), 'utf8');
+    } catch (_) {
+        return content;
+    }
 }
 
 function fingerprintFiles(rootDir, files) {

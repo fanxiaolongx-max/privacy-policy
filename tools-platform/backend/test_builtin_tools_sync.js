@@ -48,9 +48,13 @@ function run() {
         const crlfDir = path.join(tempRoot, 'crlf');
         writeFile(lfDir, 'index.html', '<html>\ntext\n</html>\n');
         writeFile(crlfDir, 'index.html', '<html>\r\ntext\r\n</html>\r\n');
+        writeFile(lfDir, 'app.webmanifest', '{\n"name":"tool"\n}\n');
+        writeFile(crlfDir, 'app.webmanifest', '{\r\n"name":"tool"\r\n}\r\n');
+        writeFile(lfDir, 'LICENSE', 'line one\nline two\n');
+        writeFile(crlfDir, 'LICENSE', 'line one\r\nline two\r\n');
         writeFile(lfDir, '.tool-manifest.json', '{"version":1,"tool":{"slug":"line-endings"}}\n');
         writeFile(crlfDir, '.tool-manifest.json', '{\r\n  "tool": {"slug":"line-endings"},\r\n  "version": 1,\r\n  "builtIn": true,\r\n  "system": {"fingerprint":"legacy"}\r\n}\r\n');
-        const fingerprintFilesList = ['.tool-manifest.json', 'index.html'];
+        const fingerprintFilesList = ['.tool-manifest.json', 'LICENSE', 'app.webmanifest', 'index.html'];
         assert.strictEqual(
             fingerprintFiles(lfDir, fingerprintFilesList),
             fingerprintFiles(crlfDir, fingerprintFilesList),
