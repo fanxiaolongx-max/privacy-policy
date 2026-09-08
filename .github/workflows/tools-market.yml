@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'tools-platform/backend/builtin-tools/**'
+      - 'tools-platform/backend/models/tool-content-fingerprint.js'
       - 'tools-platform/scripts/build-tools-market.js'
       - '.github/workflows/tools-market.yml'
   workflow_dispatch:
