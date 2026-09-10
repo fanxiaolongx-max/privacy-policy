@@ -3366,6 +3366,16 @@ dialog#mediaFormDialog.is-importing {
     padding: 14px;
 }
 
+.nav-report-transfer-card {
+    border-color: #bfdbfe;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.nav-report-transfer-actions {
+    flex-wrap: wrap;
+    max-width: 320px;
+}
+
 .nav-report-cleanup-main {
     display: grid;
     gap: 8px;

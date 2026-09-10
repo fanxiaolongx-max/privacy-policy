@@ -422,7 +422,7 @@ function registerNavbarI18n() {
             'nav.set.sub.customBackup': '单独备份和恢复自定义工具文件、注册信息、服务端状态及可识别的浏览器本地数据。',
             'nav.set.sub.accounts': '修改后会自动保存，并立即影响账号权限。',
             'nav.set.sub.security': '配置登录失败锁定、会话过期和安全告警策略。',
-            'nav.set.sub.report': '报表看板相关维护能力，当前支持历史快照冗余清理。',
+            'nav.set.sub.report': '报表看板历史数据的独立备份、跨站点恢复与冗余清理。',
             'nav.set.sub.pageFallback': '该页面的配置预留位，后续可把页面内相关设置迁移到这里统一管理。',
             'nav.set.help.primary': '勾选后显示在顶部 bar；未勾选的菜单会进入“更多工具”。使用上下按钮调整顶部显示顺序。',
             'nav.set.help.categories': '分类会显示在“更多工具”下拉菜单中。配置英文名称后，系统会在英文模式下自动应用。',
@@ -477,7 +477,23 @@ function registerNavbarI18n() {
             'nav.page.home.public': '允许免登录新窗口访问',
             'nav.page.home.private': '免登录',
             'nav.page.home.empty': '暂无自定义 HTML 工具。',
-            'nav.page.report.help': '清理报表看板“历史快照”下拉列表使用的 SLA 源快照。可彻底删除全部旧快照，只保留最新一份；也可按天数保留。已入库的月报/报表档案不在此清理范围内。',
+            'nav.page.report.help': '可单独备份和恢复历史快照与已入库内容，也可清理报表看板历史下拉列表中的冗余 SLA 源快照。所有操作只影响当前租户。',
+            'nav.page.report.backupTitle': '报表历史数据独立备份与恢复',
+            'nav.page.report.backupDesc': '导出 SLA 历史快照、已入库报表、分类得分、指标明细及关联图片/Excel。可用于不同站点间合并不同阶段的数据。',
+            'nav.page.report.exportButton': '导出独立备份',
+            'nav.page.report.importMode': '导入模式',
+            'nav.page.report.modeMerge': '增量恢复（默认）',
+            'nav.page.report.modeReplace': '清空恢复',
+            'nav.page.report.modeMergeHint': '按“快照 ID + 月份”合并：不同日期追加，同一份数据以备份包覆盖，其他现有数据保留。',
+            'nav.page.report.modeReplaceHint': '先清空当前租户的 SLA 历史快照和报表入库内容，再完整导入备份包。',
+            'nav.page.report.chooseImport': '选择备份并导入',
+            'nav.page.report.noFile': '请先选择 .zip 备份包。',
+            'nav.page.report.importDone': '导入完成：SLA 快照 {sla}条，入库报表 {reports}份，分类得分 {scores}条，指标明细 {metrics}条，附件 {attachments}个。',
+            'nav.page.report.replaceConfirmTitle': '高危操作：清空当前报表历史后恢复',
+            'nav.page.report.replaceConfirmWarning': '当前租户的 SLA 历史快照和全部已入库报表将被备份包取代。',
+            'nav.page.report.replaceConfirmHint': '请在下方完整输入“确认清空恢复”。账号、规则和其他业务数据不受影响。',
+            'nav.page.report.replaceConfirmPlaceholder': '输入：确认清空恢复',
+            'nav.page.report.replaceConfirmAction': '清空并恢复',
             'nav.page.report.title': '历史快照冗余清理',
             'nav.page.report.desc': '默认彻底清理，仅保留最新快照，保证看板仍可正常打开。请先预览影响再执行。',
             'nav.page.report.mode': '清理方式',
@@ -846,7 +862,7 @@ function registerNavbarI18n() {
             'nav.set.sub.customBackup': 'Back up and restore custom tool files, registry data, server state, and detectable browser-local data independently.',
             'nav.set.sub.accounts': 'Changes are saved automatically and immediately applied to account permissions.',
             'nav.set.sub.security': 'Configure login lockouts, session expiry, and security alert severity.',
-            'nav.set.sub.report': 'Report dashboard maintenance. Currently supports historical snapshot cleanup.',
+            'nav.set.sub.report': 'Independent backup, cross-site restore, and redundant-history cleanup for Report Dashboard data.',
             'nav.set.sub.pageFallback': "Placeholder for this page's configuration. Future page settings can be managed here.",
             'nav.set.help.primary': 'Checked items appear in the top bar; unchecked items move to "More Tools". Use up/down buttons to reorder.',
             'nav.set.help.categories': 'Categories are displayed in the "More Tools" dropdown. English names will apply automatically in English mode.',
@@ -901,7 +917,23 @@ function registerNavbarI18n() {
             'nav.page.home.public': 'Allow public new-window access',
             'nav.page.home.private': 'Sign-in required',
             'nav.page.home.empty': 'No custom HTML tools yet.',
-            'nav.page.report.help': 'Clean the SLA source snapshots used by the Report Dashboard history selector. You can remove every older snapshot and keep only the latest one, or apply a retention period. Saved monthly/report archives are outside this cleanup scope.',
+            'nav.page.report.help': 'Back up and restore historical snapshots and saved report content independently, or clean redundant SLA source snapshots from the Report Dashboard history selector. Every operation is limited to the current tenant.',
+            'nav.page.report.backupTitle': 'Independent Report History Backup & Restore',
+            'nav.page.report.backupDesc': 'Export SLA history, saved reports, category scores, metric details, and linked image/Excel files. Use the package to merge data from different periods across sites.',
+            'nav.page.report.exportButton': 'Export Independent Backup',
+            'nav.page.report.importMode': 'Import mode',
+            'nav.page.report.modeMerge': 'Incremental restore (default)',
+            'nav.page.report.modeReplace': 'Clear and restore',
+            'nav.page.report.modeMergeHint': 'Merge by snapshot ID + month: add different dates, replace matching records from the package, and retain all other existing data.',
+            'nav.page.report.modeReplaceHint': 'Clear the current tenant\'s SLA history and saved report records, then import the package in full.',
+            'nav.page.report.chooseImport': 'Choose Backup and Import',
+            'nav.page.report.noFile': 'Choose a .zip backup package first.',
+            'nav.page.report.importDone': 'Import complete: {sla} SLA snapshots, {reports} saved reports, {scores} category scores, {metrics} metric rows, and {attachments} attachments.',
+            'nav.page.report.replaceConfirmTitle': 'DANGER: Clear current report history and restore',
+            'nav.page.report.replaceConfirmWarning': 'The current tenant\'s SLA history and all saved report records will be replaced by this package.',
+            'nav.page.report.replaceConfirmHint': 'Type “确认清空恢复” exactly below. Accounts, rules, and other business data are not affected.',
+            'nav.page.report.replaceConfirmPlaceholder': 'Type: 确认清空恢复',
+            'nav.page.report.replaceConfirmAction': 'Clear and restore',
             'nav.page.report.title': 'Redundant Historical Snapshot Cleanup',
             'nav.page.report.desc': 'Complete cleanup is selected by default and retains the latest snapshot so the dashboard remains usable. Preview the impact before execution.',
             'nav.page.report.mode': 'Cleanup Mode',
@@ -4878,6 +4910,26 @@ window.setCustomToolPublicAccess = async function (slug, publicAccess, checkbox)
 function renderReportPageSettings(content) {
     content.innerHTML = `
         <div class="nav-settings-help">${navEscape(navT('nav.page.report.help'))}</div>
+        <div class="nav-report-cleanup-card nav-report-transfer-card">
+            <div class="nav-report-cleanup-main">
+                <div class="nav-backup-panel-title">${navEscape(navT('nav.page.report.backupTitle'))}</div>
+                <div class="nav-backup-panel-desc">${navEscape(navT('nav.page.report.backupDesc'))}</div>
+                <label class="nav-report-cleanup-field">
+                    <span>${navEscape(navT('nav.page.report.importMode'))}</span>
+                    <select id="reportDataRestoreMode" onchange="updateReportDataRestoreHint()">
+                        <option value="merge" selected>${navEscape(navT('nav.page.report.modeMerge'))}</option>
+                        <option value="replace">${navEscape(navT('nav.page.report.modeReplace'))}</option>
+                    </select>
+                </label>
+                <div id="reportDataRestoreHint" class="nav-backup-panel-desc">${navEscape(navT('nav.page.report.modeMergeHint'))}</div>
+                <input id="reportDataBackupFile" type="file" accept=".zip,application/zip" hidden onchange="importReportDataBackup(this)">
+            </div>
+            <div class="nav-backup-toolbar nav-report-transfer-actions">
+                <button onclick="exportReportDataBackup()">${navEscape(navT('nav.page.report.exportButton'))}</button>
+                <button onclick="document.getElementById('reportDataBackupFile').click()">${navEscape(navT('nav.page.report.chooseImport'))}</button>
+            </div>
+        </div>
+        <div id="reportDataTransferResult" class="nav-report-cleanup-result" hidden></div>
         <div class="nav-report-cleanup-card">
             <div class="nav-report-cleanup-main">
                 <div class="nav-backup-panel-title">${navEscape(navT('nav.page.report.title'))}</div>
@@ -4903,6 +4955,91 @@ function renderReportPageSettings(content) {
         <div id="reportSnapshotCleanupResult" class="nav-report-cleanup-result">${navEscape(navT('nav.page.report.wait'))}</div>
     `;
 }
+
+window.updateReportDataRestoreHint = function () {
+    const mode = document.getElementById('reportDataRestoreMode')?.value === 'replace' ? 'replace' : 'merge';
+    const hint = document.getElementById('reportDataRestoreHint');
+    if (hint) hint.textContent = navT(mode === 'replace' ? 'nav.page.report.modeReplaceHint' : 'nav.page.report.modeMergeHint');
+};
+
+function reportBackupDownloadName(response) {
+    const disposition = response.headers.get('content-disposition') || '';
+    const match = disposition.match(/filename="?([^";]+)"?/i);
+    return match?.[1] || `tools-report-data-${new Date().toISOString().slice(0, 10)}.zip`;
+}
+
+window.exportReportDataBackup = async function () {
+    await runGlobalBackupAction(navLocaleText('正在生成报表独立备份...', 'Creating report data backup...'), async () => {
+        const response = await fetch('/api/db/report-data-backup/export', { headers: getAuthHeaderForNav() });
+        if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            throw new Error(data.error || `HTTP ${response.status}`);
+        }
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = reportBackupDownloadName(response);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        return { success: true };
+    });
+};
+
+function renderReportDataTransferResult(data) {
+    const result = document.getElementById('reportDataTransferResult');
+    if (!result) return;
+    const counts = data.counts || {};
+    result.hidden = false;
+    result.textContent = navT('nav.page.report.importDone', {
+        sla: counts.slaSnapshots || 0,
+        reports: counts.reportSnapshots || 0,
+        scores: counts.reportCategoryScores || 0,
+        metrics: counts.reportMetricData || 0,
+        attachments: counts.attachments || 0
+    });
+}
+
+window.importReportDataBackup = async function (input) {
+    const file = input?.files?.[0];
+    if (!file) return;
+    const mode = document.getElementById('reportDataRestoreMode')?.value === 'replace' ? 'replace' : 'merge';
+    let confirmationText = '';
+    try {
+        if (mode === 'replace') {
+            const confirmed = await showNavbarTypedConfirm({
+                title: navT('nav.page.report.replaceConfirmTitle'),
+                message: navT('nav.page.report.replaceConfirmWarning'),
+                hint: navT('nav.page.report.replaceConfirmHint'),
+                placeholder: navT('nav.page.report.replaceConfirmPlaceholder'),
+                requiredText: '确认清空恢复',
+                cancelText: navT('nav.set.restore.cancel'),
+                confirmText: navT('nav.page.report.replaceConfirmAction')
+            });
+            if (!confirmed) return;
+            confirmationText = '确认清空恢复';
+        }
+        await runGlobalBackupAction(navLocaleText('正在导入报表历史数据...', 'Importing report history...'), async () => {
+            const form = new FormData();
+            form.append('backup', file);
+            form.append('mode', mode);
+            if (confirmationText) form.append('confirmationText', confirmationText);
+            const response = await fetch('/api/db/report-data-backup/import', {
+                method: 'POST',
+                headers: getAuthHeaderForNav(),
+                body: form
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+            renderReportDataTransferResult(data);
+            return data;
+        });
+    } finally {
+        if (input) input.value = '';
+    }
+};
 
 function getReportSnapshotCleanupDays() {
     const input = document.getElementById('reportSnapshotCleanupDays');

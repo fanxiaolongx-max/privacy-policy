@@ -2,12 +2,24 @@ const express = require('express');
 const router = express.require ? express.Router() : require('express').Router();
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
+const crypto = require('crypto');
 const zlib = require('zlib');
+const multer = require('multer');
 
 const { ensureReportDataDir, getReportDataDir } = require('../models/report-store');
 const { createDatabaseProxy } = require('../models/tenant-sqlite-pool');
 const configChangeMonitor = require('../models/config-change-monitor');
 const { selectLatestSnapshotPerMonth } = require('../models/report-trend-utils');
+const reportDataTransfer = require('../models/report-data-transfer-repository');
+
+const reportBackupUpload = multer({
+    storage: multer.diskStorage({
+        destination: os.tmpdir(),
+        filename: (_req, _file, callback) => callback(null, `tools-report-restore-${crypto.randomUUID()}.zip`)
+    }),
+    limits: { files: 1, fileSize: 1024 * 1024 * 1024 }
+});
 
 ensureReportDataDir();
 const db = createDatabaseProxy('report.db', 'report');
@@ -249,6 +261,46 @@ router.get('/snapshots', (req, res) => {
         markSqliteSource(res, 'GET /api/db/snapshots');
         res.json(rows);
     });
+});
+
+// Export only the Report Dashboard source history and saved report records.
+// This is intentionally separate from the full-tenant backup workflow so the
+// package can be merged into another site without changing its configuration.
+router.get('/report-data-backup/export', async (req, res) => {
+    if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ error: '权限不足，需要超级管理员账号' });
+    }
+    try {
+        const { buffer, manifest } = await reportDataTransfer.createBackupPackage();
+        const date = new Date().toISOString().replace(/[:.]/g, '-');
+        res.setHeader('Content-Type', 'application/zip');
+        res.setHeader('Content-Disposition', `attachment; filename="tools-report-data-${date}.zip"`);
+        res.setHeader('Cache-Control', 'no-store');
+        res.setHeader('X-Backup-Counts', Buffer.from(JSON.stringify(manifest.counts)).toString('base64'));
+        res.send(buffer);
+    } catch (error) {
+        console.error('[GET /api/db/report-data-backup/export] failed:', error);
+        res.status(500).json({ error: '导出报表历史数据失败' });
+    }
+});
+
+router.post('/report-data-backup/import', reportBackupUpload.single('backup'), async (req, res) => {
+    const uploadPath = req.file && req.file.path;
+    try {
+        if (!req.file) return res.status(400).json({ error: '请选择报表数据备份包' });
+        const mode = req.body && req.body.mode === 'replace' ? 'replace' : 'merge';
+        if (mode === 'replace' && req.body.confirmationText !== '确认清空恢复') {
+            return res.status(400).json({ error: '清空恢复前必须输入“确认清空恢复”' });
+        }
+        const result = await reportDataTransfer.restoreBackupPackage(uploadPath, { mode });
+        console.log(`[REPORT DATA RESTORE] mode=${mode}, sourceTenant=${result.sourceTenantId || '-'}, counts=${JSON.stringify(result.counts)}`);
+        res.json(result);
+    } catch (error) {
+        console.error('[POST /api/db/report-data-backup/import] failed:', error);
+        res.status(400).json({ error: error.message || '导入报表历史数据失败' });
+    } finally {
+        if (uploadPath) fs.rmSync(uploadPath, { force: true });
+    }
 });
 
 function getFailingForSnapshot(snapshot, res) {
