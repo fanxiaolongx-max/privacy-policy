@@ -7,7 +7,7 @@ const router = express.Router();
 router.get('/', (req, res) => {
     try {
         res.setHeader('Cache-Control', 'no-store');
-        res.json({ success: true, licenses: registry.listRecords({ includeArchived: req.query.includeArchived !== '0' }) });
+        res.json({ success: true, licenses: registry.listRecords({ includeArchived: req.query.includeArchived === '1' }) });
     } catch (error) {
         res.status(500).json({ error: error.message || '读取 EXE License 失败' });
     }

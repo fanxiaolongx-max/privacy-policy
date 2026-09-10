@@ -124,14 +124,16 @@ test('DataFab filing insights group eligible detail by BU, customer, family and 
     const end = source.indexOf('function xlsxXml');
     assert.ok(start > 0 && end > start);
     const helpers = vm.runInNewContext(`(() => {
-        const settings = { excludeIct: true, excludePendingScore: true, language: 'zh' };
+        const settings = { excludeIct: true, excludePendingScore: true, language: 'zh', targets: { recordRate: 25 } };
         const tr = (zh) => zh;
         const smartValue = value => value;
+        const fmt = (value, digits) => Number(value).toFixed(digits == null ? 0 : digits);
+        const fmtRate = value => Number(value).toFixed(1) + '%';
         ${source.slice(start, end)}
-        return { analyzeFilingRows, isExcludedIctLine };
+        return { analyzeFilingRows, filingReminderSummary, isExcludedIctLine };
     })()`);
     const insight = helpers.analyzeFilingRows([
-        { BU: 'BU-A', network_name: '网络甲', '账户名': '错误客户名', '客户名': '客户列甲', '操作人': '张三', '产品族': '族1', '产品': '产品A', '产品线': '无线', '备案原因': '客户窗口限制', '备注': '已沟通' },
+        { '任务单号': 'TASK-001', BU: 'BU-A', network_name: '网络甲', '账户名': '错误客户名', '客户名': '客户列甲', '操作人': '张三', '产品族': '族1', '产品': '产品A', '产品线': '无线', '备案原因': '客户窗口限制', '备注': '已沟通' },
         { BU: 'BU-A', top_cust_category_cn_name: '顶层客户乙', '操作人': '李四', '产品族': '族1', '产品': '产品B', '产品线': '无线', '备案原因': '' },
         { BU: 'BU-A', network_name: '网络待评', '操作人': '王五', '产品族': '族1', '产品': '产品D', '产品线': '无线', '评分任务状态': '待评分', '备案原因': '不应纳入' },
         { BU: 'BU-B', network_name: '网络丙', '操作人': '张三', '产品族': '族2', '产品': '产品C', '产品线': '光', '备案原因': '技术限制' },
@@ -143,6 +145,7 @@ test('DataFab filing insights group eligible detail by BU, customer, family and 
     assert.equal(insight.filed, 3);
     assert.equal(insight.missing, 2);
     assert.equal(insight.noted, 1);
+    assert.equal(insight.detail[0].taskNo, 'TASK-001');
     assert.equal(insight.dimensions.bu[0].label, 'BU-B');
     assert.equal(insight.dimensions.bu[0].filed, 2);
     assert.equal(insight.dimensions.customer.length, 3);
@@ -156,6 +159,12 @@ test('DataFab filing insights group eligible detail by BU, customer, family and 
     assert.equal(insight.operators[0].customer, '网络丙 / 客户列甲');
     assert.equal(insight.operators[0].productLine, '光 / 无线');
     assert.equal(helpers.isExcludedIctLine('ICT Services & Software'), true);
+    const reminder = helpers.filingReminderSummary(insight, { year: 2026, label: '09' });
+    assert.equal(reminder.risk, true);
+    assert.match(reminder.text, /2026-09共备案3笔/);
+    assert.match(reminder.text, /张三 3笔（个人备案率75\.0%）/);
+    assert.match(reminder.text, /产品线：光 \/ 无线/);
+    assert.match(reminder.text, /高于25\.0%备案上限50\.0个百分点/);
 
     const explicitReturnStatus = helpers.analyzeFilingRows([
         { '操作人': '赵六', '回传状态': '已回传', '备案原因': '环境限制' },
@@ -208,6 +217,10 @@ test('DataFab Excel export contains overview, product-line and complete raw-deta
     assert.match(source, /tr\('已回传数量', 'Returned Count'\)/);
     assert.match(source, /tr\('个人备案率', 'Personal Filing Rate'\)/);
     assert.match(source, /tr\('涉及产品线', 'Related Product Lines'\)/);
+    assert.match(source, /tr\('任务单号', 'Task No\.'\)/);
+    assert.match(source, /function filingReminderSummary/);
+    assert.match(source, /data-df-copy-brief/);
+    assert.match(source, /chartGrid\.insertAdjacentHTML\('beforebegin'/);
     assert.match(source, /styleRelId = sheets\.length \+ 1/);
     assert.match(source, /dashboardData\.detail\.forEach/);
     assert.match(source, /autoFilter:/);
@@ -238,6 +251,6 @@ test('floating launcher installs DataFab insights only on the DataFab origin', (
     assert.match(copy, /dataFabController = installDataFabAnalysisRuntime/);
     assert.match(copy, /dataFabController\.destroy/);
     assert.match(copy, /dataFabController\.showCsv/);
-    assert.match(page, /datafab-analysis\.js\?v=20260909-02/);
+    assert.match(page, /datafab-analysis\.js\?v=20260910-02/);
     assert.match(page, /copy\.js\?v=20260908-01/);
 });
