@@ -836,6 +836,18 @@
             border-radius: 6px;
         }
 
+        /* 播放器操作以图标表意，文字仅保留给状态更新和辅助技术。 */
+        .player-wrapper .ctrl-btn .ctrl-label,
+        .player-wrapper .ctrl-btn .episode-nav-text {
+            display: none !important;
+        }
+
+        .player-wrapper .ctrl-btn:not(#speedBtn) {
+            width: 34px;
+            min-width: 34px;
+            padding: 0;
+        }
+
         .ctrl-btn.icon-only:hover {
             background: rgba(255, 255, 255, 0.12);
             transform: scale(1.08);
@@ -1840,8 +1852,8 @@
             <div class="hero-content">
                 <div class="hero-badges">
                     <span class="badge badge-exclusive">✨ 独家首播</span>
-                    <span class="badge badge-res">720P 超清</span>
-                    <span class="badge badge-res">HEVC / AAC</span>
+                    <span class="badge badge-res" id="heroResolutionBadge">720P 超清</span>
+                    <span class="badge badge-res" id="heroCodecBadge">HEVC / AAC</span>
                     <span class="badge badge-rating">★ 9.8 高分</span>
                 </div>
                 <h1 class="hero-title" id="heroTitle">龙 餐 馆</h1>
@@ -1899,27 +1911,27 @@
                             <span class="player-badge-spec" id="playerVideoSpec">720P · HEVC</span>
                         </div>
                         <div style="display:flex; align-items:center; gap:8px;">
-                            <button class="ctrl-btn" id="topExitTheaterBtn" onclick="toggleTheaterMode()" style="display:none; background:rgba(99, 102, 241, 0.35); border:1px solid rgba(168, 85, 247, 0.65); color:#fff; font-weight:600;" title="退出宽屏剧场模式 (T / Esc)">
+                            <button class="ctrl-btn" id="topExitTheaterBtn" onclick="toggleTheaterMode()" style="display:none; background:rgba(99, 102, 241, 0.35); border:1px solid rgba(168, 85, 247, 0.65); color:#fff; font-weight:600;" title="退出宽屏剧场模式 (T / Esc)" aria-label="退出剧场模式">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <line x1="18" y1="6" x2="6" y2="18"></line>
                                     <line x1="6" y1="6" x2="18" y2="18"></line>
                                 </svg>
-                                <span>✕ 退出剧场</span>
+                                <span class="ctrl-label">✕ 退出剧场</span>
                             </button>
-                            <button class="ctrl-btn" id="topExitFsBtn" onclick="toggleFullscreen()" style="display:none; background:rgba(239, 68, 68, 0.25); border:1px solid rgba(239, 68, 68, 0.5); color:#fca5a5; font-weight:600;" title="退出全屏 (Esc / F)">
+                            <button class="ctrl-btn" id="topExitFsBtn" onclick="toggleFullscreen()" style="display:none; background:rgba(239, 68, 68, 0.25); border:1px solid rgba(239, 68, 68, 0.5); color:#fca5a5; font-weight:600;" title="退出全屏 (Esc / F)" aria-label="退出全屏">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <line x1="18" y1="6" x2="6" y2="18"></line>
                                     <line x1="6" y1="6" x2="18" y2="18"></line>
                                 </svg>
-                                <span>退出全屏 (Esc)</span>
+                                <span class="ctrl-label">退出全屏 (Esc)</span>
                             </button>
-                            <button class="ctrl-btn" id="topShortcutsBtn" title="快捷键帮助" onclick="toggleShortcutsModal(true)">
+                            <button class="ctrl-btn" id="topShortcutsBtn" title="快捷键帮助" aria-label="快捷键帮助" onclick="toggleShortcutsModal(true)">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <circle cx="12" cy="12" r="10"></circle>
                                     <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
                                     <line x1="12" y1="17" x2="12.01" y2="17"></line>
                                 </svg>
-                                <span>快捷键</span>
+                                <span class="ctrl-label">快捷键</span>
                             </button>
                         </div>
                     </div>
@@ -2001,13 +2013,13 @@
                             </div>
 
                             <div class="controls-right">
-                                <button class="ctrl-btn" id="previousEpisodeBtn" type="button" onclick="playAdjacentVideo(-1)" title="播放上一集">
+                                <button class="ctrl-btn" id="previousEpisodeBtn" type="button" onclick="playAdjacentVideo(-1)" title="播放上一集" aria-label="播放上一集">
                                     <span aria-hidden="true">⏮</span><span class="episode-nav-text">上一集</span>
                                 </button>
-                                <button class="ctrl-btn" id="episodePickerBtn" type="button" onclick="toggleEpisodePicker()" title="打开当前分类选集" aria-expanded="false" aria-controls="episodePicker">
-                                    <span aria-hidden="true">☷</span><span id="episodePickerBtnText">选集</span>
+                                <button class="ctrl-btn" id="episodePickerBtn" type="button" onclick="toggleEpisodePicker()" title="打开当前分类选集" aria-label="打开选集" aria-expanded="false" aria-controls="episodePicker">
+                                    <span aria-hidden="true">☷</span><span class="ctrl-label" id="episodePickerBtnText">选集</span>
                                 </button>
-                                <button class="ctrl-btn" id="nextEpisodeBtn" type="button" onclick="playAdjacentVideo(1)" title="播放下一集">
+                                <button class="ctrl-btn" id="nextEpisodeBtn" type="button" onclick="playAdjacentVideo(1)" title="播放下一集" aria-label="播放下一集">
                                     <span class="episode-nav-text">下一集</span><span aria-hidden="true">⏭</span>
                                 </button>
 
@@ -2027,38 +2039,38 @@
                                 </div>
 
                                 <!-- 氛围背光开关 -->
-                                <button class="ctrl-btn active" id="ambientToggleBtn" onclick="toggleAmbientLight()" title="动态流光氛围背光 (开/关)">
+                                <button class="ctrl-btn active" id="ambientToggleBtn" onclick="toggleAmbientLight()" title="动态流光氛围背光 (开/关)" aria-label="切换氛围光">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <circle cx="12" cy="12" r="4"></circle>
                                         <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
                                     </svg>
-                                    <span id="ambientBtnText">氛围光</span>
+                                    <span class="ctrl-label" id="ambientBtnText">氛围光</span>
                                 </button>
 
                                 <!-- 剧场模式 -->
-                                <button class="ctrl-btn" id="theaterBtn" onclick="toggleTheaterMode()" title="切换宽屏影院剧场模式 (T)">
+                                <button class="ctrl-btn" id="theaterBtn" onclick="toggleTheaterMode()" title="切换宽屏影院剧场模式 (T)" aria-label="切换剧场模式">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <rect x="2" y="5" width="20" height="14" rx="2"></rect>
                                         <line x1="2" y1="9" x2="22" y2="9"></line>
                                     </svg>
-                                    <span id="theaterBtnText">剧场</span>
+                                    <span class="ctrl-label" id="theaterBtnText">剧场</span>
                                 </button>
 
                                 <!-- 画中画 -->
-                                <button class="ctrl-btn" id="pipBtn" onclick="togglePiP()" title="画中画小窗播放 (P)">
+                                <button class="ctrl-btn" id="pipBtn" onclick="togglePiP()" title="画中画小窗播放 (P)" aria-label="画中画播放">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <rect x="2" y="4" width="20" height="16" rx="2"></rect>
                                         <rect x="12" y="11" width="8" height="7" rx="1" fill="none"></rect>
                                     </svg>
-                                    <span>画中画</span>
+                                    <span class="ctrl-label">画中画</span>
                                 </button>
 
                                 <!-- 原生全屏 / 退出全屏 -->
-                                <button class="ctrl-btn" id="fullscreenBtn" onclick="toggleFullscreen()" title="切换全屏模式 (F)">
+                                <button class="ctrl-btn" id="fullscreenBtn" onclick="toggleFullscreen()" title="切换全屏模式 (F)" aria-label="切换全屏">
                                     <svg id="fullscreenIconSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
                                     </svg>
-                                    <span id="fullscreenBtnText">全屏</span>
+                                    <span class="ctrl-label" id="fullscreenBtnText">全屏</span>
                                 </button>
                             </div>
                         </div>
@@ -2072,10 +2084,10 @@
                     <h2 id="currentVideoTitle">龙餐馆 (2026)</h2>
                     <div class="info-meta-chips">
                         <span class="chip" id="currentCategory">动作 / 美食 / 剧情</span>
-                        <span class="chip">720P HD</span>
-                        <span class="chip">时长 02:17:30</span>
-                        <span class="chip">HEVC (H.265) 视频编码</span>
-                        <span class="chip">AAC 立体声</span>
+                        <span class="chip" id="currentResolutionChip">720P HD</span>
+                        <span class="chip" id="currentDurationChip">时长 02:17:30</span>
+                        <span class="chip" id="currentCodecChip">HEVC (H.265) 视频编码</span>
+                        <span class="chip" id="currentAudioChip">AAC 立体声</span>
                     </div>
                     <p class="info-desc" id="currentVideoDesc">
                         深夜老街深处，一家只在特定时刻亮灯的餐馆。掌勺的老板身怀绝技，锅勺起伏间翻涌着江湖旧梦与人间烟火。每一道菜肴都是一次试炼，每一个食客都带着未解的心事...
@@ -2084,19 +2096,19 @@
                 <div class="info-specs-grid">
                     <div class="spec-item">
                         <span class="spec-label">视频分辨率</span>
-                        <span class="spec-val">1332 × 720 (720P)</span>
+                        <span class="spec-val" id="currentResolutionSpec">1332 × 720 (720P)</span>
                     </div>
                     <div class="spec-item">
                         <span class="spec-label">编码格式</span>
-                        <span class="spec-val">HEVC Main (hvc1)</span>
+                        <span class="spec-val" id="currentCodecSpec">HEVC Main (hvc1)</span>
                     </div>
                     <div class="spec-item">
                         <span class="spec-label">文件体积</span>
-                        <span class="spec-val">~580 MB</span>
+                        <span class="spec-val" id="currentFileSizeSpec">~580 MB</span>
                     </div>
                     <div class="spec-item">
                         <span class="spec-label">音频声道</span>
-                        <span class="spec-val">AAC Stereo 44.1kHz</span>
+                        <span class="spec-val" id="currentAudioSpec">AAC Stereo 44.1kHz</span>
                     </div>
                 </div>
             </div>
@@ -2337,10 +2349,26 @@
             lastProgressSavedSecond = -1;
             toggleEpisodePicker(false);
             document.getElementById('playerVideoTitle').textContent = `${item.title} · 正片`;
-            document.getElementById('playerVideoSpec').textContent = `${item.resolution || '720P'} · ${item.codec || 'HEVC'}`;
+            document.getElementById('playerVideoSpec').textContent = `${item.resolution || 'HD'} · ${item.codec || 'H.264'}`;
             document.getElementById('currentVideoTitle').textContent = `${item.title} (${item.year || '2026'})`;
             document.getElementById('currentCategory').textContent = item.categoryName || '影视作品';
             document.getElementById('currentVideoDesc').textContent = item.description || '';
+            const resolution = item.resolution || 'HD';
+            const codec = item.codec || 'H.264 (AVC)';
+            const audio = item.audioCodec || 'AAC Stereo 44.1kHz';
+            const duration = item.durationFormatted || '点播';
+            document.getElementById('heroResolutionBadge').textContent = resolution;
+            document.getElementById('heroCodecBadge').textContent = `${codec} / AAC`;
+            document.getElementById('heroDuration').textContent = duration;
+            document.getElementById('heroCategory').textContent = item.categoryName || '影视作品';
+            document.getElementById('currentResolutionChip').textContent = resolution;
+            document.getElementById('currentDurationChip').textContent = `时长 ${duration}`;
+            document.getElementById('currentCodecChip').textContent = `${codec} 视频编码`;
+            document.getElementById('currentAudioChip').textContent = audio;
+            document.getElementById('currentResolutionSpec').textContent = resolution;
+            document.getElementById('currentCodecSpec').textContent = codec;
+            document.getElementById('currentFileSizeSpec').textContent = item.fileSizeFormatted || '未知';
+            document.getElementById('currentAudioSpec').textContent = audio;
 
             // 更新 Hero Banner
             document.getElementById('heroTitle').textContent = item.title;
@@ -2669,16 +2697,28 @@
         }
 
         // --- 原生全屏切换与全生命周期状态同步 ---
+        function isIOSDevice() {
+            return /iPad|iPhone|iPod/.test(navigator.userAgent)
+                || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        }
+
         function toggleFullscreen() {
-            const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+            const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement || video.webkitDisplayingFullscreen);
             if (!isFs) {
-                if (videoBox.requestFullscreen) {
+                // iPhone/iPad Safari 不支持普通容器全屏，必须在用户点击的同步调用链中让 video 进入原生全屏。
+                if (isIOSDevice() && typeof video.webkitEnterFullscreen === 'function') {
+                    video.webkitEnterFullscreen();
+                } else if (videoBox.requestFullscreen) {
                     videoBox.requestFullscreen().catch(err => console.warn(err));
                 } else if (videoBox.webkitRequestFullscreen) {
                     videoBox.webkitRequestFullscreen();
+                } else if (typeof video.webkitEnterFullscreen === 'function') {
+                    video.webkitEnterFullscreen();
                 }
             } else {
-                if (document.exitFullscreen) {
+                if (video.webkitDisplayingFullscreen && typeof video.webkitExitFullscreen === 'function') {
+                    video.webkitExitFullscreen();
+                } else if (document.exitFullscreen) {
                     document.exitFullscreen().catch(err => console.warn(err));
                 } else if (document.webkitExitFullscreen) {
                     document.webkitExitFullscreen();
@@ -2687,7 +2727,7 @@
         }
 
         function handleFullscreenChange() {
-            const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+            const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement || video.webkitDisplayingFullscreen);
             const fsBtn = document.getElementById('fullscreenBtn');
             const fsText = document.getElementById('fullscreenBtnText');
             const fsSvg = document.getElementById('fullscreenIconSvg');
@@ -2722,6 +2762,8 @@
 
         document.addEventListener('fullscreenchange', handleFullscreenChange);
         document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        video.addEventListener('webkitbeginfullscreen', handleFullscreenChange);
+        video.addEventListener('webkitendfullscreen', handleFullscreenChange);
 
         // --- 画中画模式 ---
         async function togglePiP() {

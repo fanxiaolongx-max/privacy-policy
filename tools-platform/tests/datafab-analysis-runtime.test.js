@@ -136,11 +136,12 @@ test('DataFab filing insights group eligible detail by BU, customer, family and 
         { BU: 'BU-A', network_name: '网络待评', '操作人': '王五', '产品族': '族1', '产品': '产品D', '产品线': '无线', '评分任务状态': '待评分', '备案原因': '不应纳入' },
         { BU: 'BU-B', network_name: '网络丙', '操作人': '张三', '产品族': '族2', '产品': '产品C', '产品线': '光', '备案原因': '技术限制' },
         { BU: 'BU-B', network_name: '网络丙', '操作人': '张三', '产品族': '族2', '产品': '产品C', '产品线': '光', '备案原因': '技术限制' },
+        { BU: 'BU-B', network_name: '网络丙', '操作人': '张三', '产品族': '族2', '产品': '产品C', '产品线': '光', '备案原因': '' },
         { BU: 'BU-X', '账户名': '客户丙', '产品族': '族X', '产品': '产品X', '产品线': 'ICT服务与软件', '备案原因': '例外' }
     ]);
-    assert.equal(insight.total, 4);
+    assert.equal(insight.total, 5);
     assert.equal(insight.filed, 3);
-    assert.equal(insight.missing, 1);
+    assert.equal(insight.missing, 2);
     assert.equal(insight.noted, 1);
     assert.equal(insight.dimensions.bu[0].label, 'BU-B');
     assert.equal(insight.dimensions.bu[0].filed, 2);
@@ -149,9 +150,21 @@ test('DataFab filing insights group eligible detail by BU, customer, family and 
     assert.equal(insight.reasons[0].label, '技术限制');
     assert.equal(insight.operators[0].label, '张三');
     assert.equal(insight.operators[0].count, 3);
+    assert.equal(insight.operators[0].returned, 4);
+    assert.equal(insight.operators[0].filingRate, 75);
     assert.equal(insight.operators[0].bu, 'BU-B / BU-A');
     assert.equal(insight.operators[0].customer, '网络丙 / 客户列甲');
+    assert.equal(insight.operators[0].productLine, '光 / 无线');
     assert.equal(helpers.isExcludedIctLine('ICT Services & Software'), true);
+
+    const explicitReturnStatus = helpers.analyzeFilingRows([
+        { '操作人': '赵六', '回传状态': '已回传', '备案原因': '环境限制' },
+        { '操作人': '赵六', '回传状态': '已回传', '备案原因': '' },
+        { '操作人': '赵六', '回传状态': '待回传', '备案原因': '' }
+    ]).operators[0];
+    assert.equal(explicitReturnStatus.count, 1);
+    assert.equal(explicitReturnStatus.returned, 2);
+    assert.equal(explicitReturnStatus.filingRate, 50);
 });
 
 test('DataFab detail reconciliation removes pending-rating tasks from every total', () => {
@@ -192,6 +205,9 @@ test('DataFab Excel export contains overview, product-line and complete raw-deta
     assert.match(source, /tr\('原始明细', 'Raw Detail'\)/);
     assert.match(source, /tr\('备案多维分析', 'Filing Analysis'\)/);
     assert.match(source, /tr\('备案原因备注', 'Filing Reasons'\)/);
+    assert.match(source, /tr\('已回传数量', 'Returned Count'\)/);
+    assert.match(source, /tr\('个人备案率', 'Personal Filing Rate'\)/);
+    assert.match(source, /tr\('涉及产品线', 'Related Product Lines'\)/);
     assert.match(source, /styleRelId = sheets\.length \+ 1/);
     assert.match(source, /dashboardData\.detail\.forEach/);
     assert.match(source, /autoFilter:/);
@@ -222,6 +238,6 @@ test('floating launcher installs DataFab insights only on the DataFab origin', (
     assert.match(copy, /dataFabController = installDataFabAnalysisRuntime/);
     assert.match(copy, /dataFabController\.destroy/);
     assert.match(copy, /dataFabController\.showCsv/);
-    assert.match(page, /datafab-analysis\.js\?v=20260908-08/);
+    assert.match(page, /datafab-analysis\.js\?v=20260909-02/);
     assert.match(page, /copy\.js\?v=20260908-01/);
 });

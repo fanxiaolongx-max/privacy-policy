@@ -168,6 +168,8 @@ function scanMediaList() {
                 poster: savedMeta.poster || posterUrl,
                 durationFormatted: savedMeta.durationFormatted || '点播',
                 resolution: savedMeta.resolution || (entry.name.includes('1334x720') ? '720P HD' : 'HD'),
+                codec: savedMeta.codec || 'H.264 (AVC)',
+                audioCodec: savedMeta.audioCodec || 'AAC Stereo 44.1kHz',
                 tags: savedMeta.tags || [relativeFolder ? relativeFolder : '独家', '高清'],
                 description: savedMeta.description || `${catObj.name || '本地媒体'}：${baseName}`,
                 order: normalizeMediaOrder(savedMeta.order, isDragonRestaurant),

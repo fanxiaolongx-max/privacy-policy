@@ -28,3 +28,25 @@ test('播放器支持同分类上下集、选集及播完自动下一集', () =>
     assert.match(source, /function playAdjacentVideo\(direction\)/);
     assert.match(source, /video\.addEventListener\('ended',[\s\S]*?playAdjacentVideo\(1\)/);
 });
+
+test('移动端支持 iOS 原生视频全屏', () => {
+    assert.match(source, /function isIOSDevice\(\)/);
+    assert.match(source, /video\.webkitEnterFullscreen\(\)/);
+    assert.match(source, /video\.webkitExitFullscreen\(\)/);
+    assert.match(source, /webkitbeginfullscreen/);
+    assert.match(source, /webkitendfullscreen/);
+});
+
+test('影片详情使用当前视频的动态技术参数', () => {
+    assert.match(source, /id="currentResolutionSpec"/);
+    assert.match(source, /currentFileSizeSpec/);
+    assert.match(source, /item\.fileSizeFormatted/);
+    assert.match(source, /item\.audioCodec/);
+});
+
+test('播放器控制按钮仅显示图标且保留无障碍名称', () => {
+    assert.match(source, /\.player-wrapper \.ctrl-btn \.ctrl-label/);
+    assert.match(source, /class="ctrl-label" id="fullscreenBtnText"/);
+    assert.match(source, /id="fullscreenBtn"[^>]*aria-label="切换全屏"/);
+    assert.match(source, /id="episodePickerBtn"[^>]*aria-label="打开选集"/);
+});

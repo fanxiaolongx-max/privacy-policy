@@ -328,6 +328,59 @@ async function markToolsUpdated(slugValues, updatedAt = new Date().toISOString()
 
 function normalizeToolState(value) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+    if (value.version === 1 && (Array.isArray(value.tasks) || Array.isArray(value.satisfactionData) || value.report)) {
+        const cleanText = (input, max = 500) => String(input ?? '').trim().slice(0, max);
+        const cleanAudit = input => (Array.isArray(input) ? input : []).slice(0, 100).map(log => ({
+            id: cleanText(log && log.id, 100),
+            action: cleanText(log && log.action, 100),
+            detail: cleanText(log && log.detail, 1000),
+            actor: cleanText(log && log.actor, 200),
+            at: /^\d{4}-\d{2}-\d{2}T/.test(log && log.at) ? cleanText(log.at, 40) : ''
+        })).filter(log => log.id && log.action && log.at);
+        const tasks = (Array.isArray(value.tasks) ? value.tasks : []).slice(0, 5000).map(item => ({
+            id: cleanText(item && item.id, 100),
+            module: cleanText(item && item.module, 100),
+            title: cleanText(item && item.title, 500),
+            owner: cleanText(item && item.owner, 200),
+            status: ['正常', '预警', '延期'].includes(item && item.status) ? item.status : '正常',
+            risk: ['低', '中', '高'].includes(item && item.risk) ? item.risk : '低',
+            progress: Math.max(0, Math.min(100, Number(item && item.progress) || 0)),
+            deadline: /^\d{4}-\d{2}-\d{2}$/.test(item && item.deadline) ? item.deadline : '',
+            milestone: cleanText(item && item.milestone, 3000),
+            audit: cleanAudit(item && item.audit)
+        })).filter(item => item.id && item.title);
+        const satisfactionData = (Array.isArray(value.satisfactionData) ? value.satisfactionData : []).slice(0, 10000).map(item => ({
+            type: item && item.type === '心愿菜' ? '心愿菜' : '问题建议',
+            no: Math.max(1, Math.floor(Number(item && item.no) || 1)),
+            text: cleanText(item && item.text, 3000),
+            id: cleanText(item && item.id, 100),
+            progress: cleanText(item && item.progress, 5000),
+            owner: cleanText(item && item.owner, 200),
+            done: cleanText(item && item.done, 200),
+            audit: cleanAudit(item && item.audit)
+        })).filter(item => item.id && item.text);
+        const sourceReport = value.report && typeof value.report === 'object' && !Array.isArray(value.report) ? value.report : {};
+        return {
+            version: 1,
+            tasks,
+            satisfactionData,
+            sidebarCollapsed: Boolean(value.sidebarCollapsed),
+            report: {
+                month: cleanText(sourceReport.month, 50),
+                name: cleanText(sourceReport.name, 200),
+                wish: cleanText(sourceReport.wish, 30),
+                queue: cleanText(sourceReport.queue, 30),
+                dishes: cleanText(sourceReport.dishes, 2000),
+                activity: cleanText(sourceReport.activity, 2000),
+                actions: cleanText(sourceReport.actions, 10000),
+                metrics: (Array.isArray(sourceReport.metrics) ? sourceReport.metrics : []).slice(0, 100).map(metric => ({
+                    name: cleanText(metric && metric.name, 200),
+                    value: cleanText(metric && metric.value, 50),
+                    unit: cleanText(metric && metric.unit, 50)
+                })).filter(metric => metric.name)
+            }
+        };
+    }
     const result = {};
     if (value.vocabularyCategories && typeof value.vocabularyCategories === 'object' && !Array.isArray(value.vocabularyCategories)) {
         result.vocabularyCategories = {};
@@ -811,6 +864,7 @@ module.exports = {
     updateToolAccess,
     updateToolName,
     markToolsUpdated,
+    normalizeToolState,
     getToolState,
     saveToolState,
     restoreToolState,
