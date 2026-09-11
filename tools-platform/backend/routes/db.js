@@ -21,6 +21,16 @@ const reportBackupUpload = multer({
     limits: { files: 1, fileSize: 1024 * 1024 * 1024 }
 });
 
+const MANUAL_ADJUST_ATTACHMENT_MAX_BYTES = 12 * 1024 * 1024;
+const manualAdjustAttachmentUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { files: 1, fileSize: MANUAL_ADJUST_ATTACHMENT_MAX_BYTES }
+});
+const MANUAL_ADJUST_ATTACHMENT_EXTENSIONS = new Set([
+    '.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp',
+    '.pdf', '.txt', '.csv', '.xlsx', '.xls', '.docx', '.doc', '.pptx', '.ppt', '.zip'
+]);
+
 ensureReportDataDir();
 const db = createDatabaseProxy('report.db', 'report');
 
@@ -148,6 +158,42 @@ router.use('/images', (req, res, next) => {
     const relative = String(req.path || '').replace(/^\/+/, '');
     if (!relative || relative.includes('..')) return next();
     res.sendFile(path.join(getImagesDir(), relative), error => error ? next() : undefined);
+});
+
+router.post('/manual-adjust-attachments', (req, res, next) => {
+    manualAdjustAttachmentUpload.single('file')(req, res, error => {
+        if (!error) return next();
+        if (error.code === 'LIMIT_FILE_SIZE') {
+            return res.status(413).json({ error: '附件不能超过 12 MB' });
+        }
+        return res.status(400).json({ error: error.message || '附件上传失败' });
+    });
+}, (req, res) => {
+    const file = req.file;
+    if (!file || !Buffer.isBuffer(file.buffer) || file.buffer.length === 0) {
+        return res.status(400).json({ error: '请选择需要上传的附件' });
+    }
+
+    const originalName = path.basename(String(file.originalname || 'attachment')).slice(0, 180);
+    const extension = path.extname(originalName).toLowerCase();
+    if (!MANUAL_ADJUST_ATTACHMENT_EXTENSIONS.has(extension)) {
+        return res.status(400).json({ error: `不支持的附件格式：${extension || '无扩展名'}` });
+    }
+
+    const storedName = `manual-adjust-${crypto.randomUUID()}${extension}`;
+    try {
+        fs.writeFileSync(path.join(getImagesDir(), storedName), file.buffer, { flag: 'wx' });
+        res.json({
+            name: originalName,
+            url: `/api/db/images/${encodeURIComponent(storedName)}`,
+            type: String(file.mimetype || 'application/octet-stream'),
+            size: file.size,
+            uploadedAt: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('[POST /api/db/manual-adjust-attachments] failed:', error);
+        res.status(500).json({ error: '附件保存失败' });
+    }
 });
 
 router.post('/save', (req, res) => {

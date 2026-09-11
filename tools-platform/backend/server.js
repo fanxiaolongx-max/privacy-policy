@@ -56,10 +56,11 @@ const slaRoutes = require('./routes/sla');
 const uploadRoutes = require('./routes/upload');
 const authRoutes = require('./routes/auth');
 const requirementsRoutes = require('./routes/requirements');
-const { router: mediaRoutes, VIDEOS_DIR } = require('./routes/media');
+const { router: mediaRoutes, VIDEOS_DIR, mediaAssetGuard } = require('./routes/media');
 const aiRoutes = require('./routes/ai');
 const storageRoutes = require('./routes/storage');
 const frtRoutes = require('./routes/frt');
+const topicSnapshotsRoutes = require('./routes/topic-snapshots');
 const prauditRoutes = require('./routes/praudit');
 const chatHistoryRoutes = require('./routes/chat-history');
 const customToolsRoutes = require('./routes/custom-tools');
@@ -292,7 +293,7 @@ app.use((req, res, next) => {
 
 // Desktop builds keep uploaded media outside app.asar. Preserve the public URL
 // used by the cinema page while serving files from the writable runtime folder.
-app.use('/assets/videos', express.static(VIDEOS_DIR, { index: false }));
+app.use('/assets/videos', mediaAssetGuard, express.static(VIDEOS_DIR, { index: false }));
 app.use(express.static(FRONTEND_DIR, { index: false }));
 app.get('/favicon.ico', (req, res) => {
     res.sendFile(path.join(FRONTEND_DIR, 'assets/icon.ico'));
@@ -365,6 +366,7 @@ app.use('/api/ai', aiRoutes); // AI 服务 API
 app.use('/api/storage', storageRoutes); // 存储迁移状态 API
 app.use('/api/db-explorer', require('./routes/db-explorer')); // 数据库浏览 API
 app.use('/api/frt', frtRoutes); // FRT 历史快照 API
+app.use('/api/topic-snapshots', topicSnapshotsRoutes); // NetCare/DataFab 专题历史快照 API
 app.use('/api/praudit', prauditRoutes); // PR审计配置 API
 app.use('/api/chat-history', chatHistoryRoutes); // 租户隔离的聊天记录中心
 app.use('/api/custom-tools', customToolsRoutes); // 自定义 HTML 工具注册 API
@@ -398,6 +400,9 @@ app.get(['/cinema', '/cinema.html'], (req, res) => {
 });
 app.get('/uivf12', (req, res) => {
     res.sendFile(path.join(FRONTEND_DIR, 'pages/uivf12.html'));
+});
+app.get('/topic-analysis', (req, res) => {
+    res.sendFile(path.join(FRONTEND_DIR, 'pages/topic-analysis.html'));
 });
 app.get('/sla', (req, res) => {
     res.sendFile(path.join(FRONTEND_DIR, 'pages/sla.html'));

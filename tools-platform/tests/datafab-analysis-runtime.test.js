@@ -242,6 +242,20 @@ test('DataFab Excel export contains overview, product-line and complete raw-deta
     assert.ok(new TextDecoder().decode(archive).includes('xl/worksheets/sheet3.xml'));
 });
 
+test('DataFab insights preserve all fetched months in JSON review snapshots', () => {
+    const source = fs.readFileSync(runtimePath, 'utf8');
+    assert.match(source, /schema: 'uivf12-topic-snapshot'/);
+    assert.match(source, /platform: 'datafab'/);
+    assert.match(source, /function downloadTopicSnapshot/);
+    assert.match(source, /function importTopicSnapshot/);
+    assert.match(source, /const detailsByMonth = \{\}/);
+    assert.match(source, /detailsByMonth\[String\(month\)\] = result\[1\]/);
+    assert.match(source, /dashboardData = \{ months, detail, detailsByMonth \}/);
+    assert.match(source, /回顾模式/);
+    assert.match(source, /全年原始明细/);
+    assert.match(source, /点击“刷新专题”返回实时模式/);
+});
+
 test('floating launcher installs DataFab insights only on the DataFab origin', () => {
     const copy = fs.readFileSync(copyPath, 'utf8');
     const page = fs.readFileSync(pagePath, 'utf8');
@@ -251,6 +265,6 @@ test('floating launcher installs DataFab insights only on the DataFab origin', (
     assert.match(copy, /dataFabController = installDataFabAnalysisRuntime/);
     assert.match(copy, /dataFabController\.destroy/);
     assert.match(copy, /dataFabController\.showCsv/);
-    assert.match(page, /datafab-analysis\.js\?v=20260910-02/);
-    assert.match(page, /copy\.js\?v=20260908-01/);
+    assert.match(page, /datafab-analysis\.js\?v=20260911-03/);
+    assert.match(page, /copy\.js\?v=20260911-02/);
 });

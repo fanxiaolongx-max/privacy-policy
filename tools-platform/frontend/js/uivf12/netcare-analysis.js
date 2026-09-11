@@ -7,7 +7,8 @@
     'use strict';
 
     function installNetCareAnalysisRuntime(root, options) {
-        if (!root || window.location.hostname !== 'netcare.huawei.com') return null;
+        const simulationMode = Boolean(options && options.simulation);
+        if (!root || (!simulationMode && window.location.hostname !== 'netcare.huawei.com')) return null;
 
         const CONFIG = {
             officeCode: '026921', regionCode: '026902', certificateYear: '2026',
@@ -75,7 +76,7 @@
             .body.nc-active{display:flex;flex-direction:column;overflow:hidden}.nc-mode{display:none;min-height:0;flex:1;flex-direction:column;margin-top:11px;border:1px solid rgba(148,163,184,.2);border-radius:11px;overflow:hidden;background:rgba(2,6,23,.5)}
             .nc-mode.active{display:flex}.nc-head-button{width:auto!important;padding:0 9px!important;font-size:10px!important}.nc-head-button.active{border-color:#67e8f9!important;color:#fff!important;background:#0e7490!important}
             .nc-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;border-bottom:1px solid rgba(148,163,184,.17);background:rgba(15,23,42,.85)}
-            .nc-tabs{display:flex;gap:5px;overflow-x:auto}.nc-toolbar-actions{display:flex;align-items:center;gap:5px}.nc-tab,.nc-refresh,.nc-language{flex:0 0 auto;padding:6px 9px;border:1px solid rgba(148,163,184,.25);border-radius:7px;background:#1e293b;color:#cbd5e1;font-size:9px;font-weight:800;cursor:pointer}.nc-tab.active{border-color:#67e8f9;background:#0e7490;color:#fff}.nc-refresh{border-color:rgba(74,222,128,.4);color:#bbf7d0}.nc-refresh:disabled{opacity:.5;cursor:not-allowed}.nc-language{min-width:34px;border-color:rgba(103,232,249,.45);color:#a5f3fc;background:#164e63}
+            .nc-tabs{display:flex;gap:5px;overflow-x:auto}.nc-toolbar-actions{display:flex;align-items:center;gap:5px}.nc-tab,.nc-refresh,.nc-language,.nc-json-button{flex:0 0 auto;padding:6px 9px;border:1px solid rgba(148,163,184,.25);border-radius:7px;background:#1e293b;color:#cbd5e1;font-size:9px;font-weight:800;cursor:pointer}.nc-tab.active{border-color:#67e8f9;background:#0e7490;color:#fff}.nc-refresh{border-color:rgba(74,222,128,.4);color:#bbf7d0}.nc-refresh:disabled,.nc-json-button:disabled{opacity:.5;cursor:not-allowed}.nc-language{min-width:34px;border-color:rgba(103,232,249,.45);color:#a5f3fc;background:#164e63}.nc-json-button{border-color:rgba(251,191,36,.42);color:#fde68a;background:rgba(120,53,15,.3)}.nc-review-badge{display:none;align-items:center;padding:5px 9px;border:1px solid #fb7185;border-radius:999px;background:linear-gradient(135deg,#9f1239,#be123c);color:#fff;font-size:9px;font-weight:950;box-shadow:0 0 16px rgba(244,63,94,.32);white-space:nowrap}.nc-review-badge.active{display:inline-flex}.nc-status.review{color:#fecdd3;background:rgba(159,18,57,.2);font-weight:800}
             .nc-status{padding:7px 10px;border-bottom:1px solid rgba(148,163,184,.12);color:#94a3b8;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.nc-content{min-height:0;flex:1;overflow:auto;padding:10px}.nc-view{display:none}.nc-view.active{display:block}
             .nc-card{margin-bottom:10px;border:1px solid rgba(148,163,184,.2);border-radius:9px;overflow:hidden;background:rgba(15,23,42,.74)}.nc-card-title{display:flex;justify-content:space-between;gap:10px;padding:9px 10px;border-bottom:1px solid rgba(148,163,184,.16);color:#f8fafc;font-size:11px;font-weight:850}.nc-card-title small{color:#94a3b8;font-size:8px;font-weight:500}.nc-table-wrap{overflow:auto}.nc-table{width:max-content;min-width:100%;border-collapse:collapse;font-size:9px}.nc-table th,.nc-table td{padding:6px 7px;border-right:1px solid rgba(148,163,184,.13);border-bottom:1px solid rgba(148,163,184,.13);white-space:nowrap;text-align:center}.nc-table th{position:sticky;top:0;background:#172033;color:#bae6fd}.nc-table td{color:#cbd5e1}.nc-table .nc-name{text-align:left;font-weight:800}.nc-table .nc-child{padding-left:22px;color:#94a3b8;font-weight:500}.nc-table .nc-total td{background:rgba(14,116,144,.2);font-weight:850}.nc-table .nc-bg td{background:rgba(30,41,59,.75);font-weight:800}.nc-good{color:#86efac!important;font-weight:850}.nc-bad{color:#fca5a5!important;font-weight:850}.nc-muted{color:#64748b!important}.nc-target{color:#7dd3fc}.nc-note{padding:8px 10px;color:#64748b;font-size:8px;line-height:1.55}.nc-loading,.nc-error,.nc-empty{padding:36px 12px;text-align:center;color:#94a3b8;font-size:10px}.nc-error{color:#fca5a5}.nc-option{display:flex;align-items:center;gap:7px;margin-bottom:9px;padding:8px 10px;border:1px solid rgba(148,163,184,.2);border-radius:8px;background:rgba(15,23,42,.7);color:#cbd5e1;font-size:9px}.nc-option input{accent-color:#06b6d4}
             .nc-eos-settings{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-bottom:10px;padding:8px 10px;border:1px solid rgba(34,211,238,.24);border-radius:9px;background:rgba(8,47,73,.36);color:#bae6fd;font-size:9px}.nc-eos-settings label{display:flex;align-items:center;gap:5px}.nc-eos-settings input,.nc-eos-settings select,.nc-plan-input{box-sizing:border-box;border:1px solid rgba(148,163,184,.34);border-radius:5px;background:#0f172a;color:#f8fafc;font:inherit}.nc-eos-settings input{width:54px;padding:4px 5px;text-align:right}.nc-eos-settings select{padding:4px 6px}.nc-top-n-control{display:inline-flex;align-items:center;gap:3px}.nc-top-n-control input{width:40px!important;height:25px;padding:2px 4px!important;text-align:center!important;-moz-appearance:textfield}.nc-top-n-control input::-webkit-inner-spin-button,.nc-top-n-control input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}.nc-top-n-step{width:24px;height:25px;padding:0;border:1px solid rgba(251,191,36,.38);border-radius:5px;background:rgba(146,64,14,.3);color:#fde68a;font-size:12px;font-weight:900;cursor:pointer}.nc-top-n-step:hover{filter:brightness(1.2)}.nc-export-button{margin-left:auto;height:27px;padding:0 10px;border:1px solid rgba(74,222,128,.45);border-radius:6px;background:linear-gradient(135deg,rgba(22,101,52,.7),rgba(6,78,59,.72));color:#dcfce7;font-size:9px;font-weight:900;cursor:pointer;box-shadow:0 3px 10px rgba(16,185,129,.12)}.nc-export-button:hover{filter:brightness(1.14)}.nc-export-button:disabled{opacity:.55;cursor:wait}.nc-plan-control{display:inline-flex;align-items:center;justify-content:center;gap:3px}.nc-plan-input{width:48px;height:25px;padding:3px 4px;text-align:center;border-radius:4px!important;-moz-appearance:textfield}.nc-plan-input::-webkit-inner-spin-button,.nc-plan-input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}.nc-plan-step,.nc-plan-preset,.nc-bulk-button{height:25px;border:1px solid rgba(148,163,184,.3);border-radius:5px;color:#e2e8f0;font-size:8px;font-weight:800;cursor:pointer;transition:background .15s,border-color .15s,transform .15s}.nc-plan-step{width:25px;padding:0;background:#1e293b;color:#a5f3fc;font-size:13px}.nc-plan-step:hover{border-color:#22d3ee;background:#164e63}.nc-plan-preset{padding:0 7px;background:rgba(30,64,175,.28);color:#bfdbfe;border-color:rgba(96,165,250,.38)}.nc-plan-preset[data-plan-action="all"]{background:rgba(22,101,52,.3);color:#bbf7d0;border-color:rgba(74,222,128,.38)}.nc-plan-preset[data-plan-action="clear"]{background:rgba(127,29,29,.25);color:#fecaca;border-color:rgba(248,113,113,.32)}.nc-plan-preset:hover,.nc-bulk-button:hover{filter:brightness(1.2)}.nc-plan-step:active,.nc-plan-preset:active,.nc-bulk-button:active{transform:translateY(1px)}.nc-card-title-main{display:flex;align-items:baseline;gap:8px}.nc-bulk-actions{display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;gap:4px}.nc-bulk-button{padding:0 8px;background:rgba(30,64,175,.28);color:#bfdbfe;border-color:rgba(96,165,250,.38)}.nc-bulk-button[data-bulk-action="all"]{background:rgba(22,101,52,.3);color:#bbf7d0;border-color:rgba(74,222,128,.38)}.nc-bulk-button[data-bulk-action="topn"]{background:rgba(146,64,14,.3);color:#fde68a;border-color:rgba(251,191,36,.38)}.nc-bulk-button[data-bulk-action="clear"]{background:rgba(127,29,29,.25);color:#fecaca;border-color:rgba(248,113,113,.32)}.nc-collapse-button{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;margin-right:6px;border:1px solid rgba(103,232,249,.3);border-radius:5px;background:rgba(8,145,178,.18);color:#a5f3fc;font-size:10px;font-weight:900;cursor:pointer;vertical-align:middle;transition:background .15s,transform .15s}.nc-collapse-button:hover{background:rgba(8,145,178,.38)}.nc-collapse-button:active{transform:scale(.94)}.nc-merged-row td{background:rgba(15,23,42,.88)!important}.nc-merged-row.customer td{border-top:1px solid rgba(103,232,249,.25)}.nc-merged-row.line td{background:rgba(30,41,59,.55)!important}.nc-merged-label{color:#e2e8f0!important;text-align:left!important;font-weight:850}.nc-merged-hint{color:#64748b!important;font-size:7px}.nc-readonly-plan{color:#cbd5e1;font-weight:800}.nc-bg-divider td{background:rgba(8,47,73,.48)!important;color:#67e8f9!important;font-weight:850;text-align:left!important}.nc-customer-divider td{background:rgba(30,41,59,.68)!important;color:#e2e8f0!important;font-weight:800;text-align:left!important;padding-left:16px!important}.nc-line-divider td{background:rgba(30,41,59,.34)!important;color:#94a3b8!important;font-weight:750;text-align:left!important;padding-left:28px!important}.nc-product-divider td{color:#7dd3fc!important;font-weight:750;text-align:left!important;padding-left:40px!important}.nc-item-label{text-align:left!important;padding-left:40px!important}.nc-version-label{text-align:left!important;padding-left:52px!important}.nc-top-list{min-width:180px;max-width:300px;text-align:left;font-size:7px;line-height:1.45;color:#cbd5e1}.nc-top-customer+.nc-top-customer{margin-top:5px;padding-top:4px;border-top:1px dashed rgba(148,163,184,.2)}.nc-top-customer-title{display:block;margin-bottom:1px;color:#67e8f9;font-size:7px;font-weight:900}.nc-top-list span{display:block}.nc-top-list b{color:#f8fafc}.nc-top-empty{color:#64748b;text-align:center}.nc-eos-briefs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:-1px 0 10px}.nc-eos-brief{position:relative;padding:10px 11px 10px 14px;border:1px solid rgba(148,163,184,.18);border-radius:9px;background:linear-gradient(135deg,rgba(15,23,42,.94),rgba(8,47,73,.42));color:#cbd5e1;font-size:8px;line-height:1.7}.nc-eos-brief:before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:3px;background:#22d3ee}.nc-eos-brief.version:before{background:#a78bfa}.nc-eos-brief-title{margin-bottom:3px;color:#f8fafc;font-size:10px;font-weight:900}.nc-eos-brief p{margin:0}.nc-eos-brief p+p{margin-top:3px}.nc-eos-brief strong{color:#67e8f9;font-weight:900}.nc-eos-brief.version strong{color:#c4b5fd}.nc-eos-brief .nc-brief-focus{color:#fbbf24}.nc-eos-brief .nc-brief-good{color:#86efac}.nc-eos-brief .nc-brief-gap{color:#fca5a5}@media(max-width:760px){.nc-eos-briefs{grid-template-columns:1fr}.nc-card-title{align-items:flex-start;flex-direction:column}.nc-bulk-actions{justify-content:flex-start}.nc-export-button{margin-left:0}}
@@ -111,7 +112,7 @@
                     <button class="nc-tab" data-view="interception">${tr('高危拦截', 'High-risk Interception')}</button>
                     <button class="nc-tab" data-view="sr">${tr('SR 问题单', 'SR Tickets')}</button>
                 </div>
-                <div class="nc-toolbar-actions"><button class="nc-refresh" type="button">${tr('刷新专题', 'Refresh')}</button><button class="nc-language" type="button" title="${tr('切换为英文', 'Switch to Chinese')}">${uiLanguage === 'zh' ? 'EN' : '中'}</button></div>
+                <div class="nc-toolbar-actions"><span class="nc-review-badge"></span><button class="nc-json-button nc-json-export" type="button" disabled>${tr('导出 JSON', 'Export JSON')}</button><button class="nc-json-button nc-json-import" type="button">${tr('导入 JSON', 'Import JSON')}</button><input class="nc-json-file" type="file" accept="application/json,.json" hidden><button class="nc-refresh" type="button">${tr('刷新专题', 'Refresh')}</button><button class="nc-language" type="button" title="${tr('切换为英文', 'Switch to Chinese')}">${uiLanguage === 'zh' ? 'EN' : '中'}</button></div>
             </div>
             <div class="nc-status">${tr('专题尚未加载', 'Insights not loaded')}</div>
             <div class="nc-content">
@@ -124,7 +125,12 @@
         body.appendChild(mode);
         const refreshButton = mode.querySelector('.nc-refresh');
         const languageButton = mode.querySelector('.nc-language');
+        const jsonExportButton = mode.querySelector('.nc-json-export');
+        const jsonImportButton = mode.querySelector('.nc-json-import');
+        const jsonFileInput = mode.querySelector('.nc-json-file');
+        const reviewBadge = mode.querySelector('.nc-review-badge');
         const modeStatus = mode.querySelector('.nc-status');
+        if (simulationMode) { refreshButton.disabled = true; refreshButton.title = tr('模拟浮窗仅支持导入历史 JSON，不访问正式接口', 'Simulation only imports historical JSON and never calls live APIs'); modeStatus.textContent = tr('模拟浮窗：请点击“导入 JSON”离线回顾正式站点导出的专题数据', 'Simulation: import a topic JSON exported from the live site for offline review'); }
         const views = {};
         mode.querySelectorAll('[data-view-panel]').forEach(view => { views[view.dataset.viewPanel] = view; });
         let active = false;
@@ -133,6 +139,9 @@
         let destroyed = false;
         let interceptionDistinguishBG = false;
         let dashboardCache = null;
+        let capturedAt = null;
+        let reviewInfo = null;
+        let liveSettingsBeforeReview = null;
         let changeLoading = false;
         let srLoading = false;
         let eosFullscreenType = null;
@@ -145,6 +154,7 @@
             if (Array.isArray(savedBus)) changeBuSelection = CHANGE_BU_OPTIONS.filter(value => savedBus.includes(value));
         } catch (error) {}
         function saveChangeBuSelection() {
+            if (reviewInfo) return;
             try { localStorage.setItem(CHANGE_BU_KEY, JSON.stringify(changeBuSelection)); } catch (error) {}
         }
         try {
@@ -152,6 +162,7 @@
             if (Array.isArray(savedProductLines)) changeProductLineSelection = CHANGE_PRODUCT_LINE_OPTIONS.filter(value => savedProductLines.includes(value));
         } catch (error) {}
         function saveChangeProductLineSelection() {
+            if (reviewInfo) return;
             try { localStorage.setItem(CHANGE_PRODUCT_LINE_KEY, JSON.stringify(changeProductLineSelection)); } catch (error) {}
         }
         try {
@@ -159,6 +170,7 @@
             if (Array.isArray(savedSrTypes)) srTypeSelection = SR_TYPE_NAMES.filter(value => savedSrTypes.includes(value));
         } catch (error) {}
         function saveSrTypeSelection() {
+            if (reviewInfo) return;
             try { localStorage.setItem(SR_TYPE_FILTER_KEY, JSON.stringify(srTypeSelection)); } catch (error) {}
         }
         try {
@@ -166,6 +178,7 @@
             if (Array.isArray(savedProductLines)) srProductLineSelection = SR_PRODUCT_LINE_OPTIONS.filter(value => savedProductLines.includes(value));
         } catch (error) {}
         function saveSrProductLineSelection() {
+            if (reviewInfo) return;
             try { localStorage.setItem(SR_PRODUCT_LINE_KEY, JSON.stringify(srProductLineSelection)); } catch (error) {}
         }
 
@@ -193,6 +206,7 @@
         }
         const eosSettings = loadEosSettings();
         function saveEosSettings() {
+            if (reviewInfo) return;
             try { localStorage.setItem(EOS_SETTINGS_KEY, JSON.stringify(eosSettings)); } catch (error) {}
         }
 
@@ -212,7 +226,7 @@
                 if (active) { element.dataset.ncPreviousDisplay = element.style.display || ''; element.style.display = 'none'; }
                 else { element.style.display = element.dataset.ncPreviousDisplay || ''; delete element.dataset.ncPreviousDisplay; }
             });
-            if (active && !loaded && !loading) loadDashboard();
+            if (active && !loaded && !loading && !simulationMode) loadDashboard();
         }
         button.addEventListener('click', function () {
             if (!active && options && typeof options.isCaptureActive === 'function' && options.isCaptureActive()) {
@@ -233,17 +247,98 @@
                 + tr(' · 版本 ', ' · Versions ') + result[2].length + tr(' · 变更 ', ' · Changes ') + result[3].rows.length
                 + tr(' · 拦截 ', ' · Interceptions ') + result[4].rows.length + tr(' · SR ', ' · SR ') + result[5].summary.length;
         }
+        function snapshotCounts(result) {
+            return tr('证书 ', 'Certificates ') + result[0].length + tr(' · 产品 ', ' · Products ') + result[1].length
+                + tr(' · 版本 ', ' · Versions ') + result[2].length + tr(' · 变更 ', ' · Changes ') + result[3].rows.length
+                + tr(' · 拦截 ', ' · Interceptions ') + result[4].rows.length + tr(' · SR ', ' · SR ') + result[5].summary.length;
+        }
+        function formatSnapshotTime(value) {
+            const date = new Date(value);
+            return Number.isNaN(date.getTime()) ? String(value || '-') : date.toLocaleString(uiLanguage === 'en' ? 'en-GB' : 'zh-CN', { hour12: false });
+        }
+        function updateReviewUi() {
+            const reviewing = Boolean(reviewInfo);
+            reviewBadge.classList.toggle('active', reviewing);
+            modeStatus.classList.toggle('review', reviewing);
+            reviewBadge.textContent = reviewing ? tr('回顾模式', 'REVIEW MODE') + ' · ' + formatSnapshotTime(reviewInfo.capturedAt) : '';
+            if (reviewing && dashboardCache) modeStatus.textContent = tr('回顾数据时间：', 'Snapshot time: ') + formatSnapshotTime(reviewInfo.capturedAt) + tr(' · 导出时间：', ' · Exported: ') + formatSnapshotTime(reviewInfo.exportedAt) + ' · ' + snapshotCounts(dashboardCache) + (simulationMode ? tr(' · 离线模拟，不访问正式接口', ' · Offline simulation; live APIs are disabled') : tr(' · 点击“刷新专题”返回实时模式', ' · Refresh to return to live mode'));
+            jsonExportButton.disabled = !dashboardCache || loading;
+        }
+        function downloadTopicSnapshot() {
+            if (!dashboardCache) return;
+            const exportedAt = new Date().toISOString();
+            const snapshot = {
+                schema: 'uivf12-topic-snapshot', version: 1, platform: 'netcare', exportedAt,
+                capturedAt: reviewInfo && reviewInfo.capturedAt || capturedAt || exportedAt,
+                scope: { regionCode: CONFIG.regionCode, officeCode: CONFIG.officeCode, certificateYear: CONFIG.certificateYear, productIncorporationYear: CONFIG.productIncorporationYear },
+                settings: { eos: JSON.parse(JSON.stringify(eosSettings)), changeBus: changeBuSelection, changeProductLines: changeProductLineSelection, srTypes: srTypeSelection, srProductLines: srProductLineSelection },
+                data: { certificate: dashboardCache[0], eosProduct: dashboardCache[1], eosVersion: dashboardCache[2], change: dashboardCache[3], interception: dashboardCache[4], sr: dashboardCache[5] }
+            };
+            const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json;charset=utf-8' });
+            const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = 'NetCare专题全量数据_' + exportedAt.slice(0, 19).replace(/[-:T]/g, '') + '.json'; document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(link.href);
+        }
+        function importTopicSnapshot(file) {
+            const reader = new FileReader();
+            reader.onload = async function () {
+                try {
+                    const snapshot = JSON.parse(String(reader.result || ''));
+                    if (!snapshot || snapshot.schema !== 'uivf12-topic-snapshot' || snapshot.version !== 1 || snapshot.platform !== 'netcare') throw new Error(tr('不是有效的 NetCare 专题全量数据文件', 'Not a valid NetCare topic snapshot'));
+                    const data = snapshot.data || {}; const result = [data.certificate, data.eosProduct, data.eosVersion, data.change, data.interception, data.sr];
+                    if (!result.slice(0, 3).every(Array.isArray) || !data.change || !Array.isArray(data.change.rows) || !data.interception || !Array.isArray(data.interception.rows) || !data.sr || !Array.isArray(data.sr.summary) || !Array.isArray(data.sr.monthly)) throw new Error(tr('专题数据结构不完整', 'Snapshot data is incomplete'));
+                    if (!reviewInfo) liveSettingsBeforeReview = { eos: JSON.parse(JSON.stringify(eosSettings)), changeBus: changeBuSelection.slice(), changeProductLines: changeProductLineSelection.slice(), srTypes: srTypeSelection.slice(), srProductLines: srProductLineSelection.slice() };
+                    const importedEos = snapshot.settings && snapshot.settings.eos;
+                    if (importedEos && typeof importedEos === 'object') {
+                        for (const type of ['product', 'version']) {
+                            if (importedEos.targets && Number.isFinite(Number(importedEos.targets[type]))) eosSettings.targets[type] = Math.min(100, Math.max(0, Number(importedEos.targets[type])));
+                            if (importedEos.topN && Number.isFinite(Number(importedEos.topN[type]))) eosSettings.topN[type] = Math.min(99, Math.max(1, Math.floor(Number(importedEos.topN[type]))));
+                            eosSettings.plans[type] = importedEos.plans && importedEos.plans[type] && typeof importedEos.plans[type] === 'object' ? importedEos.plans[type] : {};
+                            eosSettings.notes[type] = importedEos.notes && importedEos.notes[type] && typeof importedEos.notes[type] === 'object' ? importedEos.notes[type] : {};
+                        }
+                        if (['quantity-desc', 'rate-asc'].includes(importedEos.sortMode)) eosSettings.sortMode = importedEos.sortMode;
+                        eosSettings.collapsed = importedEos.collapsed && typeof importedEos.collapsed === 'object' ? importedEos.collapsed : {};
+                    }
+                    const importedSettings = snapshot.settings || {};
+                    changeBuSelection = CHANGE_BU_OPTIONS.filter(value => Array.isArray(importedSettings.changeBus) && importedSettings.changeBus.includes(value));
+                    changeProductLineSelection = CHANGE_PRODUCT_LINE_OPTIONS.filter(value => Array.isArray(importedSettings.changeProductLines) && importedSettings.changeProductLines.includes(value));
+                    srTypeSelection = SR_TYPE_NAMES.filter(value => Array.isArray(importedSettings.srTypes) && importedSettings.srTypes.includes(value));
+                    srProductLineSelection = SR_PRODUCT_LINE_OPTIONS.filter(value => Array.isArray(importedSettings.srProductLines) && importedSettings.srProductLines.includes(value));
+                    dashboardCache = result; cachedInterception = data.interception; capturedAt = snapshot.capturedAt || snapshot.exportedAt; reviewInfo = { capturedAt, exportedAt: snapshot.exportedAt || capturedAt }; loaded = true;
+                    renderCertificate(result[0]); renderEos(result[1], result[2]); renderChange(result[3]); renderInterception(result[4]); renderSr(result[5]); updateReviewUi();
+                    if (options && typeof options.onSnapshotImported === 'function') {
+                        try {
+                            const saved = await options.onSnapshotImported(snapshot);
+                            modeStatus.textContent += tr(' · 已归档到服务器', ' · Archived on server') + (saved && saved.created === false ? tr('（已存在）', ' (already existed)') : '');
+                        } catch (saveError) {
+                            modeStatus.textContent += tr(' · 服务器归档失败：', ' · Server archive failed: ') + (saveError && saveError.message || String(saveError));
+                        }
+                    }
+                } catch (error) {
+                    modeStatus.textContent = tr('导入失败：', 'Import failed: ') + (error && error.message || String(error)); modeStatus.classList.remove('review');
+                } finally { jsonFileInput.value = ''; }
+            };
+            reader.readAsText(file, 'utf-8');
+        }
+        function leaveReviewMode() {
+            if (!reviewInfo) return;
+            if (liveSettingsBeforeReview) {
+                Object.keys(eosSettings).forEach(key => { delete eosSettings[key]; }); Object.assign(eosSettings, JSON.parse(JSON.stringify(liveSettingsBeforeReview.eos)));
+                changeBuSelection = liveSettingsBeforeReview.changeBus.slice(); changeProductLineSelection = liveSettingsBeforeReview.changeProductLines.slice(); srTypeSelection = liveSettingsBeforeReview.srTypes.slice(); srProductLineSelection = liveSettingsBeforeReview.srProductLines.slice();
+            }
+            liveSettingsBeforeReview = null; reviewInfo = null; modeStatus.classList.remove('review'); reviewBadge.classList.remove('active');
+        }
         function applyLanguage() {
             button.textContent = active ? tr('返回 CSV', 'Back to CSV') : tr('NetCare 专题', 'NetCare Insights');
             button.title = tr('打开 NetCare 专题分析', 'Open NetCare insights');
             const tabLabels = { eos: tr('EOS 收编', 'EOS Incorporation'), cert: tr('证书清理', 'Certificate Cleanup'), change: tr('变更数量', 'Change Volume'), interception: tr('高危拦截', 'High-risk Interception'), sr: tr('SR 问题单', 'SR Tickets') };
             mode.querySelectorAll('.nc-tab').forEach(tab => { tab.textContent = tabLabels[tab.dataset.view]; });
             refreshButton.textContent = tr('刷新专题', 'Refresh');
+            jsonExportButton.textContent = tr('导出 JSON', 'Export JSON');
+            jsonImportButton.textContent = tr('导入 JSON', 'Import JSON');
             languageButton.textContent = uiLanguage === 'zh' ? 'EN' : '中';
             languageButton.title = tr('切换为英文', 'Switch to Chinese');
             if (dashboardCache) {
                 renderCertificate(dashboardCache[0]); renderEos(dashboardCache[1], dashboardCache[2]); renderChange(dashboardCache[3]); renderInterception(dashboardCache[4]); renderSr(dashboardCache[5]);
-                modeStatus.textContent = dashboardStatus(dashboardCache);
+                modeStatus.textContent = dashboardStatus(dashboardCache); updateReviewUi();
             } else if (!loading) {
                 views.eos.innerHTML = '<div class="nc-empty">' + tr('进入专题后点击“刷新专题”获取数据', 'Click “Refresh” to load insights') + '</div>';
                 modeStatus.textContent = tr('专题尚未加载', 'Insights not loaded');
@@ -254,6 +349,9 @@
             try { localStorage.setItem(LANGUAGE_KEY, uiLanguage); } catch (error) {}
             applyLanguage();
         });
+        jsonExportButton.addEventListener('click', downloadTopicSnapshot);
+        jsonImportButton.addEventListener('click', function () { jsonFileInput.click(); });
+        jsonFileInput.addEventListener('change', function () { if (jsonFileInput.files && jsonFileInput.files[0]) importTopicSnapshot(jsonFileInput.files[0]); });
 
         function escapeHtml(value) {
             return String(value == null ? '' : value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
@@ -912,8 +1010,10 @@
         }
         async function reloadChangeData() {
             if (loading || changeLoading || srLoading || destroyed) return;
+            if (simulationMode) { modeStatus.textContent = tr('模拟浮窗不访问正式接口，请导入 JSON 回顾历史数据。', 'Simulation does not call live APIs. Import JSON to review historical data.'); return; }
             const token = findCsrfToken();
             if (!token) { modeStatus.textContent = tr('未找到 csrfToken，请刷新 NetCare 页面后重试。', 'csrfToken not found. Refresh the NetCare page and try again.'); return; }
+            leaveReviewMode();
             changeLoading = true; const applyButton = views.change.querySelector('.nc-bu-apply');
             if (applyButton) { applyButton.disabled = true; applyButton.textContent = tr('正在查询…', 'Querying…'); }
             modeStatus.textContent = tr('正在按所选 BU 和产品线获取变更数量…', 'Loading change volume for selected BUs and product lines…');
@@ -1058,7 +1158,9 @@
         }
         async function reloadSrData() {
             if (loading || changeLoading || srLoading || destroyed) return;
+            if (simulationMode) { modeStatus.textContent = tr('模拟浮窗不访问正式接口，请导入 JSON 回顾历史数据。', 'Simulation does not call live APIs. Import JSON to review historical data.'); return; }
             const token = findCsrfToken(); if (!token) { modeStatus.textContent = tr('未找到 csrfToken，请刷新 NetCare 页面后重试。', 'csrfToken not found. Refresh the NetCare page and try again.'); return; }
+            leaveReviewMode();
             srLoading = true; const applyButton = views.sr.querySelector('.nc-bu-apply'); if (applyButton) { applyButton.disabled = true; applyButton.textContent = tr('正在查询…', 'Querying…'); } modeStatus.textContent = tr('正在按所选 SR 类型和产品线获取数据…', 'Loading data for selected SR types and product lines…');
             try { const result = await loadSrData(token, srTypeSelection, srProductLineSelection); if (destroyed) return; if (dashboardCache) dashboardCache[5] = result; renderSr(result); modeStatus.textContent = dashboardCache ? dashboardStatus(dashboardCache) : tr('SR 数据已更新', 'SR data updated'); }
             catch (error) { modeStatus.textContent = tr('SR 筛选数据获取失败：', 'Failed to load filtered SR data: ') + (error && error.message || String(error)); console.error('[NetCare] Filtered SR request failed:', error); }
@@ -1067,9 +1169,11 @@
         let cachedInterception = null;
         async function loadDashboard() {
             if (loading || changeLoading || srLoading || destroyed) return;
+            if (simulationMode) { modeStatus.textContent = tr('模拟浮窗不访问正式接口，请点击“导入 JSON”离线回顾。', 'Simulation does not call live APIs. Import JSON for offline review.'); return; }
             const token = findCsrfToken();
             if (!token) { modeStatus.textContent = tr('未找到 csrfToken，请刷新 NetCare 页面后重试。', 'csrfToken not found. Refresh the NetCare page and try again.'); return; }
-            loading = true; refreshButton.disabled = true; modeStatus.textContent = tr('正在获取证书、EOS、变更数量、高危拦截及 SR 数据…', 'Loading certificates, EOS, change volume, high-risk interception, and SR data…');
+            leaveReviewMode();
+            loading = true; refreshButton.disabled = true; jsonExportButton.disabled = true; modeStatus.textContent = tr('正在获取证书、EOS、变更数量、高危拦截及 SR 数据…', 'Loading certificates, EOS, change volume, high-risk interception, and SR data…');
             Object.values(views).forEach(view => { view.innerHTML = '<div class="nc-loading">' + tr('正在加载专题数据…', 'Loading insights…') + '</div>'; });
             try {
                 const result = await Promise.all([
@@ -1079,7 +1183,7 @@
                     loadChangeData(token, changeBuSelection, changeProductLineSelection), loadInterceptionData(token), loadSrData(token, srTypeSelection, srProductLineSelection)
                 ]);
                 if (destroyed) return;
-                dashboardCache = result;
+                dashboardCache = result; capturedAt = new Date().toISOString();
                 renderCertificate(result[0]); renderEos(result[1], result[2]); renderChange(result[3]); cachedInterception = result[4]; renderInterception(cachedInterception); renderSr(result[5]);
                 loaded = true;
                 modeStatus.textContent = dashboardStatus(result);
@@ -1088,7 +1192,7 @@
                 Object.values(views).forEach(view => { view.innerHTML = '<div class="nc-error">' + tr('专题数据获取失败：', 'Failed to load insights: ') + message + '<br><br>' + tr('请确认 NetCare 登录状态后重试。', 'Confirm your NetCare session and try again.') + '</div>'; });
                 modeStatus.textContent = tr('专题获取失败', 'Failed to load insights');
                 console.error('[UIVF12 NetCare Analysis]', error);
-            } finally { loading = false; refreshButton.disabled = false; }
+            } finally { loading = false; refreshButton.disabled = false; jsonExportButton.disabled = !dashboardCache; }
         }
         refreshButton.addEventListener('click', loadDashboard);
         return {
@@ -1099,6 +1203,7 @@
     }
 
     window.UIVNetCareAnalysis = {
-        getRuntimeSource() { return `(${installNetCareAnalysisRuntime.toString()})`; }
+        getRuntimeSource() { return `(${installNetCareAnalysisRuntime.toString()})`; },
+        installForSimulation(root, options) { return installNetCareAnalysisRuntime(root, Object.assign({}, options, { simulation: true })); }
     };
 })();

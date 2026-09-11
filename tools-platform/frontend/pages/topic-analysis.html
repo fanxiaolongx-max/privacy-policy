@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>专题分析</title>
+    <link rel="stylesheet" href="/css/shared.css?v=20260911-03">
+    <link rel="stylesheet" href="/css/topic-analysis.css?v=20260911-01">
+</head>
+<body>
+    <main class="topic-page">
+        <header class="topic-hero">
+            <div>
+                <span class="topic-eyebrow">HISTORY WORKSPACE</span>
+                <h1>专题分析</h1>
+                <p>NetCare 与 DataFab 导入快照的租户级历史中心。完整 JSON 持久保存，可在任意业务页面按时间回顾。</p>
+            </div>
+            <div class="topic-hero-actions">
+                <a href="/uivf12" class="topic-button topic-button-secondary">返回脚本仓库</a>
+                <button id="refreshButton" class="topic-button" type="button">刷新数据</button>
+            </div>
+        </header>
+
+        <section class="topic-stats" aria-label="历史快照概览">
+            <article><span>快照总数</span><strong id="totalCount">0</strong><small>当前租户</small></article>
+            <article><span>NetCare</span><strong id="netcareCount">0</strong><small>已归档批次</small></article>
+            <article><span>DataFab</span><strong id="datafabCount">0</strong><small>已归档批次</small></article>
+            <article><span>最新数据时间</span><strong id="latestTime" class="topic-time">--</strong><small>以 capturedAt 为准</small></article>
+        </section>
+
+        <section class="topic-panel">
+            <div class="topic-panel-head">
+                <div><h2>历史趋势</h2><p>当前预留指标为每份快照的记录总量，后续可扩展 EOS 收编、返单率、录入率等业务指标。</p></div>
+                <label>专题范围
+                    <select id="platformFilter"><option value="">全部</option><option value="netcare">NetCare</option><option value="datafab">DataFab</option></select>
+                </label>
+            </div>
+            <div id="trendChart" class="topic-chart" aria-label="专题快照数据量趋势"></div>
+        </section>
+
+        <section class="topic-panel">
+            <div class="topic-panel-head"><div><h2>历史快照</h2><p>查看摘要、下载原始 JSON，或清理不再需要的快照。</p></div><span id="loadStatus" class="topic-status">正在读取…</span></div>
+            <div class="topic-table-wrap">
+                <table><thead><tr><th>数据时间</th><th>专题</th><th>周期</th><th>数据量</th><th>导入时间</th><th>操作</th></tr></thead><tbody id="historyBody"></tbody></table>
+            </div>
+            <div id="emptyState" class="topic-empty" hidden>还没有快照。请在 UIVF12 脚本仓库打开“模拟浮窗”并导入正式站点导出的 JSON。</div>
+        </section>
+
+        <section class="topic-panel topic-api-panel">
+            <div><h2>跨页面引用预留</h2><p>其他页面可以直接读取当前租户的已归档数据，无需重复解析本地文件。</p></div>
+            <div class="topic-api-grid"><code>GET /api/topic-snapshots</code><code>GET /api/topic-snapshots/series</code><code>GET /api/topic-snapshots/latest?platform=netcare</code><code>GET /api/topic-snapshots/:id</code></div>
+        </section>
+    </main>
+
+    <div id="detailModal" class="topic-modal" hidden>
+        <div class="topic-modal-card" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+            <div class="topic-modal-head"><h2 id="detailTitle">快照详情</h2><button id="closeDetail" type="button" aria-label="关闭">×</button></div>
+            <pre id="detailJson"></pre>
+        </div>
+    </div>
+
+    <script src="/js/shared/api.js?v=20260911-03"></script>
+    <script src="/js/shared/navbar.js?v=20260911-03"></script>
+    <script src="/js/topic-analysis.js?v=20260911-01"></script>
+</body>
+</html>

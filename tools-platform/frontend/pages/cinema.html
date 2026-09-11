@@ -1466,6 +1466,42 @@
             background: #6366f1;
         }
 
+        .category-pin-dialog {
+            width: min(400px, 100%);
+            padding: 26px;
+            border: 1px solid rgba(168, 85, 247, .48);
+            border-radius: 18px;
+            background: #12141f;
+            box-shadow: 0 28px 80px rgba(0, 0, 0, .82);
+        }
+
+        .category-pin-input {
+            width: 100%;
+            box-sizing: border-box;
+            margin-top: 16px;
+            padding: 12px 14px;
+            border: 1px solid rgba(255, 255, 255, .18);
+            border-radius: 10px;
+            outline: none;
+            color: #fff;
+            background: rgba(255, 255, 255, .07);
+            font-size: 22px;
+            letter-spacing: .5em;
+            text-align: center;
+        }
+
+        .category-pin-input:focus {
+            border-color: #818cf8;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, .2);
+        }
+
+        .category-pin-error {
+            min-height: 20px;
+            margin-top: 8px;
+            color: #fca5a5;
+            font-size: 12px;
+        }
+
         .continue-actions button:hover {
             filter: brightness(1.12);
         }
@@ -2177,6 +2213,20 @@
         </div>
     </div>
 
+    <div class="modal-backdrop" id="categoryPinModal" onclick="handleCategoryPinBackdrop(event)">
+        <form class="category-pin-dialog" onsubmit="submitCategoryPin(event)" role="dialog" aria-modal="true" aria-labelledby="categoryPinTitle">
+            <div class="continue-kicker">🔒 PIN 保护分类</div>
+            <h3 class="continue-title" id="categoryPinTitle">输入 4 位 PIN</h3>
+            <p class="continue-copy" id="categoryPinCopy">验证后即可查看该分类内容。</p>
+            <input class="category-pin-input" id="categoryPinInput" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" aria-label="4 位 PIN" required>
+            <div class="category-pin-error" id="categoryPinError" role="alert"></div>
+            <div class="continue-actions">
+                <button type="button" onclick="closeCategoryPinModal()">取消</button>
+                <button type="submit" class="primary" id="categoryPinSubmit">解锁分类</button>
+            </div>
+        </form>
+    </div>
+
     <!-- 同设备再次进入时的续播确认 -->
     <div class="modal-backdrop" id="continueWatchingModal" onclick="handleContinueWatchingBackdrop(event)">
         <div class="continue-dialog" role="dialog" aria-modal="true" aria-labelledby="continueWatchingTitle">
@@ -2219,6 +2269,10 @@
         ];
 
         const LAST_WATCH_KEY = 'cinema_last_watch_v1';
+        const CATEGORY_ACCESS_KEY = 'cinema_category_access_v1';
+        let mediaCategories = [];
+        let pendingProtectedCategory = null;
+        let pendingProtectedCategoryButton = null;
         let currentVideo = allVideos[0];
         let pendingResumeTime = 0;
         let pendingLastWatch = null;
@@ -2262,16 +2316,21 @@
                 const res = await fetch('/api/public/videos');
                 if (res.ok) {
                     const json = await res.json();
-                    if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+                    if (json.success && Array.isArray(json.data)) {
                         allVideos = json.data;
                         // 服务端已按管理员设置的优先级排序；龙餐馆在未配置时默认置顶。
                         const defaultFilm = allVideos[0];
                         if (defaultFilm) {
                             currentVideo = defaultFilm;
                             applyVideoToPage(defaultFilm);
+                        } else {
+                            currentVideo = null;
+                            video.removeAttribute('src');
+                            video.load();
                         }
                     }
                     if (json.categories && Array.isArray(json.categories)) {
+                        mediaCategories = json.categories;
                         renderCategoryTabs(json.categories);
                     }
                 }
@@ -2280,24 +2339,20 @@
             }
             renderVideoGrid(allVideos);
             updateEpisodeNavigation();
-            if (!offerLastWatchResume()) checkResumeProgress(currentVideo.id);
+            if (currentVideo && !offerLastWatchResume()) checkResumeProgress(currentVideo.id);
         }
 
         // --- 动态渲染分类标签 ---
         function renderCategoryTabs(categories) {
             const container = document.getElementById('categoryTabs');
             if (!container) return;
-            const counts = {};
-            allVideos.forEach(v => {
-                const f = v.folder || 'film';
-                counts[f] = (counts[f] || 0) + 1;
-            });
-
             container.innerHTML = `
-                <button class="tab-item active" onclick="filterCategory('all', this)">全部 (${allVideos.length})</button>
-                <button class="tab-item" onclick="filterCategory('film', this)">🌟 独家影院 (${counts['film'] || 1})</button>
-                <button class="tab-item" onclick="filterCategory('阿语日常', this)">🗣️ 阿语日常 (${counts['阿语日常'] || 0})</button>
-                <button class="tab-item" onclick="filterCategory('阿语字母', this)">🔤 阿语字母 (${counts['阿语字母'] || 0})</button>
+                <button class="tab-item active" data-category-id="all" onclick="filterCategory('all', this)">全部可见 (${allVideos.length})</button>
+                ${categories.filter(category => category.id !== 'all').map(category => `
+                    <button class="tab-item" data-category-id="${escapeCinemaHtml(category.id)}" data-protected="${Boolean(category.protected)}" onclick="filterCategory(this.dataset.categoryId, this)">
+                        ${category.protected ? '🔒' : (category.icon || '📁')} ${escapeCinemaHtml(category.name || category.folder || '未命名分类')} (${Number(category.count) || 0})
+                    </button>
+                `).join('')}
             `;
         }
 
@@ -2982,15 +3037,116 @@
             renderVideoGrid(filtered);
         }
 
-        // --- 分类切换 ---
-        function filterCategory(cat, btn) {
+        function readCategoryAccessTokens() {
+            try { return JSON.parse(sessionStorage.getItem(CATEGORY_ACCESS_KEY) || '{}'); } catch (_) { return {}; }
+        }
+
+        function saveCategoryAccessToken(categoryId, access) {
+            const tokens = readCategoryAccessTokens();
+            tokens[categoryId] = access;
+            sessionStorage.setItem(CATEGORY_ACCESS_KEY, JSON.stringify(tokens));
+        }
+
+        function removeCategoryAccessToken(categoryId) {
+            const tokens = readCategoryAccessTokens();
+            delete tokens[categoryId];
+            sessionStorage.setItem(CATEGORY_ACCESS_KEY, JSON.stringify(tokens));
+        }
+
+        function activateCategoryTab(btn) {
             document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
             if (btn) btn.classList.add('active');
+        }
+
+        async function loadProtectedCategory(category, access) {
+            const response = await fetch(`/api/media/public/list?category=${encodeURIComponent(category.id)}&access=${encodeURIComponent(access)}`);
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || !data.success) throw Object.assign(new Error(data.error || '加载分类失败'), { status: response.status });
+            const protectedIds = new Set((data.data || []).map(item => item.id));
+            allVideos = allVideos.filter(item => item.category !== category.id && !protectedIds.has(item.id)).concat(data.data || []);
+            return data.data || [];
+        }
+
+        function openCategoryPinModal(category, btn) {
+            pendingProtectedCategory = category;
+            pendingProtectedCategoryButton = btn;
+            document.getElementById('categoryPinTitle').textContent = `解锁“${category.name}”`;
+            document.getElementById('categoryPinCopy').textContent = '请输入管理员设置的 4 位 PIN。';
+            document.getElementById('categoryPinError').textContent = '';
+            document.getElementById('categoryPinInput').value = '';
+            document.getElementById('categoryPinModal').classList.add('open');
+            requestAnimationFrame(() => document.getElementById('categoryPinInput').focus());
+        }
+
+        function closeCategoryPinModal() {
+            document.getElementById('categoryPinModal').classList.remove('open');
+            pendingProtectedCategory = null;
+            pendingProtectedCategoryButton = null;
+        }
+
+        function handleCategoryPinBackdrop(event) {
+            if (event.target.id === 'categoryPinModal') closeCategoryPinModal();
+        }
+
+        async function submitCategoryPin(event) {
+            event.preventDefault();
+            const category = pendingProtectedCategory;
+            if (!category) return;
+            const pinInput = document.getElementById('categoryPinInput');
+            const errorElement = document.getElementById('categoryPinError');
+            const submit = document.getElementById('categoryPinSubmit');
+            const pin = pinInput.value.trim();
+            if (!/^\d{4}$/.test(pin)) {
+                errorElement.textContent = '请输入 4 位数字 PIN。';
+                return;
+            }
+            submit.disabled = true;
+            errorElement.textContent = '正在验证...';
+            try {
+                const response = await fetch('/api/media/public/unlock', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ category: category.id, pin })
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok || !data.success) throw new Error(data.error || 'PIN 验证失败');
+                saveCategoryAccessToken(category.id, data.access);
+                const videos = await loadProtectedCategory(category, data.access);
+                const targetButton = pendingProtectedCategoryButton;
+                closeCategoryPinModal();
+                activateCategoryTab(targetButton);
+                renderVideoGrid(videos);
+            } catch (error) {
+                errorElement.textContent = error.message;
+                pinInput.select();
+            } finally {
+                submit.disabled = false;
+            }
+        }
+
+        // --- 分类切换 ---
+        async function filterCategory(cat, btn) {
+            const category = mediaCategories.find(item => item.id === cat);
+            if (category?.protected) {
+                const access = readCategoryAccessTokens()[category.id];
+                if (access) {
+                    try {
+                        const videos = await loadProtectedCategory(category, access);
+                        activateCategoryTab(btn);
+                        renderVideoGrid(videos);
+                        return;
+                    } catch (error) {
+                        removeCategoryAccessToken(category.id);
+                    }
+                }
+                openCategoryPinModal(category, btn);
+                return;
+            }
+
+            activateCategoryTab(btn);
 
             if (cat === 'all') {
                 renderVideoGrid(allVideos);
-            } else if (cat === 'film') {
-                renderVideoGrid(allVideos.filter(v => !v.folder || v.folder === '' || v.category === 'film'));
             } else {
                 renderVideoGrid(allVideos.filter(v => v.folder === cat || v.category === cat));
             }

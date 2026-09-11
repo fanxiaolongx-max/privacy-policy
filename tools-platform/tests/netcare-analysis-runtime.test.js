@@ -28,6 +28,7 @@ test('NetCare EOS planning UI keeps its calculation and input constraints', () =
 
     assert.match(source, /Math\.min\(item\.pending, saved\)/);
     assert.match(source, /item\.noPlan = Math\.max\(0, item\.pending - item\.annualPlan\)/);
+    assert.match(source, /eosSettings\.plans\[type\]\[item\.key\] = item\.annualPlan/);
     assert.match(source, /Math\.min\(item\.pending, Math\.max\(0, Math\.floor/);
     assert.match(source, /metric\.incorporated \+ \(includePlan \? metric\.annualPlan : 0\)/);
     assert.match(source, /今年计划完成数量/);
@@ -167,6 +168,19 @@ test('NetCare EOS planning UI keeps its calculation and input constraints', () =
     assert.match(source, /月度 SR 趋势/);
 });
 
+test('NetCare insights can export and import a complete JSON review snapshot', () => {
+    const source = fs.readFileSync(runtimePath, 'utf8');
+    assert.match(source, /schema: 'uivf12-topic-snapshot'/);
+    assert.match(source, /platform: 'netcare'/);
+    assert.match(source, /function downloadTopicSnapshot/);
+    assert.match(source, /function importTopicSnapshot/);
+    assert.match(source, /data: \{ certificate: dashboardCache\[0\], eosProduct: dashboardCache\[1\], eosVersion: dashboardCache\[2\], change: dashboardCache\[3\], interception: dashboardCache\[4\], sr: dashboardCache\[5\] \}/);
+    assert.match(source, /回顾模式/);
+    assert.match(source, /回顾数据时间：/);
+    assert.match(source, /点击“刷新专题”返回实时模式/);
+    assert.match(source, /accept="application\/json,\.json"/);
+});
+
 test('NetCare EOS Top N is calculated from No Plan independently for each customer', () => {
     const source = fs.readFileSync(runtimePath, 'utf8');
     const start = source.indexOf('function emptyEosMetric');
@@ -256,5 +270,5 @@ test('NetCare SR metrics preserve source fields and weight ratio metrics', () =>
 
 test('UIVF12 page cache-busts the enhanced NetCare runtime', () => {
     const html = fs.readFileSync(pagePath, 'utf8');
-    assert.match(html, /netcare-analysis\.js\?v=20260908-05/);
+    assert.match(html, /netcare-analysis\.js\?v=20260911-03/);
 });

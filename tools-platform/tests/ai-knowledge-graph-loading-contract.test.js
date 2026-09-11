@@ -64,7 +64,7 @@ test('shared navbar defers the expensive built-in tool scan once per renderer se
         .map(filePath => fs.readFileSync(filePath, 'utf8').match(/navbar\.js\?v=([^"']+)/)?.[1])
         .filter(Boolean);
     assert.ok(navbarReferences.length > 1);
-    assert.deepEqual([...new Set(navbarReferences)], ['20260910-01']);
+    assert.deepEqual([...new Set(navbarReferences)], ['20260911-03']);
 });
 
 test('built-in tool preview worker returns a serializable preview off the main thread', async t => {

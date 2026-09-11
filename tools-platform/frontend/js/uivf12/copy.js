@@ -537,6 +537,64 @@ function closeSiteConsoleScriptPicker() {
     if (overlay) overlay.remove();
 }
 
+function getTopicSimulatorConfig(origin) {
+    if (origin === 'https://netcare.huawei.com') return { kind: 'netcare', name: 'NetCare 中国', api: window.UIVNetCareAnalysis, launcher: '.nc-head-button' };
+    if (origin === 'https://datafab-pro.gtsdata.huawei.com') return { kind: 'datafab', name: 'DataFab', api: window.UIVDataFabAnalysis, launcher: '.df-head-button' };
+    return null;
+}
+
+function closeTopicFloatingSimulator() {
+    const overlay = document.getElementById('uiv-topic-simulator-overlay');
+    if (!overlay) return;
+    if (overlay.topicController && typeof overlay.topicController.destroy === 'function') overlay.topicController.destroy();
+    overlay.remove();
+}
+
+async function archiveImportedTopicSnapshot(snapshot) {
+    if (!window.API || typeof window.API.post !== 'function') throw new Error('服务器 API 不可用');
+    const result = await window.API.post('/api/topic-snapshots', { snapshot });
+    showToast(result.message || '专题快照已保存到服务器');
+    return result;
+}
+
+function openTopicFloatingSimulator(origin) {
+    const config = getTopicSimulatorConfig(origin);
+    if (!config || !config.api || typeof config.api.installForSimulation !== 'function') {
+        showToast('❌ 当前站点没有可用的专题模拟器，请刷新页面后重试。', 'error');
+        return;
+    }
+    closeSiteConsoleScriptPicker(); closeTopicFloatingSimulator();
+    const overlay = document.createElement('div'); overlay.id = 'uiv-topic-simulator-overlay'; overlay.className = 'uiv-topic-simulator-overlay';
+    overlay.innerHTML = `
+        <div class="uiv-topic-simulator-dialog" role="dialog" aria-modal="true" aria-labelledby="uiv-topic-simulator-title">
+            <div class="uiv-topic-simulator-header">
+                <div><h3 id="uiv-topic-simulator-title">${escapeUivHtml(config.name)} · 专题模拟浮窗</h3><p>离线模拟模式不会请求正式站点。导入后会将完整 JSON 归档到当前租户服务器。</p><a class="uiv-topic-analysis-link" href="/topic-analysis">打开专题分析 ↗</a></div>
+                <button type="button" class="uiv-topic-simulator-close" aria-label="关闭">×</button>
+            </div>
+            <div class="uiv-topic-simulator-root">
+                <div class="uiv-topic-simulator-float-head"><div><strong>${escapeUivHtml(config.name)} 浮窗</strong><small>JSON 离线回顾模拟器</small></div><div class="head-actions"></div></div>
+                <div class="body">
+                    <div class="notice">模拟浮窗已就绪，请进入专题并导入 JSON。</div><div class="status"></div><div class="actions"></div><div class="results"></div>
+                </div>
+            </div>
+        </div>`;
+    overlay.addEventListener('click', event => { if (event.target === overlay || event.target.closest('.uiv-topic-simulator-close')) closeTopicFloatingSimulator(); });
+    overlay.addEventListener('keydown', event => { if (event.key === 'Escape') closeTopicFloatingSimulator(); });
+    document.body.appendChild(overlay);
+    const root = overlay.querySelector('.uiv-topic-simulator-root');
+    try {
+        overlay.topicController = config.api.installForSimulation(root, {
+            isCaptureActive: () => false,
+            onSnapshotImported: archiveImportedTopicSnapshot
+        });
+        if (!overlay.topicController) throw new Error('专题运行时未能初始化');
+        const launcher = root.querySelector(config.launcher); if (launcher) launcher.click();
+        const importButton = root.querySelector('.nc-json-import, .df-json-import'); if (importButton) importButton.focus();
+    } catch (error) {
+        closeTopicFloatingSimulator(); showToast(`❌ 打开专题模拟器失败：${error.message}`, 'error');
+    }
+}
+
 function getFloatingSlaRuleDefaults() {
     const standardRule = (id, name, values, fields, type, offsetDays, prefix, warningDays, warningColor) => ({
         id, enabled: true, name, badgePrefix: prefix,
@@ -768,16 +826,18 @@ async function openSiteConsoleScriptPicker() {
         overlay.id = 'uiv-site-script-overlay';
         overlay.className = 'uiv-site-script-overlay';
         overlay.setAttribute('role', 'presentation');
-        const siteRows = grouped.sites.map(site => `
+        const siteRows = grouped.sites.map(site => {
+            const simulator = getTopicSimulatorConfig(site.origin);
+            return `
             <div class="uiv-site-script-item">
                 <div style="min-width:0;">
                     <div class="uiv-site-script-name">${escapeUivHtml(site.name)}</div>
                     <div class="uiv-site-script-origin" title="${escapeUivHtml(site.origin)}">${escapeUivHtml(site.origin)}</div>
                     <div class="uiv-site-script-count">${site.scripts.length} 个可执行脚本</div>
                 </div>
-                <button type="button" class="uiv-site-script-copy" data-site-origin="${escapeUivHtml(site.origin)}">复制此站点</button>
+                <div class="uiv-site-script-buttons">${simulator ? `<button type="button" class="uiv-site-script-simulate" data-site-origin="${escapeUivHtml(site.origin)}">模拟浮窗</button>` : ''}<button type="button" class="uiv-site-script-copy" data-site-origin="${escapeUivHtml(site.origin)}">复制此站点</button></div>
             </div>
-        `).join('');
+        `; }).join('');
         const unresolvedNote = grouped.unresolved.length
             ? `<div class="uiv-site-script-notice">另有 ${grouped.unresolved.length} 个脚本无法识别站点，暂未列出。请先在脚本中补充请求 URL。</div>`
             : '';
@@ -802,6 +862,8 @@ async function openSiteConsoleScriptPicker() {
                 closeSiteConsoleScriptPicker();
                 return;
             }
+            const simulateButton = event.target.closest('.uiv-site-script-simulate');
+            if (simulateButton) { openTopicFloatingSimulator(simulateButton.dataset.siteOrigin || ''); return; }
             const copyButton = event.target.closest('.uiv-site-script-copy');
             if (copyButton) copySiteConsoleScripts(copyButton.dataset.siteOrigin || '');
         });
@@ -4043,6 +4105,8 @@ window.UIVCopy = {
     openSiteConsoleScriptPicker,
     closeSiteConsoleScriptPicker,
     copySiteConsoleScripts,
+    openTopicFloatingSimulator,
+    closeTopicFloatingSimulator,
     openUivBatchCategoryFilter,
     closeUivBatchCategoryFilter,
     selectAllUivBatchCategories,

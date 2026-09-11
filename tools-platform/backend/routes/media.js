@@ -2,8 +2,10 @@ const express = require('express');
 const router = express.Router();
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { exec, execSync } = require('child_process');
 const { checkAuth, requireAdmin } = require('../middleware/auth');
+const authSessionsRepo = require('../models/auth-sessions-repository');
 
 const FRONTEND_DIR = path.resolve(__dirname, '../../frontend');
 const configuredMediaDir = String(process.env.TOOLS_MEDIA_DIR || '').trim();
@@ -20,6 +22,155 @@ function validMediaFolder(name) {
     return typeof name === 'string' && name.trim() && name !== '.' && name !== '..' && !/[\\/\x00-\x1f]/.test(name) && !name.startsWith('.');
 }
 const DEFAULT_MEDIA_ORDER = 1000;
+const CATEGORY_ACCESS_TTL_MS = 30 * 60 * 1000;
+const CATEGORY_TOKEN_SECRET = crypto.randomBytes(32);
+const pinFailures = new Map();
+
+function createCategoryPinRecord(pin) {
+    if (!/^\d{4}$/.test(String(pin || ''))) {
+        throw Object.assign(new Error('PIN 必须是 4 位数字'), { statusCode: 400 });
+    }
+    const pinSalt = crypto.randomBytes(16).toString('hex');
+    const pinHash = crypto.scryptSync(String(pin), pinSalt, 32).toString('hex');
+    return { pinSalt, pinHash };
+}
+
+function verifyCategoryPin(category, pin) {
+    if (!category?.protected || !category.pinSalt || !category.pinHash || !/^\d{4}$/.test(String(pin || ''))) return false;
+    const actual = crypto.scryptSync(String(pin), category.pinSalt, 32);
+    const expected = Buffer.from(category.pinHash, 'hex');
+    return actual.length === expected.length && crypto.timingSafeEqual(actual, expected);
+}
+
+function applyCategoryProtection(category, { protected: shouldProtect, pin } = {}) {
+    if (shouldProtect === undefined) return category;
+    if (!shouldProtect) {
+        category.protected = false;
+        delete category.pinSalt;
+        delete category.pinHash;
+        return category;
+    }
+    if (pin) Object.assign(category, createCategoryPinRecord(pin));
+    if (!category.pinSalt || !category.pinHash) {
+        throw Object.assign(new Error('开启隐藏分类时请设置 4 位 PIN'), { statusCode: 400 });
+    }
+    category.protected = true;
+    return category;
+}
+
+function sanitizeCategory(category, count) {
+    const { pinSalt, pinHash, ...safe } = category;
+    return { ...safe, protected: Boolean(category.protected), ...(count !== undefined && { count }) };
+}
+
+function signCategoryAccess(categoryId) {
+    const payload = Buffer.from(JSON.stringify({ categoryId, expiresAt: Date.now() + CATEGORY_ACCESS_TTL_MS })).toString('base64url');
+    const signature = crypto.createHmac('sha256', CATEGORY_TOKEN_SECRET).update(payload).digest('base64url');
+    return `${payload}.${signature}`;
+}
+
+function verifyCategoryAccess(token, categoryId) {
+    const [payload, signature] = String(token || '').split('.');
+    if (!payload || !signature) return false;
+    const expected = crypto.createHmac('sha256', CATEGORY_TOKEN_SECRET).update(payload).digest();
+    let actual;
+    try { actual = Buffer.from(signature, 'base64url'); } catch (_) { return false; }
+    if (actual.length !== expected.length || !crypto.timingSafeEqual(actual, expected)) return false;
+    try {
+        const data = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+        return data.categoryId === categoryId && Number(data.expiresAt) > Date.now();
+    } catch (_) {
+        return false;
+    }
+}
+
+function findMediaCategory(categories, value) {
+    return (categories || []).find(category => category.id !== 'all' && (
+        category.id === value || category.folder === value || category.name === value
+    ));
+}
+
+function categoryForVideo(categories, video) {
+    return findMediaCategory(categories, video.category) || findMediaCategory(categories, video.folder);
+}
+
+function withCategoryAccess(video, token) {
+    const appendAccess = url => {
+        if (!url || !url.startsWith('/assets/videos/')) return url;
+        return `${url}${url.includes('?') ? '&' : '?'}access=${encodeURIComponent(token)}`;
+    };
+    return { ...video, src: appendAccess(video.src), poster: appendAccess(video.poster), backdrop: appendAccess(video.backdrop) };
+}
+
+function pinFailureKey(req, categoryId) {
+    return `${req.ip || req.socket?.remoteAddress || 'unknown'}:${categoryId}`;
+}
+
+function getPinAttemptBlock(req, categoryId) {
+    const key = pinFailureKey(req, categoryId);
+    const record = pinFailures.get(key);
+    if (!record) return null;
+    if (record.blockedUntil > Date.now()) return Math.ceil((record.blockedUntil - Date.now()) / 1000);
+    if (record.firstAt + 10 * 60 * 1000 < Date.now()) pinFailures.delete(key);
+    return null;
+}
+
+function recordPinFailure(req, categoryId) {
+    const key = pinFailureKey(req, categoryId);
+    const now = Date.now();
+    const previous = pinFailures.get(key);
+    const record = !previous || previous.firstAt + 10 * 60 * 1000 < now
+        ? { count: 1, firstAt: now, blockedUntil: 0 }
+        : { ...previous, count: previous.count + 1 };
+    if (record.count >= 5) record.blockedUntil = now + 5 * 60 * 1000;
+    pinFailures.set(key, record);
+}
+
+function resolveMediaPath(relativePath) {
+    const resolved = path.resolve(VIDEOS_DIR, relativePath || '');
+    if (resolved !== VIDEOS_DIR && !resolved.startsWith(VIDEOS_DIR + path.sep)) {
+        throw new Error('无效的媒体文件路径');
+    }
+    return resolved;
+}
+
+function moveMediaAssetFiles(sourceRelativePath, targetFolder) {
+    const sourcePath = resolveMediaPath(sourceRelativePath);
+    const fileName = path.basename(sourceRelativePath);
+    const targetRelativePath = targetFolder ? `${targetFolder}/${fileName}` : fileName;
+    const targetPath = resolveMediaPath(targetRelativePath);
+    if (sourcePath === targetPath) return targetRelativePath;
+    if (!fs.existsSync(sourcePath)) throw Object.assign(new Error('视频文件不存在'), { statusCode: 404 });
+    if (fs.existsSync(targetPath)) throw Object.assign(new Error('目标分类中已存在同名视频'), { statusCode: 409 });
+
+    const extension = path.extname(sourcePath);
+    const sourceBase = sourcePath.slice(0, -extension.length);
+    const targetBase = targetPath.slice(0, -extension.length);
+    const relatedFiles = [
+        [sourceBase + '_poster.jpg', targetBase + '_poster.jpg'],
+        [sourceBase + '.jpg', targetBase + '.jpg']
+    ].filter(([source]) => fs.existsSync(source));
+    if (relatedFiles.some(([, target]) => fs.existsSync(target))) {
+        throw Object.assign(new Error('目标分类中已存在同名封面'), { statusCode: 409 });
+    }
+
+    fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+    const movedFiles = [];
+    try {
+        fs.renameSync(sourcePath, targetPath);
+        movedFiles.push([sourcePath, targetPath]);
+        relatedFiles.forEach(([source, target]) => {
+            fs.renameSync(source, target);
+            movedFiles.push([source, target]);
+        });
+    } catch (error) {
+        movedFiles.reverse().forEach(([source, target]) => {
+            try { fs.renameSync(target, source); } catch (_) {}
+        });
+        throw error;
+    }
+    return targetRelativePath;
+}
 
 // 确保主目录存在
 if (!fs.existsSync(VIDEOS_DIR)) {
@@ -93,6 +244,32 @@ function normalizeMediaOrder(savedOrder, isDragonRestaurant = false) {
 function compareMediaOrder(a, b) {
     if (a.order !== b.order) return a.order - b.order;
     return a.fileName.localeCompare(b.fileName, 'zh-CN', { numeric: true });
+}
+
+function normalizeMediaCategoryOrder(savedOrder, fallbackOrder = 0) {
+    const parsed = Number(savedOrder);
+    return Number.isSafeInteger(parsed) ? parsed : fallbackOrder;
+}
+
+function sortMediaCategories(categories = []) {
+    return categories
+        .map((category, index) => ({
+            ...category,
+            order: normalizeMediaCategoryOrder(category.order, Math.max(0, index - 1) * 10),
+            sourceIndex: index
+        }))
+        .sort((a, b) => {
+            if (a.id === 'all') return -1;
+            if (b.id === 'all') return 1;
+            if (a.order !== b.order) return a.order - b.order;
+            return a.sourceIndex - b.sourceIndex;
+        })
+        .map(({ sourceIndex, ...category }) => category);
+}
+
+function nextMediaCategoryOrder(categories = []) {
+    const managed = sortMediaCategories(categories).filter(category => category.id !== 'all');
+    return managed.length ? Math.max(...managed.map(category => category.order)) + 10 : 0;
 }
 
 /**
@@ -188,7 +365,8 @@ function scanMediaList() {
                 id: `folder-${Buffer.from(f).toString('hex').slice(0, 8)}`,
                 name: f,
                 icon: '📁',
-                folder: f
+                folder: f,
+                order: nextMediaCategoryOrder(manifest.categories)
             };
             manifest.categories.push(newCat);
             categoriesMap.set(f, newCat);
@@ -203,9 +381,52 @@ function scanMediaList() {
     videos.sort(compareMediaOrder);
 
     return {
-        categories: manifest.categories,
+        categories: sortMediaCategories(manifest.categories),
         videos
     };
+}
+
+function videoMatchesAsset(video, relativePath) {
+    if (video.relPath === relativePath) return true;
+    const extension = path.extname(video.relPath);
+    const base = extension ? video.relPath.slice(0, -extension.length) : video.relPath;
+    if (relativePath === `${base}_poster.jpg` || relativePath === `${base}.jpg`) return true;
+    for (const url of [video.poster, video.backdrop]) {
+        if (!url?.startsWith('/assets/videos/')) continue;
+        const savedPath = decodeURIComponent(url.slice('/assets/videos/'.length).split('?')[0]);
+        if (savedPath === relativePath) return true;
+    }
+    return false;
+}
+
+async function hasAdminMediaSession(req) {
+    const authHeader = req.headers.authorization;
+    const cookieToken = String(req.headers.cookie || '').split(';')
+        .map(item => item.trim())
+        .find(item => item.startsWith('tools_token='))
+        ?.slice('tools_token='.length);
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : cookieToken;
+    if (!token) return false;
+    try {
+        const session = await authSessionsRepo.getSession(token);
+        return Boolean(session && session.expiresAt >= Date.now() && session.user?.role === 'admin');
+    } catch (_) {
+        return false;
+    }
+}
+
+async function mediaAssetGuard(req, res, next) {
+    try {
+        const relativePath = decodeURIComponent(req.path).replace(/^\/+/, '');
+        const { categories, videos } = scanMediaList();
+        const matchedVideo = videos.find(video => videoMatchesAsset(video, relativePath));
+        const category = matchedVideo && categoryForVideo(categories, matchedVideo);
+        if (!category?.protected) return next();
+        if (verifyCategoryAccess(req.query.access, category.id) || await hasAdminMediaSession(req)) return next();
+        return res.status(403).json({ error: '该媒体需要 PIN 验证', code: 'MEDIA_PIN_REQUIRED' });
+    } catch (error) {
+        return res.status(400).json({ error: error.message || '无效的媒体路径' });
+    }
 }
 
 // ============================================================
@@ -214,11 +435,18 @@ function scanMediaList() {
 router.get('/public/list', (req, res) => {
     try {
         const { categories, videos } = scanMediaList();
-        const { category, q } = req.query;
+        const { category, q, access } = req.query;
+        const selectedCategory = category && category !== 'all' ? findMediaCategory(categories, category) : null;
+        if (selectedCategory?.protected && !verifyCategoryAccess(access, selectedCategory.id)) {
+            return res.status(403).json({ error: '该分类需要 PIN 验证', code: 'MEDIA_PIN_REQUIRED' });
+        }
 
-        let filtered = videos;
+        let filtered = videos.filter(video => {
+            const videoCategory = categoryForVideo(categories, video);
+            return !videoCategory?.protected || videoCategory.id === selectedCategory?.id;
+        });
         if (category && category !== 'all') {
-            filtered = filtered.filter(v => v.category === category || v.folder === category);
+            filtered = filtered.filter(v => v.category === selectedCategory?.id || v.folder === selectedCategory?.folder);
         }
         if (q) {
             const query = q.trim().toLowerCase();
@@ -230,16 +458,43 @@ router.get('/public/list', (req, res) => {
         }
 
         res.setHeader('Cache-Control', 'no-cache');
+        const safeCategories = categories.map(item => sanitizeCategory(
+            item,
+            item.id === 'all' ? videos.length : videos.filter(video => categoryForVideo(categories, video)?.id === item.id).length
+        ));
         res.json({
             success: true,
             count: filtered.length,
             total: videos.length,
-            categories,
-            data: filtered
+            categories: safeCategories,
+            data: selectedCategory?.protected ? filtered.map(video => withCategoryAccess(video, access)) : filtered
         });
     } catch (err) {
         console.error('[Media API] /public/list error:', err);
         res.status(500).json({ error: '获取媒体列表失败' });
+    }
+});
+
+router.post('/public/unlock', (req, res) => {
+    try {
+        const { category, pin } = req.body || {};
+        const manifest = readManifest();
+        const selectedCategory = findMediaCategory(manifest.categories, category);
+        if (!selectedCategory?.protected) return res.status(404).json({ error: '未找到需验证的分类' });
+        const retryAfter = getPinAttemptBlock(req, selectedCategory.id);
+        if (retryAfter) {
+            res.setHeader('Retry-After', String(retryAfter));
+            return res.status(429).json({ error: 'PIN 错误次数过多，请稍后重试', retryAfter });
+        }
+        if (!verifyCategoryPin(selectedCategory, pin)) {
+            recordPinFailure(req, selectedCategory.id);
+            return res.status(401).json({ error: 'PIN 不正确' });
+        }
+        pinFailures.delete(pinFailureKey(req, selectedCategory.id));
+        res.setHeader('Cache-Control', 'no-store');
+        res.json({ success: true, category: selectedCategory.id, access: signCategoryAccess(selectedCategory.id), expiresIn: CATEGORY_ACCESS_TTL_MS / 1000 });
+    } catch (err) {
+        res.status(err.statusCode || 500).json({ error: err.message });
     }
 });
 
@@ -271,7 +526,7 @@ router.get('/admin/overview', (req, res) => {
             folderCounts
         });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(err.statusCode || 500).json({ error: err.message });
     }
 });
 
@@ -284,11 +539,11 @@ router.get('/admin/folders', (req, res) => {
         const foldersWithStats = categories.filter(category => category.id !== 'all').map(cat => {
             const matching = videos.filter(v => v.category === cat.id || v.folder === cat.folder);
             const sizeBytes = matching.reduce((acc, v) => acc + (v.fileSize || 0), 0);
-            return {
+            return sanitizeCategory({
                 ...cat,
                 count: matching.length,
                 sizeFormatted: (sizeBytes / (1024 * 1024)).toFixed(1) + ' MB'
-            };
+            });
         });
         res.json({ success: true, data: foldersWithStats });
     } catch (err) {
@@ -301,10 +556,22 @@ router.get('/admin/folders', (req, res) => {
  */
 router.post('/admin/folders', (req, res) => {
     try {
-        const { name, icon } = req.body || {};
+        const { name, icon, protected: shouldProtect, pin } = req.body || {};
         if (!name || !name.trim()) return res.status(400).json({ error: '分类名称不能为空' });
         const cleanName = name.trim();
         if (!validMediaFolder(cleanName)) return res.status(400).json({ error: '分类名称不能包含路径分隔符或特殊目录名称' });
+
+        const manifest = readManifest();
+        const exists = manifest.categories.some(c => c.name === cleanName || c.folder === cleanName);
+        if (exists) return res.status(409).json({ error: '同名分类已存在' });
+        const category = {
+            id: `cat-${Date.now()}`,
+            name: cleanName,
+            icon: icon || '📁',
+            folder: cleanName,
+            order: nextMediaCategoryOrder(manifest.categories)
+        };
+        applyCategoryProtection(category, { protected: Boolean(shouldProtect), pin });
 
         // 实体目录创建
         const targetDir = path.join(VIDEOS_DIR, cleanName);
@@ -312,21 +579,12 @@ router.post('/admin/folders', (req, res) => {
             fs.mkdirSync(targetDir, { recursive: true });
         }
 
-        const manifest = readManifest();
-        const exists = manifest.categories.some(c => c.name === cleanName || c.folder === cleanName);
-        if (!exists) {
-            manifest.categories.push({
-                id: `cat-${Date.now()}`,
-                name: cleanName,
-                icon: icon || '📁',
-                folder: cleanName
-            });
-            writeManifest(manifest);
-        }
+        manifest.categories.push(category);
+        writeManifest(manifest);
 
         res.json({ success: true, message: `成功创建分类“${cleanName}”` });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(err.statusCode || 500).json({ error: err.message });
     }
 });
 
@@ -336,12 +594,17 @@ router.post('/admin/folders', (req, res) => {
 router.put('/admin/folders/:oldName', (req, res) => {
     try {
         const { oldName } = req.params;
-        const { newName, icon } = req.body || {};
+        const { newName, icon, protected: shouldProtect, pin, order } = req.body || {};
         if (!newName || !newName.trim()) return res.status(400).json({ error: '新名称不能为空' });
+        const parsedOrder = Number(order);
+        if (order !== undefined && !Number.isSafeInteger(parsedOrder)) {
+            return res.status(400).json({ error: '分类优先级必须是整数' });
+        }
 
         const manifest = readManifest();
-        const cat = manifest.categories.find(c => c.name === oldName || c.folder === oldName);
+        const cat = findMediaCategory(manifest.categories, oldName);
         if (!cat) return res.status(404).json({ error: '未找到指定分类' });
+        if (!validMediaFolder(newName.trim())) return res.status(400).json({ error: '分类名称不能包含路径分隔符或特殊目录名称' });
 
         // 如果对应磁盘目录存在，执行目录重命名
         const oldDir = path.join(VIDEOS_DIR, cat.folder || oldName);
@@ -353,11 +616,13 @@ router.put('/admin/folders/:oldName', (req, res) => {
         cat.name = newName.trim();
         if (cat.folder) cat.folder = newName.trim();
         if (icon) cat.icon = icon;
+        if (order !== undefined) cat.order = parsedOrder;
+        applyCategoryProtection(cat, { protected: shouldProtect, pin });
         writeManifest(manifest);
 
-        res.json({ success: true, message: '重命名分类成功' });
+        res.json({ success: true, message: '分类设置保存成功' });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(err.statusCode || 500).json({ error: err.message });
     }
 });
 
@@ -393,7 +658,7 @@ router.delete('/admin/folders/:folderName', (req, res) => {
 router.get('/admin/videos', (req, res) => {
     try {
         const { categories, videos } = scanMediaList();
-        res.json({ success: true, count: videos.length, categories, data: videos });
+        res.json({ success: true, count: videos.length, categories: categories.map(category => sanitizeCategory(category)), data: videos });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -416,19 +681,36 @@ router.put('/admin/videos/:id', (req, res) => {
         const decodedPath = decodeURIComponent(id).replace(/___/g, '/');
         const baseName = path.basename(decodedPath, path.extname(decodedPath));
         const manifestKey = [id, decodedPath, baseName].find(key => manifest.videos[key]) || id;
-        manifest.videos[manifestKey] = {
+        let targetPath = decodedPath;
+        let selectedCategory;
+        if (category !== undefined) {
+            selectedCategory = findMediaCategory(manifest.categories, category);
+            if (!selectedCategory) return res.status(400).json({ error: '请选择有效的媒体分类' });
+            targetPath = moveMediaAssetFiles(decodedPath, selectedCategory.folder || '');
+        }
+
+        const targetId = encodeURIComponent(targetPath.replace(/\//g, '___'));
+        const savedMeta = {
             ...(manifest.videos[manifestKey] || {}),
             ...(title !== undefined && { title: title.trim() }),
-            ...(category !== undefined && { category }),
+            ...(selectedCategory && { category: selectedCategory.id, categoryName: selectedCategory.name }),
             ...(tags !== undefined && { tags: Array.isArray(tags) ? tags : String(tags).split(',').map(s => s.trim()).filter(Boolean) }),
             ...(description !== undefined && { description: description.trim() }),
             ...(order !== undefined && { order: parsedOrder })
         };
+        if (targetPath !== decodedPath) delete savedMeta.poster;
+        if (manifestKey !== targetId) delete manifest.videos[manifestKey];
+        manifest.videos[targetId] = savedMeta;
         writeManifest(manifest);
 
-        res.json({ success: true, message: '更新视频元数据成功', order: order !== undefined ? parsedOrder : undefined });
+        res.json({
+            success: true,
+            message: selectedCategory ? `视频已移动到“${selectedCategory.name}”` : '更新视频元数据成功',
+            id: targetId,
+            order: order !== undefined ? parsedOrder : undefined
+        });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(err.statusCode || 500).json({ error: err.message });
     }
 });
 
@@ -583,5 +865,12 @@ module.exports = {
     VIDEOS_DIR,
     DEFAULT_MEDIA_ORDER,
     normalizeMediaOrder,
-    compareMediaOrder
+    compareMediaOrder,
+    normalizeMediaCategoryOrder,
+    sortMediaCategories,
+    moveMediaAssetFiles,
+    createCategoryPinRecord,
+    verifyCategoryPin,
+    verifyCategoryAccess,
+    mediaAssetGuard
 };

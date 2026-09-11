@@ -138,13 +138,35 @@
 .uiv-site-script-name { color: #f1f5f9; font-size: 13px; font-weight: 800; }
 .uiv-site-script-origin { margin-top: 4px; overflow: hidden; color: #94a3b8; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
 .uiv-site-script-count { margin-top: 6px; color: #c4b5fd; font-size: 11px; font-weight: 700; }
+.uiv-site-script-buttons { display: flex; align-items: center; gap: 8px; }
+.uiv-site-script-simulate { min-width: 96px; padding: 9px 11px; border: 1px solid rgba(34, 211, 238, 0.55); border-radius: 8px; background: linear-gradient(135deg, #155e75, #0e7490); color: #ecfeff; font-size: 12px; font-weight: 800; cursor: pointer; }
+.uiv-site-script-simulate:hover { border-color: #a5f3fc; filter: brightness(1.12); transform: translateY(-1px); }
 .uiv-site-script-copy { min-width: 108px; padding: 9px 11px; border: 1px solid rgba(167, 139, 250, 0.55); border-radius: 8px; background: linear-gradient(135deg, #6d28d9, #7e22ce); color: #fff; font-size: 12px; font-weight: 800; cursor: pointer; }
 .uiv-site-script-copy:hover { border-color: #e9d5ff; filter: brightness(1.12); transform: translateY(-1px); }
 .uiv-site-script-empty { padding: 26px 14px; text-align: center; color: #94a3b8; font-size: 13px; line-height: 1.7; }
+.uiv-topic-simulator-overlay { position: fixed; inset: 0; z-index: 2147482500; display: flex; align-items: center; justify-content: center; padding: 18px; background: rgba(2, 6, 23, 0.82); backdrop-filter: blur(9px); }
+.uiv-topic-simulator-dialog { display: flex; flex-direction: column; width: min(1500px, 100%); height: min(900px, calc(100vh - 36px)); overflow: hidden; border: 1px solid rgba(34, 211, 238, 0.45); border-radius: 16px; background: #020617; box-shadow: 0 30px 100px rgba(0, 0, 0, 0.62); }
+.uiv-topic-simulator-header { display: flex; flex: 0 0 auto; justify-content: space-between; gap: 16px; padding: 14px 18px; border-bottom: 1px solid rgba(148, 163, 184, 0.18); background: linear-gradient(135deg, #0f172a, #164e63); }
+.uiv-topic-simulator-header h3 { margin: 0; color: #f8fafc; font-size: 17px; }
+.uiv-topic-simulator-header p { margin: 5px 0 0; color: #a5f3fc; font-size: 11px; }
+.uiv-topic-simulator-close { align-self: flex-start; border: 0; background: transparent; color: #cbd5e1; font-size: 25px; line-height: 1; cursor: pointer; }
+.uiv-topic-analysis-link { display: inline-block; margin-top: 6px; color: #d9ceff; font-size: 12px; font-weight: 750; text-decoration: none; }
+.uiv-topic-analysis-link:hover { color: #fff; text-decoration: underline; }
+.uiv-topic-simulator-root { display: flex; min-height: 0; flex: 1; flex-direction: column; padding: 12px; color: #e2e8f0; }
+.uiv-topic-simulator-float-head { display: flex; flex: 0 0 auto; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 10px; border: 1px solid rgba(148, 163, 184, 0.18); border-radius: 10px; background: #0f172a; }
+.uiv-topic-simulator-float-head strong,.uiv-topic-simulator-float-head small { display: block; }
+.uiv-topic-simulator-float-head strong { color: #f8fafc; font-size: 12px; }
+.uiv-topic-simulator-float-head small { margin-top: 2px; color: #64748b; font-size: 9px; }
+.uiv-topic-simulator-float-head .head-actions { display: flex; gap: 6px; }
+.uiv-topic-simulator-root > .body { display: flex; min-height: 0; flex: 1; flex-direction: column; overflow: hidden; }
+.uiv-topic-simulator-root > .body > .notice,.uiv-topic-simulator-root > .body > .status,.uiv-topic-simulator-root > .body > .actions,.uiv-topic-simulator-root > .body > .results { display: none; }
 @media (max-width: 520px) {
     .btn-batch-test-row { grid-template-columns: 1fr; }
     .uiv-site-script-item { grid-template-columns: 1fr; }
-    .uiv-site-script-copy { width: 100%; }
+    .uiv-site-script-buttons { display: grid; grid-template-columns: 1fr 1fr; }
+    .uiv-site-script-copy,.uiv-site-script-simulate { width: 100%; min-width: 0; }
+    .uiv-topic-simulator-overlay { padding: 6px; }
+    .uiv-topic-simulator-dialog { height: calc(100vh - 12px); }
 }
 .btn-batch-speed { width: 58px; flex: 0 0 58px; border: 1px solid rgba(103,232,249,0.55); border-radius: 6px; background: rgba(8,47,73,0.72); color: #bae6fd; font-size: 12px; font-weight: 800; cursor: pointer; transition: var(--transition); }
 .btn-batch-speed:hover { border-color: #67e8f9; color: #fff; background: rgba(14,116,144,0.75); }
@@ -3348,4 +3370,3 @@ body.uiv-modal-open { overflow: hidden; }
         justify-content: center;
     }
 }
-

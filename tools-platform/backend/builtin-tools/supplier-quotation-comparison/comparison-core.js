@@ -468,7 +468,7 @@
     }
     const base = normalizeSupplierName(baseSupplier);
     const recommended = normalizeSupplierName(recommendedSupplier);
-    if (!base) return { code: 'missing-base', label: '基础表未填有效供应商' };
+    if (!base) return { code: 'missing-base', label: '基础表未填' };
     if (!recommended) return { code: 'missing-recommendation', label: '未生成推荐' };
     if (base === recommended) return { code: 'same', label: '一致' };
     return { code: 'different', label: '不一致' };

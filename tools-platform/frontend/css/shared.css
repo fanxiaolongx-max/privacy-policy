@@ -1202,7 +1202,19 @@ body {
     font-weight: 800;
 }
 
+.nav-dialog-field.is-disabled {
+    opacity: .45;
+}
+
+.nav-dialog-field.is-disabled input,
+.nav-dialog-field.is-disabled select,
+.nav-dialog-field.is-disabled textarea {
+    cursor: not-allowed;
+    background: #e2e8f0;
+}
+
 .nav-dialog-field input,
+.nav-dialog-field select,
 .nav-dialog-field textarea {
     width: 100%;
     min-height: 42px;
@@ -1225,6 +1237,7 @@ body {
 }
 
 .nav-dialog-field input:focus,
+.nav-dialog-field select:focus,
 .nav-dialog-field textarea:focus {
     border-color: #38bdf8;
     background: #fff;

@@ -13,6 +13,8 @@ let metricCountTrendLoading = null;
 let expiringWarningTrendData = null;
 let expiringWarningTrendLoading = null;
 const inheritedTargetSavePromises = new Map();
+let manualAdjustDetailDraft = null;
+let manualAdjustLogVisibleCount = 5;
 
 function rt(key, params = {}) {
     if (window.ReportI18n && typeof window.ReportI18n.t === 'function') {
@@ -2419,6 +2421,7 @@ function renderReport(snap) {
     `;
 
     const snapAdjustData = currentSnapshot.manualAdjustData || {};
+    const snapAdjustDetails = currentSnapshot.manualAdjustDetails || {};
     const manualAutoPrefs = getManualAdjustAutoFillPrefs();
     const manualAutoSources = currentSnapshot.manualAdjustAutoFillSources || {};
 
@@ -2447,7 +2450,16 @@ function renderReport(snap) {
         // Input fields for occurrences
         categories.forEach(cat => {
             const val = (snapAdjustData[cat] && snapAdjustData[cat][idx]) || '';
-            adjustHtml += `<td><input type="number" class="manual-adjust-input" data-cat="${escapeHTML(cat)}" data-idx="${idx}" value="${val}" min="0" step="1" onchange="calculateManualAdjustments(); saveManualAdjustData(true);" style="width:100%; text-align:center; border:1px solid #ddd; padding:4px; border-radius:3px;"></td>`;
+            const detail = snapAdjustDetails[cat] && snapAdjustDetails[cat][idx];
+            const detailRecords = normalizeManualAdjustDetailRecords(detail);
+            const attachmentCount = detailRecords.reduce((sum, record) => sum + record.attachments.length, 0);
+            const hasDetail = detailRecords.some(record => record.reason || record.occurredAt || record.recorder || record.attachments.length);
+            adjustHtml += `<td>
+                <div style="display:flex; align-items:center; justify-content:center; gap:4px; min-width:104px;">
+                    <input type="number" class="manual-adjust-input" data-cat="${escapeHTML(cat)}" data-idx="${idx}" value="${val}" min="0" step="1" onchange="calculateManualAdjustments(); saveManualAdjustData(true);" style="width:58px; text-align:center; border:1px solid #ddd; padding:4px; border-radius:4px; box-sizing:border-box;">
+                    <button type="button" class="manual-adjust-detail-btn" data-cat="${escapeHTML(cat)}" data-idx="${idx}" onclick="openManualAdjustDetailModal(this.dataset.cat, Number(this.dataset.idx))" title="${escapeHTML(rt('report.adjust.detailButtonTitle'))}" aria-label="${escapeHTML(rt('report.adjust.detailButtonTitle'))}" style="position:relative; min-width:30px; height:28px; padding:2px 6px; border:1px solid ${hasDetail ? '#fb923c' : '#d8dee7'}; border-radius:6px; background:${hasDetail ? '#fff7ed' : '#fff'}; color:${hasDetail ? '#c2410c' : '#64748b'}; cursor:pointer; line-height:1;">📝${attachmentCount ? `<span style="position:absolute; right:-5px; top:-6px; min-width:15px; height:15px; padding:0 3px; border-radius:8px; background:#ea580c; color:#fff; font-size:9px; line-height:15px; box-sizing:border-box;">${attachmentCount}</span>` : ''}</button>
+                </div>
+            </td>`;
         });
 
         // Computed scores fields
@@ -3071,6 +3083,18 @@ window.calculateManualAdjustments = function () {
 window.saveManualAdjustData = async function (silent = false) {
     if (!currentSnapshot) return;
 
+    currentSnapshot.manualAdjustData = collectManualAdjustDataFromInputs();
+
+    try {
+        await putSnapshotWithCompression(currentSnapshot.id, currentSnapshot, 'manual-adjust-data');
+        if (!silent) showToast(rt('report.toast.manualAdjustSaved'), 'success');
+    } catch (e) {
+        if (!silent) showToast(rt('report.toast.saveFailed'), 'error');
+        console.error(e);
+    }
+};
+
+function collectManualAdjustDataFromInputs() {
     const inputs = document.querySelectorAll('.manual-adjust-input');
     const newData = {};
     categories.forEach(cat => newData[cat] = {});
@@ -3083,15 +3107,392 @@ window.saveManualAdjustData = async function (silent = false) {
             newData[cat][idx] = val;
         }
     });
+    return newData;
+}
 
-    currentSnapshot.manualAdjustData = newData;
+function isManualAdjustImage(attachment) {
+    return /^image\//i.test(String(attachment?.type || '')) || /\.(png|jpe?g|gif|webp|bmp)$/i.test(String(attachment?.name || ''));
+}
 
+function formatManualAdjustFileSize(bytes) {
+    const value = Number(bytes) || 0;
+    if (value < 1024) return `${value} B`;
+    if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+    return `${(value / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function createManualAdjustRecord(source = {}) {
+    return {
+        id: String(source.id || (globalThis.crypto?.randomUUID?.() || `record-${Date.now()}-${Math.random()}`)),
+        occurredAt: String(source.occurredAt || ''),
+        recorder: String(source.recorder || ''),
+        reason: String(source.reason || ''),
+        attachments: Array.isArray(source.attachments) ? source.attachments.map(item => ({ ...item })) : [],
+        newFiles: []
+    };
+}
+
+function normalizeManualAdjustDetailRecords(detail) {
+    if (Array.isArray(detail?.records)) return detail.records.map(createManualAdjustRecord);
+    if (detail && (detail.note || Array.isArray(detail.attachments))) {
+        return [createManualAdjustRecord({ reason: detail.note || '', attachments: detail.attachments || [] })];
+    }
+    return [];
+}
+
+function serializeManualAdjustRecord(record) {
+    return {
+        id: String(record?.id || ''),
+        occurredAt: String(record?.occurredAt || ''),
+        recorder: String(record?.recorder || ''),
+        reason: String(record?.reason || ''),
+        attachments: Array.isArray(record?.attachments) ? record.attachments.map(item => ({ ...item })) : []
+    };
+}
+
+function manualAdjustAttachmentSignature(attachments) {
+    return (Array.isArray(attachments) ? attachments : []).map(item => `${item.url || ''}\u0000${item.name || ''}`).sort().join('\u0001');
+}
+
+function buildManualAdjustChangeLogEntry(beforeRecords, afterRecords) {
+    const before = Array.isArray(beforeRecords) ? beforeRecords : [];
+    const after = Array.isArray(afterRecords) ? afterRecords : [];
+    const beforeById = new Map(before.map((record, index) => [record.id, { record, index }]));
+    const afterIds = new Set(after.map(record => record.id));
+    const items = [];
+
+    after.forEach((record, index) => {
+        const previous = beforeById.get(record.id);
+        if (!previous) {
+            items.push({ type: 'add', index: index + 1, reason: record.reason || '' });
+            return;
+        }
+        const fields = [];
+        ['occurredAt', 'recorder', 'reason'].forEach(field => {
+            if (String(previous.record[field] || '') !== String(record[field] || '')) {
+                fields.push({ field, before: String(previous.record[field] || ''), after: String(record[field] || '') });
+            }
+        });
+        if (manualAdjustAttachmentSignature(previous.record.attachments) !== manualAdjustAttachmentSignature(record.attachments)) {
+            fields.push({
+                field: 'attachments',
+                before: Array.isArray(previous.record.attachments) ? previous.record.attachments.length : 0,
+                after: Array.isArray(record.attachments) ? record.attachments.length : 0
+            });
+        }
+        if (fields.length) items.push({ type: 'update', index: index + 1, fields });
+    });
+
+    before.forEach((record, index) => {
+        if (!afterIds.has(record.id)) items.push({ type: 'remove', index: index + 1, reason: record.reason || '' });
+    });
+    if (!items.length) return null;
+    return {
+        id: globalThis.crypto?.randomUUID?.() || `change-${Date.now()}-${Math.random()}`,
+        timestamp: new Date().toISOString(),
+        operator: localStorage.getItem('tools_user') || '',
+        items
+    };
+}
+
+function compactManualAdjustLogValue(value) {
+    const text = String(value ?? '').trim();
+    if (!text) return rt('report.adjust.changeEmpty');
+    return text.length > 38 ? `${text.slice(0, 38)}…` : text;
+}
+
+function formatManualAdjustChangeItem(item) {
+    if (item.type === 'add') {
+        return rt('report.adjust.changeAdded', { index: item.index, reason: compactManualAdjustLogValue(item.reason) });
+    }
+    if (item.type === 'remove') {
+        return rt('report.adjust.changeRemoved', { index: item.index, reason: compactManualAdjustLogValue(item.reason) });
+    }
+    const fieldLabels = {
+        occurredAt: rt('report.adjust.occurredAt'),
+        recorder: rt('report.adjust.recorder'),
+        reason: rt('report.adjust.reasonLabel'),
+        attachments: rt('report.adjust.evidenceLabel')
+    };
+    const changes = (item.fields || []).map(field => `${fieldLabels[field.field] || field.field}: ${compactManualAdjustLogValue(field.before)} → ${compactManualAdjustLogValue(field.after)}`).join(', ');
+    return rt('report.adjust.changeUpdated', { index: item.index, changes });
+}
+
+function formatManualAdjustLogTime(value) {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? String(value || '') : date.toLocaleString(getReportLang(), { hour12: false });
+}
+
+function renderManualAdjustChangeLog() {
+    const container = document.getElementById('manual-adjust-change-log');
+    if (!container || !manualAdjustDetailDraft) return;
+    const logs = manualAdjustDetailDraft.changeLog || [];
+    if (!logs.length) {
+        container.innerHTML = `<div style="padding:9px 10px; border-radius:6px; background:#f8fafc; color:#94a3b8; font-size:11px;">${rt('report.adjust.noChangeLog')}</div>`;
+        return;
+    }
+    const visible = logs.slice(0, manualAdjustLogVisibleCount);
+    container.innerHTML = `<div style="display:flex; flex-direction:column; gap:5px;">${visible.map(log => `
+        <div style="display:grid; grid-template-columns:155px minmax(0,1fr); gap:10px; padding:7px 9px; border-radius:6px; background:#f8fafc; font-size:10px; line-height:1.5; color:#64748b;">
+            <div><span style="color:#475569;">${escapeHTML(formatManualAdjustLogTime(log.timestamp))}</span>${log.operator ? `<br><span>${escapeHTML(log.operator)}</span>` : ''}</div>
+            <div>${(log.items || []).map(item => `<div>${escapeHTML(formatManualAdjustChangeItem(item))}</div>`).join('')}</div>
+        </div>`).join('')}</div>
+        ${logs.length > visible.length ? `<button type="button" onclick="loadMoreManualAdjustLogs()" style="display:block; margin:7px auto 0; padding:3px 10px; border:1px solid #cbd5e1; border-radius:999px; background:#fff; color:#64748b; cursor:pointer; font-size:10px;">${rt('report.adjust.loadMoreChanges', { count: logs.length - visible.length })}</button>` : ''}`;
+}
+
+window.loadMoreManualAdjustLogs = function () {
+    manualAdjustLogVisibleCount += 5;
+    renderManualAdjustChangeLog();
+};
+
+function getManualAdjustOccurrenceInput(cat, idx) {
+    return Array.from(document.querySelectorAll('.manual-adjust-input')).find(input => input.dataset.cat === cat && Number(input.dataset.idx) === idx) || null;
+}
+
+function ensureManualAdjustDetailModal() {
+    let modal = document.getElementById('manual-adjust-detail-modal');
+    if (modal) return modal;
+    modal = document.createElement('div');
+    modal.id = 'manual-adjust-detail-modal';
+    modal.className = 'modal-overlay';
+    modal.style.cssText = 'display:none; position:fixed; inset:0; z-index:100001; padding:14px; box-sizing:border-box; background:rgba(15,23,42,.58); backdrop-filter:blur(3px);';
+    modal.innerHTML = `
+        <div style="background:#fff; width:min(1080px, calc(100vw - 28px)); max-height:88vh; overflow:auto; border-radius:12px; box-shadow:0 18px 55px rgba(15,23,42,.28);">
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:18px 20px 12px; border-bottom:1px solid #e5e7eb;">
+                <div><h3 id="manual-adjust-detail-title" style="margin:0 0 5px; color:#9a3412;"></h3><div id="manual-adjust-detail-subtitle" style="font-size:12px; color:#64748b;"></div></div>
+                <button type="button" onclick="closeManualAdjustDetailModal()" style="border:0; background:transparent; color:#64748b; font-size:24px; cursor:pointer;">&times;</button>
+            </div>
+            <div style="padding:16px 20px 20px;">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px;">
+                    <div style="font-size:12px; color:#64748b;">${rt('report.adjust.recordsHint')}</div>
+                    <button type="button" onclick="addManualAdjustRecord()" style="flex:0 0 auto; padding:7px 11px; border:1px solid #fdba74; border-radius:7px; background:#fff7ed; color:#c2410c; cursor:pointer; font-size:12px; font-weight:600;">＋ ${rt('report.adjust.addOccurrence')}</button>
+                </div>
+                <div style="overflow-x:auto; border:1px solid #e2e8f0; border-radius:9px;">
+                    <table style="width:100%; min-width:900px; border-collapse:collapse; table-layout:fixed; font-size:12px;">
+                        <thead><tr style="background:#fff7ed; color:#9a3412;">
+                            <th style="width:44px; padding:9px 6px;">#</th>
+                            <th style="width:158px; padding:9px 6px;">${rt('report.adjust.occurredAt')}</th>
+                            <th style="width:112px; padding:9px 6px;">${rt('report.adjust.recorder')}</th>
+                            <th style="padding:9px 6px;">${rt('report.adjust.reasonLabel')}</th>
+                            <th style="width:210px; padding:9px 6px;">${rt('report.adjust.evidenceLabel')}</th>
+                            <th style="width:54px; padding:9px 6px;">${rt('report.table.action')}</th>
+                        </tr></thead>
+                        <tbody id="manual-adjust-records-body"></tbody>
+                    </table>
+                </div>
+                <div style="font-size:11px; color:#94a3b8; margin-top:8px;">${rt('report.adjust.evidenceHint')}</div>
+                <div style="margin-top:16px; padding-top:13px; border-top:1px solid #e5e7eb;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:7px;">
+                        <strong style="font-size:12px; color:#475569;">🕘 ${rt('report.adjust.changeLogTitle')}</strong>
+                        <span style="font-size:10px; color:#94a3b8;">${rt('report.adjust.changeLogHint')}</span>
+                    </div>
+                    <div id="manual-adjust-change-log"></div>
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px; padding-top:14px; border-top:1px solid #e5e7eb;">
+                    <button type="button" onclick="closeManualAdjustDetailModal()" style="padding:8px 16px; border:1px solid #cbd5e1; background:#fff; border-radius:7px; cursor:pointer;">${rt('report.button.cancel')}</button>
+                    <button type="button" id="manual-adjust-detail-save" onclick="saveManualAdjustDetail()" style="padding:8px 16px; border:0; background:#ea580c; color:#fff; border-radius:7px; cursor:pointer; font-weight:600;">${rt('report.adjust.saveDetail')}</button>
+                </div>
+            </div>
+        </div>`;
+    modal.addEventListener('click', event => {
+        if (event.target === modal) closeManualAdjustDetailModal();
+    });
+    document.body.appendChild(modal);
+    return modal;
+}
+
+window.openManualAdjustDetailModal = function (cat, idx) {
+    if (!currentSnapshot || !manualAdjustItems[idx]) return;
+    const stored = currentSnapshot.manualAdjustDetails?.[cat]?.[idx];
+    const occurrenceInput = getManualAdjustOccurrenceInput(cat, idx);
+    const occurrenceCount = Math.max(0, parseInt(occurrenceInput?.value, 10) || 0);
+    if (occurrenceCount < 1) {
+        showToast(rt('report.toast.enterOccurrenceFirst'), 'error');
+        occurrenceInput?.focus();
+        return;
+    }
+    const records = normalizeManualAdjustDetailRecords(stored);
+    const originalRecords = records.map(record => serializeManualAdjustRecord(record));
+    if (records.length > occurrenceCount && !confirm(rt('report.confirm.trimAdjustRecords', { count: records.length - occurrenceCount }))) return;
+    while (records.length < occurrenceCount) records.push(createManualAdjustRecord());
+    records.splice(occurrenceCount);
+    manualAdjustDetailDraft = {
+        cat,
+        idx,
+        records,
+        originalRecords,
+        changeLog: Array.isArray(stored?.changeLog) ? stored.changeLog.map(item => ({ ...item })) : []
+    };
+    manualAdjustLogVisibleCount = 5;
+    const modal = ensureManualAdjustDetailModal();
+    document.getElementById('manual-adjust-detail-title').textContent = rt('report.adjust.detailTitle');
+    document.getElementById('manual-adjust-detail-subtitle').textContent = `${cat} · ${getTranslatedLabel(manualAdjustItems[idx].name)}`;
+    renderManualAdjustRecords();
+    renderManualAdjustChangeLog();
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+};
+
+window.closeManualAdjustDetailModal = function () {
+    const modal = document.getElementById('manual-adjust-detail-modal');
+    if (modal) modal.style.display = 'none';
+    manualAdjustDetailDraft?.records.forEach(record => record.newFiles.forEach(item => URL.revokeObjectURL(item.previewUrl)));
+    manualAdjustDetailDraft = null;
+};
+
+window.addManualAdjustRecord = function () {
+    if (!manualAdjustDetailDraft) return;
+    syncManualAdjustRecordFields();
+    manualAdjustDetailDraft.records.push(createManualAdjustRecord());
+    renderManualAdjustRecords();
+};
+
+window.removeManualAdjustRecord = function (index) {
+    if (!manualAdjustDetailDraft || manualAdjustDetailDraft.records.length <= 1) return;
+    if (!confirm(rt('report.confirm.deleteAdjustRecord', { index: index + 1 }))) return;
+    syncManualAdjustRecordFields();
+    const [removed] = manualAdjustDetailDraft.records.splice(index, 1);
+    removed?.newFiles.forEach(item => URL.revokeObjectURL(item.previewUrl));
+    renderManualAdjustRecords();
+};
+
+window.addManualAdjustRecordFiles = function (recordIndex, fileList) {
+    if (!manualAdjustDetailDraft) return;
+    syncManualAdjustRecordFields();
+    const record = manualAdjustDetailDraft.records[recordIndex];
+    if (!record) return;
+    const files = Array.from(fileList || []);
+    if (record.attachments.length + record.newFiles.length + files.length > 8) {
+        showToast(rt('report.toast.tooManyEvidenceFiles'), 'error');
+        return;
+    }
+    files.forEach(file => {
+        if (file.size > 12 * 1024 * 1024) {
+            showToast(rt('report.toast.evidenceFileTooLarge', { name: file.name }), 'error');
+            return;
+        }
+        record.newFiles.push({ file, previewUrl: URL.createObjectURL(file) });
+    });
+    renderManualAdjustRecords();
+};
+
+window.removeManualAdjustRecordFile = function (recordIndex, kind, fileIndex) {
+    if (!manualAdjustDetailDraft) return;
+    syncManualAdjustRecordFields();
+    const record = manualAdjustDetailDraft.records[recordIndex];
+    if (!record) return;
+    if (kind === 'new') {
+        const [removed] = record.newFiles.splice(fileIndex, 1);
+        if (removed) URL.revokeObjectURL(removed.previewUrl);
+    } else {
+        record.attachments.splice(fileIndex, 1);
+    }
+    renderManualAdjustRecords();
+};
+
+function renderManualAdjustRecordFiles(record, recordIndex) {
+    const entries = [
+        ...record.attachments.map((attachment, index) => ({ kind: 'saved', index, attachment, previewUrl: attachment.url })),
+        ...record.newFiles.map((entry, index) => ({ kind: 'new', index, attachment: { name: entry.file.name, type: entry.file.type, size: entry.file.size }, previewUrl: entry.previewUrl }))
+    ];
+    const items = entries.map(entry => {
+        const attachment = entry.attachment;
+        const preview = isManualAdjustImage(attachment)
+            ? `<img src="${escapeHTML(entry.previewUrl)}" alt="" style="width:38px; height:38px; object-fit:cover; border-radius:5px; background:#f1f5f9;">`
+            : `<div style="width:38px; height:38px; display:flex; align-items:center; justify-content:center; border-radius:5px; background:#f1f5f9; font-size:18px;">📄</div>`;
+        const visual = entry.kind === 'saved'
+            ? `<a href="${escapeHTML(entry.previewUrl)}" target="_blank" rel="noopener" title="${escapeHTML(rt('report.adjust.openEvidence'))}">${preview}</a>`
+            : preview;
+        return `<div style="position:relative; width:42px; padding:2px; border:1px solid #e2e8f0; border-radius:6px; background:#fff;">
+            ${visual}
+            <button type="button" onclick="removeManualAdjustRecordFile(${recordIndex}, '${entry.kind}', ${entry.index})" title="${escapeHTML(attachment.name)} · ${formatManualAdjustFileSize(attachment.size)}" style="position:absolute; right:-5px; top:-5px; width:16px; height:16px; padding:0; border:0; border-radius:8px; background:#475569; color:#fff; cursor:pointer; font-size:11px; line-height:16px;">×</button>
+        </div>`;
+    }).join('');
+    return `<div style="display:flex; flex-wrap:wrap; gap:7px; align-items:center;">${items}<label title="${escapeHTML(rt('report.adjust.chooseFiles'))}" style="width:42px; height:42px; display:flex; align-items:center; justify-content:center; border:1px dashed #fb923c; border-radius:6px; color:#c2410c; cursor:pointer; font-size:19px;">＋<input type="file" multiple accept="image/*,.pdf,.txt,.csv,.xlsx,.xls,.docx,.doc,.pptx,.ppt,.zip" onchange="addManualAdjustRecordFiles(${recordIndex}, this.files)" hidden></label></div>`;
+}
+
+function syncManualAdjustRecordFields() {
+    if (!manualAdjustDetailDraft) return;
+    document.querySelectorAll('#manual-adjust-records-body tr[data-record-index]').forEach(row => {
+        const record = manualAdjustDetailDraft.records[Number(row.dataset.recordIndex)];
+        if (!record) return;
+        record.occurredAt = row.querySelector('[data-field="occurredAt"]')?.value || '';
+        record.recorder = row.querySelector('[data-field="recorder"]')?.value.trim() || '';
+        record.reason = row.querySelector('[data-field="reason"]')?.value.trim() || '';
+    });
+}
+
+function renderManualAdjustRecords() {
+    const body = document.getElementById('manual-adjust-records-body');
+    if (!body || !manualAdjustDetailDraft) return;
+    body.innerHTML = manualAdjustDetailDraft.records.map((record, index) => `<tr data-record-index="${index}" style="border-top:1px solid #e2e8f0; vertical-align:middle;">
+        <td style="padding:9px 6px; text-align:center; font-weight:700; color:#c2410c;">${index + 1}</td>
+        <td style="padding:7px 5px;"><input data-field="occurredAt" type="datetime-local" value="${escapeHTML(record.occurredAt)}" style="width:100%; height:42px; padding:7px 5px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box; font:inherit;"></td>
+        <td style="padding:7px 5px;"><input data-field="recorder" type="text" maxlength="80" value="${escapeHTML(record.recorder)}" placeholder="${escapeHTML(rt('report.adjust.recorderPlaceholder'))}" style="width:100%; height:42px; padding:7px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box; font:inherit;"></td>
+        <td style="padding:7px 5px;"><textarea data-field="reason" rows="1" maxlength="2000" placeholder="${escapeHTML(rt('report.adjust.reasonPlaceholder'))}" style="display:block; width:100%; height:42px; min-height:42px; resize:vertical; overflow:auto; padding:10px 7px 7px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box; font:inherit; line-height:1.35;">${escapeHTML(record.reason)}</textarea></td>
+        <td style="padding:9px 8px;">${renderManualAdjustRecordFiles(record, index)}</td>
+        <td style="padding:9px 5px; text-align:center;"><button type="button" onclick="removeManualAdjustRecord(${index})" ${manualAdjustDetailDraft.records.length <= 1 ? 'disabled' : ''} title="${escapeHTML(rt('report.adjust.deleteOccurrence'))}" style="border:0; background:transparent; cursor:pointer; opacity:${manualAdjustDetailDraft.records.length <= 1 ? '.25' : '.65'}; font-size:16px;">🗑️</button></td>
+    </tr>`).join('');
+}
+
+async function uploadManualAdjustAttachment(file) {
+    const form = new FormData();
+    form.append('file', file);
+    const headers = {};
+    const token = localStorage.getItem('tools_token');
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const response = await fetch('/api/db/manual-adjust-attachments', { method: 'POST', headers, body: form });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(body.error || `HTTP ${response.status}`);
+    return body;
+}
+
+window.saveManualAdjustDetail = async function () {
+    if (!currentSnapshot || !manualAdjustDetailDraft) return;
+    const button = document.getElementById('manual-adjust-detail-save');
+    button.disabled = true;
+    button.textContent = rt('report.adjust.savingDetail');
     try {
-        await putSnapshotWithCompression(currentSnapshot.id, currentSnapshot, 'manual-adjust-data');
-        if (!silent) showToast(rt('report.toast.manualAdjustSaved'), 'success');
-    } catch (e) {
-        if (!silent) showToast(rt('report.toast.saveFailed'), 'error');
-        console.error(e);
+        syncManualAdjustRecordFields();
+        const { cat, idx } = manualAdjustDetailDraft;
+        if (manualAdjustDetailDraft.records.some(record => !record.reason)) {
+            throw new Error(rt('report.toast.reasonRequired'));
+        }
+        const records = await Promise.all(manualAdjustDetailDraft.records.map(async record => ({
+            id: record.id,
+            occurredAt: record.occurredAt,
+            recorder: record.recorder,
+            reason: record.reason,
+            attachments: [...record.attachments, ...await Promise.all(record.newFiles.map(entry => uploadManualAdjustAttachment(entry.file)))]
+        })));
+        const changeEntry = buildManualAdjustChangeLogEntry(manualAdjustDetailDraft.originalRecords, records);
+        const changeLog = changeEntry
+            ? [changeEntry, ...(manualAdjustDetailDraft.changeLog || [])]
+            : (manualAdjustDetailDraft.changeLog || []);
+        manualAdjustDetailDraft.records.forEach(record => record.newFiles.forEach(item => URL.revokeObjectURL(item.previewUrl)));
+        manualAdjustDetailDraft.records = records.map(createManualAdjustRecord);
+        manualAdjustDetailDraft.originalRecords = records.map(serializeManualAdjustRecord);
+        manualAdjustDetailDraft.changeLog = changeLog;
+        currentSnapshot.manualAdjustData = collectManualAdjustDataFromInputs();
+        const occurrenceInput = getManualAdjustOccurrenceInput(cat, idx);
+        if (occurrenceInput) occurrenceInput.value = String(records.length);
+        currentSnapshot.manualAdjustData[cat][idx] = records.length;
+        currentSnapshot.manualAdjustDetails ||= {};
+        currentSnapshot.manualAdjustDetails[cat] ||= {};
+        currentSnapshot.manualAdjustDetails[cat][idx] = { records, changeLog };
+        await putSnapshotWithCompression(currentSnapshot.id, currentSnapshot, 'manual-adjust-detail');
+        closeManualAdjustDetailModal();
+        renderCurrentSnapshot();
+        showToast(rt('report.toast.manualAdjustDetailSaved'), 'success');
+    } catch (error) {
+        console.error(error);
+        showToast(error.message || rt('report.toast.saveFailed'), 'error');
+    } finally {
+        if (button) {
+            button.disabled = false;
+            button.textContent = rt('report.adjust.saveDetail');
+        }
     }
 };
 
@@ -3328,11 +3729,24 @@ window.showAdjScoreDetails = function (cat) {
             const count = catAdj[idx] || 0;
             if (count > 0) {
                 const score = calculateManualAdjustScore(item, count);
+                const detail = currentSnapshot.manualAdjustDetails?.[cat]?.[idx];
+                const records = normalizeManualAdjustDetailRecords(detail);
+                const recordsHtml = records.length ? `<div style="margin-top:7px; display:flex; flex-direction:column; gap:6px;">${records.map((record, recordIndex) => {
+                    const attachments = Array.isArray(record.attachments) ? record.attachments : [];
+                    const attachmentHtml = attachments.length ? `<div style="display:flex; flex-wrap:wrap; gap:5px; margin-top:5px;">${attachments.map(attachment => isManualAdjustImage(attachment)
+                        ? `<a href="${escapeHTML(attachment.url)}" target="_blank" rel="noopener" title="${escapeHTML(attachment.name)}"><img src="${escapeHTML(attachment.url)}" alt="${escapeHTML(attachment.name)}" style="width:38px; height:38px; object-fit:cover; border:1px solid #e2e8f0; border-radius:5px;"></a>`
+                        : `<a href="${escapeHTML(attachment.url)}" target="_blank" rel="noopener" style="font-size:10px; color:#2563eb; text-decoration:none; padding:3px 6px; border:1px solid #bfdbfe; border-radius:5px;">📎 ${escapeHTML(attachment.name)}</a>`).join('')}</div>` : '';
+                    const meta = [record.occurredAt ? record.occurredAt.replace('T', ' ') : '', record.recorder].filter(Boolean).join(' · ');
+                    return `<div style="padding:7px 9px; border:1px solid #e2e8f0; border-radius:6px; background:#f8fafc; font-size:11px;">
+                        <div style="display:flex; gap:8px;"><strong style="color:#c2410c;">#${recordIndex + 1}</strong><span style="color:#94a3b8;">${escapeHTML(meta)}</span></div>
+                        <div style="margin-top:4px; color:#475569; white-space:pre-wrap;">${escapeHTML(record.reason || rt('report.adjust.noReason'))}</div>${attachmentHtml}
+                    </div>`;
+                }).join('')}</div>` : '';
 
                 const color = score > 0 ? '#2e7d32' : '#d32f2f';
                 adjDetails += `
                     <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px dashed #eee; padding-bottom:6px;">
-                        <span style="flex:1; padding-right:10px; color:#333;">${getBilingual(item.name)} <span style="background:#eee; padding:1px 6px; border-radius:10px; font-size:11px; margin-left:4px;">x${count}</span></span>
+                        <span style="flex:1; padding-right:10px; color:#333;">${getBilingual(item.name)} <span style="background:#eee; padding:1px 6px; border-radius:10px; font-size:11px; margin-left:4px;">x${count}</span>${recordsHtml}</span>
                         <span style="color:${color}; font-weight:bold;">${score > 0 ? '+' + score : score}</span>
                     </div>
                 `;

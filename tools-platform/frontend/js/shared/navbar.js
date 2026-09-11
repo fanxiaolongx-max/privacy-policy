@@ -3456,7 +3456,7 @@ function renderMediaSettingsHtml(content, overview, videos, categories) {
                                     </td>
                                     <td style="padding:8px 12px;">
                                         <span style="display:inline-block; padding:2px 8px; border-radius:12px; background:#eff6ff; color:#2563eb; font-size:11px; font-weight:500;">
-                                            ${navEscape(item.folder || item.categoryName || '独家影院')}
+                                            ${navEscape(item.categoryName || item.folder || '独家影院')}
                                         </span>
                                     </td>
                                     <td style="padding:8px 12px;">
@@ -3499,8 +3499,15 @@ function renderMediaSettingsHtml(content, overview, videos, categories) {
                                 <div>
                                     <div style="font-weight:600; font-size:13px; color:#0f172a;">${cat.icon || '📁'} ${navEscape(cat.name || f || '独家影院')}</div>
                                     <div style="font-size:11px; color:#64748b; margin-top:2px;">目录: ${f ? navEscape(f) : '根目录'} · ${cnt} 部视频</div>
+                                    <label class="nav-media-priority" title="数字越小，分类越靠前" style="margin-top:6px;">
+                                        <span>分类优先级</span>
+                                        <input type="number" step="1" value="${Number.isSafeInteger(cat.order) ? cat.order : 0}" onchange="setMediaCategoryPriority('${navEscape(cat.id)}', this.value, this)" aria-label="${navEscape(cat.name || f)} 分类优先级">
+                                    </label>
                                 </div>
                                 <div style="display:flex; gap:4px;">
+                                    <button type="button" onclick="openEditMediaCategoryModal('${navEscape(cat.id)}')" style="border:1px solid #cbd5e1;background:#fff;color:#475569;border-radius:6px;padding:3px 9px;font-size:11px;font-weight:600;cursor:pointer;" title="设置分类访问保护">
+                                        ${cat.protected ? '🔒 PIN' : '设置'}
+                                    </button>
                                     ${!isSystem ? `
                                         <button type="button" onclick="deleteMediaFolder('${navEscape(f)}')" style="border:1px solid #fecaca; background:#fff; color:#ef4444; border-radius:6px; padding:3px 9px; font-size:11px; font-weight:600; cursor:pointer; transition:all .15s ease;" onmouseover="this.style.background='#fef2f2';this.style.borderColor='#f87171'" onmouseout="this.style.background='#fff';this.style.borderColor='#fecaca'" title="删除分类">
                                             删除
@@ -3628,6 +3635,16 @@ function openMediaForm(importing) {
             <label style="display:block;font-size:13px;font-weight:600;color:#1e293b;margin-bottom:6px;">分类名称
                 <input id="mediaFormName" required maxlength="80" placeholder="输入分类名称" style="display:block;width:100%;box-sizing:border-box;margin:6px 0 16px;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;color:#0f172a;outline:none;background:#fff;">
             </label>
+            ${!importing ? `
+                <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#1e293b;margin:0 0 10px;">
+                    <input id="mediaFormProtected" type="checkbox" style="width:16px;height:16px;accent-color:#6366f1;">
+                    🔒 设为 PIN 保护分类
+                </label>
+                <label id="mediaFormPinWrap" style="display:none;font-size:13px;font-weight:600;color:#1e293b;margin-bottom:12px;">4 位 PIN
+                    <input id="mediaFormPin" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="输入 4 位数字" style="display:block;width:100%;box-sizing:border-box;margin:6px 0 4px;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;color:#0f172a;outline:none;background:#fff;">
+                    <span style="font-size:11px;font-weight:400;color:#64748b;">分类名称会显示，内容需验证 PIN 后才会加载。</span>
+                </label>
+            ` : ''}
             ${importing ? `
                 <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
                     <button type="button" class="nav-media-action" id="mediaChooseFolder" style="height:34px;padding:0 12px;font-size:12px;">📂 选择文件夹</button>
@@ -3693,6 +3710,18 @@ function openMediaForm(importing) {
     const submit = dialog.querySelector('#mediaFormSubmit');
     const cancel = dialog.querySelector('#mediaFormCancel');
     const closeBtn = dialog.querySelector('#mediaFormCloseX');
+    const protectedInput = dialog.querySelector('#mediaFormProtected');
+    const pinInput = dialog.querySelector('#mediaFormPin');
+    const pinWrap = dialog.querySelector('#mediaFormPinWrap');
+
+    if (protectedInput && pinInput && pinWrap) {
+        protectedInput.onchange = () => {
+            pinWrap.style.display = protectedInput.checked ? 'block' : 'none';
+            pinInput.required = protectedInput.checked;
+            if (protectedInput.checked) pinInput.focus();
+            else pinInput.value = '';
+        };
+    }
 
     if (closeBtn) {
         closeBtn.onmouseover = () => { closeBtn.style.color = '#334155'; closeBtn.style.background = '#f1f5f9'; };
@@ -3812,7 +3841,12 @@ function openMediaForm(importing) {
                 const folderName = name.value.trim();
                 const response = await fetch('/api/media/admin/folders', {
                     method: 'POST', headers: { 'Content-Type': 'application/json', ...getAuthHeaderForNav() },
-                    body: JSON.stringify({ name: folderName, icon: '📁' })
+                    body: JSON.stringify({
+                        name: folderName,
+                        icon: '📁',
+                        protected: Boolean(protectedInput?.checked),
+                        pin: pinInput?.value || ''
+                    })
                 });
                 const data = await response.json();
                 if (!response.ok || !data.success) throw new Error(data.error || '创建失败');
@@ -3985,6 +4019,100 @@ function openMediaForm(importing) {
 }
 window.openCreateMediaFolderModal = () => openMediaForm(false);
 
+window.setMediaCategoryPriority = async function (categoryId, value, input) {
+    const category = (navState.mediaCategoriesCache || []).find(item => item.id === categoryId);
+    const order = Number(value);
+    if (!category || !Number.isSafeInteger(order)) {
+        showNavbarNotice({ title: '输入提示', message: '分类优先级请输入整数；数字越小排名越靠前。', tone: 'info' });
+        return;
+    }
+    if (input) input.disabled = true;
+    try {
+        const response = await fetch(`/api/media/admin/folders/${encodeURIComponent(category.id)}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaderForNav() },
+            body: JSON.stringify({ newName: category.name, order })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data.success) throw new Error(data.error || '保存失败');
+        await renderMediaSettings(document.getElementById('navSettingsContent'));
+    } catch (error) {
+        if (input) input.disabled = false;
+        showNavbarNotice({ title: '保存失败', message: `分类优先级保存失败：${error.message}`, tone: 'error' });
+    }
+};
+
+window.openEditMediaCategoryModal = async function (categoryId) {
+    const category = (navState.mediaCategoriesCache || []).find(item => item.id === categoryId);
+    if (!category) return;
+    const values = await showNavbarFormDialog({
+        title: `分类设置：${category.name}`,
+        eyebrow: '媒体库访问保护',
+        icon: category.protected ? '🔒' : '📁',
+        message: '隐藏分类的名称仍可见，点击后需输入 4 位 PIN 才能加载内容。',
+        fields: [
+            {
+                name: 'order',
+                label: '分类优先级（数字越小越靠前）',
+                value: String(category.order ?? 0),
+                type: 'number',
+                required: true
+            },
+            {
+                name: 'protected',
+                label: '访问方式',
+                value: String(Boolean(category.protected)),
+                required: true,
+                options: [
+                    { value: 'false', label: '🌐 公开分类' },
+                    { value: 'true', label: '🔒 4 位 PIN 保护' }
+                ]
+            },
+            {
+                name: 'pin',
+                label: category.protected ? '新 PIN（留空则保持原 PIN）' : '4 位 PIN',
+                value: '',
+                type: 'password',
+                maxLength: 4,
+                placeholder: category.protected ? '不修改可留空' : '输入 4 位数字',
+                enabledWhen: { field: 'protected', value: 'true' }
+            }
+        ],
+        confirmText: '保存设置',
+        cancelText: '取消'
+    });
+    if (!values) return;
+    const shouldProtect = values.protected === 'true';
+    const order = Number(values.order);
+    const pin = String(values.pin || '').trim();
+    if (!Number.isSafeInteger(order)) {
+        return showNavbarNotice({ title: '优先级格式不正确', message: '分类优先级必须是整数。', tone: 'error' });
+    }
+    if (shouldProtect && !category.protected && !/^\d{4}$/.test(pin)) {
+        return showNavbarNotice({ title: 'PIN 格式不正确', message: '请输入 4 位数字 PIN。', tone: 'error' });
+    }
+    if (pin && !/^\d{4}$/.test(pin)) {
+        return showNavbarNotice({ title: 'PIN 格式不正确', message: 'PIN 必须是 4 位数字。', tone: 'error' });
+    }
+    try {
+        const response = await fetch(`/api/media/admin/folders/${encodeURIComponent(category.id)}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaderForNav() },
+            body: JSON.stringify({ newName: category.name, protected: shouldProtect, pin, order })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data.success) throw new Error(data.error || '保存失败');
+        await renderMediaSettings(document.getElementById('navSettingsContent'));
+        showNavbarNotice({
+            title: '分类设置已更新',
+            message: shouldProtect ? `“${category.name}”现在需要 4 位 PIN 才能查看。` : `“${category.name}”已设为公开分类。`,
+            tone: 'success'
+        });
+    } catch (error) {
+        showNavbarNotice({ title: '保存失败', message: error.message, tone: 'error' });
+    }
+};
+
 // 删除分类文件夹
 window.deleteMediaFolder = async function (folderName) {
     const confirmed = await showNavbarConfirm({
@@ -4036,12 +4164,17 @@ window.openEditMediaModal = async function (videoId) {
     const video = navState.mediaVideosCache?.find(v => v.id === videoId);
     if (!video) return;
 
+    const categoryOptions = (navState.mediaCategoriesCache || [])
+        .filter(category => category.id !== 'all')
+        .map(category => ({ value: category.id, label: `${category.icon || '📁'} ${category.name || category.folder || '未命名分类'}` }));
+
     const values = await showNavbarFormDialog({
         title: '编辑视频展示信息',
         eyebrow: '媒体库管理',
         icon: '✎',
         fields: [
             { name: 'title', label: '视频展示标题', value: video.title || '', required: true, maxLength: 80, placeholder: '输入视频标题' },
+            { name: 'category', label: '所属分类', value: video.category || '', required: true, options: categoryOptions },
             { name: 'description', label: '视频简介', value: video.description || '', multiline: true, maxLength: 300, placeholder: '输入视频简介描述' }
         ],
         confirmText: '保存修改',
@@ -4055,6 +4188,7 @@ window.openEditMediaModal = async function (videoId) {
             headers: { 'Content-Type': 'application/json', ...getAuthHeaderForNav() },
             body: JSON.stringify({
                 title: (values.title || '').trim(),
+                category: values.category,
                 description: (values.description || '').trim()
             })
         });
@@ -5414,6 +5548,22 @@ function showNavbarFormDialog({ title, message = '', hint = '', fields = [], can
     const form = modal.querySelector('#navbarFormDialogFields');
     form.innerHTML = fields.map((field, index) => {
         const id = `navbarFormField${index}`;
+        const dependency = field.enabledWhen;
+        const dependencyAttrs = dependency
+            ? ` data-enabled-when-name="${navEscape(dependency.field)}" data-enabled-when-value="${navEscape(dependency.value)}"`
+            : '';
+        const dependencyField = dependency ? fields.find(item => item.name === dependency.field) : null;
+        const initiallyEnabled = !dependency || String(dependencyField?.value ?? '') === String(dependency.value);
+        const disabledClass = initiallyEnabled ? '' : ' is-disabled';
+        const disabledAttr = initiallyEnabled ? '' : ' disabled';
+        if (Array.isArray(field.options)) {
+            const options = field.options.map(option => {
+                const value = String(option.value ?? '');
+                const selected = value === String(field.value ?? '') ? ' selected' : '';
+                return `<option value="${navEscape(value)}"${selected}>${navEscape(option.label ?? value)}</option>`;
+            }).join('');
+            return `<label class="nav-dialog-field${disabledClass}" for="${id}"${dependencyAttrs}><span>${navEscape(field.label || '')}</span><select id="${id}" name="${navEscape(field.name || `field${index}`)}" ${field.required ? 'required' : ''}${disabledAttr}>${options}</select></label>`;
+        }
         const tag = field.multiline ? 'textarea' : 'input';
         const attrs = [
             `id="${id}"`, `name="${navEscape(field.name || `field${index}`)}"`,
@@ -5421,21 +5571,35 @@ function showNavbarFormDialog({ title, message = '', hint = '', fields = [], can
             field.required ? 'required' : '',
             field.maxLength ? `maxlength="${Number(field.maxLength)}"` : '',
             !field.multiline ? `type="${navEscape(field.type || 'text')}"` : '',
+            disabledAttr,
             `autocomplete="${navEscape(field.autocomplete || 'off')}"`
         ].filter(Boolean).join(' ');
         const value = navEscape(field.value || '');
-        return `<label class="nav-dialog-field" for="${id}"><span>${navEscape(field.label || '')}</span>${tag === 'textarea' ? `<textarea ${attrs}>${value}</textarea>` : `<input ${attrs} value="${value}">`}</label>`;
+        return `<label class="nav-dialog-field${disabledClass}" for="${id}"${dependencyAttrs}><span>${navEscape(field.label || '')}</span>${tag === 'textarea' ? `<textarea ${attrs}>${value}</textarea>` : `<input ${attrs} value="${value}">`}</label>`;
     }).join('');
     const cancel = modal.querySelector('.nav-confirm-cancel');
     const submit = modal.querySelector('.nav-confirm-submit');
     cancel.textContent = cancelText || navT('nav.dialog.cancel');
     submit.textContent = confirmText || navT('nav.dialog.save');
-    const validate = () => { submit.disabled = !form.checkValidity(); };
+    const syncDependentFields = () => {
+        form.querySelectorAll('[data-enabled-when-name]').forEach(label => {
+            const source = form.elements.namedItem(label.dataset.enabledWhenName);
+            const target = label.querySelector('input, select, textarea');
+            const enabled = String(source?.value ?? '') === label.dataset.enabledWhenValue;
+            if (target) target.disabled = !enabled;
+            label.classList.toggle('is-disabled', !enabled);
+        });
+    };
+    const validate = () => {
+        syncDependentFields();
+        submit.disabled = !form.checkValidity();
+    };
     form.oninput = validate;
+    form.onchange = validate;
     validate();
     modal.classList.add('open');
     modal.setAttribute('aria-hidden', 'false');
-    requestAnimationFrame(() => form.querySelector('input, textarea')?.focus());
+    requestAnimationFrame(() => form.querySelector('input, select, textarea')?.focus());
     return new Promise(resolve => { navFormDialogResolver = resolve; });
 }
 

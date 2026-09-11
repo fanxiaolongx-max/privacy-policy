@@ -80,6 +80,30 @@ function attachmentNameFromApiPath(value) {
     return decoded;
 }
 
+function collectAttachmentNamesFromValue(value, names, seen = new Set()) {
+    if (typeof value === 'string') {
+        const name = attachmentNameFromApiPath(value);
+        if (name) names.add(name);
+        return;
+    }
+    if (!value || typeof value !== 'object' || seen.has(value)) return;
+    seen.add(value);
+    if (Array.isArray(value)) {
+        value.forEach(item => collectAttachmentNamesFromValue(item, names, seen));
+        return;
+    }
+    Object.values(value).forEach(item => collectAttachmentNamesFromValue(item, names, seen));
+}
+
+function collectAttachmentNamesFromJson(text, names) {
+    if (typeof text !== 'string' || !text.trim()) return;
+    try {
+        collectAttachmentNamesFromValue(JSON.parse(text), names);
+    } catch (_) {
+        // Invalid JSON is validated elsewhere; attachment discovery should remain best-effort.
+    }
+}
+
 async function collectData() {
     await ensureSchemas();
     const reportDb = getConnection('report.db', 'report');
@@ -107,7 +131,9 @@ async function createBackupPackage() {
             const name = attachmentNameFromApiPath(value);
             if (name) attachmentNames.add(name);
         });
+        collectAttachmentNamesFromJson(row.raw_data_json, attachmentNames);
     });
+    data.slaSnapshots.forEach(row => collectAttachmentNamesFromJson(row.payload_json, attachmentNames));
 
     const imagesDir = path.join(getReportDataDir(), 'images');
     const includedAttachments = [];

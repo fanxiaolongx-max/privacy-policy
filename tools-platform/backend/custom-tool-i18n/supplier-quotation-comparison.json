@@ -67,7 +67,7 @@
   "与基础表不一致": "Different from base sheet",
   "一致": "Same",
   "不一致": "Different",
-  "基础表未填有效供应商": "No valid supplier in base sheet",
+  "基础表未填": "No valid",
   "未生成推荐": "No recommendation generated",
   "无有效报价，请人工确认": "No valid quotation; manual review required",
   "规格/单位不一致，无法可靠比价": "Specifications or units differ; reliable comparison is unavailable",
