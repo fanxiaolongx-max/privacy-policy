@@ -1,0 +1,2203 @@
+{
+  "catalogVersion": 1,
+  "publisher": "tools-platform-official",
+  "generatedAt": "2026-09-11T14:31:00.203Z",
+  "platformVersion": "1.0.221",
+  "tools": [
+    {
+      "id": "official/chat-history-center",
+      "slug": "chat-history-center",
+      "releaseVersion": "2026.09.05",
+      "releasedAt": "2026-09-05T00:00:00.000Z",
+      "minPlatformVersion": "1.0.0",
+      "changelog": "",
+      "tool": {
+        "slug": "chat-history-center",
+        "name": "聊天记录中心",
+        "nameEn": "Chat History Center",
+        "icon": "💬",
+        "description": "租户共享的企业聊天记录导入、检索、收藏与人员活跃度分析工具。",
+        "descriptionEn": "Tenant-shared chat import, search, favorites, and participant analytics.",
+        "tags": [
+          "聊天记录",
+          "搜索",
+          "统计"
+        ],
+        "href": "/tools/chat-history-center",
+        "filePath": "/custom-tools/chat-history-center/index.html",
+        "publicAccess": false,
+        "createdAt": "2026-09-01T00:00:00.000Z",
+        "updatedAt": "2026-09-05T00:00:00.000Z"
+      },
+      "package": {
+        "url": "packages/chat-history-center-2026.09.05-bbfe492d2179.zip",
+        "size": 55010,
+        "sha256": "bbfe492d2179ed454c87ca0ea0596be396cdd5ec232cd21ddf60d54eed3b1dbd",
+        "directoryFingerprint": "d3437e09dd0517daf082388b6b9653d835abe7cb0ab617500ce21ed7fafccc65",
+        "files": [
+          {
+            "path": ".tool-manifest.json",
+            "size": 663,
+            "sha256": "d5e2210852dad39ba514af693e007ab427bf7d6293b48ebf3d8d1e29690c9821"
+          },
+          {
+            "path": "chat-test-data.js",
+            "size": 26084,
+            "sha256": "7241b746a2d296e274df0879976932bebb8a4cb9e4e6bd973c57b455ff5f9d1a"
+          },
+          {
+            "path": "chat-viewer.css",
+            "size": 56111,
+            "sha256": "a69df3b8746006f9651eb12840e2c512585bdc7a125ab91cd91c2d73a8e93eab"
+          },
+          {
+            "path": "chat-viewer.js",
+            "size": 120508,
+            "sha256": "663ac403a2e1464b1d358d2cb440ff4af4a025f35f5b8b1da8bc99f82b7a6916"
+          },
+          {
+            "path": "index.html",
+            "size": 33828,
+            "sha256": "bef68f178409cbf7cf28a76f36ac552b3b98077e01d0ed4d87d6fd06c0372218"
+          }
+        ]
+      }
+    },
+    {
+      "id": "official/eos_tool-v8",
+      "slug": "eos_tool-v8",
+      "releaseVersion": "2026.07.13",
+      "releasedAt": "2026-07-13T17:07:30.643Z",
+      "minPlatformVersion": "1.0.0",
+      "changelog": "",
+      "tool": {
+        "slug": "eos_tool-v8",
+        "name": "重急收编",
+        "icon": "🧩",
+        "description": "重急EOS收编统计工具",
+        "tags": [],
+        "href": "/tools/eos_tool-v8",
+        "filePath": "/custom-tools/eos_tool-v8/index.html",
+        "publicAccess": false,
+        "createdAt": "2026-06-05T18:58:42.884Z",
+        "updatedAt": "2026-07-13T17:07:30.643Z"
+      },
+      "package": {
+        "url": "packages/eos_tool-v8-2026.07.13-ca908b57c487.zip",
+        "size": 33698,
+        "sha256": "ca908b57c4874aed5c5d1e3b2b98cc1653423aedb24f76d4aed93bd31411f7e5",
+        "directoryFingerprint": "4f12d920c98f6e415c2d60d6d760d4df52139f2214a59e724c1a9425b80c6b28",
+        "files": [
+          {
+            "path": ".tool-manifest.json",
+            "size": 402,
+            "sha256": "9dfe057580417465bf01229917781d31fccf31788cf3d26096968e3d059e957b"
+          },
+          {
+            "path": "index.html",
+            "size": 152964,
+            "sha256": "ba816edeb4b717166230fbce31dcb455f1fd8a5103ff02090dba34aff02f29db"
+          }
+        ]
+      }
+    },
+    {
+      "id": "official/esn-check",
+      "slug": "esn-check",
+      "releaseVersion": "2026.06.11",
+      "releasedAt": "2026-06-11T20:31:25.570Z",
+      "minPlatformVersion": "1.0.0",
+      "changelog": "",
+      "tool": {
+        "slug": "esn-check",
+        "name": "临时license统计",
+        "icon": "🧩",
+        "description": "输入表1在网运行的临时license，表2全量license-2年，输出临时lic申请次数统计",
+        "tags": [],
+        "href": "/tools/esn-check",
+        "filePath": "/custom-tools/esn-check/index.html",
+        "publicAccess": false,
+        "createdAt": "2026-06-11T20:31:25.570Z",
+        "updatedAt": "2026-06-11T20:31:25.570Z"
+      },
+      "package": {
+        "url": "packages/esn-check-2026.06.11-f30b19b660e6.zip",
+        "size": 15657,
+        "sha256": "f30b19b660e6725f8da8e10501efdc015bf67d5d0f159ef6c5c03eb56c372ef8",
+        "directoryFingerprint": "04da61a0f0fa5553f549ae36df128deb0163dfa065115889fa169698e0d66fee",
+        "files": [
+          {
+            "path": ".tool-manifest.json",
+            "size": 475,
+            "sha256": "7a24d6a5da57ba2adcfdfdd75cd3eb2d728d9548c239713f490d7463f29377a4"
+          },
+          {
+            "path": "index.html",
+            "size": 73275,
+            "sha256": "1e9b01e2899e73ddd49b6a87140a9c3c9c220fc272264f235edfa88d8380d95b"
+          }
+        ]
+      }
+    },
+    {
+      "id": "official/f12-to-extension",
+      "slug": "f12-to-extension",
+      "releaseVersion": "2026.09.05",
+      "releasedAt": "2026-09-05T00:00:00.000Z",
+      "minPlatformVersion": "1.0.0",
+      "changelog": "",
+      "tool": {
+        "slug": "f12-to-extension",
+        "name": "F12扩展打包",
+        "icon": "📦",
+        "description": "F12 控制台脚本扩展打包器，支持内置脚本、默认代码混淆、可完全离线验签的月度 License、Popup 手动启动、兼容性检查和 Manifest V3 Edge/Chrome 扩展生成。",
+        "tags": [
+          "浏览器扩展",
+          "纯前端打包",
+          "F12脚本"
+        ],
+        "href": "/tools/f12-to-extension",
+        "filePath": "/custom-tools/f12-to-extension/index.html",
+        "publicAccess": true,
+        "createdAt": "2026-07-31T21:00:00.000Z",
+        "updatedAt": "2026-09-05T00:00:00.000Z"
+      },
+      "package": {
+        "url": "packages/f12-to-extension-2026.09.05-2e41cd492905.zip",
+        "size": 5816510,
+        "sha256": "2e41cd492905cbb19a2d9b7b503c5064939a877187664b1df3bb542b1c444db7",
+        "directoryFingerprint": "3e87bf9935f8953e18a5738070652e269f107a80cc672f1775bb7cefab588907",
+        "files": [
+          {
+            "path": ".tool-manifest.json",
+            "size": 640,
+            "sha256": "a636afebdcce004f0b6f4ce721a9abdda3ae4af1bfe1347f71cabd1fcc779df5"
+          },
+          {
+            "path": "authorized-media-exporter.js",
+            "size": 12118,
+            "sha256": "4e4db6e3a7be3d989a199c7bca78a0e10d098f7f51cfb4278e0a20f47943fc7b"
+          },
+          {
+            "path": "chrome-capture-pro.template.zip",
+            "size": 2887917,
+            "sha256": "580ba4c4181e2e4b35e7fa9de53c2e894bd5561b64e50e1a0a074d8a00d82cec"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/am/messages.json",
+            "size": 73914,
+            "sha256": "49844cc8287d975b502c1bd0059d968a11075f4567c3cbb74b1b7e3fa0d3ab7f"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/ar/messages.json",
+            "size": 71437,
+            "sha256": "d028a92c1c45217b4a8cef90e6bb8895fcdf70d5c8c94f48cbf2f1602224e67d"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/bg/messages.json",
+            "size": 77691,
+            "sha256": "1b05972296bc0055fbc7030eacdd20bc9dc3532076332692a0b160a87f6e6ed0"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/bn/messages.json",
+            "size": 88206,
+            "sha256": "4ac2deb1e2df9bfceb99a0e27a17491c2bc553c6772f948e787680a3b151e6d3"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/ca/messages.json",
+            "size": 66905,
+            "sha256": "27599f68a28b35ff0e0557447079d7ead0b4aa3735eec9fa0e83f38cd8a6ba16"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/cs/messages.json",
+            "size": 66242,
+            "sha256": "8cdb6b667f6e9cb2e54e83c9663f6dc8094be00a3f39791e49ab8b774c49f311"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/da/messages.json",
+            "size": 61758,
+            "sha256": "ecc15252d6441414e6144277ff83435843984fd76fdbd88df96dd87c52faa9d3"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/de/messages.json",
+            "size": 67223,
+            "sha256": "1bc0004cc46f1535a03f2f65f734264d7ecf7c9643f728df7f78698529b39d0c"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/el/messages.json",
+            "size": 79214,
+            "sha256": "6b65671fbe7bae9d4fbe11b4effdca707aec370fb3163544d7f857d888b6a75e"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/en/messages.json",
+            "size": 46183,
+            "sha256": "93d67974b6e4639e4dc40c54089435e9e503147803cd7ff926544bfaff2ddbde"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/en_GB/messages.json",
+            "size": 22917,
+            "sha256": "da03157b7a2d529a0bda27d9e60cc0d52af4d7e9bcdddd4dc8dd16d69daecbe4"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/es/messages.json",
+            "size": 66757,
+            "sha256": "0665cae05f3922d78147e840feb02156c59b4ad0e5b399057016e5770cb06eaa"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/et/messages.json",
+            "size": 62325,
+            "sha256": "d58240fc2d5c42d537463f1f5b51bb45e65b4391b9a35e1421c82d90a2824617"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/fa/messages.json",
+            "size": 73906,
+            "sha256": "f47b17a4451aad13c1d0965eead125d13cf46ca4b16da66b7250879fcccb08a6"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/fi/messages.json",
+            "size": 59363,
+            "sha256": "49ff5b308b04fa31f1e0f53698698cbcdf9b51b11e164cc88462ada516b9311d"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/fr/messages.json",
+            "size": 68005,
+            "sha256": "09fb1bf386d1be451bf074ea999574df9386b31788c49e12cbe02575f226e8b8"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/gu/messages.json",
+            "size": 85851,
+            "sha256": "d03f7d131bc17ff09e3897755dfdfe72f36538dcc45b22b7627b1e1840ac581e"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/he/messages.json",
+            "size": 69476,
+            "sha256": "d65ad2b2d9d746b638104ed91120da306f65489a2c09b814635cf1eab7af37e8"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/hi/messages.json",
+            "size": 86133,
+            "sha256": "54a269d1df5b6eaa204d504cf4ba1a80f524713cdd7bce2b772473a4d7d6a01e"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/hr/messages.json",
+            "size": 65793,
+            "sha256": "960054bf3ceb0b1c13ffdf7b66c9022d1191cb3eec2cf868cc89af7fa45c2428"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/hu/messages.json",
+            "size": 67637,
+            "sha256": "05e7d79a1abd5bf7355ca127db6c8b7680c1076221e35b6410df789ca82f66ee"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/id/messages.json",
+            "size": 65195,
+            "sha256": "41566fbaf15c8dde3dfb236ab7e1fcd2f00c939f5a9bebcd0bb33a03a3b16662"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/it/messages.json",
+            "size": 66827,
+            "sha256": "08a5edda44b331f92e0a95033a07d612cd431294225fdc110c7785d3d81e0428"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/ja/messages.json",
+            "size": 70492,
+            "sha256": "f73a63ad95e0ee20ab437dfc5df61301bfb6f2c7d8cb4b47a02d0eae178d1820"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/kn/messages.json",
+            "size": 91442,
+            "sha256": "2665053bb59fd05c246a24b981d30bfad70572cfe13268a62a81b948cda661b7"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/ko/messages.json",
+            "size": 67152,
+            "sha256": "c51e9157ef700ff13256d59a3ee9bf0d98a56190af2ac07b8ebb3bedf3637b20"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/lt/messages.json",
+            "size": 67035,
+            "sha256": "628995e9e6f6c44e090272e233c16be38b78587ad1e902570ec291e7d29c638b"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/lv/messages.json",
+            "size": 66833,
+            "sha256": "648e8812ec92fd581917de427237b3838d428781c2d48024c03168e933556438"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/ml/messages.json",
+            "size": 95103,
+            "sha256": "a0a429dcad9f06260a86a32ec8b12f942d4f84568213525946516cf59f4682d4"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/mr/messages.json",
+            "size": 86670,
+            "sha256": "8dcf678233d5ffa654ff541e6548bae91b6f93a4dd073cc2f5fa44d3276d5ded"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/ms/messages.json",
+            "size": 65435,
+            "sha256": "381a431310934153940b26ae44a32ffdd9ace2ced28753f1e637ff0d68decec0"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/nl/messages.json",
+            "size": 65940,
+            "sha256": "15e5f1e6b0c7a3ed2b4ac905a2728f6e9de200c51aae7c9f3dc73f0fc486b152"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/no/messages.json",
+            "size": 65031,
+            "sha256": "3198deee4cb3dbbc354b3e52c573fd30418913a7b05c57d5d45af5e4b15198b5"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/pl/messages.json",
+            "size": 66674,
+            "sha256": "d89006f19cfaeb3894a64385e001711c95df863fc7367b5ec7611d8c475baa0a"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/pt/messages.json",
+            "size": 64572,
+            "sha256": "470219aa3a06625d29c51e72495c073fd5e8aa8f5c51552c2d4c59028b76ce41"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/pt_BR/messages.json",
+            "size": 66258,
+            "sha256": "aee89f0f03a77ca8dd3b09a85d3a0fd55c92988023e7d14558d235d39c8ab080"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/pt_PT/messages.json",
+            "size": 66430,
+            "sha256": "df6377a4375cb7af8563b5c009b7447bbea81c034b6548d890a97c490922555f"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/ro/messages.json",
+            "size": 67514,
+            "sha256": "d53551667246cd6ca2bfb6f630ecc206000b41f0053ba71298362d4a860e7672"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/ru/messages.json",
+            "size": 77867,
+            "sha256": "24432093550e824bc73ddc7cceb582adccbdf39730b473bc5574c614922c8f94"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/sk/messages.json",
+            "size": 66496,
+            "sha256": "90c4f5ff40f686297714de1ebe4fb087523b7813d1bf7fca6b1fbf9260324bf2"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/sl/messages.json",
+            "size": 65516,
+            "sha256": "baf06ff252f63900425e52d335cf9fb01143bcf98b55c6c2ca1e8569afa0861e"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/sr/messages.json",
+            "size": 76374,
+            "sha256": "ee83e8e4f06b6ce12e2ca4b1ed1ac1d384482c256e7a1a66ac7f60b0a9646a84"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/sv/messages.json",
+            "size": 65577,
+            "sha256": "58cb10b5f916c86d511b016b0b9f78cf6ccc4ad0c84977d943190205e72f6be7"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/sw/messages.json",
+            "size": 65145,
+            "sha256": "f9843762fdcb85c0284ba6c65349e56254e98638d03cf57dc5528c3692a63b14"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/ta/messages.json",
+            "size": 93678,
+            "sha256": "5a90bfabf62d69c9161267c99734cea5e2873dbf72fdc732c633430cc5d8d9ba"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/te/messages.json",
+            "size": 91236,
+            "sha256": "5f70a7688b8bca4e1069c49e5da792c1d15f113396a64f96b932ab1e61abe958"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/th/messages.json",
+            "size": 84757,
+            "sha256": "30d228aefb7a6050c73d8c0cc3aaa774e56f20bef90886c5066d7b640d3337a5"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/tr/messages.json",
+            "size": 66450,
+            "sha256": "60b4c0f04fe9ce1f4c33a4abcc5f5d31fa4df0bf1c1b9ea228dd1b0d0a4eeb04"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/uk/messages.json",
+            "size": 77330,
+            "sha256": "8fadbf26ee7a8f5fc5ba73de365f2d31166268a6e74d10982582de64278ab7a4"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/vi/messages.json",
+            "size": 69752,
+            "sha256": "1dfc6497a6f2c29c11e79bb1caaa89592ad843152dec763fe4bb5b38c04945fe"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/zh_CN/messages.json",
+            "size": 60725,
+            "sha256": "c7e7860f81bac5f735c3e4c1026f14674561c2896ea6ad9f499d2f98a3b9a005"
+          },
+          {
+            "path": "chrome-capture-pro/_locales/zh_TW/messages.json",
+            "size": 63128,
+            "sha256": "10dd310698ba7d7c951663366b4a77e64d523ef18f3b81c8c9b057d340a9b2b2"
+          },
+          {
+            "path": "chrome-capture-pro/capture-background.js",
+            "size": 78,
+            "sha256": "7ec916884ce4de34b1796aabf05a245677c12b8b42d45724962f3209ae3bd580"
+          },
+          {
+            "path": "chrome-capture-pro/capture-error-background.js",
+            "size": 5612,
+            "sha256": "8ba934517b30c9761cb3078c3907a1f6508c3841b4131a38343e0790ffaf6f85"
+          },
+          {
+            "path": "chrome-capture-pro/capture-error-ui.js",
+            "size": 2559,
+            "sha256": "be814b6fbab38428167fc7530cac21b32712dfba1288d368ddbdb456d826e545"
+          },
+          {
+            "path": "chrome-capture-pro/dist/634.bundle.js",
+            "size": 9920,
+            "sha256": "eacd24c122f6eb584e1be35be9443a7124b62344f2ceada694b58df0df0866ab"
+          },
+          {
+            "path": "chrome-capture-pro/dist/aviftest/bundle.js",
+            "size": 226610,
+            "sha256": "0312417cbe6fba9d1df968837bdb154b29c68ac9942085b6938064515610b234"
+          },
+          {
+            "path": "chrome-capture-pro/dist/background/bundle.js",
+            "size": 45676,
+            "sha256": "bd565f2cd3cea50d96d58c1ae25098bd5dfc63bead5f223f04d38bfb173019b0"
+          },
+          {
+            "path": "chrome-capture-pro/dist/croppingtool/bundle.js",
+            "size": 249536,
+            "sha256": "b420a4f63ec09dce1f19f63c2a7f697ce9c47595dd8ed299cb543dbed647f822"
+          },
+          {
+            "path": "chrome-capture-pro/dist/editor/bundle.js",
+            "size": 5359482,
+            "sha256": "240323836295dfe3cebc30fd062d2bc38c2ac78d65fc9a92810658c3dcfac485"
+          },
+          {
+            "path": "chrome-capture-pro/dist/encoder.bundle.js",
+            "size": 7342,
+            "sha256": "dd89e324146804322d622cea0a231614fad9482f87ac381230ead0e80a134e2f"
+          },
+          {
+            "path": "chrome-capture-pro/dist/frameProcessor/bundle.js",
+            "size": 307109,
+            "sha256": "5f218ca3d8f15256829745ce200e2d7567eafedbe16fde1bad4f9dc0364f7143"
+          },
+          {
+            "path": "chrome-capture-pro/dist/fullscreenInfoModal/bundle.js",
+            "size": 321115,
+            "sha256": "f76dff620c7c463892ae149b75bc711070dfca2610322710a55b95a251a63303"
+          },
+          {
+            "path": "chrome-capture-pro/dist/fullscreenOverlay/bundle.js",
+            "size": 149417,
+            "sha256": "e6a4099edc08e9f17f558263182351857083e712622e17c021006f488e526377"
+          },
+          {
+            "path": "chrome-capture-pro/dist/fullwebpage/bundle.js",
+            "size": 34655,
+            "sha256": "15411c2cdf8a9cfd87ea1d61540e1ef5f32bdec930fc5f5f68dfcacb5f0b89d2"
+          },
+          {
+            "path": "chrome-capture-pro/dist/offscreen/bundle.js",
+            "size": 13219,
+            "sha256": "14c5964ecd390953b75a2ecf7c63a4175e426338b70ea55b8962b7c0c4955188"
+          },
+          {
+            "path": "chrome-capture-pro/dist/options/bundle.js",
+            "size": 757358,
+            "sha256": "f18fe9350a8434f58d93a531fe426b17f029a9252b052ef910e80d5674bd3ca4"
+          },
+          {
+            "path": "chrome-capture-pro/dist/popup/bundle.js",
+            "size": 317276,
+            "sha256": "68e26442313c04ce76aa051a54d1a92ed431f2f4c58397d5ec7050e9976177ac"
+          },
+          {
+            "path": "chrome-capture-pro/dist/quantizer.bundle.js",
+            "size": 12509,
+            "sha256": "0fa426a9472a382f6aa2fa003342ae8f8fb2e09742f4b8fa4059bf4294ee3dbe"
+          },
+          {
+            "path": "chrome-capture-pro/dist/shared/bundle.js",
+            "size": 119534,
+            "sha256": "253a4866725f64c4edf4e18b974922d3954f5c9df3ec26ce858283c7bcfed52c"
+          },
+          {
+            "path": "chrome-capture-pro/dist/vendors-Documents_GitHub_gif-encoder_node_modules_rgbquant_src_rgbquant_js.bundle.js",
+            "size": 23271,
+            "sha256": "33b04f3ecb5d15b7f06811b833de7dbb4407741dab2809f54188eb9c3e6a0a87"
+          },
+          {
+            "path": "chrome-capture-pro/images/celebration.svg",
+            "size": 45665,
+            "sha256": "4f94050cb0723a715278790e928a990249c8f4ff6d02909b4185516b278677da"
+          },
+          {
+            "path": "chrome-capture-pro/images/dark/ic_48.png",
+            "size": 651,
+            "sha256": "5938998e6fdaa400740dea1d7370de0a588a8fbd487688482e64389d96221a88"
+          },
+          {
+            "path": "chrome-capture-pro/images/dark/ic_recording_48.png",
+            "size": 690,
+            "sha256": "483876f8e8d5b24631a627824dcae8e032405d4fba77989bdc94cb5bd75ebab5"
+          },
+          {
+            "path": "chrome-capture-pro/images/dark/ic_screenshot_48.png",
+            "size": 1020,
+            "sha256": "498639a579e8f47e6af7dbc468a365a6fc9da0bb318b45308b89fe78bee40d80"
+          },
+          {
+            "path": "chrome-capture-pro/images/ic_128.png",
+            "size": 799,
+            "sha256": "0a0300961df0748eac7cf5f0f0788eb1d5249ebe83eadfe17a882d9f331ab682"
+          },
+          {
+            "path": "chrome-capture-pro/images/ic_16.png",
+            "size": 293,
+            "sha256": "097075e469957329f9ec6053305630b4e2f56894dfe58bb8380d5afeaa1894fb"
+          },
+          {
+            "path": "chrome-capture-pro/images/ic_32.png",
+            "size": 405,
+            "sha256": "e1ec3f7814d4d89ea7dbba79ab89ee19cfc960ecb5b99d72ee007f09a63bbf90"
+          },
+          {
+            "path": "chrome-capture-pro/images/ic_48.png",
+            "size": 472,
+            "sha256": "b2700ee56c2904f21193378e2135199c73bd592b3138ed74893ba87a762258d9"
+          },
+          {
+            "path": "chrome-capture-pro/images/ic_close_white.svg",
+            "size": 265,
+            "sha256": "9dad4e4702f95c3dcb017b219e2bda9320e43f74a121e0ca201282215714cab9"
+          },
+          {
+            "path": "chrome-capture-pro/images/ic_recording_48.png",
+            "size": 586,
+            "sha256": "18cfe1c34855300604bae1b6f4c82bd6a8e91832ba74d816f3a07927ee0861cb"
+          },
+          {
+            "path": "chrome-capture-pro/images/ic_screenshot_48.png",
+            "size": 928,
+            "sha256": "cdd85d85b23e93944de9d274c9a01d272144836ac3bb2dcd462b86b902d45583"
+          },
+          {
+            "path": "chrome-capture-pro/images/ic_settings_white.svg",
+            "size": 836,
+            "sha256": "3840315598dfc9cc5bc2183a652d9d95bbf5babf80ada843393e6bc570bd1e05"
+          },
+          {
+            "path": "chrome-capture-pro/images/thank_you.svg",
+            "size": 83080,
+            "sha256": "13cf807a1f1830c44178fa13cb5f7ab577d43e50ef5f3f9245b8d69552466d7b"
+          },
+          {
+            "path": "chrome-capture-pro/images/thank_you2.svg",
+            "size": 8830,
+            "sha256": "d31ba87e2ad3776926b4537ee0ebfe75a7c2c40af49a0cb8f39ed0b055388f20"
+          },
+          {
+            "path": "chrome-capture-pro/images/under_construction.svg",
+            "size": 26659,
+            "sha256": "795839c46fd50cc2b4cba79aba56490744a21e3ccccb03ff3090f4b4c496dab4"
+          },
+          {
+            "path": "chrome-capture-pro/layout/editor.html",
+            "size": 504,
+            "sha256": "a64f17e504848d71947e02ee59e48aff4851d1df69e09124f0ae2e1b33149f99"
+          },
+          {
+            "path": "chrome-capture-pro/layout/offscreen.html",
+            "size": 170,
+            "sha256": "aec644920fec421a5060930b7b81d2aa74a1e048bfd7885c63bf055f9ef0d7f6"
+          },
+          {
+            "path": "chrome-capture-pro/layout/options.html",
+            "size": 457,
+            "sha256": "ffb7e0223180c1e123d09ffe3516649e674e36cc8731b9903d5dec4c148a74b5"
+          },
+          {
+            "path": "chrome-capture-pro/layout/paddle.html",
+            "size": 364,
+            "sha256": "aef1817cd2c9b6ea1887bd2b435632e9534237304526d1542b118f92b379330b"
+          },
+          {
+            "path": "chrome-capture-pro/layout/popup.html",
+            "size": 652,
+            "sha256": "94d885896d91acf53f4eaeb1830279ba427b76c85ff8c85722acb87b5194db75"
+          },
+          {
+            "path": "chrome-capture-pro/layout/styles/editor_theme.css",
+            "size": 5701,
+            "sha256": "a81be18dcd666d766167c864eef6bffe5a035c83ac8e64482bdb1440cad74699"
+          },
+          {
+            "path": "chrome-capture-pro/layout/styles/modern_theme.css",
+            "size": 13350,
+            "sha256": "f9c98797c16c7975b3ed6727993438fd5ff7514aba4206a7f38e0d9459147903"
+          },
+          {
+            "path": "chrome-capture-pro/layout/styles/options_theme.css",
+            "size": 5630,
+            "sha256": "c21b02f24a04bd7ff1f414291968560a51c4c04be892677c9dbda8303e8fff10"
+          },
+          {
+            "path": "chrome-capture-pro/layout/styles/popup.css",
+            "size": 185,
+            "sha256": "61068e13df47f9e95abd47b7a737c0fae1faadf7cfa19733c28a825f360d0486"
+          },
+          {
+            "path": "chrome-capture-pro/layout/styles/popup_theme.css",
+            "size": 7744,
+            "sha256": "14797005cf1b9d8da087c6a1b9a75f5b40e658bcc4ea4f92e0dc6367a6eed654"
+          },
+          {
+            "path": "chrome-capture-pro/libs/fabric/fabric.min.js",
+            "size": 286528,
+            "sha256": "194cb2fed457742d7baac455c638850cba70558a8f3fc4061438131e15d70f0f"
+          },
+          {
+            "path": "chrome-capture-pro/libs/gif/encoder.wasm",
+            "size": 31666,
+            "sha256": "c2bfe0dde8ab3a944b4a6ffcbb234168fbb6f1f238f8d14fc2045ad1f67e51b5"
+          },
+          {
+            "path": "chrome-capture-pro/libs/gif/gif.js",
+            "size": 13454,
+            "sha256": "84fc03a22efe9a525a24d836ef21aa15f6c97711bd4432eae309e481969b9d50"
+          },
+          {
+            "path": "chrome-capture-pro/libs/gif/gif.worker.js",
+            "size": 10818,
+            "sha256": "18c83b69caebe952e13a0dd947b7bd768e5431a60153479dbfdef7be6daca091"
+          },
+          {
+            "path": "chrome-capture-pro/libs/microsoft/clarity.js",
+            "size": 35,
+            "sha256": "1a0c3d39f9d104246ac8615b70cafca9ea624e5b0e93287fde92a9cc4d267442"
+          },
+          {
+            "path": "chrome-capture-pro/libs/microsoft/clarity2.js",
+            "size": 19,
+            "sha256": "b5f136a5e80f0ab5bb1e78621290d4805dab71aa0957cfe65628e0212b997b59"
+          },
+          {
+            "path": "chrome-capture-pro/libs/microsoft/clarity3.js",
+            "size": 19,
+            "sha256": "b5f136a5e80f0ab5bb1e78621290d4805dab71aa0957cfe65628e0212b997b59"
+          },
+          {
+            "path": "chrome-capture-pro/libs/paddle/paddle.js",
+            "size": 18,
+            "sha256": "95fa33b120ed6e1a4a2608d1df3037084923a33cebdb4a7a6cccf162022b5981"
+          },
+          {
+            "path": "chrome-capture-pro/license-config.json",
+            "size": 138,
+            "sha256": "92306354328895dc1c87d64ff1edb2c3f053867f42c8bfab04cb1ea304e99a66"
+          },
+          {
+            "path": "chrome-capture-pro/license-guard.js",
+            "size": 24186,
+            "sha256": "556ca955054d22203712714c0984b462024e7b511288a72f8cfced96b39ea50f"
+          },
+          {
+            "path": "chrome-capture-pro/manifest.json",
+            "size": 2724,
+            "sha256": "88f3e4267bdac25550041a2c448238ed3011efa82602345245ed215b2476dfa0"
+          },
+          {
+            "path": "default-f12.js",
+            "size": 174335,
+            "sha256": "b68718c5c354e94feb6e2e7a3ee9d60a8492e0aca8353fd4691a147a1ac96057"
+          },
+          {
+            "path": "exam-question-bank-assistant.js",
+            "size": 150981,
+            "sha256": "c069e3068bb029e50f795da0be4bc2e8a4505772eebcb6c18e7c47142f0b503e"
+          },
+          {
+            "path": "index.html",
+            "size": 60069,
+            "sha256": "c5f4a28463772aa5916ee4588e88b04c8ab206f44f8a7ed2c7516fd00fcb2140"
+          },
+          {
+            "path": "packer-core.js",
+            "size": 34269,
+            "sha256": "6679037cdbf373d0bf9968019a1add2f6e456f6867abefed4e4facafdae6dd27"
+          }
+        ]
+      }
+    },
+    {
+      "id": "official/network_safety_meeting_summary",
+      "slug": "network_safety_meeting_summary",
+      "releaseVersion": "2026.08.01",
+      "releasedAt": "2026-08-01T00:00:00.000Z",
+      "minPlatformVersion": "1.0.0",
+      "changelog": "",
+      "tool": {
+        "slug": "network_safety_meeting_summary",
+        "name": "胶片设计",
+        "icon": "🛡️",
+        "description": "专业华为风格胶片编辑器，模板内所有组件均可增删、修改、拖拽与缩放，并支持导出 PDF/PPT。",
+        "tags": [
+          "模板",
+          "PDF",
+          "华子胶片"
+        ],
+        "href": "/tools/network_safety_meeting_summary",
+        "filePath": "/custom-tools/network_safety_meeting_summary/index.html",
+        "publicAccess": false,
+        "createdAt": "2026-06-16T13:49:05.303Z",
+        "updatedAt": "2026-08-01T00:00:00.000Z"
+      },
+      "package": {
+        "url": "packages/network_safety_meeting_summary-2026.08.01-71b94c53cf6d.zip",
+        "size": 107681,
+        "sha256": "71b94c53cf6dfd9bf2a728b99091929c42f95055d72b5e317d175d19eb36a5c9",
+        "directoryFingerprint": "7c311a43bfea7d264c068e477d7d99f6a17452778c0d5435818b6526e0ccf8e5",
+        "files": [
+          {
+            "path": ".tool-manifest.json",
+            "size": 615,
+            "sha256": "51f704c1ce6e310cfaa8f9d08107f7bbfbf5631017c3c808baa3f41a094e3f7e"
+          },
+          {
+            "path": "css/app.css",
+            "size": 96538,
+            "sha256": "c2d5a61a98e0bd31861d5285d48ee0a05179d97a952669e712219fe7e5cf5d07"
+          },
+          {
+            "path": "css/tailwind.css",
+            "size": 21323,
+            "sha256": "bc14fed6cb95f29360d370459a466cc383f65d88015cd209540d2f4855294327"
+          },
+          {
+            "path": "css/tailwind.input.css",
+            "size": 59,
+            "sha256": "cc1a7ad0d019ddb1d32d0ecb588ba0ac26ce41d8625dd6c366348b25f83a28ec"
+          },
+          {
+            "path": "index.html",
+            "size": 62928,
+            "sha256": "b214f6eaed202951a238a44ea580a30c6e1a9eea5f883c838005cdb2148addda"
+          },
+          {
+            "path": "js/app.js",
+            "size": 72221,
+            "sha256": "131da9da72d800627dc57b6aae7fbc713ddbaec38c78e5926ab4f45a78f1be4c"
+          },
+          {
+            "path": "js/component-editor.js",
+            "size": 97331,
+            "sha256": "b1a2c315ae9c022de9e4dd53c4e4844f0023603b9691e6ab31babca3f564b4be"
+          },
+          {
+            "path": "js/context-menu.js",
+            "size": 5687,
+            "sha256": "42093b1cd36aafbfd41b8ec77cac46dc71a116b7727fa9df45dcaa27b7805e67"
+          },
+          {
+            "path": "js/default-slides.js",
+            "size": 13599,
+            "sha256": "f7ee3e7b72b96a014c0a93257ea42fc247bef95af3a779750bc2e11b13ca7ea9"
+          },
+          {
+            "path": "js/editor.js",
+            "size": 9239,
+            "sha256": "faf3d1459ab7ae7ffc20b0c1426560acd789b89f6aae4d3a1da27ab6d2d5161f"
+          },
+          {
+            "path": "js/pptx-exporter.js",
+            "size": 3848,
+            "sha256": "e059ec60f8043e22c9c25e08405012bade359bbeadd1bdc616b0a3686755b46c"
+          },
+          {
+            "path": "js/project-workspace.js",
+            "size": 90375,
+            "sha256": "5d0553f30ad72462cd9f084485817c27c5f7edf82b37ffc5373e510b9ea24082"
+          },
+          {
+            "path": "js/slide-factory.js",
+            "size": 8672,
+            "sha256": "c6e9d68ab44ae368583309446a0cdc3110ba06fcc700f8f708b90757d3e3ff4c"
+          },
+          {
+            "path": "js/store.js",
+            "size": 840,
+            "sha256": "c87fc6570eab570d9e8ae8e0b0443930319abf7f57645fc5faeab16a57119d42"
+          },
+          {
+            "path": "js/test-autofit.js",
+            "size": 640,
+            "sha256": "b139ff48d1234980777226da948f44a179db60be8036386da4e5d8812c3bf27b"
+          },
+          {
+            "path": "reference/network_safety_oath_huawei_template_pack.html",
+            "size": 21216,
+            "sha256": "e1a63d559bb6b46cfb54c999da92e02a9f8f2a68d8a2e036be5581ae5bf32425"
+          },
+          {
+            "path": "tailwind.config.js",
+            "size": 418,
+            "sha256": "db200ff4fd8216e685a0b04cfc5bd4cb7fd6ba863e8e6a1ea4a5d20545f73ba1"
+          }
+        ]
+      }
+    },
+    {
+      "id": "official/nis_2026h1_summary",
+      "slug": "nis_2026h1_summary",
+      "releaseVersion": "2026.07.13",
+      "releasedAt": "2026-07-13T17:09:31.032Z",
+      "minPlatformVersion": "1.0.0",
+      "changelog": "",
+      "tool": {
+        "slug": "nis_2026h1_summary",
+        "name": "汇报胶片",
+        "icon": "🧩",
+        "description": "由独立 HTML 导入的平台工具，可在统一入口和顶部导航中访问。",
+        "tags": [],
+        "href": "/tools/nis_2026h1_summary",
+        "filePath": "/custom-tools/nis_2026h1_summary/index.html",
+        "publicAccess": false,
+        "createdAt": "2026-07-12T14:28:00.305Z",
+        "updatedAt": "2026-07-13T17:09:31.032Z"
+      },
+      "package": {
+        "url": "packages/nis_2026h1_summary-2026.07.13-f3eea82ec7d0.zip",
+        "size": 4308,
+        "sha256": "f3eea82ec7d0b25e7969a323df515f1c822a0102cf71b4f2a30bdecb4effb09d",
+        "directoryFingerprint": "2889b1303ccf61b27b8356830c142b9087feaa90790cebce0c5ca14cae6cbc4e",
+        "files": [
+          {
+            "path": ".tool-manifest.json",
+            "size": 480,
+            "sha256": "5854dd2b62a15ddf4212dbaa2bdcb19edd3fcd101b7b1dc8d8e606d1965a3d6e"
+          },
+          {
+            "path": "index.html",
+            "size": 21782,
+            "sha256": "dd649c0dc0af9ca86d2bfd75eba964e0ce730f4d43d9d042d6208f97029726a0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "official/optical-transfer",
+      "slug": "optical-transfer",
+      "releaseVersion": "2026.08.05",
+      "releasedAt": "2026-08-05T00:00:00.000Z",
+      "minPlatformVersion": "1.0.0",
+      "changelog": "",
+      "tool": {
+        "slug": "optical-transfer",
+        "name": "光码传文件",
+        "icon": "📲",
+        "description": "电脑屏幕播放动态二维码，手机摄像头连续扫码接收小文件或文本；文件内容不经过平台服务器。",
+        "tags": [
+          "文件传输",
+          "动态二维码",
+          "离线传输",
+          "手机接收"
+        ],
+        "href": "/tools/optical-transfer",
+        "filePath": "/custom-tools/optical-transfer/index.html",
+        "publicAccess": true,
+        "createdAt": "2026-08-05T00:00:00.000Z",
+        "updatedAt": "2026-08-05T00:00:00.000Z"
+      },
+      "package": {
+        "url": "packages/optical-transfer-2026.08.05-7a9496103bff.zip",
+        "size": 3365607,
+        "sha256": "7a9496103bff697369795bf1e0b671caca738a54cb484365634579bed70bea71",
+        "directoryFingerprint": "447335d34252af929ab6a5ed8556e37e6dff214645df679ef501e1daf137063a",
+        "files": [
+          {
+            "path": ".tool-manifest.json",
+            "size": 796,
+            "sha256": "c0e01c04e470eecafc0a7d3ca316a5d17780c5d229f5fc11e10f39d824042293"
+          },
+          {
+            "path": "LICENSE",
+            "size": 1085,
+            "sha256": "b4c142c56e708391eed86e70d4083012b2184b16ec38bacca3b7d5c3657b4771"
+          },
+          {
+            "path": "THIRD_PARTY_NOTICES.md",
+            "size": 641,
+            "sha256": "4e17702afae231d577329e2673e7416d748674720393e9fd4b67b1230c78dea8"
+          },
+          {
+            "path": "apple-touch-icon.png",
+            "size": 4630,
+            "sha256": "5433e8374a17e1c11cb9e7860e2f2c951add491d5b4d5bad0baaffd2ee4d5c21"
+          },
+          {
+            "path": "assets/dialog-Cf_qYgrT.js",
+            "size": 1056,
+            "sha256": "1ee5e6ccf455d9558842ba28c8c9604f4ebda560d75e1ef9b2fa0ecd5963d093"
+          },
+          {
+            "path": "assets/dialog-VZ1XWX8i.css",
+            "size": 18341,
+            "sha256": "582725518fe8a5eed33825361dd4efb81514724b7dc078ca10e8f06145204948"
+          },
+          {
+            "path": "assets/index-DfnlK9j-.js",
+            "size": 283,
+            "sha256": "9b50f76527b69ad7cf521afb69dfef6ba903a88b0335b075ef2cdbe0a210628f"
+          },
+          {
+            "path": "assets/receive-dc1fm69X.js",
+            "size": 13550,
+            "sha256": "77f845680a8bf3430a7ca5e56fbdce00a98620fcf6e79db8c46af83eb8724d23"
+          },
+          {
+            "path": "assets/send-Br2nzDSu.js",
+            "size": 8018,
+            "sha256": "713d2b6032d2f41110cbc9f6dac8aa1a2ff6269aaeb6ce1f96977dddbef0d0d9"
+          },
+          {
+            "path": "assets/share-dialog-BHRwTNEG.js",
+            "size": 26474,
+            "sha256": "3130dfe0dbbc69d98b58ca5866e3125a5b8746f4eef8966bd317ef7218cac0f9"
+          },
+          {
+            "path": "assets/wake-lock-agyiBZ6i.js",
+            "size": 9291,
+            "sha256": "fca20f61c2c6c5e50de31a598b4bf5b1e84a6e4c32e05faececcf28f73769f62"
+          },
+          {
+            "path": "assets/worker-_lvZGnjt.js",
+            "size": 34452,
+            "sha256": "a2ac067fce82bf8175a16421302275ce336c964bac37cbe18568922a3bf0a8dc"
+          },
+          {
+            "path": "assets/zxing_reader-EOacYbLr.wasm",
+            "size": 940931,
+            "sha256": "85d46f55d7c86a4d09bb04273367408b19c324f582d040d018aecb25a9a82942"
+          },
+          {
+            "path": "decimen_logo.svg",
+            "size": 1100,
+            "sha256": "ab17c77beb505978f0d8ff800ec2c4fba30211e077a8e3b9c156d2cd96a3b6e0"
+          },
+          {
+            "path": "icon-192.png",
+            "size": 7256,
+            "sha256": "5182b34e74a73d1b5c6c89ae54d648e70343c1afa72e68d66717088426183539"
+          },
+          {
+            "path": "icon-512.png",
+            "size": 21062,
+            "sha256": "a58c675c5ee2f634f316856e419a2606bec9069b1eef040ae1bb0bae45c887c4"
+          },
+          {
+            "path": "icon-maskable-512.png",
+            "size": 11599,
+            "sha256": "81471208f92de5c4577eae548d698564f9904536ad0880a5248b7e71768467e1"
+          },
+          {
+            "path": "index.html",
+            "size": 8777,
+            "sha256": "d574d29b846005665978334e7eecb14c9b6e8ff76ba9f40b01a9530527fe43db"
+          },
+          {
+            "path": "manifest.webmanifest",
+            "size": 525,
+            "sha256": "19cced39eb90c289672664b2c223948df2321952618adbe09082555973e12f82"
+          },
+          {
+            "path": "og.png",
+            "size": 299129,
+            "sha256": "074b976f882f944194a29256b178781b7c9df4c9538da0d27038d1d5cf4fc23e"
+          },
+          {
+            "path": "receive/index.html",
+            "size": 8210,
+            "sha256": "afc23b4d04ad07b8d66db7ab41ce9f5d982fd9b0f520e5820153fe31de8cb727"
+          },
+          {
+            "path": "send/index.html",
+            "size": 8988,
+            "sha256": "c0ad57f1511df887f0cd0a27c08106bde68005a668fb08ce134175631522d377"
+          },
+          {
+            "path": "success-2mb.png",
+            "size": 2037733,
+            "sha256": "0cd10bf4573e9ed91113f4edc06e4d4c77aa977cdb2b166ea532967e1485eb53"
+          },
+          {
+            "path": "success.png",
+            "size": 536325,
+            "sha256": "b6a37f3a96a27675e089c20b0f7cfadb540c08c5b1d607099960dca323fef30b"
+          },
+          {
+            "path": "sw.js",
+            "size": 2494,
+            "sha256": "6811d5f60e63f50e363930f5c5918eb18cc58e6ea7e775050019347c1f776aee"
+          },
+          {
+            "path": "workbox-7e3aeb59.js",
+            "size": 16571,
+            "sha256": "6f65143b5a1e14bccd3f594da1c865ae523e09999f3778ecc07ebbd97d8754da"
+          }
+        ]
+      }
+    },
+    {
+      "id": "official/particle-effects",
+      "slug": "particle-effects",
+      "releaseVersion": "2026.07.18",
+      "releasedAt": "2026-07-18T19:40:17.738Z",
+      "minPlatformVersion": "1.0.0",
+      "changelog": "",
+      "tool": {
+        "slug": "particle-effects",
+        "name": "粒子特效",
+        "icon": "✨",
+        "description": "可跟随内置音乐、音频文件或麦克风实时变化的 3D Chladni 粒子视觉特效。",
+        "tags": [
+          "3D 粒子",
+          "音乐可视化",
+          "互动特效"
+        ],
+        "href": "/tools/particle-effects",
+        "filePath": "/custom-tools/particle-effects/index.html",
+        "publicAccess": false,
+        "createdAt": "2026-07-18T19:40:17.738Z",
+        "updatedAt": "2026-07-18T19:40:17.738Z"
+      },
+      "package": {
+        "url": "packages/particle-effects-2026.07.18-9617067826a2.zip",
+        "size": 3650849,
+        "sha256": "9617067826a2594a85f218b320d2f9c53b9371843af3021da46ef8a8899c7a44",
+        "directoryFingerprint": "3acdb33485c497d671dcca8d07d9f86d5e7764754a8b173a860df21acf298efc",
+        "files": [
+          {
+            "path": ".tool-manifest.json",
+            "size": 749,
+            "sha256": "d7000264deedd8588e43625e639cb329c281b291e703729955b2246b1cd6e05d"
+          },
+          {
+            "path": "ASSET_LICENSE.md",
+            "size": 1270,
+            "sha256": "50e8607749a7d55d22142f68d836235a3f1849be3e83e6cb0924a29c2ff9a8cf"
+          },
+          {
+            "path": "LICENSE",
+            "size": 11358,
+            "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+          },
+          {
+            "path": "THIRD_PARTY_NOTICES.md",
+            "size": 1500,
+            "sha256": "bf48661147d17cf99da528449300136decec3564fdf0792db89e3b839792fcd3"
+          },
+          {
+            "path": "assets/pulsebox-lofi-production-522875.mp3",
+            "size": 3613440,
+            "sha256": "f4b3deba3c731864e2fca0dfcbbd7ace6162adf0b16e552afd0b9ce0927efe58"
+          },
+          {
+            "path": "index.html",
+            "size": 168669,
+            "sha256": "d9d0c84e62fbe4e592e4d29c085e98a907e6d2a46d5f5623086f019b1f57a053"
+          }
+        ]
+      }
+    },
+    {
+      "id": "official/pr",
+      "slug": "pr",
+      "releaseVersion": "2026.07.12",
+      "releasedAt": "2026-07-12T20:40:24.463Z",
+      "minPlatformVersion": "1.0.0",
+      "changelog": "",
+      "tool": {
+        "slug": "pr",
+        "name": "PR透视",
+        "icon": "🧩",
+        "description": "由独立 HTML 导入的平台工具，可在统一入口和顶部导航中访问。",
+        "tags": [],
+        "href": "/tools/pr",
+        "filePath": "/custom-tools/pr/index.html",
+        "publicAccess": false,
+        "createdAt": "2026-07-12T20:40:24.463Z",
+        "updatedAt": "2026-07-12T20:40:24.463Z"
+      },
+      "package": {
+        "url": "packages/pr-2026.07.12-be0050a81b6d.zip",
+        "size": 670099,
+        "sha256": "be0050a81b6dac0a273769981db674335dda9dee4bc126ace45b26d667be6336",
+        "directoryFingerprint": "56186ab6b5be60037d05209f119468889ff81ff954721be847d56da7c8462997",
+        "files": [
+          {
+            "path": ".tool-manifest.json",
+            "size": 428,
+            "sha256": "04bd2146254123cf7d65cd7f2eab3545b087c6e0ef0cdc2f17ccb7a23a5a5aff"
+          },
+          {
+            "path": "index.html",
+            "size": 76868,
+            "sha256": "4dee1fe760c65fefc95f2469baa8b9a27747d337bd6fd72109455f0360adfbea"
+          },
+          {
+            "path": "vendor/echarts.min.js",
+            "size": 1024740,
+            "sha256": "1156429a16a38cb8604dcc6518c19406d4226142d908f8edd2e3531443c54d19"
+          },
+          {
+            "path": "vendor/xlsx.full.min.js",
+            "size": 881727,
+            "sha256": "c9506197caf809a075b6dee1da0d36fb19da7158ffe8a88e7b0c96c5d8623c99"
+          }
+        ]
+      }
+    },
+    {
+      "id": "official/pr-2",
+      "slug": "pr-2",
+      "releaseVersion": "2026.08.02",
+      "releasedAt": "2026-08-02T09:58:27.909Z",
+      "minPlatformVersion": "1.0.0",
+      "changelog": "",
+      "tool": {
+        "slug": "pr-2",
+        "name": "外包 PR",
+        "icon": "🧩",
+        "description": "由独立 HTML 导入的平台工具，可在统一入口和顶部导航中访问。",
+        "tags": [],
+        "href": "/tools/pr-2",
+        "filePath": "/custom-tools/pr-2/index.html",
+        "publicAccess": false,
+        "createdAt": "2026-08-02T09:58:27.909Z",
+        "updatedAt": "2026-08-02T09:58:27.909Z"
+      },
+      "package": {
+        "url": "packages/pr-2-2026.08.02-27c800aa60eb.zip",
+        "size": 10313,
+        "sha256": "27c800aa60ebd7b5872a6afd4bd192ff4e82c63385d0b5c3300b1104ac616a88",
+        "directoryFingerprint": "309ad5ed9b9ae8fd78595b4564a937e6cc9e364dba87e7eacdacb377703b17ef",
+        "files": [
+          {
+            "path": ".tool-manifest.json",
+            "size": 602,
+            "sha256": "8c525761c94d56bbc114992f917aeea7311e4a69bfdbd480adfcdec6ce64d87c"
+          },
+          {
+            "path": "index.html",
+            "size": 35958,
+            "sha256": "7311dd90f919f56a9ba1638a79a6cf376b8df576525a6c78fff8840928fbad4d"
+          }
+        ]
+      }
+    },
+    {
+      "id": "official/question-bank-assistant-privacy",
+      "slug": "question-bank-assistant-privacy",
+      "releaseVersion": "2026.08.06",
+      "releasedAt": "2026-08-06T00:00:00.000Z",
+      "minPlatformVersion": "1.0.0",
+      "changelog": "",
+      "tool": {
+        "slug": "question-bank-assistant-privacy",
+        "name": "题库助手隐私政策",
+        "icon": "🔏",
+        "description": "题库与答题助手浏览器扩展的中英文隐私政策，说明本地题库、License 校验、扩展权限和用户数据控制方式。",
+        "tags": [
+          "隐私政策",
+          "浏览器扩展",
+          "题库与答题助手"
+        ],
+        "href": "/tools/question-bank-assistant-privacy",
+        "filePath": "/custom-tools/question-bank-assistant-privacy/index.html",
+        "publicAccess": true,
+        "createdAt": "2026-08-06T00:00:00.000Z",
+        "updatedAt": "2026-08-06T00:00:00.000Z"
+      },
+      "package": {
+        "url": "packages/question-bank-assistant-privacy-2026.08.06-742a2d8ef10a.zip",
+        "size": 10231,
+        "sha256": "742a2d8ef10a4ef1a5cb33aefe9674b3d662f2c76a27a353f2a9f4b1240e9cc8",
+        "directoryFingerprint": "ac6bb32188a3e7970955b123ece0d32445eef42f58ca4a897f930f124b051e70",
+        "files": [
+          {
+            "path": ".tool-manifest.json",
+            "size": 901,
+            "sha256": "d280dfd7c16e49914d30b1aa02318649e7d2f4023bf7cc1fa788be2cb46a9682"
+          },
+          {
+            "path": "index.html",
+            "size": 30585,
+            "sha256": "813eb4cc31f9b7a43b3ec5c6f995dcb0e8b2992238a8246d5a22a717bdbc8771"
+          }
+        ]
+      }
+    },
+    {
+      "id": "official/question-bank-study",
+      "slug": "question-bank-study",
+      "releaseVersion": "2026.08.12",
+      "releasedAt": "2026-08-12T00:00:00.000Z",
+      "minPlatformVersion": "1.0.0",
+      "changelog": "",
+      "tool": {
+        "slug": "question-bank-study",
+        "name": "题库学习与 Excel 转换",
+        "icon": "📚",
+        "description": "导入题库与答题助手导出的单题库或多题库 JSON，在页面中搜索学习并转换为 Excel。",
+        "tags": [
+          "题库",
+          "JSON",
+          "Excel",
+          "学习"
+        ],
+        "href": "/tools/question-bank-study",
+        "filePath": "/custom-tools/question-bank-study/index.html",
+        "publicAccess": false,
+        "createdAt": "2026-08-12T00:00:00.000Z",
+        "updatedAt": "2026-08-12T00:00:00.000Z"
+      },
+      "package": {
+        "url": "packages/question-bank-study-2026.08.12-17b71fcc3db4.zip",
+        "size": 8369,
+        "sha256": "17b71fcc3db417b5eaf02eda280ebe453edb4703a2d26eb863e544035d90df2f",
+        "directoryFingerprint": "1426c60329a6596cbd7d811512b1cf19f8c4e727a868a3e8dc632cba6149e70f",
+        "files": [
+          {
+            "path": ".tool-manifest.json",
+            "size": 560,
+            "sha256": "16db405c75ae646c3be1205abe34f451e0d1fb4010f5a2a382ef54f5a991398b"
+          },
+          {
+            "path": "index.html",
+            "size": 21551,
+            "sha256": "5463ef56d81f09a16c498bc0c6b78df452b5e10e5374f75d382a07ebc5da1cfb"
+          }
+        ]
+      }
+    },
+    {
+      "id": "official/supplier-quotation-comparison",
+      "slug": "supplier-quotation-comparison",
+      "releaseVersion": "2026.09.07",
+      "releasedAt": "2026-09-07T00:00:00.000Z",
+      "minPlatformVersion": "1.0.0",
+      "changelog": "",
+      "tool": {
+        "slug": "supplier-quotation-comparison",
+        "name": "供应商报价比价",
+        "nameEn": "Supplier Quotation Comparison",
+        "icon": "🧾",
+        "description": "导入含 Week1 基础表和多个供应商报价页的 Excel，自动匹配商品、折算含税可比单价并生成推荐比价表。",
+        "descriptionEn": "Import an Excel workbook with a Week1 base sheet and supplier quote sheets, match products, normalize tax-inclusive unit prices, and generate a recommendation table.",
+        "tags": [
+          "采购",
+          "Excel",
+          "供应商",
+          "比价"
+        ],
+        "href": "/tools/supplier-quotation-comparison",
+        "filePath": "/custom-tools/supplier-quotation-comparison/index.html",
+        "publicAccess": false,
+        "createdAt": "2026-09-07T00:00:00.000Z",
+        "updatedAt": "2026-09-07T00:00:00.000Z"
+      },
+      "package": {
+        "url": "packages/supplier-quotation-comparison-2026.09.07-262091e0b4e1.zip",
+        "size": 29316,
+        "sha256": "262091e0b4e1ed08edf1232ff0e76f5f6ac11254ecbc32c235aaf2040ca692df",
+        "directoryFingerprint": "d4b57fc220b74ce1dc574a4dce72ef3774c1ba844061cebc6da898570655ae3d",
+        "files": [
+          {
+            "path": ".tool-manifest.json",
+            "size": 851,
+            "sha256": "b4d3b72813d6013685e9f08d529976fdbc7181c0f0f115ce36c5772ad6dc0817"
+          },
+          {
+            "path": "app.js",
+            "size": 52324,
+            "sha256": "d4c190741fba9b32aeaaf93e4a975045eecd764ee60c80b85fcf0b7493e0bab0"
+          },
+          {
+            "path": "comparison-core.js",
+            "size": 23249,
+            "sha256": "ae052c6a9a40cb2ab4c7065ddde0cee5912bafc7817324740aaf703c5c75c75b"
+          },
+          {
+            "path": "index.html",
+            "size": 36457,
+            "sha256": "1da905cf3eeab7e2e097dcde6ed84f524079c532337e70b5a66ec08feb22631e"
+          }
+        ]
+      }
+    },
+    {
+      "id": "official/tool-mqp55fna",
+      "slug": "tool-mqp55fna",
+      "releaseVersion": "2026.07.19",
+      "releasedAt": "2026-07-19T18:13:26.375Z",
+      "minPlatformVersion": "1.0.0",
+      "changelog": "",
+      "tool": {
+        "slug": "tool-mqp55fna",
+        "name": "六个一一",
+        "icon": "🧩",
+        "description": "由独立 HTML 导入的平台工具，可在统一入口和顶部导航中访问。",
+        "tags": [],
+        "href": "/tools/tool-mqp55fna",
+        "filePath": "/custom-tools/tool-mqp55fna/index.html",
+        "publicAccess": false,
+        "createdAt": "2026-06-22T11:37:36.886Z",
+        "updatedAt": "2026-07-19T18:13:26.375Z"
+      },
+      "package": {
+        "url": "packages/tool-mqp55fna-2026.07.19-5c47c9f25f89.zip",
+        "size": 19677,
+        "sha256": "5c47c9f25f8942baef16824a3bc775bf4f8d5f8f967bd2dd163314d0972ad9d5",
+        "directoryFingerprint": "5817abe57ada5946687815a19d6886df3b5a7b64fabc9fba7afaa0757b9cc127",
+        "files": [
+          {
+            "path": ".tool-manifest.json",
+            "size": 465,
+            "sha256": "a87b46e9b750ee742d7d8c02f6dd03c4db1bcb2f593856662a3cd58698d72212"
+          },
+          {
+            "path": "index.html",
+            "size": 87809,
+            "sha256": "a75a3dc817d2372c2ec812863b3193e34e0e67a61a33e07f4a4f26980900998b"
+          }
+        ]
+      }
+    },
+    {
+      "id": "official/tool-mqtlwcrv",
+      "slug": "tool-mqtlwcrv",
+      "releaseVersion": "2026.07.13",
+      "releasedAt": "2026-07-13T17:08:40.422Z",
+      "minPlatformVersion": "1.0.0",
+      "changelog": "",
+      "tool": {
+        "slug": "tool-mqtlwcrv",
+        "name": "博客爬虫",
+        "icon": "🧩",
+        "description": "由独立 HTML 导入的平台工具，可在统一入口和顶部导航中访问。",
+        "tags": [],
+        "href": "/tools/tool-mqtlwcrv",
+        "filePath": "/custom-tools/tool-mqtlwcrv/index.html",
+        "publicAccess": false,
+        "createdAt": "2026-06-25T14:37:31.435Z",
+        "updatedAt": "2026-07-13T17:08:40.422Z"
+      },
+      "package": {
+        "url": "packages/tool-mqtlwcrv-2026.07.13-604447bd54ab.zip",
+        "size": 10114,
+        "sha256": "604447bd54abcd113fa210d44279e9d21b7f50e9c543b9829a724c9926e713fc",
+        "directoryFingerprint": "e98d6180648b64b6c006ac15ff1a3edab778f6477f4ca93a55acc6a2ab03445f",
+        "files": [
+          {
+            "path": ".tool-manifest.json",
+            "size": 465,
+            "sha256": "e20fd0829b30ad3415d658e2bce20df088564d88c1c925e1771780c356d8197d"
+          },
+          {
+            "path": "index.html",
+            "size": 34080,
+            "sha256": "60e23e3b8c4629cb1e8536985f2e71db0e535723821d74d3ced684d1ba0160c8"
+          }
+        ]
+      }
+    },
+    {
+      "id": "official/tool-mr0vvmyi",
+      "slug": "tool-mr0vvmyi",
+      "releaseVersion": "2026.07.13",
+      "releasedAt": "2026-07-13T17:09:01.832Z",
+      "minPlatformVersion": "1.0.0",
+      "changelog": "",
+      "tool": {
+        "slug": "tool-mr0vvmyi",
+        "name": "上传指南",
+        "icon": "🧩",
+        "description": "由独立 HTML 导入的平台工具，可在统一入口和顶部导航中访问。",
+        "tags": [],
+        "href": "/tools/tool-mr0vvmyi",
+        "filePath": "/custom-tools/tool-mr0vvmyi/index.html",
+        "publicAccess": false,
+        "createdAt": "2026-06-30T16:51:17.370Z",
+        "updatedAt": "2026-07-13T17:09:01.832Z"
+      },
+      "package": {
+        "url": "packages/tool-mr0vvmyi-2026.07.13-88a249991089.zip",
+        "size": 12943,
+        "sha256": "88a24999108961b842aee052d7cbba384a00880c393873fb83c3c5d5cd7df566",
+        "directoryFingerprint": "5d8b6467223f855775db2443df58c3ff21f1feecacde10d73ac6247767f5fe14",
+        "files": [
+          {
+            "path": ".tool-manifest.json",
+            "size": 465,
+            "sha256": "3494be97e15c8770b217045063a3aa9758907628efbf652fcdeeb30bbacd4f14"
+          },
+          {
+            "path": "index.html",
+            "size": 47109,
+            "sha256": "c4f0f58fa3d9a0e539de0bf6945861b07157d97f5059013e6b25808058863f6e"
+          }
+        ]
+      }
+    },
+    {
+      "id": "official/tool-mr87218d",
+      "slug": "tool-mr87218d",
+      "releaseVersion": "2026.07.13",
+      "releasedAt": "2026-07-13T17:09:14.741Z",
+      "minPlatformVersion": "1.0.0",
+      "changelog": "",
+      "tool": {
+        "slug": "tool-mr87218d",
+        "name": "膳食手册",
+        "icon": "🧩",
+        "description": "由独立 HTML 导入的平台工具，可在统一入口和顶部导航中访问。",
+        "tags": [],
+        "href": "/tools/tool-mr87218d",
+        "filePath": "/custom-tools/tool-mr87218d/index.html",
+        "publicAccess": false,
+        "createdAt": "2026-07-05T19:38:34.813Z",
+        "updatedAt": "2026-07-13T17:09:14.741Z"
+      },
+      "package": {
+        "url": "packages/tool-mr87218d-2026.07.13-3a9f41ad17c7.zip",
+        "size": 11043,
+        "sha256": "3a9f41ad17c7b20ffa6649e56ec783336afe3d84f60f18e8ab708b3dab7001d1",
+        "directoryFingerprint": "f21bd74f8bc2c896eac3fc601977d79e4f5697a087853890c7ef90bcdcc7b0c0",
+        "files": [
+          {
+            "path": ".tool-manifest.json",
+            "size": 465,
+            "sha256": "611dded276b6570ac01dec1138fd8ff72aa923943dbfc3c89ad4d517dd8947da"
+          },
+          {
+            "path": "index.html",
+            "size": 74566,
+            "sha256": "fefa52613d8f3b2586c4babd05da3c4c60ff2bd55dfa31000a9fb02ace3f71a2"
+          }
+        ]
+      }
+    },
+    {
+      "id": "official/tool-mr88gv9x",
+      "slug": "tool-mr88gv9x",
+      "releaseVersion": "2026.07.05",
+      "releasedAt": "2026-07-05T20:18:06.000Z",
+      "minPlatformVersion": "1.0.0",
+      "changelog": "",
+      "tool": {
+        "slug": "tool-mr88gv9x",
+        "name": "平台介绍",
+        "icon": "🧭",
+        "description": "CS质量运营工具平台的能力、流程与应用场景介绍。",
+        "tags": [
+          "平台介绍",
+          "质量运营"
+        ],
+        "href": "/tools/tool-mr88gv9x",
+        "filePath": "/custom-tools/tool-mr88gv9x/index.html",
+        "publicAccess": false,
+        "createdAt": "2026-07-05T20:18:06.000Z",
+        "updatedAt": "2026-07-05T20:18:06.000Z"
+      },
+      "package": {
+        "url": "packages/tool-mr88gv9x-2026.07.05-9b92182724d3.zip",
+        "size": 9394,
+        "sha256": "9b92182724d3ab389a975967d0de11867bcb338162386b03a6fb5eb20cee2e35",
+        "directoryFingerprint": "296d931cde77ac897ac7b43efd233abbf7f07b8f374f65c746d2dfd09d8a7c9c",
+        "files": [
+          {
+            "path": ".tool-manifest.json",
+            "size": 719,
+            "sha256": "58203ee1e23d47a6bdac204c293b3de8250da0b40b691921f023d1c66527979c"
+          },
+          {
+            "path": "index.html",
+            "size": 34608,
+            "sha256": "dabf1d4a8c9aa4cdb278ef2738d9d27be45a009da6c3979dd08464f3db05b326"
+          }
+        ]
+      }
+    },
+    {
+      "id": "official/tool-mrhqjeya",
+      "slug": "tool-mrhqjeya",
+      "releaseVersion": "2026.07.13",
+      "releasedAt": "2026-07-13T16:31:12.566Z",
+      "minPlatformVersion": "1.0.0",
+      "changelog": "",
+      "tool": {
+        "slug": "tool-mrhqjeya",
+        "name": "日程安排",
+        "icon": "🧩",
+        "description": "由独立 HTML 导入的平台工具，可在统一入口和顶部导航中访问。",
+        "tags": [],
+        "href": "/tools/tool-mrhqjeya",
+        "filePath": "/custom-tools/tool-mrhqjeya/index.html",
+        "publicAccess": false,
+        "createdAt": "2026-07-12T11:53:54.034Z",
+        "updatedAt": "2026-07-13T16:31:12.566Z"
+      },
+      "package": {
+        "url": "packages/tool-mrhqjeya-2026.07.13-336fda552830.zip",
+        "size": 404317,
+        "sha256": "336fda55283012ab5264c85866bd23eab1cf79b6b5a7777035ca42a15d76865e",
+        "directoryFingerprint": "e72eb670111c2ce7d3d02828c6b60f02f61786bc5a8080015c41e29f79ee7956",
+        "files": [
+          {
+            "path": ".tool-manifest.json",
+            "size": 465,
+            "sha256": "ea37a4c76021c28b76bea11c93be01a59d758a0d394d74523573021a6dc52c96"
+          },
+          {
+            "path": "assets/exceljs.min.js",
+            "size": 947702,
+            "sha256": "7e49da68588e250dbb8bba190d2caa8ab3787cc0284bda1d8b2f805c4df742c9"
+          },
+          {
+            "path": "assets/lunar.js",
+            "size": 435942,
+            "sha256": "9750324bfe1aa63c146f8c72b1143df924466c11c8a5277d7d9225c541a18aaa"
+          },
+          {
+            "path": "index.html",
+            "size": 157740,
+            "sha256": "e7d0398e1e55d396d9cfaa0e02d6efa9043092883d4abd685a12e2164118c4e5"
+          }
+        ]
+      }
+    },
+    {
+      "id": "official/tool-mrlpwjk3",
+      "slug": "tool-mrlpwjk3",
+      "releaseVersion": "2026.07.15",
+      "releasedAt": "2026-07-15T06:47:11.619Z",
+      "minPlatformVersion": "1.0.0",
+      "changelog": "",
+      "tool": {
+        "slug": "tool-mrlpwjk3",
+        "name": "欠款对账",
+        "icon": "🧩",
+        "description": "由独立 HTML 导入的平台工具，可在统一入口和顶部导航中访问。",
+        "tags": [],
+        "href": "/tools/tool-mrlpwjk3",
+        "filePath": "/custom-tools/tool-mrlpwjk3/index.html",
+        "publicAccess": false,
+        "createdAt": "2026-07-15T06:47:11.619Z",
+        "updatedAt": "2026-07-15T06:47:11.619Z"
+      },
+      "package": {
+        "url": "packages/tool-mrlpwjk3-2026.07.15-b9a1957f3410.zip",
+        "size": 10868,
+        "sha256": "b9a1957f3410f7c1c664619ecd84a4787150a02a981565f4e779fc0ee3b0af39",
+        "directoryFingerprint": "dd263bd6471a971d602fb61e43858e48e3e797dcdd9381ab126d481b4ba2b895",
+        "files": [
+          {
+            "path": ".tool-manifest.json",
+            "size": 465,
+            "sha256": "9ec0323e3d575aafb98678d30ce1f68a84357d99d68b4f57a72779b1383551b3"
+          },
+          {
+            "path": "index.html",
+            "size": 41052,
+            "sha256": "69d7c23e33e9fe4d4e5409aeb9f5e03c0de1b9f47974a001e741a5ce207fa637"
+          }
+        ]
+      }
+    },
+    {
+      "id": "official/tool-mro1gt5o",
+      "slug": "tool-mro1gt5o",
+      "releaseVersion": "2026.07.16",
+      "releasedAt": "2026-07-16T21:46:25.308Z",
+      "minPlatformVersion": "1.0.0",
+      "changelog": "",
+      "tool": {
+        "slug": "tool-mro1gt5o",
+        "name": "刷卡统计",
+        "icon": "🧩",
+        "description": "由独立 HTML 导入的平台工具，可在统一入口和顶部导航中访问。",
+        "tags": [],
+        "href": "/tools/tool-mro1gt5o",
+        "filePath": "/custom-tools/tool-mro1gt5o/index.html",
+        "publicAccess": false,
+        "createdAt": "2026-07-16T21:46:25.308Z",
+        "updatedAt": "2026-07-16T21:46:25.308Z"
+      },
+      "package": {
+        "url": "packages/tool-mro1gt5o-2026.07.16-451f07df79f0.zip",
+        "size": 20950,
+        "sha256": "451f07df79f0540888d12749e6ea365af6e2cf5caf486cf045ad5c66f63d5273",
+        "directoryFingerprint": "5f71b7448f039fe10d5bdfa76d4b74b9be8edf4a9eac4804f61f0bbb2b9afa1d",
+        "files": [
+          {
+            "path": ".tool-manifest.json",
+            "size": 465,
+            "sha256": "a3cab9ff6c52aa6e99eddcf7f539ce66bc1fc56583fcfb6059582a00a00f0305"
+          },
+          {
+            "path": "index.html",
+            "size": 76166,
+            "sha256": "39e92026d56297b89c538d7a69909c73f9ac84e3c2b25f8bf0920c65c0679320"
+          }
+        ]
+      }
+    },
+    {
+      "id": "official/tool-mrrgpqy4",
+      "slug": "tool-mrrgpqy4",
+      "releaseVersion": "2026.07.19",
+      "releasedAt": "2026-07-19T18:13:04.220Z",
+      "minPlatformVersion": "1.0.0",
+      "changelog": "",
+      "tool": {
+        "slug": "tool-mrrgpqy4",
+        "name": "人数计数",
+        "icon": "👥",
+        "description": "轻量、适合移动端使用的现场人数计数器。",
+        "tags": [
+          "人数统计",
+          "计数器"
+        ],
+        "href": "/tools/tool-mrrgpqy4",
+        "filePath": "/custom-tools/tool-mrrgpqy4/index.html",
+        "publicAccess": true,
+        "createdAt": "2026-07-19T07:16:35.000Z",
+        "updatedAt": "2026-07-19T18:13:04.220Z"
+      },
+      "package": {
+        "url": "packages/tool-mrrgpqy4-2026.07.19-fe902f6a25a4.zip",
+        "size": 4091,
+        "sha256": "fe902f6a25a45576d5f8a65a91f972f525f9b87107644db7b6428915549a29d1",
+        "directoryFingerprint": "80cb7bf468354bc55bb87f0b5aade1e4893cce7c87b1a25b63390dc74635baa4",
+        "files": [
+          {
+            "path": ".tool-manifest.json",
+            "size": 707,
+            "sha256": "4a30645abe822757dff6d26a218429eaa63d188f811ebe6f29921014101e4e6d"
+          },
+          {
+            "path": "index.html",
+            "size": 10413,
+            "sha256": "662feb3c27941bde0e3dab189285e7ee0fbd33f0e078a0a8e62ca057e8f64d10"
+          }
+        ]
+      }
+    },
+    {
+      "id": "official/tool-mrrn48dc",
+      "slug": "tool-mrrn48dc",
+      "releaseVersion": "2026.07.19",
+      "releasedAt": "2026-07-19T18:12:58.244Z",
+      "minPlatformVersion": "1.0.0",
+      "changelog": "",
+      "tool": {
+        "slug": "tool-mrrn48dc",
+        "name": "旅游计时",
+        "icon": "🏖️",
+        "description": "土耳其海边旅行倒计时页面。",
+        "tags": [
+          "倒计时",
+          "旅行"
+        ],
+        "href": "/tools/tool-mrrn48dc",
+        "filePath": "/custom-tools/tool-mrrn48dc/index.html",
+        "publicAccess": true,
+        "createdAt": "2026-07-19T10:15:48.000Z",
+        "updatedAt": "2026-07-19T18:12:58.244Z"
+      },
+      "package": {
+        "url": "packages/tool-mrrn48dc-2026.07.19-6bb440377002.zip",
+        "size": 2157544,
+        "sha256": "6bb440377002d788aa3707a62d9b194be569a2fecd0cebe6b24d7c573f5a757d",
+        "directoryFingerprint": "422262b6ac1929eaf64d3aca66784560b94c1777ce96649d671322901684ffc5",
+        "files": [
+          {
+            "path": ".tool-manifest.json",
+            "size": 704,
+            "sha256": "070badcd358141fe8e34f450cdb52915612acb52ffd2ab2cf15a5bdc1efbce0d"
+          },
+          {
+            "path": "index.html",
+            "size": 2866764,
+            "sha256": "64d89ddc5d99f327382dfdb0af9eede94770d3b283a32c41eba5476cab57b65c"
+          }
+        ]
+      }
+    },
+    {
+      "id": "official/tool-mrsw86w8",
+      "slug": "tool-mrsw86w8",
+      "releaseVersion": "2026.07.20",
+      "releasedAt": "2026-07-20T07:18:36.008Z",
+      "minPlatformVersion": "1.0.0",
+      "changelog": "",
+      "tool": {
+        "slug": "tool-mrsw86w8",
+        "name": "重点通知",
+        "icon": "🧩",
+        "description": "由独立 HTML 导入的平台工具，可在统一入口和顶部导航中访问。",
+        "tags": [],
+        "href": "/tools/tool-mrsw86w8",
+        "filePath": "/custom-tools/tool-mrsw86w8/index.html",
+        "publicAccess": false,
+        "createdAt": "2026-07-20T07:18:36.008Z",
+        "updatedAt": "2026-07-20T07:18:36.008Z"
+      },
+      "package": {
+        "url": "packages/tool-mrsw86w8-2026.07.20-d0180f506f13.zip",
+        "size": 8352,
+        "sha256": "d0180f506f13731a5cfa1e05c5d0ca5659f005ce26705c1eb1abf53eae00eafc",
+        "directoryFingerprint": "bc4af45d68a306a1e45200e2aa96b7fbf32d039fe8786e3737c2ffa96c5f4939",
+        "files": [
+          {
+            "path": ".tool-manifest.json",
+            "size": 653,
+            "sha256": "7b451709b54fcc06e4265f20e589a2103d0f33c8e60b908d167f0af688e9d82f"
+          },
+          {
+            "path": "index.html",
+            "size": 28637,
+            "sha256": "779ff2adbb9954563cbc44eec89f2069148c490fec3e5041fea74f7a7acbe824"
+          }
+        ]
+      }
+    },
+    {
+      "id": "official/tool-ms1saxuh",
+      "slug": "tool-ms1saxuh",
+      "releaseVersion": "2026.07.26",
+      "releasedAt": "2026-07-26T12:38:41.369Z",
+      "minPlatformVersion": "1.0.0",
+      "changelog": "",
+      "tool": {
+        "slug": "tool-ms1saxuh",
+        "name": "满意度啊",
+        "icon": "🧩",
+        "description": "由独立 HTML 导入的平台工具，可在统一入口和顶部导航中访问。",
+        "tags": [],
+        "href": "/tools/tool-ms1saxuh",
+        "filePath": "/custom-tools/tool-ms1saxuh/index.html",
+        "publicAccess": false,
+        "createdAt": "2026-07-26T12:38:41.369Z",
+        "updatedAt": "2026-07-26T12:38:41.369Z"
+      },
+      "package": {
+        "url": "packages/tool-ms1saxuh-2026.07.26-284cabec55db.zip",
+        "size": 23083,
+        "sha256": "284cabec55db6e1fe7648de3f90e3a03a789b074cdd027e66bbba37260bc0ed5",
+        "directoryFingerprint": "7d58728871398c793310d530fc48cc49bc91cee0dd996a88c64a86e72e2c5dfb",
+        "files": [
+          {
+            "path": ".tool-manifest.json",
+            "size": 653,
+            "sha256": "4f745ceb1427f5f8d76ce9c88ab31ee4b600f6d3c0b723966d73515eb1671905"
+          },
+          {
+            "path": "index.html",
+            "size": 83128,
+            "sha256": "8c9ac2a546f8594aab857d1cf965c11f60f25ba22f562c478d758eb23ef4e754"
+          }
+        ]
+      }
+    },
+    {
+      "id": "official/tool-ms4xb66s",
+      "slug": "tool-ms4xb66s",
+      "releaseVersion": "2026.07.28",
+      "releasedAt": "2026-07-28T17:22:08.788Z",
+      "minPlatformVersion": "1.0.0",
+      "changelog": "",
+      "tool": {
+        "slug": "tool-ms4xb66s",
+        "name": "激励统计",
+        "icon": "📊",
+        "description": "导入夜间操作 Excel，按人员、周期和操作等级核算激励并生成分析与导出结果。",
+        "tags": [
+          "激励核算",
+          "Excel",
+          "数据分析"
+        ],
+        "href": "/tools/tool-ms4xb66s",
+        "filePath": "/custom-tools/tool-ms4xb66s/index.html",
+        "publicAccess": false,
+        "createdAt": "2026-07-28T17:22:08.788Z",
+        "updatedAt": "2026-07-28T17:22:08.788Z"
+      },
+      "package": {
+        "url": "packages/tool-ms4xb66s-2026.07.28-8d08916e613a.zip",
+        "size": 32508,
+        "sha256": "8d08916e613a8d183b4242d8b97cf55152bed6e773f3486e7cef3a94598eed28",
+        "directoryFingerprint": "c48c4a73caae44c194e163828107809b766aefe14874c9f11c3421ccd8b4d148",
+        "files": [
+          {
+            "path": ".tool-manifest.json",
+            "size": 737,
+            "sha256": "7d27906a25a9c480d19cc539398a39e5ddca93cd84a3a677cc884df82b20ad40"
+          },
+          {
+            "path": "index.html",
+            "size": 122046,
+            "sha256": "c4864acf92b4c96a12dddddaa2ad1e5904569c649e93aa0be69172348bb226d3"
+          }
+        ]
+      }
+    },
+    {
+      "id": "official/tool-msbmscxd",
+      "slug": "tool-msbmscxd",
+      "releaseVersion": "2026.08.02",
+      "releasedAt": "2026-08-02T10:01:58.129Z",
+      "minPlatformVersion": "1.0.0",
+      "changelog": "",
+      "tool": {
+        "slug": "tool-msbmscxd",
+        "name": "三方软件分析",
+        "icon": "🧩",
+        "description": "由独立 HTML 导入的平台工具，可在统一入口和顶部导航中访问。",
+        "tags": [],
+        "href": "/tools/tool-msbmscxd",
+        "filePath": "/custom-tools/tool-msbmscxd/index.html",
+        "publicAccess": false,
+        "createdAt": "2026-08-02T10:01:58.129Z",
+        "updatedAt": "2026-08-02T10:01:58.129Z"
+      },
+      "package": {
+        "url": "packages/tool-msbmscxd-2026.08.02-5aa3177028d7.zip",
+        "size": 31358,
+        "sha256": "5aa3177028d777cab906930511cfce508ecb6f836cb4032c1b4479171c23ab9e",
+        "directoryFingerprint": "cfb5be998f5de1f990117367498181ff687813cae947ade9fa275afa7918243c",
+        "files": [
+          {
+            "path": ".tool-manifest.json",
+            "size": 665,
+            "sha256": "61ce264d035e7c6162a2222f232b51631f2a954bc7086c3519b69ed41d83972a"
+          },
+          {
+            "path": "index.html",
+            "size": 108178,
+            "sha256": "b162658d6e8facf7a0193cdf369b41f87dc4f446a3959947b1ab1da018ab05e1"
+          }
+        ]
+      }
+    },
+    {
+      "id": "official/tool-msbmu55i",
+      "slug": "tool-msbmu55i",
+      "releaseVersion": "2026.08.02",
+      "releasedAt": "2026-08-02T10:03:21.366Z",
+      "minPlatformVersion": "1.0.0",
+      "changelog": "",
+      "tool": {
+        "slug": "tool-msbmu55i",
+        "name": "三方软件要求",
+        "icon": "🧩",
+        "description": "由独立 HTML 导入的平台工具，可在统一入口和顶部导航中访问。",
+        "tags": [],
+        "href": "/tools/tool-msbmu55i",
+        "filePath": "/custom-tools/tool-msbmu55i/index.html",
+        "publicAccess": false,
+        "createdAt": "2026-08-02T10:03:21.366Z",
+        "updatedAt": "2026-08-02T10:03:21.366Z"
+      },
+      "package": {
+        "url": "packages/tool-msbmu55i-2026.08.02-194b6709dbd3.zip",
+        "size": 16747,
+        "sha256": "194b6709dbd3a458209e21450ade77f153ff2978f600c2646b8dd29320345f20",
+        "directoryFingerprint": "1dc1bb8d97c4782a9516009e380071676c5df8786a57a005faaa638fd4c8a751",
+        "files": [
+          {
+            "path": ".tool-manifest.json",
+            "size": 665,
+            "sha256": "cbdef02576740336691ac137918971d925ae05dd92fc1eeb4bbe01a88267996a"
+          },
+          {
+            "path": "index.html",
+            "size": 58422,
+            "sha256": "090ed15db1db432a22102a595227c242a5cb1e27692a1f06361c4a8ceceaa210"
+          }
+        ]
+      }
+    },
+    {
+      "id": "official/tool-msf5b7nn",
+      "slug": "tool-msf5b7nn",
+      "releaseVersion": "2026.08.04",
+      "releasedAt": "2026-08-04T21:03:49.379Z",
+      "minPlatformVersion": "1.0.0",
+      "changelog": "",
+      "tool": {
+        "slug": "tool-msf5b7nn",
+        "name": "会议考勤",
+        "icon": "🧩",
+        "description": "批量导入QR、RFC、WFM名单及线上线下签到表，合并去重参会人员，按最早签到时间判定准时、迟到、虚假签到或缺席，并支持检索与导出。",
+        "tags": [
+          "表格导入",
+          "名单去重",
+          "签到匹配",
+          "人员检索",
+          "结果导出"
+        ],
+        "href": "/tools/tool-msf5b7nn",
+        "filePath": "/custom-tools/tool-msf5b7nn/index.html",
+        "publicAccess": false,
+        "createdAt": "2026-08-04T21:03:49.379Z",
+        "updatedAt": "2026-08-04T21:03:49.379Z"
+      },
+      "package": {
+        "url": "packages/tool-msf5b7nn-2026.08.04-7b1a7efb4b64.zip",
+        "size": 37102,
+        "sha256": "7b1a7efb4b64f4c8813c56089965cfd5741028c8d30542a547fd536f669f287d",
+        "directoryFingerprint": "55989e7b0309d5eab834ca0a8ae728acda3bdf44a844f2618bad8e02c91b90b2",
+        "files": [
+          {
+            "path": ".tool-manifest.json",
+            "size": 865,
+            "sha256": "0be10a0c7af17e88e13b49d5018e27d19b2c7cd3b210fb9bc6807ad4afdf8cfa"
+          },
+          {
+            "path": "index.html",
+            "size": 146858,
+            "sha256": "5606f76916d10729d0ad086f7f8a9453f5965413f87ea283348cd4bb213c160b"
+          }
+        ]
+      }
+    },
+    {
+      "id": "official/tool-msh8aro4",
+      "slug": "tool-msh8aro4",
+      "releaseVersion": "2026.08.06",
+      "releasedAt": "2026-08-06T12:20:00.129Z",
+      "minPlatformVersion": "1.0.0",
+      "changelog": "",
+      "tool": {
+        "slug": "tool-msh8aro4",
+        "name": "平台全景",
+        "icon": "🧩",
+        "description": "双语展示平台核心业务模块、自定义及内置 HTML 工具、现场导入扩展与访问方式，支持工具搜索筛选和能力分类浏览。",
+        "tags": [
+          "能力总览",
+          "工具目录",
+          "双语展示",
+          "访问控制"
+        ],
+        "href": "/tools/tool-msh8aro4",
+        "filePath": "/custom-tools/tool-msh8aro4/index.html",
+        "publicAccess": true,
+        "createdAt": "2026-08-06T08:02:59.860Z",
+        "updatedAt": "2026-08-06T12:20:00.129Z"
+      },
+      "package": {
+        "url": "packages/tool-msh8aro4-2026.08.06-ec6bade313b1.zip",
+        "size": 15007,
+        "sha256": "ec6bade313b10de218bb451a36182ebd09e9c63891ce3f24fc976b6eef532c71",
+        "directoryFingerprint": "4834236915aa2be56f30be0098502f1fc2dd17fa6914225d79d93aa6a32d073b",
+        "files": [
+          {
+            "path": ".tool-manifest.json",
+            "size": 816,
+            "sha256": "6c7a82d1f8692f3dd455047aa9f497d16cbd0e044d3779508bf075b407710c76"
+          },
+          {
+            "path": "index.html",
+            "size": 38973,
+            "sha256": "d8e3a4b53f5091be349fa4174d4b53e91d9f2980a6e128eb3be8857fb82385a3"
+          }
+        ]
+      }
+    },
+    {
+      "id": "official/tool-mtakhxqm",
+      "slug": "tool-mtakhxqm",
+      "releaseVersion": "2026.09.06",
+      "releasedAt": "2026-09-06T14:20:00.000Z",
+      "minPlatformVersion": "1.0.0",
+      "changelog": "",
+      "tool": {
+        "slug": "tool-mtakhxqm",
+        "name": "阿拉伯语互动课堂",
+        "nameEn": "Egyptian Arabic Interactive Classroom",
+        "icon": "🇪🇬",
+        "description": "面向中文学习者的阿拉伯语与埃及口语沉浸式互动课堂，涵盖字母发音、连写变形、符号词汇、单词卡片记忆库、超市数字生活场景与测验。",
+        "descriptionEn": "An immersive Egyptian Arabic interactive learning platform for Chinese speakers, featuring phonetics, joining rules, symbol vocabulary, flashcards memory deck, real-world dialogues, and quizzes.",
+        "tags": [
+          "阿拉伯语",
+          "埃及口语",
+          "字母拼读",
+          "单词卡片",
+          "互动课堂"
+        ],
+        "href": "/tools/tool-mtakhxqm",
+        "filePath": "/custom-tools/tool-mtakhxqm/index.html",
+        "publicAccess": true,
+        "createdAt": "2026-08-26T20:49:48.814Z",
+        "updatedAt": "2026-09-06T14:20:00.000Z"
+      },
+      "package": {
+        "url": "packages/tool-mtakhxqm-2026.09.06-2723815b399d.zip",
+        "size": 9953783,
+        "sha256": "2723815b399d6ffc50fbebfafa8f8b8aa721525085c534971159dafb4535e5ef",
+        "directoryFingerprint": "0d58323ab4a56f7c771a5d6be52d59fd663fba189175e30efe5e5f1f985e0de6",
+        "files": [
+          {
+            "path": ".i18n.json",
+            "size": 8804,
+            "sha256": "d08c7957726b7d5ecd7314ac02779b9539d372419899867fb72f75a3a76a4281"
+          },
+          {
+            "path": ".tool-manifest.json",
+            "size": 1171,
+            "sha256": "e9549ba35fe64ba358a5b6f32ea570ea72ad33bb4eadf0334d82c02b7bd112db"
+          },
+          {
+            "path": "assets/articulation/README.md",
+            "size": 742,
+            "sha256": "ed0bb8f3c4a78244c641010f86a8df084e76abfbf7bc5ecd5c212ec788330f4b"
+          },
+          {
+            "path": "assets/articulation/mouth-front.png",
+            "size": 1029596,
+            "sha256": "6321280ecd12a7e6c4477c181d104cd7545ebefecd1ba2c3775740876b2b72a3"
+          },
+          {
+            "path": "assets/articulation/vocal-tract-side.png",
+            "size": 1391651,
+            "sha256": "afa6099ddc7b31aec16f8933706d7b37a7f0458d08a7e312bf493bb8014cb955"
+          },
+          {
+            "path": "audio/README.md",
+            "size": 792,
+            "sha256": "3914f9925cf80108a89bba5654aa6fa663591f0fbb748f032ee085ba1746606d"
+          },
+          {
+            "path": "audio/audio.bundle.zip",
+            "size": 7486587,
+            "sha256": "f7a3e62f9eef4f22d4d36ff200f4f11388de7136edf6bca578a85149c5d29067"
+          },
+          {
+            "path": "audio/manifest.json",
+            "size": 127789,
+            "sha256": "2bc03b999f9f8f3d18ad7b30e9a87b887fa2324dca88dd727a0b030fe0c439a4"
+          },
+          {
+            "path": "generate-neural-audio.mjs",
+            "size": 10493,
+            "sha256": "4dcc5f2a7010b6b2f1563f94a36700c3738ac9644f64709f3c60734452de6e26"
+          },
+          {
+            "path": "handwriting/LICENSE-CALLIAR.txt",
+            "size": 1629,
+            "sha256": "602fc5cc94c5bec0ed36a108649761b0aae77e0d85eca40a39b07295f0ed6f76"
+          },
+          {
+            "path": "handwriting/build-calliar-trajectories.py",
+            "size": 8128,
+            "sha256": "0b5e28bfacb5c4cab4ee343cb91c78f30cf69862dfa82f9944b9d1d9689703b7"
+          },
+          {
+            "path": "handwriting/calliar-human-strokes.json",
+            "size": 55924,
+            "sha256": "cefbfc7524f7ee92a4b4fd1f35f2e25cf4dafaa3e0a040c18c311a38fc0332c0"
+          },
+          {
+            "path": "handwriting/engine.css",
+            "size": 6015,
+            "sha256": "e3adce10b8368ac4d5f2f9404c8d0a1da6b99e11150d8ef12975af6fb74ac026"
+          },
+          {
+            "path": "handwriting/engine.js",
+            "size": 23738,
+            "sha256": "3f746bcb8ea90ebb77e37619ee496221d9342f60bf3889a563b3438a2c32bb37"
+          },
+          {
+            "path": "index.html",
+            "size": 307346,
+            "sha256": "598311156ae09e410fe5a84385688e50d5fc876aaf7504821b80d9d6d19beaf6"
+          },
+          {
+            "path": "pack-audio.mjs",
+            "size": 1690,
+            "sha256": "4177060fa6b6908c3d32ad737fb170f395983f7606e2839ca6a0d439c25c2a5a"
+          },
+          {
+            "path": "unpack-audio.mjs",
+            "size": 2717,
+            "sha256": "0e8b3bd1a2120e7b88f7830c3e597c2ff4ab20d5cf365f3e95736a2b7b9d3825"
+          }
+        ]
+      }
+    },
+    {
+      "id": "official/tool-mtpx4vtr",
+      "slug": "tool-mtpx4vtr",
+      "releaseVersion": "2026.09.06",
+      "releasedAt": "2026-09-06T15:18:14.975Z",
+      "minPlatformVersion": "1.0.0",
+      "changelog": "",
+      "tool": {
+        "slug": "tool-mtpx4vtr",
+        "name": "餐单核验",
+        "nameEn": "Order Data Validator",
+        "icon": "🧩",
+        "description": "用于餐厅采购订单数据清洗与核对，支持Excel导入、文本解析、数量单位纠错及多表差异比对。",
+        "descriptionEn": "A restaurant order data validation tool for cleaning and checking procurement records, supporting Excel import, text parsing, quantity and unit correction, and multi-table discrepancy comparison.",
+        "tags": [
+          "Excel核对",
+          "数据清洗",
+          "文本解析",
+          "单位纠错",
+          "差异比对"
+        ],
+        "href": "/tools/tool-mtpx4vtr",
+        "filePath": "/custom-tools/tool-mtpx4vtr/index.html",
+        "publicAccess": true,
+        "createdAt": "2026-09-06T14:40:07.455Z",
+        "updatedAt": "2026-09-06T15:18:14.975Z"
+      },
+      "package": {
+        "url": "packages/tool-mtpx4vtr-2026.09.06-33328c9da798.zip",
+        "size": 31423,
+        "sha256": "33328c9da798fb52a7b41c04503079fc1b9ea03296162b62ddae55099d74bd4c",
+        "directoryFingerprint": "ff333a1e093963f48b1d600c6d1fa36dff2fc9076b78139ee9feed846fb05774",
+        "files": [
+          {
+            "path": ".i18n.json",
+            "size": 6941,
+            "sha256": "3f63de92f56c8ba930847a8118f38435c62fa73a7435ec7165a236e5bd468ab7"
+          },
+          {
+            "path": ".tool-manifest.json",
+            "size": 1064,
+            "sha256": "c86694d502477146faa1a175f0d3bc021fc61721637c8c4af60725eb3abdce30"
+          },
+          {
+            "path": "index.html",
+            "size": 112853,
+            "sha256": "88921506ec8e70d5f2f6d5035d0bf5d43844e683c3412cbf71641d94c3949529"
+          }
+        ]
+      }
+    }
+  ]
+}
