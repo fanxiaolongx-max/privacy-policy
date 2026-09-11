@@ -1054,7 +1054,6 @@
             if (state.dimension === '3d') node.z += node.vz * elapsed;
         }
         state.alpha += (state.alphaTarget - state.alpha) * 0.035 * elapsed;
-        if (state.alpha < 0.045 && !nodes.some(node => node.dragging)) state.running = false;
     }
 
     function worldToScreen(node) {

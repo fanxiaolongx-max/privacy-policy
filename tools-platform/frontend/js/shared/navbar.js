@@ -10,6 +10,7 @@ const NAV_BUILTIN_LINKS = [
     { id: 'expedite', href: '/expedite', icon: '⚡', label: '一键催办', labelKey: 'nav.expedite', defaultCategory: 'business', match: p => p.startsWith('/expedite') },
     { id: 'monthly', href: '/monthly', icon: '📅', label: '月报页面', labelKey: 'nav.monthly', defaultCategory: 'business', match: p => p.startsWith('/monthly') },
     { id: 'bigscreen', href: '/bigscreen', icon: '🖥️', label: '大屏看板', labelKey: 'nav.bigscreen', defaultCategory: 'business', match: p => p.startsWith('/bigscreen') },
+    { id: 'topic-analysis', href: '/topic-analysis', icon: '📊', label: '专题分析', labelKey: 'nav.topicAnalysis', defaultCategory: 'cat_mshv1h0m', match: p => p.startsWith('/topic-analysis') },
     { id: 'frt', href: '/frt', icon: '📊', label: 'FRT核算', labelKey: 'nav.frt', defaultCategory: 'audit', match: p => p.startsWith('/frt') },
     { id: 'praudit', href: '/praudit', icon: '📋', label: 'PR稽查', labelKey: 'nav.praudit', defaultCategory: 'audit', match: p => p.startsWith('/praudit') },
     { id: 'storage', href: '/storage', icon: '💽', label: '迁移状态', labelKey: 'nav.storage', defaultCategory: 'system', match: p => p.startsWith('/storage') },
@@ -35,7 +36,7 @@ const NAV_DEFAULT_SETTINGS = {
         { id: 'cat_mshua5iu', name: '休闲娱乐', nameEn: 'Play' }
     ],
     categoryByItem: {
-        frt: 'audit', praudit: 'audit', storage: 'system', 'db-explorer': 'system',
+        frt: 'audit', praudit: 'audit', storage: 'system', 'db-explorer': 'system', 'topic-analysis': 'cat_mshv1h0m',
         'custom:eos_tool-v2': 'cat_mq0nny3v', 'custom:eos': 'cat_mq0nny3v',
         'custom:eos_tool-v4': 'cat_mq0nny3v', 'custom:eos_tool-v8': 'cat_mq0nny3v',
         'custom:esn-check': 'cat_mq0nny3v', 'custom:pr': 'audit',
@@ -51,7 +52,7 @@ const NAV_DEFAULT_SETTINGS = {
         'custom:question-bank-assistant-privacy': 'cat_mshv1h0m', 'custom:tool-mr88gv9x': 'cat_mshv1h0m'
     },
     itemOrder: [
-        'praudit', 'custom:pr', 'frt', 'storage', 'db-explorer', 'custom:eos_tool-v8',
+        'praudit', 'custom:pr', 'frt', 'storage', 'db-explorer', 'topic-analysis', 'custom:eos_tool-v8',
         'custom:tool-mqtlwcrv', 'custom:nis_2026h1_summary', 'custom:tool-ms4xb66s',
         'custom:particle-effects', 'custom:esn-check', 'custom:tool-mqp55fna',
         'custom:tool-mrrn48dc', 'custom:tool-ms1saxuh', 'custom:tool-mr88gv9x',
@@ -332,6 +333,7 @@ function registerNavbarI18n() {
             'nav.expedite': '一键催办',
             'nav.monthly': '月报页面',
             'nav.bigscreen': '大屏看板',
+            'nav.topicAnalysis': '专题分析',
             'nav.frt': 'FRT核算',
             'nav.praudit': 'PR稽查',
             'nav.storage': '迁移状态',
@@ -772,6 +774,7 @@ function registerNavbarI18n() {
             'nav.expedite': 'Expedite',
             'nav.monthly': 'Monthly',
             'nav.bigscreen': 'Big Screen',
+            'nav.topicAnalysis': 'Topic Analysis',
             'nav.frt': 'FRT KPI',
             'nav.praudit': 'PR Audit',
             'nav.storage': 'Migration',
@@ -6161,7 +6164,7 @@ window.openToolsKnowledgeGraph = function (options = {}) {
             script.addEventListener('load', handleLoad, { once: true });
             script.addEventListener('error', handleError, { once: true });
             if (!existing) {
-                script.src = '/js/shared/ai-knowledge-graph-spatial-themes-v5.js?v=20260908-01';
+                script.src = '/js/shared/ai-knowledge-graph-spatial-themes-v5.js?v=20260911-01';
                 document.body.appendChild(script);
             }
         }).catch(error => {

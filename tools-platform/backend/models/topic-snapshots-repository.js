@@ -34,6 +34,16 @@ async function ensureReady() {
     `);
     await run('CREATE UNIQUE INDEX IF NOT EXISTS idx_topic_snapshots_platform_hash ON topic_snapshots(platform, content_hash)');
     await run('CREATE INDEX IF NOT EXISTS idx_topic_snapshots_captured ON topic_snapshots(platform, captured_at DESC)');
+    const legacyRows = await all(`SELECT id, payload_json FROM topic_snapshots WHERE summary_json NOT LIKE '%"summaryVersion":2%'`);
+    for (const row of legacyRows) {
+        try {
+            const snapshot = normalizeSnapshot(JSON.parse(row.payload_json));
+            const summary = buildSummary(snapshot);
+            await run('UPDATE topic_snapshots SET period_label = ?, summary_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [summary.period, JSON.stringify(summary), row.id]);
+        } catch (error) {
+            console.warn(`[topic-snapshots] Unable to upgrade summary for ${row.id}: ${error.message}`);
+        }
+    }
 }
 
 function validIsoTime(value, fallback) {
@@ -74,6 +84,93 @@ function rowCount(value) {
     return Array.isArray(value) ? value.length : 0;
 }
 
+function number(value) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function ratePercent(value) {
+    const parsed = number(value);
+    return Math.abs(parsed) <= 1 ? parsed * 100 : parsed;
+}
+
+function sumField(rows, field) {
+    return (rows || []).reduce((sum, row) => sum + number(row?.[field]), 0);
+}
+
+function firstNumber(row, keys) {
+    for (const key of keys) {
+        const value = Number(row?.[key]);
+        if (Number.isFinite(value)) return value;
+    }
+    return 0;
+}
+
+function buildEosTopic(rows, type, settings) {
+    const grouped = new Map();
+    const aliases = { 'NILE ON LINE (NOL)': 'Etisalat Misr' };
+    for (const row of rows || []) {
+        const customer = aliases[String(row?.customer_name || '').trim()] || String(row?.customer_name || '').trim() || '未分类客户';
+        const productLine = String(row?.product_line_name || row?.product_line_map || '');
+        const product = String(row?.product_name || '未命名产品');
+        const label = type === 'product'
+            ? String(row?.product_name || row?.product_code_name || row?.product_code || '未命名产品')
+            : String(row?.software_version || row?.version_name || row?.product_name || '未命名版本');
+        const key = [customer, productLine, type === 'product' ? String(row?.product_name || '') : product, label].join('|||');
+        if (!grouped.has(key)) grouped.set(key, { quantity: 0, incorporated: 0, pending: 0 });
+        const item = grouped.get(key);
+        const quantity = firstNumber(row, ['incorporation_total_nes', 'annual_storage', 'capacities', 'current_inventory']);
+        const normal = type === 'product'
+            ? firstNumber(row, ['before_urgent_incorporated_nes_dtl', 'incorporated_nes'])
+            : firstNumber(row, ['nc_urgent_incorp_complet_rate_dtl', 'incorporated_nes']);
+        item.quantity += quantity;
+        item.incorporated += quantity > 0 ? Math.min(quantity, normal + firstNumber(row, ['deactivated_nes'])) : normal;
+        item.pending += firstNumber(row, ['to_be_incorporated_nes']);
+    }
+    const plans = settings?.eos?.plans?.[type] || {};
+    const totals = [...grouped.entries()].reduce((result, [key, item]) => {
+        const annualPlan = Math.min(item.pending, Math.max(0, Math.floor(number(plans[key]))));
+        result.quantity += item.quantity; result.incorporated += item.incorporated; result.pending += item.pending;
+        result.annualPlan += annualPlan; result.noPlan += Math.max(0, item.pending - annualPlan);
+        return result;
+    }, { quantity: 0, incorporated: 0, pending: 0, annualPlan: 0, noPlan: 0 });
+    totals.currentRate = totals.quantity ? Math.min(totals.quantity, totals.incorporated) / totals.quantity * 100 : 0;
+    totals.plannedRate = totals.quantity ? Math.min(totals.quantity, totals.incorporated + totals.annualPlan) / totals.quantity * 100 : 0;
+    totals.targetRate = number(settings?.eos?.targets?.[type]);
+    return totals;
+}
+
+function ytdRows(data, year) {
+    return (data?.rows || []).filter(row => row?.scope === 'TOTAL' && number(row?.year) === number(year) && number(row?.month) <= number(data?.currentMonth));
+}
+
+function changeTopic(data) {
+    const current = ytdRows(data, data?.currentYear); const previous = ytdRows(data, data?.previousYear);
+    const taskCount = sumField(current, 'task_count'); const priorTaskCount = sumField(previous, 'task_count');
+    const weightedBase = sumField(current, 'task_count');
+    const operationSuccessRate = weightedBase
+        ? current.reduce((sum, row) => sum + ratePercent(row?.operation_success_rate) * number(row?.task_count), 0) / weightedBase
+        : 0;
+    return { taskCount, priorTaskCount, yoyRate: priorTaskCount ? (taskCount - priorTaskCount) / priorTaskCount * 100 : 0, rollbackCount: sumField(current, 'rollback_count'), highRiskCount: sumField(current, 'high_core_total_count'), operationSuccessRate };
+}
+
+function interceptionTopic(data) {
+    const current = ytdRows(data, data?.currentYear); const previous = ytdRows(data, data?.previousYear);
+    const total = sumField(current, 'interception_cnt'); const priorTotal = sumField(previous, 'interception_cnt');
+    return { total, priorTotal, yoyRate: priorTotal ? (total - priorTotal) / priorTotal * 100 : 0, commandCount: sumField(current, 'commands_interception_cnt'), graphicalCount: sumField(current, 'graphical_interception_cnt') };
+}
+
+function srTopic(data) {
+    const current = (data?.summary || []).find(row => row?.scope === 'TOTAL' && row?.period === 'currentYtd') || {};
+    const previous = (data?.summary || []).find(row => row?.scope === 'TOTAL' && row?.period === 'previousYtd') || {};
+    const total = number(current.sr_total); const priorTotal = number(previous.sr_total);
+    return {
+        total, priorTotal, yoyRate: priorTotal ? (total - priorTotal) / priorTotal * 100 : 0,
+        frtRate: ratePercent(current.sr_frt), openCount: number(current.unclose_sr_cnt), overdueCount: number(current.overdue_sr_cnt),
+        minorCount: number(current.minor_sr_cnt), majorCount: number(current.major_sr_cnt), criticalCount: number(current.critical_sr_cnt)
+    };
+}
+
 function buildSummary(snapshot) {
     if (snapshot.platform === 'netcare') {
         const data = snapshot.data;
@@ -88,10 +185,21 @@ function buildSummary(snapshot) {
         };
         const srYear = data.sr?.currentYear || snapshot.settings?.year || '';
         const srMonth = data.sr?.currentMonth || snapshot.settings?.month || '';
+        const certificateTotal = sumField(data.certificate, 'need_reduce_cnt');
+        const certificateReduced = sumField(data.certificate, 'reduced_cnt');
         return {
+            summaryVersion: 2,
             period: srYear ? `${srYear}${srMonth ? `-${String(srMonth).padStart(2, '0')}` : ''}` : '',
             totalRows: Object.values(metrics).reduce((sum, value) => sum + value, 0),
-            metrics
+            metrics,
+            topics: {
+                certificate: { total: certificateTotal, reduced: certificateReduced, pending: Math.max(0, certificateTotal - certificateReduced), completionRate: certificateTotal ? certificateReduced / certificateTotal * 100 : 0 },
+                eosProduct: buildEosTopic(data.eosProduct, 'product', snapshot.settings),
+                eosVersion: buildEosTopic(data.eosVersion, 'version', snapshot.settings),
+                change: changeTopic(data.change),
+                interception: interceptionTopic(data.interception),
+                sr: srTopic(data.sr)
+            }
         };
     }
 
@@ -103,15 +211,29 @@ function buildSummary(snapshot) {
     const metrics = {
         monthlySummaries: rowCount(data.months),
         rawRows,
-        selectedRequired: Number(selected.required ?? selected.needReturn ?? selected.shouldReturn ?? 0) || 0,
-        selectedReturned: Number(selected.returned ?? selected.actualReturn ?? 0) || 0,
-        selectedRecorded: Number(selected.recorded ?? selected.actualRecord ?? 0) || 0
+        selectedRequired: number(selected.required ?? selected.needReturn ?? selected.shouldReturn),
+        selectedReturned: number(selected.returned ?? selected.actualReturn),
+        selectedRecorded: number(selected.recorded ?? selected.actualRecord)
     };
     const year = Number(snapshot.settings?.year) || '';
     return {
+        summaryVersion: 2,
         period: year ? `${year}${month ? `-${String(month).padStart(2, '0')}` : ''}` : '',
         totalRows: metrics.monthlySummaries + metrics.rawRows,
-        metrics
+        metrics,
+        topics: {
+            return: {
+                required: metrics.selectedRequired, returned: metrics.selectedReturned,
+                pending: number(selected.pending) || Math.max(0, metrics.selectedRequired - metrics.selectedReturned),
+                returnRate: number(selected.returnRate) || (metrics.selectedRequired ? metrics.selectedReturned / metrics.selectedRequired * 100 : 0),
+                targetRate: number(snapshot.settings?.targets?.returnRate)
+            },
+            filing: {
+                required: metrics.selectedRequired, recorded: metrics.selectedRecorded,
+                recordRate: number(selected.recordRate) || (metrics.selectedRequired ? metrics.selectedRecorded / metrics.selectedRequired * 100 : 0),
+                limitRate: number(snapshot.settings?.targets?.recordRate), rawRows
+            }
+        }
     };
 }
 
@@ -155,6 +277,8 @@ async function saveSnapshot(input, options = {}) {
             name = CASE WHEN excluded.name <> '' THEN excluded.name ELSE topic_snapshots.name END,
             imported_at = excluded.imported_at,
             exported_at = excluded.exported_at,
+            period_label = excluded.period_label,
+            summary_json = excluded.summary_json,
             payload_json = excluded.payload_json,
             payload_bytes = excluded.payload_bytes,
             updated_at = CURRENT_TIMESTAMP`,

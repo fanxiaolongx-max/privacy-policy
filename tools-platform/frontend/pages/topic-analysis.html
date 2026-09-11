@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>专题分析</title>
     <link rel="stylesheet" href="/css/shared.css?v=20260911-03">
-    <link rel="stylesheet" href="/css/topic-analysis.css?v=20260911-01">
+    <link rel="stylesheet" href="/css/topic-analysis.css?v=20260911-02">
 </head>
 <body>
     <main class="topic-page">
@@ -30,18 +30,21 @@
 
         <section class="topic-panel">
             <div class="topic-panel-head">
-                <div><h2>历史趋势</h2><p>当前预留指标为每份快照的记录总量，后续可扩展 EOS 收编、返单率、录入率等业务指标。</p></div>
-                <label>专题范围
-                    <select id="platformFilter"><option value="">全部</option><option value="netcare">NetCare</option><option value="datafab">DataFab</option></select>
-                </label>
+                <div><h2 id="analysisTitle">专题历史分析</h2><p id="metricDefinition">选择专题后，按同一指标口径比较每次归档时的历史状态。</p></div>
+                <div class="topic-filters">
+                    <label>分析专题<select id="topicFilter"></select></label>
+                    <label>趋势指标<select id="metricFilter"></select></label>
+                </div>
             </div>
+            <div id="topicKpis" class="topic-dynamic-kpis" aria-label="专题关键指标"></div>
             <div id="trendChart" class="topic-chart" aria-label="专题快照数据量趋势"></div>
+            <div class="topic-chart-legend"><span><i class="netcare"></i>NetCare</span><span><i class="datafab"></i>DataFab</span><em>每个点代表一次已归档快照</em></div>
         </section>
 
         <section class="topic-panel">
             <div class="topic-panel-head"><div><h2>历史快照</h2><p>查看摘要、下载原始 JSON，或清理不再需要的快照。</p></div><span id="loadStatus" class="topic-status">正在读取…</span></div>
             <div class="topic-table-wrap">
-                <table><thead><tr><th>数据时间</th><th>专题</th><th>周期</th><th>数据量</th><th>导入时间</th><th>操作</th></tr></thead><tbody id="historyBody"></tbody></table>
+                <table><thead><tr><th>数据时间</th><th>来源</th><th>周期</th><th id="metricColumnTitle">当前指标</th><th>导入时间</th><th>操作</th></tr></thead><tbody id="historyBody"></tbody></table>
             </div>
             <div id="emptyState" class="topic-empty" hidden>还没有快照。请在 UIVF12 脚本仓库打开“模拟浮窗”并导入正式站点导出的 JSON。</div>
         </section>
@@ -60,7 +63,7 @@
     </div>
 
     <script src="/js/shared/api.js?v=20260911-03"></script>
-    <script src="/js/shared/navbar.js?v=20260911-03"></script>
-    <script src="/js/topic-analysis.js?v=20260911-01"></script>
+    <script src="/js/shared/navbar.js?v=20260911-04"></script>
+    <script src="/js/topic-analysis.js?v=20260911-02"></script>
 </body>
 </html>

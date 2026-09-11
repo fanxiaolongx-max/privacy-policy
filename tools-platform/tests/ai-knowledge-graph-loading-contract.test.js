@@ -22,7 +22,7 @@ test('knowledge graph exposes cancellable NDJSON progress and tenant-scoped cach
     assert.match(serviceSource, /reportProgress\(onProgress/);
 });
 
-test('graph UI cancels stale loads, renders progress, and avoids all-pairs collision scans', () => {
+test('graph UI cancels stale loads, keeps enabled motion running, and avoids all-pairs collision scans', () => {
     const graphSource = read('frontend/js/shared/ai-knowledge-graph-spatial-themes-v5.js');
 
     assert.match(graphSource, /\/api\/ai\/knowledge\/graph-stream/);
@@ -32,7 +32,7 @@ test('graph UI cancels stale loads, renders progress, and avoids all-pairs colli
     assert.match(graphSource, /loadChatGraphWithProgress/);
     assert.match(graphSource, /function forEachNearbyNodePair/);
     assert.doesNotMatch(graphSource, /for \(let j = i \+ 1; j < nodes\.length; j \+= 1\)/);
-    assert.match(graphSource, /state\.alpha < 0\.045/);
+    assert.doesNotMatch(graphSource, /state\.alpha < 0\.045.*state\.running = false/);
 });
 
 test('custom tool shell reports stages, times out, and offers retry', () => {
