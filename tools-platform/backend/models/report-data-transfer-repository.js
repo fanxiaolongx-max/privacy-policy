@@ -123,17 +123,18 @@ async function collectData() {
 
 async function createBackupPackage() {
     const data = await collectData();
-    const dataText = JSON.stringify(data);
     const zip = new JSZip();
     const attachmentNames = new Set();
     data.reportSnapshots.forEach(row => {
-        [row.image_path, row.excel_path].forEach(value => {
-            const name = attachmentNameFromApiPath(value);
-            if (name) attachmentNames.add(name);
-        });
+        // Full-report screenshots and generated Excel files are derived output.
+        // Do not move them between sites; only preserve evidence files referenced
+        // by the source JSON, whose binary content cannot be regenerated.
+        row.image_path = null;
+        row.excel_path = null;
         collectAttachmentNamesFromJson(row.raw_data_json, attachmentNames);
     });
     data.slaSnapshots.forEach(row => collectAttachmentNamesFromJson(row.payload_json, attachmentNames));
+    const dataText = JSON.stringify(data);
 
     const imagesDir = path.join(getReportDataDir(), 'images');
     const includedAttachments = [];

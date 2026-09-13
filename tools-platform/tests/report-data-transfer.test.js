@@ -47,8 +47,11 @@ test('report packages merge different periods and replace matching snapshot-mont
         const imagesDir = path.join(getReportDataDir(), 'images');
         fs.mkdirSync(imagesDir, { recursive: true });
         fs.writeFileSync(path.join(imagesDir, 'snapshot-a_1.png'), 'image-a');
+        fs.writeFileSync(path.join(imagesDir, 'snapshot-a_1.xlsx'), 'excel-a');
         fs.writeFileSync(path.join(imagesDir, 'manual-adjust-proof.png'), 'proof-a');
-        await runReport("UPDATE ReportSnapshots SET image_path='/api/db/images/snapshot-a_1.png' WHERE snapshot_id='snapshot-a'");
+        await runReport(`UPDATE ReportSnapshots
+            SET image_path='/api/db/images/snapshot-a_1.png', excel_path='/api/db/images/snapshot-a_1.xlsx'
+            WHERE snapshot_id='snapshot-a'`);
         await appDb.run('UPDATE sla_snapshots SET payload_json = ? WHERE id = ?', [JSON.stringify({
             id: 'snapshot-a',
             marker: 'from-a',
@@ -66,14 +69,17 @@ test('report packages merge different periods and replace matching snapshot-mont
 
         const merged = await transfer.restoreBackupPackage(packageBuffer, { mode: 'merge' });
         assert.equal(merged.mode, 'merge');
-        assert.equal(merged.counts.attachments, 2);
-        assert.equal(fs.readFileSync(path.join(getReportDataDir(), 'images', 'snapshot-a_1.png'), 'utf8'), 'image-a');
+        assert.equal(merged.counts.attachments, 1);
+        assert.equal(fs.existsSync(path.join(getReportDataDir(), 'images', 'snapshot-a_1.png')), false);
+        assert.equal(fs.existsSync(path.join(getReportDataDir(), 'images', 'snapshot-a_1.xlsx')), false);
         assert.equal(fs.readFileSync(path.join(getReportDataDir(), 'images', 'manual-adjust-proof.png'), 'utf8'), 'proof-a');
 
-        const reports = await allReport('SELECT snapshot_id, month, raw_data_json FROM ReportSnapshots ORDER BY snapshot_id');
+        const reports = await allReport('SELECT snapshot_id, month, raw_data_json, image_path, excel_path FROM ReportSnapshots ORDER BY snapshot_id');
         assert.equal(reports.length, 2);
         assert.deepEqual(reports.map(row => row.snapshot_id), ['snapshot-a', 'snapshot-b']);
         assert.equal(JSON.parse(reports[0].raw_data_json).marker, 'from-a');
+        assert.equal(reports[0].image_path, null);
+        assert.equal(reports[0].excel_path, null);
         assert.equal((await appDb.all('SELECT id FROM sla_snapshots ORDER BY id')).length, 2);
 
         const replaced = await transfer.restoreBackupPackage(packageBuffer, { mode: 'replace' });
