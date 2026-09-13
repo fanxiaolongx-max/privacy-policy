@@ -39,6 +39,7 @@
 
     const state = { items: [], total: 0, topicKey: 'netcare-eos-product', metricKey: 'pending' };
     const elements = {};
+    const DETAIL_LABELS = { customer_name: '客户', product_line_name: '产品线', product_line_map: '产品线', product_name: '产品', software_version: '版本', task_id: '任务单号', need_reduce_cnt: '需消减', reduced_cnt: '已消减', incorporation_total_nes: '数量', incorporated_nes: '已收编', to_be_incorporated_nes: '待收编', current_phase_name: '阶段', scope: '范围', year: '年份', month: '月份', task_count: '变更任务数', operation_success_rate: '操作成功率', rollback_count: '回退数', high_core_total_count: '高危核心', interception_cnt: '拦截数', commands_interception_cnt: '命令行拦截', graphical_interception_cnt: '图形化拦截', period: '期间', sr_total: 'SR 数', sr_frt: 'FRT', unclose_sr_cnt: '未关闭', overdue_sr_cnt: '逾期', minor_sr_cnt: 'Minor', major_sr_cnt: 'Major', critical_sr_cnt: 'Critical' };
     const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
     const formatTime = value => { const date = new Date(value || ''); return Number.isNaN(date.getTime()) ? '--' : date.toLocaleString('zh-CN', { hour12: false }); };
     const topic = () => TOPICS[state.topicKey];
@@ -93,7 +94,44 @@
 
     function renderTable() {
         const items = topicItems(); const definition = selectedMetric(); elements.metricColumnTitle.textContent = definition.label; elements.emptyState.hidden = items.length > 0;
-        elements.historyBody.innerHTML = items.map(item => `<tr><td>${escapeHtml(formatTime(item.capturedAt))}</td><td><span class="topic-platform ${escapeHtml(item.platform)}">${item.platform === 'datafab' ? 'DataFab' : 'NetCare'}</span></td><td>${escapeHtml(item.period || '--')}</td><td>${escapeHtml(formatMetric(metricValue(item, definition), definition))}</td><td>${escapeHtml(formatTime(item.importedAt))}</td><td><div class="topic-row-actions"><button data-action="view" data-id="${escapeHtml(item.id)}">查看</button><button data-action="download" data-id="${escapeHtml(item.id)}">下载</button><button class="danger" data-action="delete" data-id="${escapeHtml(item.id)}">删除</button></div></td></tr>`).join('');
+        elements.historyBody.innerHTML = items.map(item => `<tr><td>${escapeHtml(formatTime(item.capturedAt))}</td><td><span class="topic-platform ${escapeHtml(item.platform)}">${item.platform === 'datafab' ? 'DataFab' : 'NetCare'}</span></td><td>${escapeHtml(item.period || '--')}</td><td>${escapeHtml(formatMetric(metricValue(item, definition), definition))}</td><td>${escapeHtml(formatTime(item.importedAt))}</td><td><div class="topic-row-actions"><button data-action="view" data-id="${escapeHtml(item.id)}">详表</button><button data-action="download" data-id="${escapeHtml(item.id)}">下载 JSON</button><button class="danger" data-action="delete" data-id="${escapeHtml(item.id)}">删除</button></div></td></tr>`).join('');
+    }
+
+    function detailRows(snapshot) {
+        const data = snapshot?.data || {};
+        if (topic().platform === 'netcare') {
+            const source = data[topic().path];
+            if (topic().path === 'sr') return [...(data.sr?.summary || []).map(row => ({ rowType: '汇总', ...row })), ...(data.sr?.monthly || []).map(row => ({ rowType: '月度', ...row }))];
+            return Array.isArray(source) ? source : Array.isArray(source?.rows) ? source.rows : [];
+        }
+        const byMonth = data.detailsByMonth && typeof data.detailsByMonth === 'object' ? data.detailsByMonth : {};
+        const rows = Object.entries(byMonth).flatMap(([month, values]) => (Array.isArray(values) ? values : []).map(row => ({ month, ...row })));
+        return rows.length ? rows : (Array.isArray(data.detail) ? data.detail : []).map(row => ({ month: snapshot.settings?.month || '', ...row }));
+    }
+
+    function detailColumns(rows) {
+        const keys = []; rows.forEach(row => Object.keys(row || {}).forEach(key => { if (!keys.includes(key) && !['id'].includes(key)) keys.push(key); }));
+        return keys;
+    }
+
+    function detailValue(value, key) {
+        if (value === null || value === undefined || value === '') return '--';
+        if (['operation_success_rate', 'sr_frt'].includes(key)) return `${(Number(value) <= 1 ? Number(value) * 100 : Number(value)).toFixed(1)}%`;
+        return typeof value === 'object' ? JSON.stringify(value) : String(value);
+    }
+
+    function renderDetail(snapshot) {
+        const rows = detailRows(snapshot); const columns = detailColumns(rows);
+        elements.detailSummary.textContent = `${topic().label} · ${rows.length} 条明细${rows.length > 500 ? '（仅展示前 500 条）' : ''}`;
+        const visibleRows = rows.slice(0, 500);
+        elements.detailTable.innerHTML = rows.length ? `<table><thead><tr>${columns.map(key => `<th>${escapeHtml(DETAIL_LABELS[key] || key)}</th>`).join('')}</tr></thead><tbody>${visibleRows.map(row => `<tr>${columns.map(key => `<td title="${escapeHtml(detailValue(row[key], key))}">${escapeHtml(detailValue(row[key], key))}</td>`).join('')}</tr>`).join('')}</tbody></table>` : '<div class="topic-detail-empty">该专题没有可展示的明细数据</div>';
+        elements.detailJson.hidden = true; elements.detailTable.hidden = false; elements.viewRaw.textContent = '原始 JSON';
+        elements.detailModal.hidden = false;
+    }
+
+    function downloadDetailTable(snapshot) {
+        const rows = detailRows(snapshot); const columns = detailColumns(rows); const csv = [columns.map(key => DETAIL_LABELS[key] || key), ...rows.map(row => columns.map(key => detailValue(row[key], key)))].map(row => row.map(value => `"${String(value).replace(/"/g, '""')}"`).join(',')).join('\n');
+        const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' })); link.download = `${snapshot.platform}_${topic().path}_detail.csv`; link.click(); URL.revokeObjectURL(link.href);
     }
 
     function renderAnalysis() { renderKpis(); renderChart(); renderTable(); }
@@ -113,17 +151,17 @@
         try {
             if (action === 'delete') { if (!window.confirm('确定删除这份历史快照？删除后无法在分析页回顾。')) return; await API.delete(`/api/topic-snapshots/${encodeURIComponent(id)}`); await loadData(); return; }
             const item = await getFullSnapshot(id);
-            if (action === 'view') { elements.detailTitle.textContent = `${item.platform === 'datafab' ? 'DataFab' : 'NetCare'} · ${formatTime(item.capturedAt)}`; elements.detailJson.textContent = JSON.stringify(item.snapshot, null, 2); elements.detailModal.hidden = false; }
+            if (action === 'view') { state.detailSnapshot = item; elements.detailTitle.textContent = `${item.platform === 'datafab' ? 'DataFab' : 'NetCare'} · ${formatTime(item.capturedAt)}`; renderDetail(item.snapshot); }
             else { const blob = new Blob([JSON.stringify(item.snapshot, null, 2)], { type: 'application/json;charset=utf-8' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${item.platform}_topic_${String(item.capturedAt).replace(/[-:T.Z]/g, '').slice(0, 14)}.json`; link.click(); URL.revokeObjectURL(link.href); }
         } catch (error) { window.alert(`操作失败：${error.message}`); } finally { button.disabled = false; }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        ['totalCount', 'netcareCount', 'datafabCount', 'latestTime', 'refreshButton', 'topicFilter', 'metricFilter', 'analysisTitle', 'metricDefinition', 'topicKpis', 'trendChart', 'metricColumnTitle', 'loadStatus', 'historyBody', 'emptyState', 'detailModal', 'detailTitle', 'detailJson', 'closeDetail'].forEach(id => { elements[id] = document.getElementById(id); });
+        ['totalCount', 'netcareCount', 'datafabCount', 'latestTime', 'refreshButton', 'topicFilter', 'metricFilter', 'analysisTitle', 'metricDefinition', 'topicKpis', 'trendChart', 'metricColumnTitle', 'loadStatus', 'historyBody', 'emptyState', 'detailModal', 'detailTitle', 'detailSummary', 'detailTable', 'detailJson', 'downloadDetail', 'viewRaw', 'closeDetail'].forEach(id => { elements[id] = document.getElementById(id); });
         renderTopicControls(); elements.refreshButton.addEventListener('click', loadData);
         elements.topicFilter.addEventListener('change', event => { state.topicKey = event.target.value; state.metricKey = topic().metrics[0].key; renderTopicControls(); renderAnalysis(); });
         elements.metricFilter.addEventListener('change', event => { state.metricKey = event.target.value; renderAnalysis(); });
-        elements.historyBody.addEventListener('click', handleTableAction); elements.closeDetail.addEventListener('click', () => { elements.detailModal.hidden = true; });
+        elements.historyBody.addEventListener('click', handleTableAction); elements.downloadDetail.addEventListener('click', () => { if (state.detailSnapshot) downloadDetailTable(state.detailSnapshot.snapshot); }); elements.viewRaw.addEventListener('click', () => { if (!state.detailSnapshot) return; const showingRaw = !elements.detailJson.hidden; elements.detailJson.textContent = JSON.stringify(state.detailSnapshot.snapshot, null, 2); elements.detailJson.hidden = showingRaw; elements.detailTable.hidden = !showingRaw; elements.viewRaw.textContent = showingRaw ? '原始 JSON' : '返回详表'; }); elements.closeDetail.addEventListener('click', () => { elements.detailModal.hidden = true; });
         elements.detailModal.addEventListener('click', event => { if (event.target === elements.detailModal) elements.detailModal.hidden = true; }); loadData();
     });
 }());

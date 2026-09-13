@@ -20,12 +20,15 @@ test('topic snapshot API and analysis page are wired', () => {
     assert.match(routes, /router\.get\('\/:id'/);
     assert.match(routes, /router\.post\('\/'/);
     assert.match(page, /专题分析/);
-    assert.match(page, /topic-analysis\.js\?v=20260911-02/);
+    assert.match(page, /topic-analysis\.js\?v=20260913-01/);
+    assert.match(page, /下载详表/);
     assert.match(script, /API\.get\('\/api\/topic-snapshots\?limit=200'\)/);
     assert.match(script, /API\.delete/);
     assert.match(script, /'netcare-eos-product'/);
     assert.match(script, /'datafab-return'/);
     assert.match(script, /'datafab-filing'/);
+    assert.match(script, /function detailRows\(snapshot\)/);
+    assert.match(script, /downloadDetailTable/);
     assert.match(navbar, /id: 'topic-analysis'[\s\S]*defaultCategory: 'cat_mshv1h0m'/);
     assert.match(navbar, /'nav\.topicAnalysis': '专题分析'/);
     assert.match(navRepository, /'topic-analysis': 'cat_mshv1h0m'/);

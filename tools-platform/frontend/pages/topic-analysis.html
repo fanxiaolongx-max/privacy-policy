@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>专题分析</title>
     <link rel="stylesheet" href="/css/shared.css?v=20260911-03">
-    <link rel="stylesheet" href="/css/topic-analysis.css?v=20260911-02">
+    <link rel="stylesheet" href="/css/topic-analysis.css?v=20260913-01">
 </head>
 <body>
     <main class="topic-page">
@@ -57,13 +57,14 @@
 
     <div id="detailModal" class="topic-modal" hidden>
         <div class="topic-modal-card" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
-            <div class="topic-modal-head"><h2 id="detailTitle">快照详情</h2><button id="closeDetail" type="button" aria-label="关闭">×</button></div>
+            <div class="topic-modal-head"><div><h2 id="detailTitle">专题详表</h2><p id="detailSummary"></p></div><div class="topic-modal-actions"><button id="downloadDetail" type="button">下载详表</button><button id="viewRaw" type="button">原始 JSON</button><button id="closeDetail" type="button" aria-label="关闭">×</button></div></div>
+            <div id="detailTable" class="topic-detail-table-wrap"></div>
             <pre id="detailJson"></pre>
         </div>
     </div>
 
     <script src="/js/shared/api.js?v=20260911-03"></script>
     <script src="/js/shared/navbar.js?v=20260913-01"></script>
-    <script src="/js/topic-analysis.js?v=20260911-02"></script>
+    <script src="/js/topic-analysis.js?v=20260913-01"></script>
 </body>
 </html>
