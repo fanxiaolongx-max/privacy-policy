@@ -7,8 +7,8 @@ function evaluateAllMetrics() {
     const shouldAutoPercent = (label, colName) => (
         String(label || '').includes('率') || String(colName || '').includes('率')
     );
-    const formatMetricValueByTarget = (value, targetDef, autoPercent, ruleType) => {
-        if (value === '--' || ruleType === 'count' || ruleType === 'ratio') return value;
+    const formatMetricValueByTarget = (value, targetDef, autoPercent, ruleType, aggregation) => {
+        if (value === '--' || ruleType === 'count' || ruleType === 'ratio' || (ruleType === 'extract_multi' && aggregation === 'count')) return value;
         const strVal = String(value).trim();
         if (targetDef && targetDef.isPercent === false && strVal.endsWith('%')) {
             return strVal.replace(/%$/, '');
@@ -57,6 +57,8 @@ function evaluateAllMetrics() {
                         }
                     }
                     return total > 0 ? Math.round((matched / total) * 100) + '%' : '0%';
+                } else if (r.type === 'extract_multi') {
+                    return aggregateMetricRowValues(dataRows.filter(rowMatches), r);
                 } else {
                     for (let i = 0; i < dataRows.length; i++) {
                         const row = dataRows[i];
@@ -73,7 +75,7 @@ function evaluateAllMetrics() {
             const ruleColZ = rule.colZ || '';
             const targetKey = `${secId}_${rule.id}`;
             const targetDef = window.GlobalTargets ? window.GlobalTargets[targetKey] : null;
-            matchedValue = formatMetricValueByTarget(matchedValue, targetDef, shouldAutoPercent(displayLabel, ruleColZ), rule.type);
+            matchedValue = formatMetricValueByTarget(matchedValue, targetDef, shouldAutoPercent(displayLabel, ruleColZ), rule.type, rule.aggregation);
             
             const evaluatedSubMetrics = [];
             if (rule.subMetrics && rule.subMetrics.length > 0) {
@@ -89,7 +91,7 @@ function evaluateAllMetrics() {
                     const effectiveColZ = sm.colZ || rule.colZ || '';
                     const smTargetKey = `${secId}_${sm.id}`;
                     const smTargetDef = window.GlobalTargets ? (window.GlobalTargets[smTargetKey] || window.GlobalTargets[targetKey]) : null;
-                    smValue = formatMetricValueByTarget(smValue, smTargetDef, shouldAutoPercent(effectiveLabel, effectiveColZ), sm.type);
+                    smValue = formatMetricValueByTarget(smValue, smTargetDef, shouldAutoPercent(effectiveLabel, effectiveColZ), sm.type, sm.aggregation);
                     evaluatedSubMetrics.push({ category: sm.category, value: smValue });
                 });
             }

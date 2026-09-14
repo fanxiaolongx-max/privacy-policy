@@ -23,6 +23,7 @@
             'sla.modal.metricNamePh': '例如：业务比对回传率',
             'sla.modal.mode': '模式',
             'sla.modal.extract': '提取 SHOW',
+            'sla.modal.extractMulti': '提取多行 AGGREGATE',
             'sla.modal.count': '统计 COUNT',
             'sla.modal.ratio': '占比 RATIO',
             'sla.modal.category': '子指标分类/归属',
@@ -33,6 +34,15 @@
             'sla.modal.colZ': '展示/统计列 Z',
             'sla.modal.valK': '统计值 K',
             'sla.modal.valKPh': '统计/占比分子关键字',
+            'sla.modal.aggregation': '多行计算方法',
+            'sla.modal.filterLogic': '过滤条件关系',
+            'sla.modal.aggSum': '求和（默认）',
+            'sla.modal.aggAvg': '平均值',
+            'sla.modal.aggMax': '最大值',
+            'sla.modal.aggMin': '最小值',
+            'sla.modal.aggCount': '有效数值个数',
+            'sla.modal.logicAnd': 'AND：全部满足',
+            'sla.modal.logicOr': 'OR：任一满足',
             'sla.modal.cancel': '取消',
             'sla.modal.save': '保存修改',
             'sla.modal.copyTitle': '📋 复制指标规则',
@@ -180,11 +190,22 @@
             'sla.section.copySearchPh': '🔍 搜索提取列名...',
             'sla.section.metricHint': '📌 配置顶部悬浮指标推送规则：',
             'sla.section.extractOne': '提取单行数值',
+            'sla.section.extractMulti': '提取多行数值',
             'sla.section.countTimes': '统计满足次数',
             'sla.section.countRatio': '统计占比',
             'sla.section.colXOption': '1. 当此列(X)...',
             'sla.section.valYPh': '2. 包含内容(Y) (支持[空]/[非空])',
             'sla.section.colZOption': '3. 则提取该行此列(Z)的值',
+            'sla.section.aggregateSum': '4. 多行数值求和（默认）',
+            'sla.section.aggregateAvg': '4. 多行数值求平均值',
+            'sla.section.aggregateMax': '4. 取多行数值最大值',
+            'sla.section.aggregateMin': '4. 取多行数值最小值',
+            'sla.section.aggregateCount': '4. 统计有效数值个数',
+            'sla.section.conditionRelation': '条件关系',
+            'sla.section.conditionAnd': 'AND：全部满足',
+            'sla.section.conditionOr': 'OR：任一满足',
+            'sla.section.andConditionsHelp': '以下条件与上方主条件同时满足（AND），可不断增加。',
+            'sla.section.multiConditionsHelp': '主条件与附加条件可按 AND 或 OR 匹配；多行命中后统一计算 Z 列。',
             'sla.section.countXOption': '1. 筛选条件列(X)... (选填)',
             'sla.section.countYPh': '2. 筛选X列含内容(Y) (支持[空]/[非空])',
             'sla.section.countZOption': '3. 目标统计列(Z)',
@@ -266,10 +287,12 @@
             'sla.rules.otherTable': '独立表规则 ({id})',
             'sla.rules.unknownTable': '未知表',
             'sla.rules.extract': '提取',
+            'sla.rules.extractMulti': '提取多行',
             'sla.rules.count': '统计',
             'sla.rules.ratio': '占比',
             'sla.rules.contains': 'contains',
             'sla.rules.and': 'and',
+            'sla.rules.or': 'or',
             'sla.rules.allRows': '全量行',
             'sla.rules.totalRows': '总行数',
             'sla.rules.uncategorized': '未分类',
@@ -344,6 +367,7 @@
             'sla.modal.metricNamePh': 'Example: callback rate',
             'sla.modal.mode': 'Mode',
             'sla.modal.extract': 'Extract SHOW',
+            'sla.modal.extractMulti': 'Multi-row AGGREGATE',
             'sla.modal.count': 'Count COUNT',
             'sla.modal.ratio': 'Ratio RATIO',
             'sla.modal.category': 'Sub-metric Category',
@@ -354,6 +378,15 @@
             'sla.modal.colZ': 'Display/Count Column Z',
             'sla.modal.valK': 'Count Value K',
             'sla.modal.valKPh': 'Numerator keyword',
+            'sla.modal.aggregation': 'Multi-row calculation',
+            'sla.modal.filterLogic': 'Filter relationship',
+            'sla.modal.aggSum': 'Sum (default)',
+            'sla.modal.aggAvg': 'Average',
+            'sla.modal.aggMax': 'Maximum',
+            'sla.modal.aggMin': 'Minimum',
+            'sla.modal.aggCount': 'Numeric value count',
+            'sla.modal.logicAnd': 'AND: match all',
+            'sla.modal.logicOr': 'OR: match any',
             'sla.modal.cancel': 'Cancel',
             'sla.modal.save': 'Save Changes',
             'sla.modal.copyTitle': '📋 Copy Metric Rule',
@@ -501,11 +534,22 @@
             'sla.section.copySearchPh': '🔍 Search extract columns...',
             'sla.section.metricHint': '📌 Configure top floating metric rule:',
             'sla.section.extractOne': 'Extract single-row value',
+            'sla.section.extractMulti': 'Extract multiple rows',
             'sla.section.countTimes': 'Count matches',
             'sla.section.countRatio': 'Count ratio',
             'sla.section.colXOption': '1. When column X...',
             'sla.section.valYPh': '2. Contains Y ([empty]/[non-empty] supported)',
             'sla.section.colZOption': '3. Extract value from column Z',
+            'sla.section.aggregateSum': '4. Sum values (default)',
+            'sla.section.aggregateAvg': '4. Average values',
+            'sla.section.aggregateMax': '4. Maximum value',
+            'sla.section.aggregateMin': '4. Minimum value',
+            'sla.section.aggregateCount': '4. Count numeric values',
+            'sla.section.conditionRelation': 'Condition relationship',
+            'sla.section.conditionAnd': 'AND: match all',
+            'sla.section.conditionOr': 'OR: match any',
+            'sla.section.andConditionsHelp': 'All conditions must match the primary condition (AND). Add more as needed.',
+            'sla.section.multiConditionsHelp': 'Match the primary and added conditions with AND or OR, then calculate column Z across all matching rows.',
             'sla.section.countXOption': '1. Filter column X... (optional)',
             'sla.section.countYPh': '2. Filter X by Y ([empty]/[non-empty] supported)',
             'sla.section.countZOption': '3. Target count column Z',
@@ -587,10 +631,12 @@
             'sla.rules.otherTable': 'Standalone table rule ({id})',
             'sla.rules.unknownTable': 'Unknown table',
             'sla.rules.extract': 'Extract',
+            'sla.rules.extractMulti': 'Multi-row extract',
             'sla.rules.count': 'Count',
             'sla.rules.ratio': 'Ratio',
             'sla.rules.contains': 'contains',
             'sla.rules.and': 'and',
+            'sla.rules.or': 'or',
             'sla.rules.allRows': 'All rows',
             'sla.rules.totalRows': 'total rows',
             'sla.rules.uncategorized': 'Uncategorized',
@@ -706,8 +752,19 @@
         ].forEach((key, index) => { if (editLabels[index]) editLabels[index].textContent = t(key); });
         setPlaceholder('#metric-rule-edit-label', t('sla.modal.metricNamePh'));
         setText('#metric-rule-edit-type option[value="extract"]', t('sla.modal.extract'));
+        setText('#metric-rule-edit-type option[value="extract_multi"]', t('sla.modal.extractMulti'));
         setText('#metric-rule-edit-type option[value="count"]', t('sla.modal.count'));
         setText('#metric-rule-edit-type option[value="ratio"]', t('sla.modal.ratio'));
+        const multiLabels = document.querySelectorAll('.metric-rule-edit-multi-only > span');
+        if (multiLabels[0]) multiLabels[0].textContent = t('sla.modal.aggregation');
+        if (multiLabels[1]) multiLabels[1].textContent = t('sla.modal.filterLogic');
+        setText('#metric-rule-edit-aggregation option[value="sum"]', t('sla.modal.aggSum'));
+        setText('#metric-rule-edit-aggregation option[value="avg"]', t('sla.modal.aggAvg'));
+        setText('#metric-rule-edit-aggregation option[value="max"]', t('sla.modal.aggMax'));
+        setText('#metric-rule-edit-aggregation option[value="min"]', t('sla.modal.aggMin'));
+        setText('#metric-rule-edit-aggregation option[value="count"]', t('sla.modal.aggCount'));
+        setText('#metric-rule-edit-filter-logic option[value="and"]', t('sla.modal.logicAnd'));
+        setText('#metric-rule-edit-filter-logic option[value="or"]', t('sla.modal.logicOr'));
         setPlaceholder('#metric-rule-edit-valy', t('sla.modal.valYPh'));
         setPlaceholder('#metric-rule-edit-valk', t('sla.modal.valKPh'));
         setText('#metric-rule-edit-modal .metric-rule-edit-cancel', t('sla.modal.cancel'));

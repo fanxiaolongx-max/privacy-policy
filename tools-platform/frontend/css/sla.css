@@ -1115,6 +1115,8 @@ textarea.risk-editor-input { resize: vertical; min-height: 48px; }
 .metric-advanced-toggle span { display: inline-grid; place-items: center; min-width: 18px; height: 18px; margin-left: 4px; border-radius: 999px; background: #7c3aed; color: #fff; }
 .metric-advanced-panel { margin-top: 6px; padding: 8px; border: 1px solid #ede9fe; border-radius: 9px; background: #fff; }
 .metric-advanced-panel p { margin: 0 0 7px; color: #64748b; font-size: 10px; }
+.metric-condition-logic { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 7px; color: #4c1d95; font-size: 11px; font-weight: 800; }
+.metric-condition-logic select { min-width: 135px; height: 30px; border: 1px solid #c4b5fd; border-radius: 7px; background: #fff; color: #4c1d95; padding: 0 7px; }
 .metric-condition-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 26px; gap: 5px; margin-bottom: 6px; align-items: center; }
 .metric-condition-row select, .metric-condition-row input { width: 100%; min-width: 0; height: 30px; box-sizing: border-box; border: 1px solid #cbd5e1; border-radius: 7px; padding: 0 7px; font-size: 11px; }
 .metric-condition-row button { width: 26px; height: 26px; border: 0; border-radius: 7px; background: #fee2e2; color: #b91c1c; cursor: pointer; }

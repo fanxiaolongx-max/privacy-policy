@@ -1,6 +1,9 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { findMatchedMetricLabels } = require('../backend/models/ai-report-analysis-service');
+const {
+    findMatchedMetricLabels,
+    buildProactiveAlertCandidates
+} = require('../backend/models/ai-report-analysis-service');
 
 test('matches a uniquely identifying shortened Chinese metric name', () => {
     const labels = ['存储整改', '路由器', '重疾EOS预案覆盖率'];
@@ -46,4 +49,40 @@ test('keeps overlapping metric names when the user explicitly lists them', () =>
         labels
     );
     assert.deepEqual(findMatchedMetricLabels(labels, '日志回传备案当前值怎么样'), ['日志回传备案']);
+});
+
+test('ranks proactive KPI alerts by business weight and gap', () => {
+    const candidates = buildProactiveAlertCandidates([
+        { cat_name: 'TE', metric_label: '收入', weight: 5, target_val: '≥10', raw_val: '6', gap: '4', is_failing: 1 },
+        { cat_name: 'ORG', metric_label: '过保订单', weight: 8, target_val: '≥5', raw_val: '3', gap: '2', is_failing: 1 },
+        { cat_name: 'ET', metric_label: '收入', weight: 5, target_val: '≥10', raw_val: '9', gap: '1', is_failing: 1 },
+        { cat_name: 'VDF', metric_label: '质量', weight: 10, target_val: '≥95%', raw_val: '99%', gap: '', is_failing: 0 }
+    ], 2);
+
+    assert.equal(candidates.length, 2);
+    assert.deepEqual(candidates.map(item => `${item.customerGroup}/${item.metric}`), ['ORG/过保订单', 'TE/收入']);
+    assert.equal(candidates[0].target, '≥5');
+    assert.equal(Object.hasOwn(candidates[0], 'priority'), false);
+});
+
+test('deduplicates proactive KPI alert candidates and requires a customer group', () => {
+    const candidates = buildProactiveAlertCandidates([
+        { cat_name: 'TE', metric_label: '收入', weight: 5, is_failing: 1 },
+        { cat_name: 'ORG', metric_label: '收入', weight: 4, is_failing: 1 },
+        { cat_name: '', metric_label: '收入', weight: 9, is_failing: 1 }
+    ]);
+
+    assert.equal(candidates.length, 1);
+    assert.equal(candidates[0].customerGroup, 'TE');
+});
+
+test('prioritizes imported KPI alerts over higher-weight manual metrics', () => {
+    const candidates = buildProactiveAlertCandidates([
+        { cat_name: 'TE', metric_label: '手动收入', weight: 20, gap: '9', is_failing: 1, is_manual: true },
+        { cat_name: 'ORG', metric_label: '导入日志', weight: 1, gap: '1', is_failing: 1, is_manual: false }
+    ]);
+
+    assert.equal(candidates[0].metric, '导入日志');
+    assert.equal(candidates[0].sourceType, 'imported');
+    assert.equal(candidates[1].sourceType, 'manual');
 });

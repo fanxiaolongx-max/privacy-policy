@@ -783,10 +783,11 @@ function buildDOM(secId, title, themeColor) {
                 <div id="metrics-picker-${secId}" class="dropdown-menu" style="right:80px;width:340px;padding:12px;border-color:#9c27b0;max-height:450px;overflow-y:auto;">
                     <div style="font-weight:bold;color:#8e44ad;font-size:12px;margin-bottom:8px;border-bottom:1px solid #f3e5f5;padding-bottom:5px;">${tt('sla.section.metricHint')}</div>
                     
-                    <div style="margin-bottom:8px; display:flex; gap:10px; font-size:12px;">
-                        <label><input type="radio" name="m-type-${secId}" value="extract" checked onclick="document.getElementById('m-extract-config-${secId}').style.display='block'; document.getElementById('m-count-config-${secId}').style.display='none';"> ${tt('sla.section.extractOne')}</label>
-                        <label><input type="radio" name="m-type-${secId}" value="count" onclick="document.getElementById('m-extract-config-${secId}').style.display='none'; document.getElementById('m-count-config-${secId}').style.display='block';"> ${tt('sla.section.countTimes')}</label>
-                        <label><input type="radio" name="m-type-${secId}" value="ratio" onclick="document.getElementById('m-extract-config-${secId}').style.display='none'; document.getElementById('m-count-config-${secId}').style.display='block';"> ${tt('sla.section.countRatio')}</label>
+                    <div style="margin-bottom:8px; display:flex; flex-wrap:wrap; gap:6px 10px; font-size:12px;">
+                        <label><input type="radio" name="m-type-${secId}" value="extract" checked onclick="setMetricCreateType('${secId}', 'extract')"> ${tt('sla.section.extractOne')}</label>
+                        <label><input type="radio" name="m-type-${secId}" value="extract_multi" onclick="setMetricCreateType('${secId}', 'extract_multi')"> ${tt('sla.section.extractMulti')}</label>
+                        <label><input type="radio" name="m-type-${secId}" value="count" onclick="setMetricCreateType('${secId}', 'count')"> ${tt('sla.section.countTimes')}</label>
+                        <label><input type="radio" name="m-type-${secId}" value="ratio" onclick="setMetricCreateType('${secId}', 'ratio')"> ${tt('sla.section.countRatio')}</label>
                     </div>
 
                     <!-- 提取模式 -->
@@ -794,6 +795,16 @@ function buildDOM(secId, title, themeColor) {
                         <select id="m-colx-${secId}" class="picker-search" style="margin-bottom:6px;cursor:pointer;"><option value="">${tt('sla.section.colXOption')}</option></select>
                         <input type="text" id="m-valy-${secId}" class="picker-search" placeholder="${tt('sla.section.valYPh')}" style="margin-bottom:6px;">
                         <select id="m-colz-${secId}" class="picker-search" style="margin-bottom:6px;cursor:pointer;"><option value="">${tt('sla.section.colZOption')}</option></select>
+                    </div>
+
+                    <div id="m-multi-config-${secId}" style="display:none;margin-bottom:6px;">
+                        <select id="m-aggregation-${secId}" class="picker-search" style="margin-bottom:0;cursor:pointer;">
+                            <option value="sum">${tt('sla.section.aggregateSum')}</option>
+                            <option value="avg">${tt('sla.section.aggregateAvg')}</option>
+                            <option value="max">${tt('sla.section.aggregateMax')}</option>
+                            <option value="min">${tt('sla.section.aggregateMin')}</option>
+                            <option value="count">${tt('sla.section.aggregateCount')}</option>
+                        </select>
                     </div>
 
                     <!-- 统计模式/占比模式 -->
@@ -807,7 +818,14 @@ function buildDOM(secId, title, themeColor) {
                     <div class="metric-advanced-filter">
                         <button type="button" class="metric-advanced-toggle" onclick="toggleMetricAdvancedConditions('${secId}')">⚙️ 高级多重过滤 <span id="m-conditions-count-${secId}">0</span></button>
                         <div id="m-conditions-panel-${secId}" class="metric-advanced-panel" style="display:none;">
-                            <p>以下条件与上方主条件同时满足（AND），可不断增加。</p>
+                            <div id="m-condition-logic-wrap-${secId}" class="metric-condition-logic" style="display:none;">
+                                <span>${tt('sla.section.conditionRelation')}</span>
+                                <select id="m-condition-logic-${secId}">
+                                    <option value="and">${tt('sla.section.conditionAnd')}</option>
+                                    <option value="or">${tt('sla.section.conditionOr')}</option>
+                                </select>
+                            </div>
+                            <p id="m-conditions-help-${secId}">以下条件与上方主条件同时满足（AND），可不断增加。</p>
                             <div id="m-conditions-${secId}"></div>
                             <button type="button" class="metric-condition-add" onclick="addMetricConditionRow('${secId}')">＋ 增加列条件</button>
                         </div>

@@ -57,7 +57,8 @@
 
     <div id="detailModal" class="topic-modal" hidden>
         <div class="topic-modal-card" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
-            <div class="topic-modal-head"><div><h2 id="detailTitle">专题详表</h2><p id="detailSummary"></p></div><div class="topic-modal-actions"><button id="downloadDetail" type="button">下载详表</button><button id="viewRaw" type="button">原始 JSON</button><button id="closeDetail" type="button" aria-label="关闭">×</button></div></div>
+            <div class="topic-modal-head"><div><h2 id="detailTitle">专题详表</h2><p id="detailSummary"></p></div><div class="topic-modal-actions"><button id="downloadDetail" type="button">下载详表</button><button id="viewRaw" type="button">原始 JSON</button><button id="toggleDetailFullscreen" type="button">全屏</button><button id="closeDetail" type="button" aria-label="关闭">×</button></div></div>
+            <div id="detailTools" class="topic-detail-tools"><input id="detailSearch" type="search" placeholder="筛选全部列…" aria-label="筛选详表"><label>每页<select id="detailPageSize"><option value="50">50</option><option value="100">100</option><option value="200">200</option></select></label><span>排序：</span><select id="detailSortColumn" aria-label="排序列"></select><button id="detailSortDirection" type="button">升序</button></div>
             <div id="detailTable" class="topic-detail-table-wrap"></div>
             <pre id="detailJson"></pre>
         </div>

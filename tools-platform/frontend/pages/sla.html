@@ -7,7 +7,7 @@
     <meta name="description" content="Task SLA & 风险监控全局中台，整改/常规/专项三表合一，SLA预警呼吸灯">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="/css/shared.css?v=20260911-03">
-    <link rel="stylesheet" href="/css/sla.css?v=20260802-01">
+    <link rel="stylesheet" href="/css/sla.css?v=20260914-01">
     <style>
         .sla-source-wrapper {
             display: flex;
@@ -236,6 +236,7 @@
                         <span>模式</span>
                         <select id="metric-rule-edit-type" onchange="refreshMetricRuleEditorMode()">
                             <option value="extract">提取 SHOW</option>
+                            <option value="extract_multi">提取多行 AGGREGATE</option>
                             <option value="count">统计 COUNT</option>
                             <option value="ratio">占比 RATIO</option>
                         </select>
@@ -264,10 +265,27 @@
                         <span id="metric-rule-edit-valk-label">统计值 K</span>
                         <input id="metric-rule-edit-valk" type="text" placeholder="统计/占比分子关键字">
                     </label>
+                    <label class="metric-rule-edit-field metric-rule-edit-multi-only">
+                        <span>多行计算方法</span>
+                        <select id="metric-rule-edit-aggregation">
+                            <option value="sum">求和（默认）</option>
+                            <option value="avg">平均值</option>
+                            <option value="max">最大值</option>
+                            <option value="min">最小值</option>
+                            <option value="count">有效数值个数</option>
+                        </select>
+                    </label>
+                    <label class="metric-rule-edit-field metric-rule-edit-multi-only">
+                        <span>过滤条件关系</span>
+                        <select id="metric-rule-edit-filter-logic">
+                            <option value="and">AND：全部满足</option>
+                            <option value="or">OR：任一满足</option>
+                        </select>
+                    </label>
                 </div>
                 <div class="metric-rule-edit-conditions">
                     <div class="metric-rule-edit-conditions-head">
-                        <div><b>高级多重过滤</b><span>所有条件同时满足（AND），可继续增加新的列条件。</span></div>
+                        <div><b>高级多重过滤</b><span id="metric-rule-edit-conditions-help">所有条件同时满足（AND），可继续增加新的列条件。</span></div>
                         <button type="button" onclick="addMetricRuleEditorCondition()">＋ 增加列条件</button>
                     </div>
                     <div id="metric-rule-edit-conditions-list"></div>
@@ -431,17 +449,17 @@
     <script src="/js/shared/i18n.js?v=20260628-05"></script>
     <script src="/js/shared/navbar.js?v=20260913-01"></script>
     <!-- SLA 模块（注意加载顺序）-->
-    <script src="/js/sla/i18n.js?v=20260814-01"></script>
+    <script src="/js/sla/i18n.js?v=20260914-01"></script>
     <script src="/js/sla/config.js?v=20260630-01"></script>
     <script src="/js/sla/prefs.js?v=20260713-01"></script>
     <script src="/js/sla/upload.js?v=20260814-01"></script>
     <script src="/js/sla/rule-picker.js?v=20260713-02"></script>
     <script src="/js/sla/risk-rules.js?v=20260713-03"></script>
     <script src="/js/sla/other-rules.js?v=20260713-03"></script>
-    <script src="/js/sla/section.js?v=20260731-01"></script>
-    <script src="/js/sla/table.js?v=20260731-01"></script>
-    <script src="/js/sla/events.js?v=20260802-01"></script>
-    <script src="/js/sla/metrics.js?v=20260731-01"></script>
+    <script src="/js/sla/section.js?v=20260914-01"></script>
+    <script src="/js/sla/table.js?v=20260914-01"></script>
+    <script src="/js/sla/events.js?v=20260914-01"></script>
+    <script src="/js/sla/metrics.js?v=20260914-01"></script>
     <script src="/js/sla/history.js?v=20260709-01"></script>
     <script src="/js/sla/categories.js?v=20260802-01"></script>
     <script>

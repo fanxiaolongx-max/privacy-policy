@@ -65,6 +65,8 @@ function getMetricRulesUsingSection(secId) {
             rule.colZ || '',
             rule.valK || '',
             ...(Array.isArray(rule.conditions) ? rule.conditions.flatMap(item => [item && item.column || '', item && item.value || '']) : []),
+            rule.filterLogic || 'and',
+            rule.aggregation || '',
             rule.type || ''
         ].join('|');
         if (seen.has(dedupeKey)) return;
@@ -165,17 +167,23 @@ function buildMetricCellHighlightMeta(secId) {
         const type = rule.type || 'extract';
         const rows = state.globalData || [];
 
-        if (type === 'extract') {
-            const matchedRow = rows.find(row => typeof metricRuleRowMatches === 'function'
-                ? metricRuleRowMatches(row, rule, true)
-                : (rule.colX && metricCellMatches(row[rule.colX], rule.valY)));
-            if (matchedRow) {
-                addCell(matchedRow, rule.colX, 'metric-condition-cell', `${ruleName} 条件命中：${rule.colX} 包含 ${rule.valY}`);
+        if (type === 'extract' || type === 'extract_multi') {
+            const matchedRows = type === 'extract_multi'
+                ? rows.filter(row => typeof metricRuleRowMatches === 'function'
+                    ? metricRuleRowMatches(row, rule, true)
+                    : (rule.colX && metricCellMatches(row[rule.colX], rule.valY)))
+                : [rows.find(row => typeof metricRuleRowMatches === 'function'
+                    ? metricRuleRowMatches(row, rule, true)
+                    : (rule.colX && metricCellMatches(row[rule.colX], rule.valY)))].filter(Boolean);
+            matchedRows.forEach(matchedRow => {
+                if (metricCellMatches(matchedRow[rule.colX], rule.valY)) {
+                    addCell(matchedRow, rule.colX, 'metric-condition-cell', `${ruleName} 条件命中：${rule.colX} 包含 ${rule.valY}`);
+                }
                 (Array.isArray(rule.conditions) ? rule.conditions : []).forEach(item => {
-                    if (item && item.column) addCell(matchedRow, item.column, 'metric-condition-cell', `${ruleName} 高级条件命中：${item.column} 包含 ${item.value}`);
+                    if (item && item.column && metricCellMatches(matchedRow[item.column], item.value)) addCell(matchedRow, item.column, 'metric-condition-cell', `${ruleName} 高级条件命中：${item.column} 包含 ${item.value}`);
                 });
-                addCell(matchedRow, rule.colZ, 'metric-value-cell', `${ruleName} 实际取值单元格`);
-            }
+                addCell(matchedRow, rule.colZ, 'metric-value-cell', `${ruleName} ${type === 'extract_multi' ? '参与聚合的数值单元格' : '实际取值单元格'}`);
+            });
             return;
         }
 

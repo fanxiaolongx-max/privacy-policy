@@ -137,6 +137,103 @@ function buildMetricStats(metrics) {
     };
 }
 
+function numericMagnitude(value) {
+    const matched = String(value ?? '').replace(/,/g, '').match(/-?\d+(?:\.\d+)?/);
+    return matched ? Math.abs(Number(matched[0])) : 0;
+}
+
+function getManualMetricLabels(snapshot) {
+    const raw = parseSnapshotRaw(snapshot);
+    return new Set((Array.isArray(raw.topMetrics) ? raw.topMetrics : [])
+        .filter(item => item && (
+            item.isManual === true
+            || String(item.id || '').startsWith('manual_m_')
+            || item.colX === '手动指标'
+            || item.colZ === '手动指标'
+        ))
+        .map(item => String(item.label || '').trim())
+        .filter(Boolean));
+}
+
+function buildProactiveAlertCandidates(metrics = [], limit = 12) {
+    const safeLimit = Math.max(1, Math.min(200, Number(limit) || 12));
+    const seen = new Set();
+    return metrics
+        .filter(item => Number(item?.is_failing) === 1 && item.metric_label && item.cat_name)
+        .map(item => ({
+            customerGroup: String(item.cat_name).trim(),
+            metric: String(item.metric_label).trim(),
+            target: String(item.target_val ?? '').trim(),
+            actual: String(item.raw_val ?? '').trim(),
+            gap: String(item.gap ?? '').trim(),
+            weight: finiteOrNull(item.weight),
+            earnedScore: finiteOrNull(item.earned_score),
+            completionRatio: finiteOrNull(item.completion_ratio),
+            sourceType: item.is_manual ? 'manual' : 'imported',
+            priority: (item.is_manual ? 0 : 1000000)
+                + (Number(item.weight) || 0) * 1000
+                + numericMagnitude(item.gap) * 10
+                + Math.max(0, 1 - (Number(item.completion_ratio) || 0))
+        }))
+        .sort((a, b) => b.priority - a.priority
+            || a.metric.localeCompare(b.metric, 'zh-CN')
+            || a.customerGroup.localeCompare(b.customerGroup, 'zh-CN'))
+        .filter(item => {
+            // 同一指标可能有多个未达标客户群，预警只选优先级最高的一个代表。
+            const key = item.metric;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        })
+        .slice(0, safeLimit)
+        .map(({ priority, ...item }) => item);
+}
+
+async function getProactiveAlerts({ limit = 12 } = {}) {
+    const db = await openReadOnlyDb();
+    if (!db) {
+        return { available: false, reason: '报表数据库尚未创建', items: [] };
+    }
+    try {
+        const snapshot = await dbGet(
+            db,
+            `SELECT id, snapshot_id, month, created_at, stored_at, raw_data_json
+             FROM ReportSnapshots ORDER BY id DESC LIMIT 1`
+        );
+        if (!snapshot) return { available: false, reason: '尚无入库报表', items: [] };
+        const manualMetricLabels = getManualMetricLabels(snapshot);
+        const rows = await dbAll(
+            db,
+            `SELECT cat_name, metric_label, weight, target_val, raw_val, is_failing,
+                    gap, earned_score, completion_ratio
+             FROM ReportMetricData
+             WHERE snapshot_id = ? AND (month = ? OR month IS NULL) AND is_failing = 1
+             LIMIT ?`,
+            [snapshot.snapshot_id, snapshot.month, MAX_METRIC_ROWS]
+        );
+        const sourceAwareRows = rows.map(item => ({
+            ...item,
+            is_manual: manualMetricLabels.has(String(item.metric_label || '').trim())
+        }));
+        return {
+            available: true,
+            snapshot: {
+                snapshotId: snapshot.snapshot_id,
+                month: snapshot.month,
+                createdAt: snapshot.created_at,
+                storedAt: snapshot.stored_at || null
+            },
+            totalFailing: rows.length,
+            items: buildProactiveAlertCandidates(sourceAwareRows, limit),
+            selectionRule: '数据导入指标优先，再按权重和差距排序；手动录入指标仅作为后备提醒。',
+            source: 'data/report.db: ReportSnapshots, ReportMetricData',
+            readOnly: true
+        };
+    } finally {
+        await closeDb(db);
+    }
+}
+
 function parseSnapshotTopMetrics(snapshot) {
     try {
         const raw = JSON.parse(snapshot?.raw_data_json || '{}');
@@ -946,6 +1043,8 @@ module.exports = {
     analyzeQuestion,
     formatAnalysisForPrompt,
     buildMetricStats,
+    buildProactiveAlertCandidates,
+    getProactiveAlerts,
     findMatchedMetricLabels,
     parseRequestedHistoryCount,
     loadMatchedMetricHistory

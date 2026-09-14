@@ -37,7 +37,7 @@
         }
     };
 
-    const state = { items: [], total: 0, topicKey: 'netcare-eos-product', metricKey: 'pending' };
+    const state = { items: [], total: 0, topicKey: 'netcare-eos-product', metricKey: 'pending', detailRows: [], detailColumns: [], detailPage: 1, detailPageSize: 50, detailSortColumn: '', detailSortAscending: true, detailFilter: '' };
     const elements = {};
     const DETAIL_LABELS = { customer_name: '客户', product_line_name: '产品线', product_line_map: '产品线', product_name: '产品', software_version: '版本', task_id: '任务单号', need_reduce_cnt: '需消减', reduced_cnt: '已消减', incorporation_total_nes: '数量', incorporated_nes: '已收编', to_be_incorporated_nes: '待收编', current_phase_name: '阶段', scope: '范围', year: '年份', month: '月份', task_count: '变更任务数', operation_success_rate: '操作成功率', rollback_count: '回退数', high_core_total_count: '高危核心', interception_cnt: '拦截数', commands_interception_cnt: '命令行拦截', graphical_interception_cnt: '图形化拦截', period: '期间', sr_total: 'SR 数', sr_frt: 'FRT', unclose_sr_cnt: '未关闭', overdue_sr_cnt: '逾期', minor_sr_cnt: 'Minor', major_sr_cnt: 'Major', critical_sr_cnt: 'Critical' };
     const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
@@ -120,12 +120,18 @@
         return typeof value === 'object' ? JSON.stringify(value) : String(value);
     }
 
-    function renderDetail(snapshot) {
-        const rows = detailRows(snapshot); const columns = detailColumns(rows);
-        elements.detailSummary.textContent = `${topic().label} · ${rows.length} 条明细${rows.length > 500 ? '（仅展示前 500 条）' : ''}`;
-        const visibleRows = rows.slice(0, 500);
-        elements.detailTable.innerHTML = rows.length ? `<table><thead><tr>${columns.map(key => `<th>${escapeHtml(DETAIL_LABELS[key] || key)}</th>`).join('')}</tr></thead><tbody>${visibleRows.map(row => `<tr>${columns.map(key => `<td title="${escapeHtml(detailValue(row[key], key))}">${escapeHtml(detailValue(row[key], key))}</td>`).join('')}</tr>`).join('')}</tbody></table>` : '<div class="topic-detail-empty">该专题没有可展示的明细数据</div>';
+    function renderDetailTable() {
+        const rows = state.detailRows.filter(row => !state.detailFilter || state.detailColumns.some(key => detailValue(row[key], key).toLowerCase().includes(state.detailFilter)));
+        const column = state.detailSortColumn;
+        rows.sort((a, b) => { if (!column) return 0; const av = detailValue(a[column], column), bv = detailValue(b[column], column); const an = Number(av.replace(/[% ,]/g, '')), bn = Number(bv.replace(/[% ,]/g, '')); const result = Number.isFinite(an) && Number.isFinite(bn) ? an - bn : av.localeCompare(bv, 'zh-CN'); return state.detailSortAscending ? result : -result; });
+        const pageCount = Math.max(1, Math.ceil(rows.length / state.detailPageSize)); state.detailPage = Math.min(pageCount, Math.max(1, state.detailPage)); const start = (state.detailPage - 1) * state.detailPageSize; const pageRows = rows.slice(start, start + state.detailPageSize);
+        elements.detailSummary.textContent = `${topic().label} · 共 ${state.detailRows.length} 条明细 · 筛选后 ${rows.length} 条 · 第 ${state.detailPage}/${pageCount} 页`;
+        elements.detailTable.innerHTML = state.detailRows.length ? `<table><thead><tr>${state.detailColumns.map(key => `<th>${escapeHtml(DETAIL_LABELS[key] || key)}</th>`).join('')}</tr></thead><tbody>${pageRows.map(row => `<tr>${state.detailColumns.map(key => `<td title="${escapeHtml(detailValue(row[key], key))}">${escapeHtml(detailValue(row[key], key))}</td>`).join('')}</tr>`).join('')}</tbody></table><div class="topic-detail-pager"><button data-detail-page="prev" ${state.detailPage <= 1 ? 'disabled' : ''}>上一页</button><b>${state.detailPage} / ${pageCount}</b><button data-detail-page="next" ${state.detailPage >= pageCount ? 'disabled' : ''}>下一页</button><span>显示 ${rows.length ? start + 1 : 0}–${Math.min(rows.length, start + state.detailPageSize)} / ${rows.length}</span></div>` : '<div class="topic-detail-empty">该专题没有可展示的明细数据</div>';
+        elements.detailSortColumn.innerHTML = state.detailColumns.map(key => `<option value="${escapeHtml(key)}" ${key === state.detailSortColumn ? 'selected' : ''}>${escapeHtml(DETAIL_LABELS[key] || key)}</option>`).join('');
         elements.detailJson.hidden = true; elements.detailTable.hidden = false; elements.viewRaw.textContent = '原始 JSON';
+    }
+    function renderDetail(snapshot) {
+        state.detailRows = detailRows(snapshot); state.detailColumns = detailColumns(state.detailRows); state.detailPage = 1; state.detailFilter = ''; state.detailSortColumn = state.detailColumns[0] || ''; state.detailSortAscending = true; elements.detailSearch.value = ''; elements.detailTools.hidden = false; elements.detailSortDirection.textContent = '升序'; renderDetailTable();
         elements.detailModal.hidden = false;
     }
 
@@ -157,11 +163,11 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        ['totalCount', 'netcareCount', 'datafabCount', 'latestTime', 'refreshButton', 'topicFilter', 'metricFilter', 'analysisTitle', 'metricDefinition', 'topicKpis', 'trendChart', 'metricColumnTitle', 'loadStatus', 'historyBody', 'emptyState', 'detailModal', 'detailTitle', 'detailSummary', 'detailTable', 'detailJson', 'downloadDetail', 'viewRaw', 'closeDetail'].forEach(id => { elements[id] = document.getElementById(id); });
+        ['totalCount', 'netcareCount', 'datafabCount', 'latestTime', 'refreshButton', 'topicFilter', 'metricFilter', 'analysisTitle', 'metricDefinition', 'topicKpis', 'trendChart', 'metricColumnTitle', 'loadStatus', 'historyBody', 'emptyState', 'detailModal', 'detailTitle', 'detailSummary', 'detailTable', 'detailJson', 'downloadDetail', 'viewRaw', 'toggleDetailFullscreen', 'detailTools', 'detailSearch', 'detailPageSize', 'detailSortColumn', 'detailSortDirection', 'closeDetail'].forEach(id => { elements[id] = document.getElementById(id); });
         renderTopicControls(); elements.refreshButton.addEventListener('click', loadData);
         elements.topicFilter.addEventListener('change', event => { state.topicKey = event.target.value; state.metricKey = topic().metrics[0].key; renderTopicControls(); renderAnalysis(); });
         elements.metricFilter.addEventListener('change', event => { state.metricKey = event.target.value; renderAnalysis(); });
-        elements.historyBody.addEventListener('click', handleTableAction); elements.downloadDetail.addEventListener('click', () => { if (state.detailSnapshot) downloadDetailTable(state.detailSnapshot.snapshot); }); elements.viewRaw.addEventListener('click', () => { if (!state.detailSnapshot) return; const showingRaw = !elements.detailJson.hidden; elements.detailJson.textContent = JSON.stringify(state.detailSnapshot.snapshot, null, 2); elements.detailJson.hidden = showingRaw; elements.detailTable.hidden = !showingRaw; elements.viewRaw.textContent = showingRaw ? '原始 JSON' : '返回详表'; }); elements.closeDetail.addEventListener('click', () => { elements.detailModal.hidden = true; });
+        elements.historyBody.addEventListener('click', handleTableAction); elements.downloadDetail.addEventListener('click', () => { if (state.detailSnapshot) downloadDetailTable(state.detailSnapshot.snapshot); }); elements.viewRaw.addEventListener('click', () => { if (!state.detailSnapshot) return; const showingRaw = !elements.detailJson.hidden; elements.detailJson.textContent = JSON.stringify(state.detailSnapshot.snapshot, null, 2); elements.detailJson.hidden = showingRaw; elements.detailTable.hidden = !showingRaw; elements.detailTools.hidden = !showingRaw; elements.viewRaw.textContent = showingRaw ? '原始 JSON' : '返回详表'; }); elements.detailSearch.addEventListener('input', event => { state.detailFilter = event.target.value.trim().toLowerCase(); state.detailPage = 1; renderDetailTable(); }); elements.detailPageSize.addEventListener('change', event => { state.detailPageSize = Number(event.target.value) || 50; state.detailPage = 1; renderDetailTable(); }); elements.detailSortColumn.addEventListener('change', event => { state.detailSortColumn = event.target.value; state.detailPage = 1; renderDetailTable(); }); elements.detailSortDirection.addEventListener('click', () => { state.detailSortAscending = !state.detailSortAscending; elements.detailSortDirection.textContent = state.detailSortAscending ? '升序' : '降序'; renderDetailTable(); }); elements.detailTable.addEventListener('click', event => { const button = event.target.closest('[data-detail-page]'); if (!button) return; state.detailPage += button.dataset.detailPage === 'next' ? 1 : -1; renderDetailTable(); }); elements.toggleDetailFullscreen.addEventListener('click', () => { elements.detailModal.classList.toggle('is-fullscreen'); elements.toggleDetailFullscreen.textContent = elements.detailModal.classList.contains('is-fullscreen') ? '退出全屏' : '全屏'; }); elements.closeDetail.addEventListener('click', () => { elements.detailModal.classList.remove('is-fullscreen'); elements.toggleDetailFullscreen.textContent = '全屏'; elements.detailModal.hidden = true; });
         elements.detailModal.addEventListener('click', event => { if (event.target === elements.detailModal) elements.detailModal.hidden = true; }); loadData();
     });
 }());

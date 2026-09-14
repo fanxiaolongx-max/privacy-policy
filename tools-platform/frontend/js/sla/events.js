@@ -163,8 +163,45 @@ function metricRuleCellMatches(cellVal, pattern) {
 }
 
 function metricRuleRowMatches(row, rule, includePrimary = true) {
-    if (includePrimary && rule && rule.colX && !metricRuleCellMatches(row && row[rule.colX], rule.valY)) return false;
-    return getMetricRuleConditions(rule).every(item => metricRuleCellMatches(row && row[item.column], item.value));
+    const tests = [];
+    if (includePrimary && rule && rule.colX) {
+        tests.push(() => metricRuleCellMatches(row && row[rule.colX], rule.valY));
+    }
+    getMetricRuleConditions(rule).forEach(item => {
+        tests.push(() => metricRuleCellMatches(row && row[item.column], item.value));
+    });
+    if (!tests.length) return true;
+    const useOr = rule && rule.type === 'extract_multi' && rule.filterLogic === 'or';
+    return useOr ? tests.some(test => test()) : tests.every(test => test());
+}
+
+function parseMetricNumericValue(value) {
+    if (typeof value === 'number') return Number.isFinite(value) ? { value, isPercent: false } : null;
+    let text = String(value === undefined || value === null ? '' : value).trim();
+    if (!text) return null;
+    const isPercent = text.endsWith('%');
+    if (isPercent) text = text.slice(0, -1).trim();
+    const negativeByParentheses = /^\(.*\)$/.test(text);
+    if (negativeByParentheses) text = text.slice(1, -1).trim();
+    text = text.replace(/[,，\s]/g, '').replace(/^[¥￥$€£]/, '');
+    if (!/^[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[-+]?\d+)?$/i.test(text)) return null;
+    const number = Number(text);
+    if (!Number.isFinite(number)) return null;
+    return { value: negativeByParentheses ? -number : number, isPercent };
+}
+
+function aggregateMetricRowValues(rows, rule) {
+    const parsed = (rows || []).map(row => parseMetricNumericValue(row && row[rule.colZ])).filter(Boolean);
+    if (!parsed.length) return '--';
+    const method = rule.aggregation || 'sum';
+    let result;
+    if (method === 'count') result = parsed.length;
+    else if (method === 'avg') result = parsed.reduce((sum, item) => sum + item.value, 0) / parsed.length;
+    else if (method === 'max') result = Math.max(...parsed.map(item => item.value));
+    else if (method === 'min') result = Math.min(...parsed.map(item => item.value));
+    else result = parsed.reduce((sum, item) => sum + item.value, 0);
+    result = Number(result.toFixed(12));
+    return method !== 'count' && parsed.every(item => item.isPercent) ? `${result}%` : result;
 }
 
 function buildMetricConditionFieldOptions(fields, selected = '') {
@@ -224,6 +261,25 @@ window.removeMetricConditionRow = function(secId, index) {
     renderMetricConditionRows(container, AppState[secId]?.orderedHeaders || [], conditions, secId);
     const count = document.getElementById(`m-conditions-count-${secId}`);
     if (count) count.textContent = String(conditions.length);
+};
+
+window.setMetricCreateType = function(secId, type) {
+    const isExtract = type === 'extract' || type === 'extract_multi';
+    const isMulti = type === 'extract_multi';
+    const extractConfig = document.getElementById(`m-extract-config-${secId}`);
+    const countConfig = document.getElementById(`m-count-config-${secId}`);
+    const multiConfig = document.getElementById(`m-multi-config-${secId}`);
+    const logicWrap = document.getElementById(`m-condition-logic-wrap-${secId}`);
+    const logic = document.getElementById(`m-condition-logic-${secId}`);
+    const help = document.getElementById(`m-conditions-help-${secId}`);
+    if (extractConfig) extractConfig.style.display = isExtract ? 'block' : 'none';
+    if (countConfig) countConfig.style.display = isExtract ? 'none' : 'block';
+    if (multiConfig) multiConfig.style.display = isMulti ? 'block' : 'none';
+    if (logicWrap) logicWrap.style.display = isMulti ? 'flex' : 'none';
+    if (!isMulti && logic) logic.value = 'and';
+    if (help) help.textContent = isMulti
+        ? SLAT('sla.section.multiConditionsHelp')
+        : SLAT('sla.section.andConditionsHelp');
 };
 
 function populateMetricSelects(secId) {
@@ -286,12 +342,18 @@ function resetMetricForm(secId) {
     const countConfig = document.getElementById(`m-count-config-${secId}`);
     if (extractConfig) extractConfig.style.display = 'block';
     if (countConfig) countConfig.style.display = 'none';
+    const multiConfig = document.getElementById(`m-multi-config-${secId}`);
+    if (multiConfig) multiConfig.style.display = 'none';
 
     [
         'm-colx', 'm-valy', 'm-colz',
         'm-c-colx', 'm-c-valy', 'm-c-colz', 'm-c-valk',
         'm-label', 'm-color', 'm-parent', 'm-cat'
     ].forEach(id => setValue(id));
+    setValue('m-aggregation', 'sum');
+    setValue('m-condition-logic', 'and');
+    const logicWrap = document.getElementById(`m-condition-logic-wrap-${secId}`);
+    if (logicWrap) logicWrap.style.display = 'none';
 
     const labelContainer = document.getElementById(`m-label-container-${secId}`);
     const categorySelect = document.getElementById(`m-cat-${secId}`);
@@ -310,7 +372,7 @@ function addMetricRule(secId) {
     const type = typeEl ? typeEl.value : 'extract';
 
     let colX, valY, colZ, valK;
-    if (type === 'extract') {
+    if (type === 'extract' || type === 'extract_multi') {
         colX = document.getElementById(`m-colx-${secId}`).value;
         valY = document.getElementById(`m-valy-${secId}`).value.trim();
         colZ = document.getElementById(`m-colz-${secId}`).value;
@@ -348,9 +410,11 @@ function addMetricRule(secId) {
     }
 
     const conditions = readMetricConditionRows(document.getElementById(`m-conditions-${secId}`));
+    const aggregation = type === 'extract_multi' ? (document.getElementById(`m-aggregation-${secId}`)?.value || 'sum') : '';
+    const filterLogic = type === 'extract_multi' ? (document.getElementById(`m-condition-logic-${secId}`)?.value || 'and') : 'and';
     const rule = {
         id: 'm_' + new Date().getTime(),
-        type, colX, valY, colZ, valK, label, color, conditions,
+        type, colX, valY, colZ, valK, label, color, conditions, aggregation, filterLogic,
         sourceSecId: secId
     };
 
@@ -587,6 +651,10 @@ function describeMetricRule(rule) {
     if (rule.type === 'ratio') {
         return `RATIO [${escapeHTML(rule.colZ)}] ${SLAT('sla.rules.contains')} '${escapeHTML(rule.valK)}' / ${rule.colX ? `[${escapeHTML(rule.colX)}] ${SLAT('sla.rules.contains')} '${escapeHTML(rule.valY)}'` : SLAT('sla.rules.totalRows')}`;
     }
+    if (rule.type === 'extract_multi') {
+        const labels = { sum: 'SUM', avg: 'AVG', max: 'MAX', min: 'MIN', count: 'COUNT' };
+        return `${labels[rule.aggregation || 'sum'] || 'SUM'} [${escapeHTML(rule.colZ)}]`;
+    }
     return `SHOW [${escapeHTML(rule.colZ)}]`;
 }
 
@@ -601,7 +669,10 @@ function describeMetricCondition(rule) {
     getMetricRuleConditions(rule).forEach(item => {
         parts.push(`[${escapeHTML(item.column)}] ${SLAT('sla.rules.contains')} '${escapeHTML(item.value)}'`);
     });
-    return parts.length ? parts.join(` ${SLAT('sla.rules.and')} `) : SLAT('sla.rules.allRows');
+    const relation = rule.type === 'extract_multi' && rule.filterLogic === 'or'
+        ? SLAT('sla.rules.or')
+        : SLAT('sla.rules.and');
+    return parts.length ? parts.join(` ${relation} `) : SLAT('sla.rules.allRows');
 }
 
 function getMetricRuleModeFieldLabels(type) {
@@ -648,7 +719,7 @@ function getMetricRuleSearchText(record) {
     const ruleType = record.rule && record.rule.type ? record.rule.type : 'extract';
     const modeAliases = ruleType === 'count'
         ? '统计 count COUNT'
-        : (ruleType === 'ratio' ? '占比 比例 ratio RATIO' : '提取 extract show SHOW');
+        : (ruleType === 'ratio' ? '占比 比例 ratio RATIO' : (ruleType === 'extract_multi' ? '提取多行 聚合 aggregate sum avg max min' : '提取 extract show SHOW'));
     return [
         record.label,
         record.parentMetricName,
@@ -708,7 +779,11 @@ function makeMetricRuleRecord(base) {
             })
             : SLAT('sla.rules.independent'),
         category: base.kind === 'sub' ? (rule.category || SLAT('sla.rules.uncategorized')) : '-',
-        typeText: rule.type === 'count' ? SLAT('sla.rules.count') : (rule.type === 'ratio' ? SLAT('sla.rules.ratio') : SLAT('sla.rules.extract'))
+        typeText: rule.type === 'count'
+            ? SLAT('sla.rules.count')
+            : (rule.type === 'ratio'
+                ? SLAT('sla.rules.ratio')
+                : (rule.type === 'extract_multi' ? SLAT('sla.rules.extractMulti') : SLAT('sla.rules.extract')))
     };
     record.searchText = getMetricRuleSearchText(record);
     return record;
@@ -995,7 +1070,9 @@ function renderMetricRuleEditorPreview() {
     const parentSel = document.getElementById('metric-rule-edit-parent');
     const parentText = parentSel && parentSel.selectedOptions[0] ? parentSel.selectedOptions[0].textContent : SLAT('sla.rules.independent');
     const conditions = readMetricConditionRows(document.getElementById('metric-rule-edit-conditions-list'));
-    const rule = { type, colX, valY, colZ, valK, conditions };
+    const aggregation = document.getElementById('metric-rule-edit-aggregation')?.value || 'sum';
+    const filterLogic = document.getElementById('metric-rule-edit-filter-logic')?.value || 'and';
+    const rule = { type, colX, valY, colZ, valK, conditions, aggregation, filterLogic };
     const preview = document.getElementById('metric-rule-edit-preview');
     if (!preview) return;
     preview.innerHTML = `
@@ -1006,10 +1083,19 @@ function renderMetricRuleEditorPreview() {
 
 window.refreshMetricRuleEditorMode = function() {
     const type = document.getElementById('metric-rule-edit-type')?.value || 'extract';
+    const isExtract = type === 'extract' || type === 'extract_multi';
+    const isMulti = type === 'extract_multi';
     updateMetricRuleEditorModeLabels(type);
     document.querySelectorAll('.metric-rule-edit-stat-only').forEach(el => {
-        el.style.display = type === 'extract' ? 'none' : 'flex';
+        el.style.display = isExtract ? 'none' : 'flex';
     });
+    document.querySelectorAll('.metric-rule-edit-multi-only').forEach(el => {
+        el.style.display = isMulti ? 'flex' : 'none';
+    });
+    const help = document.getElementById('metric-rule-edit-conditions-help');
+    if (help) help.textContent = isMulti
+        ? SLAT('sla.section.multiConditionsHelp')
+        : SLAT('sla.section.andConditionsHelp');
     renderMetricRuleEditorPreview();
 };
 
@@ -1080,6 +1166,8 @@ window.openMetricRuleEditor = function(index) {
     document.getElementById('metric-rule-edit-colz').value = rule.colZ || '';
     document.getElementById('metric-rule-edit-valy').value = rule.valY || '';
     document.getElementById('metric-rule-edit-valk').value = rule.valK || '';
+    document.getElementById('metric-rule-edit-aggregation').value = rule.aggregation || 'sum';
+    document.getElementById('metric-rule-edit-filter-logic').value = rule.filterLogic || 'and';
     renderMetricConditionRows(
         document.getElementById('metric-rule-edit-conditions-list'),
         candidates,
@@ -1105,7 +1193,7 @@ window.openMetricRuleEditor = function(index) {
         el.style.display = record.kind === 'sub' ? 'flex' : 'none';
     });
     document.getElementById('metric-rule-edit-subtitle').textContent = `${getMetricRuleDisplayOrigin(record.origin)} · ${translateMetricRuleSectionTitle(record.parentTitle)} · ${record.kind === 'sub' ? SLAT('sla.rules.sub') : SLAT('sla.rules.main')}`;
-    ['metric-rule-edit-label', 'metric-rule-edit-colx', 'metric-rule-edit-valy', 'metric-rule-edit-colz', 'metric-rule-edit-valk', 'metric-rule-edit-category', 'metric-rule-edit-parent']
+    ['metric-rule-edit-label', 'metric-rule-edit-colx', 'metric-rule-edit-valy', 'metric-rule-edit-colz', 'metric-rule-edit-valk', 'metric-rule-edit-aggregation', 'metric-rule-edit-filter-logic', 'metric-rule-edit-category', 'metric-rule-edit-parent']
         .forEach(id => {
             const el = document.getElementById(id);
             if (el) el.oninput = renderMetricRuleEditorPreview;
@@ -1180,19 +1268,22 @@ window.saveMetricRuleEditor = async function() {
     const valK = document.getElementById('metric-rule-edit-valk').value.trim();
     const label = document.getElementById('metric-rule-edit-label').value.trim();
     const conditions = readMetricConditionRows(document.getElementById('metric-rule-edit-conditions-list'));
+    const isExtract = type === 'extract' || type === 'extract_multi';
 
     if (!label) { showToast(SLAT('sla.rules.needName'), 'warning'); return; }
     if (!colZ) { showToast(SLAT('sla.rules.needColZ'), 'warning'); return; }
-    if (type === 'extract' && (!colX || !valY)) { showToast(SLAT('sla.rules.needExtractFields'), 'warning'); return; }
-    if (type !== 'extract' && !valK) { showToast(SLAT('sla.rules.needStatValue'), 'warning'); return; }
+    if (isExtract && (!colX || !valY)) { showToast(SLAT('sla.rules.needExtractFields'), 'warning'); return; }
+    if (!isExtract && !valK) { showToast(SLAT('sla.rules.needStatValue'), 'warning'); return; }
 
     const rule = ref.rule;
     rule.type = type;
     rule.colX = colX;
     rule.valY = valY;
     rule.colZ = colZ;
-    rule.valK = type === 'extract' ? '' : valK;
+    rule.valK = isExtract ? '' : valK;
     rule.conditions = conditions;
+    rule.aggregation = type === 'extract_multi' ? (document.getElementById('metric-rule-edit-aggregation').value || 'sum') : '';
+    rule.filterLogic = type === 'extract_multi' ? (document.getElementById('metric-rule-edit-filter-logic').value || 'and') : 'and';
     rule.label = label;
     if (record.kind === 'sub') {
         rule.category = document.getElementById('metric-rule-edit-category').value || rule.category || '未分类';
@@ -1238,7 +1329,7 @@ function cloneMetricRuleForCopy(sourceRule, record, rowData) {
     cloned.colX = rowData.colX;
     cloned.valY = rowData.valY;
     cloned.colZ = rowData.colZ;
-    cloned.valK = rowData.type === 'extract' ? '' : rowData.valK;
+    cloned.valK = (rowData.type === 'extract' || rowData.type === 'extract_multi') ? '' : rowData.valK;
     cloned.conditions = getMetricRuleConditions({ conditions: rowData.conditions }).map(item => ({ ...item }));
     cloned.label = rowData.label;
     cloned.sourceSecId = sourceRule.sourceSecId || record.sourceSecId;
@@ -1354,6 +1445,7 @@ window.renderMetricRuleCopyRows = function() {
     const fieldOptions = [{ value: '', label: SLAT('sla.rules.emptyColumn') }, ...fieldCandidates.map(col => ({ value: col, label: col }))];
     const typeOptions = [
         { value: 'extract', label: SLAT('sla.modal.extract') },
+        { value: 'extract_multi', label: SLAT('sla.modal.extractMulti') },
         { value: 'count', label: SLAT('sla.modal.count') },
         { value: 'ratio', label: SLAT('sla.modal.ratio') }
     ];
@@ -1376,9 +1468,9 @@ window.renderMetricRuleCopyRows = function() {
             category: mapping ? mapping.category : (existing.category || rule.category || record.category || cats[0] || ''),
             parent: existing.parent || currentParentValue,
             colX: existing.colX || rule.colX || '',
-            valY: mapping && rowType === 'extract' ? mapping.conditionValue : (existing.valY || rule.valY || ''),
+            valY: mapping && (rowType === 'extract' || rowType === 'extract_multi') ? mapping.conditionValue : (existing.valY || rule.valY || ''),
             colZ: existing.colZ || rule.colZ || '',
-            valK: mapping && rowType !== 'extract' ? mapping.conditionValue : (existing.valK || rule.valK || ''),
+            valK: mapping && rowType !== 'extract' && rowType !== 'extract_multi' ? mapping.conditionValue : (existing.valK || rule.valK || ''),
             conditions: Object.prototype.hasOwnProperty.call(existing, 'conditions')
                 ? existing.conditions
                 : getMetricRuleConditions(rule).map(item => ({ ...item }))
@@ -1780,7 +1872,9 @@ window.saveMetricRuleCopies = async function() {
                     ref.rule.colX || '',
                     ref.rule.valY || '',
                     ref.rule.colZ || '',
-                    rType === 'extract' ? '' : (ref.rule.valK || ''),
+                    (rType === 'extract' || rType === 'extract_multi') ? '' : (ref.rule.valK || ''),
+                    rType === 'extract_multi' ? (ref.rule.aggregation || 'sum') : '',
+                    rType === 'extract_multi' ? (ref.rule.filterLogic || 'and') : '',
                     metricRuleConditionsSignature(ref.rule.conditions)
                 ].join('||');
                 existingSignatures.add(sig);
@@ -1808,7 +1902,9 @@ window.saveMetricRuleCopies = async function() {
                 row.colX || '',
                 row.valY || '',
                 row.colZ || '',
-                rowType === 'extract' ? '' : (row.valK || ''),
+                (rowType === 'extract' || rowType === 'extract_multi') ? '' : (row.valK || ''),
+                rowType === 'extract_multi' ? (ref.rule.aggregation || 'sum') : '',
+                rowType === 'extract_multi' ? (ref.rule.filterLogic || 'and') : '',
                 metricRuleConditionsSignature(row.conditions)
             ].join('||');
 
@@ -1822,8 +1918,8 @@ window.saveMetricRuleCopies = async function() {
         }
 
         if (!row.colZ) { showToast(`${SLAT('sla.rules.copyRowPrefix', { index: row.index })}${SLAT('sla.rules.needColZ')}`, 'warning'); return; }
-        if (row.type === 'extract' && (!row.colX || !row.valY)) { showToast(`${SLAT('sla.rules.copyRowPrefix', { index: row.index })}${SLAT('sla.rules.needExtractFields')}`, 'warning'); return; }
-        if (row.type !== 'extract' && !row.valK) { showToast(`${SLAT('sla.rules.copyRowPrefix', { index: row.index })}${SLAT('sla.rules.needStatValue')}`, 'warning'); return; }
+        if ((row.type === 'extract' || row.type === 'extract_multi') && (!row.colX || !row.valY)) { showToast(`${SLAT('sla.rules.copyRowPrefix', { index: row.index })}${SLAT('sla.rules.needExtractFields')}`, 'warning'); return; }
+        if (row.type !== 'extract' && row.type !== 'extract_multi' && !row.valK) { showToast(`${SLAT('sla.rules.copyRowPrefix', { index: row.index })}${SLAT('sla.rules.needStatValue')}`, 'warning'); return; }
         if (record.kind === 'sub' && !row.parent) { showToast(`${SLAT('sla.rules.copyRowPrefix', { index: row.index })}${SLAT('sla.rules.notFoundParent')}`, 'warning'); return; }
     }
 

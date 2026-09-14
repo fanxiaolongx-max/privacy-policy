@@ -155,6 +155,19 @@
   .filter-card-head h2{margin:0}
   .filter-head-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   .filter-head-actions button{white-space:nowrap}
+  .operator-scope{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:0 0 12px;padding:12px 14px;
+    border:1px solid rgba(200,16,46,.2);border-radius:10px;background:linear-gradient(100deg,rgba(200,16,46,.09),rgba(255,255,255,.68))}
+  .operator-scope-copy{min-width:180px}.operator-scope-title{font-size:12px;font-weight:800;color:var(--navy)}
+  .operator-scope-note{font-size:10px;color:var(--muted);margin-top:3px}
+  .operator-scope-buttons{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:4px;border-radius:9px;background:rgba(255,255,255,.82);border:1px solid rgba(200,16,46,.14)}
+  .operator-scope-btn{min-width:150px;background:transparent;color:#667085;border:1px solid transparent;padding:8px 13px}
+  .operator-scope-btn.active{background:var(--red);color:#fff;box-shadow:0 5px 14px rgba(200,16,46,.2)}
+  .operator-scope-count{display:inline-block;margin-left:5px;padding:1px 6px;border-radius:999px;background:rgba(102,112,133,.12);font-size:9px}
+  .operator-scope-btn.active .operator-scope-count{background:rgba(255,255,255,.2)}
+  .night-rule-toggle{display:flex;align-items:flex-start;gap:8px;cursor:pointer;margin:0;color:#344054}
+  .night-rule-toggle input{width:auto;margin:2px 0 0;accent-color:var(--red)}
+  .night-rule-status{font-size:10px;color:var(--muted);margin-top:5px}
+  .time-setting.disabled{opacity:.58}
   .reset-filter-btn{width:100%;background:#fff;color:#475467;border:1px solid #dfe3e8}
   .reset-filter-btn:hover{background:#f7f8fa}
   .compare-modal{position:fixed;inset:0;z-index:130;display:none;align-items:center;justify-content:center;background:rgba(17,24,39,.42);backdrop-filter:blur(7px)}
@@ -243,7 +256,7 @@
     border-radius:7px;background:#f7f8fa;color:#667085;font-size:10px}
   .table-focus-notice[hidden]{display:none}
   .table-focus-notice button{padding:4px 7px;background:#fff;color:#475467;border:1px solid #dfe3e8;font-size:9.5px}
-  @media(max-width:720px){.analytics-heading{align-items:flex-start;flex-direction:column}.quality-grid{grid-template-columns:1fr 1fr}}
+  @media(max-width:720px){.analytics-heading{align-items:flex-start;flex-direction:column}.quality-grid{grid-template-columns:1fr 1fr}.operator-scope{align-items:stretch;flex-direction:column}.operator-scope-btn{min-width:0}.operator-scope-buttons{width:100%}}
 
   body{
     background:
@@ -314,6 +327,16 @@
         <button class="primary" id="openCompareBtn">同比 / 环比分析</button>
       </div>
     </div>
+    <div class="operator-scope" aria-label="操作人统计类别">
+      <div class="operator-scope-copy">
+        <div class="operator-scope-title">统计类别</div>
+        <div class="operator-scope-note">导入时按操作人工号是否包含 WX 自动分组</div>
+      </div>
+      <div class="operator-scope-buttons" role="group" aria-label="切换 WX 或非 WX 统计结果">
+        <button type="button" class="operator-scope-btn active" data-operator-group="nonwx" aria-pressed="true">非 WX 操作人<span class="operator-scope-count" id="nonWxCount">0</span></button>
+        <button type="button" class="operator-scope-btn" data-operator-group="wx" aria-pressed="false">WX 操作人<span class="operator-scope-count" id="wxCount">0</span></button>
+      </div>
+    </div>
     <div class="quick-row">
       <span class="quick-label">快速筛选</span>
       <button class="quick-btn active" data-quick="all">全部</button>
@@ -369,8 +392,8 @@
 
 
   <section class="stats">
-    <div class="stat"><div class="k">原始记录 <span class="scope-note fixed">不随筛选</span></div><div class="v" id="sRaw">0</div></div>
-    <div class="stat"><div class="k">夜间且已完成 <span class="scope-note fixed">不随筛选</span></div><div class="v ok" id="sValid">0</div></div>
+    <div class="stat"><div class="k">原始记录 <span class="scope-note fixed">当前类别</span></div><div class="v" id="sRaw">0</div></div>
+    <div class="stat"><div class="k">规则有效记录 <span class="scope-note fixed">当前类别</span></div><div class="v ok" id="sValid">0</div></div>
     <div class="stat"><div class="k"><span id="sDedupLabel">同人同日去重后</span> <span class="scope-note dynamic">随筛选</span></div><div class="v red" id="sDedup">0</div></div>
     <div class="stat"><div class="k">涉及人员 <span class="scope-note dynamic">随筛选</span></div><div class="v" id="sPeople">0</div></div>
     <div class="stat"><div class="k">激励合计 <span style="font-size:9px;color:#98a2b3">（元）</span> <span class="scope-note dynamic">随筛选</span></div><div class="v warn" id="sMoney">0</div></div>
@@ -630,20 +653,24 @@
     </div>
     <div class="rule-modal-body" id="ruleModalBody">
       <div class="settings">
-        <div class="setting-box"><label>Low 激励（元）</label><input id="feeLow" type="number" value="100" min="0"></div>
-        <div class="setting-box"><label>Medium 激励（元）</label><input id="feeMedium" type="number" value="200" min="0"></div>
-        <div class="setting-box"><label>High 激励（元）</label><input id="feeHigh" type="number" value="300" min="0"></div>
-        <div class="setting-box"><label>Fatal 激励（元）</label><input id="feeFatal" type="number" value="400" min="0"></div>
-        <div class="setting-box"><label>夜间开始</label><input id="nightStart" type="time" value="22:00"></div>
-        <div class="setting-box"><label>夜间结束</label><input id="nightEnd" type="time" value="06:00"></div>
-        <div class="setting-box"><label>二次校验模式</label>
-          <select id="verifyMode"><option value="warn">字段为主，时间异常仅提示</option><option value="strict">字段与时间均须满足</option><option value="time">仅按当地时间判断</option></select>
+        <div class="setting-box"><label>Low 激励（元）</label><input id="feeLow" type="number" value="50" min="0"></div>
+        <div class="setting-box"><label>Medium 激励（元）</label><input id="feeMedium" type="number" value="180" min="0"></div>
+        <div class="setting-box"><label>High 激励（元）</label><input id="feeHigh" type="number" value="280" min="0"></div>
+        <div class="setting-box"><label>Fatal 激励（元）</label><input id="feeFatal" type="number" value="600" min="0"></div>
+        <div class="setting-box">
+          <label class="night-rule-toggle"><input id="nightOnly" type="checkbox"><span>仅统计夜间操作</span></label>
+          <div class="night-rule-status" id="nightRuleStatus">操作时间：全天</div>
+        </div>
+        <div class="setting-box time-setting" id="nightStartBox"><label>操作时间开始</label><input id="nightStart" type="time" value="22:00" disabled></div>
+        <div class="setting-box time-setting" id="nightEndBox"><label>操作时间结束</label><input id="nightEnd" type="time" value="06:00" disabled></div>
+        <div class="setting-box"><label>夜间校验方式</label>
+          <select id="verifyMode" disabled><option value="time">仅按操作时间判断</option><option value="strict">字段与时间均须满足</option><option value="warn">字段为主，时间异常仅提示</option></select>
         </div>
         <div class="setting-box"><label>人员识别字段</label>
           <select id="personField"><option value="complete_operator">complete_operator 操作人工号</option><option value="方案实施人工号">方案实施人工号</option><option value="solution_develop_name">solution_develop_name</option></select>
         </div>
       </div>
-      <div class="hint">等级优先级：Fatal ＞ High ＞ Medium ＞ Low。未识别等级按 0 元处理。</div>
+      <div class="hint">等级优先级：Fatal ＞ High ＞ Medium ＞ Low。未识别等级按 0 元处理。操作时间默认全天；勾选“仅统计夜间操作”后会自动填入 22:00–06:00。</div>
       <div class="rule-actions">
         <button class="reset-btn" id="resetRulesBtn">重置默认规则</button>
         <button class="primary" id="saveRulesBtn">保存并应用</button>
@@ -704,7 +731,7 @@ m00961966"></textarea>
 
 <script>
 const $=id=>document.getElementById(id);
-let rawRows=[], validRows=[], dedupRows=[], calcDetailRows=[], excludedRows=[], currentView='dimension', activeDimension='person', activeCrossDimension='bu', quickRange=null;
+let rawRows=[], validRows=[], dedupRows=[], calcDetailRows=[], excludedRows=[], currentView='dimension', activeDimension='person', activeCrossDimension='bu', activeOperatorGroup='nonwx', quickRange=null;
 let rankPersonShowIds=false,rankPersonHitRows=[];
 let analyticsMetric='money',trendHitPoints=[],heatmapHitCells=[];
 const barChartHitRows=new Map();
@@ -713,7 +740,7 @@ const levelRank={fatal:4,high:3,medium:2,low:1};
 const aliases={
   task_status:['task_status','任务状态'],
   operate_level:['operate_level','操作等级','变更等级'],
-  operation_period:['操作时间段','operation_period'],
+  operation_period:['操作时间','操作时间段','operation_period'],
   local_start:['当地开始时间','local_start_time'],
   local_end:['当地完成时间','local_end_time'],
   source_year:['年份','年度','year','Year','YEAR'],
@@ -766,26 +793,34 @@ function updateBlacklistCount(){
   if($('blacklistCount'))$('blacklistCount').textContent=`当前 ${count} 人`;
 }
 const RULE_STORAGE_KEY='nightAllowanceRulesV1';
+const RULES_VERSION=2;
 const defaultRules={
-  feeLow:100,feeMedium:200,feeHigh:300,feeFatal:400,
+  rulesVersion:RULES_VERSION,
+  feeLow:50,feeMedium:180,feeHigh:280,feeFatal:600,
   nightStart:'22:00',nightEnd:'06:00',
-  verifyMode:'warn',personField:'complete_operator'
+  nightOnly:false,verifyMode:'time',personField:'complete_operator'
 };
 function getRuleValues(){
   return {
+    rulesVersion:RULES_VERSION,
     feeLow:+$('feeLow').value||0,
     feeMedium:+$('feeMedium').value||0,
     feeHigh:+$('feeHigh').value||0,
     feeFatal:+$('feeFatal').value||0,
     nightStart:$('nightStart').value||defaultRules.nightStart,
     nightEnd:$('nightEnd').value||defaultRules.nightEnd,
+    nightOnly:$('nightOnly').checked,
     verifyMode:$('verifyMode').value||defaultRules.verifyMode,
     personField:$('personField').value||defaultRules.personField
   };
 }
 function applyRuleValues(values){
   const v={...defaultRules,...(values||{})};
-  Object.entries(v).forEach(([k,val])=>{if($(k))$(k).value=val});
+  Object.entries(v).forEach(([k,val])=>{
+    if(!$(k))return;
+    if(k==='nightOnly')$(k).checked=Boolean(val);else $(k).value=val;
+  });
+  syncNightRuleUI();
 }
 function saveRules(){
   try{localStorage.setItem(RULE_STORAGE_KEY,JSON.stringify(getRuleValues()))}catch(e){}
@@ -793,6 +828,13 @@ function saveRules(){
 function loadRules(){
   try{
     const saved=JSON.parse(localStorage.getItem(RULE_STORAGE_KEY)||'null');
+    if(saved&&saved.rulesVersion!==RULES_VERSION){
+      const usedLegacyDefaultFees=saved.feeLow===100&&saved.feeMedium===200&&saved.feeHigh===300&&saved.feeFatal===400;
+      if(usedLegacyDefaultFees)Object.assign(saved,{feeLow:50,feeMedium:180,feeHigh:280,feeFatal:600});
+      if(saved.nightOnly===undefined)saved.nightOnly=true;
+      saved.rulesVersion=RULES_VERSION;
+      localStorage.setItem(RULE_STORAGE_KEY,JSON.stringify(saved));
+    }
     applyRuleValues(saved||defaultRules);
   }catch(e){applyRuleValues(defaultRules)}
 }
@@ -804,6 +846,28 @@ function resetRules(){
 
 function val(row, keys){for(const k of keys||[]){if(row[k]!==undefined&&row[k]!==null&&String(row[k]).trim()!=='')return row[k]}return ''}
 function clean(v){return String(v??'').trim()}
+function operatorGroup(person){return clean(person).toLowerCase().includes('wx')?'wx':'nonwx'}
+function operatorMatchesGroup(r){return (r&&r.__operatorGroup)===activeOperatorGroup}
+function personFromRow(r,personField){
+  const pf=personField||defaultRules.personField;
+  return clean(val(r,[pf,'complete_operator','方案实施人工号','solution_develop_name']));
+}
+function personFromRawRow(r){
+  const pf=$('personField')?.value||defaultRules.personField;
+  return personFromRow(r,pf);
+}
+function syncOperatorGroupCounts(){
+  const wx=rawRows.filter(r=>operatorGroup(personFromRawRow(r))==='wx').length;
+  if($('wxCount'))$('wxCount').textContent=wx;
+  if($('nonWxCount'))$('nonWxCount').textContent=rawRows.length-wx;
+}
+function syncNightRuleUI(fillNightRange=false){
+  const enabled=$('nightOnly').checked;
+  if(enabled&&fillNightRange){$('nightStart').value='22:00';$('nightEnd').value='06:00';$('verifyMode').value='time'}
+  ['nightStart','nightEnd','verifyMode'].forEach(id=>$(id).disabled=!enabled);
+  ['nightStartBox','nightEndBox'].forEach(id=>$(id).classList.toggle('disabled',!enabled));
+  $('nightRuleStatus').textContent=enabled?`操作时间：${$('nightStart').value}–${$('nightEnd').value}`:'操作时间：全天';
+}
 function personIdsMatch(operatorId,fullnameId){
   const operator=clean(operatorId).toLowerCase(),reported=clean(fullnameId).toLowerCase();
   if(!operator||!reported)return false;
@@ -850,7 +914,8 @@ function isNightByTime(start,end){
   if(!start&&!end)return false;
   const ns=$('nightStart').value.split(':').map(Number), ne=$('nightEnd').value.split(':').map(Number);
   const a=ns[0]*60+ns[1], b=ne[0]*60+ne[1];
-  const check=d=>{const m=timeMin(d);return a>b?(m>=a||m<b):(m>=a&&m<b)};
+  if(a===b)return true;
+  const check=d=>{if(!d)return false;const m=timeMin(d);return a>b?(m>=a||m<b):(m>=a&&m<b)};
   if(check(start)||check(end))return true;
   if(start&&end){
     let dur=(end-start)/60000;if(dur<0)dur+=1440;
@@ -925,11 +990,16 @@ function resetAllFiltersForNewFile(){
   if($('blacklistMode'))$('blacklistMode').value='enabled';
   activeDimension='person';
   activeCrossDimension='bu';
+  activeOperatorGroup='nonwx';
   currentView='dimension';
 
   document.querySelectorAll('.quick-btn').forEach(b=>b.classList.toggle('active',b.dataset.quick==='all'));
   document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.view==='dimension'));
   document.querySelectorAll('.cross-btn').forEach(b=>b.classList.toggle('active',b.dataset.cross==='bu'));
+  document.querySelectorAll('.operator-scope-btn').forEach(b=>{
+    const active=b.dataset.operatorGroup==='nonwx';
+    b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));
+  });
   if($('crossControls'))$('crossControls').classList.remove('show');
 }
 async function loadFile(file){
@@ -956,26 +1026,28 @@ async function loadFile(file){
 }
 function recalculate(){
   validRows=[];excludedRows=[];
-  const pf=$('personField').value,mode=$('verifyMode').value;
+  const pf=$('personField').value,mode=$('verifyMode').value,nightOnly=$('nightOnly').checked;
   rawRows.forEach((r,i)=>{
     const status=val(r,aliases.task_status), opField=clean(val(r,aliases.operation_period));
     const start=parseDate(val(r,aliases.local_start)),end=parseDate(val(r,aliases.local_end));
     const byField=opField.includes('夜间')||opField.toLowerCase().includes('night');
     const byTime=isNightByTime(start,end);
     const completed=isCompleted(status);
-    const person=clean(r[pf]??val(r,[pf,'complete_operator','方案实施人工号','solution_develop_name']));
+    const person=personFromRow(r,pf);
     const identity=parseFmeFullname(val(r,aliases.full_name),person);
-    let nightOk=mode==='strict'?(byField&&byTime):mode==='time'?byTime:byField;
+    let nightOk=true;
+    if(nightOnly)nightOk=mode==='strict'?(byField&&byTime):mode==='time'?byTime:byField;
     let reasons=[];
     if(!completed)reasons.push('任务未完成');
-    if(!nightOk)reasons.push(mode==='strict'?'夜间字段或当地时间不满足':'非夜间操作');
+    if(!nightOk)reasons.push(mode==='strict'?'夜间字段或操作时间不满足':'非夜间操作');
     if(!person)reasons.push('缺少操作人');
     if(!start)reasons.push('缺少/无法识别当地开始时间');
     const base={...r,__row:i+2,__person:person,__start:start,__end:end,__date:dateKey(start),__sourceYear:normalizeSourceYear(val(r,aliases.source_year)),__sourceMonth:normalizeSourceMonth(val(r,aliases.source_month)),__level:clean(val(r,aliases.operate_level)),
       __rank:rank(val(r,aliases.operate_level)),__fee:fee(val(r,aliases.operate_level)),__byField:byField,__byTime:byTime,
       __bu:clean(val(r,aliases.bu)),__customer:clean(val(r,aliases.customer)),__attr:clean(val(r,aliases.attr)),
       __task:clean(val(r,aliases.task)),__summary:clean(val(r,aliases.summary)),__status:clean(status),
-      __name:identity.status==='matched'?identity.name:'',__fmeName:identity.name,__fmeFullname:identity.raw,__fmePerson:identity.reportedPerson,__identityStatus:identity.status};
+      __name:identity.status==='matched'?identity.name:'',__fmeName:identity.name,__fmeFullname:identity.raw,__fmePerson:identity.reportedPerson,__identityStatus:identity.status,
+      __operatorGroup:operatorGroup(person)};
     if(completed&&nightOk&&person&&start)validRows.push(base); else excludedRows.push({...base,__reason:reasons.join('；')||'规则未满足'});
   });
   const best=new Map();
@@ -1002,7 +1074,7 @@ function recalculate(){
       __selectedTask:blockedReason?'':selected?.__task||''
     };
   });
-  refreshFilters(); render();
+  syncOperatorGroupCounts();refreshFilters();render();
 }
 function uniq(arr){return [...new Set(arr.filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'zh-CN'))}
 function fillSelect(id,vals){
@@ -1024,7 +1096,7 @@ function rowMatchesFilters(r){
   const d=filterDateForRow(r);
   const inQuick=!quickRange||!d||(d>=quickRange.start&&d<quickRange.end);
   const personText=clean($('filterPerson').value).toLowerCase();
-  return inQuick&&
+  return operatorMatchesGroup(r)&&inQuick&&
     (!$('filterYear').value||String(d?.getFullYear())===$('filterYear').value)&&
     (!$('filterMonth').value||String((d?.getMonth()||0)+1).padStart(2,'0')===$('filterMonth').value)&&
     (!$('filterBU').value||r.__bu===$('filterBU').value)&&
@@ -1040,7 +1112,8 @@ function isBlacklistEnabled(){
   return $('blacklistMode')?.value!=='disabled';
 }
 function rowsForRuleMode({dedup=true,blacklist=true}={}){
-  const candidates=blacklist?validRows.filter(r=>!blacklistReason(r.__person)):validRows.slice();
+  const groupRows=validRows.filter(operatorMatchesGroup);
+  const candidates=blacklist?groupRows.filter(r=>!blacklistReason(r.__person)):groupRows;
   if(!dedup)return candidates;
   const best=new Map();
   candidates.forEach(r=>{
@@ -1101,7 +1174,8 @@ function money(n){return Math.round(Number(n)||0).toLocaleString('zh-CN')}
 function render(){
   hideTableFocus();
   const rows=filtered();
-  $('sRaw').textContent=rawRows.length;$('sValid').textContent=validRows.length;$('sDedup').textContent=rows.length;
+  $('sRaw').textContent=rawRows.filter(r=>operatorGroup(personFromRawRow(r))===activeOperatorGroup).length;
+  $('sValid').textContent=validRows.filter(operatorMatchesGroup).length;$('sDedup').textContent=rows.length;
   $('sDedupLabel').textContent=isNoDedupMode()?'不剔重有效记录':'同人同日去重后';
   $('sPeople').textContent=new Set(rows.map(r=>r.__person)).size;$('sMoney').textContent=money(rows.reduce((s,r)=>s+r.__fee,0));
   renderIdentityValidation();
@@ -1115,7 +1189,7 @@ function render(){
   else renderExcluded(filteredExcludedRows());
 }
 function renderIdentityValidation(){
-  const checked=validRows.filter(r=>r.__identityStatus!=='missing');
+  const checked=validRows.filter(operatorMatchesGroup).filter(r=>r.__identityStatus!=='missing');
   const mismatches=checked.filter(r=>r.__identityStatus==='mismatch');
   const alertBox=$('identityAlert'),detailsBtn=$('identityDetailsBtn');
   if(mismatches.length){
@@ -1133,6 +1207,7 @@ function renderIdentityValidation(){
 }
 function openIdentityDetails(){
   const mismatches=validRows
+    .filter(operatorMatchesGroup)
     .filter(r=>r.__identityStatus==='mismatch')
     .sort((a,b)=>a.__row-b.__row);
   $('identityDetailsSummary').textContent=`共 ${mismatches.length} 条校验不通过记录；列表按原始 Excel 行号排列。`;
@@ -1674,7 +1749,7 @@ function renderDetail(rows){
     r.__byTime?'<span class="tag ok">时间确认</span>':'<span class="tag mid">时间未确认</span>',
     esc(r.__start?r.__start.toLocaleString('zh-CN'):'')
   ]);
-  table(['操作日期','操作人','姓名','姓名工号校验','计算状态','操作等级','本行激励（元）','忽略原因','当日计发等级','当日计发任务号','BU1','客户','人员属性','任务号','操作摘要','操作时间段校验','当地时间校验','当地开始时间'],data);
+  table(['操作日期','操作人','姓名','姓名工号校验','计算状态','操作等级','本行激励（元）','忽略原因','当日计发等级','当日计发任务号','BU1','客户','人员属性','任务号','操作摘要','操作时间校验','当地时间校验','当地开始时间'],data);
 }
 function renderExcluded(rows=filteredExcludedRows()){
   const data=[...rows].sort((a,b)=>(b.__date||'').localeCompare(a.__date||'')||a.__row-b.__row).map(r=>[r.__row,esc(r.__reason),esc(r.__person),esc(displayPersonName(r)),identityCheckCell(r),esc(r.__status),esc(r.__level),esc(r.__task),esc(r.__summary),
@@ -1917,7 +1992,7 @@ function exportCurrent(){
   XLSX.utils.book_append_sheet(wb,outWs,sourceSheetName||'当前计算结果');
   XLSX.writeFile(
     wb,
-    `埃及代表处夜间操作激励统计结果_${isNoDedupMode()?'不剔重':'同人同日最高等级'}_${isBlacklistEnabled()?'启用黑名单':'不启用黑名单'}_${new Date().toISOString().slice(0,10)}.xlsx`,
+    `埃及代表处夜间操作激励统计结果_${activeOperatorGroup==='wx'?'WX':'非WX'}_${isNoDedupMode()?'不剔重':'同人同日最高等级'}_${isBlacklistEnabled()?'启用黑名单':'不启用黑名单'}_${new Date().toISOString().slice(0,10)}.xlsx`,
     {cellStyles:true}
   );
 }
@@ -1953,6 +2028,18 @@ document.querySelectorAll('.cross-btn').forEach(b=>b.onclick=()=>{
   activeCrossDimension=b.dataset.cross;
   document.querySelectorAll('.cross-btn').forEach(x=>x.classList.toggle('active',x===b));
   render();
+});
+document.querySelectorAll('.operator-scope-btn').forEach(button=>button.onclick=()=>{
+  if(activeOperatorGroup===button.dataset.operatorGroup)return;
+  activeOperatorGroup=button.dataset.operatorGroup;
+  document.querySelectorAll('.operator-scope-btn').forEach(item=>{
+    const active=item===button;
+    item.classList.toggle('active',active);
+    item.setAttribute('aria-pressed',String(active));
+  });
+  refreshFilters();
+  render();
+  if($('compareModal').classList.contains('show'))populateComparePeriods();
 });
 $('periodSourceMode').onchange=()=>{
   const usingImported=$('periodSourceMode').value==='imported';
@@ -2093,9 +2180,15 @@ $('clearTableFocus').onclick=render;
 document.querySelectorAll('.quick-btn').forEach(b=>b.onclick=()=>setQuickRange(b.dataset.quick));
 window.addEventListener('resize',()=>{if(rawRows.length)drawCharts(filtered())});
 ['feeLow','feeMedium','feeHigh','feeFatal','nightStart','nightEnd','verifyMode','personField'].forEach(id=>$(id).onchange=()=>{
+  syncNightRuleUI();
   saveRules();
   if(rawRows.length)recalculate();
 });
+$('nightOnly').onchange=()=>{
+  syncNightRuleUI($('nightOnly').checked);
+  saveRules();
+  if(rawRows.length)recalculate();
+};
 
 
 
