@@ -161,6 +161,7 @@ function buildProactiveAlertCandidates(metrics = [], limit = 12) {
     return metrics
         .filter(item => Number(item?.is_failing) === 1 && item.metric_label && item.cat_name)
         .map(item => ({
+            kind: 'kpi',
             customerGroup: String(item.cat_name).trim(),
             metric: String(item.metric_label).trim(),
             target: String(item.target_val ?? '').trim(),
@@ -189,6 +190,59 @@ function buildProactiveAlertCandidates(metrics = [], limit = 12) {
         .map(({ priority, ...item }) => item);
 }
 
+const PROACTIVE_TASK_TYPE_LABELS = {
+    rectification: '整改',
+    risk: '风险',
+    special: '专项',
+    sr: 'SR',
+    vulnerability: '漏洞'
+};
+
+function cleanProactiveTaskText(value, fallback) {
+    return String(value || fallback || '').replace(/^[\s🔧🧯📞⚠️⭐]+/u, '').replace(/\s*合集\s*$/, '').trim();
+}
+
+function getProactiveTaskOwner(ticket) {
+    const data = ticket && ticket.data && typeof ticket.data === 'object' ? ticket.data : {};
+    const owner = data.fullname || data.cur_assignee || data.task_owner || data.sr_owner || data.owner
+        || data.owner_name || data.handler || data.assignee || data.responsible_person
+        || data['责任人'] || data['负责人'] || data['当前处理人'];
+    return cleanProactiveTaskText(owner, '未明确负责人');
+}
+
+function buildProactiveTaskCandidates(tickets = [], limit = 12) {
+    const safeLimit = Math.max(1, Math.min(200, Number(limit) || 12));
+    const grouped = new Map();
+    tickets.forEach(ticket => {
+        const days = Number(ticket && ticket._slaDays);
+        if (!Number.isFinite(days) || days < 0 || days > 7) return;
+        const collection = String(ticket.collection || 'other').trim() || 'other';
+        const taskType = cleanProactiveTaskText(ticket.title, PROACTIVE_TASK_TYPE_LABELS[collection] || '临期任务');
+        const owner = getProactiveTaskOwner(ticket);
+        const key = `${owner}\u0000${taskType}`;
+        const current = grouped.get(key) || {
+            kind: 'task',
+            owner,
+            taskType,
+            count: 0,
+            dueWindowDays: 7,
+            nearestDays: days,
+            // 兼容尚未刷新、仍按 KPI 字段渲染气泡的旧页面，避免出现 undefined。
+            customerGroup: owner,
+            metric: `${taskType}类临期任务`,
+            actual: '',
+            target: '7天内处理'
+        };
+        current.count += 1;
+        current.actual = `${current.count}个`;
+        current.nearestDays = Math.min(current.nearestDays, days);
+        grouped.set(key, current);
+    });
+    return [...grouped.values()]
+        .sort((a, b) => a.nearestDays - b.nearestDays || b.count - a.count || a.owner.localeCompare(b.owner, 'zh-CN'))
+        .slice(0, safeLimit);
+}
+
 async function getProactiveAlerts({ limit = 12 } = {}) {
     const db = await openReadOnlyDb();
     if (!db) {
@@ -215,6 +269,9 @@ async function getProactiveAlerts({ limit = 12 } = {}) {
             ...item,
             is_manual: manualMetricLabels.has(String(item.metric_label || '').trim())
         }));
+        const raw = parseSnapshotRaw(snapshot);
+        const taskItems = buildProactiveTaskCandidates(Array.isArray(raw.expiringTickets) ? raw.expiringTickets : [], limit);
+        const kpiItems = buildProactiveAlertCandidates(sourceAwareRows, limit);
         return {
             available: true,
             snapshot: {
@@ -224,8 +281,9 @@ async function getProactiveAlerts({ limit = 12 } = {}) {
                 storedAt: snapshot.stored_at || null
             },
             totalFailing: rows.length,
-            items: buildProactiveAlertCandidates(sourceAwareRows, limit),
-            selectionRule: '数据导入指标优先，再按权重和差距排序；手动录入指标仅作为后备提醒。',
+            totalExpiringSoon: taskItems.reduce((sum, item) => sum + item.count, 0),
+            items: [...taskItems, ...kpiItems],
+            selectionRule: '未来 7 天临期任务与 KPI 提醒交替穿插；KPI 内优先数据导入指标，手动录入指标仅作为后备。',
             source: 'data/report.db: ReportSnapshots, ReportMetricData',
             readOnly: true
         };
@@ -1044,6 +1102,7 @@ module.exports = {
     formatAnalysisForPrompt,
     buildMetricStats,
     buildProactiveAlertCandidates,
+    buildProactiveTaskCandidates,
     getProactiveAlerts,
     findMatchedMetricLabels,
     parseRequestedHistoryCount,

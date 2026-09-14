@@ -82,6 +82,7 @@ function applyReqLanguage(lang) {
         else el.placeholder = key;
     });
     
+    if (typeof ReqApp !== 'undefined') ReqApp.refreshCategoryOptions();
     ReqApp.renderBoard();
 }
 
@@ -101,8 +102,47 @@ const ReqApp = {
     currentPage: 1,
     pageSize: 8,
 
+    fallbackCategories: [
+        { value: '全局通用', label: '🌐 全局通用' },
+        { value: '新增页面', label: '✨ 新增页面' },
+        { value: '工具中台首页', label: '🏠 工具中台首页' },
+        { value: '数据抓取(UIVF12)', label: '🚀 数据抓取(UIVF12)' },
+        { value: '数据导入(SLA)', label: '📊 数据导入(SLA)' },
+        { value: '报表看板', label: '📈 报表看板' },
+        { value: '一键催办', label: '⚡ 一键催办' },
+        { value: '月报页面', label: '📅 月报页面' },
+        { value: '需求管理', label: '🎯 需求管理' }
+    ],
+
     init: async function() {
+        this.refreshCategoryOptions();
         await this.loadRequirements();
+    },
+
+    refreshCategoryOptions: function(categories) {
+        const select = document.getElementById('reqCategorySelect');
+        if (!select) return;
+        const selectedValue = select.value;
+        const source = Array.isArray(categories) && categories.length
+            ? categories
+            : (typeof window.getRequirementPageCategories === 'function'
+                ? window.getRequirementPageCategories()
+                : this.fallbackCategories);
+        const uniqueCategories = [];
+        const knownValues = new Set();
+        source.forEach(category => {
+            const value = String(category?.value || '').trim();
+            if (!value || knownValues.has(value)) return;
+            knownValues.add(value);
+            uniqueCategories.push({ value, label: String(category.label || value) });
+        });
+
+        select.replaceChildren(new Option(tText('请选择分类...', 'Select category...'), '', true, true));
+        uniqueCategories.forEach(category => select.add(new Option(category.label, category.value)));
+        if (selectedValue) {
+            if (!knownValues.has(selectedValue)) select.add(new Option(selectedValue, selectedValue));
+            select.value = selectedValue;
+        }
     },
 
     loadRequirements: async function() {
@@ -654,4 +694,8 @@ document.addEventListener('DOMContentLoaded', () => {
     ReqApp.init();
     const storedLang = localStorage.getItem('tools_lang') || navigator.language || 'zh';
     applyReqLanguage(storedLang.startsWith('en') ? 'en' : 'zh');
+});
+
+window.addEventListener('tools:requirement-page-categories-change', event => {
+    ReqApp.refreshCategoryOptions(event.detail?.categories);
 });

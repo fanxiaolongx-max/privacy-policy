@@ -21,16 +21,48 @@ test('global assistant schedules, displays, and opens proactive KPI alerts', () 
     assert.match(assistant, /z-index: 100020/);
     assert.match(assistant, /data-placement="below"/);
     assert.match(assistant, /availableAbove >= availableBelow/);
+    assert.match(assistant, /PROACTIVE_ENTRY_PATHS = new Set\(\['\/', '\/uivf12', '\/sla', '\/report', '\/expedite', '\/monthly'\]\)/);
+    assert.match(assistant, /window\.setTimeout\(\(\) => loadProactiveAlert\(\), 700\)/);
+    assert.match(assistant, /classList\.add\('ai-polished'\)/);
+    assert.match(assistant, />✦ AI<\/span>/);
+    assert.match(assistant, /@keyframes ai-alert-arrive/);
+    assert.match(assistant, /@keyframes ai-alert-depart/);
+    assert.match(assistant, /@keyframes ai-alert-close-away/);
+    assert.match(assistant, /hideProactiveAlert\(\{ reason:'close' \}\)/);
+    assert.match(assistant, /prefers-reduced-motion: reduce/);
+    assert.match(assistant, /proactiveItemKey\(item\)/);
+    assert.match(assistant, /alertTaskKicker: '近 7 天临期任务'/);
+    assert.match(assistant, /ai-proactive-alert-ai-panel/);
+    assert.match(assistant, /revealProactiveAiText\(message\)/);
+    assert.match(assistant, /@keyframes ai-polish-flow/);
+    assert.match(assistant, /@keyframes ai-polish-char/);
+    assert.match(assistant, /proactiveAlert\.addEventListener\('pointerenter'/);
+    assert.match(assistant, /proactiveAlert\.addEventListener\('pointerleave'/);
+    assert.match(assistant, /PROACTIVE_HOVER_LEAVE_GRACE_MS = 6 \* 1000/);
+    assert.match(assistant, /ai-proactive-alert-snooze/);
+    assert.match(assistant, /snoozeProactiveAlertsToday\(\)/);
+    assert.match(assistant, /isProactiveSnoozedToday\(\)/);
+    assert.match(assistant, /navigator\.clipboard\.writeText\(copyText\)/);
+});
+
+test('assistant bubble and dialogs follow the current page theme first', () => {
+    assert.match(assistant, /function detectPageAssistantTheme\(\)/);
+    assert.match(assistant, /detectPageAssistantTheme\(\) \|\| getFallbackAssistantTheme\(\)/);
+    assert.match(assistant, /new MutationObserver\(\(\) => applyContextTheme\(\)\)/);
+    assert.match(assistant, /proactiveAlert\.dataset\.theme = assistantTheme/);
+    assert.match(assistant, /archiveOverlay\.dataset\.theme = assistantTheme/);
 });
 
 test('proactive KPI APIs are authenticated and the wording route remains read-only for users', () => {
     assert.match(routes, /router\.get\('\/proactive-alerts', checkAuth/);
     assert.match(routes, /router\.post\('\/proactive-alert-message', checkAuth/);
     assert.match(server, /req\.path === '\/ai\/proactive-alert-message'/);
+    assert.match(routes, /item\?\.kind === 'task'/);
+    assert.match(routes, /不得补充或索要单号/);
 });
 
 test('navbar loads the current proactive assistant asset version everywhere', () => {
-    const matches = navbar.match(/ai-assistant\.js\?v=20260914-03/g) || [];
+    const matches = navbar.match(/ai-assistant\.js\?v=20260914-10/g) || [];
     assert.equal(matches.length, 2);
-    assert.doesNotMatch(navbar, /ai-assistant\.js\?v=20260914-02/);
+    assert.doesNotMatch(navbar, /ai-assistant\.js\?v=20260914-09/);
 });

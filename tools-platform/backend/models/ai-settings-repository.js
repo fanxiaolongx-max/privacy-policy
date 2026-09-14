@@ -130,13 +130,13 @@ async function getProfileStore() {
         const activeProfileId = profiles.some(item => item.id === raw.activeProfileId)
             ? raw.activeProfileId
             : profiles[0].id;
-        return { version: 2, activeProfileId, profiles };
+        return { version: 3, activeProfileId, autoSwitchEnabled: raw.autoSwitchEnabled === true, profiles };
     }
 
     // 无感迁移：历史单配置原样成为第一套方案，Token 不会丢失。
     const legacy = normalizeSettings(await readKV('sys', LEGACY_SETTINGS_KEY, DEFAULT_SETTINGS));
     const first = createProfileRecord(legacy, defaultProfileName(legacy), 'default');
-    const migrated = { version: 2, activeProfileId: first.id, profiles: [first] };
+    const migrated = { version: 3, activeProfileId: first.id, autoSwitchEnabled: false, profiles: [first] };
     await writeProfileStore(migrated);
     return migrated;
 }
@@ -144,8 +144,9 @@ async function getProfileStore() {
 async function writeProfileStore(store) {
     const active = store.profiles.find(item => item.id === store.activeProfileId) || store.profiles[0];
     const normalized = {
-        version: 2,
+        version: 3,
         activeProfileId: active.id,
+        autoSwitchEnabled: store.autoSwitchEnabled === true,
         profiles: store.profiles.map(normalizeProfile)
     };
     await writeKV('sys', PROFILE_STORE_KEY, normalized);
@@ -215,7 +216,18 @@ async function getStoredSettings(profileId) {
 }
 
 async function getRuntimeSettings() {
-    return runtimeSettings(await getStoredSettings());
+    const store = await getProfileStore();
+    const active = findProfile(store, store.activeProfileId);
+    const toRuntime = profile => runtimeSettings({
+        ...profileSettings(profile),
+        profileId: profile.id,
+        profileName: profile.name
+    });
+    const primary = toRuntime(active);
+    const fallbackProfiles = store.autoSwitchEnabled
+        ? store.profiles.filter(profile => profile.id !== active.id).map(toRuntime).filter(item => item.hasApiKey && item.keyLooksValid)
+        : [];
+    return { ...primary, autoSwitchEnabled: store.autoSwitchEnabled === true, fallbackProfiles };
 }
 
 async function buildRuntimeSettings(payload = {}) {
@@ -235,6 +247,7 @@ async function getPublicSettings() {
     return {
         ...publicSettings(runtimeSettings(profileSettings(active))),
         activeProfileId: store.activeProfileId,
+        autoSwitchEnabled: store.autoSwitchEnabled === true,
         profiles: store.profiles.map(item => publicProfile(item, store.activeProfileId))
     };
 }
@@ -244,8 +257,10 @@ async function saveSettings(payload = {}) {
     const profile = findProfile(store, payload.profileId);
     if (!profile) throw profileNotFoundError();
     const nextPayload = { ...payload };
+    if (Object.prototype.hasOwnProperty.call(payload, 'autoSwitchEnabled')) store.autoSwitchEnabled = payload.autoSwitchEnabled === true;
     delete nextPayload.profileId;
     delete nextPayload.name;
+    delete nextPayload.autoSwitchEnabled;
     if (payload.clearApiKey) {
         nextPayload.apiKey = '';
     } else if (!Object.prototype.hasOwnProperty.call(payload, 'apiKey') || String(payload.apiKey || '').trim() === '') {

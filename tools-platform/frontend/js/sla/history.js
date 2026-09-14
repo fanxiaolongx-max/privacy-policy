@@ -130,7 +130,13 @@ function renderHistory(data) {
         .sticky-col { left: 0; position: sticky; background: #e0e0e0 !important; z-index: 20 !important; box-shadow: 2px 0 5px rgba(0,0,0,0.1); border-right: 2px solid #ccc !important; }
         .sticky-col-td { left: 0; position: sticky; background: #fafafa !important; z-index: 11 !important; box-shadow: 2px 0 5px rgba(0,0,0,0.05); border-right: 2px solid #ccc !important; }
         .history-table tr:hover td.sticky-col-td { background: #f0f0f0 !important; }
-        .summary-col { min-width: 350px; white-space: normal !important; word-wrap: break-word; }
+        .summary-col { min-width: 220px; max-width: 520px; white-space: normal !important; word-wrap: break-word; }
+        .history-summary-details { min-width: 190px; }
+        .history-summary-toggle { display:inline-flex; align-items:center; gap:6px; color:#1565c0; font-weight:800; cursor:pointer; user-select:none; list-style:none; }
+        .history-summary-toggle::-webkit-details-marker { display:none; }
+        .history-summary-toggle::before { content:'▶'; font-size:9px; transition:transform .15s ease; }
+        .history-summary-details[open] > .history-summary-toggle::before { transform:rotate(90deg); }
+        .history-summary-content { margin-top:8px; min-width:330px; }
         .history-import-cell { display:flex; flex-direction:column; align-items:flex-start; gap:8px; min-width:156px; padding:4px 0; }
         .history-import-time { color:#1976d2; font-weight:800; line-height:1.45; white-space:normal; word-break:break-word; }
         .history-import-badges { display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
@@ -197,10 +203,12 @@ function renderHistory(data) {
 
         // 区块汇总渲染
         let summaryHtml = '';
+        let summaryMetricCount = 0;
         if(item.summary && item.summary.length) {
             item.summary.forEach(sec => {
                 let secText = `<strong style="color:#555;">${escapeHTML(sec.section.replace(/\s*合集/, ''))}</strong>: `;
                 sec.metrics.forEach(m => {
+                    summaryMetricCount += 1;
                     const statusColor = (m.status || '').includes('达标') ? '#388e3c' : ((m.status || '').includes('落后') ? '#d32f2f' : '#888');
                     const metricTitle = getHistoryMetricLabel(m.title);
                     const statusLabel = getHistoryStatusLabel(m.status);
@@ -209,6 +217,9 @@ function renderHistory(data) {
                 summaryHtml += `<div style="margin-bottom:4px; font-size:11px; background:#f5f5f5; padding:3px 6px; border-radius:4px;">${secText}</div>`;
             });
         }
+        const summaryCellHtml = summaryHtml
+            ? `<details class="history-summary-details"><summary class="history-summary-toggle">${escapeHTML(SLAT('sla.history.expandSummary', { count: summaryMetricCount }))}</summary><div class="history-summary-content">${summaryHtml}</div></details>`
+            : '<span style="color:#aaa;">--</span>';
 
         html += `
             <tr>
@@ -221,7 +232,7 @@ function renderHistory(data) {
                 </td>
                 <td><span style="background:#e3f2fd; padding:2px 6px; border-radius:10px; color:#1565c0;">${item.files.length}</span></td>
                 ${metricColsHtml}
-                <td class="summary-col">${summaryHtml}</td>
+                <td class="summary-col">${summaryCellHtml}</td>
             </tr>
         `;
     });

@@ -246,7 +246,11 @@ class AiProviderClient {
                 outputTokens,
                 totalTokens,
                 costUsd,
-                costCny: costUsd * Number(this.settings.usdToCny || 0)
+                costCny: costUsd * Number(this.settings.usdToCny || 0),
+                provider: this.provider,
+                model: this.model,
+                profileId: this.settings.profileId,
+                profileName: this.settings.profileName
             });
         } catch (usageErr) {
             console.warn('[AI] failed to record provider usage:', usageErr.message || usageErr);
@@ -674,7 +678,60 @@ class AiProviderClient {
     }
 }
 
+function isAutoSwitchableError(error, emitted) {
+    if (emitted || error?.name === 'AbortError' || error?.code === 'ABORT_ERR') return false;
+    const status = Number(error && (error.status || error.statusCode));
+    if ([400, 401, 403, 404, 408, 409, 422, 429].includes(status) || status >= 500) return true;
+    return /timeout|timed out|fetch failed|network|socket|connection|ECONN|ENOTFOUND|EAI_AGAIN/i.test(String(error?.message || ''));
+}
+
+class AutoSwitchAiClient {
+    constructor(settings = {}) {
+        this.settings = settings;
+        this.provider = normalizeProvider(settings.provider);
+        this.model = settings.model;
+        this.candidates = [settings, ...(Array.isArray(settings.fallbackProfiles) ? settings.fallbackProfiles : [])]
+            .filter(item => item && item.hasApiKey && item.keyLooksValid)
+            .map(item => new AiProviderClient(item));
+    }
+
+    async generateText(options = {}) {
+        let lastError;
+        for (let index = 0; index < this.candidates.length; index += 1) {
+            const client = this.candidates[index];
+            let emitted = false;
+            const attemptOptions = typeof options.onDelta === 'function'
+                ? { ...options, onDelta: delta => { emitted = true; options.onDelta(delta); } }
+                : options;
+            try {
+                const result = await client.generateText(attemptOptions);
+                if (index > 0) {
+                    result.autoSwitch = {
+                        used: true,
+                        from: `${this.candidates[0].provider}/${this.candidates[0].model}`,
+                        to: `${client.provider}/${client.model}`,
+                        attempts: index + 1
+                    };
+                }
+                return result;
+            } catch (error) {
+                lastError = error;
+                if (index >= this.candidates.length - 1 || !isAutoSwitchableError(error, emitted)) throw error;
+                console.warn(`[AI] ${client.provider}/${client.model} unavailable; auto-switching to the next configured model: ${error.message}`);
+            }
+        }
+        throw lastError || new Error('没有可用的 AI 模型配置');
+    }
+
+    generateChat(options = {}) {
+        return this.generateText(options);
+    }
+}
+
 function createClient(settings = {}) {
+    if (settings.autoSwitchEnabled === true && Array.isArray(settings.fallbackProfiles) && settings.fallbackProfiles.length) {
+        return new AutoSwitchAiClient(settings);
+    }
     return new AiProviderClient(settings);
 }
 
@@ -682,5 +739,6 @@ module.exports = {
     DEFAULT_BASE_URLS,
     normalizeProvider,
     stripReasoningText,
+    isAutoSwitchableError,
     createClient
 };

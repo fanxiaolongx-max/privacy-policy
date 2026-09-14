@@ -95,11 +95,30 @@
             cursor: pointer;
             opacity: 0;
             pointer-events: none;
-            transform: translateY(10px) scale(0.96);
+            transform: translateY(12px) scale(0.965);
             transform-origin: bottom right;
-            transition: opacity .2s ease, transform .24s cubic-bezier(.2,.8,.2,1);
+            will-change: transform, opacity, filter;
         }
-        .ai-proactive-alert.show { opacity:1; pointer-events:auto; transform:translateY(0) scale(1); }
+        .ai-proactive-alert.show {
+            opacity:1; pointer-events:auto; transform:translateY(0) scale(1);
+            animation:ai-alert-arrive .48s cubic-bezier(.16,1,.3,1) both;
+        }
+        .ai-proactive-alert[data-placement="below"] { transform-origin:top right; }
+        .ai-proactive-alert.is-leaving { pointer-events:none; animation:ai-alert-depart .28s cubic-bezier(.4,0,1,1) both; }
+        .ai-proactive-alert.is-closing { animation:ai-alert-close-away .34s cubic-bezier(.4,0,.7,.2) both; }
+        @keyframes ai-alert-arrive {
+            0% { opacity:0; transform:translateY(14px) scale(.94); filter:blur(3px); }
+            58% { opacity:1; transform:translateY(-2px) scale(1.012); filter:blur(0); }
+            100% { opacity:1; transform:translateY(0) scale(1); filter:blur(0); }
+        }
+        @keyframes ai-alert-depart {
+            from { opacity:1; transform:translateY(0) scale(1); filter:blur(0); }
+            to { opacity:0; transform:translateY(8px) scale(.975); filter:blur(1.5px); }
+        }
+        @keyframes ai-alert-close-away {
+            0% { opacity:1; transform:translate(0,0) scale(1); filter:blur(0); }
+            100% { opacity:0; transform:translate(12px,10px) scale(.88); filter:blur(2px); }
+        }
         .ai-proactive-alert::after {
             content:""; position:absolute; right:var(--ai-alert-arrow-right, 24px); bottom:-8px; width:14px; height:14px;
             background:#fff; border-right:1px solid rgba(129,140,248,.3); border-bottom:1px solid rgba(129,140,248,.3);
@@ -108,9 +127,36 @@
         .ai-proactive-alert[data-placement="below"]::after {
             top:-8px; bottom:auto; border:0; border-left:1px solid rgba(129,140,248,.3); border-top:1px solid rgba(129,140,248,.3);
         }
-        .ai-proactive-alert-kicker { margin-bottom:5px; color:#5b63c8; font-size:11px; font-weight:800; letter-spacing:.04em; }
+        .ai-proactive-alert-kicker { display:flex; align-items:center; gap:7px; margin-bottom:5px; color:#5b63c8; font-size:11px; font-weight:800; letter-spacing:.04em; }
+        .ai-proactive-alert-ai-badge {
+            display:inline-flex; align-items:center; gap:3px; padding:2px 7px; border:1px solid rgba(124,58,237,.25); border-radius:999px;
+            color:#fff; background:linear-gradient(135deg,#6366f1,#8b5cf6 58%,#c026d3); box-shadow:0 3px 10px rgba(109,40,217,.22);
+            font-size:9px; line-height:1.3; letter-spacing:.06em; text-transform:uppercase;
+        }
         .ai-proactive-alert-text { display:block; }
-        .ai-proactive-alert-hint { display:block; margin-top:6px; color:#7b8799; font-size:11px; }
+        .ai-proactive-alert-ai-panel {
+            display:none; position:relative; margin-top:10px; padding:9px 10px; overflow:hidden; border:1px solid transparent; border-radius:11px;
+            background:linear-gradient(#f8faff,#f8faff) padding-box,linear-gradient(115deg,#60a5fa,#8b5cf6,#ec4899,#22d3ee,#60a5fa) border-box;
+            background-size:100% 100%,240% 100%; box-shadow:0 5px 18px rgba(99,102,241,.10);
+            animation:ai-polish-flow 4.5s linear infinite;
+        }
+        .ai-proactive-alert.ai-polished .ai-proactive-alert-ai-panel { display:block; }
+        .ai-proactive-alert-ai-head { display:flex; align-items:center; gap:7px; margin-bottom:5px; }
+        .ai-proactive-alert-ai-caption { color:#7c3aed; font-size:10px; font-weight:800; letter-spacing:.04em; }
+        .ai-proactive-alert-ai-text { color:#556176; font-size:11px; line-height:1.55; }
+        .ai-proactive-alert-ai-char { display:inline-block; opacity:0; transform:translateY(4px); animation:ai-polish-char .32s cubic-bezier(.2,.8,.2,1) forwards; animation-delay:calc(var(--ai-char-index) * 16ms); }
+        @keyframes ai-polish-flow { to { background-position:0 0,240% 0; } }
+        @keyframes ai-polish-char { to { opacity:1; transform:translateY(0); } }
+        .ai-proactive-alert-footer { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:8px; }
+        .ai-proactive-alert-hint { flex:1; min-width:0; color:#7b8799; font-size:11px; }
+        .ai-proactive-alert-actions { display:flex; align-items:center; gap:5px; flex-shrink:0; }
+        .ai-proactive-alert-action {
+            min-height:25px; padding:3px 8px; border:1px solid rgba(129,140,248,.22); border-radius:7px;
+            color:#667085; background:rgba(248,250,252,.88); font-size:10px; line-height:1.2; cursor:pointer;
+            transition:color .16s ease,background .16s ease,border-color .16s ease,transform .16s ease;
+        }
+        .ai-proactive-alert-action:hover { color:#4f46e5; background:#eef2ff; border-color:rgba(99,102,241,.4); transform:translateY(-1px); }
+        .ai-proactive-alert-action:active { transform:translateY(0) scale(.97); }
         .ai-proactive-alert-close {
             position:absolute; right:9px; top:8px; width:26px; height:26px; border:0; border-radius:8px;
             color:#7b8799; background:transparent; cursor:pointer; font-size:18px; line-height:1;
@@ -120,11 +166,20 @@
         body.ai-kg-open .ai-proactive-alert { color:#dbe4f3; background:rgba(18,28,47,.98); border-color:rgba(129,140,248,.4); }
         .ai-proactive-alert[data-theme="graph"]::after,
         body.ai-kg-open .ai-proactive-alert::after { background:#121c2f; border-color:rgba(129,140,248,.4); }
+        .ai-proactive-alert[data-theme="graph"] .ai-proactive-alert-ai-panel,
+        body.ai-kg-open .ai-proactive-alert .ai-proactive-alert-ai-panel { background:linear-gradient(#111b2e,#111b2e) padding-box,linear-gradient(115deg,#38bdf8,#818cf8,#e879f9,#22d3ee,#38bdf8) border-box; background-size:100% 100%,240% 100%; }
+        .ai-proactive-alert[data-theme="graph"] .ai-proactive-alert-ai-text,
+        body.ai-kg-open .ai-proactive-alert .ai-proactive-alert-ai-text { color:#b8c5dc; }
+        .ai-proactive-alert[data-theme="graph"] .ai-proactive-alert-action,
+        body.ai-kg-open .ai-proactive-alert .ai-proactive-alert-action { color:#aab7cc; background:rgba(30,41,59,.8); border-color:rgba(129,140,248,.28); }
+        .ai-proactive-alert[data-theme="graph"] .ai-proactive-alert-action:hover,
+        body.ai-kg-open .ai-proactive-alert .ai-proactive-alert-action:hover { color:#c7d2fe; background:#26324a; border-color:rgba(129,140,248,.5); }
         @media (max-width: 520px) {
             .ai-proactive-alert { width:calc(100vw - 28px); }
         }
         @media (prefers-reduced-motion: reduce) {
-            .ai-proactive-alert { transition:opacity .01ms linear; transform:none; }
+            .ai-proactive-alert, .ai-proactive-alert.show, .ai-proactive-alert.is-leaving, .ai-proactive-alert.is-closing, .ai-proactive-alert-ai-panel, .ai-proactive-alert-ai-char { animation:none; transition:opacity .01ms linear; transform:none; filter:none; }
+            .ai-proactive-alert-ai-char { opacity:1; }
         }
         .ai-panel {
             position: fixed;
@@ -797,7 +852,7 @@
     const AI_TEXT = {
         zh: {
             open: '打开智能客服助手', title: '智能客服助手', titleCompact: '智能客服', subtitle: '项目知识 · 数据分析 · 运营建议', subtitleCompact: '知识 · 数据 · 运营',
-            alertKicker: '主动 KPI 提醒', alertHint: '点击打开助手继续追问', alertClose: '关闭提醒',
+            alertKicker: '主动 KPI 提醒', alertTaskKicker: '近 7 天临期任务', alertHint: '点击打开助手继续追问', alertClose: '关闭提醒', alertAi: 'AI 润色', alertAiCaption: '润色建议', alertSnoozeToday: '今天不再提醒', alertCopy: '复制', alertCopied: '已复制',
             graph: '知识与指标图谱', history: '历史问答', archive: '查看归档会话', graphTheme: '切换图谱深色主题', lightTheme: '切换明亮主题', expand: '放大窗口', restore: '恢复默认大小',
             fullscreen: '全屏聊天', exitFullscreen: '退出全屏', close: '关闭', send: '发送消息', stop: '停止生成',
             welcome: '👋 你好！我是您的专属智能助手，正在为您加载页面上下文...', thinking: 'AI 正在思考...',
@@ -816,7 +871,7 @@
         },
         en: {
             open: 'Open AI Support Assistant', title: 'AI Support Assistant', titleCompact: 'AI Support', subtitle: 'Project knowledge · Data analysis · Operations', subtitleCompact: 'Knowledge · Data · Ops',
-            alertKicker: 'Proactive KPI alert', alertHint: 'Click to open the assistant and follow up', alertClose: 'Dismiss alert',
+            alertKicker: 'Proactive KPI alert', alertTaskKicker: 'Tasks due in 7 days', alertHint: 'Click to open the assistant and follow up', alertClose: 'Dismiss alert', alertAi: 'AI polished', alertAiCaption: 'Polished suggestion', alertSnoozeToday: 'Mute today', alertCopy: 'Copy', alertCopied: 'Copied',
             graph: 'Knowledge & Metrics Graph', history: 'Chat history', archive: 'View archived chats', graphTheme: 'Switch to graph dark theme', lightTheme: 'Switch to light theme', expand: 'Expand window', restore: 'Restore default size',
             fullscreen: 'Full-screen chat', exitFullscreen: 'Exit full screen', close: 'Close', send: 'Send message', stop: 'Stop generating',
             welcome: '👋 Hi! I’m your AI assistant. Loading the current page context…', thinking: 'AI is thinking…',
@@ -859,9 +914,10 @@
     proactiveAlert.setAttribute('role', 'status');
     proactiveAlert.innerHTML = `
         <button class="ai-proactive-alert-close" type="button" aria-label="关闭提醒">×</button>
-        <span class="ai-proactive-alert-kicker">主动 KPI 提醒</span>
+        <span class="ai-proactive-alert-kicker"><span class="ai-proactive-alert-kicker-label">主动 KPI 提醒</span></span>
         <span class="ai-proactive-alert-text"></span>
-        <span class="ai-proactive-alert-hint">点击打开助手继续追问</span>`;
+        <span class="ai-proactive-alert-ai-panel"><span class="ai-proactive-alert-ai-head"><span class="ai-proactive-alert-ai-badge" title="AI 润色">✦ AI</span><span class="ai-proactive-alert-ai-caption">润色建议</span></span><span class="ai-proactive-alert-ai-text"></span></span>
+        <span class="ai-proactive-alert-footer"><span class="ai-proactive-alert-hint">点击打开助手继续追问</span><span class="ai-proactive-alert-actions"><button class="ai-proactive-alert-action ai-proactive-alert-snooze" type="button">今天不再提醒</button><button class="ai-proactive-alert-action ai-proactive-alert-copy" type="button">复制</button></span></span>`;
     document.body.appendChild(proactiveAlert);
 
     const panel = document.createElement('div');
@@ -948,12 +1004,34 @@
         element?.setAttribute('aria-label', text);
     }
     const AI_THEME_KEY = 'tools_ai_assistant_theme';
-    let assistantTheme = (() => {
+    function detectPageAssistantTheme() {
+        const roots = [document.documentElement, document.body].filter(Boolean);
+        for (const root of roots) {
+            const marker = [root.getAttribute('data-theme'), root.getAttribute('data-color-scheme'), root.className]
+                .filter(Boolean).join(' ').toLowerCase();
+            if (/(^|[\s_-])(dark|night|black)([\s_-]|$)/.test(marker)) return 'graph';
+            if (/(^|[\s_-])(light|day|white)([\s_-]|$)/.test(marker)) return 'light';
+        }
+        for (const root of [document.body, document.documentElement].filter(Boolean)) {
+            const style = window.getComputedStyle(root);
+            if (style.colorScheme === 'dark') return 'graph';
+            if (style.colorScheme === 'light') return 'light';
+            const match = style.backgroundColor.match(/^rgba?\((\d+)[,\s]+(\d+)[,\s]+(\d+)(?:[,\s/]+([\d.]+))?\)$/i);
+            if (!match || (match[4] !== undefined && Number(match[4]) === 0)) continue;
+            const luminance = (Number(match[1]) * 299 + Number(match[2]) * 587 + Number(match[3]) * 114) / 1000;
+            return luminance < 128 ? 'graph' : 'light';
+        }
+        return null;
+    }
+    function getFallbackAssistantTheme() {
         try {
             const saved = localStorage.getItem(AI_THEME_KEY);
             if (['light', 'graph'].includes(saved)) return saved;
         } catch (_error) {}
-        return document.body.classList.contains('ai-kg-open') ? 'graph' : 'light';
+        return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'graph' : 'light';
+    }
+    let assistantTheme = (() => {
+        return detectPageAssistantTheme() || getFallbackAssistantTheme();
     })();
     function applyAssistantTheme(theme, { persist = false } = {}) {
         assistantTheme = theme === 'graph' ? 'graph' : 'light';
@@ -967,18 +1045,17 @@
         }
     }
     function applyContextTheme() {
-        let hasSavedTheme = false;
-        try { hasSavedTheme = ['light', 'graph'].includes(localStorage.getItem(AI_THEME_KEY)); } catch (_error) {}
-        if (!hasSavedTheme && document.body.classList.contains('ai-kg-open')) applyAssistantTheme('graph');
+        applyAssistantTheme(detectPageAssistantTheme() || getFallbackAssistantTheme());
     }
     function applyAiLanguage() {
         setActionText(fab, aiT('open'));
-        const alertMonth = Number(proactiveAlert.dataset.month) || null;
-        proactiveAlert.querySelector('.ai-proactive-alert-kicker').textContent = alertMonth
-            ? `${aiT('alertKicker')} · ${getAiLang() === 'en' ? `Month ${alertMonth}` : `${alertMonth}月`}`
-            : aiT('alertKicker');
+        updateProactiveKicker();
         proactiveAlert.querySelector('.ai-proactive-alert-hint').textContent = aiT('alertHint');
         setActionText(proactiveAlert.querySelector('.ai-proactive-alert-close'), aiT('alertClose'));
+        setActionText(proactiveAlert.querySelector('.ai-proactive-alert-ai-badge'), aiT('alertAi'));
+        proactiveAlert.querySelector('.ai-proactive-alert-ai-caption').textContent = aiT('alertAiCaption');
+        proactiveAlert.querySelector('.ai-proactive-alert-snooze').textContent = aiT('alertSnoozeToday');
+        proactiveAlert.querySelector('.ai-proactive-alert-copy').textContent = aiT('alertCopy');
         panel.querySelector('.ai-brand-title-full').textContent = aiT('title');
         panel.querySelector('.ai-brand-title-compact').textContent = aiT('titleCompact');
         panel.querySelector('.ai-brand-subtitle-full').textContent = aiT('subtitle');
@@ -1278,13 +1355,53 @@
 
     proactiveAlert.querySelector('.ai-proactive-alert-close').addEventListener('click', event => {
         event.stopPropagation();
-        hideProactiveAlert();
+        hideProactiveAlert({ reason:'close' });
+    });
+    proactiveAlert.querySelector('.ai-proactive-alert-snooze').addEventListener('click', event => {
+        event.stopPropagation();
+        snoozeProactiveAlertsToday();
+        hideProactiveAlert({ reschedule:false, reason:'close' });
+        scheduleProactiveAlert();
+    });
+    proactiveAlert.querySelector('.ai-proactive-alert-copy').addEventListener('click', async event => {
+        event.stopPropagation();
+        const button = event.currentTarget;
+        const original = proactiveAlert.querySelector('.ai-proactive-alert-text').textContent.trim();
+        const polished = proactiveAlert.classList.contains('ai-polished')
+            ? proactiveAlert.querySelector('.ai-proactive-alert-ai-text').textContent.replace(/\u00a0/g, ' ').trim()
+            : '';
+        const copyText = polished
+            ? `${original}\n${aiT('alertAiCaption')}：${polished}`
+            : original;
+        try {
+            await navigator.clipboard.writeText(copyText);
+        } catch (_error) {
+            const textarea = document.createElement('textarea');
+            textarea.value = copyText;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            textarea.remove();
+        }
+        button.textContent = aiT('alertCopied');
+        window.setTimeout(() => { button.textContent = aiT('alertCopy'); }, 1400);
     });
     proactiveAlert.addEventListener('click', () => {
         const prompt = proactiveAlert.dataset.prompt || '';
         const displayText = proactiveAlert.querySelector('.ai-proactive-alert-text').textContent || prompt;
         hideProactiveAlert();
         openAssistant({ prompt, displayText });
+    });
+    proactiveAlert.addEventListener('pointerenter', () => {
+        if (proactiveHideTimer) window.clearTimeout(proactiveHideTimer);
+        proactiveHideTimer = null;
+    });
+    proactiveAlert.addEventListener('pointerleave', () => {
+        if (!proactiveAlert.classList.contains('show') || proactiveAlert.classList.contains('is-leaving')) return;
+        if (proactiveHideTimer) window.clearTimeout(proactiveHideTimer);
+        proactiveHideTimer = window.setTimeout(() => hideProactiveAlert(), PROACTIVE_HOVER_LEAVE_GRACE_MS);
     });
     window.addEventListener('resize', positionProactiveAlert);
     document.addEventListener('visibilitychange', () => {
@@ -1706,9 +1823,13 @@
     const PROACTIVE_MAX_DELAY_MS = 60 * 60 * 1000;
     const PROACTIVE_HOVER_COOLDOWN_MS = 60 * 1000;
     const PROACTIVE_VISIBLE_MS = 18 * 1000;
+    const PROACTIVE_HOVER_LEAVE_GRACE_MS = 6 * 1000;
     const PROACTIVE_SEEN_KEY = 'tools_ai_proactive_alerts_seen_v2';
+    const PROACTIVE_SNOOZE_KEY = 'tools_ai_proactive_alerts_snoozed_v1';
+    const PROACTIVE_ENTRY_PATHS = new Set(['/', '/uivf12', '/sla', '/report', '/expedite', '/monthly']);
     let proactiveTimer = null;
     let proactiveHideTimer = null;
+    let proactiveExitTimer = null;
     let proactiveLoading = false;
     let proactiveActive = null;
     let lastProactiveHoverAt = 0;
@@ -1719,7 +1840,9 @@
 
     function scheduleProactiveAlert() {
         if (proactiveTimer) window.clearTimeout(proactiveTimer);
-        const delay = randomInt(PROACTIVE_MIN_DELAY_MS, PROACTIVE_MAX_DELAY_MS);
+        const delay = isProactiveSnoozedToday()
+            ? Math.max(1000, new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + 1).getTime() - Date.now() + 1000)
+            : randomInt(PROACTIVE_MIN_DELAY_MS, PROACTIVE_MAX_DELAY_MS);
         proactiveTimer = window.setTimeout(() => {
             proactiveTimer = null;
             loadProactiveAlert();
@@ -1734,6 +1857,19 @@
     function proactiveSeenStorageKey() {
         const tenantId = localStorage.getItem('tools_tenant_id') || 'default';
         return `${PROACTIVE_SEEN_KEY}:${tenantId}`;
+    }
+
+    function proactiveSnoozeStorageKey() {
+        const tenantId = localStorage.getItem('tools_tenant_id') || 'default';
+        return `${PROACTIVE_SNOOZE_KEY}:${tenantId}`;
+    }
+
+    function isProactiveSnoozedToday() {
+        try { return localStorage.getItem(proactiveSnoozeStorageKey()) === localDateKey(); } catch (_error) { return false; }
+    }
+
+    function snoozeProactiveAlertsToday() {
+        try { localStorage.setItem(proactiveSnoozeStorageKey(), localDateKey()); } catch (_error) {}
     }
 
     function readSeenProactiveKeys() {
@@ -1755,47 +1891,99 @@
         } catch (_error) {}
     }
 
+    function proactiveItemKey(item) {
+        return item?.kind === 'task'
+            ? `task:${item.owner || ''}:${item.taskType || ''}`
+            : `kpi:${item?.metric || ''}`;
+    }
+
     function chooseProactiveItems(items) {
         const pool = Array.isArray(items) ? items : [];
         if (!pool.length) return [];
         let seen = new Set(readSeenProactiveKeys());
-        let available = pool.filter(item => !seen.has(item.metric));
+        let available = pool.filter(item => !seen.has(proactiveItemKey(item)));
         if (!available.length) {
             seen = new Set();
             available = pool;
         }
-        // 优先走完数据导入指标，再使用手动录入指标作为后备。
-        const imported = available.filter(item => item.sourceType !== 'manual');
-        const preferred = imported.length ? imported : available;
+        const seenOrder = readSeenProactiveKeys();
+        const lastKind = String(seenOrder[seenOrder.length - 1] || '').split(':')[0];
+        const tasks = available.filter(item => item.kind === 'task');
+        const metrics = available.filter(item => item.kind !== 'task');
+        let preferred = lastKind
+            ? (lastKind === 'task' ? metrics : tasks)
+            : (Math.random() < 0.35 && tasks.length ? tasks : metrics);
+        if (!preferred.length) preferred = tasks.length ? tasks : metrics;
+        if (preferred[0]?.kind !== 'task') {
+            const imported = preferred.filter(item => item.sourceType !== 'manual');
+            if (imported.length) preferred = imported;
+        }
         const shuffled = [...preferred].sort(() => Math.random() - 0.5);
-        const selected = shuffled.slice(0, Math.min(randomInt(1, 3), shuffled.length));
-        writeSeenProactiveKeys([...seen, ...selected.map(item => item.metric)]);
+        const take = preferred[0]?.kind === 'task' ? 1 : randomInt(1, 3);
+        const selected = shuffled.slice(0, Math.min(take, shuffled.length));
+        writeSeenProactiveKeys([...seen, ...selected.map(proactiveItemKey)]);
         return selected;
     }
 
     function formatProactiveTemplate(items) {
         const first = items[0];
+        if (first?.kind === 'task') {
+            if (getAiLang() === 'en') return `${first.owner} has ${first.count} ${first.taskType} task(s) due within 7 days. Please arrange follow-up soon.`;
+            return `${first.owner}最近 7 天有 ${first.count} 个${first.taskType}类临期任务，请尽快安排处理。`;
+        }
+        const customerGroup = first?.customerGroup || (getAiLang() === 'en' ? 'The selected group' : '相关客户群');
+        const metric = first?.metric || (getAiLang() === 'en' ? 'this metric' : '该指标');
         if (getAiLang() === 'en') {
             const more = items.length > 1 ? ` and ${items.length - 1} more priority gaps` : '';
-            return `${first.customerGroup}'s ${first.metric} is ${first.actual || 'below target'} versus ${first.target || 'the target'}${more}. A quick follow-up may help move it forward.`;
+            return `${customerGroup}'s ${metric} is ${first?.actual || 'below target'} versus ${first?.target || 'the target'}${more}. A quick follow-up may help move it forward.`;
         }
         const more = items.length > 1 ? `，另有 ${items.length - 1} 项重点差距` : '';
-        return `${first.customerGroup}的「${first.metric}」当前为 ${first.actual || '未达标'}，目标 ${first.target || '待核对'}${more}。建议尽快关注一下。`;
+        return `${customerGroup}的「${metric}」当前为 ${first?.actual || '未达标'}，目标 ${first?.target || '待核对'}${more}。建议尽快关注一下。`;
+    }
+
+    function updateProactiveKicker() {
+        const alertMonth = Number(proactiveAlert.dataset.month) || null;
+        const isTask = proactiveAlert.dataset.kind === 'task';
+        proactiveAlert.querySelector('.ai-proactive-alert-kicker-label').textContent = alertMonth
+            && !isTask ? `${aiT('alertKicker')} · ${getAiLang() === 'en' ? `Month ${alertMonth}` : `${alertMonth}月`}`
+            : aiT(isTask ? 'alertTaskKicker' : 'alertKicker');
     }
 
     function buildProactivePrompt(items, snapshot) {
-        const lines = items.map((item, index) => `${index + 1}. ${item.customerGroup} / ${item.metric}：实际 ${item.actual || '无值'}，目标 ${item.target || '未配置'}${item.gap ? `，差距 ${item.gap}` : ''}`);
+        const isTask = items[0]?.kind === 'task';
+        const lines = items.map((item, index) => item.kind === 'task'
+            ? `${index + 1}. 负责人 ${item.owner}：未来 7 天有 ${item.count} 个${item.taskType}类临期任务`
+            : `${index + 1}. ${item.customerGroup} / ${item.metric}：实际 ${item.actual || '无值'}，目标 ${item.target || '未配置'}${item.gap ? `，差距 ${item.gap}` : ''}`);
         const timeText = snapshot
             ? `目标月份 ${snapshot.month} 月，快照生成时间 ${snapshot.createdAt || '未知'}`
             : '最新入库报表';
-        return `请根据这条主动 KPI 提醒继续分析，并给出优先跟进建议。\n数据口径：${timeText}\n${lines.join('\n')}`;
+        return `请根据这条主动${isTask ? '临期任务' : ' KPI'}提醒继续分析，并给出优先跟进建议。不得展示或猜测具体单号。\n数据口径：${timeText}\n${lines.join('\n')}`;
     }
 
-    function hideProactiveAlert({ reschedule = true } = {}) {
-        proactiveAlert.classList.remove('show');
+    function revealProactiveAiText(message) {
+        const target = proactiveAlert.querySelector('.ai-proactive-alert-ai-text');
+        target.innerHTML = '';
+        Array.from(message).forEach((char, index) => {
+            const span = document.createElement('span');
+            span.className = 'ai-proactive-alert-ai-char';
+            span.style.setProperty('--ai-char-index', String(Math.min(index, 120)));
+            span.textContent = /\s/.test(char) ? '\u00a0' : char;
+            target.appendChild(span);
+        });
+    }
+
+    function hideProactiveAlert({ reschedule = true, reason = 'auto' } = {}) {
+        if (!proactiveAlert.classList.contains('show')) return;
         if (proactiveHideTimer) window.clearTimeout(proactiveHideTimer);
         proactiveHideTimer = null;
         proactiveActive = null;
+        if (proactiveExitTimer) window.clearTimeout(proactiveExitTimer);
+        proactiveAlert.classList.add('is-leaving');
+        proactiveAlert.classList.toggle('is-closing', reason === 'close');
+        proactiveExitTimer = window.setTimeout(() => {
+            proactiveAlert.classList.remove('show', 'is-leaving', 'is-closing');
+            proactiveExitTimer = null;
+        }, reason === 'close' ? 340 : 280);
         if (reschedule) scheduleProactiveAlert();
     }
 
@@ -1811,7 +1999,12 @@
             if (proactiveActive !== activeToken || !proactiveAlert.classList.contains('show')) return;
             const message = String(data.message || '').trim();
             if (message) {
-                proactiveAlert.querySelector('.ai-proactive-alert-text').textContent = message;
+                revealProactiveAiText(message);
+                if (data.source === 'ai') {
+                    proactiveAlert.classList.add('ai-polished');
+                    if (proactiveHideTimer) window.clearTimeout(proactiveHideTimer);
+                    proactiveHideTimer = window.setTimeout(() => hideProactiveAlert(), PROACTIVE_VISIBLE_MS);
+                }
                 positionProactiveAlert();
             }
         } catch (_error) {
@@ -1822,14 +2015,17 @@
     function showProactiveAlert(items, snapshot) {
         const activeToken = `${Date.now()}-${Math.random()}`;
         proactiveActive = activeToken;
+        if (proactiveExitTimer) window.clearTimeout(proactiveExitTimer);
+        proactiveExitTimer = null;
+        proactiveAlert.classList.remove('ai-polished', 'show', 'is-leaving', 'is-closing');
+        proactiveAlert.querySelector('.ai-proactive-alert-ai-text').innerHTML = '';
+        proactiveAlert.dataset.kind = items[0]?.kind === 'task' ? 'task' : 'kpi';
         proactiveAlert.dataset.month = Number(snapshot?.month) ? String(snapshot.month) : '';
-        const alertMonth = Number(snapshot?.month) || null;
-        proactiveAlert.querySelector('.ai-proactive-alert-kicker').textContent = alertMonth
-            ? `${aiT('alertKicker')} · ${getAiLang() === 'en' ? `Month ${alertMonth}` : `${alertMonth}月`}`
-            : aiT('alertKicker');
+        updateProactiveKicker();
         proactiveAlert.querySelector('.ai-proactive-alert-text').textContent = formatProactiveTemplate(items);
         proactiveAlert.dataset.prompt = buildProactivePrompt(items, snapshot);
         positionProactiveAlert();
+        void proactiveAlert.offsetWidth;
         proactiveAlert.classList.add('show');
         positionProactiveAlert();
         if (proactiveHideTimer) window.clearTimeout(proactiveHideTimer);
@@ -1838,6 +2034,10 @@
     }
 
     async function loadProactiveAlert() {
+        if (isProactiveSnoozedToday()) {
+            scheduleProactiveAlert();
+            return;
+        }
         if (proactiveLoading || panel.classList.contains('open') || document.hidden) {
             scheduleProactiveAlert();
             return;
@@ -2393,7 +2593,15 @@
         }
     };
 
-    applyAssistantTheme(assistantTheme);
+    applyContextTheme();
+    const pageThemeObserver = new MutationObserver(() => applyContextTheme());
+    pageThemeObserver.observe(document.documentElement, { attributes:true, attributeFilter:['class', 'style', 'data-theme', 'data-color-scheme'] });
+    pageThemeObserver.observe(document.body, { attributes:true, attributeFilter:['class', 'style', 'data-theme', 'data-color-scheme'] });
+    window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change', applyContextTheme);
     scheduleProactiveAlert();
+    const proactiveEntryPath = (window.location.pathname || '/').replace(/\/+$/, '') || '/';
+    if (PROACTIVE_ENTRY_PATHS.has(proactiveEntryPath)) {
+        window.setTimeout(() => loadProactiveAlert(), 700);
+    }
 
 })();

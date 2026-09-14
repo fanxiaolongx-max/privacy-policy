@@ -2,7 +2,8 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const {
     findMatchedMetricLabels,
-    buildProactiveAlertCandidates
+    buildProactiveAlertCandidates,
+    buildProactiveTaskCandidates
 } = require('../backend/models/ai-report-analysis-service');
 
 test('matches a uniquely identifying shortened Chinese metric name', () => {
@@ -85,4 +86,20 @@ test('prioritizes imported KPI alerts over higher-weight manual metrics', () => 
     assert.equal(candidates[0].metric, '导入日志');
     assert.equal(candidates[0].sourceType, 'imported');
     assert.equal(candidates[1].sourceType, 'manual');
+});
+
+test('aggregates tasks due in the next 7 days without exposing ticket ids', () => {
+    const candidates = buildProactiveTaskCandidates([
+        { collection: 'risk', title: '风险合集', _slaDays: 2, data: { task_id: 'SECRET-1', fullname: '张三' } },
+        { collection: 'risk', title: '风险合集', _slaDays: 6, data: { task_id: 'SECRET-2', fullname: '张三' } },
+        { collection: 'risk', title: '风险合集', _slaDays: 8, data: { task_id: 'SECRET-3', fullname: '张三' } },
+        { collection: 'sr', title: 'SR 合集', _slaDays: -1, data: { sr_num: 'SECRET-4', cur_assignee: '李四' } },
+        { collection: 'rectification', title: '', _slaDays: 1, data: {} }
+    ]);
+
+    assert.deepEqual(candidates, [
+        { kind: 'task', owner: '未明确负责人', taskType: '整改', count: 1, dueWindowDays: 7, nearestDays: 1, customerGroup: '未明确负责人', metric: '整改类临期任务', actual: '1个', target: '7天内处理' },
+        { kind: 'task', owner: '张三', taskType: '风险', count: 2, dueWindowDays: 7, nearestDays: 2, customerGroup: '张三', metric: '风险类临期任务', actual: '2个', target: '7天内处理' }
+    ]);
+    assert.doesNotMatch(JSON.stringify(candidates), /SECRET-/);
 });

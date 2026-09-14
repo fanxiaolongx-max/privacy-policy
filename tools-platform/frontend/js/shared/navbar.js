@@ -566,6 +566,11 @@ function registerNavbarI18n() {
             'nav.ai.usageLoading': '正在读取用量...',
             'nav.ai.usageFail': '用量读取失败：',
             'nav.ai.usagePeriod': '当前区间',
+            'nav.ai.autoSwitch': '主模型异常时自动切换',
+            'nav.ai.autoSwitchHelp': '仅切换到已配置有效 Token 的其他方案；限流、超时、鉴权或服务异常时生效。',
+            'nav.ai.usageAllModels': '全部模型',
+            'nav.ai.usageByModel': '按模型查看趋势',
+            'nav.ai.usageLegacy': '历史未分类',
 
             'nav.up.help': '更新来源为 GitHub Releases。下载完成后可立即重启安装，也可以稍后手动重启。',
             'nav.up.current': '当前版本',
@@ -1007,6 +1012,11 @@ function registerNavbarI18n() {
             'nav.ai.usageLoading': 'Loading usage...',
             'nav.ai.usageFail': 'Failed to load usage: ',
             'nav.ai.usagePeriod': 'Selected range',
+            'nav.ai.autoSwitch': 'Auto-switch when the primary model fails',
+            'nav.ai.autoSwitchHelp': 'Uses another profile with a valid token for rate limits, timeouts, authentication, or service failures.',
+            'nav.ai.usageAllModels': 'All models',
+            'nav.ai.usageByModel': 'View trends by model',
+            'nav.ai.usageLegacy': 'Legacy unclassified',
 
             'nav.up.help': 'Updates are delivered from GitHub Releases. After download, restart now to install or restart later manually.',
             'nav.up.current': 'Current Version',
@@ -1259,6 +1269,36 @@ function getAllNavItems() {
     return [...NAV_BUILTIN_LINKS, ...customItems];
 }
 
+// 需求管理页以导航中的实际页面/工具作为分类来源，避免维护另一份容易过期的页面清单。
+// value 保持中文原始名称，展示文本才随当前语言切换，保证已保存的需求分类稳定。
+function getRequirementPageCategories() {
+    const fixedCategories = [
+        { value: '全局通用', label: navLocaleText('🌐 全局通用', '🌐 General') },
+        { value: '新增页面', label: navLocaleText('✨ 新增页面', '✨ New Page') },
+        { value: '需求管理', label: navLocaleText('🎯 需求管理', '🎯 Requirements') }
+    ];
+    const knownValues = new Set(fixedCategories.map(category => category.value));
+    const pageCategories = getAllNavItems().reduce((categories, item) => {
+        const value = String(item.label || '').trim();
+        if (!value || knownValues.has(value)) return categories;
+        knownValues.add(value);
+        categories.push({
+            value,
+            label: `${item.icon || '📄'} ${getNavLabel(item)}`.trim()
+        });
+        return categories;
+    }, []);
+    return [...fixedCategories, ...pageCategories];
+}
+
+function notifyRequirementPageCategoriesChanged() {
+    window.dispatchEvent(new CustomEvent('tools:requirement-page-categories-change', {
+        detail: { categories: getRequirementPageCategories() }
+    }));
+}
+
+window.getRequirementPageCategories = getRequirementPageCategories;
+
 function sortNavItems(items, orderIds) {
     const order = new Map((orderIds || []).map((id, index) => [id, index]));
     return items.slice().sort((a, b) => {
@@ -1459,6 +1499,7 @@ async function loadNavigationData() {
     } catch (e) {
         console.warn('[Navbar] load navigation data failed:', e);
     }
+    notifyRequirementPageCategoriesChanged();
     renderNavLinksFromState();
     if (document.getElementById('navSettingsModal')) renderNavSettingsContent();
 }
@@ -2137,9 +2178,20 @@ function buildAiUsageChart(series) {
 function renderAiUsageDashboard(data) {
     const host = document.getElementById('navAiUsageBody');
     if (!host) return;
-    const totals = data?.totals || {}, series = Array.isArray(data?.series) ? data.series : [];
+    const models = Array.isArray(data?.models) ? data.models : [];
+    const selectedKey = navState.aiUsageModelKey || 'all';
+    const selectedModel = models.find(item => item.key === selectedKey) || null;
+    if (selectedKey !== 'all' && !selectedModel) navState.aiUsageModelKey = 'all';
+    const totals = selectedModel?.totals || data?.totals || {};
+    const series = Array.isArray(selectedModel?.series) ? selectedModel.series : (Array.isArray(data?.series) ? data.series : []);
     const period = series.reduce((sum, item) => ({ tokens: sum.tokens + Number(item.tokens || 0), costCny: sum.costCny + Number(item.costCny || 0) }), { tokens: 0, costCny: 0 });
+    const unclassified = data?.unclassified || {};
     host.innerHTML = `
+        <div style="margin:12px 0 10px;display:flex;align-items:center;gap:7px;overflow-x:auto;padding-bottom:3px;">
+            <button type="button" class="nav-settings-add ${selectedModel ? 'secondary' : ''}" onclick="setAiUsageModel('all')" style="margin:0;white-space:nowrap;">${navEscape(navT('nav.ai.usageAllModels'))}</button>
+            ${models.map(item => `<button type="button" class="nav-settings-add ${selectedModel?.key === item.key ? '' : 'secondary'}" onclick="setAiUsageModel('${navEscape(item.key)}')" style="margin:0;white-space:nowrap;">${navEscape(item.profileName || item.provider)} · ${navEscape(item.model)} · ${formatAiUsageNumber(item.totals?.tokens)}</button>`).join('')}
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-bottom:8px;">${navEscape(navT('nav.ai.usageByModel'))}${Number(unclassified.tokens || 0) > 0 ? ` · ${navEscape(navT('nav.ai.usageLegacy'))} ${formatAiUsageNumber(unclassified.tokens)} Tokens` : ''}</div>
         <div class="nav-ai-usage-kpis">
             <div><span>${navEscape(navT('nav.ai.usageTokens'))}</span><strong>${formatAiUsageNumber(totals.tokens)}</strong><small>${Number(totals.tokens || 0).toLocaleString()} tokens</small></div>
             <div><span>${navEscape(navT('nav.ai.usageCostCny'))}</span><strong>¥${Number(totals.costCny || 0).toFixed(4)}</strong><small>${navEscape(navT('nav.ai.usageCostUsd'))} $${Number(totals.costUsd || 0).toFixed(4)}</small></div>
@@ -2149,6 +2201,11 @@ function renderAiUsageDashboard(data) {
         <div class="nav-ai-chart-wrap">${buildAiUsageChart(series)}</div>
     `;
 }
+
+window.setAiUsageModel = function (key) {
+    navState.aiUsageModelKey = key || 'all';
+    if (navState.aiUsageData) renderAiUsageDashboard(navState.aiUsageData);
+};
 
 async function loadAiUsageDashboard(dimension = navState.aiUsageDimension || 'day') {
     navState.aiUsageDimension = ['day', 'week', 'month', 'year'].includes(dimension) ? dimension : 'day';
@@ -2161,6 +2218,7 @@ async function loadAiUsageDashboard(dimension = navState.aiUsageDimension || 'da
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (expectedDimension !== navState.aiUsageDimension) return;
+        navState.aiUsageData = data;
         renderAiUsageDashboard(data);
     } catch (err) {
         if (host) host.innerHTML = `<div class="nav-settings-empty">${navEscape(navT('nav.ai.usageFail'))}${navEscape(err.message)}</div>`;
@@ -2200,6 +2258,10 @@ async function renderAiSettings(content) {
                         </button>
                     `).join('')}
                 </div>
+                <label class="nav-settings-check" style="margin-top:8px;padding:9px 10px;border:1px solid rgba(129,140,248,.24);border-radius:10px;background:rgba(255,255,255,.68);display:flex;align-items:center;gap:8px;">
+                    <input id="navAiAutoSwitch" type="checkbox" ${settingsStore.autoSwitchEnabled ? 'checked' : ''} onchange="scheduleAiSettingsSave()">
+                    <span><b>${navEscape(navT('nav.ai.autoSwitch'))}</b><small style="display:block;margin-top:2px;color:#64748b;font-weight:500;">${navEscape(navT('nav.ai.autoSwitchHelp'))}</small></span>
+                </label>
                 <div class="nav-ai-profile-toolbar">
                     <label>
                         <span>方案名称</span>
@@ -2319,6 +2381,7 @@ function collectAiSettingsPayload(options = {}) {
         usdToCny: document.getElementById('navAiUsdToCny')?.value || 7.2,
         systemPrompt: document.getElementById('navAiSystemPrompt')?.value || ''
     };
+    payload.autoSwitchEnabled = document.getElementById('navAiAutoSwitch')?.checked === true;
     const token = tokenInput ? tokenInput.value.trim() : '';
     if (token) payload.apiKey = token;
     if (options.clearApiKey) payload.clearApiKey = true;
@@ -6188,7 +6251,7 @@ window.openToolsAIAssistant = function (options = {}) {
             script.addEventListener('load', resolve, { once: true });
             script.addEventListener('error', () => reject(new Error('AI 助手组件加载失败')), { once: true });
             if (!existing) {
-                script.src = '/js/shared/ai-assistant.js?v=20260914-03';
+                script.src = '/js/shared/ai-assistant.js?v=20260914-10';
                 document.body.appendChild(script);
             }
         }).catch(error => {
@@ -6211,7 +6274,7 @@ window.openToolsAIAssistant = function (options = {}) {
     // 确保不重复加载
     if (!document.querySelector('script[src^="/js/shared/ai-assistant.js"]')) {
         const aiScript = document.createElement('script');
-        aiScript.src = '/js/shared/ai-assistant.js?v=20260914-03';
+        aiScript.src = '/js/shared/ai-assistant.js?v=20260914-10';
         document.body.appendChild(aiScript);
     }
 })();
