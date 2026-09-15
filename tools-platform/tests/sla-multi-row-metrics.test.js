@@ -42,9 +42,17 @@ test('multi-row OR matches the primary condition or any advanced condition', () 
     };
 
     assert.equal(helpers.metricRuleRowMatches({ region: 'North', team: 'Edge', status: 'Open' }, rule), true);
+    assert.equal(helpers.metricRuleRowMatches({ region: 'North', team: 'Core', status: 'Open' }, rule), true);
+    assert.equal(helpers.metricRuleRowMatches({ region: 'North', team: 'Edge', status: '' }, rule), true);
     assert.equal(helpers.metricRuleRowMatches({ region: 'South', team: 'Core', status: 'Open' }, rule), true);
     assert.equal(helpers.metricRuleRowMatches({ region: 'South', team: 'Edge', status: '' }, rule), true);
     assert.equal(helpers.metricRuleRowMatches({ region: 'South', team: 'Edge', status: 'Open' }, rule), false);
+});
+
+test('multi-row rules without advanced conditions only require the primary condition', () => {
+    const rule = { type: 'extract_multi', colX: 'region', valY: 'North', filterLogic: 'or', conditions: [] };
+    assert.equal(helpers.metricRuleRowMatches({ region: 'North' }, rule), true);
+    assert.equal(helpers.metricRuleRowMatches({ region: 'South' }, rule), false);
 });
 
 test('multi-row aggregation defaults to sum and supports common calculations', () => {
