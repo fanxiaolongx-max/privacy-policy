@@ -1426,7 +1426,7 @@
     <script src="/js/shared/migration-status.js?v=20260626-01"></script>
     <script src="/js/shared/toast.js?v=20260530-03"></script>
     <script src="/js/shared/i18n.js?v=20260610-01"></script>
-    <script src="/js/shared/navbar.js?v=20260914-02"></script>
+    <script src="/js/shared/navbar.js?v=20260916-02"></script>
     <script src="/js/shared/jszip.min.js?v=3.10.1"></script>
     <script>
         const historyState = {
@@ -3004,7 +3004,8 @@
                 missing: text('可安装', 'Available'),
                 update: text('可更新', 'Update'),
                 conflict: text('本地同名冲突', 'Local conflict'),
-                incompatible: text('平台版本不兼容', 'Incompatible')
+                incompatible: text('平台版本不兼容', 'Incompatible'),
+                unresolved: text('版本无法比较', 'Version unclear')
             });
 
             const render = data => {
@@ -3061,6 +3062,11 @@
                         ? `<p class="tool-market-warning">${text('检测到本地文件修改；更新前会自动备份。', 'Local file changes detected; a backup will be created before updating.')}</p>` : '';
                     const conflict = tool.status === 'conflict'
                         ? `<p class="tool-market-warning">${text('这是未关联的手动导入工具；只有主动勾选并二次确认才会接管。', 'This manually imported tool is not linked; it is adopted only after selection and confirmation.')}</p>` : '';
+                    const sourceLabel = tool.selectedSource === 'builtin'
+                        ? text('内置工具较新，将从内置源安装', 'Bundled tool is newer; install from bundled source')
+                        : tool.selectedSource === 'unknown'
+                            ? text('缺少可比较的发布日期，已停止自动更新', 'Release dates cannot be compared; automatic update paused')
+                            : text('工具市场较新，将从市场安装', 'Market tool is newer; install from market');
 
                     let badgeHtml = '';
                     if (hasPendingUpdates && isPending) {
@@ -3087,10 +3093,11 @@
                             <div class="tool-market-title">${escapeHtml(english() ? (tool.nameEn || tool.name) : tool.name)}${badgeHtml}</div>
                             <p>${escapeHtml(description || '')}</p>${localModified}${conflict}
                             <div class="tool-market-meta">
-                                <span>${text('本地', 'Local')} ${escapeHtml(tool.localVersion || (tool.localSource === 'bundled' ? text('随平台内置', 'Bundled') : '-'))} → ${escapeHtml(tool.releaseVersion)}</span>
-                                <span>${size(tool.packageSize)}</span>
-                                <span>${text('需平台', 'Requires')} ${escapeHtml(tool.minPlatformVersion)}+</span>
-                                <span class="tool-market-fingerprint" title="SHA-256 ${escapeHtml(tool.packageSha256)}">SHA-256 ${escapeHtml(tool.packageSha256.slice(0, 12))}…</span>
+                                <span>${escapeHtml(sourceLabel)}</span>
+                                <span>${text('内置', 'Bundled')} ${escapeHtml(tool.builtinVersion || '-')} / ${text('市场', 'Market')} ${escapeHtml(tool.marketVersion)}</span>
+                                <span>${text('本地', 'Local')} ${escapeHtml(tool.localVersion || (tool.localSource === 'bundled' ? text('随平台内置', 'Bundled') : '-'))} → ${escapeHtml(tool.releaseVersion || '-')}</span>
+                                ${tool.selectedSource === 'market' ? `<span>${size(tool.packageSize)}</span><span>${text('需平台', 'Requires')} ${escapeHtml(tool.minPlatformVersion)}+</span>` : ''}
+                                <span class="tool-market-fingerprint" title="SHA-256 ${escapeHtml(tool.fingerprint)}">SHA-256 ${escapeHtml(tool.fingerprint.slice(0, 12))}…</span>
                             </div>
                         </div>
                         <span class="tool-market-status ${escapeHtml(tool.status)}">${escapeHtml(statusLabels[tool.status] || tool.status)}</span>
@@ -3133,6 +3140,7 @@
                 button.focus();
             };
             button.addEventListener('click', () => {
+                button.dataset.opened = '1';
                 modal.classList.add('open');
                 document.body.style.overflow = 'hidden';
                 void load(true);
@@ -3166,7 +3174,9 @@
                     for (const slug of selected) {
                         const tool = preview.tools.find(item => item.slug === slug);
                         const displayName = english() ? (tool?.nameEn || tool?.name || slug) : (tool?.name || slug);
-                        progressText.textContent = text(`正在下载、校验并安装：${displayName}`, `Downloading, verifying, and installing: ${displayName}`);
+                        progressText.textContent = tool?.selectedSource === 'builtin'
+                            ? text(`正在从内置工具安装：${displayName}`, `Installing bundled tool: ${displayName}`)
+                            : text(`正在下载、校验并安装：${displayName}`, `Downloading, verifying, and installing: ${displayName}`);
                         progressCount.textContent = `${completed + 1} / ${selected.length}`;
                         appendLog(text(`→ ${displayName}：开始处理`, `→ ${displayName}: started`));
                         try {
@@ -3176,7 +3186,9 @@
                                 expectedFingerprints: { [slug]: fingerprints[slug] }
                             });
                             succeeded += Array.isArray(result.changed) ? result.changed.length : 0;
-                            appendLog(text(`✓ ${displayName}：下载、SHA-256 校验和安装完成`, `✓ ${displayName}: downloaded, SHA-256 verified, and installed`));
+                            appendLog(tool?.selectedSource === 'builtin'
+                                ? text(`✓ ${displayName}：已从内置工具恢复`, `✓ ${displayName}: restored from bundled tool`)
+                                : text(`✓ ${displayName}：下载、SHA-256 校验和安装完成`, `✓ ${displayName}: downloaded, SHA-256 verified, and installed`));
                         } catch (error) {
                             failures.push({ name: displayName, message: error.message || text('未知错误', 'Unknown error') });
                             appendLog(text(`✗ ${displayName}：${error.message}`, `✗ ${displayName}: ${error.message}`));

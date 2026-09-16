@@ -533,6 +533,7 @@ module.exports = {
     TOOL_MANIFEST_FILE,
     applyBuiltinToolDecisions,
     compareBundledTool,
+    validateBundledTool,
     initializeBuiltinTools,
     listBundledTools,
     previewBuiltinTools,

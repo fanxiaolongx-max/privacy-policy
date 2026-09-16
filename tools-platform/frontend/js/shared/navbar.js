@@ -6988,7 +6988,6 @@ function initBackToTopButton() {
 }
 
 let builtinToolsSyncChecking = false;
-const BUILTIN_TOOLS_SYNC_SESSION_KEY = 'tools_builtin_sync_checked_20260907';
 const BUILTIN_TOOLS_SYNC_SNOOZE_KEY = 'builtin_tools_sync_snooze_date_v1';
 
 function getBuiltinToolsSyncLocalDate() {
@@ -7219,13 +7218,10 @@ function openBuiltinToolsSyncModal(preview) {
 }
 
 async function checkBuiltinToolsSync() {
-    if (document.getElementById('toolMarketBtn')) {
-        sessionStorage.setItem(BUILTIN_TOOLS_SYNC_SESSION_KEY, '1');
-        return;
-    }
+    const toolMarketOpened = () => document.getElementById('toolMarketBtn')?.dataset.opened === '1';
+    if (toolMarketOpened()) return;
     if (
         builtinToolsSyncChecking
-        || sessionStorage.getItem(BUILTIN_TOOLS_SYNC_SESSION_KEY) === '1'
         || localStorage.getItem('tools_role') !== 'admin'
         || isBuiltinToolsSyncSnoozedToday()
         || typeof API === 'undefined'
@@ -7235,8 +7231,7 @@ async function checkBuiltinToolsSync() {
     builtinToolsSyncChecking = true;
     try {
         const preview = await API.get('/api/custom-tools/builtin-sync/preview');
-        sessionStorage.setItem(BUILTIN_TOOLS_SYNC_SESSION_KEY, '1');
-        if (preview && Array.isArray(preview.pending) && preview.pending.length) {
+        if (!toolMarketOpened() && preview && Array.isArray(preview.pending) && preview.pending.length) {
             openBuiltinToolsSyncModal(preview);
         }
     } catch (error) {

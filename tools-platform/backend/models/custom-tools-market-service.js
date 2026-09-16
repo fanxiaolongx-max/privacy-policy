@@ -10,6 +10,7 @@ const builtinToolsSync = require('./builtin-tools-sync');
 const repo = require('./custom-tools-repository');
 const { fingerprintFiles } = require('./tool-content-fingerprint');
 const { getDataDir } = require('./store');
+const BUILTIN_SOURCE_DIR = path.join(__dirname, '../builtin-tools');
 
 const DEFAULT_CATALOG_URL = 'https://raw.githubusercontent.com/fanxiaolongx-max/privacy-policy/tool-market/catalog.json';
 const CATALOG_MAX_BYTES = 2 * 1024 * 1024;
@@ -221,13 +222,39 @@ function hasLocalChanges(toolDir, manifest) {
     });
 }
 
-function compareCatalogTool(item, { targetDir = repo.CUSTOM_TOOLS_DIR, platformVersion = require('../../package.json').version } = {}) {
+function releaseTime(value) {
+    const text = String(value || '').trim();
+    if (!/^20\d{2}[.-]\d{1,2}[.-]\d{1,2}(?:T|\b)/.test(text)) return null;
+    const date = Date.parse(text.replace(/^20\d{2}\.\d{1,2}\.\d{1,2}/, match => match.replace(/\./g, '-')));
+    return Number.isFinite(date) ? date : null;
+}
+
+function bundledCandidate(item, sourceDir) {
+    const bundled = path.join(sourceDir, item.slug);
+    if (!fs.existsSync(path.join(bundled, repo.TOOL_MANIFEST_FILE))) return null;
+    const source = builtinToolsSync.validateBundledTool(sourceDir, item.slug);
+    const version = source.manifest.tool.updatedAt || source.manifest.releaseVersion || null;
+    const bundledTime = releaseTime(version);
+    const marketTime = releaseTime(item.releasedAt || item.releaseVersion);
+    return {
+        fingerprint: source.fingerprint,
+        version,
+        comparable: bundledTime !== null && marketTime !== null,
+        newer: bundledTime !== null && marketTime !== null && bundledTime > marketTime
+    };
+}
+
+function compareCatalogTool(item, { targetDir = repo.CUSTOM_TOOLS_DIR, sourceDir = BUILTIN_SOURCE_DIR, platformVersion = require('../../package.json').version } = {}) {
     const toolDir = path.join(targetDir, item.slug);
     const exists = fs.existsSync(toolDir) && fs.statSync(toolDir).isDirectory();
     const manifest = exists ? readManifest(toolDir) : null;
     const managed = Boolean(manifest && manifest.system && manifest.system.managedBy === builtinToolsSync.SYSTEM_MARKER);
     const linked = Boolean(manifest && manifest.market && manifest.market.id === item.id) || managed;
-    const compatible = versionAtLeast(platformVersion, item.minPlatformVersion);
+    const bundled = bundledCandidate(item, sourceDir);
+    const selectedSource = bundled && !bundled.comparable && bundled.fingerprint !== item.package.directoryFingerprint
+        ? 'unknown' : bundled && bundled.newer ? 'builtin' : 'market';
+    const selectedFingerprint = selectedSource === 'builtin' ? bundled.fingerprint : item.package.directoryFingerprint;
+    const compatible = selectedSource === 'builtin' || versionAtLeast(platformVersion, item.minPlatformVersion);
     let localFingerprint = manifest && manifest.system && manifest.system.fingerprint || null;
     if (managed && !manifest.market && Array.isArray(manifest.system.files)) {
         const managedFiles = [repo.TOOL_MANIFEST_FILE, ...manifest.system.files]
@@ -239,10 +266,11 @@ function compareCatalogTool(item, { targetDir = repo.CUSTOM_TOOLS_DIR, platformV
         } catch (_) { localFingerprint = null; }
     }
     let status = 'unchanged';
-    if (!compatible) status = 'incompatible';
+    if (selectedSource === 'unknown') status = 'unresolved';
+    else if (!compatible) status = 'incompatible';
     else if (!exists) status = 'missing';
     else if (!linked) status = 'conflict';
-    else if (localFingerprint !== item.package.directoryFingerprint) status = 'update';
+    else if (localFingerprint !== selectedFingerprint) status = 'update';
     return {
         id: item.id,
         slug: item.slug,
@@ -251,14 +279,17 @@ function compareCatalogTool(item, { targetDir = repo.CUSTOM_TOOLS_DIR, platformV
         icon: item.tool.icon || '🧩',
         description: item.tool.description || '',
         descriptionEn: item.tool.descriptionEn || '',
-        releaseVersion: item.releaseVersion,
+        releaseVersion: selectedSource === 'builtin' ? bundled.version : item.releaseVersion,
+        marketVersion: item.releaseVersion,
+        builtinVersion: bundled && bundled.version || null,
+        selectedSource,
         localVersion: manifest && manifest.market && manifest.market.releaseVersion || null,
         localSource: exists && !manifest?.market ? 'bundled' : null,
         releasedAt: item.releasedAt,
         minPlatformVersion: item.minPlatformVersion,
         changelog: item.changelog,
         packageSize: item.package.size,
-        fingerprint: item.package.directoryFingerprint,
+        fingerprint: selectedFingerprint,
         packageSha256: item.package.sha256,
         status,
         compatible,
@@ -342,7 +373,7 @@ function annotateInstalledTool(item) {
 async function applyMarketUpdates({ slugs = [], adoptSlugs = [], expectedFingerprints = {} } = {}) {
     const selected = [...new Set(slugs.map(normalizeSlug).filter(Boolean))];
     const allowedAdoptions = new Set(adoptSlugs.map(normalizeSlug).filter(slug => selected.includes(slug)));
-    if (!selected.length) return { installed: [], updated: [], backups: [], invalid: [], preview: await previewMarket() };
+    if (!selected.length) return { installed: [], adopted: [], updated: [], changed: [], backups: [], invalid: [], preview: await previewMarket() };
     const catalog = await loadCatalog({ force: true });
     const items = new Map(catalog.tools.map(item => [item.slug, item]));
     const current = new Map(catalog.tools.map(item => [item.slug, compareCatalogTool(item)]));
@@ -350,18 +381,36 @@ async function applyMarketUpdates({ slugs = [], adoptSlugs = [], expectedFingerp
         const item = items.get(slug);
         const comparison = current.get(slug);
         if (!item) throw Object.assign(new Error(`工具市场中不存在 ${slug}`), { status: 404 });
-        if (expectedFingerprints[slug] !== item.package.directoryFingerprint) throw Object.assign(new Error(`${slug} 已发布新版本，请重新加载市场`), { status: 409 });
+        if (expectedFingerprints[slug] !== comparison.fingerprint) throw Object.assign(new Error(`${slug} 的推荐来源已变化，请重新加载市场`), { status: 409 });
         if (comparison.status === 'conflict' && !allowedAdoptions.has(slug)) {
             throw Object.assign(new Error(`${slug} 与未关联的本地工具同名，需要明确确认接管`), { status: 409 });
         }
         if (comparison.status === 'incompatible') throw Object.assign(new Error(`${slug} 需要平台 ${item.minPlatformVersion} 或更高版本`), { status: 409 });
+        if (comparison.status === 'unresolved') throw Object.assign(new Error(`${slug} 缺少可比较的内置或市场发布日期，已停止自动更新`), { status: 409 });
+        if (comparison.status === 'unchanged') throw Object.assign(new Error(`${slug} 已是最新版本，请重新加载市场`), { status: 409 });
+    }
+    const bundledSlugs = selected.filter(slug => current.get(slug).selectedSource === 'builtin');
+    const marketSlugs = selected.filter(slug => current.get(slug).selectedSource === 'market');
+    let bundledResult = { installed: [], adopted: [], updated: [], backups: [], invalid: [] };
+    if (bundledSlugs.length) {
+        bundledResult = builtinToolsSync.applyBuiltinToolDecisions({
+            sourceDir: BUILTIN_SOURCE_DIR,
+            targetDir: repo.CUSTOM_TOOLS_DIR,
+            backupRoot: path.join(getDataDir(), 'backups', 'tool-market'),
+            applySlugs: bundledSlugs,
+            expectedFingerprints: Object.fromEntries(bundledSlugs.map(slug => [slug, current.get(slug).fingerprint]))
+        });
+    }
+    if (!marketSlugs.length) {
+        const changed = [...bundledResult.installed, ...bundledResult.adopted, ...bundledResult.updated];
+        return { ...bundledResult, changed, preview: await previewMarket() };
     }
     const tempParent = path.join(getDataDir(), 'tmp', 'tool-market');
     fs.mkdirSync(tempParent, { recursive: true });
     const sourceDir = fs.mkdtempSync(path.join(tempParent, 'apply-'));
     try {
         const catalogHost = new URL(catalog.catalogUrl).hostname;
-        for (const slug of selected) {
+        for (const slug of marketSlugs) {
             const item = items.get(slug);
             const buffer = await fetchBuffer(item.package.url, { limit: PACKAGE_MAX_BYTES, catalogHostname: catalogHost });
             if (buffer.length !== item.package.size || sha256(buffer) !== item.package.sha256) throw new Error(`${slug} 工具包 SHA-256 或大小校验失败`);
@@ -371,19 +420,29 @@ async function applyMarketUpdates({ slugs = [], adoptSlugs = [], expectedFingerp
         }
         const sourcePreview = builtinToolsSync.previewBuiltinTools({ sourceDir, targetDir: repo.CUSTOM_TOOLS_DIR, includeSkipped: true });
         const sourceMap = new Map(sourcePreview.tools.map(item => [item.slug, item]));
-        for (const slug of selected) {
+        for (const slug of marketSlugs) {
             if (sourceMap.get(slug)?.fingerprint !== items.get(slug).package.directoryFingerprint) throw new Error(`${slug} 解压内容指纹与目录不一致`);
         }
         const result = builtinToolsSync.applyBuiltinToolDecisions({
             sourceDir,
             targetDir: repo.CUSTOM_TOOLS_DIR,
             backupRoot: path.join(getDataDir(), 'backups', 'tool-market'),
-            applySlugs: selected,
-            expectedFingerprints: Object.fromEntries(selected.map(slug => [slug, sourceMap.get(slug).fingerprint]))
+            applySlugs: marketSlugs,
+            expectedFingerprints: Object.fromEntries(marketSlugs.map(slug => [slug, sourceMap.get(slug).fingerprint]))
         });
-        const changed = [...result.installed, ...result.adopted, ...result.updated];
-        changed.forEach(slug => annotateInstalledTool(items.get(slug)));
-        return { ...result, changed, preview: await previewMarket() };
+        const marketChanged = [...result.installed, ...result.adopted, ...result.updated];
+        marketChanged.forEach(slug => annotateInstalledTool(items.get(slug)));
+        const changed = [...bundledResult.installed, ...bundledResult.adopted, ...bundledResult.updated, ...marketChanged];
+        return {
+            ...result,
+            installed: [...bundledResult.installed, ...result.installed],
+            adopted: [...bundledResult.adopted, ...result.adopted],
+            updated: [...bundledResult.updated, ...result.updated],
+            backups: [...bundledResult.backups, ...result.backups],
+            invalid: [...bundledResult.invalid, ...result.invalid],
+            changed,
+            preview: await previewMarket()
+        };
     } finally {
         fs.rmSync(sourceDir, { recursive: true, force: true });
     }

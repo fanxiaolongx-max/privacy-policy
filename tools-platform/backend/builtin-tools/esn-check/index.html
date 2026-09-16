@@ -4,8 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ESN 数据洞察系统 (高阶透视版)</title>
+    <title>临时 License 统计与月报</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="./assets/exceljs.min.js"></script>
     <style>
         /* 现代化全局变量与基础样式 */
         :root {
@@ -76,9 +78,44 @@
             background-color: var(--success-hover);
             transform: translateY(-1px);
         }
+        .notice-overlay { position: fixed; inset: 0; z-index: 1000; display: none; align-items: center; justify-content: center; padding: 10px; background: rgba(15, 23, 42, .45); }
+        .notice-overlay.show { display: flex; }
+        .notice-panel { width: min(560px, 100%); max-height: min(80vh, 680px); display: flex; flex-direction: column; overflow: hidden; border-radius: 14px; background: #fff; box-shadow: 0 20px 50px rgba(15, 23, 42, .25); }
+        .notice-panel.wide { width: min(1500px, 100%); max-height: 94vh; }
+        .notice-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+        .notice-header h2 { margin: 0; font-size: 16px; }
+        .notice-close { border: 0; background: transparent; color: var(--text-muted); font-size: 24px; cursor: pointer; }
+        .notice-message { overflow: auto; padding: 18px 20px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; line-height: 1.65; }
+        .notice-summary { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; color: #334155; }
+        .notice-summary strong { color: #b45309; }
+        .notice-table-wrap { overflow: auto; max-height: 72vh; border: 1px solid var(--border); border-radius: 8px; }
+        .notice-table { width: 100%; min-width: 1320px; border-collapse: separate; border-spacing: 0; white-space: nowrap; font-size: 12px; }
+        .notice-table th, .notice-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; }
+        .notice-table th { position: sticky; top: 0; z-index: 1; background: #eaf2ff; color: #1e3a5f; }
+        .notice-table tbody tr:nth-child(even) { background: #f8fafc; }
+        .notice-table td { max-width: 230px; overflow: hidden; text-overflow: ellipsis; }
+        .notice-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding: 12px 20px; border-top: 1px solid var(--border); }
+        .notice-export-status { margin-right: auto; color: #475569; font-size: 12px; }
+        .notice-actions button { border: 0; border-radius: 8px; padding: 8px 22px; background: var(--primary); color: #fff; cursor: pointer; }
+        .notice-actions .notice-export { background: #e8f1ff; color: #1d4ed8; }
+        .export-overlay { position: fixed; inset: 0; z-index: 1200; display: none; align-items: center; justify-content: center; padding: 16px; background: rgba(15, 23, 42, .68); }
+        .export-overlay.show { display: flex; }
+        .export-dialog { width: min(700px, 100%); max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; border-radius: 16px; background: #fff; box-shadow: 0 24px 70px rgba(0, 0, 0, .35); }
+        .export-dialog-head { padding: 20px 24px 12px; }
+        .export-dialog-head h2 { margin: 0 0 6px; font-size: 18px; }
+        .export-dialog-head p { margin: 0; color: var(--text-muted); font-size: 13px; }
+        .export-dialog-progress { padding: 12px 24px 18px; }
+        .export-dialog-stage { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 9px; font-size: 13px; font-weight: 600; }
+        .export-dialog-track { height: 12px; overflow: hidden; border-radius: 99px; background: #e2e8f0; }
+        .export-dialog-fill { width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #2563eb, #60a5fa, #2563eb); background-size: 200% 100%; transition: width .25s; animation: exportProgressFlow 1.6s linear infinite; }
+        @keyframes exportProgressFlow { to { background-position: 200% 0; } }
+        .export-dialog-log { min-height: 150px; max-height: min(42vh, 350px); overflow: auto; margin: 0 24px 18px; padding: 14px; border-radius: 9px; background: #0f172a; color: #c7f9d4; font: 12px/1.65 ui-monospace, SFMono-Regular, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+        .export-dialog-actions { display: flex; justify-content: flex-end; padding: 14px 24px; border-top: 1px solid var(--border); }
+        .export-dialog-actions button { border: 0; border-radius: 8px; padding: 9px 22px; background: var(--primary); color: #fff; cursor: pointer; }
 
         .main-content {
             flex: 1;
+            min-height: 0;
             overflow-y: auto;
             padding: 20px;
             display: flex;
@@ -86,79 +123,129 @@
             gap: 20px;
             scroll-behavior: smooth;
         }
+        .main-content > * {
+            flex-shrink: 0;
+        }
 
-        /* 控制面板：导入卡片 */
+        /* 控制面板：导入与日志统一栅格 */
         .control-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 14px;
+            align-items: stretch;
+        }
+        @media (min-width: 960px) {
+            .control-grid {
+                grid-template-columns: 1fr 1fr 1.15fr;
+            }
         }
 
         .upload-card {
             background: var(--bg-surface);
             border: 1px solid var(--border);
             border-radius: var(--radius-lg);
-            padding: 16px;
+            padding: 12px 14px;
             box-shadow: var(--shadow-sm);
-            transition: border-color 0.2s;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
-
+        .upload-card:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.04);
+        }
+        .upload-card-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
         .upload-card h3 {
-            margin: 0 0 8px 0;
-            font-size: 14px;
+            margin: 0;
+            font-size: 13px;
+            font-weight: 700;
             color: var(--text-main);
         }
-
-        .upload-card p {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin: 0 0 12px 0;
+        .upload-card-badge {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: #e0f2fe;
+            color: #0369a1;
+            white-space: nowrap;
         }
-
+        .upload-card-badge.optional {
+            background: #f3e8ff;
+            color: #7e22ce;
+        }
+        .upload-card-actions { display: flex; align-items: center; gap: 6px; }
+        .upload-card-config { border: 1px solid #d8b4fe; border-radius: 6px; background: #faf5ff; color: #6b21a8; padding: 3px 7px; font-size: 10px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+        .sheet-ignore-config { margin: 0 0 8px; padding: 8px; border: 1px solid #e9d5ff; border-radius: 8px; background: #faf5ff; }
+        .sheet-ignore-config[hidden] { display: none; }
+        .sheet-ignore-config label { display: block; margin-bottom: 5px; font-size: 11px; font-weight: 700; color: #6b21a8; }
+        .sheet-ignore-config textarea { box-sizing: border-box; width: 100%; min-height: 52px; resize: vertical; border: 1px solid #d8b4fe; border-radius: 6px; padding: 6px; font: inherit; font-size: 11px; }
+        .sheet-ignore-config small, .sheet-ignore-summary { display: block; margin-top: 4px; font-size: 10px; color: #7c3aed; }
+        .upload-card p {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin: 0 0 8px 0;
+            line-height: 1.4;
+        }
         .file-input-wrapper input[type="file"] {
-            font-size: 13px;
+            font-size: 12px;
             width: 100%;
             cursor: pointer;
-            padding: 8px;
-            background: #f1f5f9;
+            padding: 6px 8px;
+            background: #f8fafc;
             border: 1px dashed #cbd5e1;
             border-radius: var(--radius-md);
             box-sizing: border-box;
+            transition: all 0.2s;
         }
-
+        .file-input-wrapper input[type="file"]:hover {
+            background: #f1f5f9;
+            border-color: var(--primary);
+        }
         .file-input-wrapper input:disabled {
             cursor: not-allowed;
             opacity: 0.6;
         }
 
-        /* 极客终端日志区 */
+        /* 极客终端日志区 (与导入卡片并排对齐) */
         .terminal-container {
             background: #1e1e1e;
-            border-radius: var(--radius-md);
+            border-radius: var(--radius-lg);
             box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            height: 100%;
+            min-height: 115px;
         }
-
         .terminal-header {
             background: #2d2d2d;
-            padding: 6px 16px;
+            padding: 6px 12px;
             font-size: 11px;
             color: #a1a1aa;
             display: flex;
             justify-content: space-between;
+            align-items: center;
             border-bottom: 1px solid #000;
+            flex-shrink: 0;
         }
-
         .log-terminal {
             color: #4ade80;
             font-family: "Courier New", Courier, monospace;
-            font-size: 12px;
-            padding: 12px 16px;
-            height: 120px;
+            font-size: 11px;
+            padding: 8px 12px;
+            flex: 1;
+            min-height: 70px;
+            max-height: 115px;
             overflow-y: auto;
-            line-height: 1.6;
+            line-height: 1.5;
         }
 
         .log-line {
@@ -258,6 +345,18 @@
             padding: 16px;
             box-shadow: var(--shadow-sm);
         }
+        .missing-esn-panel { border-top: 4px solid #ef4444; }
+        .missing-esn-summary { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; font-size: 12px; color: #475569; }
+        .missing-esn-summary strong { color: #b91c1c; font-size: 15px; }
+        .missing-esn-table-wrap { overflow: auto; max-height: 520px; border: 1px solid var(--border); border-radius: 8px; }
+        .missing-esn-table { width: 100%; min-width: 900px; border-collapse: collapse; font-size: 12px; }
+        .missing-esn-table th, .missing-esn-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap; }
+        .missing-esn-table th { position: sticky; top: 0; background: #fff1f2; color: #9f1239; }
+        .missing-esn-table tbody tr:nth-child(even) { background: #f8fafc; }
+        .missing-esn-table td { max-width: 250px; overflow: hidden; text-overflow: ellipsis; }
+        .missing-esn-pager { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 10px; font-size: 12px; }
+        .missing-esn-pager button { border: 1px solid var(--border); border-radius: 6px; background: #fff; padding: 5px 10px; cursor: pointer; }
+        .missing-esn-pager button:disabled { cursor: not-allowed; opacity: .5; }
 
         .summary-title {
             font-size: 14px;
@@ -719,47 +818,503 @@
             color: var(--text-muted);
             font-size: 13px;
         }
+        /* 现代化分段选项卡 (Segmented Tabs) */
+        .view-tabs {
+            display: inline-flex;
+            background: #e2e8f0;
+            padding: 4px;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            gap: 4px;
+            align-self: flex-start;
+        }
+        .view-tab {
+            border: none;
+            background: transparent;
+            color: #475569;
+            border-radius: 7px;
+            padding: 8px 18px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            user-select: none;
+        }
+        .view-tab:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.6);
+        }
+        .view-tab.active {
+            background: #ffffff;
+            color: var(--primary);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+            font-weight: 700;
+        }
+        .report-controls { display:flex; gap:10px; flex-wrap:wrap; align-items:end; margin-bottom:14px; }
+        .report-controls label { display:grid; gap:4px; font-size:12px; color:var(--text-muted); }
+        .report-controls select,.report-controls input { padding:8px; border:1px solid var(--border); border-radius:6px; background:#fff; color:var(--text-main); }
+        .report-controls input[type="checkbox"] { padding:0; vertical-align:middle; }
+        #monthly-view > .report-controls { display:block; margin-bottom:14px; }
+        .report-controls-main { display:flex; flex-wrap:wrap; align-items:flex-end; gap:10px; }
+        .report-controls-main label { display:grid; gap:4px; font-size:12px; color:var(--text-muted); }
+        .report-controls-main select,.report-controls-main input { box-sizing:border-box; height:36px; padding:7px 8px; border:1px solid var(--border); border-radius:7px; background:#fff; color:var(--text-main); }
+        .report-controls-main .view-tab { display:inline-flex; align-items:center; justify-content:center; height:36px; box-sizing:border-box; padding:7px 14px; white-space:nowrap; }
+        .report-controls-notes { display:flex; flex-wrap:wrap; gap:8px 16px; margin-top:8px; padding-left:1px; color:var(--text-muted); font-size:12px; line-height:1.45; }
+        .report-controls-notes .muted { display:block; }
+        .report-settings { display:grid; gap:14px; margin:0; }
+        .report-settings h3 { margin:0; font-size:14px; }
+        .report-filter-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:7px 0; }
+        .report-filter-row select,.report-filter-row input,.report-settings select,.report-settings input { padding:7px; border:1px solid var(--border); border-radius:6px; background:#fff; color:var(--text-main); }
+        .report-filter-row input { min-width:170px; flex:1; }
+        .report-filter-row button { border:1px solid var(--border); border-radius:6px; background:#fff; padding:7px 10px; cursor:pointer; }
+        .report-group-members { display:flex; gap:8px 16px; flex-wrap:wrap; max-height:130px; overflow:auto; margin:10px 0 0; padding:10px; background:#f8fafc; border:1px solid #e5edf5; border-radius:8px; }
+        .report-group-members label { white-space:nowrap; font-size:13px; color:#334155; }
+        .report-group-card { border:1px solid #dbe5ef; border-radius:10px; padding:12px; margin:10px 0 0; background:#fff; box-shadow:0 1px 2px rgba(15,23,42,.03); }
+        .report-group-card .report-controls { margin-bottom:4px; }
+        .report-group-note { min-width:260px; }
+        .report-group-note textarea { min-width:260px; min-height:56px; padding:7px; border:1px solid var(--border); border-radius:6px; resize:vertical; }
+        .report-split-name { display:flex; flex-direction:column; margin:-6px -8px; }
+        .report-split-name > span { box-sizing:border-box; display:flex; align-items:center; justify-content:center; padding:6px 8px; white-space:pre-line; }
+        .report-split-name > span + span { border-top:1px solid #94a3b8; font-weight:400; font-size:11px; }
+        .report-settings .hint { color:var(--text-muted); font-size:12px; line-height:1.65; margin:6px 0 0; }
+        .report-settings-modal .modal-panel { width:min(1180px, 96vw); max-height:92vh; background:#f8fafc; }
+        .report-settings-modal .modal-head { background:#fff; padding:16px 22px; }
+        .report-settings-modal .modal-body { padding:18px 22px 24px; }
+        .settings-intro { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:10px 14px; border:1px solid #d9e9fb; border-radius:10px; background:#eff6ff; color:#315a88; font-size:12px; line-height:1.5; }
+        .settings-intro strong { color:#1d4ed8; }
+        .settings-section { border:1px solid #dbe5ef; border-radius:12px; background:#fff; padding:16px; }
+        .settings-section-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; }
+        .settings-section-head h3 { color:#1e293b; }
+        .settings-section-head h3::before { content:""; display:inline-block; width:4px; height:16px; margin-right:8px; vertical-align:-3px; border-radius:4px; background:#2563eb; }
+        .settings-grid { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:12px; align-items:end; }
+        .settings-grid.three { grid-template-columns:repeat(3, minmax(0, 1fr)); }
+        .settings-grid .report-controls { margin:0; }
+        .settings-section .report-controls { margin:0; }
+        .report-settings .report-controls label { min-width:0; }
+        .report-settings .report-controls select,.report-settings .report-controls input,.report-settings .report-controls textarea { width:100%; box-sizing:border-box; min-height:36px; }
+        .report-settings .report-controls input[type="checkbox"] { width:auto; min-height:auto; }
+        .report-settings .view-tab { padding:7px 11px; border-radius:7px; font-size:12px; }
+        .settings-subsection { padding-top:14px; margin-top:14px; border-top:1px solid #e7edf3; }
+        .settings-subsection:first-of-type { padding-top:0; margin-top:0; border-top:0; }
+        .settings-subsection h4 { margin:0 0 6px; color:#334155; font-size:13px; }
+        .report-order-list { display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 0; }
+        .report-order-item { display:flex; gap:6px; align-items:center; border:1px solid var(--border); border-radius:7px; padding:5px 8px; background:#f8fafc; font-size:12px; }
+        .report-order-item button { border:1px solid var(--border); background:#fff; border-radius:5px; cursor:pointer; }
+        @media (max-width:900px) { .settings-grid,.settings-grid.three { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
+        @media (max-width:620px) { .report-settings-modal .modal-head { padding:14px; align-items:flex-start; flex-wrap:wrap; } .report-settings-modal .modal-body { padding:12px; } .settings-grid,.settings-grid.three { grid-template-columns:1fr; } .settings-section { padding:13px; } }
+        .report-sheet { background:#fff; border:1px solid var(--border); padding:22px; max-width:1200px; margin:auto; overflow:auto; }
+        .report-copy { padding:5px 8px; line-height:1.55; font-size:14px; }
+        .report-copy[contenteditable="true"] { cursor:text; }
+        .report-copy[contenteditable="true"]:hover { background:#f8fbff; }
+        .report-copy[contenteditable="true"]:focus { outline:2px solid var(--primary); background:#fff; }
+        .report-text-tools { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+        .report-text-popover { display:none; position:fixed; z-index:1100; align-items:center; gap:4px; padding:6px; border:1px solid #cbd5e1; border-radius:9px; background:#fff; box-shadow:0 8px 24px rgba(15,23,42,.18); }
+        .report-text-popover.show { display:flex; }
+        .report-text-popover button { width:30px; height:30px; padding:0; border:1px solid #d7e0ea; border-radius:6px; background:#fff; color:#1e293b; cursor:pointer; font-weight:800; }
+        .report-text-popover button:hover { background:#eff6ff; border-color:#93c5fd; }
+        .report-text-popover .text-color-swatch { width:24px; height:24px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 1px #cbd5e1; }
+        .report-title { background:#dceef4; text-align:center; padding:14px; font-size:21px; font-weight:800; }
+        .report-objective { border-bottom:1px solid #94a3b8; font-weight:700; }
+        .report-progress-heading,.report-section-heading { font-weight:800; }
+        .report-progress-block { border-bottom:1px solid #94a3b8; padding-bottom:6px; }
+        .report-section-heading { background:#f1f5f9; margin-top:10px; }
+        .report-table-intro { font-weight:700; margin-top:10px; }
+        .report-table-caption { text-align:center; font-size:12px; margin-bottom:10px; }
+        .report-sheet p { margin:7px 0; line-height:1.6; }
+        .report-sheet table,.source-detail-table { border-collapse:collapse; width:100%; font-size:12px; }
+        .report-sheet th,.report-sheet td,.source-detail-table th,.source-detail-table td { border:1px solid #94a3b8; padding:6px 8px; text-align:center; }
+        .report-sheet th,.source-detail-table th { background:#e8f1f5; }
+        .report-sheet tfoot { font-weight:700; background:#e8f1f5; }
+        .source-detail-panel { background:#fff; border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:16px; }
+        .source-detail-panel h3 { margin:0 0 10px; }
+        .source-detail-wrap { overflow:auto; max-height:60vh; background:#fff; }
+        .source-detail-table th { position:sticky; top:0; }
+        .source-detail-esn { max-width:180px; min-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:pointer; color:#1d4ed8; text-decoration:underline; }
+        .source-detail-esn:hover { background:#dbeafe; }
+        .esn-full-value { display:block; padding:12px; border:1px solid var(--border); border-radius:8px; background:#f8fafc; overflow-wrap:anywhere; white-space:pre-wrap; }
+        .source-detail-columns { display:flex; flex-wrap:wrap; gap:6px 14px; max-height:90px; overflow:auto; padding:8px; border:1px solid var(--border); border-radius:6px; margin:8px 0; }
+        .source-detail-columns label { font-size:12px; white-space:nowrap; }
+        .source-detail-page { display:flex; align-items:center; gap:10px; margin-top:8px; font-size:12px; }
+        /* 页面全局指示条 (微型流光进度条) */
+        .global-progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            z-index: 9999;
+            background: transparent;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .global-progress-bar.active {
+            opacity: 1;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899, #10b981, #3b82f6);
+            background-size: 200% 100%;
+            animation: globalProgressShimmer 1.1s linear infinite;
+        }
+        @keyframes globalProgressShimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* 数据导入可折叠卡片与常驻摘要条 */
+        .import-section {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
+            transition: border-color 0.2s, box-shadow 0.2s;
+            overflow: hidden;
+        }
+        .import-section:hover {
+            border-color: #cbd5e1;
+        }
+        .import-summary-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 11px 18px;
+            background: #f8fafc;
+            cursor: pointer;
+            user-select: none;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.2s, border-color 0.2s;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .import-summary-bar:hover {
+            background: #f1f5f9;
+        }
+        .import-section.is-collapsed .import-summary-bar {
+            border-bottom-color: transparent;
+            background: #ffffff;
+        }
+        .import-summary-badges {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .summary-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            background: #ffffff;
+            border: 1px solid var(--border);
+            color: #475569;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .summary-badge .badge-title {
+            font-weight: 600;
+        }
+        .summary-badge.has-data {
+            background: #f0fdf4;
+            border-color: #bbf7d0;
+            color: #166534;
+        }
+        .summary-badge.full-has-data {
+            background: #faf5ff;
+            border-color: #e9d5ff;
+            color: #6b21a8;
+        }
+        .badge-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+        .dot-green { background: #22c55e; box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.25); }
+        .dot-purple { background: #a855f7; box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.25); }
+        .dot-gray { background: #94a3b8; }
+        .badge-mini-upload {
+            background: #8b5cf6;
+            color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            cursor: pointer;
+            margin-left: 6px;
+            line-height: 1.2;
+            transition: all 0.15s;
+        }
+        .badge-mini-upload:hover {
+            background: #7c3aed;
+            transform: scale(1.05);
+        }
+        .upload-card-badge.badge-success {
+            background: #dcfce7;
+            color: #166534;
+            font-weight: 600;
+        }
+        .upload-card-badge.badge-pending {
+            background: #f3e8ff;
+            color: #7e22ce;
+            font-weight: 700;
+            border: 1px solid #d8b4fe;
+        }
+        @keyframes cardPulseGlow {
+            0% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.4); border-color: #a855f7; }
+            50% { box-shadow: 0 0 0 6px rgba(168, 85, 247, 0.15); border-color: #9333ea; }
+            100% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0); border-color: var(--border); }
+        }
+        .upload-card.step-highlight {
+            animation: cardPulseGlow 1.5s ease 3;
+            border-color: #a855f7 !important;
+            background: #fdfaff !important;
+        }
+        .btn-toggle-import {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #ffffff;
+            border: 1px solid var(--border);
+            padding: 5px 12px;
+            border-radius: var(--radius-md);
+            font-size: 12px;
+            color: #334155;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: var(--shadow-sm);
+        }
+        .btn-toggle-import:hover {
+            background: #eff6ff;
+            color: var(--primary);
+            border-color: #bfdbfe;
+        }
+        .import-collapsible-content {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            padding: 16px;
+            transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease, padding 0.35s ease;
+            overflow: hidden;
+            max-height: none;
+            opacity: 1;
+        }
+        .import-section.is-collapsed .import-collapsible-content {
+            max-height: 0;
+            opacity: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+            pointer-events: none;
+        }
+
+        /* 视图级轻量级加载反馈 (Skeleton / Loading Overlay) */
+        .view-loading-overlay {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 42px 20px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(4px);
+            border-radius: var(--radius-lg);
+            border: 1px dashed var(--border);
+            margin-bottom: 16px;
+            animation: fadeIn 0.2s ease-out;
+        }
+        .view-loading-spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid #e2e8f0;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .view-loading-text {
+            font-size: 13px;
+            color: #475569;
+            font-weight: 600;
+        }
+
+        .logic-note {
+            background: #f0f7ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 10px;
+            padding: 12px 18px;
+            font-size: 13px;
+            line-height: 1.7;
+            color: #1e3a8a;
+            box-shadow: var(--shadow-sm);
+        }
+
+        @media (max-height: 800px) {
+            .navbar { padding: 8px 18px; }
+            .navbar h1 { font-size: 1rem; }
+            .main-content { padding: 12px 16px; gap: 12px; }
+            .import-summary-bar { padding: 7px 14px; }
+            .import-collapsible-content { padding: 10px 14px; gap: 10px; }
+            .upload-card { padding: 8px 12px; }
+            .upload-card p { margin: 0 0 6px 0; }
+            .file-input-wrapper input[type="file"] { padding: 4px 6px; font-size: 11px; }
+            .terminal-container { min-height: 95px; }
+            .log-terminal { font-size: 11px; padding: 6px 10px; min-height: 55px; max-height: 85px; }
+            .logic-note { padding: 8px 14px; font-size: 12px; line-height: 1.5; }
+        }
+
+        @media print { .navbar,.import-section,.control-grid,.terminal-container,.progress-panel,.view-tabs,.report-controls,.logic-note,.report-settings-modal { display:none!important; } .main-content { overflow:visible; } .report-sheet { border:0; max-width:none; } }
     </style>
 </head>
 
 <body>
 
     <div class="navbar">
-        <h1>📊 ESN 数据洞察系统 (定制美化版)</h1>
-        <button id="export-btn" class="btn-export">⬇️ 导出精美报表至 Excel</button>
+        <h1>📊 临时 License 统计与月报</h1>
+        <button id="export-btn" class="btn-export">⬇️ 导出完整报告至 Excel</button>
+    </div>
+    <div id="global-progress-bar" class="global-progress-bar"></div>
+    <div id="notice-overlay" class="notice-overlay" role="dialog" aria-modal="true" aria-labelledby="notice-title">
+        <div class="notice-panel">
+            <div class="notice-header"><h2 id="notice-title"></h2><button type="button" class="notice-close" aria-label="关闭提示">×</button></div>
+            <div id="notice-message" class="notice-message"></div>
+            <div class="notice-actions"><span id="notice-export-status" class="notice-export-status" aria-live="polite"></span><button type="button" id="notice-export" class="notice-export" hidden>导出全部重复记录 Excel</button><button type="button" id="notice-ok">知道了</button></div>
+        </div>
+    </div>
+    <div id="export-overlay" class="export-overlay" role="dialog" aria-modal="true" aria-labelledby="export-dialog-title" tabindex="-1">
+        <div class="export-dialog">
+            <div class="export-dialog-head"><h2 id="export-dialog-title">正在导出完整报告</h2><p id="export-dialog-description">请等待文件生成，期间已锁定页面操作。</p></div>
+            <div class="export-dialog-progress"><div class="export-dialog-stage"><span id="export-dialog-stage">准备数据…</span><span id="export-dialog-percent">0%</span></div><div class="export-dialog-track"><div id="export-dialog-fill" class="export-dialog-fill"></div></div></div>
+            <div id="export-dialog-log" class="export-dialog-log" role="log" aria-live="polite"></div>
+            <div class="export-dialog-actions"><button type="button" id="export-dialog-close" hidden>关闭</button></div>
+        </div>
     </div>
 
     <div class="main-content" id="main-scroll">
-        <div class="control-grid">
-            <div class="upload-card">
-                <h3>🟢 步骤 1: 导入基础数据集 (支持批量)</h3>
-                <p>上传核心表格进行清洗，触发日志追踪。</p>
-                <div class="file-input-wrapper">
-                    <input type="file" id="excel-file-base" accept=".xlsx, .xls, .csv" multiple />
+        <div id="import-section" class="import-section">
+            <div id="import-summary-bar" class="import-summary-bar" onclick="toggleImportSection()">
+                <div class="import-summary-badges">
+                    <div class="summary-badge base-badge" id="badge-base-summary">
+                        <span class="badge-dot dot-gray" id="badge-base-dot"></span>
+                        <span class="badge-title">🟢 基础数据集：</span>
+                        <span class="badge-content" id="badge-base-text">待导入</span>
+                    </div>
+                    <div class="summary-badge full-badge" id="badge-full-summary">
+                        <span class="badge-dot dot-gray" id="badge-full-dot"></span>
+                        <span class="badge-title">🟣 全量参照集：</span>
+                        <span class="badge-content" id="badge-full-text">待导入 (可选)</span>
+                    </div>
+                    <div class="summary-badge status-badge" id="badge-status-summary">
+                        <span class="badge-dot dot-gray" id="badge-status-dot"></span>
+                        <span class="badge-content" id="badge-status-text">系统就绪</span>
+                    </div>
+                </div>
+                <div class="import-summary-actions" onclick="event.stopPropagation()">
+                    <button type="button" class="btn-toggle-import" id="btn-toggle-import" onclick="toggleImportSection()">
+                        <span id="btn-toggle-import-text">收起导入面板</span>
+                        <span id="btn-toggle-import-icon">▴</span>
+                    </button>
                 </div>
             </div>
-            <div class="upload-card">
-                <h3>🟣 步骤 2: 导入全量参照集 (支持大文件)</h3>
-                <p>上传海量参照表计算全局申请频次。</p>
-                <div class="file-input-wrapper">
-                    <input type="file" id="excel-file-full" accept=".xlsx, .xls, .csv" disabled multiple />
+
+            <div id="import-collapsible-content" class="import-collapsible-content">
+                <div class="control-grid">
+                    <div class="upload-card" id="upload-card-base">
+                        <div class="upload-card-head">
+                            <h3>🟢 步骤 1: 基础数据集</h3>
+                            <span class="upload-card-badge" id="upload-badge-base">支持批量</span>
+                        </div>
+                        <p>上传核心表格进行清洗，触发日志追踪。</p>
+                        <div class="file-input-wrapper">
+                            <input type="file" id="excel-file-base" accept=".xlsx, .xls, .csv" multiple />
+                        </div>
+                    </div>
+                    <div class="upload-card" id="upload-card-full">
+                        <div class="upload-card-head">
+                            <h3>🟣 步骤 2: 全量参照集</h3>
+                            <div class="upload-card-actions"><span class="upload-card-badge optional" id="upload-badge-full">可单独使用</span><button type="button" class="upload-card-config" id="sheet-ignore-toggle" aria-expanded="false" aria-controls="sheet-ignore-config">忽略工作表</button></div>
+                        </div>
+                        <p>上传参照表计算申请频次，也可生成月报。</p>
+                        <div id="sheet-ignore-config" class="sheet-ignore-config" hidden>
+                            <label for="sheet-ignore-input">导入时忽略的工作表名称</label>
+                            <textarea id="sheet-ignore-input" rows="2" placeholder="每行一个名称，也可用逗号分隔"></textarea>
+                            <small>不区分大小写；修改后自动保存，并在下一次导入时生效。留空表示不忽略。</small>
+                        </div>
+                        <span id="sheet-ignore-summary" class="sheet-ignore-summary"></span>
+                        <div class="file-input-wrapper">
+                            <input type="file" id="excel-file-full" accept=".xlsx, .xls, .csv" multiple />
+                        </div>
+                    </div>
+                    <div class="terminal-container">
+                        <div class="terminal-header">
+                            <span>💻 System Terminal</span>
+                            <span id="terminal-status">🟢 Idle</span>
+                        </div>
+                        <div class="log-terminal" id="log-terminal">
+                            <div class="log-line"><span class="log-time">[System]</span> 引擎初始化成功。Excel 企业级渲染核心加载完成。</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="progress-panel" id="progress-panel">
+                    <div id="progress-list"></div>
                 </div>
             </div>
         </div>
 
-        <div class="terminal-container">
-            <div class="terminal-header">
-                <span>System Processing Terminal</span>
-                <span id="terminal-status">🟢 Idle</span>
-            </div>
-            <div class="log-terminal" id="log-terminal">
-                <div class="log-line"><span class="log-time">[System]</span> 引擎初始化成功。Excel 企业级渲染核心加载完成。</div>
-            </div>
+        <div class="logic-note"><strong>统计口径：</strong>标准 ESN 按 ESN 去重，ANY 按“网络＋产品”去重；重复时保留生效日期最新的一行。基础表去重数为配置数；全量申请次数按“网络＋产品＋ESN”匹配全量表的行数累加。自动月报的基础表和全量参照集默认均为“标准 ESN 去重＋ANY 不去重”，也可分别设置默认口径。空 ESN 不参与两表匹配。</div>
+        <div class="view-tabs" role="tablist">
+            <button class="view-tab active" data-view="analysis" onclick="showView('analysis')">统计分析</button>
+            <button class="view-tab" data-view="monthly" onclick="showView('monthly')">自动月报</button>
+            <button class="view-tab" data-view="detail" onclick="showView('detail')">两表详表</button>
         </div>
-
-        <div class="progress-panel" id="progress-panel">
-            <div id="progress-list"></div>
-        </div>
+        <section id="monthly-view" style="display:none">
+            <div id="monthly-loading-overlay" class="view-loading-overlay" style="display:none;">
+                <div class="view-loading-spinner"></div>
+                <div class="view-loading-text" id="monthly-loading-text">正在根据新口径计算月报数据...</div>
+            </div>
+            <div class="report-controls">
+              <div class="report-controls-main">
+                <label>统计时间范围<select id="report-period"><option value="month">月份</option><option value="year">年度</option><option value="all">全部时间</option></select></label>
+                <label id="report-month-wrap">报表月份<input id="report-month" type="month"></label>
+                <label id="report-year-wrap" style="display:none">报表年度<input id="report-year" type="number" min="1900" max="2100" step="1"></label>
+                <label>计算口径<select id="report-source"><option value="dedup">基础表：标准 ESN 去重＋ANY 不去重</option><option value="raw">基础表：标准 ESN 不去重＋ANY 不去重</option><option value="both-dedup">基础表：标准 ESN 去重＋ANY 去重</option><option value="full-dedup">全量参照集：标准 ESN 去重＋ANY 不去重</option><option value="full">全量参照集：标准 ESN 不去重＋ANY 不去重</option><option value="full-both-dedup">全量参照集：标准 ESN 去重＋ANY 去重</option></select></label>
+                <button class="view-tab" id="report-set-default" type="button">设为当前表默认</button>
+                <label>上月补充文件（可选）<input id="report-previous" type="file" accept=".xlsx,.xls,.csv" multiple></label>
+                <button class="view-tab" id="report-open-settings" type="button">⚙️ 报表配置</button>
+                <button class="view-tab" id="report-reset-copy" type="button">恢复自动文案</button>
+                <button class="view-tab" id="report-png">下载月报 PNG</button>
+                <button class="view-tab" id="report-excel" type="button">下载月报 Excel</button>
+              </div>
+              <div class="report-controls-notes">
+                <span class="muted">选中文字或右键可加粗、标色；修改自动保存当前口径与时间范围</span>
+                <span class="muted" id="report-default-status"></span>
+                <span class="muted" id="report-time-column-info"></span>
+                <span class="muted" id="report-expiry-info"></span>
+              </div>
+            </div>
+            <div id="report-sheet" class="report-sheet"><div class="empty-state">导入数据后生成月报。</div></div>
+        </section>
+        <section id="detail-view" style="display:none">
+            <div id="detail-loading-overlay" class="view-loading-overlay" style="display:none;">
+                <div class="view-loading-spinner"></div>
+                <div class="view-loading-text" id="detail-loading-text">正在加载详表数据并应用筛选...</div>
+            </div>
+            <div class="logic-note">分别展示两份输入表的原始行。列显示、过滤和排序设置按表格保存在当前浏览器。</div>
+            <div id="base-detail-panel" class="source-detail-panel"></div>
+            <div id="full-detail-panel" class="source-detail-panel"></div>
+        </section>
+        <section id="analysis-view">
+            <div id="analysis-loading-overlay" class="view-loading-overlay" style="display:none;">
+                <div class="view-loading-spinner"></div>
+                <div class="view-loading-text" id="analysis-loading-text">正在更新统计分析透视表...</div>
+            </div>
 
         <div class="summary-dashboard" id="summary-dashboard">
             <div class="summary-card" style="border-top: 4px solid #3b82f6;">
@@ -850,6 +1405,12 @@
             </div>
         </div>
 
+        <div class="summary-card missing-esn-panel" id="missing-esn-panel">
+            <div class="summary-title"><span>🔴 全量有、基础表没有的标准 ESN</span><span class="summary-hint">按 ESN 对比，申请次数为全量表记录数</span></div>
+            <div id="missing-esn-content" class="empty-state">请先导入基础数据集和全量参照集。</div>
+        </div>
+
+        </section>
     </div>
 
     <div class="modal-mask" id="match-modal">
@@ -873,22 +1434,480 @@
         </div>
     </div>
 
+    <div class="modal-mask report-settings-modal" id="report-settings-modal">
+        <div class="modal-panel">
+            <div class="modal-head">
+                <div><div class="modal-title">自动月报配置</div><div id="report-pref-status" class="modal-subtitle">偏好保存在当前浏览器；三种基础表口径共用一套，全量表单独保存</div></div>
+                <div class="report-text-tools"><button class="view-tab" id="report-export-preferences" type="button">导出全部偏好</button><button class="view-tab" id="report-import-preferences" type="button">导入偏好</button><input id="report-import-file" type="file" accept=".json,application/json" hidden></div>
+                <button class="modal-close" id="report-close-settings" type="button">完成</button>
+            </div>
+            <div class="modal-body">
+                <div class="report-settings">
+                    <div class="settings-intro"><strong>配置会自动保存</strong><span>基础表三种计算口径共用一套偏好；全量参照集单独保存。修改后月报会立即刷新。</span></div>
+                    <section class="settings-section">
+                    <div class="settings-section-head"><h3>字段与时间</h3></div>
+                    <div class="settings-grid">
+                        <label>系统部 / Account 列<select id="report-account"></select></label>
+                        <label>使用场景列<select id="report-scenario"></select></label>
+                        <label>产品线列<select id="report-line"></select></label>
+                        <label>统计时间列<select id="report-time-column"></select></label>
+                    </div>
+                    <p class="hint">自动选择时，按表头顺序寻找“月份、统计月、month、生效日期、effect time、申请日期、date”。月份和年度筛选、最新月份、环比都使用这里选定的列。</p>
+                    <div class="settings-subsection" id="report-expiry-section">
+                    <div class="settings-section-head"><h4 id="report-expiry-heading">全量表失效记录</h4></div>
+                    <div class="settings-grid three" id="report-expiry-settings">
+                        <label><input id="report-expiry-enabled" type="checkbox" checked> 不关注失效超过指定天数的记录</label>
+                        <label>失效倒数天数列<select id="report-expiry-column"></select></label>
+                        <label>不关注：数值小于<input id="report-expiry-threshold" type="number" value="-90" step="1"></label>
+                    </div>
+                    <p class="hint" id="report-expiry-note">默认忽略小于 -90 的记录；-90 本身仍计入。空值和非数字保留。此规则仅影响全量表月报及环比。</p>
+                    </div></section>
+                    <section class="settings-section">
+                    <div class="settings-section-head"><h3>统计筛选</h3><button class="view-tab" id="report-add-filter" type="button">＋ 添加条件</button></div>
+                    <div class="report-controls"><label>条件关系<select id="report-filter-logic"><option value="all">同时满足全部条件</option><option value="any">满足任一条件</option></select></label></div>
+                    <p class="hint">先按时间和条件筛选，再按当前口径统计；环比使用相同条件。</p>
+                    <div id="report-filters"></div>
+                    </section>
+                    <section class="settings-section">
+                    <div class="settings-section-head"><h3>系统部管理</h3></div>
+                    <div class="settings-subsection">
+                    <h4>忽略系统部</h4>
+                    <p class="hint">勾选后该系统部不参与月报和环比统计。</p>
+                    <div id="report-ignored-accounts" class="report-group-members"></div>
+                    </div>
+                    <div class="settings-subsection">
+                    <div class="settings-section-head"><h4>系统部聚合</h4><button class="view-tab" id="report-add-group" type="button">＋ 新增聚合组</button></div>
+                    <p class="hint">每组填写一个名称并勾选客户；同一客户只能属于一组。报表仅显示聚合后的行，各列自动合计。</p>
+                    <div id="report-groups"></div>
+                    </div></section>
+                    <section class="settings-section">
+                    <div class="settings-section-head"><h3>列分类聚合</h3><button class="view-tab" id="report-add-column-group" type="button">＋ 新增列聚合组</button></div>
+                    <p class="hint">选择“使用场景”或“产品线”，填写新列名并勾选要合并的原分类。</p>
+                    <div id="report-column-groups"></div>
+                    </section>
+                    <section class="settings-section">
+                    <div class="settings-section-head"><h3>高危网元范围</h3><button class="view-tab" id="report-add-risk-filter" type="button">＋ 添加高危条件</button></div>
+                    <p class="hint">可填写网元名称，或添加多个列条件；两种方式命中的行合并计入高危网元。未配置时按产品线或产品名称中的“核心网 / core”识别。</p>
+                    <div class="settings-grid three">
+                        <label>网元名称所在列<select id="report-risk-name-column"></select></label>
+                        <label>高危网元名称（逗号或换行分隔）<textarea id="report-risk-names" rows="2" placeholder="例如：NE40E, 核心网元"></textarea></label>
+                        <label>多个条件关系<select id="report-risk-logic"><option value="any">满足任一条件</option><option value="all">同时满足全部条件</option></select></label>
+                    </div>
+                    <div id="report-risk-filters"></div>
+                    </section>
+                    <section class="settings-section">
+                    <div class="settings-section-head"><h3>License 状态分类</h3></div>
+                    <p class="hint">优先识别“正常 / 未过期”和临期，再识别过期；其他非空状态归入正常。未选择状态列时显示“未识别”。关键词用逗号分隔。</p>
+                    <div class="settings-grid three">
+                        <label>状态列<select id="report-status-column"></select></label>
+                        <label>过期关键词<input id="report-overdue-terms" value="过期,超期,expired,overdue"></label>
+                        <label>临期关键词<input id="report-near-terms" value="临期,即将过期,near expiration,expiring"></label>
+                    </div>
+                    </section>
+                    <section class="settings-section">
+                    <div class="settings-section-head"><h3>显示顺序</h3></div>
+                    <div class="settings-subsection"><h4>系统部</h4><div id="report-row-order" class="report-order-list"></div></div>
+                    <div class="settings-subsection"><h4>使用场景列</h4><div id="report-scenario-order" class="report-order-list"></div></div>
+                    <div class="settings-subsection"><h4>产品线列</h4><div id="report-line-order" class="report-order-list"></div></div>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-mask" id="esn-detail-modal">
+        <div class="modal-panel" style="width:min(680px, 96vw)">
+            <div class="modal-head"><div><div class="modal-title">完整 ESN</div><div class="modal-subtitle">已限制详表列宽；可复制完整内容。</div></div><div class="modal-actions"><button class="modal-close" id="esn-detail-copy" type="button">复制 ESN</button><button class="modal-close" id="esn-detail-close" type="button">关闭</button></div></div>
+            <div class="modal-body"><code class="esn-full-value" id="esn-detail-value"></code></div>
+        </div>
+    </div>
+    <div class="report-text-popover" id="report-text-popover" role="toolbar" aria-label="月报文字格式">
+        <button id="report-popover-bold" type="button" title="加粗">B</button>
+        <button class="text-color-swatch" type="button" data-report-color="#0f172a" style="background:#0f172a" title="黑色"></button>
+        <button class="text-color-swatch" type="button" data-report-color="#1d4ed8" style="background:#1d4ed8" title="蓝色"></button>
+        <button class="text-color-swatch" type="button" data-report-color="#dc2626" style="background:#dc2626" title="红色"></button>
+        <button class="text-color-swatch" type="button" data-report-color="#16a34a" style="background:#16a34a" title="绿色"></button>
+        <button class="text-color-swatch" type="button" data-report-color="#d97706" style="background:#d97706" title="橙色"></button>
+        <button class="text-color-swatch" type="button" data-report-color="#7c3aed" style="background:#7c3aed" title="紫色"></button>
+    </div>
+
     <script>
+        const noticeOverlay = document.getElementById('notice-overlay');
+        let noticeResolve = null;
+        let noticeRequiresAcknowledge = false;
+        let noticeExport = null;
+        const pendingNotices = [];
+        function closeNotice(acknowledged = false) {
+            if (noticeRequiresAcknowledge && !acknowledged) return;
+            noticeOverlay.classList.remove('show');
+            noticeOverlay.querySelector('.notice-panel').classList.remove('wide');
+            noticeOverlay.querySelector('.notice-close').hidden = false;
+            noticeRequiresAcknowledge = false;
+            noticeExport = null;
+            const resolve = noticeResolve;
+            noticeResolve = null;
+            if (resolve) resolve();
+            if (pendingNotices.length) {
+                const next = pendingNotices.shift();
+                openNotice(next.title, next.message, next.options, next.resolve);
+            }
+        }
+        function openNotice(title, message, options, resolve) {
+            document.getElementById('notice-title').textContent = title;
+            const body = document.getElementById('notice-message');
+            body.replaceChildren();
+            if (message instanceof Node) body.appendChild(message);
+            else body.textContent = String(message);
+            noticeRequiresAcknowledge = Boolean(options.requireAcknowledge);
+            noticeOverlay.querySelector('.notice-panel').classList.toggle('wide', Boolean(options.wide));
+            noticeOverlay.querySelector('.notice-close').hidden = noticeRequiresAcknowledge;
+            noticeExport = options.onExport || null;
+            document.getElementById('notice-export').hidden = !noticeExport;
+            document.getElementById('notice-export-status').textContent = '';
+            noticeOverlay.classList.add('show');
+            document.getElementById('notice-ok').focus();
+            noticeResolve = resolve;
+        }
+        function showNotice(title, message, options = {}) {
+            return new Promise(resolve => {
+                if (noticeResolve) pendingNotices.push({ title, message, options, resolve });
+                else openNotice(title, message, options, resolve);
+            });
+        }
+        noticeOverlay.querySelector('.notice-close').addEventListener('click', () => closeNotice());
+        document.getElementById('notice-ok').addEventListener('click', () => closeNotice(true));
+        document.getElementById('notice-export').addEventListener('click', async event => {
+            if (!noticeExport) return;
+            const button = event.currentTarget;
+            button.disabled = true;
+            const status = document.getElementById('notice-export-status');
+            status.textContent = '正在生成重复记录文件…';
+            try {
+                await noticeExport();
+                status.textContent = '已开始下载全部重复记录。';
+            } catch (error) {
+                status.textContent = `导出失败：${error.message}`;
+            } finally {
+                button.disabled = false;
+            }
+        });
+        noticeOverlay.addEventListener('click', event => { if (event.target === noticeOverlay) closeNotice(); });
+        document.addEventListener('keydown', event => { if (event.key === 'Escape' && noticeOverlay.classList.contains('show')) closeNotice(); });
         let rawGlobal = {};
         let globalData = {};
         let currentFileName = "智能分析报告.xlsx";
         const NEW_COL_NAME = "全量频次";
         const SOURCE_FILE_COL = "来源文件";
         const SOURCE_SHEET_COL = "来源工作表";
+        const SHEET_IGNORE_DEFAULT = ['Product Data'];
+        function sheetIgnoreKey() {
+            let tenant = 'default';
+            try { tenant = localStorage.getItem('tools_tenant_id') || tenant; } catch (_) { /* continue with default tenant */ }
+            return `esn-check:ignored-full-sheets:v1:${tenant}`;
+        }
+        function normalizeSheetNames(value) {
+            const seen = new Set();
+            return String(value || '').split(/[\n,，;；]+/).map(name => name.trim()).filter(name => {
+                const key = name.toLocaleLowerCase();
+                if (!name || seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            });
+        }
+        function loadIgnoredSheetNames() {
+            try {
+                const stored = localStorage.getItem(sheetIgnoreKey());
+                if (stored === null) return [...SHEET_IGNORE_DEFAULT];
+                const parsed = JSON.parse(stored);
+                return Array.isArray(parsed) ? normalizeSheetNames(parsed.join('\n')) : [...SHEET_IGNORE_DEFAULT];
+            } catch (_) { return [...SHEET_IGNORE_DEFAULT]; }
+        }
+        let ignoredSheetNames = loadIgnoredSheetNames();
+        const sheetIgnoreInput = document.getElementById('sheet-ignore-input');
+        sheetIgnoreInput.value = ignoredSheetNames.join('\n');
+        function updateSheetIgnoreSummary() {
+            document.getElementById('sheet-ignore-summary').textContent = ignoredSheetNames.length
+                ? `导入时忽略：${ignoredSheetNames.join('、')}` : '导入时不忽略任何工作表';
+        }
+        updateSheetIgnoreSummary();
+        sheetIgnoreInput.addEventListener('input', () => {
+            ignoredSheetNames = normalizeSheetNames(sheetIgnoreInput.value);
+            try { localStorage.setItem(sheetIgnoreKey(), JSON.stringify(ignoredSheetNames)); } catch (_) { /* this page still uses the current setting */ }
+            updateSheetIgnoreSummary();
+        });
+        document.getElementById('sheet-ignore-toggle').addEventListener('click', event => {
+            const config = document.getElementById('sheet-ignore-config');
+            config.hidden = !config.hidden;
+            event.currentTarget.setAttribute('aria-expanded', String(!config.hidden));
+            if (!config.hidden) sheetIgnoreInput.focus();
+        });
+
+        const REPORT_DEFAULT_MODES = { base: ['dedup', 'raw', 'both-dedup'], full: ['full-dedup', 'full', 'full-both-dedup'] };
+        const REPORT_INITIAL_DEFAULTS = { base: 'dedup', full: 'full-dedup' };
+        function reportDefaultKey(scope) { return `esn-check:report-default-mode:v1:${reportPreferenceTenant()}:${scope}`; }
+        function getDefaultReportMode(scope) {
+            try {
+                const saved = localStorage.getItem(reportDefaultKey(scope));
+                if (REPORT_DEFAULT_MODES[scope].includes(saved)) return saved;
+            } catch (_) { /* use built-in default */ }
+            return REPORT_INITIAL_DEFAULTS[scope];
+        }
+        function updateReportDefaultUi() {
+            const select = document.getElementById('report-source');
+            const defaults = [getDefaultReportMode('base'), getDefaultReportMode('full')];
+            Array.from(select.options).forEach(option => {
+                if (!option.dataset.label) option.dataset.label = option.textContent;
+                option.textContent = option.dataset.label + (defaults.includes(option.value) ? '（默认）' : '');
+            });
+            const label = value => select.querySelector(`option[value="${value}"]`).dataset.label.split('：')[1];
+            document.getElementById('report-default-status').textContent = `默认口径 · 基础表：${label(defaults[0])}；全量参照集：${label(defaults[1])}`;
+        }
+        document.getElementById('report-source').value = getDefaultReportMode('base');
+        updateReportDefaultUi();
+        document.getElementById('report-set-default').addEventListener('click', () => {
+            const mode = document.getElementById('report-source').value;
+            const scope = mode.startsWith('full') ? 'full' : 'base';
+            try { localStorage.setItem(reportDefaultKey(scope), mode); }
+            catch (_) { showNotice('保存失败', '浏览器未能保存默认口径，请检查本地存储权限。'); return; }
+            updateReportDefaultUi();
+            document.getElementById('report-pref-status').textContent = `${scope === 'full' ? '全量参照集' : '基础表'}默认口径已保存。`;
+        });
 
         let expandedPivotLines = { 'normal-count': new Set(), 'any-count': new Set(), 'normal-freq': new Set(), 'any-freq': new Set() };
         let uiVisibleColumns = { normal: new Set(), any: new Set() };
         let allAvailableHeaders = { normal: new Set(), any: new Set() };
         let detailFilters = { normal: 'all', any: 'all' };
         let fullMatchMap = new Map();
+        let fullRawRows = [];
         let fullAvailableHeaders = new Set();
         let matchVisibleColumns = new Set();
         let currentMatchRows = [];
+        const sourceDetailPrefs = { base: null, full: null };
+        const sourceDetailPages = { base: 0, full: 0 };
+        const sourceDetailData = { base: null, full: null };
+        let previousReportRows = [];
+        let previousReportGroups = new Map();
+        let activeReportPreferenceSource = 'dedup';
+        let reportPreference = { filters: [], logic: 'all', groups: [], columnGroups: [], ignoredAccounts: [], rowOrder: [], columnOrder: { scenario: [], line: [] }, columns: {}, timeColumn: '', expiry: { enabled: true, column: '', threshold: -90 }, risk: { filters: [], logic: 'any', nameColumn: '', names: '' }, status: { column: '', overdue: '过期,超期,expired,overdue', near: '临期,即将过期,near expiration,expiring' } };
+        let reportGroupCounter = 0;
+        let reportColumnGroupCounter = 0;
+        let reportAutoTimeColumn = '';
+
+        function debounce(func, wait = 250) {
+            let timeout;
+            return function (...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+
+        let globalLoadingCount = 0;
+        function startGlobalLoading() {
+            globalLoadingCount++;
+            const bar = document.getElementById('global-progress-bar');
+            if (bar) bar.classList.add('active');
+        }
+        function finishGlobalLoading() {
+            globalLoadingCount = Math.max(0, globalLoadingCount - 1);
+            if (globalLoadingCount === 0) {
+                const bar = document.getElementById('global-progress-bar');
+                if (bar) bar.classList.remove('active');
+            }
+        }
+
+        let currentActiveView = 'analysis';
+        const viewDirtyFlags = {
+            analysis: false,
+            monthly: true,
+            detail: true
+        };
+
+        function isImportCollapsed() {
+            const sec = document.getElementById('import-section');
+            return sec ? sec.classList.contains('is-collapsed') : false;
+        }
+        function collapseImportSection() {
+            const sec = document.getElementById('import-section');
+            const text = document.getElementById('btn-toggle-import-text');
+            const icon = document.getElementById('btn-toggle-import-icon');
+            if (sec) {
+                sec.classList.add('is-collapsed');
+                if (text) {
+                    const hasBase = Object.keys(globalData).length > 0;
+                    const hasFull = fullRawRows && fullRawRows.length > 0;
+                    if (hasBase && !hasFull) {
+                        text.textContent = '展开导入全量参照集 ↗';
+                    } else {
+                        text.textContent = '展开导入面板 / 上传';
+                    }
+                }
+                if (icon) icon.textContent = '▾';
+            }
+        }
+        function expandImportSection() {
+            const sec = document.getElementById('import-section');
+            const text = document.getElementById('btn-toggle-import-text');
+            const icon = document.getElementById('btn-toggle-import-icon');
+            if (sec) {
+                sec.classList.remove('is-collapsed');
+                if (text) text.textContent = '收起导入面板';
+                if (icon) icon.textContent = '▴';
+            }
+        }
+        function toggleImportSection(forceState) {
+            if (typeof forceState === 'boolean') {
+                forceState ? expandImportSection() : collapseImportSection();
+                return;
+            }
+            if (isImportCollapsed()) expandImportSection();
+            else collapseImportSection();
+        }
+
+        function updateImportSummaryBar() {
+            const baseBadge = document.getElementById('badge-base-summary');
+            const baseDot = document.getElementById('badge-base-dot');
+            const baseText = document.getElementById('badge-base-text');
+            const fullBadge = document.getElementById('badge-full-summary');
+            const fullDot = document.getElementById('badge-full-dot');
+            const fullText = document.getElementById('badge-full-text');
+            const statusDot = document.getElementById('badge-status-dot');
+            const statusText = document.getElementById('badge-status-text');
+            const uploadBadgeBase = document.getElementById('upload-badge-base');
+            const uploadBadgeFull = document.getElementById('upload-badge-full');
+
+            const baseSheets = Object.keys(globalData);
+            if (baseSheets.length > 0) {
+                let totalRows = 0, normalCount = 0, anyCount = 0;
+                baseSheets.forEach(s => {
+                    const info = globalData[s];
+                    normalCount += (info.normal?.length || 0);
+                    anyCount += (info.any?.length || 0);
+                });
+                const rawSheets = Object.keys(rawGlobal);
+                rawSheets.forEach(s => {
+                    totalRows += ((rawGlobal[s].normalRaw?.length || 0) + (rawGlobal[s].anyRaw?.length || 0));
+                });
+                if (baseBadge) baseBadge.classList.add('has-data');
+                if (baseDot) baseDot.className = 'badge-dot dot-green';
+                if (baseText) baseText.textContent = `已导入 ${baseSheets.length} 个工作表 · 共 ${totalRows.toLocaleString()} 条 (标准去重 ${normalCount.toLocaleString()}，ANY去重 ${anyCount.toLocaleString()})`;
+                if (uploadBadgeBase) {
+                    uploadBadgeBase.textContent = '✓ 已就绪 (可重选)';
+                    uploadBadgeBase.className = 'upload-card-badge badge-success';
+                }
+            } else {
+                if (baseBadge) baseBadge.classList.remove('has-data');
+                if (baseDot) baseDot.className = 'badge-dot dot-gray';
+                if (baseText) baseText.textContent = '待导入';
+                if (uploadBadgeBase) {
+                    uploadBadgeBase.textContent = '支持批量';
+                    uploadBadgeBase.className = 'upload-card-badge';
+                }
+            }
+
+            if (fullRawRows && fullRawRows.length > 0) {
+                if (fullBadge) fullBadge.classList.add('full-has-data');
+                if (fullDot) fullDot.className = 'badge-dot dot-purple';
+                if (fullText) fullText.textContent = `已导入 · 共 ${fullRawRows.length.toLocaleString()} 条参照记录`;
+                if (uploadBadgeFull) {
+                    uploadBadgeFull.textContent = '✓ 已就绪 (可重选)';
+                    uploadBadgeFull.className = 'upload-card-badge badge-success';
+                }
+            } else {
+                if (fullBadge) fullBadge.classList.remove('full-has-data');
+                if (fullDot) fullDot.className = 'badge-dot dot-gray';
+                if (baseSheets.length > 0) {
+                    if (fullText) fullText.innerHTML = `待导入 <button type="button" class="badge-mini-upload" onclick="event.stopPropagation(); expandImportSection(); document.getElementById('excel-file-full').click();">立即上传 ↗</button>`;
+                    if (uploadBadgeFull) {
+                        uploadBadgeFull.textContent = '👉 待导入 (比对频次)';
+                        uploadBadgeFull.className = 'upload-card-badge badge-pending';
+                    }
+                } else {
+                    if (fullText) fullText.textContent = '待导入 (可选)';
+                    if (uploadBadgeFull) {
+                        uploadBadgeFull.textContent = '可单独使用';
+                        uploadBadgeFull.className = 'upload-card-badge optional';
+                    }
+                }
+            }
+
+            if (statusDot && statusText) {
+                if (baseSheets.length > 0 && fullRawRows && fullRawRows.length > 0) {
+                    statusDot.className = 'badge-dot dot-green';
+                    statusText.textContent = '双表已就绪';
+                } else if (baseSheets.length > 0) {
+                    statusDot.className = 'badge-dot dot-green';
+                    statusText.textContent = '基础表就绪 (可导入全量表)';
+                } else if (fullRawRows && fullRawRows.length > 0) {
+                    statusDot.className = 'badge-dot dot-green';
+                    statusText.textContent = '全量表就绪';
+                } else {
+                    statusDot.className = 'badge-dot dot-gray';
+                    statusText.textContent = '系统就绪';
+                }
+            }
+        }
+
+        let monthlyRenderTimer = null;
+        function scheduleMonthlyRender(options = {}) {
+            const { reason = '正在更新月报数据...', showLoading = true, delay = 0 } = options;
+            viewDirtyFlags.monthly = true;
+            return new Promise((resolve) => {
+                clearTimeout(monthlyRenderTimer);
+                monthlyRenderTimer = setTimeout(async () => {
+                    const overlay = document.getElementById('monthly-loading-overlay');
+                    const text = document.getElementById('monthly-loading-text');
+                    if (showLoading && currentActiveView === 'monthly') {
+                        startGlobalLoading();
+                        if (overlay) {
+                            if (text) text.textContent = reason;
+                            overlay.style.display = 'flex';
+                        }
+                        await paintUI();
+                    }
+                    try {
+                        renderMonthlyReport();
+                        viewDirtyFlags.monthly = false;
+                    } catch (err) {
+                        console.error('Error rendering monthly report:', err);
+                    } finally {
+                        if (showLoading) {
+                            if (overlay) overlay.style.display = 'none';
+                            finishGlobalLoading();
+                        }
+                        resolve();
+                    }
+                }, delay);
+            });
+        }
+
+        let detailRenderTimer = null;
+        function scheduleDetailRender(options = {}) {
+            const { showLoading = true, delay = 0 } = options;
+            viewDirtyFlags.detail = true;
+            return new Promise((resolve) => {
+                clearTimeout(detailRenderTimer);
+                detailRenderTimer = setTimeout(async () => {
+                    const overlay = document.getElementById('detail-loading-overlay');
+                    if (showLoading && currentActiveView === 'detail') {
+                        startGlobalLoading();
+                        if (overlay) overlay.style.display = 'flex';
+                        await paintUI();
+                    }
+                    try {
+                        renderSourceDetail('base');
+                        renderSourceDetail('full');
+                        viewDirtyFlags.detail = false;
+                    } catch (err) {
+                        console.error('Error rendering detail tables:', err);
+                    } finally {
+                        if (showLoading) {
+                            if (overlay) overlay.style.display = 'none';
+                            finishGlobalLoading();
+                        }
+                        resolve();
+                    }
+                }, delay);
+            });
+        }
 
         const paintUI = () => new Promise(resolve => { requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(resolve, 80))); });
         const yieldToMain = () => new Promise(resolve => setTimeout(resolve, 0));
@@ -965,6 +1984,68 @@
         function getNetValue(row) { return getColValue(row, ['网络', 'Network'], ['网络', 'Network']); }
         function getEsnValue(row) { return getColValue(row, ['ESN'], ['ESN']); }
         function getTimeValue(row) { return getColValue(row, ['生效日期', 'Effect Time'], ['生效日期', 'Effect Time']); }
+        function duplicateDateValue(value) {
+            const text = String(value || '').trim();
+            if (/^\d{5}(?:\.\d+)?$/.test(text) && typeof XLSX !== 'undefined') {
+                const date = XLSX.SSF.parse_date_code(Number(text));
+                if (date) return `${date.y}-${String(date.m).padStart(2, '0')}-${String(date.d).padStart(2, '0')}`;
+            }
+            return text || '—';
+        }
+        function duplicateEsnColumns() {
+            return [
+                ['ESN', item => item.esn], ['重复记录', item => item.groupSize],
+                ['生效日期', item => duplicateDateValue(getTimeValue(item.row))],
+                ['失效 / 到期日期', item => duplicateDateValue(getColValue(item.row, ['失效日期', '到期日期', 'Expiry Date', 'Expiration Date', 'End Date'], ['失效日期', '到期日期', 'Expiry', 'Expiration', 'End Date']))],
+                ['客户 / 系统部', item => getColValue(item.row, ['客户名称', '客户', '系统部', 'Account', 'Operator'], ['客户', '系统部', 'Account', 'Operator'])],
+                ['产品线', item => getProdLineValue(item.row)], ['产品', item => getProdValue(item.row)],
+                ['网络', item => getNetValue(item.row)], ['来源文件', item => item.file],
+                ['工作表', item => item.sheet], ['行号', item => item.rowNumber]
+            ];
+        }
+        function* duplicateEsnRows(duplicates) {
+            for (const [esn, records] of duplicates) {
+                for (const record of records) yield { ...record, esn, groupSize: records.length };
+            }
+        }
+        function duplicateEsnNotice(duplicates) {
+            const fragment = document.createDocumentFragment();
+            const totalRows = Array.from(duplicates.values()).reduce((sum, rows) => sum + rows.length, 0);
+            const summary = document.createElement('div'); summary.className = 'notice-summary';
+            summary.innerHTML = `重复 ESN <strong>${duplicates.size}</strong> 个　·　涉及记录 <strong>${totalRows}</strong> 行。请核对来源与时间后继续清洗。`;
+            fragment.appendChild(summary);
+            const wrap = document.createElement('div'); wrap.className = 'notice-table-wrap';
+            const table = document.createElement('table'); table.className = 'notice-table';
+            const columns = duplicateEsnColumns();
+            const head = table.createTHead().insertRow();
+            columns.forEach(([label]) => { const th = document.createElement('th'); th.textContent = label; head.appendChild(th); });
+            const body = table.createTBody();
+            const limit = 1000;
+            let shown = 0;
+            for (const item of duplicateEsnRows(duplicates)) {
+                if (shown >= limit) break;
+                const tr = body.insertRow();
+                columns.forEach(([, value]) => {
+                    const cell = tr.insertCell(); cell.textContent = String(value(item) || '—'); cell.title = cell.textContent;
+                });
+                shown++;
+            }
+            wrap.appendChild(table); fragment.appendChild(wrap);
+            if (shown < totalRows) { const note = document.createElement('p'); note.textContent = `表格显示前 ${shown} 行，共 ${totalRows} 行；点击下方按钮可导出全部记录。`; fragment.appendChild(note); }
+            return fragment;
+        }
+        function exportDuplicateEsn(duplicates) {
+            if (typeof XLSX === 'undefined') throw new Error('Excel 导出组件未加载，请刷新工具后重试。');
+            const columns = duplicateEsnColumns();
+            const rows = [columns.map(([label]) => label)];
+            for (const item of duplicateEsnRows(duplicates)) rows.push(columns.map(([, value]) => value(item) || ''));
+            const worksheet = XLSX.utils.aoa_to_sheet(rows);
+            worksheet['!cols'] = [24, 12, 16, 18, 22, 18, 18, 16, 30, 24, 10].map(wch => ({ wch }));
+            worksheet['!autofilter'] = { ref: worksheet['!ref'] };
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, '重复 ESN 明细');
+            XLSX.writeFile(workbook, `重复ESN明细_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        }
 
         function getReorderedHeaders(originalHeaders) {
             const findKey = (exactKeys, inc = [], exc = []) => {
@@ -1103,6 +2184,7 @@
         document.getElementById('excel-file-base').addEventListener('change', async function (e) {
             const files = Array.from(e.target.files);
             if (files.length === 0) return;
+            if (isFullReportSource()) document.getElementById('report-source').value = getDefaultReportMode('base');
 
             logger.status("🚀 Processing Base", true);
             logger.log("==========================================");
@@ -1111,12 +2193,14 @@
             document.getElementById('export-btn').style.display = 'none';
             document.getElementById('excel-file-full').disabled = true;
             document.getElementById('summary-dashboard').style.display = 'none';
+            markMissingEsnDashboardLoading();
             currentFileName = (files.length > 1 ? "批量合并_" : "") + files[0].name.replace(/\.[^/.]+$/, "") + "_洞察分析.xlsx";
 
             progressCtrl.show();
             rawGlobal = {};
             allAvailableHeaders = { normal: new Set(), any: new Set() };
             fullMatchMap = new Map();
+            fullRawRows = [];
             fullAvailableHeaders = new Set();
             matchVisibleColumns = new Set();
             expandedPivotLines = { 'normal-count': new Set(), 'any-count': new Set(), 'normal-freq': new Set(), 'any-freq': new Set() };
@@ -1154,7 +2238,7 @@
                                 const esnVal = getEsnValue(row);
                                 const esnKey = esnVal.toUpperCase();
                                 if (esnVal && esnKey !== 'ANY') {
-                                    const source = `${file.name} / ${sheetName} / 第${j + 2}行`;
+                                    const source = { file: file.name, sheet: sheetName, rowNumber: j + 2, row };
                                     if (baseEsnSeen.has(esnKey)) {
                                         if (!duplicateEsnMap.has(esnKey)) duplicateEsnMap.set(esnKey, [baseEsnSeen.get(esnKey)]);
                                         duplicateEsnMap.get(esnKey).push(source);
@@ -1177,12 +2261,12 @@
             }
 
             if (duplicateEsnMap.size > 0) {
-                const sample = Array.from(duplicateEsnMap.entries()).slice(0, 10)
-                    .map(([esn, sources]) => `${esn}: ${sources.join('；')}`)
-                    .join('\n');
-                const more = duplicateEsnMap.size > 10 ? `\n...另有 ${duplicateEsnMap.size - 10} 个重复 ESN` : '';
                 logger.log(`⚠️ 基础表发现 ${duplicateEsnMap.size} 个重复 ESN，请确认表一数据唯一性。`, 'warn');
-                alert(`基础表发现重复 ESN，请先确认数据唯一性：\n\n${sample}${more}`);
+                await showNotice('发现重复 ESN', duplicateEsnNotice(duplicateEsnMap), {
+                    wide: true,
+                    requireAcknowledge: true,
+                    onExport: () => exportDuplicateEsn(duplicateEsnMap)
+                });
             }
 
             logger.log("执行时序逻辑：精准比对生效时间并去重...");
@@ -1203,12 +2287,31 @@
             updateDashboard();
             buildColumnMenu('normal'); buildColumnMenu('any');
             renderSpecificUI('normal'); renderSpecificUI('any');
+            updateImportSummaryBar();
+            const hasFullData = fullRawRows && fullRawRows.length > 0;
+            if (hasFullData) {
+                collapseImportSection();
+                document.getElementById('summary-dashboard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else {
+                expandImportSection();
+                const cardFull = document.getElementById('upload-card-full');
+                if (cardFull) {
+                    cardFull.classList.add('step-highlight');
+                    setTimeout(() => cardFull.classList.remove('step-highlight'), 4500);
+                }
+            }
+            viewDirtyFlags.monthly = true;
+            viewDirtyFlags.detail = true;
+            refreshExtraViews();
 
             progressCtrl.hide();
-            logger.log("✅ 基础数据流清洗完毕，看板与底层 UI 已重绘。");
+            if (!hasFullData) {
+                logger.log("✅ 基础数据清洗完毕！请继续在【步骤 2: 全量参照集】中上传激活详表；若无需比对，您可随时点击右上角【收起导入面板】。");
+            } else {
+                logger.log("✅ 基础数据流清洗完毕，看板与底层 UI 已重绘。");
+            }
             logger.status("🟢 Base Ready", false);
 
-            document.getElementById('summary-dashboard').scrollIntoView({ behavior: 'smooth', block: 'start' });
             document.getElementById('export-btn').style.display = 'block';
             document.getElementById('excel-file-full').disabled = false;
         });
@@ -1216,6 +2319,9 @@
         document.getElementById('excel-file-full').addEventListener('change', async function (e) {
             const files = Array.from(e.target.files);
             if (files.length === 0) return;
+            document.getElementById('export-btn').style.display = 'none';
+            markMissingEsnDashboardLoading();
+            if (Object.keys(globalData).length === 0) document.getElementById('report-source').value = getDefaultReportMode('full');
 
             progressCtrl.show();
             logger.status("🚀 Processing Full", true);
@@ -1224,7 +2330,10 @@
 
             const freqMap = new Map();
             fullMatchMap = new Map();
+            fullRawRows = [];
             fullAvailableHeaders = new Set([SOURCE_FILE_COL, SOURCE_SHEET_COL]);
+            const ignoredSheetKeys = new Set(ignoredSheetNames.map(name => name.toLocaleLowerCase()));
+            if (ignoredSheetNames.length) logger.log(`本次导入将忽略工作表：${ignoredSheetNames.join('、')}`);
 
             for (let i = 0; i < files.length; i++) {
                 const file = files[i]; const fid = `full-${i}`; progressCtrl.add(fid, file.name);
@@ -1237,7 +2346,13 @@
                     const workbook = XLSX.read(arrayBuffer, { type: 'array', cellFormula: false, cellHTML: false, cellText: false });
                     logger.log(`>> [3/3] 核心解码完成。启动分片微任务，无感构建海量联合字典...`);
 
+                    let importedSheets = 0;
                     for (let sheetName of workbook.SheetNames) {
+                        if (ignoredSheetKeys.has(sheetName.trim().toLocaleLowerCase())) {
+                            logger.log(`⏭️ 已跳过工作表：${file.name} / ${sheetName}`);
+                            continue;
+                        }
+                        importedSheets++;
                         const dataRows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
                         const totalRows = dataRows.length; let processed = 0; const CHUNK = 20000;
 
@@ -1246,15 +2361,16 @@
                             for (let j = processed; j < end; j++) {
                                 const row = dataRows[j];
                                 const esnVal = getEsnValue(row);
+                                const matchRow = Object.assign({}, row, {
+                                    [SOURCE_FILE_COL]: file.name,
+                                    [SOURCE_SHEET_COL]: sheetName
+                                });
+                                fullRawRows.push(matchRow);
+                                Object.keys(row).forEach(h => fullAvailableHeaders.add(h));
                                 if (esnVal) {
                                     const netVal = getNetValue(row); const prodVal = getProdValue(row);
                                     const compositeKey = `${netVal}_${prodVal}_${esnVal}`;
                                     freqMap.set(compositeKey, (freqMap.get(compositeKey) || 0) + 1);
-                                    Object.keys(row).forEach(h => fullAvailableHeaders.add(h));
-                                    const matchRow = Object.assign({}, row, {
-                                        [SOURCE_FILE_COL]: file.name,
-                                        [SOURCE_SHEET_COL]: sheetName
-                                    });
                                     if (!fullMatchMap.has(compositeKey)) fullMatchMap.set(compositeKey, []);
                                     fullMatchMap.get(compositeKey).push(matchRow);
                                 }
@@ -1264,7 +2380,8 @@
                             await yieldToMain();
                         }
                     }
-                    progressCtrl.update(fid, 100, "合并成功", true);
+                    if (!importedSheets) logger.log(`⚠️ ${file.name} 中的工作表均已忽略，没有可导入数据。`, 'warn');
+                    progressCtrl.update(fid, 100, importedSheets ? "合并成功" : "无可导入工作表", true);
                 } catch (err) {
                     progressCtrl.update(fid, 0, `失败`); logger.log(`❌ 异常: ${err.message}`, 'error');
                 }
@@ -1297,11 +2414,28 @@
             updateDashboard();
             buildColumnMenu('normal'); buildColumnMenu('any');
             renderSpecificUI('normal'); renderSpecificUI('any');
+            updateImportSummaryBar();
+            viewDirtyFlags.monthly = true;
+            viewDirtyFlags.detail = true;
+            refreshExtraViews();
 
             progressCtrl.hide();
-            logger.log(`🎉 全量数据链路比对完成，明细已按频次降序呈现！`);
-            logger.status("🟢 Analysis Done", false);
-            document.getElementById('summary-dashboard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (fullRawRows.length) logger.log(`🎉 全量数据链路比对完成，明细已按频次降序呈现！`);
+            else logger.log('⚠️ 没有导入全量参照记录，请检查工作表忽略配置和源文件。', 'warn');
+            logger.status(fullRawRows.length ? "🟢 Analysis Done" : "🟠 No Full Data", false);
+            document.getElementById('export-btn').style.display = fullRawRows.length || Object.keys(globalData).length ? 'block' : 'none';
+            if (fullRawRows.length && !Object.keys(globalData).length) currentFileName = '全量参照集_完整报告.xlsx';
+
+            if (Object.keys(globalData).length > 0) {
+                // 双表数据均已就绪，留出 1.5 秒供用户查看成功状态，随后平滑折叠面板并聚焦看板
+                setTimeout(() => {
+                    collapseImportSection();
+                    document.getElementById('summary-dashboard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 1500);
+            } else {
+                expandImportSection();
+                logger.log("💡 全量参照集解析完成！如需与基础数据集进行交叉比对，可继续在【步骤 1】中上传基础表。");
+            }
         });
 
         function processNormalDeduplication(rows) {
@@ -1466,6 +2600,94 @@
             updateDashboard();
         };
 
+        let missingEsnCache = { base: null, full: null, result: null };
+        let missingEsnPage = 0;
+        function calculateMissingEsnApplications(baseData, fullRows) {
+            const baseEsns = new Set();
+            let hasBase = false;
+            for (const sheet of Object.values(baseData)) {
+                for (const rows of [sheet.normalRaw, sheet.anyRaw]) {
+                    for (const row of rows) {
+                        hasBase = true;
+                        const esn = getEsnValue(row).toLocaleUpperCase();
+                        if (esn && esn !== 'ANY') baseEsns.add(esn);
+                    }
+                }
+            }
+            if (!hasBase || !fullRows.length) return { ready: false, hasBase, hasFull: fullRows.length > 0, items: [] };
+            const groups = new Map();
+            for (const row of fullRows) {
+                const esn = getEsnValue(row);
+                const key = esn.toLocaleUpperCase();
+                if (!key || key === 'ANY' || baseEsns.has(key)) continue;
+                let item = groups.get(key);
+                if (!item) {
+                    item = { esn, count: 0, networks: new Set(), lines: new Set(), products: new Set(), customers: new Set(), files: new Set() };
+                    groups.set(key, item);
+                }
+                item.count++;
+                const customer = getColValue(row, ['客户名称', '客户', '系统部', 'Account', 'Operator'], ['客户', '系统部', 'Account', 'Operator']);
+                [[item.networks, getNetValue(row)], [item.lines, getProdLineValue(row)], [item.products, getProdValue(row)], [item.customers, customer], [item.files, row[SOURCE_FILE_COL]]]
+                    .forEach(([target, value]) => { if (value) target.add(String(value)); });
+            }
+            const items = Array.from(groups.values()).sort((a, b) => b.count - a.count || a.esn.localeCompare(b.esn));
+            return { ready: true, hasBase: true, hasFull: true, items, applications: items.reduce((sum, item) => sum + item.count, 0) };
+        }
+        function missingEsnResult() {
+            if (missingEsnCache.base !== rawGlobal || missingEsnCache.full !== fullRawRows) {
+                missingEsnCache = { base: rawGlobal, full: fullRawRows, result: calculateMissingEsnApplications(rawGlobal, fullRawRows) };
+                missingEsnPage = 0;
+            }
+            return missingEsnCache.result;
+        }
+        function renderMissingEsnDashboard() {
+            const host = document.getElementById('missing-esn-content');
+            const result = missingEsnResult();
+            host.replaceChildren();
+            if (!result.ready) {
+                host.className = 'empty-state';
+                host.textContent = !result.hasBase && !result.hasFull ? '请先导入基础数据集和全量参照集。'
+                    : !result.hasBase ? '请先导入基础数据集，才能判断哪些 ESN 不在基础表中。'
+                        : '请导入全量参照集，随后显示基础表缺失的 ESN 申请次数。';
+                return;
+            }
+            host.className = '';
+            const summary = document.createElement('div'); summary.className = 'missing-esn-summary';
+            const count = document.createElement('span'); count.innerHTML = `基础表缺失的标准 ESN：<strong>${result.items.length}</strong> 个`;
+            const applications = document.createElement('span'); applications.innerHTML = `全量申请记录：<strong>${result.applications}</strong> 次`;
+            summary.append(count, applications); host.appendChild(summary);
+            if (!result.items.length) { const empty = document.createElement('div'); empty.className = 'empty-state'; empty.textContent = '全量参照集中的标准 ESN 均已包含在基础数据集中。'; host.appendChild(empty); return; }
+            const wrap = document.createElement('div'); wrap.className = 'missing-esn-table-wrap';
+            const table = document.createElement('table'); table.className = 'missing-esn-table';
+            const fields = [['ESN', item => item.esn], ['申请次数', item => item.count], ['网络', item => item.networks], ['产品线', item => item.lines], ['产品', item => item.products], ['客户 / 系统部', item => item.customers], ['来源文件', item => item.files]];
+            const compact = value => value instanceof Set ? (value.size ? [...value].slice(0, 3).join('、') + (value.size > 3 ? ` 等 ${value.size} 项` : '') : '—') : String(value ?? '—');
+            const header = table.createTHead().insertRow();
+            fields.forEach(([label]) => { const cell = document.createElement('th'); cell.textContent = label; header.appendChild(cell); });
+            const body = table.createTBody();
+            const pageSize = 100;
+            const pages = Math.ceil(result.items.length / pageSize);
+            missingEsnPage = Math.min(missingEsnPage, pages - 1);
+            result.items.slice(missingEsnPage * pageSize, (missingEsnPage + 1) * pageSize).forEach(item => {
+                const row = body.insertRow();
+                fields.forEach(([, value]) => { const cell = row.insertCell(); cell.textContent = compact(value(item)); cell.title = value(item) instanceof Set ? [...value(item)].join('、') : cell.textContent; });
+            });
+            wrap.appendChild(table); host.appendChild(wrap);
+            if (pages > 1) {
+                const pager = document.createElement('div'); pager.className = 'missing-esn-pager';
+                const previous = document.createElement('button'); previous.type = 'button'; previous.textContent = '上一页'; previous.disabled = missingEsnPage === 0;
+                previous.addEventListener('click', () => { missingEsnPage--; renderMissingEsnDashboard(); });
+                const label = document.createElement('span'); label.textContent = `第 ${missingEsnPage + 1} / ${pages} 页`;
+                const next = document.createElement('button'); next.type = 'button'; next.textContent = '下一页'; next.disabled = missingEsnPage === pages - 1;
+                next.addEventListener('click', () => { missingEsnPage++; renderMissingEsnDashboard(); });
+                pager.append(previous, label, next); host.appendChild(pager);
+            }
+        }
+        function markMissingEsnDashboardLoading() {
+            const host = document.getElementById('missing-esn-content');
+            host.className = 'empty-state';
+            host.textContent = '正在更新两表 ESN 差异…';
+        }
+
         function updateDashboard() {
             document.getElementById('summary-dashboard').style.display = 'flex';
             let allNormal = [], allAny = [];
@@ -1496,6 +2718,7 @@
                     document.getElementById(`${id}-crosstab`).innerHTML = '<div class="empty-state">待执行步骤 2 自动生成频次透视...</div>';
                 });
             }
+            renderMissingEsnDashboard();
         }
 
         function renderSpecificUI(type) {
@@ -1643,103 +2866,1292 @@
             return ws;
         }
 
-        document.getElementById('export-btn').addEventListener('click', async function () {
-            if (Object.keys(globalData).length === 0) return;
-
-            logger.log("触发导出引擎，构建报表架构...");
-            progressCtrl.show(); progressCtrl.add('export', '生成企业级汇报表');
-            progressCtrl.update('export', 10, '计算透视区...'); await paintUI();
-
-            const newWorkbook = XLSX.utils.book_new();
-            let allNormal = [], allAny = [];
-            Object.values(globalData).forEach(sheet => {
-                allNormal = allNormal.concat(sheet.normal); allAny = allAny.concat(sheet.any);
-            });
-
-            // 1. 生成并附加带样式的透视表
-            if (allNormal.length > 0) {
-                const ws = createExcelPivotSheet(prepareCrosstabData(allNormal, 'count'));
-                XLSX.utils.book_append_sheet(newWorkbook, ws, "透视_标准_去重数");
-            }
-            if (allAny.length > 0) {
-                const ws = createExcelPivotSheet(prepareCrosstabData(allAny, 'count'));
-                // 给 ANY 表增加特定的 Tab 颜色标识
-                ws['!tabcolor'] = { rgb: "F59E0B" };
-                XLSX.utils.book_append_sheet(newWorkbook, ws, "透视_ANY_去重数");
-            }
-
+        async function appendAnalysisWorksheet(workbook, onSection) {
+            const worksheet = workbook.addWorksheet('统计分析');
+            worksheet.getColumn(1).width = 22;
+            const normal = Object.values(globalData).flatMap(sheet => sheet.normal);
+            const any = Object.values(globalData).flatMap(sheet => sheet.any);
+            const sections = [
+                ['标准 ESN 去重数', normal, 'count'],
+                ['ANY 去重数', any, 'count'],
+                ['标准 ESN 申请汇总', normal, 'freq'],
+                ['ANY 申请汇总', any, 'freq']
+            ];
             const hasFreq = allAvailableHeaders.normal.has(NEW_COL_NAME) || allAvailableHeaders.any.has(NEW_COL_NAME);
-            if (hasFreq) {
-                if (allNormal.length > 0) XLSX.utils.book_append_sheet(newWorkbook, createExcelPivotSheet(prepareCrosstabData(allNormal, 'freq')), "透视_标准_申请汇总");
-                if (allAny.length > 0) {
-                    const ws = createExcelPivotSheet(prepareCrosstabData(allAny, 'freq'));
-                    ws['!tabcolor'] = { rgb: "F59E0B" };
-                    XLSX.utils.book_append_sheet(newWorkbook, ws, "透视_ANY_申请汇总");
+            for (const [title, rows, metric] of sections) {
+                if (metric === 'freq' && !hasFreq) continue;
+                if (onSection) await onSection(title);
+                const data = prepareCrosstabData(rows, metric);
+                const products = data.sortedLines.flatMap(line => data.lineToProds[line]);
+                const width = Math.max(2, products.length + 2);
+                const heading = worksheet.addRow([title]);
+                worksheet.mergeCells(heading.number, 1, heading.number, width);
+                heading.height = 27;
+                heading.getCell(1).font = { name: 'Microsoft YaHei', size: 13, bold: true, color: { argb: 'FF1D4ED8' } };
+                heading.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEFF6FF' } };
+                if (!rows.length) { worksheet.addRow(['暂无数据']); worksheet.addRow([]); continue; }
+                const lineHeader = worksheet.addRow(['网络 / 产品层级']);
+                const productHeader = worksheet.addRow(['']);
+                worksheet.mergeCells(lineHeader.number, 1, productHeader.number, 1);
+                let column = 2;
+                data.sortedLines.forEach(line => {
+                    const count = data.lineToProds[line].length;
+                    lineHeader.getCell(column).value = line;
+                    if (count > 1) worksheet.mergeCells(lineHeader.number, column, lineHeader.number, column + count - 1);
+                    data.lineToProds[line].forEach((product, offset) => { productHeader.getCell(column + offset).value = product; });
+                    column += count;
+                });
+                lineHeader.getCell(column).value = '总计';
+                worksheet.mergeCells(lineHeader.number, column, productHeader.number, column);
+                [lineHeader, productHeader].forEach(row => {
+                    row.height = 24;
+                    for (let c = 1; c <= width; c++) {
+                        const cell = row.getCell(c);
+                        cell.font = { name: 'Microsoft YaHei', bold: true, color: { argb: 'FF0F172A' } };
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
+                        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+                    }
+                });
+                data.sortedNets.forEach(net => {
+                    const values = products.map(product => data.counts[net]?.[product] || 0);
+                    worksheet.addRow([net, ...values, values.reduce((sum, value) => sum + value, 0)]);
+                });
+                const totals = products.map(product => data.colTotals.prods[product] || 0);
+                const footer = worksheet.addRow(['各项总计', ...totals, totals.reduce((sum, value) => sum + value, 0)]);
+                footer.font = { name: 'Microsoft YaHei', bold: true, color: { argb: 'FF1D4ED8' } };
+                footer.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+                worksheet.addRow([]);
+                for (let c = 2; c <= width; c++) worksheet.getColumn(c).width = Math.max(14, worksheet.getColumn(c).width || 0);
+            }
+            worksheet.views = [{ state: 'frozen', ySplit: 1 }];
+        }
+        async function appendSourceDetailWorksheet(workbook, type, onProgress) {
+            const worksheet = workbook.addWorksheet(type === 'base' ? '基础表详表' : '全量参照集详表');
+            const headers = sourceDetailHeaders(type);
+            const rows = sourceDetailRows(type);
+            if (!headers.length) { worksheet.addRow(['暂无数据']); return; }
+            const header = worksheet.addRow(['序号', ...headers]);
+            header.height = 27;
+            header.font = { name: 'Microsoft YaHei', bold: true, color: { argb: 'FF0F172A' } };
+            header.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
+            header.alignment = { vertical: 'middle', wrapText: true };
+            worksheet.getColumn(1).width = 10;
+            headers.forEach((name, index) => { worksheet.getColumn(index + 2).width = Math.min(40, Math.max(14, String(name).length * 2 + 4)); });
+            for (let index = 0; index < rows.length; index++) {
+                const row = rows[index];
+                worksheet.addRow([index + 1, ...headers.map(name => row[name] ?? '')]);
+                if ((index + 1) % 500 === 0) {
+                    if (onProgress) onProgress(index + 1, rows.length);
+                    await yieldToMain();
                 }
             }
-
-            progressCtrl.update('export', 50, '抽表明细区并应用样式...'); await paintUI();
-
-            // 2. 生成明细表并进行全量样式渲染
-            Object.keys(globalData).forEach(sheetName => {
-                const sheetInfo = globalData[sheetName];
-                const orderedHeaders = getReorderedHeaders(sheetInfo.headers);
-
-                const appendDataToBook = (dataRows, targetSheetName, isAny = false) => {
-                    if (dataRows.length === 0) return;
-                    const excelRows = [orderedHeaders];
-                    dataRows.forEach(rowObj => excelRows.push(orderedHeaders.map(header => rowObj[header] !== undefined ? rowObj[header] : '')));
-                    const ws = XLSX.utils.aoa_to_sheet(excelRows);
-
-                    // 应用高级样式
-                    const range = XLSX.utils.decode_range(ws['!ref']);
-                    for (let R = range.s.r; R <= range.e.r; ++R) {
-                        if (!ws['!rows']) ws['!rows'] = [];
-                        ws['!rows'][R] = { hpt: R === 0 ? 24 : 18 };
-                        for (let C = range.s.c; C <= range.e.c; ++C) {
-                            const cellRef = XLSX.utils.encode_cell({ c: C, r: R });
-                            if (!ws[cellRef]) ws[cellRef] = { t: 's', v: '' };
-                            const cell = ws[cellRef];
-
-                            cell.s = {
-                                font: { name: "Microsoft YaHei", sz: 10, color: { rgb: "334155" } },
-                                alignment: { vertical: "center", horizontal: "left" },
-                                border: { top: { style: "thin", color: { rgb: "E2E8F0" } }, bottom: { style: "thin", color: { rgb: "E2E8F0" } }, left: { style: "thin", color: { rgb: "E2E8F0" } }, right: { style: "thin", color: { rgb: "E2E8F0" } } }
-                            };
-
-                            if (R === 0) { // 顶级表头
-                                cell.s.fill = { fgColor: { rgb: "E2E8F0" } };
-                                cell.s.font.bold = true; cell.s.font.color = { rgb: "0F172A" };
-                                cell.s.alignment.horizontal = "center";
-                            }
-                        }
-                    }
-
-                    ws['!cols'] = orderedHeaders.map((h, i) => {
-                        let maxLen = String(h || '').replace(/[^\x00-\xff]/g, 'aa').length;
-                        for (let r = 1; r < excelRows.length; r++) {
-                            const l = String(excelRows[r][i] || '').replace(/[^\x00-\xff]/g, 'aa').length;
-                            if (l > maxLen) maxLen = l;
-                        }
-                        return { wch: Math.min(Math.max(maxLen + 3, 12), 45) };
-                    });
-
-                    ws['!views'] = [{ state: 'frozen', ySplit: 1 }]; // 冻结首行
-                    if (isAny) ws['!tabcolor'] = { rgb: "F59E0B" }; // ANY 橘色页签
-
-                    XLSX.utils.book_append_sheet(newWorkbook, ws, targetSheetName.substring(0, 31));
-                };
-
-                appendDataToBook(sheetInfo.normal, `${sheetName.substring(0, 25)}_标准`, false);
-                appendDataToBook(sheetInfo.any, `${sheetName.substring(0, 25)}_ANY`, true);
-            });
-
-            progressCtrl.update('export', 90, '流下载中...'); await paintUI();
-
-            XLSX.writeFile(newWorkbook, currentFileName);
-            progressCtrl.update('export', 100, '完成', true); progressCtrl.hide();
-            logger.log("🚀 企业级样式报表已生成完毕！");
+            if (onProgress) onProgress(rows.length, rows.length);
+            worksheet.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: headers.length + 1 } };
+            worksheet.views = [{ state: 'frozen', ySplit: 1 }];
+        }
+        const exportOverlay = document.getElementById('export-overlay');
+        const exportCloseButton = document.getElementById('export-dialog-close');
+        function exportLog(message) {
+            const time = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+            const log = document.getElementById('export-dialog-log');
+            log.textContent += `${log.textContent ? '\n' : ''}[${time}] ${message}`;
+            log.scrollTop = log.scrollHeight;
+        }
+        function exportProgress(percent, stage, detail) {
+            document.getElementById('export-dialog-stage').textContent = stage;
+            document.getElementById('export-dialog-percent').textContent = `${percent}%`;
+            document.getElementById('export-dialog-fill').style.width = `${percent}%`;
+            if (detail) exportLog(detail);
+        }
+        function openExportDialog() {
+            document.getElementById('export-dialog-title').textContent = '正在导出完整报告';
+            document.getElementById('export-dialog-description').textContent = '请等待文件生成，期间已锁定页面操作。';
+            document.getElementById('export-dialog-log').textContent = '';
+            exportCloseButton.hidden = true;
+            exportProgress(0, '准备数据…', '开始生成完整 Excel 报告。');
+            document.querySelector('.navbar').inert = true;
+            document.getElementById('main-scroll').inert = true;
+            exportOverlay.classList.add('show');
+            exportOverlay.focus();
+        }
+        function finishExportDialog(success, message) {
+            document.getElementById('export-dialog-title').textContent = success ? '报告导出完成' : '报告导出失败';
+            document.getElementById('export-dialog-description').textContent = success ? '文件下载已触发，可查看下方日志。' : '请查看下方错误信息后重试。';
+            exportProgress(success ? 100 : Number.parseInt(document.getElementById('export-dialog-percent').textContent, 10), success ? '已完成' : '已停止', message);
+            exportCloseButton.hidden = false;
+            exportCloseButton.focus();
+        }
+        exportCloseButton.addEventListener('click', () => {
+            exportOverlay.classList.remove('show');
+            document.querySelector('.navbar').inert = false;
+            document.getElementById('main-scroll').inert = false;
+            document.getElementById('export-btn').focus();
         });
+        document.getElementById('export-btn').addEventListener('click', async function () {
+            if (!Object.keys(globalData).length && !fullRawRows.length) return;
+            if (typeof ExcelJS === 'undefined') { showNotice('导出失败', 'Excel 导出组件未加载，请刷新工具后重试。'); return; }
+            this.disabled = true;
+            openExportDialog();
+            progressCtrl.show(); progressCtrl.add('export', '生成完整 Excel 报告');
+            try {
+                await paintUI();
+                exportProgress(10, '生成自动月报', '读取当前月报口径、筛选条件和文案。');
+                progressCtrl.update('export', 15, '生成自动月报...'); await paintUI();
+                renderMonthlyReport();
+                const workbook = new ExcelJS.Workbook(); workbook.creator = '临时 License 统计与月报'; workbook.created = new Date();
+                appendMonthlyWorksheet(workbook);
+                exportLog('月报 Sheet 已生成。');
+                progressCtrl.update('export', 45, '合并统计分析...'); await paintUI();
+                exportProgress(35, '合并统计分析', '开始汇总标准 ESN 与 ANY 透视数据。');
+                let analysisSection = 0;
+                await appendAnalysisWorksheet(workbook, async title => {
+                    analysisSection++;
+                    exportProgress(Math.min(55, 35 + analysisSection * 5), '合并统计分析', `正在生成：${title}`);
+                    await yieldToMain();
+                });
+                exportLog('统计分析 Sheet 已生成。');
+                progressCtrl.update('export', 70, '生成两表详表...'); await paintUI();
+                const appendDetail = async (type, start, span) => {
+                    const name = type === 'base' ? '基础表详表' : '全量参照集详表';
+                    exportProgress(start, `生成${name}`, `开始写入${name}。`);
+                    let lastLogged = -1;
+                    await appendSourceDetailWorksheet(workbook, type, (done, total) => {
+                        const ratio = total ? done / total : 1;
+                        const percent = Math.min(88, start + Math.round(span * ratio));
+                        exportProgress(percent, `生成${name}：${done} / ${total} 行`);
+                        const decile = Math.floor(ratio * 10);
+                        if (decile > lastLogged || done === total) { lastLogged = decile; exportLog(`${name}已写入 ${done} / ${total} 行。`); }
+                    });
+                    exportLog(`${name} Sheet 已生成。`);
+                };
+                await appendDetail('base', 60, 14);
+                await appendDetail('full', 74, 14);
+                progressCtrl.update('export', 90, '写入 Excel 文件...'); await paintUI();
+                exportProgress(90, '打包并写入 Excel 文件', '正在压缩工作簿；数据量较大时这一步可能需要一些时间。');
+                await paintUI();
+                await downloadExcelWorkbook(workbook, currentFileName);
+                progressCtrl.update('export', 100, '完成', true);
+                logger.log('✅ 完整 Excel 报告已生成：月报、统计分析、基础表详表、全量参照集详表。');
+                finishExportDialog(true, `已触发下载：${currentFileName}`);
+            } catch (error) {
+                logger.log(`❌ Excel 导出失败：${error.message}`, 'error');
+                finishExportDialog(false, `错误：${error.message}`);
+            } finally {
+                progressCtrl.hide();
+                this.disabled = false;
+            }
+        });
+
+        async function showView(view) {
+            currentActiveView = view;
+            ['analysis', 'monthly', 'detail'].forEach(id => {
+                const el = document.getElementById(`${id}-view`);
+                if (el) el.style.display = id === view ? '' : 'none';
+                const tab = document.querySelector(`[data-view="${id}"]`);
+                if (tab) tab.classList.toggle('active', id === view);
+            });
+            if (view === 'monthly') {
+                if (viewDirtyFlags.monthly) {
+                    await scheduleMonthlyRender({ reason: '正在生成自动月报...', showLoading: true });
+                }
+            } else if (view === 'detail') {
+                if (viewDirtyFlags.detail) {
+                    await scheduleDetailRender({ showLoading: true });
+                }
+            }
+        }
+        function reportSourceRows() {
+            if (isFullReportSource()) return Array.from(fullMatchMap.values()).flat();
+            return Object.values(rawGlobal).flatMap(sheet => [...sheet.normalRaw, ...sheet.anyRaw]);
+        }
+        function isFullReportSource(source = document.getElementById('report-source').value) { return ['full', 'full-dedup', 'full-both-dedup'].includes(source); }
+        function reportPreferenceScope(source) { return isFullReportSource(source) ? 'full' : 'base'; }
+        function reportPreferenceKey(source) { return `esn-check:monthly-preferences:v2:${localStorage.getItem('tools_tenant_id') || 'default'}:${reportPreferenceScope(source)}`; }
+        function legacyReportPreferenceKey(source) { return `esn-check:monthly-preferences:v1:${localStorage.getItem('tools_tenant_id') || 'default'}:${source}`; }
+        function getReportHeaders() {
+            const headers = new Set();
+            if (isFullReportSource()) {
+                fullAvailableHeaders.forEach(h => { if (h !== SOURCE_FILE_COL && h !== SOURCE_SHEET_COL) headers.add(h); });
+            } else Object.values(rawGlobal).forEach(sheet => sheet.headers.forEach(h => headers.add(h)));
+            return Array.from(headers).filter(Boolean);
+        }
+        function readReportFilters(hostId = 'report-filters') {
+            return Array.from(document.querySelectorAll(`#${hostId} .report-filter-row`)).map(row => ({
+                field: row.querySelector('.report-filter-field').value,
+                operator: row.querySelector('.report-filter-operator').value,
+                value: row.querySelector('.report-filter-value').value
+            })).filter(item => item.field);
+        }
+        function reportFilterMatches(row, filter) {
+            if (!Object.prototype.hasOwnProperty.call(row, filter.field)) return false;
+            const actual = String(row[filter.field] ?? '').trim().toLocaleLowerCase();
+            const expected = String(filter.value ?? '').trim().toLocaleLowerCase();
+            if (filter.operator === 'empty') return actual === '';
+            if (filter.operator === 'not-empty') return actual !== '';
+            if (filter.operator === 'equals') return actual === expected;
+            if (filter.operator === 'not-equals') return actual !== expected;
+            if (filter.operator === 'not-contains') return !actual.includes(expected);
+            return actual.includes(expected);
+        }
+        function applyReportFilters(rows) {
+            const filters = readReportFilters().filter(item => ['empty', 'not-empty'].includes(item.operator) || item.value.trim());
+            const ignored = new Set(reportPreference.ignoredAccounts || []);
+            const eligible = rows.filter(row => (!ignored.size || !ignored.has(reportDimension(row, 'report-account'))) && reportExpiryIncluded(row));
+            if (!filters.length) return eligible;
+            const any = document.getElementById('report-filter-logic').value === 'any';
+            return eligible.filter(row => any ? filters.some(filter => reportFilterMatches(row, filter)) : filters.every(filter => reportFilterMatches(row, filter)));
+        }
+        function addReportFilterRow(filter = {}, hostId = 'report-filters') {
+            const row = document.createElement('div'); row.className = 'report-filter-row';
+            const field = document.createElement('select'); field.className = 'report-filter-field';
+            const blank = document.createElement('option'); blank.value = ''; blank.textContent = '选择列'; field.appendChild(blank);
+            getReportHeaders().forEach(header => { const option = document.createElement('option'); option.value = header; option.textContent = header; field.appendChild(option); });
+            if (filter.field && !getReportHeaders().includes(filter.field)) {
+                const missing = document.createElement('option'); missing.value = filter.field; missing.textContent = `${filter.field}（当前表缺失）`; field.appendChild(missing);
+            }
+            field.value = filter.field || '';
+            const operator = document.createElement('select'); operator.className = 'report-filter-operator';
+            [['contains', '包含'], ['not-contains', '不包含'], ['equals', '等于'], ['not-equals', '不等于'], ['empty', '为空'], ['not-empty', '不为空']].forEach(([value, label]) => {
+                const option = document.createElement('option'); option.value = value; option.textContent = label; operator.appendChild(option);
+            });
+            operator.value = filter.operator || 'contains';
+            const value = document.createElement('input'); value.className = 'report-filter-value'; value.placeholder = '输入筛选值'; value.value = filter.value || '';
+            value.disabled = ['empty', 'not-empty'].includes(operator.value);
+            const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = '移除';
+            [field, operator].forEach(select => select.addEventListener('change', () => {
+                value.disabled = ['empty', 'not-empty'].includes(operator.value); saveReportPreferences(); scheduleMonthlyRender({ reason: '正在应用筛选条件...' });
+            }));
+            value.addEventListener('input', debounce(() => { saveReportPreferences(); scheduleMonthlyRender({ reason: '正在应用筛选条件...' }); }, 250));
+            remove.addEventListener('click', () => { row.remove(); saveReportPreferences(); scheduleMonthlyRender({ reason: '正在应用筛选条件...' }); });
+            row.append(field, operator, value, remove);
+            document.getElementById(hostId).appendChild(row);
+        }
+        function saveReportPreferences() {
+            reportPreference = {
+                filters: readReportFilters(),
+                logic: document.getElementById('report-filter-logic').value,
+                groups: Array.from(document.querySelectorAll('#report-groups .report-group-card')).map(card => ({
+                    id: card.dataset.groupId,
+                    name: card.querySelector('.report-group-name').value.trim(),
+                    note: card.querySelector('.report-group-note textarea').value.trim(),
+                    members: Array.from(card.querySelectorAll('.report-group-members input:checked')).map(input => input.value)
+                })),
+                columnGroups: Array.from(document.querySelectorAll('.report-column-group-card')).map(card => ({
+                    id: card.dataset.groupId,
+                    dimension: card.querySelector('.report-column-group-dimension').value,
+                    name: card.querySelector('.report-column-group-name').value.trim(),
+                    note: card.querySelector('.report-group-note textarea').value.trim(),
+                    members: Array.from(card.querySelectorAll('.report-group-members input:checked')).map(input => input.value)
+                })),
+                risk: {
+                    nameColumn: document.getElementById('report-risk-name-column').value,
+                    names: document.getElementById('report-risk-names').value,
+                    logic: document.getElementById('report-risk-logic').value,
+                    filters: readReportFilters('report-risk-filters')
+                },
+                status: {
+                    column: document.getElementById('report-status-column').value,
+                    overdue: document.getElementById('report-overdue-terms').value,
+                    near: document.getElementById('report-near-terms').value
+                },
+                timeColumn: document.getElementById('report-time-column').value,
+                expiry: {
+                    enabled: document.getElementById('report-expiry-enabled').checked,
+                    column: document.getElementById('report-expiry-column').value,
+                    threshold: document.getElementById('report-expiry-threshold').value === '' ? -90 : Number(document.getElementById('report-expiry-threshold').value)
+                },
+                ignoredAccounts: Array.from(document.querySelectorAll('#report-ignored-accounts input:checked')).map(input => input.value),
+                rowOrder: reportPreference.rowOrder || [],
+                columnOrder: reportPreference.columnOrder || { scenario: [], line: [] },
+                columns: Object.fromEntries(['report-account', 'report-scenario', 'report-line'].map(id => [id, document.getElementById(id).value]))
+            };
+            try {
+                localStorage.setItem(reportPreferenceKey(activeReportPreferenceSource), JSON.stringify(reportPreference));
+                document.getElementById('report-pref-status').textContent = '偏好已自动保存在当前浏览器';
+            } catch (_) { document.getElementById('report-pref-status').textContent = '浏览器未允许保存本地偏好'; }
+            renderReportOrders();
+        }
+        function fillIgnoredAccounts() {
+            const host = document.getElementById('report-ignored-accounts'); host.replaceChildren();
+            const selected = new Set(reportPreference.ignoredAccounts || []);
+            const names = [...new Set(reportSourceRows().map(row => reportDimension(row, 'report-account')).filter(name => name !== '未指定字段'))].sort();
+            if (!names.length) { host.textContent = '导入数据并选择系统部列后可配置。'; return; }
+            names.forEach(name => {
+                const label = document.createElement('label'), input = document.createElement('input');
+                input.type = 'checkbox'; input.value = name; input.checked = selected.has(name);
+                input.addEventListener('change', () => { saveReportPreferences(); scheduleMonthlyRender({ reason: '正在更新系统部过滤...' }); });
+                label.append(input, document.createTextNode(name)); host.appendChild(label);
+            });
+        }
+        function addReportGroup(group = {}) {
+            const host = document.getElementById('report-groups');
+            const card = document.createElement('div'); card.className = 'report-group-card';
+            card.dataset.groupId = group.id || `group-${++reportGroupCounter}`;
+            const controls = document.createElement('div'); controls.className = 'report-controls';
+            const label = document.createElement('label'); label.textContent = '聚合后名称';
+            const name = document.createElement('input'); name.className = 'report-group-name'; name.placeholder = '例如：三大运营商'; name.value = group.name || '';
+            name.addEventListener('input', debounce(() => { saveReportPreferences(); scheduleMonthlyRender({ reason: '正在更新分组名称...' }); }, 250));
+            label.appendChild(name); controls.appendChild(label);
+            const noteLabel = document.createElement('label'); noteLabel.className = 'report-group-note'; noteLabel.textContent = '名称下方解释';
+            const note = document.createElement('textarea'); note.placeholder = '可输入多行说明'; note.value = group.note || '';
+            note.addEventListener('input', debounce(() => { saveReportPreferences(); scheduleMonthlyRender({ reason: '正在更新分组说明...' }); }, 250));
+            noteLabel.appendChild(note); controls.appendChild(noteLabel);
+            const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'view-tab'; remove.textContent = '删除此组';
+            remove.addEventListener('click', () => { card.remove(); saveReportPreferences(); scheduleMonthlyRender({ reason: '正在更新分组...' }); });
+            controls.appendChild(remove); card.appendChild(controls);
+            const members = document.createElement('div'); members.className = 'report-group-members';
+            const selected = new Set(group.members || []);
+            const names = [...new Set(reportSourceRows().map(row => reportDimension(row, 'report-account')).filter(name => name !== '未指定字段'))].sort();
+            if (!names.length) members.textContent = '导入数据并选择系统部列后可配置。';
+            names.forEach(name => {
+                const label = document.createElement('label'); const input = document.createElement('input');
+                input.type = 'checkbox'; input.value = name; input.checked = selected.has(name);
+                input.addEventListener('change', () => {
+                    if (input.checked) document.querySelectorAll('#report-groups .report-group-card').forEach(other => {
+                        if (other !== card) other.querySelectorAll('.report-group-members input').forEach(candidate => {
+                            if (candidate.value === input.value) candidate.checked = false;
+                        });
+                    });
+                    saveReportPreferences(); scheduleMonthlyRender({ reason: '正在更新组成员...' });
+                });
+                label.append(input, document.createTextNode(name)); members.appendChild(label);
+            });
+            card.appendChild(members); host.appendChild(card);
+        }
+        function fillReportGroups() {
+            const host = document.getElementById('report-groups'); host.replaceChildren();
+            const owned = new Set();
+            (reportPreference.groups || []).forEach(group => {
+                const members = (group.members || []).filter(name => {
+                    if (owned.has(name)) return false;
+                    owned.add(name); return true;
+                });
+                addReportGroup({ ...group, members });
+            });
+        }
+        function populateReportColumnGroupMembers(card, selected = []) {
+            const host = card.querySelector('.report-group-members'); host.replaceChildren();
+            const dimension = card.querySelector('.report-column-group-dimension').value;
+            const selectId = dimension === 'line' ? 'report-line' : 'report-scenario';
+            const names = [...new Set(reportSourceRows().map(row => reportDimension(row, selectId)).filter(name => name !== '未指定字段'))].sort();
+            if (!names.length) { host.textContent = '导入数据并选择对应列后可配置。'; return; }
+            const checked = new Set(selected);
+            names.forEach(name => {
+                const label = document.createElement('label'), input = document.createElement('input');
+                input.type = 'checkbox'; input.value = name; input.checked = checked.has(name);
+                input.addEventListener('change', () => {
+                    if (input.checked) document.querySelectorAll('.report-column-group-card').forEach(other => {
+                        if (other !== card && other.querySelector('.report-column-group-dimension').value === dimension) {
+                            other.querySelectorAll('.report-group-members input').forEach(candidate => {
+                                if (candidate.value === name) candidate.checked = false;
+                            });
+                        }
+                    });
+                    saveReportPreferences(); scheduleMonthlyRender({ reason: '正在更新列组成员...' });
+                });
+                label.append(input, document.createTextNode(name)); host.appendChild(label);
+            });
+        }
+        function addReportColumnGroup(group = {}) {
+            const host = document.getElementById('report-column-groups');
+            const card = document.createElement('div'); card.className = 'report-group-card report-column-group-card';
+            card.dataset.groupId = group.id || `column-group-${++reportColumnGroupCounter}`;
+            const controls = document.createElement('div'); controls.className = 'report-controls';
+            const dimensionLabel = document.createElement('label'); dimensionLabel.textContent = '目标表格';
+            const dimension = document.createElement('select'); dimension.className = 'report-column-group-dimension';
+            [['scenario', '使用场景'], ['line', '产品线']].forEach(([value, text]) => {
+                const option = document.createElement('option'); option.value = value; option.textContent = text; dimension.appendChild(option);
+            });
+            dimension.value = group.dimension === 'line' ? 'line' : 'scenario';
+            dimension.addEventListener('change', () => { populateReportColumnGroupMembers(card); saveReportPreferences(); scheduleMonthlyRender({ reason: '正在切换列目标维度...' }); });
+            dimensionLabel.appendChild(dimension); controls.appendChild(dimensionLabel);
+            const nameLabel = document.createElement('label'); nameLabel.textContent = '聚合后列名';
+            const name = document.createElement('input'); name.className = 'report-column-group-name'; name.placeholder = '例如：其他场景'; name.value = group.name || '';
+            name.addEventListener('input', debounce(() => { saveReportPreferences(); scheduleMonthlyRender({ reason: '正在更新列名...' }); }, 250));
+            nameLabel.appendChild(name); controls.appendChild(nameLabel);
+            const noteLabel = document.createElement('label'); noteLabel.className = 'report-group-note'; noteLabel.textContent = '列名下方解释';
+            const note = document.createElement('textarea'); note.placeholder = '可输入多行说明'; note.value = group.note || '';
+            note.addEventListener('input', debounce(() => { saveReportPreferences(); scheduleMonthlyRender({ reason: '正在更新列说明...' }); }, 250));
+            noteLabel.appendChild(note); controls.appendChild(noteLabel);
+            const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'view-tab'; remove.textContent = '删除此组';
+            remove.addEventListener('click', () => { card.remove(); saveReportPreferences(); scheduleMonthlyRender({ reason: '正在删除列组...' }); });
+            controls.appendChild(remove); card.appendChild(controls);
+            const members = document.createElement('div'); members.className = 'report-group-members'; card.appendChild(members);
+            host.appendChild(card); populateReportColumnGroupMembers(card, group.members || []);
+        }
+        function fillReportColumnGroups() {
+            document.getElementById('report-column-groups').replaceChildren();
+            const owned = { scenario: new Set(), line: new Set() };
+            (reportPreference.columnGroups || []).forEach(group => {
+                const dimension = group.dimension === 'line' ? 'line' : 'scenario';
+                const members = (group.members || []).filter(name => {
+                    if (owned[dimension].has(name)) return false;
+                    owned[dimension].add(name); return true;
+                });
+                addReportColumnGroup({ ...group, dimension, members });
+            });
+        }
+        function loadReportPreferences() {
+            activeReportPreferenceSource = document.getElementById('report-source').value;
+            let saved = null;
+            try {
+                saved = JSON.parse(localStorage.getItem(reportPreferenceKey(activeReportPreferenceSource)) || 'null');
+                if (!saved) {
+                    const legacySources = reportPreferenceScope(activeReportPreferenceSource) === 'base'
+                        ? [activeReportPreferenceSource, 'raw', 'dedup', 'both-dedup'] : [activeReportPreferenceSource, 'full'];
+                    for (const source of [...new Set(legacySources)]) {
+                        const value = JSON.parse(localStorage.getItem(legacyReportPreferenceKey(source)) || 'null');
+                        if (value) { saved = value; break; }
+                    }
+                }
+            } catch (_) { /* use defaults */ }
+            reportPreference = saved && typeof saved === 'object' ? saved : { filters: [], logic: 'all', groups: [], columnGroups: [], ignoredAccounts: [], rowOrder: [], columnOrder: { scenario: [], line: [] }, columns: {} };
+            if (!Array.isArray(reportPreference.groups)) {
+                reportPreference.groups = reportPreference.groupName || reportPreference.groupMembers?.length
+                    ? [{ id: 'migrated-group', name: reportPreference.groupName || '', members: reportPreference.groupMembers || [] }]
+                    : [];
+            }
+            if (!Array.isArray(reportPreference.columnGroups)) reportPreference.columnGroups = [];
+            if (!reportPreference.risk || typeof reportPreference.risk !== 'object') reportPreference.risk = {};
+            if (!reportPreference.status || typeof reportPreference.status !== 'object') reportPreference.status = {};
+            if (!reportPreference.expiry || typeof reportPreference.expiry !== 'object') reportPreference.expiry = { enabled: true, column: '', threshold: -90 };
+            if (!Array.isArray(reportPreference.ignoredAccounts)) reportPreference.ignoredAccounts = [];
+            if (!Array.isArray(reportPreference.rowOrder)) reportPreference.rowOrder = [];
+            if (!reportPreference.columnOrder || typeof reportPreference.columnOrder !== 'object') reportPreference.columnOrder = { scenario: [], line: [] };
+            ['scenario', 'line'].forEach(key => { if (!Array.isArray(reportPreference.columnOrder[key])) reportPreference.columnOrder[key] = []; });
+            const columns = reportPreference.columns || {};
+            ['report-account', 'report-scenario', 'report-line'].forEach(id => {
+                const select = document.getElementById(id);
+                if (columns[id] && Array.from(select.options).some(option => option.value === columns[id])) select.value = columns[id];
+            });
+            const risk = reportPreference.risk, status = reportPreference.status;
+            document.getElementById('report-risk-name-column').value = risk.nameColumn || '';
+            document.getElementById('report-risk-names').value = risk.names || '';
+            document.getElementById('report-risk-logic').value = risk.logic === 'all' ? 'all' : 'any';
+            document.getElementById('report-risk-filters').replaceChildren();
+            (Array.isArray(risk.filters) ? risk.filters : []).forEach(item => addReportFilterRow(item, 'report-risk-filters'));
+            document.getElementById('report-status-column').value = status.column || '';
+            document.getElementById('report-overdue-terms').value = status.overdue ?? '过期,超期,expired,overdue';
+            document.getElementById('report-near-terms').value = status.near ?? '临期,即将过期,near expiration,expiring';
+            document.getElementById('report-time-column').value = reportPreference.timeColumn || '';
+            document.getElementById('report-expiry-enabled').checked = reportPreference.expiry.enabled !== false;
+            const expiryColumn = saved?.expiry ? (reportPreference.expiry.column || '') : document.getElementById('report-expiry-column').value;
+            reportPreference.expiry.column = expiryColumn;
+            document.getElementById('report-expiry-column').value = expiryColumn;
+            document.getElementById('report-expiry-threshold').value = reportPreference.expiry.threshold !== '' && Number.isFinite(Number(reportPreference.expiry.threshold)) ? reportPreference.expiry.threshold : -90;
+            updateReportTimeColumnInfo();
+            updateReportExpiryVisibility();
+            document.getElementById('report-filter-logic').value = reportPreference.logic === 'any' ? 'any' : 'all';
+            document.getElementById('report-filters').replaceChildren();
+            (Array.isArray(reportPreference.filters) ? reportPreference.filters : []).forEach(item => addReportFilterRow(item));
+            fillIgnoredAccounts();
+            fillReportGroups();
+            fillReportColumnGroups();
+            renderReportOrders();
+            const scopeLabel = reportPreferenceScope(activeReportPreferenceSource) === 'base' ? '基础表共享偏好' : '全量表偏好';
+            document.getElementById('report-pref-status').textContent = saved ? `已加载${scopeLabel}` : `${scopeLabel}保存在当前浏览器`;
+        }
+        function resolveReportTimeColumn() { return document.getElementById('report-time-column').value || reportAutoTimeColumn; }
+        function updateReportTimeColumnInfo() {
+            const field = resolveReportTimeColumn();
+            document.getElementById('report-time-column-info').textContent = field
+                ? `统计时间列：${field}${document.getElementById('report-time-column').value ? '（手动）' : '（自动）'}`
+                : '未找到统计时间列；月份和年度暂按全部记录展示';
+        }
+        function updateReportExpiryVisibility() {
+            const full = isFullReportSource();
+            document.getElementById('report-expiry-section').style.display = full ? '' : 'none';
+        }
+        function reportExpiryIncluded(row) {
+            if (!isFullReportSource()) return true;
+            const config = reportPreference.expiry || {};
+            if (config.enabled === false || !config.column || !Object.prototype.hasOwnProperty.call(row, config.column)) return true;
+            const raw = String(row[config.column] ?? '').trim();
+            if (!raw) return true;
+            const days = Number(raw.replace(/,/g, ''));
+            const threshold = Number(config.threshold);
+            return !Number.isFinite(days) || !Number.isFinite(threshold) || days >= threshold;
+        }
+        function rowMonth(row) {
+            const field = resolveReportTimeColumn();
+            if (!field) return '';
+            const value = row[field];
+            if (typeof value === 'number' && value > 20000 && value < 100000) {
+                const date = new Date(Date.UTC(1899, 11, 30) + value * 86400000);
+                return date.toISOString().slice(0, 7);
+            }
+            const match = String(value ?? '').match(/(20\d{2})[年\/.-]?(0?[1-9]|1[0-2])(?:月|\b|[\/.-])/);
+            return match ? `${match[1]}-${match[2].padStart(2, '0')}` : '';
+        }
+        function sourceRowsForPeriod(period, value) {
+            const source = document.getElementById('report-source').value;
+            const matchesPeriod = row => period === 'all' || (period === 'year' ? rowMonth(row).startsWith(String(value)) : rowMonth(row) === value);
+            if (isFullReportSource(source)) {
+                const rows = reportSourceRows();
+                const hasMonth = rows.some(rowMonth);
+                return dedupReportRows(applyReportFilters(period === 'all' || !hasMonth ? rows : rows.filter(matchesPeriod)));
+            }
+            const raw = Object.values(rawGlobal);
+            const hasMonth = raw.some(sheet => [...sheet.normalRaw, ...sheet.anyRaw].some(rowMonth));
+            return raw.flatMap(sheet => {
+                const rows = [...sheet.normalRaw, ...sheet.anyRaw];
+                return dedupReportRows(applyReportFilters(period === 'all' || !hasMonth ? rows : rows.filter(matchesPeriod)));
+            });
+        }
+        function reportRows() {
+            const period = document.getElementById('report-period').value;
+            return sourceRowsForPeriod(period, period === 'year' ? document.getElementById('report-year').value : document.getElementById('report-month').value);
+        }
+        function selectLatestReportMonth() {
+            const months = applyReportFilters(reportSourceRows()).map(rowMonth).filter(Boolean).sort();
+            if (months.length) {
+                document.getElementById('report-month').value = months[months.length - 1];
+                document.getElementById('report-year').value = months[months.length - 1].slice(0, 4);
+            }
+        }
+        function previousMonth(month) {
+            const [year, number] = month.split('-').map(Number);
+            if (!year || !number) return '';
+            return number === 1 ? `${year - 1}-12` : `${year}-${String(number - 1).padStart(2, '0')}`;
+        }
+        function fillReportColumns() {
+            const headers = new Set(getReportHeaders());
+            const guesses = { 'report-account': /运营商|客户名称|客户|系统部|account|operator/i, 'report-scenario': /场景|scenario/i, 'report-line': /产品线|product line/i };
+            Object.entries(guesses).forEach(([id, guess]) => {
+                const select = document.getElementById(id), previous = select.value;
+                const candidates = Array.from(headers).filter(h => id !== 'report-scenario' || !/ICT\s*场景|原始场景/i.test(h));
+                select.replaceChildren();
+                const blank = document.createElement('option'); blank.value = ''; blank.textContent = '未指定'; select.appendChild(blank);
+                candidates.forEach(h => { const option = document.createElement('option'); option.value = h; option.textContent = h; select.appendChild(option); });
+                select.value = candidates.includes(previous) ? previous : (candidates.find(h => guess.test(h)) || '');
+            });
+            reportAutoTimeColumn = Array.from(headers).find(h => /月份|统计月|month|生效日期|effect time|申请日期|date/i.test(h)) || '';
+            [['report-risk-name-column', /网元名称|设备名称|网元|network element|ne name/i], ['report-status-column', /license.*状态|许可.*状态|授权.*状态|状态|status/i], ['report-time-column', /月份|统计月|month|生效日期|effect time|申请日期|date/i], ['report-expiry-column', /失效倒数天数|失效.*天数|倒数天数|days.*expir|expiry.*days/i]].forEach(([id, guess]) => {
+                const select = document.getElementById(id), previous = select.value, candidates = Array.from(headers);
+                select.replaceChildren();
+                const blank = document.createElement('option'); blank.value = ''; blank.textContent = id === 'report-time-column' ? '自动选择' : '未指定'; select.appendChild(blank);
+                candidates.forEach(h => { const option = document.createElement('option'); option.value = h; option.textContent = h; select.appendChild(option); });
+                select.value = candidates.includes(previous) ? previous : (id === 'report-time-column' ? '' : candidates.find(h => guess.test(h)) || '');
+            });
+            updateReportTimeColumnInfo();
+        }
+        function reportDimension(row, selectId) {
+            const field = document.getElementById(selectId).value;
+            return field ? (String(row[field] ?? '').trim() || '未填写') : '未指定字段';
+        }
+        function reportAccount(row) {
+            const original = reportDimension(row, 'report-account');
+            const group = (reportPreference.groups || []).find(item => item.name && item.members?.includes(original));
+            return group ? group.name : original;
+        }
+        function reportColumnValue(row, dimensionId) {
+            const original = reportDimension(row, dimensionId);
+            const dimension = dimensionId === 'report-line' ? 'line' : 'scenario';
+            const group = (reportPreference.columnGroups || []).find(item => item.dimension === dimension && item.name && item.members?.includes(original));
+            return group ? group.name : original;
+        }
+        function reportRiskRows(rows) {
+            const risk = reportPreference.risk || {};
+            const names = String(risk.names || '').split(/[,，;；\n]+/).map(value => value.trim().toLocaleLowerCase()).filter(Boolean);
+            const filters = (risk.filters || []).filter(item => item.field && (['empty', 'not-empty'].includes(item.operator) || String(item.value || '').trim()));
+            if (!names.length && !filters.length) return rows.filter(row => /核心网|core/i.test(`${getProdLineValue(row)} ${getProdValue(row)}`));
+            return rows.filter(row => {
+                const name = String(row[risk.nameColumn] ?? '').trim().toLocaleLowerCase();
+                const byName = !!(risk.nameColumn && names.length && names.includes(name));
+                const byFilters = filters.length && (risk.logic === 'all' ? filters.every(item => reportFilterMatches(row, item)) : filters.some(item => reportFilterMatches(row, item)));
+                return byName || byFilters;
+            });
+        }
+        function reportLicenseStatus(row) {
+            const config = reportPreference.status || {};
+            if (!config.column || !Object.prototype.hasOwnProperty.call(row, config.column)) return '未识别';
+            const value = String(row[config.column] ?? '').trim().toLocaleLowerCase();
+            if (!value) return '未识别';
+            const matches = terms => String(terms || '').split(/[,，;；\n]+/).map(term => term.trim().toLocaleLowerCase()).filter(Boolean).some(term => value.includes(term));
+            if (/^(正常|未过期|有效|normal|valid|active)$/i.test(value)) return '正常';
+            if (matches(config.near ?? '临期,即将过期,near expiration,expiring')) return '临期';
+            if (matches(config.overdue ?? '过期,超期,expired,overdue')) return '过期';
+            return '正常';
+        }
+        function orderedReportValues(values, order) {
+            const positions = new Map((order || []).map((value, index) => [value, index]));
+            return [...values].sort((a, b) => {
+                const left = positions.has(a) ? positions.get(a) : Infinity;
+                const right = positions.has(b) ? positions.get(b) : Infinity;
+                return left === right ? a.localeCompare(b, 'zh-CN') : left - right;
+            });
+        }
+        function renderReportOrderList(hostId, values, orderKey) {
+            const host = document.getElementById(hostId); host.replaceChildren();
+            const currentOrder = orderKey === 'row' ? reportPreference.rowOrder : reportPreference.columnOrder[orderKey];
+            const displayed = orderedReportValues(values, currentOrder);
+            if (!displayed.length) { host.textContent = '当前无可排序项目。'; return; }
+            displayed.forEach((value, index) => {
+                const item = document.createElement('span'); item.className = 'report-order-item';
+                const name = document.createElement('span'); name.textContent = value; item.appendChild(name);
+                [['↑', -1], ['↓', 1]].forEach(([symbol, shift]) => {
+                    const button = document.createElement('button'); button.type = 'button'; button.textContent = symbol;
+                    button.disabled = index + shift < 0 || index + shift >= displayed.length;
+                    button.addEventListener('click', () => {
+                        const next = [...displayed]; [next[index], next[index + shift]] = [next[index + shift], next[index]];
+                        const hidden = currentOrder.filter(name => !next.includes(name));
+                        if (orderKey === 'row') reportPreference.rowOrder = [...next, ...hidden];
+                        else reportPreference.columnOrder[orderKey] = [...next, ...hidden];
+                        saveReportPreferences(); renderMonthlyReport();
+                    });
+                    item.appendChild(button);
+                });
+                host.appendChild(item);
+            });
+        }
+        function renderReportOrders() {
+            const rows = applyReportFilters(reportSourceRows());
+            renderReportOrderList('report-row-order', [...new Set(rows.map(reportAccount))], 'row');
+            renderReportOrderList('report-scenario-order', [...new Set(rows.map(row => reportColumnValue(row, 'report-scenario')))], 'scenario');
+            renderReportOrderList('report-line-order', [...new Set(rows.map(row => reportColumnValue(row, 'report-line')))], 'line');
+        }
+        function addReportTable(host, title, rows, dimensionId) {
+            const dimension = dimensionId === 'report-status' ? 'status' : dimensionId === 'report-line' ? 'line' : 'scenario';
+            const valueForRow = row => dimension === 'status' ? reportLicenseStatus(row) : reportColumnValue(row, dimensionId);
+            const dims = dimension === 'status' ? ['过期', '临期', '正常', '未识别'].filter(name => name !== '未识别' || rows.some(row => valueForRow(row) === name))
+                : orderedReportValues(new Set(rows.map(valueForRow)), reportPreference.columnOrder[dimension]);
+            const accounts = orderedReportValues(new Set(rows.map(reportAccount)), reportPreference.rowOrder);
+            const table = document.createElement('table');
+            const head = table.createTHead().insertRow();
+            const splitName = (cell, name, note) => {
+                if (!note) { cell.textContent = name; return; }
+                const wrapper = document.createElement('div'); wrapper.className = 'report-split-name';
+                [name, note].forEach(value => { const part = document.createElement('span'); part.textContent = value; wrapper.appendChild(part); });
+                cell.appendChild(wrapper);
+            };
+            ['系统部 / Account', ...dims, '总计'].forEach(label => {
+                const th = document.createElement('th');
+                const group = (reportPreference.columnGroups || []).find(item => item.dimension === dimension && item.name === label);
+                splitName(th, label, group?.note);
+                head.appendChild(th);
+            });
+            const body = table.createTBody();
+            accounts.forEach(account => {
+                const tr = body.insertRow();
+                const subset = rows.filter(r => reportAccount(r) === account);
+                [account, ...dims.map(d => subset.filter(r => valueForRow(r) === d).length || '—'), subset.length].forEach((value, index) => {
+                    const cell = tr.insertCell();
+                    const group = index === 0 && (reportPreference.groups || []).find(item => item.name === account);
+                    if (group) splitName(cell, value, group.note); else cell.textContent = value;
+                });
+            });
+            const foot = table.createTFoot().insertRow();
+            ['总计', ...dims.map(d => rows.filter(r => valueForRow(r) === d).length || '—'), rows.length].forEach(value => { const th = document.createElement('th'); th.textContent = value; foot.appendChild(th); });
+            host.appendChild(table);
+            const splitHeaders = Array.from(head.cells).map(cell => cell.querySelector('.report-split-name')).filter(Boolean);
+            if (splitHeaders.length) {
+                const titleHeight = Math.max(...splitHeaders.map(item => item.firstElementChild.scrollHeight));
+                const noteHeight = Math.max(...splitHeaders.map(item => item.lastElementChild.scrollHeight));
+                splitHeaders.forEach(item => {
+                    item.firstElementChild.style.height = `${titleHeight}px`;
+                    item.lastElementChild.style.height = `${noteHeight}px`;
+                });
+            }
+            const caption = document.createElement('div'); caption.className = 'report-table-caption'; caption.textContent = title; host.appendChild(caption);
+        }
+        function reportCopyKey() {
+            const source = document.getElementById('report-source').value;
+            const period = document.getElementById('report-period').value;
+            const value = period === 'all' ? 'all' : period === 'year' ? document.getElementById('report-year').value : document.getElementById('report-month').value;
+            let tenant = 'default';
+            try { tenant = localStorage.getItem('tools_tenant_id') || tenant; } catch (_) { /* private browsing */ }
+            return `esn-check:monthly-copy:v1:${tenant}:${source}:${period}:${value}`;
+        }
+        function reportCopyOverrides() {
+            try { return JSON.parse(localStorage.getItem(reportCopyKey()) || '{}') || {}; } catch (_) { return {}; }
+        }
+        function sanitizeReportCopyHtml(html) {
+            const parsed = new DOMParser().parseFromString(`<div>${String(html || '')}</div>`, 'text/html');
+            const result = document.createElement('div');
+            const colorValue = value => /^#[0-9a-f]{3,8}$/i.test(value || '') || /^rgba?\([\d\s.,%]+\)$/i.test(value || '') ? value : '';
+            const copyNode = (source, target) => {
+                if (source.nodeType === Node.TEXT_NODE) { target.appendChild(document.createTextNode(source.textContent)); return; }
+                if (source.nodeType !== Node.ELEMENT_NODE) return;
+                const tag = source.tagName.toLowerCase();
+                if (tag === 'br') { target.appendChild(document.createElement('br')); return; }
+                let destination = target;
+                if (tag === 'b' || tag === 'strong') { destination = document.createElement('strong'); target.appendChild(destination); }
+                else if (tag === 'font' || tag === 'span') {
+                    const color = colorValue(tag === 'font' ? source.getAttribute('color') : source.style.color);
+                    if (color) { destination = document.createElement('span'); destination.style.color = color; target.appendChild(destination); }
+                }
+                if (tag === 'span' && (source.style.fontWeight === 'bold' || Number(source.style.fontWeight) >= 600)) {
+                    const bold = document.createElement('strong'); destination.appendChild(bold); destination = bold;
+                }
+                Array.from(source.childNodes).forEach(child => copyNode(child, destination));
+                if (tag === 'div' || tag === 'p') target.appendChild(document.createElement('br'));
+            };
+            Array.from(parsed.body.firstElementChild?.childNodes || []).forEach(node => copyNode(node, result));
+            return result.innerHTML.replace(/(?:<br>)+$/i, '');
+        }
+        let reportEditingBlock = null, reportEditingRange = null;
+        const reportTextPopover = document.getElementById('report-text-popover');
+        function hideReportTextPopover() { reportTextPopover.classList.remove('show'); }
+        function positionReportTextPopover(range) {
+            const rect = range.getBoundingClientRect();
+            if (!rect.width && !rect.height) return hideReportTextPopover();
+            reportTextPopover.classList.add('show');
+            const top = Math.max(8, rect.top - reportTextPopover.offsetHeight - 8);
+            const left = Math.max(8, Math.min(rect.left, window.innerWidth - reportTextPopover.offsetWidth - 8));
+            reportTextPopover.style.top = `${top}px`; reportTextPopover.style.left = `${left}px`;
+        }
+        function rememberReportSelection() {
+            const selection = window.getSelection(), node = selection?.anchorNode;
+            const block = node && (node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement)?.closest?.('#report-sheet .report-copy');
+            if (block && selection.rangeCount && !selection.getRangeAt(0).collapsed) {
+                reportEditingBlock = block; reportEditingRange = selection.getRangeAt(0).cloneRange(); positionReportTextPopover(reportEditingRange);
+            } else hideReportTextPopover();
+        }
+        function applyReportTextCommand(command, value) {
+            if (!reportEditingBlock?.isConnected || !reportEditingRange || reportEditingRange.collapsed) { showNotice('操作提示', '请先选中月报中的文字。'); return; }
+            reportEditingBlock.focus();
+            const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(reportEditingRange);
+            if (command === 'bold' && document.queryCommandState('bold')) return;
+            if (command === 'foreColor') document.execCommand('styleWithCSS', false, true);
+            document.execCommand(command, false, value);
+            rememberReportSelection();
+            reportEditingBlock.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        function reportPreferenceTenant() {
+            try { return localStorage.getItem('tools_tenant_id') || 'default'; } catch (_) { return 'default'; }
+        }
+        function exportReportPreferences() {
+            const tenant = reportPreferenceTenant();
+            const bundle = { type: 'esn-check-preferences', version: 1, exportedAt: new Date().toISOString(), monthly: {}, detail: {}, copy: {}, defaults: { base: getDefaultReportMode('base'), full: getDefaultReportMode('full') } };
+            try {
+                ['base', 'full'].forEach(scope => {
+                    const value = localStorage.getItem(`esn-check:monthly-preferences:v2:${tenant}:${scope}`);
+                    if (value) bundle.monthly[scope] = JSON.parse(value);
+                });
+                if (!bundle.monthly.base) {
+                    for (const source of ['dedup', 'raw', 'both-dedup']) {
+                        const value = localStorage.getItem(`esn-check:monthly-preferences:v1:${tenant}:${source}`);
+                        if (value) { bundle.monthly.base = JSON.parse(value); break; }
+                    }
+                }
+                if (!bundle.monthly.full) {
+                    const value = localStorage.getItem(`esn-check:monthly-preferences:v1:${tenant}:full`);
+                    if (value) bundle.monthly.full = JSON.parse(value);
+                }
+                ['base', 'full'].forEach(source => {
+                    const value = localStorage.getItem(`esn-check:detail-preferences:v1:${tenant}:${source}`);
+                    if (value) bundle.detail[source] = JSON.parse(value);
+                });
+                const prefix = `esn-check:monthly-copy:v1:${tenant}:`;
+                for (let index = 0; index < localStorage.length; index++) {
+                    const key = localStorage.key(index);
+                    if (key?.startsWith(prefix)) bundle.copy[key.slice(prefix.length)] = JSON.parse(localStorage.getItem(key));
+                }
+            } catch (_) { showNotice('读取失败', '无法读取本地偏好，请检查浏览器存储权限。'); return; }
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' }));
+            link.href = url; link.download = `临时License工具偏好_${new Date().toISOString().slice(0, 10)}.json`; link.click();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+        async function importReportPreferences(file) {
+            if (!file || file.size > 10 * 1024 * 1024) { showNotice('文件无效', '请选择不超过 10 MB 的偏好 JSON 文件。'); return; }
+            let bundle;
+            try { bundle = JSON.parse(await file.text()); } catch (_) { showNotice('文件无效', '文件不是有效的 JSON。'); return; }
+            if (bundle?.type !== 'esn-check-preferences' || bundle.version !== 1 || !bundle.monthly || !bundle.detail || !bundle.copy) {
+                showNotice('文件无效', '这不是受支持的临时 License 工具偏好文件。'); return;
+            }
+            const tenant = reportPreferenceTenant(), updates = [];
+            [['base', bundle.monthly.base || bundle.monthly.dedup || bundle.monthly.raw || bundle.monthly['both-dedup']], ['full', bundle.monthly.full]].forEach(([scope, value]) => {
+                if (value && typeof value === 'object' && !Array.isArray(value)) updates.push([`esn-check:monthly-preferences:v2:${tenant}:${scope}`, value]);
+            });
+            ['base', 'full'].forEach(source => {
+                const value = bundle.detail[source];
+                if (value && typeof value === 'object' && !Array.isArray(value)) updates.push([`esn-check:detail-preferences:v1:${tenant}:${source}`, value]);
+            });
+            Object.entries(bundle.copy).forEach(([suffix, value]) => {
+                if (!/^(dedup|raw|both-dedup|full|full-dedup|full-both-dedup):(month|year|all):[a-z0-9_-]+$/i.test(suffix) || !value || typeof value !== 'object' || Array.isArray(value)) return;
+                const safeCopy = {};
+                Object.entries(value).forEach(([key, text]) => {
+                    if (!/^[a-z0-9-]+$/i.test(key)) return;
+                    if (typeof text === 'string') safeCopy[key] = text;
+                    else if (text && typeof text.html === 'string') safeCopy[key] = { html: sanitizeReportCopyHtml(text.html) };
+                });
+                updates.push([`esn-check:monthly-copy:v1:${tenant}:${suffix}`, safeCopy]);
+            });
+            try {
+                updates.forEach(([key, value]) => localStorage.setItem(key, JSON.stringify(value)));
+                ['base', 'full'].forEach(scope => {
+                    const mode = bundle.defaults?.[scope];
+                    if (REPORT_DEFAULT_MODES[scope].includes(mode)) localStorage.setItem(reportDefaultKey(scope), mode);
+                });
+            }
+            catch (_) { showNotice('保存失败', '浏览器未能保存导入的偏好。'); return; }
+            updateReportDefaultUi();
+            fillReportColumns(); loadReportPreferences(); renderMonthlyReport(); setupSourceDetail('base'); setupSourceDetail('full');
+            document.getElementById('report-pref-status').textContent = `已导入 ${updates.length} 组偏好，应用到当前浏览器`;
+        }
+        function appendReportCopy(host, key, generated, className, overrides, storageKey) {
+            const block = document.createElement('div');
+            block.className = `report-copy ${className}`;
+            block.contentEditable = 'true'; block.spellcheck = false;
+            block.dataset.copyKey = key;
+            block.title = '点击修改；修改后自动保存到当前月份和计算口径';
+            const saved = overrides[key];
+            if (saved && typeof saved === 'object' && typeof saved.html === 'string') block.innerHTML = sanitizeReportCopyHtml(saved.html);
+            else block.textContent = typeof saved === 'string' ? saved : generated;
+            block.addEventListener('input', () => {
+                overrides[key] = { html: sanitizeReportCopyHtml(block.innerHTML) };
+                try { localStorage.setItem(storageKey, JSON.stringify(overrides)); } catch (_) { /* manual edits remain visible until reload */ }
+            });
+            block.addEventListener('mouseup', rememberReportSelection);
+            block.addEventListener('keyup', rememberReportSelection);
+            block.addEventListener('contextmenu', event => {
+                rememberReportSelection();
+                if (reportEditingRange && !reportEditingRange.collapsed) { event.preventDefault(); positionReportTextPopover(reportEditingRange); }
+            });
+            block.addEventListener('paste', event => {
+                event.preventDefault(); document.execCommand('insertText', false, event.clipboardData.getData('text/plain'));
+            });
+            host.appendChild(block);
+        }
+        function excelReportColor(value, fallback = 'FF0F172A') {
+            const color = String(value || '').trim();
+            const hex = color.match(/^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i);
+            if (hex) {
+                const digits = hex[1].length === 3 ? [...hex[1]].map(letter => letter + letter).join('') : hex[1];
+                return (digits.length === 8 ? digits : `FF${digits}`).toUpperCase();
+            }
+            const rgb = color.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+            if (rgb) return `FF${rgb.slice(1, 4).map(part => Math.min(255, Number(part)).toString(16).padStart(2, '0')).join('')}`.toUpperCase();
+            return fallback;
+        }
+        function reportExcelRichText(block) {
+            const computed = getComputedStyle(block);
+            const base = { bold: Number.parseInt(computed.fontWeight, 10) >= 600, color: computed.color };
+            const size = Math.max(9, Math.round(Number.parseFloat(computed.fontSize) * 0.75));
+            const runs = [];
+            const visit = (node, format) => {
+                if (node.nodeType === Node.TEXT_NODE) {
+                    if (node.textContent) runs.push({ text: node.textContent, font: { name: 'Microsoft YaHei', size, bold: format.bold, color: { argb: excelReportColor(format.color) } } });
+                    return;
+                }
+                if (node.nodeType !== Node.ELEMENT_NODE) return;
+                const tag = node.tagName.toLowerCase();
+                if (tag === 'br') { runs.push({ text: '\n', font: { name: 'Microsoft YaHei', size } }); return; }
+                const next = { ...format };
+                if (tag === 'b' || tag === 'strong') next.bold = true;
+                if (node.style?.color) next.color = node.style.color;
+                if (tag === 'font' && node.getAttribute('color')) next.color = node.getAttribute('color');
+                Array.from(node.childNodes).forEach(child => visit(child, next));
+                if (tag === 'div' || tag === 'p') runs.push({ text: '\n', font: { name: 'Microsoft YaHei', size } });
+            };
+            Array.from(block.childNodes).forEach(node => visit(node, base));
+            return runs.length ? { richText: runs } : block.textContent;
+        }
+        function appendMonthlyWorksheet(workbook) {
+            const sheet = document.getElementById('report-sheet');
+            const tables = Array.from(sheet.querySelectorAll('table'));
+            const columns = Math.max(24, ...tables.map(table => table.rows[0]?.cells.length * 2 || 0));
+            const worksheet = workbook.addWorksheet('临时 License 月报', { pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 } });
+            for (let index = 1; index <= columns; index++) worksheet.getColumn(index).width = 5.5;
+            const border = { top: { style: 'thin', color: { argb: 'FF94A3B8' } }, left: { style: 'thin', color: { argb: 'FF94A3B8' } }, bottom: { style: 'thin', color: { argb: 'FF94A3B8' } }, right: { style: 'thin', color: { argb: 'FF94A3B8' } } };
+            let rowNumber = 1;
+            const appendCopy = block => {
+                const row = worksheet.getRow(rowNumber++);
+                worksheet.mergeCells(row.number, 1, row.number, columns);
+                const cell = row.getCell(1), computed = getComputedStyle(block);
+                cell.value = reportExcelRichText(block);
+                cell.alignment = { vertical: 'middle', horizontal: block.classList.contains('report-title') ? 'center' : 'left', wrapText: true };
+                cell.font = { name: 'Microsoft YaHei', size: Math.max(9, Math.round(Number.parseFloat(computed.fontSize) * 0.75)), bold: Number.parseInt(computed.fontWeight, 10) >= 600, color: { argb: excelReportColor(computed.color) } };
+                if (block.classList.contains('report-title')) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDCEEF4' } };
+                if (block.classList.contains('report-section-heading')) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+                if (block.classList.contains('report-objective') || block.classList.contains('report-section-heading')) cell.border = { bottom: border.bottom };
+                row.height = Math.max(block.classList.contains('report-title') ? 38 : 22, Math.ceil(block.getBoundingClientRect().height * 0.75) + 5);
+            };
+            const appendCaption = block => {
+                const row = worksheet.getRow(rowNumber++); worksheet.mergeCells(row.number, 1, row.number, columns);
+                const cell = row.getCell(1); cell.value = block.textContent; cell.alignment = { horizontal: 'center', vertical: 'middle' };
+                cell.font = { name: 'Microsoft YaHei', size: 9, color: { argb: 'FF334155' } }; row.height = 21;
+            };
+            const appendTable = table => {
+                Array.from(table.rows).forEach((sourceRow, rowIndex) => {
+                    const row = worksheet.getRow(rowNumber++), cells = Array.from(sourceRow.cells);
+                    const header = sourceRow.parentElement.tagName === 'THEAD', footer = sourceRow.parentElement.tagName === 'TFOOT';
+                    cells.forEach((sourceCell, index) => {
+                        const start = Math.floor(index * columns / cells.length) + 1;
+                        const end = Math.floor((index + 1) * columns / cells.length);
+                        if (end > start) worksheet.mergeCells(row.number, start, row.number, end);
+                        const cell = row.getCell(start), split = sourceCell.querySelector('.report-split-name');
+                        const value = split ? Array.from(split.children).map(part => part.textContent).join('\n') : sourceCell.textContent.trim();
+                        cell.value = !header && !split && /^\d+$/.test(value) ? Number(value) : value;
+                        cell.font = { name: 'Microsoft YaHei', size: header ? 10 : 9, bold: header || footer, color: { argb: 'FF0F172A' } };
+                        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+                        cell.border = border;
+                        if (header || footer) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8F1F5' } };
+                    });
+                    row.height = Math.max(header ? 38 : 23, Math.ceil(sourceRow.getBoundingClientRect().height * 0.75) + 3);
+                });
+            };
+            const appendNode = node => {
+                if (node.classList?.contains('report-copy')) appendCopy(node);
+                else if (node.classList?.contains('report-table-caption')) appendCaption(node);
+                else if (node.tagName === 'TABLE') appendTable(node);
+                else Array.from(node.children || []).forEach(appendNode);
+            };
+            Array.from(sheet.children).forEach(appendNode);
+            if (rowNumber === 1) worksheet.getCell('A1').value = '当前时间、口径和筛选条件下没有月报数据。';
+            worksheet.pageSetup.printArea = `A1:${worksheet.getColumn(columns).letter}${Math.max(1, rowNumber - 1)}`;
+            return worksheet;
+        }
+        async function downloadExcelWorkbook(workbook, filename) {
+            const buffer = await workbook.xlsx.writeBuffer();
+            const url = URL.createObjectURL(new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+            const link = document.createElement('a'); link.href = url; link.download = filename; link.click();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+        async function exportMonthlyExcel() {
+            if (!reportRows().length) return;
+            if (typeof ExcelJS === 'undefined') { showNotice('导出失败', 'Excel 导出组件未加载，请刷新工具后重试。'); return; }
+            if (viewDirtyFlags.monthly) renderMonthlyReport();
+            const workbook = new ExcelJS.Workbook(); workbook.creator = '临时 License 统计与月报'; workbook.created = new Date();
+            appendMonthlyWorksheet(workbook);
+            const period = document.getElementById('report-period').value;
+            const label = period === 'all' ? '全部时间' : period === 'year' ? document.getElementById('report-year').value : document.getElementById('report-month').value;
+            try {
+                await downloadExcelWorkbook(workbook, `临时License月报_${label}.xlsx`);
+            } catch (error) { showNotice('导出失败', `Excel 导出失败：${error.message}`); }
+        }
+        function renderMonthlyReport() {
+            const host = document.getElementById('report-sheet'), rows = reportRows();
+            const expiryInfo = document.getElementById('report-expiry-info');
+            const expiry = reportPreference.expiry || {};
+            const excludedCount = isFullReportSource() && expiry.enabled !== false
+                ? reportSourceRows().filter(row => !reportExpiryIncluded(row)).length : 0;
+            expiryInfo.textContent = isFullReportSource() && expiry.enabled !== false
+                ? (expiry.column ? `失效记录不关注：${excludedCount} 条（${expiry.column} < ${expiry.threshold}）` : '未选择失效倒数天数列，未忽略记录') : '';
+            host.replaceChildren();
+            if (!rows.length) { host.innerHTML = '<div class="empty-state">当前时间、口径和筛选条件下没有数据。</div>'; return; }
+            const period = document.getElementById('report-period').value;
+            const month = document.getElementById('report-month').value || new Date().toISOString().slice(0, 7);
+            const year = document.getElementById('report-year').value || month.slice(0, 4);
+            const periodLabel = period === 'all' ? '全部时间' : period === 'year' ? `${year} 年` : `${Number(month.slice(0, 4))} 年 ${Number(month.slice(5, 7))} 月`;
+            const dated = applyReportFilters(reportSourceRows()).some(rowMonth);
+            let priorRows = [];
+            if (period !== 'all') {
+                const priorValue = period === 'year' ? String(Number(year) - 1) : previousMonth(month);
+                priorRows = dated ? sourceRowsForPeriod(period, priorValue) : [];
+                if (!priorRows.length && previousReportRows.length) priorRows = isFullReportSource()
+                    ? dedupReportRows(applyReportFilters(previousReportRows))
+                    : Array.from(previousReportGroups.values()).flatMap(group => dedupReportRows(applyReportFilters(group)));
+            }
+            const trend = (current, previous) => previous
+                ? `${current >= previous ? '上升' : '下降'} ${Math.abs((current - previous) / previous * 100).toFixed(1)}%`
+                : '暂无可比数据';
+            const priorLabel = period === 'year' ? '上年' : '上月';
+            const trendText = period === 'all' ? '全部时间不计算环比' : `较${priorLabel}${trend(rows.length, priorRows.length)}`;
+            const scenarioCounts = new Map(), lineCounts = new Map(), priorLineCounts = new Map();
+            const addCount = (map, value) => map.set(value, (map.get(value) || 0) + 1);
+            rows.forEach(row => { addCount(scenarioCounts, reportColumnValue(row, 'report-scenario')); addCount(lineCounts, reportColumnValue(row, 'report-line')); });
+            priorRows.forEach(row => addCount(priorLineCounts, reportColumnValue(row, 'report-line')));
+            const countMatching = (map, pattern) => [...map].filter(([name]) => pattern.test(name)).reduce((sum, [, count]) => sum + count, 0);
+            const noPo = countMatching(scenarioCounts, /no\s*po|无\s*po/i);
+            const havePo = countMatching(scenarioCounts, /have\s*po|有\s*po|后付费/i);
+            const software = countMatching(scenarioCounts, /软件测试|software\s*testing/i);
+            const engineering = countMatching(scenarioCounts, /工程调测|network\s*rollout/i);
+            const noPoShare = (noPo / rows.length * 100).toFixed(1);
+            const highRiskRows = reportRiskRows(rows);
+            const coreNoPo = highRiskRows.filter(row => /no\s*po|无\s*po/i.test(reportColumnValue(row, 'report-scenario'))).length;
+            const riskByAccount = new Map();
+            rows.filter(row => /软件测试|software\s*testing|工程调测|network\s*rollout/i.test(reportColumnValue(row, 'report-scenario')))
+                .forEach(row => addCount(riskByAccount, reportAccount(row)));
+            const topAccount = [...riskByAccount].sort((a, b) => b[1] - a[1])[0];
+            const topLine = [...lineCounts].sort((a, b) => b[1] - a[1])[0] || ['未分类产品线', 0];
+            const linePrior = priorLineCounts.get(topLine[0]) || 0;
+            const storageKey = reportCopyKey(), overrides = reportCopyOverrides();
+            const copy = (key, text, className = '') => appendReportCopy(host, key, text, className, overrides, storageKey);
+            copy('title', `埃及运营商临时 License 使用&转商用进展月报（${periodLabel}）`, 'report-title');
+            copy('objective', '总体目标：无 License 超期导致的事故和重大问题，牵引临时 License 有序转商用，增加收入，降低成本。', 'report-objective');
+            const progress = document.createElement('div'); progress.className = 'report-progress-block'; host.appendChild(progress);
+            const progressCopy = (key, text, className = '') => appendReportCopy(progress, key, text, className, overrides, storageKey);
+            progressCopy('progress-heading', '简要进展：', 'report-progress-heading');
+            progressCopy('trend', `【总体趋势】在网运行临时 License 总量为 ${rows.length} 条，${trendText}；其中销售场景(No PO+Have PO) ${noPo + havePo} 条，其中无 PO 在网运行的 License 总量 ${noPo} 条，占比 ${noPoShare}%。（见表 1）`);
+            progressCopy('risk', `【核心风险】核心网元临时 License 应优先清理，当前有${coreNoPo}核心网元用无 PO 临时 License（见表 3）`);
+            progressCopy('redline', `【红线违规】“软件测试”和“工程调测”场景 License 禁止用于商用网络，目前遗留 ${engineering} 条工程调测和 ${software} 条软件测试 License，TOP 系统部：${topAccount ? `${topAccount[0]}(${topAccount[1]})` : '暂无'}。（见表 1）`);
+            copy('section-heading', '➤ 临时 License 总量：', 'report-section-heading');
+            copy('table1-intro', `1、临时 License 分场景统计，临时 License 量大，其中无 PO 场景 License ${noPo} 条，占 ${noPoShare}%，供公司高度关注，日常维护/管理负荷大，替换操作、在网使用风险高！`, 'report-table-intro');
+            copy('table1-redline', '“软件测试”和“工程调测”场景 License 禁止用于商用网络，需代表处 NTD、行销关注，随 License 超期逐步退出商用网络。');
+            addReportTable(host, '（表 1）', rows, 'report-scenario');
+            const lineTrend = period === 'all' ? '全部时间无环比' : `较上期${trend(topLine[1], linePrior)}`;
+            copy('table2-intro', `2、各产品线临时 License 数量如下，${topLine[0]}存量最多为 ${topLine[1]}，${lineTrend}。`, 'report-table-intro');
+            addReportTable(host, '（表 2）', rows, 'report-line');
+            copy('table3-intro', `3、核心高危网元有 ${coreNoPo} 设备使用无 PO 临时 License，需加快此部分设备商用 License PO 获取，以免临时 License 超期对网络造成重大影响。`, 'report-table-intro');
+            addReportTable(host, '（表 3）', highRiskRows, 'report-scenario');
+            const statusCounts = new Map(); rows.forEach(row => addCount(statusCounts, reportLicenseStatus(row)));
+            const overdue = statusCounts.get('过期') || 0, near = statusCounts.get('临期') || 0;
+            const topCountFor = statusName => {
+                const counts = new Map(); rows.filter(row => reportLicenseStatus(row) === statusName).forEach(row => addCount(counts, reportAccount(row)));
+                return [...counts].sort((a, b) => b[1] - a[1])[0];
+            };
+            const overdueTop = topCountFor('过期'), nearTop = topCountFor('临期');
+            copy('status-heading', '➤ 过期 License 和临期 License', 'report-section-heading');
+            copy('table4-intro', '为保证每一条超期 License 都有人“主动盯”、“主动管”，已提出“及时替换率”要求。过期与临期按所选 License 状态列判断。', 'report-table-intro');
+            copy('table4-overdue', `现网累计 ${overdue} 个超期 License 运行，${overdueTop ? `其中 ${overdueTop[0]} 超期最多 ${overdueTop[1]}；` : ''}需重点关注。`);
+            copy('table4-near', `现网累计 ${near} 个临期 License 运行${nearTop ? `，其中 ${nearTop[0]} 临期最多 ${nearTop[1]}` : ''}。`);
+            copy('table4-reminder', '请注意及时申请并替换超期 License，提前申请并替换临期 License，避免造成严重网络影响。');
+            addReportTable(host, '（表 4）', rows, 'report-status');
+        }
+        function sourceDetailRows(type) {
+            return type === 'base'
+                ? Object.values(rawGlobal).flatMap(sheet => [...sheet.normalRaw, ...sheet.anyRaw])
+                : fullRawRows;
+        }
+        function sourceDetailHeaders(type) {
+            const headers = new Set(type === 'base'
+                ? Object.values(rawGlobal).flatMap(sheet => Array.from(sheet.headers))
+                : Array.from(fullAvailableHeaders));
+            sourceDetailRows(type).forEach(row => Object.keys(row).forEach(header => headers.add(header)));
+            return getReorderedHeaders(Array.from(headers).filter(Boolean));
+        }
+        function sourceDetailPreferenceKey(type) {
+            return `esn-check:detail-preferences:v1:${localStorage.getItem('tools_tenant_id') || 'default'}:${type}`;
+        }
+        function saveSourceDetailPreference(type) {
+            try { localStorage.setItem(sourceDetailPreferenceKey(type), JSON.stringify(sourceDetailPrefs[type])); }
+            catch (_) { /* the table remains usable when local storage is unavailable */ }
+        }
+        function sourceDetailSelect(options, value, onChange) {
+            const select = document.createElement('select');
+            options.forEach(([key, label]) => { const option = document.createElement('option'); option.value = key; option.textContent = label; select.appendChild(option); });
+            select.value = value;
+            select.addEventListener('change', () => onChange(select.value));
+            return select;
+        }
+        function setupSourceDetail(type) {
+            const host = document.getElementById(`${type}-detail-panel`);
+            sourceDetailData[type] = { rows: sourceDetailRows(type), headers: sourceDetailHeaders(type) };
+            const headers = sourceDetailData[type].headers;
+            let saved = null;
+            try { saved = JSON.parse(localStorage.getItem(sourceDetailPreferenceKey(type)) || 'null'); } catch (_) { /* use defaults */ }
+            sourceDetailPrefs[type] = {
+                visible: Array.isArray(saved?.visible) ? saved.visible.filter(h => headers.includes(h)) : headers.slice(0, 8),
+                filterField: saved?.filterField === '*' || headers.includes(saved?.filterField) ? saved.filterField : '*',
+                filterOperator: ['contains', 'equals', 'not-equals', 'empty', 'not-empty'].includes(saved?.filterOperator) ? saved.filterOperator : 'contains',
+                filterValue: String(saved?.filterValue || ''),
+                sortField: headers.includes(saved?.sortField) ? saved.sortField : '',
+                sortDirection: saved?.sortDirection === 'desc' ? 'desc' : 'asc'
+            };
+            sourceDetailPages[type] = 0;
+            host.replaceChildren();
+            const title = document.createElement('h3'); title.textContent = type === 'base' ? '基础表原始详表' : '全量参照集原始详表'; host.appendChild(title);
+            const controls = document.createElement('div'); controls.className = 'report-controls';
+            const fieldOptions = [['*', '全部列'], ...headers.map(h => [h, h])];
+            const sortOptions = [['', '原始顺序'], ...headers.map(h => [h, h])];
+            const pref = sourceDetailPrefs[type];
+            const update = (key, value) => { pref[key] = value; sourceDetailPages[type] = 0; saveSourceDetailPreference(type); renderSourceDetail(type); };
+            const label = (name, element) => { const wrapper = document.createElement('label'); wrapper.textContent = name; wrapper.appendChild(element); controls.appendChild(wrapper); };
+            label('过滤列', sourceDetailSelect(fieldOptions, pref.filterField, value => update('filterField', value)));
+            label('条件', sourceDetailSelect([['contains', '包含'], ['equals', '等于'], ['not-equals', '不等于'], ['empty', '为空'], ['not-empty', '不为空']], pref.filterOperator, value => update('filterOperator', value)));
+            const query = document.createElement('input'); query.placeholder = '输入过滤值'; query.value = pref.filterValue;
+            query.addEventListener('input', debounce(() => update('filterValue', query.value), 250)); label('过滤值', query);
+            label('排序列', sourceDetailSelect(sortOptions, pref.sortField, value => update('sortField', value)));
+            label('顺序', sourceDetailSelect([['asc', '升序'], ['desc', '降序']], pref.sortDirection, value => update('sortDirection', value)));
+            host.appendChild(controls);
+            const columnsTitle = document.createElement('div'); columnsTitle.textContent = '显示列（自动保存）'; columnsTitle.style.fontSize = '12px'; host.appendChild(columnsTitle);
+            const columns = document.createElement('div'); columns.className = 'source-detail-columns';
+            headers.forEach(header => {
+                const item = document.createElement('label'), checkbox = document.createElement('input');
+                checkbox.type = 'checkbox'; checkbox.checked = pref.visible.includes(header);
+                checkbox.addEventListener('change', () => {
+                    pref.visible = checkbox.checked ? [...pref.visible, header] : pref.visible.filter(h => h !== header);
+                    saveSourceDetailPreference(type); renderSourceDetail(type);
+                });
+                item.append(checkbox, document.createTextNode(header)); columns.appendChild(item);
+            });
+            host.appendChild(columns);
+            const summary = document.createElement('div'); summary.id = `${type}-detail-summary`; summary.className = 'hint'; host.appendChild(summary);
+            const table = document.createElement('div'); table.id = `${type}-detail-table`; table.className = 'source-detail-wrap'; host.appendChild(table);
+            const pagination = document.createElement('div'); pagination.className = 'source-detail-page';
+            const previous = document.createElement('button'), next = document.createElement('button'), page = document.createElement('span');
+            previous.textContent = '上一页'; next.textContent = '下一页'; previous.type = next.type = 'button';
+            previous.addEventListener('click', () => { sourceDetailPages[type]--; renderSourceDetail(type); });
+            next.addEventListener('click', () => { sourceDetailPages[type]++; renderSourceDetail(type); });
+            pagination.append(previous, page, next); host.appendChild(pagination);
+            host._pagination = { previous, next, page };
+            renderSourceDetail(type);
+        }
+        function renderSourceDetail(type) {
+            const host = document.getElementById(`${type}-detail-panel`), tableHost = document.getElementById(`${type}-detail-table`);
+            const pref = sourceDetailPrefs[type]; if (!pref || !tableHost) return;
+            const { rows: allRows, headers } = sourceDetailData[type];
+            const term = pref.filterValue.trim().toLocaleLowerCase();
+            const rows = allRows.filter(row => {
+                if (!term && !['empty', 'not-empty'].includes(pref.filterOperator)) return true;
+                const fields = pref.filterField === '*' ? headers : [pref.filterField];
+                const matches = fields.map(field => String(row[field] ?? '').trim().toLocaleLowerCase());
+                if (pref.filterOperator === 'empty') return matches.some(value => value === '');
+                if (pref.filterOperator === 'not-empty') return matches.some(value => value !== '');
+                if (pref.filterOperator === 'equals') return matches.some(value => value === term);
+                if (pref.filterOperator === 'not-equals') return matches.every(value => value !== term);
+                return matches.some(value => value.includes(term));
+            });
+            if (pref.sortField) {
+                const collator = new Intl.Collator('zh-CN', { numeric: true, sensitivity: 'base' });
+                rows.sort((a, b) => {
+                    const left = String(a[pref.sortField] ?? ''), right = String(b[pref.sortField] ?? '');
+                    return (pref.sortDirection === 'desc' ? -1 : 1) * collator.compare(left, right);
+                });
+            }
+            const pageSize = 200, pages = Math.max(1, Math.ceil(rows.length / pageSize));
+            sourceDetailPages[type] = Math.max(0, Math.min(sourceDetailPages[type], pages - 1));
+            document.getElementById(`${type}-detail-summary`).textContent = `原始 ${allRows.length} 行，过滤后 ${rows.length} 行。`;
+            tableHost.replaceChildren();
+            if (rows.length) {
+                const table = document.createElement('table'); table.className = 'source-detail-table';
+                const head = table.createTHead().insertRow();
+                const visibleHeaders = headers.filter(h => pref.visible.includes(h));
+                ['序号', ...visibleHeaders].forEach(header => { const th = document.createElement('th'); th.textContent = header; head.appendChild(th); });
+                const body = table.createTBody(), start = sourceDetailPages[type] * pageSize;
+                rows.slice(start, start + pageSize).forEach((row, index) => {
+                    const tr = body.insertRow();
+                    const sequence = tr.insertCell(); sequence.textContent = start + index + 1;
+                    visibleHeaders.forEach(header => {
+                        const td = tr.insertCell(); const value = row[header] ?? '';
+                        if (/^esn$/i.test(String(header).trim())) {
+                            td.className = 'source-detail-esn'; td.textContent = value; td.title = '点击查看完整 ESN 并复制';
+                            td.addEventListener('click', () => openEsnDetail(value));
+                        } else td.textContent = value;
+                    });
+                });
+                tableHost.appendChild(table);
+            } else tableHost.innerHTML = '<div class="empty-state">当前表格没有符合条件的行。</div>';
+            host._pagination.page.textContent = `第 ${sourceDetailPages[type] + 1} / ${pages} 页`;
+            host._pagination.previous.disabled = sourceDetailPages[type] === 0;
+            host._pagination.next.disabled = sourceDetailPages[type] >= pages - 1;
+        }
+        let currentDetailEsn = '';
+        function openEsnDetail(value) {
+            currentDetailEsn = String(value ?? '');
+            document.getElementById('esn-detail-value').textContent = currentDetailEsn;
+            document.getElementById('esn-detail-modal').classList.add('show');
+        }
+        async function copyDetailEsn() {
+            try { await navigator.clipboard.writeText(currentDetailEsn); }
+            catch (_) {
+                const input = document.createElement('textarea'); input.value = currentDetailEsn; document.body.appendChild(input); input.select(); document.execCommand('copy'); input.remove();
+            }
+            const button = document.getElementById('esn-detail-copy'); const original = button.textContent; button.textContent = '已复制'; setTimeout(() => { button.textContent = original; }, 1200);
+        }
+        function refreshExtraViews() {
+            fillReportColumns();
+            loadReportPreferences();
+            selectLatestReportMonth();
+            viewDirtyFlags.monthly = true;
+            viewDirtyFlags.detail = true;
+            setupSourceDetail('base');
+            setupSourceDetail('full');
+            if (currentActiveView === 'monthly') {
+                scheduleMonthlyRender({ reason: '正在生成月报...', showLoading: true });
+            } else if (currentActiveView === 'detail') {
+                scheduleDetailRender({ showLoading: true });
+            }
+        }
+        function dedupReportRows(rows) {
+            const mode = document.getElementById('report-source').value;
+            if (mode === 'raw' || mode === 'full') return [...rows];
+            const normal = processNormalDeduplication(rows.filter(row => getEsnValue(row).toUpperCase() !== 'ANY'));
+            const any = rows.filter(row => getEsnValue(row).toUpperCase() === 'ANY');
+            return mode === 'both-dedup' || mode === 'full-both-dedup'
+                ? [...normal, ...processAnyDeduplication(any)] : [...normal, ...any];
+        }
+        document.getElementById('report-previous').addEventListener('change', async function () {
+            previousReportRows = [];
+            previousReportGroups = new Map();
+            for (const file of this.files) {
+                try {
+                    const workbook = XLSX.read(await file.arrayBuffer(), { type: 'array', cellFormula: false, cellHTML: false });
+                    const names = workbook.SheetNames.includes('NIS重点遗留任务') ? ['NIS重点遗留任务'] : workbook.SheetNames;
+                    names.forEach(name => {
+                        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[name], { defval: '' }).filter(getEsnValue);
+                        previousReportRows.push(...rows);
+                        if (!previousReportGroups.has(name)) previousReportGroups.set(name, []);
+                        previousReportGroups.get(name).push(...rows);
+                    });
+                } catch (error) { logger.log(`上月文件读取失败：${file.name}，${error.message}`, 'error'); }
+            }
+            scheduleMonthlyRender({ reason: '正在比对上月数据...' });
+        });
+        ['report-account', 'report-scenario', 'report-line'].forEach(id => document.getElementById(id).addEventListener('change', () => {
+            if (id === 'report-account') { fillIgnoredAccounts(); fillReportGroups(); }
+            if (id === 'report-scenario' || id === 'report-line') fillReportColumnGroups();
+            saveReportPreferences(); scheduleMonthlyRender({ reason: '正在更新分组规则...' });
+        }));
+        document.getElementById('report-source').addEventListener('change', () => {
+            saveReportPreferences();
+            ['report-account', 'report-scenario', 'report-line'].forEach(id => { document.getElementById(id).value = ''; });
+            fillReportColumns(); loadReportPreferences(); selectLatestReportMonth();
+            scheduleMonthlyRender({ reason: '正在根据新口径计算月报数据...' });
+        });
+        document.getElementById('report-add-filter').addEventListener('click', () => { addReportFilterRow(); saveReportPreferences(); scheduleMonthlyRender({ reason: '正在更新筛选条件...' }); });
+        document.getElementById('report-add-risk-filter').addEventListener('click', () => { addReportFilterRow({}, 'report-risk-filters'); saveReportPreferences(); scheduleMonthlyRender({ reason: '正在更新筛选条件...' }); });
+        ['report-risk-name-column', 'report-risk-names', 'report-risk-logic', 'report-status-column', 'report-overdue-terms', 'report-near-terms'].forEach(id => {
+            document.getElementById(id).addEventListener('input', debounce(() => { saveReportPreferences(); scheduleMonthlyRender({ reason: '正在更新报表参数...' }); }, 250));
+        });
+        document.getElementById('report-time-column').addEventListener('change', () => {
+            saveReportPreferences(); updateReportTimeColumnInfo(); selectLatestReportMonth(); scheduleMonthlyRender({ reason: '正在按新时间列重新统计...' });
+        });
+        ['report-expiry-enabled', 'report-expiry-column', 'report-expiry-threshold'].forEach(id => {
+            document.getElementById(id).addEventListener('change', () => { saveReportPreferences(); scheduleMonthlyRender({ reason: '正在更新失效规则...' }); });
+        });
+        document.getElementById('report-filter-logic').addEventListener('change', () => { saveReportPreferences(); scheduleMonthlyRender({ reason: '正在更新筛选逻辑...' }); });
+        document.getElementById('report-add-group').addEventListener('click', () => { addReportGroup(); saveReportPreferences(); scheduleMonthlyRender({ reason: '正在更新报表分组...' }); });
+        document.getElementById('report-add-column-group').addEventListener('click', () => { addReportColumnGroup(); saveReportPreferences(); scheduleMonthlyRender({ reason: '正在更新列分组...' }); });
+        const reportSettingsModal = document.getElementById('report-settings-modal');
+        document.getElementById('report-open-settings').addEventListener('click', () => { renderReportOrders(); reportSettingsModal.classList.add('show'); });
+        document.getElementById('report-close-settings').addEventListener('click', () => reportSettingsModal.classList.remove('show'));
+        reportSettingsModal.addEventListener('click', event => { if (event.target === reportSettingsModal) reportSettingsModal.classList.remove('show'); });
+        document.addEventListener('keydown', event => { if (event.key === 'Escape') reportSettingsModal.classList.remove('show'); });
+        const esnDetailModal = document.getElementById('esn-detail-modal');
+        document.getElementById('esn-detail-close').addEventListener('click', () => esnDetailModal.classList.remove('show'));
+        document.getElementById('esn-detail-copy').addEventListener('click', copyDetailEsn);
+        esnDetailModal.addEventListener('click', event => { if (event.target === esnDetailModal) esnDetailModal.classList.remove('show'); });
+        document.addEventListener('keydown', event => { if (event.key === 'Escape') esnDetailModal.classList.remove('show'); });
+        document.getElementById('report-month').value = new Date().toISOString().slice(0, 7);
+        document.getElementById('report-year').value = new Date().getFullYear();
+        document.getElementById('report-period').addEventListener('change', function () {
+            document.getElementById('report-month-wrap').style.display = this.value === 'month' ? '' : 'none';
+            document.getElementById('report-year-wrap').style.display = this.value === 'year' ? '' : 'none';
+            scheduleMonthlyRender({ reason: '正在切换统计时间范围...' });
+        });
+        document.getElementById('report-month').addEventListener('change', () => scheduleMonthlyRender({ reason: '正在计算指定月份月报...' }));
+        document.getElementById('report-year').addEventListener('change', () => scheduleMonthlyRender({ reason: '正在计算指定年度月报...' }));
+        document.getElementById('report-reset-copy').addEventListener('click', () => {
+            try { localStorage.removeItem(reportCopyKey()); } catch (_) { /* browser storage may be unavailable */ }
+            scheduleMonthlyRender({ reason: '正在恢复自动文案...' });
+        });
+        reportTextPopover.addEventListener('pointerdown', event => event.preventDefault());
+        document.getElementById('report-popover-bold').addEventListener('click', () => applyReportTextCommand('bold'));
+        document.querySelectorAll('[data-report-color]').forEach(button => button.addEventListener('click', () => applyReportTextCommand('foreColor', button.dataset.reportColor)));
+        document.addEventListener('selectionchange', () => requestAnimationFrame(rememberReportSelection));
+        document.addEventListener('mousedown', event => { if (!event.target.closest('#report-sheet .report-copy, #report-text-popover')) hideReportTextPopover(); });
+        window.addEventListener('resize', hideReportTextPopover);
+        document.getElementById('report-export-preferences').addEventListener('click', exportReportPreferences);
+        document.getElementById('report-import-preferences').addEventListener('click', () => document.getElementById('report-import-file').click());
+        document.getElementById('report-import-file').addEventListener('change', async event => {
+            await importReportPreferences(event.target.files?.[0]); event.target.value = '';
+        });
+        document.getElementById('report-excel').addEventListener('click', exportMonthlyExcel);
+        document.getElementById('report-png').addEventListener('click', async () => {
+            if (!reportRows().length) return;
+            if (typeof html2canvas !== 'function') { showNotice('导出失败', '图片导出组件未加载，请检查网络后重试。'); return; }
+            const element = document.getElementById('report-sheet');
+            const canvas = await html2canvas(element, { backgroundColor: '#ffffff', scale: 2, useCORS: true });
+            const period = document.getElementById('report-period').value;
+            const label = period === 'all' ? '全部时间' : period === 'year' ? document.getElementById('report-year').value : document.getElementById('report-month').value;
+            const link = document.createElement('a'); link.download = `临时License报表_${label}.png`; link.href = canvas.toDataURL('image/png'); link.click();
+        });
+        setupSourceDetail('base');
+        setupSourceDetail('full');
+        updateImportSummaryBar();
     </script>
 </body>
 

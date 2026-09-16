@@ -46,6 +46,7 @@ function catalogTool(slug, overrides = {}) {
 
 function run() {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'tools-market-test-'));
+    const bundledRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'tools-bundled-test-'));
     const previousKey = process.env.TOOLS_MARKET_PUBLIC_KEY;
     const previousRequired = process.env.TOOLS_MARKET_REQUIRE_SIGNATURE;
     try {
@@ -87,6 +88,29 @@ function run() {
         const current = market.compareCatalogTool(catalogTool('current'), { targetDir: root, platformVersion: '1.0.209' });
         assert.strictEqual(current.status, 'unchanged');
 
+        writeManifest(bundledRoot, 'newer-bundled', {
+            tool: { slug: 'newer-bundled', name: 'newer-bundled', updatedAt: '2026-09-16T00:00:00.000Z' }
+        });
+        writeManifest(root, 'newer-bundled', {
+            builtIn: true,
+            system: { managedBy: 'tools-platform', fingerprint: 'old', files: ['index.html'] },
+            market: { id: 'official/newer-bundled', releaseVersion: '2026.09.08', files: [] }
+        });
+        const bundledNewer = market.compareCatalogTool(catalogTool('newer-bundled'), { targetDir: root, sourceDir: bundledRoot, platformVersion: '1.0.209' });
+        assert.strictEqual(bundledNewer.selectedSource, 'builtin');
+        assert.strictEqual(bundledNewer.status, 'update');
+        assert.strictEqual(bundledNewer.fingerprint, fingerprintFiles(path.join(bundledRoot, 'newer-bundled'), ['.tool-manifest.json', 'index.html']));
+
+        writeManifest(bundledRoot, 'newer-market', {
+            tool: { slug: 'newer-market', name: 'newer-market', updatedAt: '2026-09-01T00:00:00.000Z' }
+        });
+        const marketNewer = market.compareCatalogTool(catalogTool('newer-market'), { targetDir: root, sourceDir: bundledRoot, platformVersion: '1.0.209' });
+        assert.strictEqual(marketNewer.selectedSource, 'market');
+        assert.strictEqual(marketNewer.fingerprint, 'b'.repeat(64));
+        const unknownDate = market.compareCatalogTool(catalogTool('newer-market', { releasedAt: null }), { targetDir: root, sourceDir: bundledRoot, platformVersion: '1.0.209' });
+        assert.strictEqual(unknownDate.status, 'unresolved');
+        assert.strictEqual(unknownDate.recommended, false);
+
         const incompatible = market.compareCatalogTool(catalogTool('future', { minPlatformVersion: '2.0.0' }), { targetDir: root, platformVersion: '1.0.209' });
         assert.strictEqual(incompatible.status, 'incompatible');
         assert.strictEqual(market.versionAtLeast('1.0.209', '1.0.180'), true);
@@ -107,6 +131,7 @@ function run() {
         if (previousKey === undefined) delete process.env.TOOLS_MARKET_PUBLIC_KEY; else process.env.TOOLS_MARKET_PUBLIC_KEY = previousKey;
         if (previousRequired === undefined) delete process.env.TOOLS_MARKET_REQUIRE_SIGNATURE; else process.env.TOOLS_MARKET_REQUIRE_SIGNATURE = previousRequired;
         fs.rmSync(root, { recursive: true, force: true });
+        fs.rmSync(bundledRoot, { recursive: true, force: true });
     }
 }
 

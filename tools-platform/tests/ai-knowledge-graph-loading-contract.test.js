@@ -45,12 +45,15 @@ test('custom tool shell reports stages, times out, and offers retry', () => {
     assert.match(shellSource, /30000/);
 });
 
-test('shared navbar defers the expensive built-in tool scan once per renderer session', () => {
+test('shared navbar checks built-in tools after page load unless the market was opened', () => {
     const navbarSource = read('frontend/js/shared/navbar.js');
     const customToolsRouteSource = read('backend/routes/custom-tools.js');
-    assert.match(navbarSource, /BUILTIN_TOOLS_SYNC_SESSION_KEY/);
+    assert.doesNotMatch(navbarSource, /BUILTIN_TOOLS_SYNC_SESSION_KEY/);
+    assert.match(navbarSource, /isBuiltinToolsSyncSnoozedToday\(\)/);
     assert.match(navbarSource, /requestIdleCallback/);
     assert.match(navbarSource, /setTimeout\(checkBuiltinToolsSync, 8000\)/);
+    assert.match(navbarSource, /toolMarketOpened\(\)/);
+    assert.match(read('frontend/index.html'), /button\.dataset\.opened = '1'/);
     assert.match(customToolsRouteSource, /new Worker\(/);
     assert.match(customToolsRouteSource, /previewBuiltinToolsOffMainThread/);
 
@@ -64,7 +67,7 @@ test('shared navbar defers the expensive built-in tool scan once per renderer se
         .map(filePath => fs.readFileSync(filePath, 'utf8').match(/navbar\.js\?v=([^"']+)/)?.[1])
         .filter(Boolean);
     assert.ok(navbarReferences.length > 1);
-    assert.deepEqual([...new Set(navbarReferences)], ['20260914-02']);
+    assert.deepEqual([...new Set(navbarReferences)], ['20260916-02']);
 });
 
 test('built-in tool preview worker returns a serializable preview off the main thread', async t => {
