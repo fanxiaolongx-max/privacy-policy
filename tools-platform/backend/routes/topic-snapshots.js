@@ -40,6 +40,16 @@ router.get('/latest', async (req, res) => {
     }
 });
 
+router.get('/eos-monthly-report', async (req, res) => {
+    try {
+        const result = await topicSnapshotsRepo.getEosMonthlyReport(req.query.month);
+        res.setHeader('X-Data-Source', 'sqlite');
+        res.json(result);
+    } catch (error) {
+        sendError(res, error, '读取 EOS 进展月报失败');
+    }
+});
+
 router.get('/:id', async (req, res) => {
     try {
         const item = await topicSnapshotsRepo.getSnapshot(req.params.id);

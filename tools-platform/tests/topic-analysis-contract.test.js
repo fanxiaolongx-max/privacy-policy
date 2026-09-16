@@ -20,7 +20,14 @@ test('topic snapshot API and analysis page are wired', () => {
     assert.match(routes, /router\.get\('\/:id'/);
     assert.match(routes, /router\.post\('\/'/);
     assert.match(page, /专题分析/);
-    assert.match(page, /topic-analysis\.js\?v=20260913-01/);
+    assert.match(page, /topic-analysis\.js\?v=20260916-06/);
+    assert.match(page, /eosMonthlyReport/);
+    assert.match(page, /topic-report-sheet/);
+    assert.match(page, /制定计划/);
+    assert.match(page, /发送预警函中/);
+    assert.match(page, /IBMS 更新新增/);
+    assert.doesNotMatch(page, /待核差额/);
+    assert.match(routes, /router\.get\('\/eos-monthly-report'/);
     assert.match(page, /下载详表/);
     assert.match(script, /API\.get\('\/api\/topic-snapshots\?limit=200'\)/);
     assert.match(script, /API\.delete/);

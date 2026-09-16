@@ -322,6 +322,46 @@ async function getSeries(options = {}) {
     return result.items.slice().sort((a, b) => String(a.capturedAt).localeCompare(String(b.capturedAt)));
 }
 
+async function getEosMonthlyReport(month) {
+    await ensureReady();
+    const months = await all(`SELECT id, period, captured_at, imported_at FROM (
+        SELECT id, captured_at, imported_at,
+            CASE WHEN period_label GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]*' THEN substr(period_label, 1, 7) ELSE substr(captured_at, 1, 7) END AS period,
+            ROW_NUMBER() OVER (PARTITION BY CASE WHEN period_label GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]*' THEN substr(period_label, 1, 7) ELSE substr(captured_at, 1, 7) END
+                ORDER BY imported_at DESC, rowid DESC) AS rank
+        FROM topic_snapshots WHERE platform = 'netcare'
+    ) WHERE rank = 1 ORDER BY period DESC`);
+    const selected = month ? months.find(row => row.period === month) : months[0];
+    if (month && !/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) throw topicSnapshotError('月份格式应为 YYYY-MM');
+    if (!selected) return { months: months.map(row => row.period), report: null };
+    const item = await getSnapshot(selected.id);
+    const snapshot = item.snapshot;
+    const aliases = { 'NILE ON LINE (NOL)': 'Etisalat Misr' };
+    const customerName = row => aliases[String(row?.customer_name || '').trim()] || String(row?.customer_name || '').trim() || '未分类客户';
+    const buildSection = type => {
+        const rows = type === 'product' ? snapshot.data.eosProduct : snapshot.data.eosVersion;
+        const customers = [...new Set(rows.map(customerName))].sort((a, b) => a.localeCompare(b, 'zh-CN'));
+        const accounts = customers.map(customer => ({ customer, ...buildEosTopic(rows.filter(row => customerName(row) === customer), type, snapshot.settings) }));
+        const total = buildEosTopic(rows, type, snapshot.settings);
+        const groups = new Map();
+        for (const row of rows) {
+            const customer = customerName(row);
+            const product = String(row?.product_name || '未命名产品');
+            const label = type === 'product' ? product : String(row?.software_version || row?.version_name || product);
+            const key = [customer, String(row?.product_line_name || row?.product_line_map || ''), type === 'product' ? product : product, label].join('|||');
+            if (!groups.has(key)) groups.set(key, { customer, label: type === 'product' ? product : `${product} / ${label}`, rows: [] });
+            groups.get(key).rows.push(row);
+        }
+        const priorities = [...groups.values()].map(group => ({ customer: group.customer, label: group.label, ...buildEosTopic(group.rows, type, snapshot.settings) }))
+            .filter(group => group.noPlan > 0).sort((a, b) => b.noPlan - a.noPlan || a.label.localeCompare(b.label, 'zh-CN')).slice(0, 5)
+            .map(({ customer, label, noPlan }) => ({ customer, label, noPlan }));
+        return { accounts, total, priorities };
+    };
+    return { months: months.map(row => row.period), report: { month: selected.period, snapshot: {
+        id: item.id, name: item.name, capturedAt: item.capturedAt, importedAt: item.importedAt
+    }, product: buildSection('product'), version: buildSection('version') } };
+}
+
 async function deleteSnapshot(id) {
     await ensureReady();
     const result = await run('DELETE FROM topic_snapshots WHERE id = ?', [String(id || '')]);
@@ -338,6 +378,7 @@ module.exports = {
     ensureReady,
     getLatestSnapshot,
     getSeries,
+    getEosMonthlyReport,
     getSnapshot,
     listSnapshots,
     normalizeSnapshot,

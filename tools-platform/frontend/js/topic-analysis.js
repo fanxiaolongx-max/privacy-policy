@@ -37,7 +37,7 @@
         }
     };
 
-    const state = { items: [], total: 0, topicKey: 'netcare-eos-product', metricKey: 'pending', detailRows: [], detailColumns: [], detailPage: 1, detailPageSize: 50, detailSortColumn: '', detailSortAscending: true, detailFilter: '' };
+    const state = { items: [], total: 0, topicKey: 'netcare-eos-product', metricKey: 'pending', detailRows: [], detailColumns: [], detailPage: 1, detailPageSize: 50, detailSortColumn: '', detailSortAscending: true, detailFilter: '', eosMonthlyReport: null, fixedCopyDefaults: new Map() };
     const elements = {};
     const DETAIL_LABELS = { customer_name: '客户', product_line_name: '产品线', product_line_map: '产品线', product_name: '产品', software_version: '版本', task_id: '任务单号', need_reduce_cnt: '需消减', reduced_cnt: '已消减', incorporation_total_nes: '数量', incorporated_nes: '已收编', to_be_incorporated_nes: '待收编', current_phase_name: '阶段', scope: '范围', year: '年份', month: '月份', task_count: '变更任务数', operation_success_rate: '操作成功率', rollback_count: '回退数', high_core_total_count: '高危核心', interception_cnt: '拦截数', commands_interception_cnt: '命令行拦截', graphical_interception_cnt: '图形化拦截', period: '期间', sr_total: 'SR 数', sr_frt: 'FRT', unclose_sr_cnt: '未关闭', overdue_sr_cnt: '逾期', minor_sr_cnt: 'Minor', major_sr_cnt: 'Major', critical_sr_cnt: 'Critical' };
     const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
@@ -142,6 +142,132 @@
 
     function renderAnalysis() { renderKpis(); renderChart(); renderTable(); }
 
+    function renderMonthlySection(section, label) {
+        const { total, accounts, priorities } = section;
+        const pct = value => `${Number(value || 0).toFixed(1)}%`;
+        const target = total.targetRate > 0 ? `收编目标 ${pct(total.targetRate)}，当前距离目标 ${pct(Math.max(0, total.targetRate - total.currentRate))}` : '快照中未设置收编目标';
+        const cells = metric => `<td>${metric.quantity}</td><td>${metric.incorporated}</td><td>${pct(metric.currentRate)}</td><td>${metric.pending}</td><td>${metric.annualPlan}</td><td>${metric.noPlan}</td><td>${pct(metric.plannedRate)}</td>`;
+        const rows = accounts.map(item => `<tr><th scope="row">${escapeHtml(item.customer)}</th>${cells(item)}</tr>`).join('');
+        const priorityText = priorities.length ? priorities.map(item => `${escapeHtml(item.customer)} · ${escapeHtml(item.label)}（${item.noPlan}）`).join('；') : '暂无无计划重点项';
+        return `<section class="topic-monthly-section"><h3>➤ 紧急 EOS ${label}收编进展</h3><div class="topic-monthly-copy"><p><strong>【总体进展】</strong>已收编 ${total.incorporated} / ${total.quantity}，当前收编率 ${pct(total.currentRate)}；${target}。完成已录入今年计划 ${total.annualPlan} 后，预计收编率 ${pct(total.plannedRate)}。</p><p><strong>【核心风险】</strong>待收编 ${total.pending}，其中 ${total.noPlan} 尚无今年计划。</p><p><strong>【重点推进】</strong>${priorityText}。</p></div><p class="topic-monthly-intro">${label} EOS 分客户进展如下：</p><div class="topic-table-wrap topic-report-table-wrap"><table class="topic-monthly-table"><thead><tr><th rowspan="3">客户</th><th colspan="7">紧急 EOS · ${label}</th></tr><tr><th rowspan="2">总量</th><th rowspan="2">已收编</th><th rowspan="2">当前收编率</th><th colspan="3">待收编</th><th rowspan="2">计划后收编率</th></tr><tr><th>小计</th><th>今年计划</th><th>无计划</th></tr></thead><tbody>${rows}<tr class="topic-monthly-total"><th scope="row">合计</th>${cells(total)}</tr></tbody></table></div><p class="topic-report-caption">（表 ${label === '产品' ? 1 : 2}：${label} EOS 收编进展）</p></section>`;
+    }
+
+    const MONTHLY_COPY_SELECTOR = '.topic-report-title, .topic-report-objective, .topic-report-heading, .topic-monthly-section h3, .topic-monthly-section .topic-monthly-copy p, .topic-monthly-section .topic-monthly-intro, .topic-monthly-footnote';
+    const FIXED_COPY_SELECTOR = '.topic-fixed-head h3, .topic-fixed-head p, .topic-fixed-block h4, .topic-fixed-steps, .topic-fixed-block .topic-monthly-copy p, .topic-fixed-block .topic-monthly-intro, .topic-fixed-footnote';
+    let editingBlock = null;
+    let editingRange = null;
+
+    function copyStorageKey(scope) {
+        let tenant = 'default';
+        try { tenant = localStorage.getItem('tools_tenant_id') || tenant; } catch (_) { /* storage may be disabled */ }
+        return `topic-eos:monthly-copy:v1:${tenant}:${scope === 'fixed' ? 'fixed' : `month:${state.eosMonthlyReport?.month || ''}`}`;
+    }
+
+    function readCopyPreferences(scope) {
+        try {
+            const value = JSON.parse(localStorage.getItem(copyStorageKey(scope)) || '{}');
+            return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+        } catch (_) { return {}; }
+    }
+
+    function sanitizeCopyHtml(html) {
+        const parsed = new DOMParser().parseFromString(`<div>${String(html || '').slice(0, 10000)}</div>`, 'text/html');
+        const result = document.createElement('div');
+        const safeColor = value => /^#[0-9a-f]{6}$/i.test(value || '') || /^rgba?\([\d\s.,%]+\)$/i.test(value || '') ? value : '';
+        function copyNode(source, target) {
+            if (source.nodeType === Node.TEXT_NODE) { target.appendChild(document.createTextNode(source.textContent)); return; }
+            if (source.nodeType !== Node.ELEMENT_NODE) return;
+            const tag = source.tagName.toLowerCase();
+            if (['script', 'style', 'svg', 'iframe', 'object'].includes(tag)) return;
+            if (tag === 'br') { target.appendChild(document.createElement('br')); return; }
+            let destination = target;
+            if (tag === 'b' || tag === 'strong' || source.style.fontWeight === 'bold' || Number(source.style.fontWeight) >= 600) {
+                const bold = document.createElement('strong'); destination.appendChild(bold); destination = bold;
+            }
+            const color = safeColor(tag === 'font' ? source.getAttribute('color') : source.style.color);
+            if (color) { const span = document.createElement('span'); span.style.color = color; destination.appendChild(span); destination = span; }
+            Array.from(source.childNodes).forEach(child => copyNode(child, destination));
+            if (tag === 'div' || tag === 'p') target.appendChild(document.createElement('br'));
+        }
+        Array.from(parsed.body.firstElementChild?.childNodes || []).forEach(node => copyNode(node, result));
+        return result.innerHTML.replace(/(?:<br>)+$/i, '');
+    }
+
+    function setCopyStatus(message) { elements.eosCopyStatus.textContent = message; }
+
+    function saveCopy(block) {
+        const scope = block.dataset.eosCopyScope;
+        const preferences = readCopyPreferences(scope);
+        preferences[block.dataset.eosCopyKey] = sanitizeCopyHtml(block.innerHTML);
+        try { localStorage.setItem(copyStorageKey(scope), JSON.stringify(preferences)); setCopyStatus('已自动保存'); }
+        catch (_) { setCopyStatus('浏览器未能保存偏好，本次修改仅在当前页面有效'); }
+    }
+
+    function activateCopy(root, selector, scope) {
+        const preferences = readCopyPreferences(scope);
+        root.querySelectorAll(selector).forEach((block, index) => {
+            const key = `copy-${index}`;
+            if (scope === 'fixed' && !state.fixedCopyDefaults.has(key)) state.fixedCopyDefaults.set(key, block.innerHTML);
+            if (typeof preferences[key] === 'string') block.innerHTML = sanitizeCopyHtml(preferences[key]);
+            block.contentEditable = 'true'; block.spellcheck = false;
+            block.classList.add('topic-editable'); block.dataset.eosCopyKey = key; block.dataset.eosCopyScope = scope;
+            block.title = '点击修改，修改后自动保存';
+            block.addEventListener('input', () => saveCopy(block));
+            block.addEventListener('blur', () => { const clean = sanitizeCopyHtml(block.innerHTML); if (block.innerHTML !== clean) block.innerHTML = clean; });
+            block.addEventListener('paste', event => {
+                event.preventDefault();
+                document.execCommand('insertText', false, event.clipboardData.getData('text/plain'));
+            });
+            block.addEventListener('drop', event => event.preventDefault());
+        });
+    }
+
+    function hideTextToolbar() { elements.eosTextToolbar.hidden = true; editingBlock = null; editingRange = null; }
+
+    function rememberTextSelection() {
+        const selection = window.getSelection();
+        if (!selection?.rangeCount || selection.isCollapsed) { hideTextToolbar(); return; }
+        const anchor = selection.anchorNode?.nodeType === Node.ELEMENT_NODE ? selection.anchorNode : selection.anchorNode?.parentElement;
+        const focus = selection.focusNode?.nodeType === Node.ELEMENT_NODE ? selection.focusNode : selection.focusNode?.parentElement;
+        const block = anchor?.closest?.('.topic-report-sheet .topic-editable');
+        if (!block || focus?.closest?.('.topic-report-sheet .topic-editable') !== block) { hideTextToolbar(); return; }
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        if (!rect.width && !rect.height) { hideTextToolbar(); return; }
+        editingBlock = block; editingRange = range.cloneRange();
+        elements.eosTextToolbar.hidden = false;
+        elements.eosTextToolbar.style.top = `${Math.max(8, rect.top - elements.eosTextToolbar.offsetHeight - 8)}px`;
+        elements.eosTextToolbar.style.left = `${Math.max(8, Math.min(rect.left, window.innerWidth - elements.eosTextToolbar.offsetWidth - 8))}px`;
+    }
+
+    function applyTextFormat(command, value) {
+        if (!editingBlock?.isConnected || !editingRange || editingRange.collapsed) return;
+        editingBlock.focus();
+        const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(editingRange);
+        if (command === 'foreColor') document.execCommand('styleWithCSS', false, true);
+        document.execCommand(command, false, value || null);
+        saveCopy(editingBlock);
+        rememberTextSelection();
+    }
+
+    function renderEosMonthlyReport(report) {
+        elements.eosMonthlyReport.innerHTML = `<h3 class="topic-report-title">EOS 产品与版本收编进展月报（${escapeHtml(report.month)}）</h3><p class="topic-report-objective">总体目标：加快紧急 EOS 产品与版本收编，优先推进无计划网元的升级、退网或收编方案。</p><p class="topic-report-heading">简要进展：</p>` + renderMonthlySection(report.product, '产品') + renderMonthlySection(report.version, '版本') + '<p class="topic-monthly-footnote">口径：已退网网元计入已收编；无计划 = 待收编 − 今年计划；计划后收编率 =（已收编 + 今年计划）÷ 总量。计划后数值以完成已录入计划为前提，不代表已完成。</p>';
+        activateCopy(elements.eosMonthlyReport, MONTHLY_COPY_SELECTOR, 'monthly');
+    }
+
+    async function loadMonthlyReport(month = '') {
+        elements.eosMonthlyReport.textContent = '正在生成月报…';
+        try {
+            const result = await API.get(`/api/topic-snapshots/eos-monthly-report${month ? `?month=${encodeURIComponent(month)}` : ''}`);
+            elements.eosMonthlyMonth.innerHTML = (result.months || []).map(value => `<option value="${escapeHtml(value)}"${result.report?.month === value ? ' selected' : ''}>${escapeHtml(value)}</option>`).join('');
+            if (!result.report) { state.eosMonthlyReport = null; elements.eosCopyResetMonth.disabled = true; elements.eosMonthlySource.textContent = ''; elements.eosMonthlyReport.textContent = '暂无该月的 NetCare EOS 产品与版本快照。'; return; }
+            const report = result.report; state.eosMonthlyReport = report;
+            elements.eosCopyResetMonth.disabled = false;
+            elements.eosMonthlySource.textContent = `数据月份 ${report.month} · 数据时间 ${formatTime(report.snapshot.capturedAt)} · 导入时间 ${formatTime(report.snapshot.importedAt)}${report.snapshot.name ? ` · ${report.snapshot.name}` : ''}`;
+            renderEosMonthlyReport(report);
+        } catch (error) { state.eosMonthlyReport = null; elements.eosCopyResetMonth.disabled = true; elements.eosMonthlyReport.textContent = `月报生成失败：${error.message}`; }
+    }
+
     async function loadData() {
         elements.loadStatus.textContent = '正在读取…';
         try {
@@ -149,6 +275,7 @@
             state.items = Array.isArray(result.items) ? result.items : []; state.total = Number(result.total) || state.items.length;
             updateStats(); renderAnalysis(); elements.loadStatus.textContent = `已读取 ${state.items.length} 份快照`;
         } catch (error) { elements.loadStatus.textContent = `读取失败：${error.message}`; elements.trendChart.innerHTML = '<div class="topic-chart-empty">暂时无法读取趋势数据</div>'; }
+        await loadMonthlyReport(elements.eosMonthlyMonth.value);
     }
 
     async function getFullSnapshot(id) { return (await API.get(`/api/topic-snapshots/${encodeURIComponent(id)}`)).item; }
@@ -163,7 +290,27 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        ['totalCount', 'netcareCount', 'datafabCount', 'latestTime', 'refreshButton', 'topicFilter', 'metricFilter', 'analysisTitle', 'metricDefinition', 'topicKpis', 'trendChart', 'metricColumnTitle', 'loadStatus', 'historyBody', 'emptyState', 'detailModal', 'detailTitle', 'detailSummary', 'detailTable', 'detailJson', 'downloadDetail', 'viewRaw', 'toggleDetailFullscreen', 'detailTools', 'detailSearch', 'detailPageSize', 'detailSortColumn', 'detailSortDirection', 'closeDetail'].forEach(id => { elements[id] = document.getElementById(id); });
+        ['totalCount', 'netcareCount', 'datafabCount', 'latestTime', 'refreshButton', 'topicFilter', 'metricFilter', 'analysisTitle', 'metricDefinition', 'topicKpis', 'trendChart', 'metricColumnTitle', 'loadStatus', 'historyBody', 'emptyState', 'eosMonthlyMonth', 'eosMonthlySource', 'eosMonthlyReport', 'eosCopyResetMonth', 'eosCopyResetFixed', 'eosCopyStatus', 'eosTextToolbar', 'detailModal', 'detailTitle', 'detailSummary', 'detailTable', 'detailJson', 'downloadDetail', 'viewRaw', 'toggleDetailFullscreen', 'detailTools', 'detailSearch', 'detailPageSize', 'detailSortColumn', 'detailSortDirection', 'closeDetail'].forEach(id => { elements[id] = document.getElementById(id); });
+        activateCopy(document.querySelector('.topic-fixed-progress'), FIXED_COPY_SELECTOR, 'fixed');
+        document.addEventListener('selectionchange', rememberTextSelection);
+        document.addEventListener('mousedown', event => { if (!event.target.closest('.topic-report-sheet .topic-editable, #eosTextToolbar')) hideTextToolbar(); });
+        elements.eosTextToolbar.addEventListener('mousedown', event => event.preventDefault());
+        elements.eosTextToolbar.addEventListener('click', event => {
+            const button = event.target.closest('button'); if (!button) return;
+            if (button.dataset.eosFormat === 'bold') applyTextFormat('bold');
+            else if (button.dataset.eosColor) applyTextFormat('foreColor', button.dataset.eosColor);
+        });
+        elements.eosCopyResetMonth.addEventListener('click', () => {
+            if (!state.eosMonthlyReport) return;
+            try { localStorage.removeItem(copyStorageKey('monthly')); } catch (_) { setCopyStatus('浏览器未能清除偏好'); return; }
+            renderEosMonthlyReport(state.eosMonthlyReport); hideTextToolbar(); setCopyStatus('已恢复本月自动文案');
+        });
+        elements.eosCopyResetFixed.addEventListener('click', () => {
+            try { localStorage.removeItem(copyStorageKey('fixed')); } catch (_) { setCopyStatus('浏览器未能清除偏好'); return; }
+            document.querySelectorAll('.topic-fixed-progress .topic-editable').forEach(block => { block.innerHTML = state.fixedCopyDefaults.get(block.dataset.eosCopyKey) || ''; });
+            hideTextToolbar(); setCopyStatus('已恢复固定文案');
+        });
+        elements.eosMonthlyMonth.addEventListener('change', event => loadMonthlyReport(event.target.value));
         renderTopicControls(); elements.refreshButton.addEventListener('click', loadData);
         elements.topicFilter.addEventListener('change', event => { state.topicKey = event.target.value; state.metricKey = topic().metrics[0].key; renderTopicControls(); renderAnalysis(); });
         elements.metricFilter.addEventListener('change', event => { state.metricKey = event.target.value; renderAnalysis(); });

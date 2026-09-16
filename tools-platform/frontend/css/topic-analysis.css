@@ -62,6 +62,77 @@ body { margin:0; background:radial-gradient(circle at 90% 0, rgba(109,53,242,.1)
 .topic-modal-head button { border:0; background:none; font-size:27px; cursor:pointer; }
 .topic-modal pre { margin:0; padding:20px; overflow:auto; font-size:12px; line-height:1.55; background:#111624; color:#d9e2ff; }
 .uiv-topic-analysis-link { display:inline-block; margin-top:6px; color:#d7caff; font-weight:750; font-size:12px; text-decoration:none; }
+.topic-monthly-source { margin:0 0 14px!important; color:var(--topic-muted); }
+.topic-monthly-section { padding:18px 0; border-top:1px solid var(--topic-line); }
+.topic-monthly-section h3 { margin:0 0 7px; font-size:17px; }
+.topic-monthly-intro { margin-bottom:14px!important; font-weight:650; }
+.topic-monthly-layout { display:grid; grid-template-columns:minmax(0,2fr) minmax(230px,1fr); gap:16px; align-items:start; }
+.topic-monthly-table { min-width:770px!important; text-align:right; }
+.topic-monthly-table th { text-align:right; white-space:nowrap; }
+.topic-monthly-table th:first-child { text-align:left; }
+.topic-monthly-total th,.topic-monthly-total td { font-weight:800; background:rgba(109,53,242,.07); }
+.topic-monthly-notes { padding:15px; border:1px solid var(--topic-line); border-radius:12px; background:var(--topic-card); overflow-wrap:anywhere; }
+.topic-monthly-notes h4 { margin:0 0 4px; color:var(--topic-brand); font-size:13px; }
+.topic-monthly-notes p { margin:0 0 13px; }
+.topic-monthly-notes p:last-child { margin-bottom:0; }
+.topic-monthly-footnote { padding-top:10px; border-top:1px solid var(--topic-line); }
+.topic-fixed-progress { margin-top:24px; padding-top:22px; border-top:2px solid var(--topic-line); }
+.topic-fixed-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:8px; }
+.topic-fixed-head h3 { margin:0 0 7px; font-size:19px; }
+.topic-fixed-head span { flex:none; padding:7px 11px; border-radius:999px; background:#e8f7ef; color:#087443; font-size:12px; font-weight:800; }
+.topic-fixed-block { padding:18px 0; border-top:1px solid var(--topic-line); }
+.topic-fixed-block h4 { margin:0 0 7px; font-size:16px; }
+.topic-fixed-steps { margin:0 0 13px!important; }
+.topic-fixed-table { min-width:760px!important; text-align:right; }
+.topic-fixed-table th { text-align:right; white-space:nowrap; }
+.topic-fixed-table th:first-child { text-align:left; }
+.topic-fixed-table .topic-fixed-complete { color:#087443; font-weight:800; }
+.topic-fixed-block .topic-monthly-notes h5 { margin:0 0 4px; color:var(--topic-brand); font-size:13px; }
+.topic-fixed-footnote { padding-top:10px; border-top:1px solid var(--topic-line); }
+.topic-monthly-panel { background:#f8fafc; }
+.topic-monthly-panel .topic-panel-head h2 { color:#0f172a; }
+.topic-monthly-panel .topic-panel-head p { color:#64748b; }
+.topic-monthly-panel .topic-panel-head label { color:#64748b; }
+.topic-monthly-controls { display:flex; align-items:center; justify-content:flex-end; gap:8px; flex-wrap:wrap; }
+.topic-monthly-controls button { border:1px solid #cbd5e1; border-radius:7px; padding:8px 10px; background:#fff; color:#334155; font-size:12px; font-weight:700; cursor:pointer; }
+.topic-monthly-controls button:hover { border-color:#2563eb; color:#1d4ed8; }
+.topic-monthly-controls button:disabled { opacity:.5; cursor:not-allowed; }
+.topic-monthly-edit-hint { margin:-5px 0 12px!important; color:#64748b!important; font-size:12px!important; }
+.topic-monthly-edit-hint span { color:#087443; font-weight:700; }
+.topic-report-sheet { max-width:1200px; margin:0 auto; padding:22px; border:1px solid #e2e8f0; background:#fff; color:#0f172a; box-shadow:0 1px 2px rgba(15,23,42,.05); }
+.topic-editable { cursor:text; }
+.topic-editable:hover { background-color:#f8fbff; }
+.topic-editable:focus { outline:2px solid #2563eb; outline-offset:2px; background-color:#fff; }
+.topic-text-toolbar { position:fixed; z-index:10010; display:flex; align-items:center; gap:5px; padding:6px; border:1px solid #cbd5e1; border-radius:9px; background:#fff; box-shadow:0 8px 24px rgba(15,23,42,.2); }
+.topic-text-toolbar[hidden] { display:none; }
+.topic-text-toolbar button { display:grid; place-items:center; width:29px; height:29px; border:1px solid #d7e0ea; border-radius:6px; background:#fff; color:#1e293b; cursor:pointer; }
+.topic-text-toolbar button:hover { border-color:#2563eb; background:#eff6ff; }
+.topic-text-toolbar button[data-eos-color] { width:23px; height:23px; border:2px solid #fff; border-radius:50%; background:var(--swatch); box-shadow:0 0 0 1px #cbd5e1; }
+.topic-report-sheet p { color:#334155; font-size:14px; line-height:1.6; }
+.topic-report-sheet .topic-monthly-source { margin:0 0 10px!important; color:#64748b; font-size:12px; }
+.topic-report-title { margin:0 0 10px!important; padding:14px; background:#dceef4; color:#0f172a; font-size:21px!important; font-weight:800; text-align:center; }
+.topic-report-objective { margin:0 0 8px!important; padding:7px 8px; border-bottom:1px solid #94a3b8; font-weight:700; }
+.topic-report-heading { margin:0 0 4px!important; padding:5px 8px; font-weight:800; }
+.topic-report-sheet .topic-monthly-section,.topic-report-sheet .topic-fixed-block { padding:10px 0 16px; border:0; }
+.topic-report-sheet .topic-monthly-section h3,.topic-report-sheet .topic-fixed-head h3 { margin:10px 0 8px; padding:7px 9px; background:#f1f5f9; color:#0f172a; font-size:16px; font-weight:800; }
+.topic-monthly-copy { padding:0 8px 4px; border-bottom:1px solid #94a3b8; }
+.topic-monthly-copy p { margin:7px 0!important; }
+.topic-monthly-copy strong { color:#0f172a; }
+.topic-report-sheet .topic-monthly-intro { margin:12px 8px 9px!important; font-weight:700; }
+.topic-report-sheet .topic-table-wrap { border:0; border-radius:0; }
+.topic-report-sheet .topic-monthly-table,.topic-report-sheet .topic-fixed-table { width:100%; min-width:850px!important; border-collapse:collapse; font-size:12px; }
+.topic-report-sheet .topic-monthly-table th,.topic-report-sheet .topic-monthly-table td,.topic-report-sheet .topic-fixed-table th,.topic-report-sheet .topic-fixed-table td { padding:7px 8px; border:1px solid #94a3b8; text-align:center; white-space:nowrap; }
+.topic-report-sheet .topic-monthly-table th,.topic-report-sheet .topic-fixed-table th { background:#e8f1f5; color:#0f172a; }
+.topic-report-sheet .topic-monthly-total th,.topic-report-sheet .topic-monthly-total td { background:#e8f1f5; font-weight:800; }
+.topic-report-sheet .topic-monthly-table tr:hover td,.topic-report-sheet .topic-fixed-table tr:hover td { background:#f8fafc; }
+.topic-report-caption { margin:5px 0 0!important; text-align:center; font-size:12px!important; color:#64748b!important; }
+.topic-report-sheet .topic-fixed-progress { margin-top:16px; padding-top:12px; border-top:1px solid #94a3b8; }
+.topic-report-sheet .topic-fixed-head { display:block; margin-bottom:2px; }
+.topic-report-sheet .topic-fixed-head span { display:inline-block; margin:6px 0 4px 8px; background:#dceef4; color:#0f5b75; }
+.topic-report-sheet .topic-fixed-steps { margin:0 8px 8px!important; color:#64748b; font-size:12px; }
+.topic-report-sheet .topic-fixed-footnote,.topic-report-sheet .topic-monthly-footnote { margin:8px 0 0!important; padding:8px; border-top:1px solid #94a3b8; color:#64748b; font-size:12px; }
 @media (prefers-color-scheme:dark) { :root { --topic-ink:#edf0fa; --topic-muted:#aab1c3; --topic-line:#34394a; --topic-card:#202432; --topic-bg:#151821; } .topic-stats strong,.topic-dynamic-kpis strong{color:#f4f5fa}.topic-dynamic-kpis article{background:linear-gradient(145deg,#252a39,#202432)}.topic-panel select,.topic-row-actions button,.topic-modal-actions button{background:#292e3d;color:#e8eaf2}.topic-chart{background:#191d29}.topic-table-wrap th,.topic-detail-table-wrap th{background:#292e3d}.topic-table-wrap td,.topic-detail-table-wrap td{border-color:#34394a}.topic-table-wrap tr:hover td,.topic-detail-table-wrap tr:hover td{background:#272b39}.topic-modal-card{background:#202432} }
 @media (max-width:900px) { .topic-page{width:min(100% - 24px,1440px);margin-top:74px}.topic-hero{align-items:flex-start;flex-direction:column}.topic-stats{grid-template-columns:1fr 1fr}.topic-api-panel{grid-template-columns:1fr}.topic-api-grid{grid-template-columns:1fr} }
+@media (max-width:900px) { .topic-monthly-layout{grid-template-columns:1fr} }
 @media (max-width:560px) { .topic-hero{padding:24px}.topic-hero-actions{width:100%;flex-direction:column}.topic-hero-actions>*{text-align:center}.topic-stats{grid-template-columns:1fr 1fr}.topic-panel{padding:18px}.topic-panel-head{flex-direction:column}.topic-stats strong{font-size:26px} }
+@media (max-width:560px) { .topic-fixed-head{flex-direction:column} }

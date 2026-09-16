@@ -71,6 +71,21 @@ test('topic snapshots persist full JSON, deduplicate imports and remain tenant i
         await repo.saveSnapshot(makeNetCareSnapshot('2026-09-03T09:00:00.000Z'));
         assert.equal((await repo.listSnapshots()).total, 1);
     });
+    await runWithTenant('monthly', async () => {
+        const older = makeNetCareSnapshot('2026-08-03T09:00:00.000Z');
+        older.data.eosProduct[0].incorporation_total_nes = 11;
+        await repo.saveSnapshot(older);
+        const newer = makeNetCareSnapshot('2026-08-02T09:00:00.000Z');
+        newer.data.eosProduct[0].incorporation_total_nes = 20;
+        await repo.saveSnapshot(newer);
+        const report = await repo.getEosMonthlyReport('2026-08');
+        assert.deepEqual(report.months, ['2026-08']);
+        assert.equal(report.report.product.total.quantity, 20);
+        assert.equal(report.report.product.accounts[0].annualPlan, 3);
+        assert.equal(report.report.product.total.noPlan, 3);
+        assert.equal(report.report.version.total.quantity, 8);
+        assert.equal((await repo.getEosMonthlyReport('2026-07')).report, null);
+    });
     assert.equal((await repo.listSnapshots()).total, 2);
     assert.equal(await repo.deleteSnapshot(first.item.id), true);
     assert.equal(await repo.getSnapshot(first.item.id), null);
