@@ -370,6 +370,16 @@
         function customerBG(value) { return CONFIG.cnbgCustomers.includes(normalizeCustomer(value)) ? 'CNBG' : 'EBG'; }
         function pad2(value) { return String(value).padStart(2, '0'); }
         function findCsrfToken() {
+            // Match the working NetCare scraper: globalConfig is the current session's token source.
+            const configValue = localStorage.getItem('globalConfig') || '';
+            const configMatch = configValue.match(/[A-Fa-f0-9]{64}/);
+            if (configMatch) return configMatch[0];
+            try {
+                const parsed = JSON.parse(configValue);
+                const config = Array.isArray(parsed) ? parsed[0] : parsed;
+                const token = config && (config.csrfToken || config.configData && config.configData.csrfToken);
+                if (typeof token === 'string' && token) return token;
+            } catch (error) {}
             for (const storage of [localStorage, sessionStorage]) {
                 for (const key of ['csrfToken', 'csrf-token', 'x-gde-csrf-token', 'X-GDE-CSRF-TOKEN']) {
                     const value = storage.getItem(key);
@@ -399,8 +409,14 @@
             if (simpleHeaders) headers['x-requested-with'] = 'XMLHttpRequest';
             else { headers['x-gde-src-page'] = sourcePage; headers['x-gde-target-app'] = 'NetCareOperationCenter'; }
             const response = await fetch(url, { method: 'POST', credentials: 'include', headers, body: JSON.stringify(payload) });
-            if (!response.ok) throw new Error('HTTP ' + response.status + ' ' + response.statusText);
-            const json = await response.json();
+            const json = await response.json().catch(() => null);
+            if (!response.ok) {
+                const csrfFailed = json && String(json.code) === '03200003';
+                throw new Error(csrfFailed
+                    ? tr('CSRF token 校验失败，请刷新 NetCare 页面后重试。', 'CSRF token validation failed. Refresh NetCare and try again.')
+                    : 'HTTP ' + response.status + ' ' + response.statusText + (json && json.message ? '：' + json.message : ''));
+            }
+            if (!json) throw new Error(tr('NetCare 返回的数据不是 JSON。', 'NetCare returned a non-JSON response.'));
             if (json.code && String(json.code) !== '0' && String(json.code) !== '200') throw new Error(json.message || tr('接口错误：', 'API error: ') + json.code);
             return json;
         }

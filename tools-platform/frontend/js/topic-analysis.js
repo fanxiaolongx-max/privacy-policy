@@ -37,7 +37,7 @@
         }
     };
 
-    const state = { items: [], total: 0, topicKey: 'netcare-eos-product', metricKey: 'pending', detailRows: [], detailColumns: [], detailPage: 1, detailPageSize: 50, detailSortColumn: '', detailSortAscending: true, detailFilter: '', eosMonthlyReport: null, fixedCopyDefaults: new Map() };
+    const state = { items: [], total: 0, topicKey: 'netcare-eos-product', metricKey: 'pending', detailRows: [], detailColumns: [], detailPage: 1, detailPageSize: 50, detailSortColumn: '', detailSortAscending: true, detailFilter: '', eosMonthlyReport: null, eosMonthlySnapshot: null, fixedCopyDefaults: new Map() };
     const elements = {};
     const DETAIL_LABELS = { customer_name: '客户', product_line_name: '产品线', product_line_map: '产品线', product_name: '产品', software_version: '版本', task_id: '任务单号', need_reduce_cnt: '需消减', reduced_cnt: '已消减', incorporation_total_nes: '数量', incorporated_nes: '已收编', to_be_incorporated_nes: '待收编', current_phase_name: '阶段', scope: '范围', year: '年份', month: '月份', task_count: '变更任务数', operation_success_rate: '操作成功率', rollback_count: '回退数', high_core_total_count: '高危核心', interception_cnt: '拦截数', commands_interception_cnt: '命令行拦截', graphical_interception_cnt: '图形化拦截', period: '期间', sr_total: 'SR 数', sr_frt: 'FRT', unclose_sr_cnt: '未关闭', overdue_sr_cnt: '逾期', minor_sr_cnt: 'Minor', major_sr_cnt: 'Major', critical_sr_cnt: 'Critical' };
     const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
@@ -250,6 +250,726 @@
         rememberTextSelection();
     }
 
+    const THEME_STORAGE_KEY = 'topic_analysis_theme';
+
+    function initTheme() {
+        let saved = 'light';
+        try { saved = localStorage.getItem(THEME_STORAGE_KEY) || 'light'; } catch (_) {}
+        setTheme(saved, false);
+    }
+
+    function setTheme(theme, save = true) {
+        const active = theme === 'dark' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', active);
+        if (elements.themeToggleIcon && elements.themeToggleText && elements.themeToggleButton) {
+            if (active === 'dark') {
+                elements.themeToggleIcon.textContent = '🌙';
+                elements.themeToggleText.textContent = '深色模式';
+                elements.themeToggleButton.title = '当前为深色模式，点击切换至浅色模式';
+            } else {
+                elements.themeToggleIcon.textContent = '☀️';
+                elements.themeToggleText.textContent = '浅色模式';
+                elements.themeToggleButton.title = '当前为浅色模式，点击切换至深色模式';
+            }
+        }
+        if (save) {
+            try { localStorage.setItem(THEME_STORAGE_KEY, active); } catch (_) {}
+        }
+    }
+
+    function toggleTheme() {
+        const current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+        setTheme(current === 'dark' ? 'light' : 'dark', true);
+    }
+
+    const firstNumber = (row, keys) => {
+        for (const key of keys) {
+            const val = row?.[key];
+            if (val !== undefined && val !== null && val !== '') {
+                const n = Number(val);
+                if (!Number.isNaN(n)) return n;
+            }
+        }
+        return 0;
+    };
+
+    const aliases = { 'NILE ON LINE (NOL)': 'Etisalat Misr' };
+    const customerName = row => aliases[String(row?.customer_name || '').trim()] || String(row?.customer_name || '').trim() || '未分类客户';
+
+    function excelReportColor(value, fallback = 'FF0F172A') {
+        const color = String(value || '').trim();
+        const hex = color.match(/^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i);
+        if (hex) {
+            const digits = hex[1].length === 3 ? [...hex[1]].map(letter => letter + letter).join('') : hex[1];
+            return (digits.length === 8 ? digits : `FF${digits}`).toUpperCase();
+        }
+        const rgb = color.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+        if (rgb) return `FF${rgb.slice(1, 4).map(part => Math.min(255, Number(part)).toString(16).padStart(2, '0')).join('')}`.toUpperCase();
+        return fallback;
+    }
+
+    function reportExcelRichText(block) {
+        const computed = getComputedStyle(block);
+        const base = { bold: Number.parseInt(computed.fontWeight, 10) >= 600, color: computed.color };
+        const size = Math.max(9, Math.round(Number.parseFloat(computed.fontSize) * 0.75));
+        const runs = [];
+        const visit = (node, format) => {
+            if (node.nodeType === Node.TEXT_NODE) {
+                if (node.textContent) runs.push({ text: node.textContent, font: { name: 'Microsoft YaHei', size, bold: format.bold, color: { argb: excelReportColor(format.color) } } });
+                return;
+            }
+            if (node.nodeType !== Node.ELEMENT_NODE) return;
+            const tag = node.tagName.toLowerCase();
+            if (tag === 'br') { runs.push({ text: '\n', font: { name: 'Microsoft YaHei', size } }); return; }
+            const next = { ...format };
+            if (tag === 'b' || tag === 'strong') next.bold = true;
+            if (node.style?.color) next.color = node.style.color;
+            if (tag === 'font' && node.getAttribute('color')) next.color = node.getAttribute('color');
+            Array.from(node.childNodes).forEach(child => visit(child, next));
+            if (tag === 'div' || tag === 'p') runs.push({ text: '\n', font: { name: 'Microsoft YaHei', size } });
+        };
+        Array.from(block.childNodes).forEach(node => visit(node, base));
+        return runs.length ? { richText: runs } : block.textContent;
+    }
+
+    async function downloadExcelWorkbook(workbook, filename) {
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function appendMonthlyWorksheet(workbook) {
+        const sheet = elements.eosReportSheet || document.getElementById('eosReportSheet');
+        if (!sheet) return;
+        const worksheet = workbook.addWorksheet('EOS收编进展月报', {
+            pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 }
+        });
+        const columns = 12;
+        for (let c = 1; c <= columns; c++) worksheet.getColumn(c).width = c === 1 ? 16 : 12;
+        const border = {
+            top: { style: 'thin', color: { argb: 'FF94A3B8' } },
+            left: { style: 'thin', color: { argb: 'FF94A3B8' } },
+            bottom: { style: 'thin', color: { argb: 'FF94A3B8' } },
+            right: { style: 'thin', color: { argb: 'FF94A3B8' } }
+        };
+        let rowNumber = 1;
+
+        const appendCopy = block => {
+            const row = worksheet.getRow(rowNumber++);
+            worksheet.mergeCells(row.number, 1, row.number, columns);
+            const cell = row.getCell(1);
+            const computed = getComputedStyle(block);
+            cell.value = reportExcelRichText(block);
+            const isTitle = block.classList.contains('topic-report-title');
+            const isSectionHeading = block.tagName === 'H3' || block.classList.contains('topic-report-heading') || block.tagName === 'H4';
+            const isObjective = block.classList.contains('topic-report-objective');
+            cell.alignment = {
+                vertical: 'middle',
+                horizontal: isTitle ? 'center' : 'left',
+                wrapText: true
+            };
+            cell.font = {
+                name: 'Microsoft YaHei',
+                size: Math.max(9, Math.round(Number.parseFloat(computed.fontSize) * 0.75)),
+                bold: Number.parseInt(computed.fontWeight, 10) >= 600,
+                color: { argb: excelReportColor(computed.color) }
+            };
+            if (isTitle) {
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDCEEF4' } };
+                row.height = 38;
+            } else if (isSectionHeading) {
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+                row.height = 25;
+                cell.border = { bottom: border.bottom };
+            } else if (isObjective) {
+                row.height = 24;
+                cell.border = { bottom: border.bottom };
+            } else {
+                row.height = Math.max(20, Math.ceil(block.getBoundingClientRect().height * 0.75) + 3);
+            }
+        };
+
+        const appendCaption = block => {
+            const row = worksheet.getRow(rowNumber++);
+            worksheet.mergeCells(row.number, 1, row.number, columns);
+            const cell = row.getCell(1);
+            cell.value = block.textContent.trim();
+            cell.alignment = { horizontal: 'center', vertical: 'middle' };
+            cell.font = { name: 'Microsoft YaHei', size: 9, color: { argb: 'FF64748B' } };
+            row.height = 20;
+        };
+
+        const appendTable = table => {
+            const rows = Array.from(table.rows);
+            const grid = [];
+            rows.forEach(sourceRow => {
+                const rowIndex = grid.length;
+                grid[rowIndex] = grid[rowIndex] || [];
+                let cIndex = 1;
+                const currentRow = worksheet.getRow(rowNumber);
+                const isHeader = sourceRow.parentElement?.tagName === 'THEAD';
+                const isTotal = sourceRow.classList.contains('topic-monthly-total');
+                Array.from(sourceRow.cells).forEach(cell => {
+                    while (grid[rowIndex][cIndex]) cIndex++;
+                    const rowSpan = cell.rowSpan || 1;
+                    const colSpan = cell.colSpan || 1;
+                    if (rowSpan > 1 || colSpan > 1) {
+                        worksheet.mergeCells(rowNumber, cIndex, rowNumber + rowSpan - 1, cIndex + colSpan - 1);
+                    }
+                    for (let r = 0; r < rowSpan; r++) {
+                        grid[rowIndex + r] = grid[rowIndex + r] || [];
+                        for (let c = 0; c < colSpan; c++) {
+                            grid[rowIndex + r][cIndex + c] = true;
+                        }
+                    }
+                    const xlCell = currentRow.getCell(cIndex);
+                    const text = cell.textContent.trim();
+                    const isPercent = /^[\d.]+%$/.test(text);
+                    const isNumeric = /^-?\d+(?:,\d+)*(?:\.\d+)?$/.test(text);
+                    xlCell.value = isPercent ? text : (isNumeric ? Number(text.replace(/,/g, '')) : text);
+                    const isComplete = cell.classList.contains('topic-fixed-complete');
+                    xlCell.font = {
+                        name: 'Microsoft YaHei',
+                        size: isHeader ? 10 : 9,
+                        bold: isHeader || isTotal || cell.tagName === 'TH' || isComplete,
+                        color: { argb: isComplete ? 'FF087443' : 'FF0F172A' }
+                    };
+                    xlCell.alignment = {
+                        horizontal: cell.tagName === 'TH' && !cell.getAttribute('scope') ? 'center' : (isNumeric || isPercent ? 'right' : 'center'),
+                        vertical: 'middle',
+                        wrapText: true
+                    };
+                    xlCell.border = border;
+                    if (isHeader || isTotal) {
+                        xlCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8F1F5' } };
+                    }
+                    cIndex += colSpan;
+                });
+                currentRow.height = isHeader ? 26 : 22;
+                rowNumber++;
+            });
+            rowNumber++;
+        };
+
+        const appendNode = node => {
+            if (!node || node.nodeType !== Node.ELEMENT_NODE) return;
+            if (node.classList?.contains('topic-report-caption')) {
+                appendCaption(node);
+            } else if (node.tagName === 'TABLE') {
+                appendTable(node);
+            } else if (
+                node.classList?.contains('topic-report-title') ||
+                node.classList?.contains('topic-report-objective') ||
+                node.classList?.contains('topic-report-heading') ||
+                node.classList?.contains('topic-monthly-intro') ||
+                node.classList?.contains('topic-monthly-source') ||
+                node.classList?.contains('topic-fixed-steps') ||
+                node.classList?.contains('topic-fixed-footnote') ||
+                node.classList?.contains('topic-monthly-footnote') ||
+                (node.parentElement?.classList?.contains('topic-monthly-copy') && node.tagName === 'P') ||
+                (node.tagName === 'H3' && node.closest('.topic-report-sheet')) ||
+                (node.tagName === 'H4' && node.closest('.topic-report-sheet'))
+            ) {
+                appendCopy(node);
+            } else {
+                Array.from(node.children || []).forEach(appendNode);
+            }
+        };
+
+        Array.from(sheet.children).forEach(appendNode);
+        worksheet.pageSetup.printArea = `A1:L${Math.max(1, rowNumber - 1)}`;
+        return worksheet;
+    }
+
+    function appendAnalysisWorksheet(workbook, snapshot) {
+        const worksheet = workbook.addWorksheet('多维度统计分析', {
+            views: [{ state: 'frozen', ySplit: 1 }]
+        });
+        const borderThin = {
+            top: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+            left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+            bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+            right: { style: 'thin', color: { argb: 'FFCBD5E1' } }
+        };
+        const borderHeader = {
+            top: { style: 'thin', color: { argb: 'FF94A3B8' } },
+            left: { style: 'thin', color: { argb: 'FF94A3B8' } },
+            bottom: { style: 'thin', color: { argb: 'FF94A3B8' } },
+            right: { style: 'thin', color: { argb: 'FF94A3B8' } }
+        };
+
+        const prodRows = Array.isArray(snapshot?.data?.eosProduct) ? snapshot.data.eosProduct : [];
+        const verRows = Array.isArray(snapshot?.data?.eosVersion) ? snapshot.data.eosVersion : [];
+        const plans = snapshot?.settings?.eos?.plans || {};
+
+        const parseProdRow = row => {
+            const cust = customerName(row);
+            const line = String(row.product_line_name || row.product_line_map || '其他');
+            const prod = String(row.product_name || '未命名产品');
+            const phase = String(row.current_phase_name || '未指定');
+            const qty = firstNumber(row, ['incorporation_total_nes', 'annual_storage', 'capacities', 'current_inventory']);
+            const normal = firstNumber(row, ['before_urgent_incorporated_nes_dtl', 'incorporated_nes']);
+            const deact = firstNumber(row, ['deactivated_nes']);
+            const inc = qty > 0 ? Math.min(qty, normal + deact) : normal;
+            const pend = firstNumber(row, ['to_be_incorporated_nes']);
+            const planKey = [cust, line, prod, prod].join('|||');
+            const plan = Math.min(pend, Math.max(0, Math.floor(Number(plans?.product?.[planKey]) || 0)));
+            const noplan = Math.max(0, pend - plan);
+            return { customer: cust, line, product: prod, phase, quantity: qty, incorporated: inc, pending: pend, deactivated: deact, annualPlan: plan, noPlan: noplan };
+        };
+
+        const parseVerRow = row => {
+            const cust = customerName(row);
+            const line = String(row.product_line_name || row.product_line_map || '其他');
+            const prod = String(row.product_name || '未命名产品');
+            const ver = String(row.software_version || row.version_name || prod);
+            const phase = String(row.current_phase_name || '未指定');
+            const qty = firstNumber(row, ['incorporation_total_nes', 'annual_storage', 'capacities', 'current_inventory']);
+            const normal = firstNumber(row, ['nc_urgent_incorp_complet_rate_dtl', 'incorporated_nes']);
+            const deact = firstNumber(row, ['deactivated_nes']);
+            const inc = qty > 0 ? Math.min(qty, normal + deact) : normal;
+            const pend = firstNumber(row, ['to_be_incorporated_nes']);
+            const planKey = [cust, line, prod, ver].join('|||');
+            const plan = Math.min(pend, Math.max(0, Math.floor(Number(plans?.version?.[planKey]) || 0)));
+            const noplan = Math.max(0, pend - plan);
+            return { customer: cust, line, product: prod, version: ver, phase, quantity: qty, incorporated: inc, pending: pend, deactivated: deact, annualPlan: plan, noPlan: noplan };
+        };
+
+        const parsedProds = prodRows.map(parseProdRow);
+        const parsedVers = verRows.map(parseVerRow);
+
+        let rowNum = 1;
+
+        const writeSectionTitle = (title, cols) => {
+            const row = worksheet.getRow(rowNum);
+            worksheet.mergeCells(rowNum, 1, rowNum, cols);
+            row.height = 26;
+            const cell = row.getCell(1);
+            cell.value = title;
+            cell.font = { name: 'Microsoft YaHei', size: 11, bold: true, color: { argb: 'FF1D4ED8' } };
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEFF6FF' } };
+            cell.alignment = { vertical: 'middle', horizontal: 'left' };
+            cell.border = { bottom: { style: 'thin', color: { argb: 'FF93C5FD' } } };
+            rowNum++;
+        };
+
+        const writeHeaders = (headers, colWidths = []) => {
+            const row = worksheet.getRow(rowNum);
+            row.height = 24;
+            headers.forEach((h, idx) => {
+                const c = row.getCell(idx + 1);
+                c.value = h;
+                c.font = { name: 'Microsoft YaHei', size: 9.5, bold: true, color: { argb: 'FF0F172A' } };
+                c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
+                c.alignment = { vertical: 'middle', horizontal: 'center' };
+                c.border = borderHeader;
+                if (colWidths[idx]) {
+                    const col = worksheet.getColumn(idx + 1);
+                    col.width = Math.max(col.width || 0, colWidths[idx]);
+                }
+            });
+            rowNum++;
+        };
+
+        const writeDataRow = (values, alignMap = [], isTotal = false) => {
+            const row = worksheet.getRow(rowNum);
+            row.height = isTotal ? 23 : 21;
+            values.forEach((v, idx) => {
+                const c = row.getCell(idx + 1);
+                c.value = v;
+                c.font = { name: 'Microsoft YaHei', size: 9, bold: isTotal, color: { argb: 'FF0F172A' } };
+                c.border = isTotal ? { top: { style: 'double', color: { argb: 'FF94A3B8' } }, bottom: { style: 'thin', color: { argb: 'FF94A3B8' } } } : borderThin;
+                if (isTotal) {
+                    c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+                }
+                const align = alignMap[idx] || (typeof v === 'number' ? 'right' : 'center');
+                c.alignment = { vertical: 'middle', horizontal: align };
+            });
+            rowNum++;
+        };
+
+        // Table 1: 产品收编 · 分客户与产品线分析
+        writeSectionTitle('表 1：产品收编 · 分客户与产品线多维分析', 11);
+        const t1Headers = ['序号', '客户', '产品线', '产品种类数', '网元总量', '已收编网元', '当前收编率', '待收编网元', '今年计划', '无计划', '计划后收编率'];
+        const t1Widths = [8, 16, 16, 12, 12, 12, 13, 12, 12, 12, 13];
+        writeHeaders(t1Headers, t1Widths);
+
+        const prodCustLineMap = new Map();
+        parsedProds.forEach(p => {
+            const k = `${p.customer}|||${p.line}`;
+            if (!prodCustLineMap.has(k)) prodCustLineMap.set(k, { customer: p.customer, line: p.line, prods: new Set(), qty: 0, inc: 0, pend: 0, plan: 0, noplan: 0 });
+            const item = prodCustLineMap.get(k);
+            item.prods.add(p.product);
+            item.qty += p.quantity;
+            item.inc += p.incorporated;
+            item.pend += p.pending;
+            item.plan += p.annualPlan;
+            item.noplan += p.noPlan;
+        });
+
+        const t1Items = [...prodCustLineMap.values()].sort((a, b) => a.customer.localeCompare(b.customer, 'zh-CN') || a.line.localeCompare(b.line, 'zh-CN'));
+        const t1Total = { qty: 0, inc: 0, pend: 0, plan: 0, noplan: 0 };
+        t1Items.forEach((item, idx) => {
+            t1Total.qty += item.qty;
+            t1Total.inc += item.inc;
+            t1Total.pend += item.pend;
+            t1Total.plan += item.plan;
+            t1Total.noplan += item.noplan;
+            const curRate = item.qty ? `${(item.inc / item.qty * 100).toFixed(1)}%` : '0.0%';
+            const planRate = item.qty ? `${(Math.min(item.qty, item.inc + item.plan) / item.qty * 100).toFixed(1)}%` : '0.0%';
+            writeDataRow([idx + 1, item.customer, item.line, item.prods.size, item.qty, item.inc, curRate, item.pend, item.plan, item.noplan, planRate],
+                ['center', 'left', 'left', 'right', 'right', 'right', 'right', 'right', 'right', 'right', 'right']);
+        });
+        const t1CurRate = t1Total.qty ? `${(t1Total.inc / t1Total.qty * 100).toFixed(1)}%` : '0.0%';
+        const t1PlanRate = t1Total.qty ? `${(Math.min(t1Total.qty, t1Total.inc + t1Total.plan) / t1Total.qty * 100).toFixed(1)}%` : '0.0%';
+        writeDataRow(['合计', '—', '—', new Set(parsedProds.map(p => p.product)).size, t1Total.qty, t1Total.inc, t1CurRate, t1Total.pend, t1Total.plan, t1Total.noplan, t1PlanRate],
+            ['center', 'center', 'center', 'right', 'right', 'right', 'right', 'right', 'right', 'right', 'right'], true);
+        rowNum++;
+
+        // Table 2: 产品收编 · 重点待收编产品 TOP 10
+        writeSectionTitle('表 2：产品收编 · 重点待收编产品排行 TOP 10', 10);
+        const t2Headers = ['排名', '产品名称', '产品线', '涉及客户', '网元总量', '已收编网元', '待收编网元', '今年计划', '无计划', '当前收编率'];
+        const t2Widths = [8, 22, 16, 20, 12, 12, 12, 12, 12, 13];
+        writeHeaders(t2Headers, t2Widths);
+
+        const prodMap = new Map();
+        parsedProds.forEach(p => {
+            if (!prodMap.has(p.product)) prodMap.set(p.product, { product: p.product, line: p.line, custs: new Set(), qty: 0, inc: 0, pend: 0, plan: 0, noplan: 0 });
+            const item = prodMap.get(p.product);
+            item.custs.add(p.customer);
+            item.qty += p.quantity;
+            item.inc += p.incorporated;
+            item.pend += p.pending;
+            item.plan += p.annualPlan;
+            item.noplan += p.noPlan;
+        });
+
+        const t2Items = [...prodMap.values()].sort((a, b) => b.noplan - a.noplan || b.pend - a.pend).slice(0, 10);
+        t2Items.forEach((item, idx) => {
+            const curRate = item.qty ? `${(item.inc / item.qty * 100).toFixed(1)}%` : '0.0%';
+            writeDataRow([idx + 1, item.product, item.line, [...item.custs].join('、'), item.qty, item.inc, item.pend, item.plan, item.noplan, curRate],
+                ['center', 'left', 'left', 'left', 'right', 'right', 'right', 'right', 'right', 'right']);
+        });
+        rowNum++;
+
+        // Table 3: 版本收编 · 分客户与产品线分析
+        writeSectionTitle('表 3：版本收编 · 分客户与产品线多维分析', 11);
+        const t3Headers = ['序号', '客户', '产品线', '版本数量', '网元总量', '已收编网元', '当前收编率', '待收编网元', '今年计划', '无计划', '计划后收编率'];
+        writeHeaders(t3Headers, t1Widths);
+
+        const verCustLineMap = new Map();
+        parsedVers.forEach(v => {
+            const k = `${v.customer}|||${v.line}`;
+            if (!verCustLineMap.has(k)) verCustLineMap.set(k, { customer: v.customer, line: v.line, vers: new Set(), qty: 0, inc: 0, pend: 0, plan: 0, noplan: 0 });
+            const item = verCustLineMap.get(k);
+            item.vers.add(v.version);
+            item.qty += v.quantity;
+            item.inc += v.incorporated;
+            item.pend += v.pending;
+            item.plan += v.annualPlan;
+            item.noplan += v.noPlan;
+        });
+
+        const t3Items = [...verCustLineMap.values()].sort((a, b) => a.customer.localeCompare(b.customer, 'zh-CN') || a.line.localeCompare(b.line, 'zh-CN'));
+        const t3Total = { qty: 0, inc: 0, pend: 0, plan: 0, noplan: 0 };
+        t3Items.forEach((item, idx) => {
+            t3Total.qty += item.qty;
+            t3Total.inc += item.inc;
+            t3Total.pend += item.pend;
+            t3Total.plan += item.plan;
+            t3Total.noplan += item.noplan;
+            const curRate = item.qty ? `${(item.inc / item.qty * 100).toFixed(1)}%` : '0.0%';
+            const planRate = item.qty ? `${(Math.min(item.qty, item.inc + item.plan) / item.qty * 100).toFixed(1)}%` : '0.0%';
+            writeDataRow([idx + 1, item.customer, item.line, item.vers.size, item.qty, item.inc, curRate, item.pend, item.plan, item.noplan, planRate],
+                ['center', 'left', 'left', 'right', 'right', 'right', 'right', 'right', 'right', 'right', 'right']);
+        });
+        const t3CurRate = t3Total.qty ? `${(t3Total.inc / t3Total.qty * 100).toFixed(1)}%` : '0.0%';
+        const t3PlanRate = t3Total.qty ? `${(Math.min(t3Total.qty, t3Total.inc + t3Total.plan) / t3Total.qty * 100).toFixed(1)}%` : '0.0%';
+        writeDataRow(['合计', '—', '—', new Set(parsedVers.map(v => v.version)).size, t3Total.qty, t3Total.inc, t3CurRate, t3Total.pend, t3Total.plan, t3Total.noplan, t3PlanRate],
+            ['center', 'center', 'center', 'right', 'right', 'right', 'right', 'right', 'right', 'right', 'right'], true);
+        rowNum++;
+
+        // Table 4: 版本收编 · 高风险无计划版本 TOP 10
+        writeSectionTitle('表 4：版本收编 · 高风险无计划版本排行 TOP 10', 11);
+        const t4Headers = ['排名', '软件版本', '所属产品', '产品线', '涉及客户', '网元总量', '已收编网元', '待收编网元', '今年计划', '无计划', '当前收编率'];
+        const t4Widths = [8, 24, 20, 16, 18, 12, 12, 12, 12, 12, 13];
+        writeHeaders(t4Headers, t4Widths);
+
+        const verMap = new Map();
+        parsedVers.forEach(v => {
+            const k = `${v.product}|||${v.version}`;
+            if (!verMap.has(k)) verMap.set(k, { version: v.version, product: v.product, line: v.line, custs: new Set(), qty: 0, inc: 0, pend: 0, plan: 0, noplan: 0 });
+            const item = verMap.get(k);
+            item.custs.add(v.customer);
+            item.qty += v.quantity;
+            item.inc += v.incorporated;
+            item.pend += v.pending;
+            item.plan += v.annualPlan;
+            item.noplan += v.noPlan;
+        });
+
+        const t4Items = [...verMap.values()].sort((a, b) => b.noplan - a.noplan || b.pend - a.pend).slice(0, 10);
+        t4Items.forEach((item, idx) => {
+            const curRate = item.qty ? `${(item.inc / item.qty * 100).toFixed(1)}%` : '0.0%';
+            writeDataRow([idx + 1, item.version, item.product, item.line, [...item.custs].join('、'), item.qty, item.inc, item.pend, item.plan, item.noplan, curRate],
+                ['center', 'left', 'left', 'left', 'left', 'right', 'right', 'right', 'right', 'right', 'right']);
+        });
+        rowNum++;
+
+        // Table 5: 阶段分布统计
+        writeSectionTitle('表 5：EOS 收编与处置阶段分布统计', 5);
+        const t5Headers = ['处置阶段', '产品涉及网元', '产品网元占比', '版本涉及网元', '版本网元占比'];
+        const t5Widths = [18, 14, 14, 14, 14];
+        writeHeaders(t5Headers, t5Widths);
+
+        const phases = new Set([...parsedProds.map(p => p.phase), ...parsedVers.map(v => v.phase)]);
+        const totalP = parsedProds.reduce((s, p) => s + p.quantity, 0);
+        const totalV = parsedVers.reduce((s, v) => s + v.quantity, 0);
+        [...phases].forEach(ph => {
+            const pQty = parsedProds.filter(p => p.phase === ph).reduce((s, p) => s + p.quantity, 0);
+            const vQty = parsedVers.filter(v => v.phase === ph).reduce((s, v) => s + v.quantity, 0);
+            const pPct = totalP ? `${(pQty / totalP * 100).toFixed(1)}%` : '0.0%';
+            const vPct = totalV ? `${(vQty / totalV * 100).toFixed(1)}%` : '0.0%';
+            writeDataRow([ph, pQty, pPct, vQty, vPct], ['left', 'right', 'right', 'right', 'right']);
+        });
+        writeDataRow(['合计', totalP, '100.0%', totalV, '100.0%'], ['center', 'right', 'right', 'right', 'right'], true);
+
+        return worksheet;
+    }
+
+    function appendProductDetailWorksheet(workbook, snapshot) {
+        const worksheet = workbook.addWorksheet('产品收编详表', {
+            views: [{ state: 'frozen', ySplit: 1 }]
+        });
+        const headers = ['序号', '客户', '产品线', '产品名称', '当前阶段', '网元总量', '已收编网元', '待收编网元', '已退网网元', '今年计划', '无计划', '当前收编率', '计划后收编率'];
+        const widths = [8, 16, 16, 22, 14, 12, 12, 12, 12, 12, 12, 13, 13];
+        const borderHeader = {
+            top: { style: 'thin', color: { argb: 'FF94A3B8' } },
+            left: { style: 'thin', color: { argb: 'FF94A3B8' } },
+            bottom: { style: 'thin', color: { argb: 'FF94A3B8' } },
+            right: { style: 'thin', color: { argb: 'FF94A3B8' } }
+        };
+        const borderThin = {
+            top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+            left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+            bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+            right: { style: 'thin', color: { argb: 'FFE2E8F0' } }
+        };
+
+        const headRow = worksheet.getRow(1);
+        headRow.height = 26;
+        headers.forEach((h, idx) => {
+            const cell = headRow.getCell(idx + 1);
+            cell.value = h;
+            cell.font = { name: 'Microsoft YaHei', size: 9.5, bold: true, color: { argb: 'FF0F172A' } };
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8F1F5' } };
+            cell.alignment = { vertical: 'middle', horizontal: 'center' };
+            cell.border = borderHeader;
+            worksheet.getColumn(idx + 1).width = widths[idx];
+        });
+
+        const rows = Array.isArray(snapshot?.data?.eosProduct) ? snapshot.data.eosProduct : [];
+        const plans = snapshot?.settings?.eos?.plans || {};
+
+        rows.forEach((r, idx) => {
+            const cust = customerName(r);
+            const line = String(r.product_line_name || r.product_line_map || '其他');
+            const prod = String(r.product_name || '未命名产品');
+            const phase = String(r.current_phase_name || '未指定');
+            const qty = firstNumber(r, ['incorporation_total_nes', 'annual_storage', 'capacities', 'current_inventory']);
+            const normal = firstNumber(r, ['before_urgent_incorporated_nes_dtl', 'incorporated_nes']);
+            const deact = firstNumber(r, ['deactivated_nes']);
+            const inc = qty > 0 ? Math.min(qty, normal + deact) : normal;
+            const pend = firstNumber(r, ['to_be_incorporated_nes']);
+            const planKey = [cust, line, prod, prod].join('|||');
+            const plan = Math.min(pend, Math.max(0, Math.floor(Number(plans?.product?.[planKey]) || 0)));
+            const noplan = Math.max(0, pend - plan);
+            const curRate = qty ? `${(inc / qty * 100).toFixed(1)}%` : '0.0%';
+            const planRate = qty ? `${(Math.min(qty, inc + plan) / qty * 100).toFixed(1)}%` : '0.0%';
+
+            const row = worksheet.getRow(idx + 2);
+            row.height = 21;
+            const vals = [idx + 1, cust, line, prod, phase, qty, inc, pend, deact, plan, noplan, curRate, planRate];
+            vals.forEach((v, cIdx) => {
+                const cell = row.getCell(cIdx + 1);
+                cell.value = v;
+                cell.font = { name: 'Microsoft YaHei', size: 9, color: { argb: 'FF0F172A' } };
+                cell.border = borderThin;
+                cell.alignment = {
+                    vertical: 'middle',
+                    horizontal: [0, 1, 2, 3, 4].includes(cIdx) ? ([0].includes(cIdx) ? 'center' : 'left') : 'right'
+                };
+            });
+        });
+
+        worksheet.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: headers.length } };
+        return worksheet;
+    }
+
+    function appendVersionDetailWorksheet(workbook, snapshot) {
+        const worksheet = workbook.addWorksheet('版本收编详表', {
+            views: [{ state: 'frozen', ySplit: 1 }]
+        });
+        const headers = ['序号', '客户', '产品线', '产品名称', '软件版本', '当前阶段', '网元总量', '已收编网元', '待收编网元', '已退网网元', '今年计划', '无计划', '当前收编率', '计划后收编率'];
+        const widths = [8, 16, 16, 20, 24, 14, 12, 12, 12, 12, 12, 12, 13, 13];
+        const borderHeader = {
+            top: { style: 'thin', color: { argb: 'FF94A3B8' } },
+            left: { style: 'thin', color: { argb: 'FF94A3B8' } },
+            bottom: { style: 'thin', color: { argb: 'FF94A3B8' } },
+            right: { style: 'thin', color: { argb: 'FF94A3B8' } }
+        };
+        const borderThin = {
+            top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+            left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+            bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+            right: { style: 'thin', color: { argb: 'FFE2E8F0' } }
+        };
+
+        const headRow = worksheet.getRow(1);
+        headRow.height = 26;
+        headers.forEach((h, idx) => {
+            const cell = headRow.getCell(idx + 1);
+            cell.value = h;
+            cell.font = { name: 'Microsoft YaHei', size: 9.5, bold: true, color: { argb: 'FF0F172A' } };
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8F1F5' } };
+            cell.alignment = { vertical: 'middle', horizontal: 'center' };
+            cell.border = borderHeader;
+            worksheet.getColumn(idx + 1).width = widths[idx];
+        });
+
+        const rows = Array.isArray(snapshot?.data?.eosVersion) ? snapshot.data.eosVersion : [];
+        const plans = snapshot?.settings?.eos?.plans || {};
+
+        rows.forEach((r, idx) => {
+            const cust = customerName(r);
+            const line = String(r.product_line_name || r.product_line_map || '其他');
+            const prod = String(r.product_name || '未命名产品');
+            const ver = String(r.software_version || r.version_name || prod);
+            const phase = String(r.current_phase_name || '未指定');
+            const qty = firstNumber(r, ['incorporation_total_nes', 'annual_storage', 'capacities', 'current_inventory']);
+            const normal = firstNumber(r, ['nc_urgent_incorp_complet_rate_dtl', 'incorporated_nes']);
+            const deact = firstNumber(r, ['deactivated_nes']);
+            const inc = qty > 0 ? Math.min(qty, normal + deact) : normal;
+            const pend = firstNumber(r, ['to_be_incorporated_nes']);
+            const planKey = [cust, line, prod, ver].join('|||');
+            const plan = Math.min(pend, Math.max(0, Math.floor(Number(plans?.version?.[planKey]) || 0)));
+            const noplan = Math.max(0, pend - plan);
+            const curRate = qty ? `${(inc / qty * 100).toFixed(1)}%` : '0.0%';
+            const planRate = qty ? `${(Math.min(qty, inc + plan) / qty * 100).toFixed(1)}%` : '0.0%';
+
+            const row = worksheet.getRow(idx + 2);
+            row.height = 21;
+            const vals = [idx + 1, cust, line, prod, ver, phase, qty, inc, pend, deact, plan, noplan, curRate, planRate];
+            vals.forEach((v, cIdx) => {
+                const cell = row.getCell(cIdx + 1);
+                cell.value = v;
+                cell.font = { name: 'Microsoft YaHei', size: 9, color: { argb: 'FF0F172A' } };
+                cell.border = borderThin;
+                cell.alignment = {
+                    vertical: 'middle',
+                    horizontal: [0, 1, 2, 3, 4, 5].includes(cIdx) ? ([0].includes(cIdx) ? 'center' : 'left') : 'right'
+                };
+            });
+        });
+
+        worksheet.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: headers.length } };
+        return worksheet;
+    }
+
+    async function exportMonthlyPng() {
+        if (!state.eosMonthlyReport) {
+            alert('当前暂无月报数据可供导出。');
+            return;
+        }
+        if (typeof html2canvas !== 'function') {
+            alert('图片导出组件（html2canvas）未加载，请刷新页面后重试。');
+            return;
+        }
+        const sheet = elements.eosReportSheet || document.getElementById('eosReportSheet');
+        if (!sheet) return;
+        hideTextToolbar();
+        if (document.activeElement && document.activeElement.classList?.contains('topic-editable')) {
+            document.activeElement.blur();
+        }
+        const button = elements.eosDownloadPng;
+        const originalText = button.textContent;
+        button.classList.add('is-loading');
+        button.textContent = '正在生成 PNG...';
+
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        if (currentTheme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'light');
+        }
+        try {
+            await new Promise(resolve => setTimeout(resolve, 50));
+            const canvas = await html2canvas(sheet, {
+                backgroundColor: '#ffffff',
+                scale: 2,
+                useCORS: true,
+                logging: false
+            });
+            const month = state.eosMonthlyReport.month || '当期';
+            const link = document.createElement('a');
+            link.download = `EOS产品与版本收编月报_${month}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        } catch (error) {
+            console.error('月报 PNG 导出失败:', error);
+            alert(`月报 PNG 导出失败：${error.message}`);
+        } finally {
+            if (currentTheme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+            button.classList.remove('is-loading');
+            button.textContent = originalText;
+        }
+    }
+
+    async function exportMonthlyExcel() {
+        if (!state.eosMonthlyReport) {
+            alert('当前暂无月报数据可供导出。');
+            return;
+        }
+        if (typeof ExcelJS === 'undefined') {
+            alert('Excel 导出组件（ExcelJS）未加载，请刷新页面后重试。');
+            return;
+        }
+        const button = elements.eosDownloadExcel;
+        const originalText = button.textContent;
+        button.classList.add('is-loading');
+        button.textContent = '正在生成 Excel...';
+        try {
+            let snapshot = state.eosMonthlySnapshot;
+            if (!snapshot && state.eosMonthlyReport?.snapshot?.id) {
+                const item = await getFullSnapshot(state.eosMonthlyReport.snapshot.id);
+                snapshot = item?.snapshot;
+                state.eosMonthlySnapshot = snapshot;
+            }
+            const workbook = new ExcelJS.Workbook();
+            workbook.creator = 'NetCare · EOS 进展月报';
+            workbook.created = new Date();
+
+            appendMonthlyWorksheet(workbook);
+            appendAnalysisWorksheet(workbook, snapshot);
+            appendProductDetailWorksheet(workbook, snapshot);
+            appendVersionDetailWorksheet(workbook, snapshot);
+
+            const month = state.eosMonthlyReport.month || '当期';
+            await downloadExcelWorkbook(workbook, `EOS产品与版本收编月报_${month}.xlsx`);
+        } catch (error) {
+            console.error('月报 Excel 导出失败:', error);
+            alert(`月报 Excel 导出失败：${error.message}`);
+        } finally {
+            button.classList.remove('is-loading');
+            button.textContent = originalText;
+        }
+    }
+
     function renderEosMonthlyReport(report) {
         elements.eosMonthlyReport.innerHTML = `<h3 class="topic-report-title">EOS 产品与版本收编进展月报（${escapeHtml(report.month)}）</h3><p class="topic-report-objective">总体目标：加快紧急 EOS 产品与版本收编，优先推进无计划网元的升级、退网或收编方案。</p><p class="topic-report-heading">简要进展：</p>` + renderMonthlySection(report.product, '产品') + renderMonthlySection(report.version, '版本') + '<p class="topic-monthly-footnote">口径：已退网网元计入已收编；无计划 = 待收编 − 今年计划；计划后收编率 =（已收编 + 今年计划）÷ 总量。计划后数值以完成已录入计划为前提，不代表已完成。</p>';
         activateCopy(elements.eosMonthlyReport, MONTHLY_COPY_SELECTOR, 'monthly');
@@ -257,15 +977,33 @@
 
     async function loadMonthlyReport(month = '') {
         elements.eosMonthlyReport.textContent = '正在生成月报…';
+        state.eosMonthlySnapshot = null;
         try {
             const result = await API.get(`/api/topic-snapshots/eos-monthly-report${month ? `?month=${encodeURIComponent(month)}` : ''}`);
             elements.eosMonthlyMonth.innerHTML = (result.months || []).map(value => `<option value="${escapeHtml(value)}"${result.report?.month === value ? ' selected' : ''}>${escapeHtml(value)}</option>`).join('');
-            if (!result.report) { state.eosMonthlyReport = null; elements.eosCopyResetMonth.disabled = true; elements.eosMonthlySource.textContent = ''; elements.eosMonthlyReport.textContent = '暂无该月的 NetCare EOS 产品与版本快照。'; return; }
-            const report = result.report; state.eosMonthlyReport = report;
+            if (!result.report) {
+                state.eosMonthlyReport = null;
+                elements.eosCopyResetMonth.disabled = true;
+                if (elements.eosDownloadPng) elements.eosDownloadPng.disabled = true;
+                if (elements.eosDownloadExcel) elements.eosDownloadExcel.disabled = true;
+                elements.eosMonthlySource.textContent = '';
+                elements.eosMonthlyReport.textContent = '暂无该月的 NetCare EOS 产品与版本快照。';
+                return;
+            }
+            const report = result.report;
+            state.eosMonthlyReport = report;
             elements.eosCopyResetMonth.disabled = false;
+            if (elements.eosDownloadPng) elements.eosDownloadPng.disabled = false;
+            if (elements.eosDownloadExcel) elements.eosDownloadExcel.disabled = false;
             elements.eosMonthlySource.textContent = `数据月份 ${report.month} · 数据时间 ${formatTime(report.snapshot.capturedAt)} · 导入时间 ${formatTime(report.snapshot.importedAt)}${report.snapshot.name ? ` · ${report.snapshot.name}` : ''}`;
             renderEosMonthlyReport(report);
-        } catch (error) { state.eosMonthlyReport = null; elements.eosCopyResetMonth.disabled = true; elements.eosMonthlyReport.textContent = `月报生成失败：${error.message}`; }
+        } catch (error) {
+            state.eosMonthlyReport = null;
+            elements.eosCopyResetMonth.disabled = true;
+            if (elements.eosDownloadPng) elements.eosDownloadPng.disabled = true;
+            if (elements.eosDownloadExcel) elements.eosDownloadExcel.disabled = true;
+            elements.eosMonthlyReport.textContent = `月报生成失败：${error.message}`;
+        }
     }
 
     async function loadData() {
@@ -290,7 +1028,11 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        ['totalCount', 'netcareCount', 'datafabCount', 'latestTime', 'refreshButton', 'topicFilter', 'metricFilter', 'analysisTitle', 'metricDefinition', 'topicKpis', 'trendChart', 'metricColumnTitle', 'loadStatus', 'historyBody', 'emptyState', 'eosMonthlyMonth', 'eosMonthlySource', 'eosMonthlyReport', 'eosCopyResetMonth', 'eosCopyResetFixed', 'eosCopyStatus', 'eosTextToolbar', 'detailModal', 'detailTitle', 'detailSummary', 'detailTable', 'detailJson', 'downloadDetail', 'viewRaw', 'toggleDetailFullscreen', 'detailTools', 'detailSearch', 'detailPageSize', 'detailSortColumn', 'detailSortDirection', 'closeDetail'].forEach(id => { elements[id] = document.getElementById(id); });
+        ['totalCount', 'netcareCount', 'datafabCount', 'latestTime', 'themeToggleButton', 'themeToggleIcon', 'themeToggleText', 'refreshButton', 'topicFilter', 'metricFilter', 'analysisTitle', 'metricDefinition', 'topicKpis', 'trendChart', 'metricColumnTitle', 'loadStatus', 'historyBody', 'emptyState', 'eosMonthlyMonth', 'eosMonthlySource', 'eosMonthlyReport', 'eosCopyResetMonth', 'eosCopyResetFixed', 'eosDownloadPng', 'eosDownloadExcel', 'eosReportSheet', 'eosCopyStatus', 'eosTextToolbar', 'detailModal', 'detailTitle', 'detailSummary', 'detailTable', 'detailJson', 'downloadDetail', 'viewRaw', 'toggleDetailFullscreen', 'detailTools', 'detailSearch', 'detailPageSize', 'detailSortColumn', 'detailSortDirection', 'closeDetail'].forEach(id => { elements[id] = document.getElementById(id); });
+        initTheme();
+        if (elements.themeToggleButton) elements.themeToggleButton.addEventListener('click', toggleTheme);
+        if (elements.eosDownloadPng) elements.eosDownloadPng.addEventListener('click', exportMonthlyPng);
+        if (elements.eosDownloadExcel) elements.eosDownloadExcel.addEventListener('click', exportMonthlyExcel);
         activateCopy(document.querySelector('.topic-fixed-progress'), FIXED_COPY_SELECTOR, 'fixed');
         document.addEventListener('selectionchange', rememberTextSelection);
         document.addEventListener('mousedown', event => { if (!event.target.closest('.topic-report-sheet .topic-editable, #eosTextToolbar')) hideTextToolbar(); });

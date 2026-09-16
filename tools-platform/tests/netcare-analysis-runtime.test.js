@@ -8,6 +8,26 @@ const projectRoot = path.resolve(__dirname, '..');
 const runtimePath = path.join(projectRoot, 'frontend/js/uivf12/netcare-analysis.js');
 const pagePath = path.join(projectRoot, 'frontend/pages/uivf12.html');
 
+test('NetCare insights prefer the active globalConfig CSRF token over stale storage entries', () => {
+    const source = fs.readFileSync(runtimePath, 'utf8');
+    const start = source.indexOf('function findCsrfToken()');
+    const end = source.indexOf('async function postJson(', start);
+    assert.ok(start > 0 && end > start);
+    const entries = new Map([
+        ['csrfToken', 'stale-token'],
+        ['globalConfig', JSON.stringify({ configData: { csrfToken: 'current-token' } })]
+    ]);
+    const storage = { get length() { return entries.size; }, getItem: key => entries.get(key) || null, key: index => [...entries.keys()][index] };
+    const findCsrfToken = vm.runInNewContext(`(() => { ${source.slice(start, end)} return findCsrfToken; })()`, {
+        localStorage: storage,
+        sessionStorage: { length: 0, getItem: () => null },
+        document: { querySelector: () => null }
+    });
+    assert.equal(findCsrfToken(), 'current-token');
+    entries.set('globalConfig', JSON.stringify([{ csrfToken: 'array-token' }]));
+    assert.equal(findCsrfToken(), 'array-token');
+});
+
 test('NetCare EOS runtime stays self-contained when embedded in the floating script', () => {
     const source = fs.readFileSync(runtimePath, 'utf8');
     const context = { window: {} };
@@ -270,5 +290,5 @@ test('NetCare SR metrics preserve source fields and weight ratio metrics', () =>
 
 test('UIVF12 page cache-busts the enhanced NetCare runtime', () => {
     const html = fs.readFileSync(pagePath, 'utf8');
-    assert.match(html, /netcare-analysis\.js\?v=20260911-03/);
+    assert.match(html, /netcare-analysis\.js\?v=20260917-01/);
 });

@@ -130,9 +130,94 @@ body { margin:0; background:radial-gradient(circle at 90% 0, rgba(109,53,242,.1)
 .topic-report-sheet .topic-fixed-head { display:block; margin-bottom:2px; }
 .topic-report-sheet .topic-fixed-head span { display:inline-block; margin:6px 0 4px 8px; background:#dceef4; color:#0f5b75; }
 .topic-report-sheet .topic-fixed-steps { margin:0 8px 8px!important; color:#64748b; font-size:12px; }
-.topic-report-sheet .topic-fixed-footnote,.topic-report-sheet .topic-monthly-footnote { margin:8px 0 0!important; padding:8px; border-top:1px solid #94a3b8; color:#64748b; font-size:12px; }
-@media (prefers-color-scheme:dark) { :root { --topic-ink:#edf0fa; --topic-muted:#aab1c3; --topic-line:#34394a; --topic-card:#202432; --topic-bg:#151821; } .topic-stats strong,.topic-dynamic-kpis strong{color:#f4f5fa}.topic-dynamic-kpis article{background:linear-gradient(145deg,#252a39,#202432)}.topic-panel select,.topic-row-actions button,.topic-modal-actions button{background:#292e3d;color:#e8eaf2}.topic-chart{background:#191d29}.topic-table-wrap th,.topic-detail-table-wrap th{background:#292e3d}.topic-table-wrap td,.topic-detail-table-wrap td{border-color:#34394a}.topic-table-wrap tr:hover td,.topic-detail-table-wrap tr:hover td{background:#272b39}.topic-modal-card{background:#202432} }
+/* Primary & Secondary Action Styles for Monthly Controls */
+.topic-monthly-controls .topic-monthly-btn-primary { background:#2563eb; color:#fff; border-color:#2563eb; }
+.topic-monthly-controls .topic-monthly-btn-primary:hover { background:#1d4ed8; border-color:#1d4ed8; color:#fff; }
+.topic-monthly-controls button.is-loading { opacity:.7; cursor:wait; pointer-events:none; }
+.topic-monthly-controls button.is-loading::before { content:'⏳ '; }
+
+/* Theme Toggle Button */
+.topic-theme-toggle { display:inline-flex; align-items:center; gap:6px; font-weight:700; }
+.topic-theme-toggle:hover { background:rgba(255,255,255,.22); }
+
+/* Dark Theme Support via data-theme="dark" */
+:root[data-theme="dark"] {
+    --topic-ink:#edf0fa;
+    --topic-muted:#aab1c3;
+    --topic-line:#34394a;
+    --topic-card:#202432;
+    --topic-bg:#151821;
+}
+:root[data-theme="dark"] body {
+    background:radial-gradient(circle at 90% 0, rgba(109,53,242,.15), transparent 32%), var(--topic-bg);
+}
+:root[data-theme="dark"] .topic-stats strong,
+:root[data-theme="dark"] .topic-dynamic-kpis strong { color:#f4f5fa; }
+:root[data-theme="dark"] .topic-dynamic-kpis article { background:linear-gradient(145deg,#252a39,#202432); border-color:#34394a; }
+:root[data-theme="dark"] .topic-panel select,
+:root[data-theme="dark"] .topic-row-actions button,
+:root[data-theme="dark"] .topic-modal-actions button,
+:root[data-theme="dark"] .topic-detail-tools input,
+:root[data-theme="dark"] .topic-detail-tools select,
+:root[data-theme="dark"] .topic-detail-tools button,
+:root[data-theme="dark"] .topic-detail-pager button {
+    background:#292e3d; color:#e8eaf2; border-color:#3d4559;
+}
+:root[data-theme="dark"] .topic-chart { background:#191d29; }
+:root[data-theme="dark"] .topic-table-wrap th,
+:root[data-theme="dark"] .topic-detail-table-wrap th { background:#292e3d; color:#c4ccde; }
+:root[data-theme="dark"] .topic-table-wrap td,
+:root[data-theme="dark"] .topic-detail-table-wrap td { border-color:#34394a; color:#edf0fa; }
+:root[data-theme="dark"] .topic-table-wrap tr:hover td,
+:root[data-theme="dark"] .topic-detail-table-wrap tr:hover td { background:#272b39; }
+:root[data-theme="dark"] .topic-modal-card { background:#202432; color:#edf0fa; }
+:root[data-theme="dark"] .topic-modal-head { border-bottom-color:#34394a; }
+:root[data-theme="dark"] .topic-detail-tools { border-bottom-color:#34394a; }
+:root[data-theme="dark"] .topic-detail-pager { border-top-color:#34394a; }
+:root[data-theme="dark"] .topic-api-grid code { background:#27223b; color:#d8c6ff; }
+
+/* Dark Theme for EOS Monthly Report Panel */
+:root[data-theme="dark"] .topic-monthly-panel { background:#1a1e2b; border-color:#34394a; }
+:root[data-theme="dark"] .topic-monthly-panel .topic-panel-head h2 { color:#f1f5f9; }
+:root[data-theme="dark"] .topic-monthly-panel .topic-panel-head p,
+:root[data-theme="dark"] .topic-monthly-panel .topic-panel-head label,
+:root[data-theme="dark"] .topic-monthly-edit-hint { color:#a0aec0!important; }
+:root[data-theme="dark"] .topic-monthly-controls button { background:#292e3d; color:#e8eaf2; border-color:#3d4559; }
+:root[data-theme="dark"] .topic-monthly-controls button:hover { border-color:#60a5fa; color:#93c5fd; }
+:root[data-theme="dark"] .topic-monthly-controls .topic-monthly-btn-primary { background:#3b82f6; color:#fff; border-color:#3b82f6; }
+:root[data-theme="dark"] .topic-monthly-controls .topic-monthly-btn-primary:hover { background:#2563eb; border-color:#2563eb; }
+:root[data-theme="dark"] .topic-report-sheet { background:#1e2433; border-color:#34394a; color:#f1f5f9; }
+:root[data-theme="dark"] .topic-report-sheet p { color:#cbd5e1; }
+:root[data-theme="dark"] .topic-report-sheet .topic-monthly-source { color:#94a3b8!important; }
+:root[data-theme="dark"] .topic-report-title { background:#1e3a5f; color:#e0f2fe; }
+:root[data-theme="dark"] .topic-report-objective { border-bottom-color:#475569; }
+:root[data-theme="dark"] .topic-monthly-copy { border-bottom-color:#475569; }
+:root[data-theme="dark"] .topic-monthly-copy strong { color:#f8fafc; }
+:root[data-theme="dark"] .topic-report-sheet .topic-monthly-section h3,
+:root[data-theme="dark"] .topic-report-sheet .topic-fixed-head h3 { background:#262d3d; color:#f1f5f9; }
+:root[data-theme="dark"] .topic-report-sheet .topic-monthly-table th,
+:root[data-theme="dark"] .topic-report-sheet .topic-fixed-table th { background:#262d3d; color:#e2e8f0; border-color:#475569; }
+:root[data-theme="dark"] .topic-report-sheet .topic-monthly-table td,
+:root[data-theme="dark"] .topic-report-sheet .topic-fixed-table td { border-color:#475569; color:#cbd5e1; }
+:root[data-theme="dark"] .topic-report-sheet .topic-monthly-total th,
+:root[data-theme="dark"] .topic-report-sheet .topic-monthly-total td { background:#2e374a; color:#f8fafc; }
+:root[data-theme="dark"] .topic-report-sheet .topic-monthly-table tr:hover td,
+:root[data-theme="dark"] .topic-report-sheet .topic-fixed-table tr:hover td { background:#252d3d; }
+:root[data-theme="dark"] .topic-report-caption { color:#94a3b8!important; }
+:root[data-theme="dark"] .topic-report-sheet .topic-fixed-progress { border-top-color:#475569; }
+:root[data-theme="dark"] .topic-report-sheet .topic-fixed-head span { background:#164e63; color:#a5f3fc; }
+:root[data-theme="dark"] .topic-report-sheet .topic-fixed-steps { color:#94a3b8!important; }
+:root[data-theme="dark"] .topic-report-sheet .topic-fixed-footnote,
+:root[data-theme="dark"] .topic-report-sheet .topic-monthly-footnote { border-top-color:#475569; color:#94a3b8; }
+:root[data-theme="dark"] .topic-fixed-table .topic-fixed-complete { color:#34d399; }
+:root[data-theme="dark"] .topic-editable:hover { background-color:#2a3346; }
+:root[data-theme="dark"] .topic-editable:focus { background-color:#1e2433; outline-color:#60a5fa; }
+:root[data-theme="dark"] .topic-text-toolbar { background:#202432; border-color:#3d4559; }
+:root[data-theme="dark"] .topic-text-toolbar button { background:#292e3d; color:#edf0fa; border-color:#3d4559; }
+:root[data-theme="dark"] .topic-text-toolbar button:hover { background:#343c50; border-color:#60a5fa; }
+
 @media (max-width:900px) { .topic-page{width:min(100% - 24px,1440px);margin-top:74px}.topic-hero{align-items:flex-start;flex-direction:column}.topic-stats{grid-template-columns:1fr 1fr}.topic-api-panel{grid-template-columns:1fr}.topic-api-grid{grid-template-columns:1fr} }
 @media (max-width:900px) { .topic-monthly-layout{grid-template-columns:1fr} }
 @media (max-width:560px) { .topic-hero{padding:24px}.topic-hero-actions{width:100%;flex-direction:column}.topic-hero-actions>*{text-align:center}.topic-stats{grid-template-columns:1fr 1fr}.topic-panel{padding:18px}.topic-panel-head{flex-direction:column}.topic-stats strong{font-size:26px} }
 @media (max-width:560px) { .topic-fixed-head{flex-direction:column} }
+

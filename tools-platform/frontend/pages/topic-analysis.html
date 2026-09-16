@@ -18,6 +18,9 @@
                 <p>NetCare 与 DataFab 导入快照的租户级历史中心。完整 JSON 持久保存，可在任意业务页面按时间回顾。</p>
             </div>
             <div class="topic-hero-actions">
+                <button id="themeToggleButton" class="topic-button topic-button-secondary topic-theme-toggle" type="button" aria-label="切换主题模式" title="点击切换浅色/深色主题">
+                    <span id="themeToggleIcon">☀️</span> <span id="themeToggleText">浅色模式</span>
+                </button>
                 <a href="/uivf12" class="topic-button topic-button-secondary">返回脚本仓库</a>
                 <button id="refreshButton" class="topic-button" type="button">刷新数据</button>
             </div>
@@ -37,13 +40,17 @@
                     <h2 id="eosMonthlyTitle">EOS 产品与版本收编 · 进展月报</h2>
                     <p>每月采用该数据月份最后导入的一份 NetCare 快照；计划数和目标沿用该快照保存的设置。</p>
                 </div>
-                <div class="topic-monthly-controls"><label>报告月份<select id="eosMonthlyMonth"
-                            aria-label="EOS 月报月份"></select></label><button id="eosCopyResetMonth" type="button"
-                        disabled>恢复本月自动文案</button><button id="eosCopyResetFixed" type="button">恢复固定文案</button></div>
+                <div class="topic-monthly-controls">
+                    <label>报告月份<select id="eosMonthlyMonth" aria-label="EOS 月报月份"></select></label>
+                    <button id="eosCopyResetMonth" type="button" disabled>恢复本月自动文案</button>
+                    <button id="eosCopyResetFixed" type="button">恢复固定文案</button>
+                    <button id="eosDownloadPng" class="topic-monthly-btn" type="button" title="下载当前月报长图 PNG">下载月报 PNG</button>
+                    <button id="eosDownloadExcel" class="topic-monthly-btn topic-monthly-btn-primary" type="button" title="下载包含月报、多维度分析及详表的多 Sheet Excel">下载月报 Excel</button>
+                </div>
             </div>
             <p class="topic-monthly-edit-hint">点击月报文字可修改；选中文字可加粗或改色。当前浏览器会按租户和月份记忆动态文案，按租户记忆固定文案。<span
                     id="eosCopyStatus" role="status"></span></p>
-            <div class="topic-report-sheet">
+            <div id="eosReportSheet" class="topic-report-sheet">
                 <p id="eosMonthlySource" class="topic-monthly-source"></p>
                 <div id="eosMonthlyReport" class="topic-monthly-report" aria-live="polite">正在生成月报…</div>
                 <div class="topic-fixed-progress" aria-labelledby="fixedProgressTitle">
@@ -353,7 +360,9 @@
 
     <script src="/js/shared/api.js?v=20260911-03"></script>
     <script src="/js/shared/navbar.js?v=20260916-02"></script>
-    <script src="/js/topic-analysis.js?v=20260916-06"></script>
+    <script src="/js/shared/html2canvas.min.js?v=20260911-03"></script>
+    <script src="/js/shared/exceljs.min.js?v=20260916-01"></script>
+    <script src="/js/topic-analysis.js?v=20260917-01"></script>
 </body>
 
 </html>
