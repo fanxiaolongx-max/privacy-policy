@@ -42,7 +42,9 @@ test('report MSG export creates a real Outlook file with editable HTML body', as
     const htmlStream = CFB.find(compound, '/__substg1.0_10130102');
     assert.ok(htmlStream, 'MSG should contain PR_HTML');
     assert.match(Buffer.from(htmlStream.content).toString('utf8'), /可编辑月报/);
-    assert.equal(CFB.find(compound, '/__substg1.0_1000001F'), null, 'MSG should not contain the plain text body stream');
+    const fallbackBody = CFB.find(compound, '/__substg1.0_1000001F');
+    assert.ok(fallbackBody, 'MSG should contain a plain text fallback body');
+    assert.match(Buffer.from(fallbackBody.content).toString('utf16le'), /可编辑月报/);
     assert.ok(CFB.find(compound, '/__substg1.0_0037001F'), 'MSG should contain subject');
     const properties = CFB.find(compound, '/__properties_version1.0').content;
     let flags = 0;
@@ -58,7 +60,7 @@ test('report MSG export creates a real Outlook file with editable HTML body', as
     assert.ok(flags & 0x8, 'MSG should be an unsent draft');
     assert.equal(nativeBody, 3, 'HTML must be the native body format');
     assert.equal(editorFormat, 2, 'Outlook editor must use HTML');
-    assert.equal(hasPlainBodyProperty, false, 'MSG should only offer the HTML body');
+    assert.equal(hasPlainBodyProperty, true, 'MSG should declare its fallback body');
     const attachmentData = compound.FullPaths.find(value => /__attach_version1\.0_#00000000\/__substg1\.0_37010102$/.test(value));
     assert.ok(attachmentData, 'MSG should include the source workbook attachment');
     assert.equal(Buffer.from(CFB.find(compound, attachmentData).content).toString(), 'xlsx-fixture');

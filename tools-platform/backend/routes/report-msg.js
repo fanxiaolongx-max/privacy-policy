@@ -4,6 +4,7 @@ const router = express.Router();
 router.post('/export', async (req, res) => {
     const subject = String(req.body?.subject || '').trim();
     const html = String(req.body?.html || '');
+    const text = String(req.body?.text || '').trim();
     const attachment = req.body?.attachment;
     if (!subject || subject.length > 200 || !html || html.length > 2_000_000) {
         return res.status(400).json({ error: 'INVALID_REPORT', message: '月报内容无效或过大' });
@@ -18,13 +19,13 @@ router.post('/export', async (req, res) => {
         const message = new Email();
         message.subject(subject);
         message.bodyHtml(html);
+        // Some Outlook versions fall back to PR_BODY when opening a standalone MSG.
+        message.bodyText((text || html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()).slice(0, 500_000));
         message.bodyFormat(MessageEditorFormat.EDITOR_FORMAT_HTML);
         if (attachment) message.attach(new Attachment(Buffer.from(attachment.data, 'base64'), attachment.filename));
         const compound = CFB.read(Buffer.from(message.msg()), { type: 'buffer' });
-        // oxmsg always writes PR_BODY, even for HTML messages. Outlook can select it
-        // instead of PR_HTML when resolving the best body from a standalone MSG.
         if (!CFB.find(compound, '/__substg1.0_10130102')) throw new Error('MSG HTML body missing');
-        if (!CFB.utils.cfb_del(compound, '/__substg1.0_1000001F')) throw new Error('MSG plain body missing');
+        if (!CFB.find(compound, '/__substg1.0_1000001F')) throw new Error('MSG fallback body missing');
         const propertyEntry = CFB.find(compound, '/__properties_version1.0');
         const properties = propertyEntry?.content;
         if (!properties) throw new Error('MSG properties missing');
@@ -46,15 +47,7 @@ router.post('/export', async (req, res) => {
         nativeBody.writeUInt32LE(3, 8);
         // The library leaves four trailing padding bytes after the property records.
         if ((properties.length - 32) % 16 !== 4) throw new Error('Unexpected MSG property layout');
-        const propertyRecords = [];
-        let foundPlainBody = false;
-        for (let offset = 32; offset + 16 <= properties.length - 4; offset += 16) {
-            const record = properties.subarray(offset, offset + 16);
-            if (record.readUInt32LE(0) === 0x1000001F) { foundPlainBody = true; continue; }
-            propertyRecords.push(record);
-        }
-        if (!foundPlainBody) throw new Error('MSG plain body property missing');
-        propertyEntry.content = Buffer.concat([properties.subarray(0, 32), ...propertyRecords, nativeBody, properties.subarray(-4)]);
+        propertyEntry.content = Buffer.concat([properties.subarray(0, -4), nativeBody, properties.subarray(-4)]);
         propertyEntry.size = propertyEntry.content.length;
         CFB.utils.cfb_gc(compound);
         const buffer = Buffer.from(CFB.write(compound, { type: 'buffer' }));
