@@ -130,6 +130,9 @@ body { margin:0; background:radial-gradient(circle at 90% 0, rgba(109,53,242,.1)
 .topic-report-sheet .topic-monthly-total th,.topic-report-sheet .topic-monthly-total td { background:#e8f1f5; font-weight:800; }
 .topic-report-sheet .topic-monthly-table tr:hover td,.topic-report-sheet .topic-fixed-table tr:hover td { background:#f8fafc; }
 .topic-report-caption { margin:5px 0 0!important; text-align:center; font-size:12px!important; color:#64748b!important; }
+.topic-report-footer { margin-top:18px; padding:12px 8px 2px; border-top:1px solid #cbd5e1; }
+.topic-report-sheet .topic-report-footer-copy { margin:4px 0!important; color:#475569; font-size:13px; }
+.topic-report-sheet .topic-report-endmark { margin:18px 0 0!important; color:#94a3b8; font-size:11px; text-align:center; letter-spacing:.04em; }
 .topic-report-sheet .topic-fixed-progress { margin-top:16px; padding-top:12px; border-top:1px solid #94a3b8; }
 .topic-report-sheet .topic-fixed-head { display:block; margin-bottom:2px; }
 .topic-report-sheet .topic-fixed-head span { display:inline-block; margin:6px 0 4px 8px; background:#dceef4; color:#0f5b75; }
@@ -211,6 +214,8 @@ body { margin:0; background:radial-gradient(circle at 90% 0, rgba(109,53,242,.1)
 :root[data-theme="dark"] .topic-report-sheet .topic-fixed-progress { border-top-color:#475569; }
 :root[data-theme="dark"] .topic-report-sheet .topic-fixed-head span { background:#164e63; color:#a5f3fc; }
 :root[data-theme="dark"] .topic-report-sheet .topic-fixed-steps { color:#94a3b8!important; }
+:root[data-theme="dark"] .topic-report-footer { border-top-color:#475569; }
+:root[data-theme="dark"] .topic-report-sheet .topic-report-footer-copy { color:#cbd5e1; }
 :root[data-theme="dark"] .topic-report-sheet .topic-fixed-footnote,
 :root[data-theme="dark"] .topic-report-sheet .topic-monthly-footnote { border-top-color:#475569; color:#94a3b8; }
 :root[data-theme="dark"] .topic-fixed-table .topic-fixed-complete { color:#34d399; }
@@ -229,4 +234,3 @@ body { margin:0; background:radial-gradient(circle at 90% 0, rgba(109,53,242,.1)
 @media (max-width:900px) { .topic-monthly-layout{grid-template-columns:1fr} }
 @media (max-width:560px) { .topic-hero{padding:24px}.topic-hero-actions{width:100%;flex-direction:column}.topic-hero-actions>*{text-align:center}.topic-stats{grid-template-columns:1fr 1fr}.topic-panel{padding:18px}.topic-panel-head{flex-direction:column}.topic-stats strong{font-size:26px} }
 @media (max-width:560px) { .topic-fixed-head{flex-direction:column} }
-

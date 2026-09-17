@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>专题分析</title>
     <link rel="stylesheet" href="/css/shared.css?v=20260911-03">
-    <link rel="stylesheet" href="/css/topic-analysis.css?v=20260917-02">
+    <link rel="stylesheet" href="/css/topic-analysis.css?v=20260917-03">
 </head>
 
 <body>
@@ -46,6 +46,7 @@
                     <button id="eosCopyResetFixed" type="button">恢复固定文案</button>
                     <button id="eosDownloadPng" class="topic-monthly-btn" type="button" title="下载当前月报长图 PNG">下载月报 PNG</button>
                     <button id="eosDownloadExcel" class="topic-monthly-btn topic-monthly-btn-primary" type="button" title="下载包含月报、多维度分析及详表的多 Sheet Excel">下载月报 Excel</button>
+                    <button id="eosDownloadMsg" class="topic-monthly-btn" type="button" title="下载可在 Outlook 中继续编辑的 HTML 月报邮件">下载月报 MSG</button>
                 </div>
             </div>
             <p class="topic-monthly-edit-hint">点击月报文字可修改；选中文字可加粗或改色。当前浏览器会按租户和月份记忆动态文案，按租户记忆固定文案。<span
@@ -269,6 +270,11 @@
                     <p class="topic-fixed-footnote">固定基线据 NetCare 官方材料整理，网元基线为年初固定值。*版本已闭环小计包含 NetCare 官方 IBMS 更新新增的 4
                         个网元，因此小计可能高于年初基线对应的原始统计，这是数据更新后的正常现象；闭环率按整数显示为 100%。</p>
                 </div>
+                <footer class="topic-report-footer">
+                    <p class="topic-report-footer-copy">若您对此报告数据有疑问，请联系范晓龙wx154337，于祥00877023，谢谢！</p>
+                    <p class="topic-report-footer-copy">原始数据见附件</p>
+                    <p id="eosReportEndmark" class="topic-report-endmark"></p>
+                </footer>
             </div>
         </section>
 
@@ -362,7 +368,8 @@
     <script src="/js/shared/navbar.js?v=20260916-02"></script>
     <script src="/js/shared/html2canvas.min.js?v=20260911-03"></script>
     <script src="/js/shared/exceljs.min.js?v=20260916-01"></script>
-    <script src="/js/topic-analysis.js?v=20260917-01"></script>
+    <script src="/js/shared/report-msg-export.js?v=20260917-04"></script>
+    <script src="/js/topic-analysis.js?v=20260917-06"></script>
 </body>
 
 </html>

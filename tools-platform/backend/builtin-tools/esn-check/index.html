@@ -924,6 +924,9 @@
         .report-table-intro { font-weight:700; margin-top:10px; }
         .report-table-caption { text-align:center; font-size:12px; margin-bottom:10px; }
         .report-sheet p { margin:7px 0; line-height:1.6; }
+        .report-footer { margin-top:18px; padding:12px 8px 2px; border-top:1px solid #cbd5e1; }
+        .report-footer .report-copy { padding:2px 0; color:#475569; font-size:13px; }
+        .report-footer .report-endmark { margin-top:18px; color:#94a3b8; font-size:11px; text-align:center; letter-spacing:.04em; }
         .report-sheet table,.source-detail-table { border-collapse:collapse; width:100%; font-size:12px; }
         .report-sheet th,.report-sheet td,.source-detail-table th,.source-detail-table td { border:1px solid #94a3b8; padding:6px 8px; text-align:center; }
         .report-sheet th,.source-detail-table th { background:#e8f1f5; }
@@ -1291,6 +1294,7 @@
                 <button class="view-tab" id="report-reset-copy" type="button">恢复自动文案</button>
                 <button class="view-tab" id="report-png">下载月报 PNG</button>
                 <button class="view-tab" id="report-excel" type="button">下载月报 Excel</button>
+                <button class="view-tab" id="report-msg" type="button">下载月报 MSG</button>
               </div>
               <div class="report-controls-notes">
                 <span class="muted">选中文字或右键可加粗、标色；修改自动保存当前口径与时间范围</span>
@@ -1530,6 +1534,7 @@
         <button class="text-color-swatch" type="button" data-report-color="#7c3aed" style="background:#7c3aed" title="紫色"></button>
     </div>
 
+    <script src="/js/shared/report-msg-export.js?v=20260917-04"></script>
     <script>
         const noticeOverlay = document.getElementById('notice-overlay');
         let noticeResolve = null;
@@ -3748,6 +3753,14 @@
             Array.from(block.childNodes).forEach(node => visit(node, base));
             return runs.length ? { richText: runs } : block.textContent;
         }
+        function reportExcelTextHeight(value, width, fontSize) {
+            const usableWidth = Math.max(1, width * 0.78);
+            const lines = String(value || '').split(/\r?\n/).reduce((count, part) => {
+                const units = Array.from(part).reduce((sum, char) => sum + (char.charCodeAt(0) > 255 ? 2 : 1), 0);
+                return count + Math.max(1, Math.ceil(units / usableWidth));
+            }, 0);
+            return Math.min(409, Math.ceil(lines * fontSize * 1.6 + 8));
+        }
         function appendMonthlyWorksheet(workbook) {
             const sheet = document.getElementById('report-sheet');
             const tables = Array.from(sheet.querySelectorAll('table'));
@@ -3766,7 +3779,8 @@
                 if (block.classList.contains('report-title')) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDCEEF4' } };
                 if (block.classList.contains('report-section-heading')) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
                 if (block.classList.contains('report-objective') || block.classList.contains('report-section-heading')) cell.border = { bottom: border.bottom };
-                row.height = Math.max(block.classList.contains('report-title') ? 38 : 22, Math.ceil(block.getBoundingClientRect().height * 0.75) + 5);
+                row.height = Math.max(block.classList.contains('report-title') ? 38 : 22, Math.ceil(block.getBoundingClientRect().height * 0.75) + 5,
+                    reportExcelTextHeight(block.innerText || block.textContent, columns * 5.5, cell.font.size));
             };
             const appendCaption = block => {
                 const row = worksheet.getRow(rowNumber++); worksheet.mergeCells(row.number, 1, row.number, columns);
@@ -3777,6 +3791,7 @@
                 Array.from(table.rows).forEach((sourceRow, rowIndex) => {
                     const row = worksheet.getRow(rowNumber++), cells = Array.from(sourceRow.cells);
                     const header = sourceRow.parentElement.tagName === 'THEAD', footer = sourceRow.parentElement.tagName === 'TFOOT';
+                    let textHeight = 0;
                     cells.forEach((sourceCell, index) => {
                         const start = Math.floor(index * columns / cells.length) + 1;
                         const end = Math.floor((index + 1) * columns / cells.length);
@@ -3786,10 +3801,11 @@
                         cell.value = !header && !split && /^\d+$/.test(value) ? Number(value) : value;
                         cell.font = { name: 'Microsoft YaHei', size: header ? 10 : 9, bold: header || footer, color: { argb: 'FF0F172A' } };
                         cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+                        textHeight = Math.max(textHeight, reportExcelTextHeight(value, (end - start + 1) * 5.5, cell.font.size));
                         cell.border = border;
                         if (header || footer) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8F1F5' } };
                     });
-                    row.height = Math.max(header ? 38 : 23, Math.ceil(sourceRow.getBoundingClientRect().height * 0.75) + 3);
+                    row.height = Math.max(header ? 38 : 23, Math.ceil(sourceRow.getBoundingClientRect().height * 0.75) + 3, textHeight);
                 });
             };
             const appendNode = node => {
@@ -3820,6 +3836,35 @@
             try {
                 await downloadExcelWorkbook(workbook, `临时License月报_${label}.xlsx`);
             } catch (error) { showNotice('导出失败', `Excel 导出失败：${error.message}`); }
+        }
+        async function exportMonthlyMsg() {
+            if (!reportRows().length) return;
+            if (viewDirtyFlags.monthly) renderMonthlyReport();
+            const button = document.getElementById('report-msg');
+            const originalText = button.textContent;
+            button.disabled = true;
+            button.textContent = '正在生成 MSG...';
+            try {
+                const period = document.getElementById('report-period').value;
+                const label = period === 'all' ? '全部时间' : period === 'year'
+                    ? document.getElementById('report-year').value : document.getElementById('report-month').value;
+                const workbook = new ExcelJS.Workbook();
+                workbook.creator = '临时 License 统计与月报';
+                workbook.created = new Date();
+                appendMonthlyWorksheet(workbook);
+                await appendAnalysisWorksheet(workbook);
+                await appendSourceDetailWorksheet(workbook, 'base');
+                await appendSourceDetailWorksheet(workbook, 'full');
+                const bytes = await workbook.xlsx.writeBuffer();
+                await window.ReportMsgExport.download(document.getElementById('report-sheet'),
+                    `埃及运营商临时 License 使用与转商用进展月报（${label}）`, `临时License月报_${label}.msg`,
+                    { filename: `临时License月报及原始数据_${label}.xlsx`, bytes });
+            } catch (error) {
+                window.ReportMsgExport.showError(error);
+            } finally {
+                button.disabled = false;
+                button.textContent = originalText;
+            }
         }
         function renderMonthlyReport() {
             const host = document.getElementById('report-sheet'), rows = reportRows();
@@ -3869,7 +3914,8 @@
             const linePrior = priorLineCounts.get(topLine[0]) || 0;
             const storageKey = reportCopyKey(), overrides = reportCopyOverrides();
             const copy = (key, text, className = '') => appendReportCopy(host, key, text, className, overrides, storageKey);
-            copy('title', `埃及运营商临时 License 使用&转商用进展月报（${periodLabel}）`, 'report-title');
+            const reportTitle = `埃及运营商临时 License 使用&转商用进展月报（${periodLabel}）`;
+            copy('title', reportTitle, 'report-title');
             copy('objective', '总体目标：无 License 超期导致的事故和重大问题，牵引临时 License 有序转商用，增加收入，降低成本。', 'report-objective');
             const progress = document.createElement('div'); progress.className = 'report-progress-block'; host.appendChild(progress);
             const progressCopy = (key, text, className = '') => appendReportCopy(progress, key, text, className, overrides, storageKey);
@@ -3899,6 +3945,11 @@
             copy('table4-near', `现网累计 ${near} 个临期 License 运行${nearTop ? `，其中 ${nearTop[0]} 临期最多 ${nearTop[1]}` : ''}。`);
             copy('table4-reminder', '请注意及时申请并替换超期 License，提前申请并替换临期 License，避免造成严重网络影响。');
             addReportTable(host, '（表 4）', rows, 'report-status');
+            const footer = document.createElement('footer'); footer.className = 'report-footer'; host.appendChild(footer);
+            appendReportCopy(footer, 'footer-contact', '若您对此报告数据有疑问，请联系范晓龙wx154337，于祥00877023，谢谢！', '', overrides, storageKey);
+            appendReportCopy(footer, 'footer-attachment', '原始数据见附件', '', overrides, storageKey);
+            const endmark = document.createElement('p'); endmark.className = 'report-copy report-endmark';
+            endmark.textContent = `-- ${reportTitle} --`; footer.appendChild(endmark);
         }
         function sourceDetailRows(type) {
             return type === 'base'
@@ -4140,6 +4191,7 @@
             await importReportPreferences(event.target.files?.[0]); event.target.value = '';
         });
         document.getElementById('report-excel').addEventListener('click', exportMonthlyExcel);
+        document.getElementById('report-msg').addEventListener('click', exportMonthlyMsg);
         document.getElementById('report-png').addEventListener('click', async () => {
             if (!reportRows().length) return;
             if (typeof html2canvas !== 'function') { showNotice('导出失败', '图片导出组件未加载，请检查网络后重试。'); return; }

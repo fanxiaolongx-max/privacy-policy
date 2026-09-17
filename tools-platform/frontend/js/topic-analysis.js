@@ -406,11 +406,12 @@
             const computed = getComputedStyle(block);
             cell.value = reportExcelRichText(block);
             const isTitle = block.classList.contains('topic-report-title');
+            const isEndmark = block.classList.contains('topic-report-endmark');
             const isSectionHeading = block.tagName === 'H3' || block.classList.contains('topic-report-heading') || block.tagName === 'H4';
             const isObjective = block.classList.contains('topic-report-objective');
             cell.alignment = {
                 vertical: 'middle',
-                horizontal: isTitle ? 'center' : 'left',
+                horizontal: isTitle || isEndmark ? 'center' : 'left',
                 wrapText: true
             };
             cell.font = {
@@ -422,6 +423,8 @@
             if (isTitle) {
                 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDCEEF4' } };
                 row.height = 38;
+            } else if (isEndmark) {
+                row.height = 20;
             } else if (isSectionHeading) {
                 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
                 row.height = 25;
@@ -447,8 +450,7 @@
         const appendTable = table => {
             const rows = Array.from(table.rows);
             const grid = [];
-            rows.forEach(sourceRow => {
-                const rowIndex = grid.length;
+            rows.forEach((sourceRow, rowIndex) => {
                 grid[rowIndex] = grid[rowIndex] || [];
                 let cIndex = 1;
                 const currentRow = worksheet.getRow(rowNumber);
@@ -510,6 +512,8 @@
                 node.classList?.contains('topic-monthly-source') ||
                 node.classList?.contains('topic-fixed-steps') ||
                 node.classList?.contains('topic-fixed-footnote') ||
+                node.classList?.contains('topic-report-footer-copy') ||
+                node.classList?.contains('topic-report-endmark') ||
                 node.classList?.contains('topic-monthly-footnote') ||
                 (node.parentElement?.classList?.contains('topic-monthly-copy') && node.tagName === 'P') ||
                 (node.tagName === 'H3' && node.closest('.topic-report-sheet')) ||
@@ -984,20 +988,7 @@
         button.classList.add('is-loading');
         button.textContent = '正在生成 Excel...';
         try {
-            let snapshot = state.eosMonthlySnapshot;
-            if (!snapshot && state.eosMonthlyReport?.snapshot?.id) {
-                const item = await getFullSnapshot(state.eosMonthlyReport.snapshot.id);
-                snapshot = item?.snapshot;
-                state.eosMonthlySnapshot = snapshot;
-            }
-            const workbook = new ExcelJS.Workbook();
-            workbook.creator = 'NetCare · EOS 进展月报';
-            workbook.created = new Date();
-
-            appendMonthlyWorksheet(workbook);
-            appendAnalysisWorksheet(workbook, snapshot);
-            appendProductDetailWorksheet(workbook, snapshot);
-            appendVersionDetailWorksheet(workbook, snapshot);
+            const workbook = await buildMonthlyWorkbook();
 
             const month = state.eosMonthlyReport.month || '当期';
             await downloadExcelWorkbook(workbook, `EOS产品与版本收编月报_${month}.xlsx`);
@@ -1006,6 +997,45 @@
             alert(`月报 Excel 导出失败：${error.message}`);
         } finally {
             button.classList.remove('is-loading');
+            button.textContent = originalText;
+        }
+    }
+
+    async function buildMonthlyWorkbook() {
+        let snapshot = state.eosMonthlySnapshot;
+        if (!snapshot && state.eosMonthlyReport?.snapshot?.id) {
+            const item = await getFullSnapshot(state.eosMonthlyReport.snapshot.id);
+            snapshot = item?.snapshot;
+            state.eosMonthlySnapshot = snapshot;
+        }
+        const workbook = new ExcelJS.Workbook();
+        workbook.creator = 'NetCare · EOS 进展月报';
+        workbook.created = new Date();
+        appendMonthlyWorksheet(workbook);
+        appendAnalysisWorksheet(workbook, snapshot);
+        appendProductDetailWorksheet(workbook, snapshot);
+        appendVersionDetailWorksheet(workbook, snapshot);
+        return workbook;
+    }
+
+    async function exportMonthlyMsg() {
+        if (!state.eosMonthlyReport) { alert('当前暂无月报数据可供导出。'); return; }
+        const button = elements.eosDownloadMsg;
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = '正在生成 MSG...';
+        try {
+            const month = state.eosMonthlyReport.month || '当期';
+            const workbook = await buildMonthlyWorkbook();
+            const bytes = await workbook.xlsx.writeBuffer();
+            await window.ReportMsgExport.download(elements.eosReportSheet,
+                `EOS 产品与版本收编进展月报（${month}）`, `EOS产品与版本收编月报_${month}.msg`,
+                { filename: `EOS产品与版本收编月报_${month}.xlsx`, bytes });
+        } catch (error) {
+            console.error('月报 MSG 导出失败:', error);
+            window.ReportMsgExport.showError(error);
+        } finally {
+            button.disabled = false;
             button.textContent = originalText;
         }
     }
@@ -1023,9 +1053,11 @@
             elements.eosMonthlyMonth.innerHTML = (result.months || []).map(value => `<option value="${escapeHtml(value)}"${result.report?.month === value ? ' selected' : ''}>${escapeHtml(value)}</option>`).join('');
             if (!result.report) {
                 state.eosMonthlyReport = null;
+                elements.eosReportEndmark.textContent = '';
                 elements.eosCopyResetMonth.disabled = true;
                 if (elements.eosDownloadPng) elements.eosDownloadPng.disabled = true;
                 if (elements.eosDownloadExcel) elements.eosDownloadExcel.disabled = true;
+                if (elements.eosDownloadMsg) elements.eosDownloadMsg.disabled = true;
                 elements.eosMonthlySource.textContent = '';
                 elements.eosMonthlyReport.textContent = '暂无该月的 NetCare EOS 产品与版本快照。';
                 return;
@@ -1035,13 +1067,17 @@
             elements.eosCopyResetMonth.disabled = false;
             if (elements.eosDownloadPng) elements.eosDownloadPng.disabled = false;
             if (elements.eosDownloadExcel) elements.eosDownloadExcel.disabled = false;
+            if (elements.eosDownloadMsg) elements.eosDownloadMsg.disabled = false;
+            elements.eosReportEndmark.textContent = `-- EOS 产品与版本收编进展月报（${report.month}） --`;
             elements.eosMonthlySource.textContent = `数据月份 ${report.month} · 数据时间 ${formatTime(report.snapshot.capturedAt)} · 导入时间 ${formatTime(report.snapshot.importedAt)}${report.snapshot.name ? ` · ${report.snapshot.name}` : ''}`;
             renderEosMonthlyReport(report);
         } catch (error) {
             state.eosMonthlyReport = null;
+            elements.eosReportEndmark.textContent = '';
             elements.eosCopyResetMonth.disabled = true;
             if (elements.eosDownloadPng) elements.eosDownloadPng.disabled = true;
             if (elements.eosDownloadExcel) elements.eosDownloadExcel.disabled = true;
+            if (elements.eosDownloadMsg) elements.eosDownloadMsg.disabled = true;
             elements.eosMonthlyReport.textContent = `月报生成失败：${error.message}`;
         }
     }
@@ -1068,11 +1104,12 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        ['totalCount', 'netcareCount', 'datafabCount', 'latestTime', 'themeToggleButton', 'themeToggleIcon', 'themeToggleText', 'refreshButton', 'topicFilter', 'metricFilter', 'analysisTitle', 'metricDefinition', 'topicKpis', 'trendChart', 'metricColumnTitle', 'loadStatus', 'historyBody', 'emptyState', 'eosMonthlyMonth', 'eosMonthlySource', 'eosMonthlyReport', 'eosCopyResetMonth', 'eosCopyResetFixed', 'eosDownloadPng', 'eosDownloadExcel', 'eosReportSheet', 'eosCopyStatus', 'eosTextToolbar', 'detailModal', 'detailTitle', 'detailSummary', 'detailTable', 'detailJson', 'downloadDetail', 'viewRaw', 'toggleDetailFullscreen', 'detailTools', 'detailSearch', 'detailPageSize', 'detailSortColumn', 'detailSortDirection', 'closeDetail'].forEach(id => { elements[id] = document.getElementById(id); });
+        ['totalCount', 'netcareCount', 'datafabCount', 'latestTime', 'themeToggleButton', 'themeToggleIcon', 'themeToggleText', 'refreshButton', 'topicFilter', 'metricFilter', 'analysisTitle', 'metricDefinition', 'topicKpis', 'trendChart', 'metricColumnTitle', 'loadStatus', 'historyBody', 'emptyState', 'eosMonthlyMonth', 'eosMonthlySource', 'eosMonthlyReport', 'eosCopyResetMonth', 'eosCopyResetFixed', 'eosDownloadPng', 'eosDownloadExcel', 'eosDownloadMsg', 'eosReportEndmark', 'eosReportSheet', 'eosCopyStatus', 'eosTextToolbar', 'detailModal', 'detailTitle', 'detailSummary', 'detailTable', 'detailJson', 'downloadDetail', 'viewRaw', 'toggleDetailFullscreen', 'detailTools', 'detailSearch', 'detailPageSize', 'detailSortColumn', 'detailSortDirection', 'closeDetail'].forEach(id => { elements[id] = document.getElementById(id); });
         initTheme();
         if (elements.themeToggleButton) elements.themeToggleButton.addEventListener('click', toggleTheme);
         if (elements.eosDownloadPng) elements.eosDownloadPng.addEventListener('click', exportMonthlyPng);
         if (elements.eosDownloadExcel) elements.eosDownloadExcel.addEventListener('click', exportMonthlyExcel);
+        if (elements.eosDownloadMsg) elements.eosDownloadMsg.addEventListener('click', exportMonthlyMsg);
         activateCopy(document.querySelector('.topic-fixed-progress'), FIXED_COPY_SELECTOR, 'fixed');
         document.addEventListener('selectionchange', rememberTextSelection);
         document.addEventListener('mousedown', event => { if (!event.target.closest('.topic-report-sheet .topic-editable, #eosTextToolbar')) hideTextToolbar(); });

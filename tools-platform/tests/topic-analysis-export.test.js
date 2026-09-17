@@ -2,7 +2,40 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
+const vm = require('node:vm');
 const ExcelJS = require('exceljs');
+
+test('monthly Excel export handles multi-row table headers', async () => {
+    const source = fs.readFileSync(path.join(__dirname, '../frontend/js/topic-analysis.js'), 'utf-8');
+    const start = source.indexOf('    function appendMonthlyWorksheet(workbook) {');
+    const end = source.indexOf('    function appendAnalysisWorksheet(', start);
+    assert.ok(start >= 0 && end > start);
+
+    const cell = (text, rowSpan = 1, colSpan = 1) => ({
+        textContent: text, rowSpan, colSpan, tagName: 'TH', classList: { contains: () => false },
+        getAttribute: () => null
+    });
+    const row = cells => ({ cells, parentElement: { tagName: 'THEAD' }, classList: { contains: () => false } });
+    const table = {
+        nodeType: 1, tagName: 'TABLE', rows: [
+            row([cell('客户', 3), cell('紧急 EOS', 1, 7)]),
+            row([cell('总量', 2), cell('已收编', 2), cell('当前收编率', 2), cell('待收编', 1, 3), cell('计划后收编率', 2)]),
+            row([cell('小计'), cell('今年计划'), cell('无计划')])
+        ]
+    };
+    const sheet = { children: [table] };
+    const append = vm.runInNewContext(`(() => { ${source.slice(start, end)} return appendMonthlyWorksheet; })()`, {
+        elements: { eosReportSheet: sheet }, document: {}, Node: { ELEMENT_NODE: 1 }
+    });
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = append(workbook);
+    assert.equal(worksheet.getCell('A1').value, '客户');
+    assert.equal(worksheet.getCell('B2').value, '总量');
+    assert.equal(worksheet.getCell('E3').value, '小计');
+    assert.equal(worksheet.getCell('G3').value, '无计划');
+    const buffer = await workbook.xlsx.writeBuffer();
+    assert.ok(buffer.length > 0);
+});
 
 test('frontend static assets for html2canvas and exceljs exist and are valid', () => {
     const html2canvasPath = path.join(__dirname, '../frontend/js/shared/html2canvas.min.js');
@@ -18,6 +51,8 @@ test('topic-analysis.html contains theme toggle and export controls', () => {
     assert.ok(html.includes('id="themeToggleButton"'), 'Must have theme toggle button');
     assert.ok(html.includes('id="eosDownloadPng"'), 'Must have EOS PNG download button');
     assert.ok(html.includes('id="eosDownloadExcel"'), 'Must have EOS Excel download button');
+    assert.ok(html.includes('id="eosDownloadMsg"'), 'Must have EOS MSG download button');
+    assert.ok(html.includes('src="/js/shared/report-msg-export.js'), 'Must load MSG export helper');
     assert.ok(html.includes('id="eosReportSheet"'), 'Must have eosReportSheet ID');
     assert.ok(html.includes('src="/js/shared/html2canvas.min.js'), 'Must load html2canvas');
     assert.ok(html.includes('src="/js/shared/exceljs.min.js'), 'Must load exceljs');

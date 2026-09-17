@@ -352,6 +352,7 @@ app.use('/api', (req, res, next) => {
     if (req.method === 'POST' && req.path === '/uiv/run-uivision-macro') return next(); // 只生成临时 runner，不修改业务数据
     if (req.method === 'POST' && req.path === '/platform-metrics/open') return next(); // 登录用户记录工具打开量
     if (req.method === 'POST' && req.path === '/ai/proactive-alert-message') return next(); // 只读 KPI 提醒文案，不修改业务数据
+    if (req.method === 'POST' && req.path === '/report-msg/export') return next(); // 仅生成并返回当前用户的月报文件
     if (req.method !== 'GET') {
         return requireAdmin(req, res, next);
     }
@@ -368,6 +369,7 @@ app.use('/api/storage', storageRoutes); // 存储迁移状态 API
 app.use('/api/db-explorer', require('./routes/db-explorer')); // 数据库浏览 API
 app.use('/api/frt', frtRoutes); // FRT 历史快照 API
 app.use('/api/topic-snapshots', topicSnapshotsRoutes); // NetCare/DataFab 专题历史快照 API
+app.use('/api/report-msg', require('./routes/report-msg')); // 月报 Outlook 邮件文件导出
 app.use('/api/praudit', prauditRoutes); // PR审计配置 API
 app.use('/api/chat-history', chatHistoryRoutes); // 租户隔离的聊天记录中心
 app.use('/api/custom-tools', customToolsRoutes); // 自定义 HTML 工具注册 API
