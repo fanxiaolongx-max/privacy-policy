@@ -924,9 +924,19 @@
         .report-table-intro { font-weight:700; margin-top:10px; }
         .report-table-caption { text-align:center; font-size:12px; margin-bottom:10px; }
         .report-sheet p { margin:7px 0; line-height:1.6; }
-        .report-footer { margin-top:18px; padding:12px 8px 2px; border-top:1px solid #cbd5e1; }
-        .report-footer .report-copy { padding:2px 0; color:#475569; font-size:13px; }
-        .report-footer .report-endmark { margin-top:18px; color:#94a3b8; font-size:11px; text-align:center; letter-spacing:.04em; }
+        .report-emergency { margin-top:12px; border:1px solid #94a3b8; }
+        .report-emergency .report-section-heading { margin:0; border-bottom:1px solid #94a3b8; }
+        .report-emergency .report-copy:not(.report-section-heading) { min-height:30px; text-align:center; border-bottom:1px solid #cbd5e1; }
+        .report-emergency .report-copy:last-child { border-bottom:0; color:#64748b; font-style:italic; }
+        .report-guidance { margin-top:12px; border:1px solid #94a3b8; }
+        .report-guidance .report-section-heading { margin:0; border-bottom:1px solid #94a3b8; }
+        .report-guidance .report-copy:not(.report-section-heading) { padding:4px 8px 0; }
+        .report-guidance-link { overflow-wrap:anywhere; padding-bottom:6px!important; }
+        .report-guidance-link a { color:#1d4ed8; text-decoration:underline; }
+        .report-footer { margin-top:0; border:1px solid #94a3b8; border-top:0; }
+        .report-footer .report-footer-contact { padding:8px 12px; text-align:center; font-size:13px; font-style:italic; }
+        .report-footer .report-footer-attachment { padding:2px 12px 8px; text-align:center; font-size:12px; color:#475569; }
+        .report-footer .report-footer-brand { margin:0; background:#dceef4; padding:14px; text-align:center; font-size:21px; font-weight:800; color:#0f172a; }
         .report-sheet table,.source-detail-table { border-collapse:collapse; width:100%; font-size:12px; }
         .report-sheet th,.report-sheet td,.source-detail-table th,.source-detail-table td { border:1px solid #94a3b8; padding:6px 8px; text-align:center; }
         .report-sheet th,.source-detail-table th { background:#e8f1f5; }
@@ -1534,7 +1544,7 @@
         <button class="text-color-swatch" type="button" data-report-color="#7c3aed" style="background:#7c3aed" title="紫色"></button>
     </div>
 
-    <script src="/js/shared/report-msg-export.js?v=20260917-04"></script>
+    <script src="/js/shared/report-msg-export.js?v=20260917-05"></script>
     <script>
         const noticeOverlay = document.getElementById('notice-overlay');
         let noticeResolve = null;
@@ -3774,8 +3784,17 @@
                 worksheet.mergeCells(row.number, 1, row.number, columns);
                 const cell = row.getCell(1), computed = getComputedStyle(block);
                 cell.value = reportExcelRichText(block);
-                cell.alignment = { vertical: 'middle', horizontal: block.classList.contains('report-title') ? 'center' : 'left', wrapText: true };
+                const centered = ['report-title', 'report-emergency-note', 'report-emergency-placeholder', 'report-footer-contact', 'report-footer-attachment']
+                    .some(name => block.classList.contains(name));
+                cell.alignment = { vertical: 'middle', horizontal: centered ? 'center' : 'left', wrapText: true };
                 cell.font = { name: 'Microsoft YaHei', size: Math.max(9, Math.round(Number.parseFloat(computed.fontSize) * 0.75)), bold: Number.parseInt(computed.fontWeight, 10) >= 600, color: { argb: excelReportColor(computed.color) } };
+                if (block.classList.contains('report-guidance-link')) {
+                    const link = block.querySelector('a[href^="https://"]');
+                    if (link) {
+                        cell.value = { text: link.textContent, hyperlink: link.href };
+                        cell.font = { ...cell.font, color: { argb: 'FF1D4ED8' }, underline: true };
+                    }
+                }
                 if (block.classList.contains('report-title')) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDCEEF4' } };
                 if (block.classList.contains('report-section-heading')) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
                 if (block.classList.contains('report-objective') || block.classList.contains('report-section-heading')) cell.border = { bottom: border.bottom };
@@ -3945,11 +3964,25 @@
             copy('table4-near', `现网累计 ${near} 个临期 License 运行${nearTop ? `，其中 ${nearTop[0]} 临期最多 ${nearTop[1]}` : ''}。`);
             copy('table4-reminder', '请注意及时申请并替换超期 License，提前申请并替换临期 License，避免造成严重网络影响。');
             addReportTable(host, '（表 4）', rows, 'report-status');
+            const emergency = document.createElement('section'); emergency.className = 'report-emergency'; host.appendChild(emergency);
+            appendReportCopy(emergency, 'emergency-heading', '➤ 紧急恢复场景 License', 'report-section-heading', overrides, storageKey);
+            appendReportCopy(emergency, 'emergency-note', '（今年暂无，后续有数据时在此补充。）', 'report-emergency-note', overrides, storageKey);
+            appendReportCopy(emergency, 'emergency-placeholder', '预留统计表区域', 'report-emergency-placeholder', overrides, storageKey);
+            const guidance = document.createElement('section'); guidance.className = 'report-guidance'; host.appendChild(guidance);
+            appendReportCopy(guidance, 'guidance-heading', '➤ License 管理规定&指导', 'report-section-heading', overrides, storageKey);
+            appendReportCopy(guidance, 'guidance-policy', '《ICT BG运营商业务固定期限License业务管理规定V3.0》', '', overrides, storageKey);
+            const addGuidanceLink = url => {
+                const row = document.createElement('div'); row.className = 'report-copy report-guidance-link';
+                const link = document.createElement('a'); link.href = url; link.target = '_blank'; link.rel = 'noopener noreferrer';
+                link.textContent = url; row.appendChild(link); guidance.appendChild(row);
+            };
+            addGuidanceLink('https://w3.huawei.com/info/cn/doc/viewDoc.do?did=19787023&cata=333961');
+            appendReportCopy(guidance, 'guidance-service', '《运营商维护服务场景License风险管控指导书(试行)》', '', overrides, storageKey);
+            addGuidanceLink('https://w3.huawei.com/pdmcplus/#/workflowAssets/detail/zh_CN/14/BP0002976353/3?treeId=a709931a-5415-4346-94f2-4756538100d3&flowAdapt=true&orgCode=1001');
             const footer = document.createElement('footer'); footer.className = 'report-footer'; host.appendChild(footer);
-            appendReportCopy(footer, 'footer-contact', '若您对此报告数据有疑问，请联系范晓龙wx154337，于祥00877023，谢谢！', '', overrides, storageKey);
-            appendReportCopy(footer, 'footer-attachment', '原始数据见附件', '', overrides, storageKey);
-            const endmark = document.createElement('p'); endmark.className = 'report-copy report-endmark';
-            endmark.textContent = `-- ${reportTitle} --`; footer.appendChild(endmark);
+            appendReportCopy(footer, 'footer-contact', '若您对此报告数据有疑问，请联系范晓龙wx154337，于祥00877023，谢谢！', 'report-footer-contact', overrides, storageKey);
+            appendReportCopy(footer, 'footer-attachment', '原始数据见附件', 'report-footer-attachment', overrides, storageKey);
+            appendReportCopy(footer, 'footer-brand', '埃及网络保障与运维服务部', 'report-title report-footer-brand', overrides, storageKey);
         }
         function sourceDetailRows(type) {
             return type === 'base'

@@ -26,7 +26,21 @@ test('temporary License monthly Excel gives wrapped copy and table cells enough 
         rows: [{ cells: [tableCell, { ...tableCell, textContent: '其他' }],
             parentElement: { tagName: 'TBODY' }, getBoundingClientRect: () => ({ height: 20 }) }]
     };
-    const sheet = { children: [copy, table], querySelectorAll: () => [table] };
+    const brand = {
+        classList: { contains: name => name === 'report-copy' || name === 'report-title' || name === 'report-footer-brand' },
+        textContent: '埃及网络保障与运维服务部',
+        innerText: '埃及网络保障与运维服务部',
+        getBoundingClientRect: () => ({ height: 40 })
+    };
+    const documentUrl = 'https://w3.huawei.com/info/cn/doc/viewDoc.do?did=19787023&cata=333961';
+    const guidanceLink = {
+        classList: { contains: name => name === 'report-copy' || name === 'report-guidance-link' },
+        textContent: documentUrl,
+        innerText: documentUrl,
+        querySelector: () => ({ textContent: documentUrl, href: documentUrl }),
+        getBoundingClientRect: () => ({ height: 25 })
+    };
+    const sheet = { children: [copy, table, guidanceLink, brand], querySelectorAll: () => [table] };
     const append = vm.runInNewContext(`(() => { ${source.slice(start, end)} return appendMonthlyWorksheet; })()`, {
         document: { getElementById: () => sheet },
         getComputedStyle: () => ({ fontWeight: '400', fontSize: '12px', color: 'rgb(0, 0, 0)' }),
@@ -37,6 +51,14 @@ test('temporary License monthly Excel gives wrapped copy and table cells enough 
     const worksheet = append(workbook);
     assert.ok(worksheet.getRow(1).height >= 50, 'Three explicit lines must be visible');
     assert.ok(worksheet.getRow(2).height >= 60, 'Long wrapped table text must be visible');
+    assert.equal(worksheet.getRow(3).getCell(1).value.hyperlink, documentUrl, 'Management rule URL remains clickable in Excel');
+    assert.equal(worksheet.getRow(4).getCell(1).alignment.horizontal, 'center');
+    assert.equal(worksheet.getRow(4).getCell(1).fill.fgColor.argb, 'FFDCEEF4', 'Closing banner matches report title');
+
+    assert.match(source, /紧急恢复场景 License/);
+    assert.match(source, /License 管理规定&指导/);
+    assert.match(source, /viewDoc\.do\?did=19787023&cata=333961/);
+    assert.match(source, /BP0002976353\/3\?treeId=a709931a-5415-4346-94f2-4756538100d3&flowAdapt=true&orgCode=1001/);
 
     const buffer = await workbook.xlsx.writeBuffer();
     const readBack = new ExcelJS.Workbook();

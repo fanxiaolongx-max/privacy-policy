@@ -1,8 +1,8 @@
 (function () {
     'use strict';
 
-    const allowedTags = new Set(['DIV', 'P', 'H1', 'H2', 'H3', 'H4', 'TABLE', 'THEAD', 'TBODY', 'TFOOT', 'TR', 'TD', 'TH', 'SPAN', 'STRONG', 'B', 'EM', 'I', 'BR', 'UL', 'OL', 'LI']);
-    const styleNames = ['color', 'background-color', 'font-family', 'font-size', 'font-weight', 'font-style', 'text-align', 'line-height', 'padding', 'border-top', 'border-right', 'border-bottom', 'border-left'];
+    const allowedTags = new Set(['DIV', 'P', 'H1', 'H2', 'H3', 'H4', 'TABLE', 'THEAD', 'TBODY', 'TFOOT', 'TR', 'TD', 'TH', 'SPAN', 'STRONG', 'B', 'EM', 'I', 'BR', 'UL', 'OL', 'LI', 'A']);
+    const styleNames = ['color', 'background-color', 'font-family', 'font-size', 'font-weight', 'font-style', 'text-decoration', 'text-align', 'line-height', 'padding', 'border-top', 'border-right', 'border-bottom', 'border-left'];
 
     function copyForEmail(source) {
         if (source.nodeType === Node.TEXT_NODE) return document.createTextNode(source.textContent || '');
@@ -11,6 +11,7 @@
         if (style.display === 'none' || style.visibility === 'hidden') return null;
         const tag = allowedTags.has(source.tagName) ? source.tagName.toLowerCase() : 'div';
         const target = document.createElement(tag);
+        if (tag === 'a' && /^https?:\/\//i.test(source.href)) target.href = source.href;
         const inline = styleNames.map(name => {
             const value = style.getPropertyValue(name);
             return value && value !== 'none' && value !== 'normal' && value !== 'rgba(0, 0, 0, 0)' ? `${name}:${value}` : '';
