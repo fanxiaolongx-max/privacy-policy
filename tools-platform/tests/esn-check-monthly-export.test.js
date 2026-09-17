@@ -23,7 +23,7 @@ test('temporary License monthly Excel gives wrapped copy and table cells enough 
     };
     const table = {
         tagName: 'TABLE',
-        rows: [{ cells: [tableCell, { ...tableCell, textContent: '其他' }],
+        rows: [{ cells: [{ ...tableCell, classList: { contains: name => name === 'report-metric-critical' } }, { ...tableCell, textContent: '其他' }],
             parentElement: { tagName: 'TBODY' }, getBoundingClientRect: () => ({ height: 20 }) }]
     };
     const brand = {
@@ -51,12 +51,15 @@ test('temporary License monthly Excel gives wrapped copy and table cells enough 
     const worksheet = append(workbook);
     assert.ok(worksheet.getRow(1).height >= 50, 'Three explicit lines must be visible');
     assert.ok(worksheet.getRow(2).height >= 60, 'Long wrapped table text must be visible');
+    assert.equal(worksheet.getRow(2).getCell(1).font.color.argb, 'FFA61B1B', 'Highlighted counts stay red in Excel');
     assert.equal(worksheet.getRow(3).getCell(1).value.hyperlink, documentUrl, 'Management rule URL remains clickable in Excel');
     assert.equal(worksheet.getRow(4).getCell(1).alignment.horizontal, 'center');
     assert.equal(worksheet.getRow(4).getCell(1).fill.fgColor.argb, 'FFDCEEF4', 'Closing banner matches report title');
 
     assert.match(source, /紧急恢复场景 License/);
     assert.match(source, /License 管理规定&指导/);
+    assert.ok(source.indexOf("addReportTable(host, '（表 2）', highRiskRows") < source.indexOf("addReportTable(host, '（表 3）', rows, 'report-line'"), 'Core risk precedes product lines');
+    assert.match(source, /总体目标：无 License 违规使用/);
     assert.match(source, /viewDoc\.do\?did=19787023&cata=333961/);
     assert.match(source, /BP0002976353\/3\?treeId=a709931a-5415-4346-94f2-4756538100d3&flowAdapt=true&orgCode=1001/);
 

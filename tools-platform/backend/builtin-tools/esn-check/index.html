@@ -905,8 +905,8 @@
         .report-order-item button { border:1px solid var(--border); background:#fff; border-radius:5px; cursor:pointer; }
         @media (max-width:900px) { .settings-grid,.settings-grid.three { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
         @media (max-width:620px) { .report-settings-modal .modal-head { padding:14px; align-items:flex-start; flex-wrap:wrap; } .report-settings-modal .modal-body { padding:12px; } .settings-grid,.settings-grid.three { grid-template-columns:1fr; } .settings-section { padding:13px; } }
-        .report-sheet { background:#fff; border:1px solid var(--border); padding:22px; max-width:1200px; margin:auto; overflow:auto; }
-        .report-copy { padding:5px 8px; line-height:1.55; font-size:14px; }
+        .report-sheet { background:#fff; border:1px solid #94a3b8; padding:0; max-width:1200px; margin:auto; overflow:auto; color:#1f2937; font-family:Arial,"Microsoft YaHei",sans-serif; }
+        .report-copy { padding:5px 8px; line-height:1.5; font-size:13px; border-bottom:1px solid #cbd5e1; }
         .report-copy[contenteditable="true"] { cursor:text; }
         .report-copy[contenteditable="true"]:hover { background:#f8fbff; }
         .report-copy[contenteditable="true"]:focus { outline:2px solid var(--primary); background:#fff; }
@@ -916,19 +916,21 @@
         .report-text-popover button { width:30px; height:30px; padding:0; border:1px solid #d7e0ea; border-radius:6px; background:#fff; color:#1e293b; cursor:pointer; font-weight:800; }
         .report-text-popover button:hover { background:#eff6ff; border-color:#93c5fd; }
         .report-text-popover .text-color-swatch { width:24px; height:24px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 1px #cbd5e1; }
-        .report-title { background:#dceef4; text-align:center; padding:14px; font-size:21px; font-weight:800; }
-        .report-objective { border-bottom:1px solid #94a3b8; font-weight:700; }
+        .report-title { background:#dceef4; text-align:center; padding:12px; font-size:18px; font-weight:800; }
+        .report-objective { font-weight:700; }
         .report-progress-heading,.report-section-heading { font-weight:800; }
-        .report-progress-block { border-bottom:1px solid #94a3b8; padding-bottom:6px; }
-        .report-section-heading { background:#f1f5f9; margin-top:10px; }
-        .report-table-intro { font-weight:700; margin-top:10px; }
-        .report-table-caption { text-align:center; font-size:12px; margin-bottom:10px; }
+        .report-progress-block { border-bottom:1px solid #94a3b8; }
+        .report-section-heading { background:#fff; margin-top:0; }
+        .report-table-intro { font-weight:700; margin-top:0; }
+        .report-table-caption { text-align:center; font-size:11px; margin-bottom:0; border-bottom:1px solid #94a3b8; }
+        .report-metric-group { color:#1d4ed8!important; font-weight:800; }
+        .report-metric-critical { color:#a61b1b!important; font-weight:800; }
         .report-sheet p { margin:7px 0; line-height:1.6; }
-        .report-emergency { margin-top:12px; border:1px solid #94a3b8; }
+        .report-emergency { margin-top:0; border:1px solid #94a3b8; }
         .report-emergency .report-section-heading { margin:0; border-bottom:1px solid #94a3b8; }
         .report-emergency .report-copy:not(.report-section-heading) { min-height:30px; text-align:center; border-bottom:1px solid #cbd5e1; }
         .report-emergency .report-copy:last-child { border-bottom:0; color:#64748b; font-style:italic; }
-        .report-guidance { margin-top:12px; border:1px solid #94a3b8; }
+        .report-guidance { margin-top:0; border:1px solid #94a3b8; }
         .report-guidance .report-section-heading { margin:0; border-bottom:1px solid #94a3b8; }
         .report-guidance .report-copy:not(.report-section-heading) { padding:4px 8px 0; }
         .report-guidance-link { overflow-wrap:anywhere; padding-bottom:6px!important; }
@@ -936,11 +938,13 @@
         .report-footer { margin-top:0; border:1px solid #94a3b8; border-top:0; }
         .report-footer .report-footer-contact { padding:8px 12px; text-align:center; font-size:13px; font-style:italic; }
         .report-footer .report-footer-attachment { padding:2px 12px 8px; text-align:center; font-size:12px; color:#475569; }
-        .report-footer .report-footer-brand { margin:0; background:#dceef4; padding:14px; text-align:center; font-size:21px; font-weight:800; color:#0f172a; }
+        .report-footer .report-footer-brand { margin:0; background:#dceef4; padding:12px; text-align:center; font-size:18px; font-weight:800; color:#0f172a; }
         .report-sheet table,.source-detail-table { border-collapse:collapse; width:100%; font-size:12px; }
-        .report-sheet th,.report-sheet td,.source-detail-table th,.source-detail-table td { border:1px solid #94a3b8; padding:6px 8px; text-align:center; }
-        .report-sheet th,.source-detail-table th { background:#e8f1f5; }
-        .report-sheet tfoot { font-weight:700; background:#e8f1f5; }
+        .report-sheet th,.report-sheet td { border:1px solid #94a3b8; padding:5px 8px; text-align:center; color:#334155; }
+        .report-sheet th { background:#f1f5f9; }
+        .report-sheet tfoot { font-weight:700; background:#f8fafc; }
+        .source-detail-table th,.source-detail-table td { border:1px solid #94a3b8; padding:6px 8px; text-align:center; }
+        .source-detail-table th { background:#e8f1f5; }
         .source-detail-panel { background:#fff; border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:16px; }
         .source-detail-panel h3 { margin:0 0 10px; }
         .source-detail-wrap { overflow:auto; max-height:60vh; background:#fff; }
@@ -3541,22 +3545,35 @@
             };
             ['系统部 / Account', ...dims, '总计'].forEach(label => {
                 const th = document.createElement('th');
+                if (/^(?:no\s*po|have\s*po|无\s*po|有\s*po)$/i.test(label)) th.classList.add('report-metric-group');
                 const group = (reportPreference.columnGroups || []).find(item => item.dimension === dimension && item.name === label);
                 splitName(th, label, group?.note);
                 head.appendChild(th);
             });
+            const isCriticalValue = (label, value) => {
+                const count = Number(value);
+                if (!Number.isFinite(count) || count <= 0) return false;
+                return (dimension === 'status' && /过期|临期/.test(label))
+                    || (dimension === 'line' && /无线/.test(label) && count >= 100);
+            };
             const body = table.createTBody();
             accounts.forEach(account => {
                 const tr = body.insertRow();
                 const subset = rows.filter(r => reportAccount(r) === account);
                 [account, ...dims.map(d => subset.filter(r => valueForRow(r) === d).length || '—'), subset.length].forEach((value, index) => {
                     const cell = tr.insertCell();
+                    if (index > 0 && index <= dims.length && isCriticalValue(dims[index - 1], value)) cell.classList.add('report-metric-critical');
                     const group = index === 0 && (reportPreference.groups || []).find(item => item.name === account);
                     if (group) splitName(cell, value, group.note); else cell.textContent = value;
                 });
             });
             const foot = table.createTFoot().insertRow();
-            ['总计', ...dims.map(d => rows.filter(r => valueForRow(r) === d).length || '—'), rows.length].forEach(value => { const th = document.createElement('th'); th.textContent = value; foot.appendChild(th); });
+            ['总计', ...dims.map(d => rows.filter(r => valueForRow(r) === d).length || '—'), rows.length].forEach((value, index) => {
+                const th = document.createElement('th'); th.textContent = value;
+                if ((index > 0 && index <= dims.length && isCriticalValue(dims[index - 1], value))
+                    || (index === dims.length + 1 && (title === '（表 1）' || dimension === 'line'))) th.classList.add('report-metric-critical');
+                foot.appendChild(th);
+            });
             host.appendChild(table);
             const splitHeaders = Array.from(head.cells).map(cell => cell.querySelector('.report-split-name')).filter(Boolean);
             if (splitHeaders.length) {
@@ -3713,7 +3730,15 @@
             block.title = '点击修改；修改后自动保存到当前月份和计算口径';
             const saved = overrides[key];
             if (saved && typeof saved === 'object' && typeof saved.html === 'string') block.innerHTML = sanitizeReportCopyHtml(saved.html);
-            else block.textContent = typeof saved === 'string' ? saved : generated;
+            else if (typeof saved === 'string') block.textContent = saved;
+            else if (Array.isArray(generated)) generated.forEach(part => {
+                if (typeof part === 'string') { block.appendChild(document.createTextNode(part)); return; }
+                const span = document.createElement('span'); span.textContent = part.text;
+                if (part.color) span.style.color = part.color;
+                if (part.bold) span.style.fontWeight = '700';
+                block.appendChild(span);
+            });
+            else block.textContent = generated;
             block.addEventListener('input', () => {
                 overrides[key] = { html: sanitizeReportCopyHtml(block.innerHTML) };
                 try { localStorage.setItem(storageKey, JSON.stringify(overrides)); } catch (_) { /* manual edits remain visible until reload */ }
@@ -3728,6 +3753,7 @@
                 event.preventDefault(); document.execCommand('insertText', false, event.clipboardData.getData('text/plain'));
             });
             host.appendChild(block);
+            return block;
         }
         function excelReportColor(value, fallback = 'FF0F172A') {
             const color = String(value || '').trim();
@@ -3756,6 +3782,7 @@
                 const next = { ...format };
                 if (tag === 'b' || tag === 'strong') next.bold = true;
                 if (node.style?.color) next.color = node.style.color;
+                if (node.style?.fontWeight === 'bold' || Number(node.style?.fontWeight) >= 600) next.bold = true;
                 if (tag === 'font' && node.getAttribute('color')) next.color = node.getAttribute('color');
                 Array.from(node.childNodes).forEach(child => visit(child, next));
                 if (tag === 'div' || tag === 'p') runs.push({ text: '\n', font: { name: 'Microsoft YaHei', size } });
@@ -3796,7 +3823,7 @@
                     }
                 }
                 if (block.classList.contains('report-title')) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDCEEF4' } };
-                if (block.classList.contains('report-section-heading')) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+                if (block.classList.contains('report-section-heading')) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
                 if (block.classList.contains('report-objective') || block.classList.contains('report-section-heading')) cell.border = { bottom: border.bottom };
                 row.height = Math.max(block.classList.contains('report-title') ? 38 : 22, Math.ceil(block.getBoundingClientRect().height * 0.75) + 5,
                     reportExcelTextHeight(block.innerText || block.textContent, columns * 5.5, cell.font.size));
@@ -3818,11 +3845,14 @@
                         const cell = row.getCell(start), split = sourceCell.querySelector('.report-split-name');
                         const value = split ? Array.from(split.children).map(part => part.textContent).join('\n') : sourceCell.textContent.trim();
                         cell.value = !header && !split && /^\d+$/.test(value) ? Number(value) : value;
-                        cell.font = { name: 'Microsoft YaHei', size: header ? 10 : 9, bold: header || footer, color: { argb: 'FF0F172A' } };
+                        const critical = sourceCell.classList?.contains('report-metric-critical');
+                        const group = sourceCell.classList?.contains('report-metric-group');
+                        cell.font = { name: 'Microsoft YaHei', size: header ? 10 : 9, bold: header || footer || critical || group,
+                            color: { argb: critical ? 'FFA61B1B' : group ? 'FF1D4ED8' : 'FF334155' } };
                         cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
                         textHeight = Math.max(textHeight, reportExcelTextHeight(value, (end - start + 1) * 5.5, cell.font.size));
                         cell.border = border;
-                        if (header || footer) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8F1F5' } };
+                        if (header || footer) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: header ? 'FFF1F5F9' : 'FFF8FAFC' } };
                     });
                     row.height = Math.max(header ? 38 : 23, Math.ceil(sourceRow.getBoundingClientRect().height * 0.75) + 3, textHeight);
                 });
@@ -3925,34 +3955,52 @@
             const noPoShare = (noPo / rows.length * 100).toFixed(1);
             const highRiskRows = reportRiskRows(rows);
             const coreNoPo = highRiskRows.filter(row => /no\s*po|无\s*po/i.test(reportColumnValue(row, 'report-scenario'))).length;
-            const riskByAccount = new Map();
-            rows.filter(row => /软件测试|software\s*testing|工程调测|network\s*rollout/i.test(reportColumnValue(row, 'report-scenario')))
-                .forEach(row => addCount(riskByAccount, reportAccount(row)));
-            const topAccount = [...riskByAccount].sort((a, b) => b[1] - a[1])[0];
             const topLine = [...lineCounts].sort((a, b) => b[1] - a[1])[0] || ['未分类产品线', 0];
             const linePrior = priorLineCounts.get(topLine[0]) || 0;
+            const statusCounts = new Map(); rows.forEach(row => addCount(statusCounts, reportLicenseStatus(row)));
+            const overdue = statusCounts.get('过期') || 0, near = statusCounts.get('临期') || 0;
+            const leadingAccounts = (items, limit = 2) => {
+                const counts = new Map(); items.forEach(row => addCount(counts, reportAccount(row)));
+                return [...counts].sort((a, b) => b[1] - a[1]).slice(0, limit).map(([name]) => name).join('、');
+            };
+            const noPoAccount = leadingAccounts(rows.filter(row => /no\s*po|无\s*po/i.test(reportColumnValue(row, 'report-scenario'))), 1);
+            const coreAccounts = leadingAccounts(highRiskRows.filter(row => /no\s*po|无\s*po/i.test(reportColumnValue(row, 'report-scenario'))));
+            const redlineAccounts = leadingAccounts(rows.filter(row => /软件测试|software\s*testing|工程调测|network\s*rollout/i.test(reportColumnValue(row, 'report-scenario'))));
             const storageKey = reportCopyKey(), overrides = reportCopyOverrides();
+            const renumberSavedIntro = (block, key, number) => {
+                if (!overrides[key]) return;
+                let first = block;
+                while (first.firstChild) first = first.firstChild;
+                if (first.nodeType === Node.TEXT_NODE) first.textContent = first.textContent.replace(/^\s*[23][、.．]/, `${number}、`);
+            };
             const copy = (key, text, className = '') => appendReportCopy(host, key, text, className, overrides, storageKey);
+            const blue = text => ({ text: String(text), color: '#1d4ed8', bold: true });
+            const red = text => ({ text: String(text), color: '#a61b1b', bold: true });
             const reportTitle = `埃及运营商临时 License 使用&转商用进展月报（${periodLabel}）`;
             copy('title', reportTitle, 'report-title');
-            copy('objective', '总体目标：无 License 超期导致的事故和重大问题，牵引临时 License 有序转商用，增加收入，降低成本。', 'report-objective');
+            copy('objective', '总体目标：无 License 违规使用、无 License 超期导致的事故和重大问题，牵引临时 License 有序转商用，增加收入、降低成本。', 'report-objective');
             const progress = document.createElement('div'); progress.className = 'report-progress-block'; host.appendChild(progress);
             const progressCopy = (key, text, className = '') => appendReportCopy(progress, key, text, className, overrides, storageKey);
             progressCopy('progress-heading', '简要进展：', 'report-progress-heading');
-            progressCopy('trend', `【总体趋势】在网运行临时 License 总量为 ${rows.length} 条，${trendText}；其中销售场景(No PO+Have PO) ${noPo + havePo} 条，其中无 PO 在网运行的 License 总量 ${noPo} 条，占比 ${noPoShare}%。（见表 1）`);
-            progressCopy('risk', `【核心风险】核心网元临时 License 应优先清理，当前有${coreNoPo}核心网元用无 PO 临时 License（见表 3）`);
-            progressCopy('redline', `【红线违规】“软件测试”和“工程调测”场景 License 禁止用于商用网络，目前遗留 ${engineering} 条工程调测和 ${software} 条软件测试 License，TOP 系统部：${topAccount ? `${topAccount[0]}(${topAccount[1]})` : '暂无'}。（见表 1）`);
+            progressCopy('trend', ['【总体趋势】在网运行临时 License 总量为 ', blue(rows.length), ' 条，', blue(trendText),
+                `；其中销售场景 ${noPo + havePo} 条（No PO ${noPo}，Have PO ${havePo}），No PO 占比 ${noPoShare}%。`,
+                noPoAccount ? red(` ${noPoAccount} 系统部请重点关注。`) : '', '（见表 1）']);
+            progressCopy('risk', ['【核心风险】核心网元无 PO 临时 License 应优先清理，当前有 ', blue(coreNoPo),
+                ' 个核心网元使用无 PO 临时 License（见表 2）。', coreAccounts ? red(`请 ${coreAccounts} 系统部加快申请商用 License PO。`) : '']);
+            progressCopy('redline', ['【红线违规】', blue('“软件测试”和“工程调测”场景 License 禁止用于商用网络'),
+                `，当前遗留 ${engineering} 条工程调测和 ${software} 条软件测试 License（见表 1）。`,
+                redlineAccounts ? red(`请 ${redlineAccounts} 系统部关注 License 使用规范。`) : '']);
+            progressCopy('expiry', ['【过期&临期】License 超期可能造成网络故障，当前累计 ', overdue ? red(overdue) : '0',
+                ' 个超期 License、', near ? red(near) : '0', ' 个临期 License 运行（见表 4），请及时申请并替换。']);
             copy('section-heading', '➤ 临时 License 总量：', 'report-section-heading');
-            copy('table1-intro', `1、临时 License 分场景统计，临时 License 量大，其中无 PO 场景 License ${noPo} 条，占 ${noPoShare}%，供公司高度关注，日常维护/管理负荷大，替换操作、在网使用风险高！`, 'report-table-intro');
-            copy('table1-redline', '“软件测试”和“工程调测”场景 License 禁止用于商用网络，需代表处 NTD、行销关注，随 License 超期逐步退出商用网络。');
+            copy('table1-intro', `1、临时 License 数量较多，按分场景统计，无 PO 场景 License ${noPo} 条，占 ${noPoShare}%，缺少合同保护，日常维护/管理负荷大，替换操作、在网使用风险高！`, 'report-table-intro');
+            copy('table1-redline', [blue('“软件测试”和“工程调测”场景 License 禁止用于商用网络'), '，请代表处 NTD、行销关注，随 License 超期逐步退出商用网络。']);
             addReportTable(host, '（表 1）', rows, 'report-scenario');
+            renumberSavedIntro(copy('table3-intro', `2、核心高危网元有 ${coreNoPo} 设备使用无 PO 临时 License，需加快此部分设备商用 License PO 获取，以免临时 License 超期对网络造成重大影响。`, 'report-table-intro'), 'table3-intro', 2);
+            addReportTable(host, '（表 2）', highRiskRows, 'report-scenario');
             const lineTrend = period === 'all' ? '全部时间无环比' : `较上期${trend(topLine[1], linePrior)}`;
-            copy('table2-intro', `2、各产品线临时 License 数量如下，${topLine[0]}存量最多为 ${topLine[1]}，${lineTrend}。`, 'report-table-intro');
-            addReportTable(host, '（表 2）', rows, 'report-line');
-            copy('table3-intro', `3、核心高危网元有 ${coreNoPo} 设备使用无 PO 临时 License，需加快此部分设备商用 License PO 获取，以免临时 License 超期对网络造成重大影响。`, 'report-table-intro');
-            addReportTable(host, '（表 3）', highRiskRows, 'report-scenario');
-            const statusCounts = new Map(); rows.forEach(row => addCount(statusCounts, reportLicenseStatus(row)));
-            const overdue = statusCounts.get('过期') || 0, near = statusCounts.get('临期') || 0;
+            renumberSavedIntro(copy('table2-intro', `3、各产品线临时 License 数量如下，${topLine[0]}存量最多为 ${topLine[1]}，${lineTrend}。`, 'report-table-intro'), 'table2-intro', 3);
+            addReportTable(host, '（表 3）', rows, 'report-line');
             const topCountFor = statusName => {
                 const counts = new Map(); rows.filter(row => reportLicenseStatus(row) === statusName).forEach(row => addCount(counts, reportAccount(row)));
                 return [...counts].sort((a, b) => b[1] - a[1])[0];
