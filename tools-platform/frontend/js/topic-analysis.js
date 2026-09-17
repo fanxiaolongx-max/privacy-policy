@@ -224,6 +224,45 @@
 
     function hideTextToolbar() { elements.eosTextToolbar.hidden = true; editingBlock = null; editingRange = null; }
 
+    function updateToolbarActiveStates() {
+        if (!elements.eosTextToolbar || elements.eosTextToolbar.hidden) return;
+        const boldBtn = elements.eosTextToolbar.querySelector('button[data-eos-format="bold"]');
+        let isBold = false;
+        try {
+            isBold = document.queryCommandState('bold');
+        } catch (_) {}
+        if (!isBold && editingRange) {
+            const container = editingRange.commonAncestorContainer;
+            const el = container.nodeType === Node.ELEMENT_NODE ? container : container.parentElement;
+            if (el) {
+                const weight = window.getComputedStyle(el).fontWeight;
+                isBold = el.closest('strong, b') !== null || Number.parseInt(weight, 10) >= 600 || weight === 'bold';
+            }
+        }
+        if (boldBtn) {
+            boldBtn.classList.toggle('is-active', Boolean(isBold));
+            boldBtn.setAttribute('aria-pressed', Boolean(isBold) ? 'true' : 'false');
+            boldBtn.title = isBold ? '已加粗（点击取消加粗）' : '加粗';
+        }
+
+        let currentColor = '';
+        try {
+            currentColor = document.queryCommandValue('foreColor') || '';
+        } catch (_) {}
+        if (!currentColor && editingRange) {
+            const container = editingRange.commonAncestorContainer;
+            const el = container.nodeType === Node.ELEMENT_NODE ? container : container.parentElement;
+            if (el) currentColor = window.getComputedStyle(el).color;
+        }
+        const hex = excelReportColor(currentColor, '').toLowerCase();
+        elements.eosTextToolbar.querySelectorAll('button[data-eos-color]').forEach(btn => {
+            const btnColor = btn.dataset.eosColor.toLowerCase();
+            const btnHex = excelReportColor(btnColor, '').toLowerCase();
+            const matches = hex && btnHex && hex === btnHex;
+            btn.classList.toggle('is-active', Boolean(matches));
+        });
+    }
+
     function rememberTextSelection() {
         const selection = window.getSelection();
         if (!selection?.rangeCount || selection.isCollapsed) { hideTextToolbar(); return; }
@@ -238,6 +277,7 @@
         elements.eosTextToolbar.hidden = false;
         elements.eosTextToolbar.style.top = `${Math.max(8, rect.top - elements.eosTextToolbar.offsetHeight - 8)}px`;
         elements.eosTextToolbar.style.left = `${Math.max(8, Math.min(rect.left, window.innerWidth - elements.eosTextToolbar.offsetWidth - 8))}px`;
+        updateToolbarActiveStates();
     }
 
     function applyTextFormat(command, value) {
