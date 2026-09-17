@@ -3966,6 +3966,7 @@
             const noPoAccount = leadingAccounts(rows.filter(row => /no\s*po|无\s*po/i.test(reportColumnValue(row, 'report-scenario'))), 1);
             const coreAccounts = leadingAccounts(highRiskRows.filter(row => /no\s*po|无\s*po/i.test(reportColumnValue(row, 'report-scenario'))));
             const redlineAccounts = leadingAccounts(rows.filter(row => /软件测试|software\s*testing|工程调测|network\s*rollout/i.test(reportColumnValue(row, 'report-scenario'))));
+            const expiryAccounts = leadingAccounts(rows.filter(row => ['过期', '临期'].includes(reportLicenseStatus(row))));
             const storageKey = reportCopyKey(), overrides = reportCopyOverrides();
             const renumberSavedIntro = (block, key, number) => {
                 if (!overrides[key]) return;
@@ -3991,7 +3992,8 @@
                 `，当前遗留 ${engineering} 条工程调测和 ${software} 条软件测试 License（见表 1）。`,
                 redlineAccounts ? red(`请 ${redlineAccounts} 系统部关注 License 使用规范。`) : '']);
             progressCopy('expiry', ['【过期&临期】License 超期可能造成网络故障，当前累计 ', overdue ? red(overdue) : '0',
-                ' 个超期 License、', near ? red(near) : '0', ' 个临期 License 运行（见表 4），请及时申请并替换。']);
+                ' 个超期 License、', near ? red(near) : '0', ' 个临期 License 运行（见表 4）。',
+                red(`请 ${expiryAccounts || '相关'} 系统部和 CS 重点关注。`), '请及时申请并替换。']);
             copy('section-heading', '➤ 临时 License 总量：', 'report-section-heading');
             copy('table1-intro', `1、临时 License 数量较多，按分场景统计，无 PO 场景 License ${noPo} 条，占 ${noPoShare}%，缺少合同保护，日常维护/管理负荷大，替换操作、在网使用风险高！`, 'report-table-intro');
             copy('table1-redline', [blue('“软件测试”和“工程调测”场景 License 禁止用于商用网络'), '，请代表处 NTD、行销关注，随 License 超期逐步退出商用网络。']);

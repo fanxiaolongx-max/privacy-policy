@@ -60,6 +60,7 @@ test('temporary License monthly Excel gives wrapped copy and table cells enough 
     assert.match(source, /License 管理规定&指导/);
     assert.ok(source.indexOf("addReportTable(host, '（表 2）', highRiskRows") < source.indexOf("addReportTable(host, '（表 3）', rows, 'report-line'"), 'Core risk precedes product lines');
     assert.match(source, /总体目标：无 License 违规使用/);
+    assert.match(source, /请 \$\{expiryAccounts \|\| '相关'\} 系统部和 CS 重点关注/);
     assert.match(source, /viewDoc\.do\?did=19787023&cata=333961/);
     assert.match(source, /BP0002976353\/3\?treeId=a709931a-5415-4346-94f2-4756538100d3&flowAdapt=true&orgCode=1001/);
 
