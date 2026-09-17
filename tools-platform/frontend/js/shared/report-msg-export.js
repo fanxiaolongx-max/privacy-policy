@@ -91,7 +91,7 @@
         const response = await fetch('/api/report-msg/export', {
             method: 'POST', credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ subject, html, text: root.innerText || root.textContent || '', attachment: file })
+            body: JSON.stringify({ subject, html, attachment: file })
         });
         if (!response.ok) {
             const responseText = await response.text();
