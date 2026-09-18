@@ -347,6 +347,7 @@ app.use('/api', (req, res, next) => {
     if (req.path.startsWith('/surveys')) return next(); // 调查模板和提交由模块内部控制权限
     if (req.method === 'POST' && req.path === '/db/config/monthly_report_titles') return next(); // 登录用户可编辑月报中英文标题，路由内继续校验数据
     if (/^\/custom-tools\/[^/]+\/(?:state(?:\/restore)?|history(?:\/[^/]+)?)$/.test(req.path)) return next(); // 登录用户可维护自定义工具业务数据
+    if (req.method === 'POST' && /^\/department-reward-penalty\/(?:records|evidence)$/.test(req.path)) return next(); // 普通用户可提交草稿和证据，路由内校验发布权限
     if (/^\/chat-history\/(?:settings|conversations\/[^/]+\/(?:read|pin)|favorites\/[^/]+)$/.test(req.path)) return next(); // 聊天数据租户共享，普通用户只能维护个人状态
     if (req.method === 'DELETE' && /^\/slide-design\/assets\/[^/]+$/.test(req.path)) return next(); // 素材上传者或管理员可删除，路由内校验归属
     if (req.method === 'POST' && req.path === '/uiv/run-uivision-macro') return next(); // 只生成临时 runner，不修改业务数据
@@ -373,6 +374,7 @@ app.use('/api/report-msg', require('./routes/report-msg')); // 月报 Outlook �
 app.use('/api/praudit', prauditRoutes); // PR审计配置 API
 app.use('/api/chat-history', chatHistoryRoutes); // 租户隔离的聊天记录中心
 app.use('/api/custom-tools', customToolsRoutes); // 自定义 HTML 工具注册 API
+app.use('/api/department-reward-penalty', require('./routes/department-reward-penalty'));
 app.use('/api/slide-design', slideDesignRoutes); // 胶片设计项目与 PPT 素材库
 app.use('/api/surveys', surveysRoutes); // 可配置调查模板与提交记录 API
 app.use('/api/nav-settings', navSettingsRoutes); // 顶部导航全局设置 API

@@ -1,0 +1,686 @@
+[
+  {
+    "id": "R01",
+    "svcModule": "高风险网元排查清除",
+    "subModule": "整改风险清除",
+    "desc": "整改完成进度未达到月度目标",
+    "roles": [
+      "MTD",
+      "TL",
+      "TE"
+    ],
+    "deduct": "1 Month/Time",
+    "weight": 10,
+    "archived": false
+  },
+  {
+    "id": "R02",
+    "svcModule": "高风险网元排查清除",
+    "subModule": "整改风险清除",
+    "desc": "发生整改确认和实施超期扣分",
+    "roles": [
+      "TL",
+      "TE"
+    ],
+    "deduct": "1 Month/Ticket",
+    "weight": 10,
+    "archived": false
+  },
+  {
+    "id": "R03",
+    "svcModule": "高风险网元排查清除",
+    "subModule": "整改风险清除",
+    "desc": "审计团队（总部/区域报告）发现不合格关闭RC工单",
+    "roles": [
+      "TL",
+      "TE"
+    ],
+    "deduct": "1 Month/Ticket",
+    "weight": 10,
+    "archived": false
+  },
+  {
+    "id": "R04",
+    "svcModule": "高风险网元排查清除",
+    "subModule": "整改风险清除",
+    "desc": "整改未在支持要求的时间内完成（包括延期）",
+    "roles": [
+      "MTD"
+    ],
+    "deduct": "1 Month/Time",
+    "weight": 10,
+    "archived": false
+  },
+  {
+    "id": "R05",
+    "svcModule": "高风险网元排查清除",
+    "subModule": "整改风险清除",
+    "desc": "因未按时完成整改导致的事故或客户投诉",
+    "roles": [
+      "MTD"
+    ],
+    "deduct": "0.5 Year/Time",
+    "weight": 10,
+    "archived": false
+  },
+  {
+    "id": "R06",
+    "svcModule": "高风险网元排查清除",
+    "subModule": "整改风险清除",
+    "desc": "整改被错误确认为不涉及或部分涉及",
+    "roles": [
+      "TL",
+      "TE"
+    ],
+    "deduct": "1 Quarter/Time",
+    "weight": 10,
+    "archived": false
+  },
+  {
+    "id": "R07",
+    "svcModule": "高风险网元排查清除",
+    "subModule": "风险清除",
+    "desc": "TOPN进度未达到月度目标",
+    "roles": [
+      "MTD"
+    ],
+    "deduct": "1 Month/Time",
+    "weight": 7,
+    "archived": false
+  },
+  {
+    "id": "R08",
+    "svcModule": "高风险网元排查清除",
+    "subModule": "风险清除",
+    "desc": "月度审计中发现非标准或不合格的风险处理",
+    "roles": [
+      "TL",
+      "TE"
+    ],
+    "deduct": "1 Month/Ticket",
+    "weight": 7,
+    "archived": false
+  },
+  {
+    "id": "R09",
+    "svcModule": "高风险网元排查清除",
+    "subModule": "风险清除",
+    "desc": "风险确认/暂停/关闭超期",
+    "roles": [
+      "TL",
+      "TE"
+    ],
+    "deduct": "1 Month/Ticket",
+    "weight": 7,
+    "archived": false
+  },
+  {
+    "id": "R10",
+    "svcModule": "高风险网元排查清除",
+    "subModule": "价值网络检查",
+    "desc": "价值网络健康检查进度未达到月度目标",
+    "roles": [
+      "MTD"
+    ],
+    "deduct": "1 Month/Time",
+    "weight": 5,
+    "archived": false
+  },
+  {
+    "id": "R11",
+    "svcModule": "CNBG四大主战场",
+    "subModule": "1. 数字证书",
+    "desc": "风险清除进度未达到月度目标（包括延期任务）",
+    "roles": [
+      "MTD"
+    ],
+    "deduct": "1 Month/Time",
+    "weight": 5,
+    "archived": false
+  },
+  {
+    "id": "R12",
+    "svcModule": "CNBG四大主战场",
+    "subModule": "1. 数字证书",
+    "desc": "整改被错误确认为不涉及或部分涉及",
+    "roles": [
+      "TL",
+      "TE"
+    ],
+    "deduct": "1 Quarter/Time",
+    "weight": 5,
+    "archived": false
+  },
+  {
+    "id": "R13",
+    "svcModule": "CNBG四大主战场",
+    "subModule": "1. 数字证书",
+    "desc": "审计团队发现不合格关闭工单",
+    "roles": [
+      "TL",
+      "TE"
+    ],
+    "deduct": "1 Quarter/Time",
+    "weight": 5,
+    "archived": false
+  },
+  {
+    "id": "R14",
+    "svcModule": "CNBG四大主战场",
+    "subModule": "2.1 EOS-ALL",
+    "desc": "EOS风险缓解进度未达到目标（包括产品和软件版本）",
+    "roles": [
+      "SPM"
+    ],
+    "deduct": "1 Month/Time",
+    "weight": 5,
+    "archived": false
+  },
+  {
+    "id": "R15",
+    "svcModule": "CNBG四大主战场",
+    "subModule": "2.2 紧急EOS",
+    "desc": "紧急EOS风险缓解进度未达到月度目标",
+    "roles": [
+      "SPM"
+    ],
+    "deduct": "1 Month/Time",
+    "weight": null,
+    "archived": false
+  },
+  {
+    "id": "R16",
+    "svcModule": "CNBG四大主战场",
+    "subModule": "3.1 机房锂电池",
+    "desc": "CO机房锂电池风险缓解进度未达到目标",
+    "roles": [
+      "MTD"
+    ],
+    "deduct": "1 Month/Time",
+    "weight": 2,
+    "archived": false
+  },
+  {
+    "id": "R17",
+    "svcModule": "CNBG四大主战场",
+    "subModule": "3.2 路由器整改",
+    "desc": "风险缓解进度未达到月度目标",
+    "roles": [
+      "MTD"
+    ],
+    "deduct": "1 Month/Time",
+    "weight": 3,
+    "archived": false
+  },
+  {
+    "id": "R18",
+    "svcModule": "CNBG四大主战场",
+    "subModule": "3.3 光传输WDM板",
+    "desc": "不涉及（埃及区域）",
+    "roles": [
+      "MTD"
+    ],
+    "deduct": "1 Month/Time",
+    "weight": 0,
+    "archived": false
+  },
+  {
+    "id": "R19",
+    "svcModule": "CNBG四大主战场",
+    "subModule": "3.4 数据存储",
+    "desc": "不涉及",
+    "roles": [
+      "MTD"
+    ],
+    "deduct": "1 Month/Time",
+    "weight": 0,
+    "archived": false
+  },
+  {
+    "id": "R20",
+    "svcModule": "CNBG四大主战场",
+    "subModule": "3.5 MM版本升级",
+    "desc": "未涉及（A&S参考其KPI定义）",
+    "roles": [
+      "MTD"
+    ],
+    "deduct": "1 Month/Time",
+    "weight": 0,
+    "archived": false
+  },
+  {
+    "id": "R21",
+    "svcModule": "CNBG四大主战场",
+    "subModule": "4.1 网络评估",
+    "desc": "无法满足时间线目标（未涉及）",
+    "roles": [
+      "MTD"
+    ],
+    "deduct": "1 Month/Time",
+    "weight": 0,
+    "archived": false
+  },
+  {
+    "id": "R22",
+    "svcModule": "CNBG四大主战场",
+    "subModule": "4.2 1-2级漏洞",
+    "desc": "未按公告时间线完成客户预防性通知",
+    "roles": [
+      "SPM"
+    ],
+    "deduct": "1 Quarter/Time",
+    "weight": 0,
+    "archived": false
+  },
+  {
+    "id": "R23",
+    "svcModule": "应急恢复能力提升",
+    "subModule": "高风险逃生演练",
+    "desc": "演练完成进度未达到月度目标",
+    "roles": [
+      "MTD"
+    ],
+    "deduct": "1 Month/Time",
+    "weight": 2,
+    "archived": false
+  },
+  {
+    "id": "R24",
+    "svcModule": "应急恢复能力提升",
+    "subModule": "高风险逃生演练",
+    "desc": "未与客户开展跨产品应急演练并上传材料",
+    "roles": [
+      "MTD"
+    ],
+    "deduct": "1 Month/Time",
+    "weight": 3,
+    "archived": false
+  },
+  {
+    "id": "R25",
+    "svcModule": "应急恢复能力提升",
+    "subModule": "i-Lab演练",
+    "desc": "演练完成进度未达到月度目标",
+    "roles": [
+      "MTD"
+    ],
+    "deduct": "1 Month/Time",
+    "weight": 2,
+    "archived": false
+  },
+  {
+    "id": "R26",
+    "svcModule": "应急恢复能力提升",
+    "subModule": "Top与应急预案更新",
+    "desc": "更新进度未达到要求（每半年1次）",
+    "roles": [
+      "MTD",
+      "TL",
+      "TE"
+    ],
+    "deduct": "1 Month/Time",
+    "weight": 2,
+    "archived": false
+  },
+  {
+    "id": "R27",
+    "svcModule": "应急恢复能力提升",
+    "subModule": "Top与应急预案更新",
+    "desc": "月度审计发现非标准或不合格更新",
+    "roles": [
+      "TL",
+      "TE"
+    ],
+    "deduct": "1 Month/Ticket",
+    "weight": null,
+    "archived": false
+  },
+  {
+    "id": "R28",
+    "svcModule": "应急恢复能力提升",
+    "subModule": "IBMS更新",
+    "desc": "IBMS更新进度未达到月度目标",
+    "roles": [
+      "TL",
+      "TE"
+    ],
+    "deduct": "1 Month/Time",
+    "weight": 2,
+    "archived": false
+  },
+  {
+    "id": "R29",
+    "svcModule": "网络问题管理",
+    "subModule": "ITR- FRT",
+    "desc": "月度FRT <= 98.5%",
+    "roles": [
+      "TL",
+      "TE"
+    ],
+    "deduct": "1 Month/Time",
+    "weight": 2,
+    "archived": false
+  },
+  {
+    "id": "R30",
+    "svcModule": "网络问题管理",
+    "subModule": "60分钟快速恢复",
+    "desc": "事件恢复时间 > 60分钟（仅限华为根本原因）",
+    "roles": [
+      "SPM",
+      "MTD"
+    ],
+    "deduct": "1 Quarter/Ticket",
+    "weight": 3,
+    "archived": false
+  },
+  {
+    "id": "R31",
+    "svcModule": "红线资源管理",
+    "subModule": "红线资源在岗",
+    "desc": "KPI（CNBG红线在岗率）未达到月度目标",
+    "roles": [
+      "Redline Resource"
+    ],
+    "deduct": "1 Month/Resource",
+    "weight": 2,
+    "archived": false
+  },
+  {
+    "id": "R32",
+    "svcModule": "红线资源管理",
+    "subModule": "红线资源在岗",
+    "desc": "存在红线资源每月任务少于3个",
+    "roles": [
+      "Redline Resource"
+    ],
+    "deduct": "1 Month/Resource",
+    "weight": null,
+    "archived": false
+  },
+  {
+    "id": "R33",
+    "svcModule": "红线资源管理",
+    "subModule": "红线资源 - C&Q",
+    "desc": "KPI未达到月度目标",
+    "roles": [
+      "Redline Resource"
+    ],
+    "deduct": "1 Month/Resource",
+    "weight": 2,
+    "archived": false
+  },
+  {
+    "id": "R34",
+    "svcModule": "网络变更管理",
+    "subModule": "工具使用率",
+    "desc": "工具使用率低于95%或解释率高于25%",
+    "roles": [
+      "FME"
+    ],
+    "deduct": "1 Month/FME",
+    "weight": 5,
+    "archived": false
+  },
+  {
+    "id": "R35",
+    "svcModule": "网络变更管理",
+    "subModule": "操作日志审计",
+    "desc": "操作日志审计率低于80%",
+    "roles": [
+      "admin"
+    ],
+    "deduct": "1 Month/Account",
+    "weight": null,
+    "archived": false
+  },
+  {
+    "id": "R36",
+    "svcModule": "网络变更管理",
+    "subModule": "离职账户清理",
+    "desc": "FME离职后超过10天未清理账户",
+    "roles": [
+      "TL",
+      "admin"
+    ],
+    "deduct": "1 Quarter/Time",
+    "weight": null,
+    "archived": false
+  },
+  {
+    "id": "R37",
+    "svcModule": "网络变更管理",
+    "subModule": "超出授权窗口",
+    "desc": "WFM操作超出授权窗口且未提交客户延期邮件",
+    "roles": [
+      "FME",
+      "SPM"
+    ],
+    "deduct": "1 Quarter/Time",
+    "weight": 20,
+    "archived": false
+  },
+  {
+    "id": "R38",
+    "svcModule": "网络变更管理",
+    "subModule": "服务质量回滚",
+    "desc": "WFM操作因代表处服务质量原因回滚",
+    "roles": [
+      "FME",
+      "TD"
+    ],
+    "deduct": "1 Quarter/Time",
+    "weight": null,
+    "archived": false
+  },
+  {
+    "id": "R39",
+    "svcModule": "网络变更管理",
+    "subModule": "回滚追溯",
+    "desc": "未按时完成回滚追溯（SLA：10天）",
+    "roles": [
+      "TD"
+    ],
+    "deduct": "1 Quarter/Time",
+    "weight": null,
+    "archived": false
+  },
+  {
+    "id": "R40",
+    "svcModule": "网络变更管理",
+    "subModule": "超出MOP",
+    "desc": "网络变更无RFC或超出MOP",
+    "roles": [
+      "FME",
+      "TD",
+      "PM"
+    ],
+    "deduct": "1 Quarter/Time",
+    "weight": null,
+    "archived": false
+  },
+  {
+    "id": "R41",
+    "svcModule": "网络变更管理",
+    "subModule": "疲劳操作",
+    "desc": "疲劳操作未经VP批准",
+    "roles": [
+      "admin"
+    ],
+    "deduct": "1 Month/Time",
+    "weight": null,
+    "archived": false
+  },
+  {
+    "id": "R42",
+    "svcModule": "网络变更管理",
+    "subModule": "MOP质量",
+    "desc": "MOP质量违反相关章节规范",
+    "roles": [
+      "FME"
+    ],
+    "deduct": "1 Month/Time",
+    "weight": null,
+    "archived": false
+  },
+  {
+    "id": "R43",
+    "svcModule": "网络变更管理",
+    "subModule": "异常行为",
+    "desc": "Netcare中通报的异常行为FME",
+    "roles": [
+      "FME"
+    ],
+    "deduct": "1 Quarter/Time",
+    "weight": null,
+    "archived": false
+  },
+  {
+    "id": "R44",
+    "svcModule": "网络变更管理",
+    "subModule": "高风险命令",
+    "desc": "FME被拦截高风险命令超过20次",
+    "roles": [
+      "FME"
+    ],
+    "deduct": "1 Month/Time",
+    "weight": null,
+    "archived": false
+  },
+  {
+    "id": "R45",
+    "svcModule": "网络变更管理",
+    "subModule": "第三方软件/工具",
+    "desc": "入离职确认超时/未安装Client/安装未授权第三方软件",
+    "roles": [
+      "FME",
+      "admin"
+    ],
+    "deduct": "Quarterly",
+    "weight": null,
+    "archived": false
+  },
+  {
+    "id": "R46",
+    "svcModule": "网络变更管理",
+    "subModule": "SR/RFC真实性",
+    "desc": "创建SR/RFC时错误选择“服务类型”",
+    "roles": [
+      "FME",
+      "PM"
+    ],
+    "deduct": "1 Month/Time",
+    "weight": null,
+    "archived": false
+  },
+  {
+    "id": "R47",
+    "svcModule": "网络变更管理",
+    "subModule": "季度考试",
+    "desc": "工程师未按时完成季度区域考试",
+    "roles": [
+      "FME"
+    ],
+    "deduct": "1 Month/Time",
+    "weight": null,
+    "archived": false
+  },
+  {
+    "id": "R48",
+    "svcModule": "价值管理",
+    "subModule": "管理者领导力",
+    "desc": "未在GTS Jam发布月度会议纪要",
+    "roles": [
+      "admin"
+    ],
+    "deduct": "1 Month/Time",
+    "weight": 5,
+    "archived": false
+  },
+  {
+    "id": "R49",
+    "svcModule": "价值管理",
+    "subModule": "客户价值呈现",
+    "desc": "未按时发送维护月报或抄送CXO",
+    "roles": [
+      "SPM"
+    ],
+    "deduct": "1 Month/Time",
+    "weight": 5,
+    "archived": false
+  },
+  {
+    "id": "R50",
+    "svcModule": "价值管理",
+    "subModule": "服务杂志",
+    "desc": "未按季度向客户提交服务杂志并归档",
+    "roles": [
+      "SPM"
+    ],
+    "deduct": "1 Month/Time",
+    "weight": null,
+    "archived": false
+  },
+  {
+    "id": "R51",
+    "svcModule": "备件管理",
+    "subModule": "CIAG抽查与结果",
+    "desc": "抽查实物差异 或 CIAG < 100%",
+    "roles": [
+      "SP manager"
+    ],
+    "deduct": "1 Quarter/Time",
+    "weight": 8,
+    "archived": false
+  },
+  {
+    "id": "R52",
+    "svcModule": "备件管理",
+    "subModule": "备件逾期",
+    "desc": "存在180天以上逾期 或 代表处备件逾期率 > 6%",
+    "roles": [
+      "SP admin",
+      "manager"
+    ],
+    "deduct": "1 Month/Time",
+    "weight": null,
+    "archived": false
+  },
+  {
+    "id": "R53",
+    "svcModule": "备件管理",
+    "subModule": "内控结果",
+    "desc": "CT合规率 < 100% 或 存在业务真实性/BCG违规",
+    "roles": [
+      "SP manager",
+      "admin"
+    ],
+    "deduct": "1 Quarter/Time",
+    "weight": null,
+    "archived": false
+  },
+  {
+    "id": "R54",
+    "svcModule": "备件管理",
+    "subModule": "现场审核/方案",
+    "desc": "总监未参与现场盘点 或 未向客户现场展示方案",
+    "roles": [
+      "SP manager"
+    ],
+    "deduct": "1 Monthly/Time",
+    "weight": null,
+    "archived": false
+  },
+  {
+    "id": "R99",
+    "svcModule": "通用及其他事件",
+    "subModule": "日常发现与服务事故",
+    "desc": "未在明确扣罚目录内的日常违规与服务事件",
+    "roles": [
+      "ALL"
+    ],
+    "deduct": "Custom",
+    "weight": null,
+    "archived": false
+  }
+]
