@@ -10,6 +10,9 @@
     "tags": ["质量管理", "奖惩", "规则", "人员"],
     "href": "/tools/department-reward-penalty",
     "filePath": "/custom-tools/department-reward-penalty/index.html",
-    "publicAccess": false
-  }
+    "publicAccess": false,
+    "createdAt": "2026-09-17T00:00:00.000Z",
+    "updatedAt": "2026-09-18T00:00:00.000Z"
+  },
+  "history": null
 }
