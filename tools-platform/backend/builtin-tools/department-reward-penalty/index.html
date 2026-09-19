@@ -58,7 +58,7 @@ nav button.active .nav-icon{color:var(--red)}
 main{min-width:0;padding:26px;max-width:1700px;width:100%;margin:0 auto;height:100vh;overflow-y:auto}
 .top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}.top h2{margin:0;font-size:22px}.muted{color:#79838d;font-size:12px}
 .panel{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 3px 16px #20304008;margin-bottom:18px;padding:20px}
-.panel-head,.toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.panel h3{margin:0 0 16px;font-size:16px}
+.panel-head,.toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.panel h3{margin:0 0 16px;font-size:16px}.panel-head-title-wrap{display:inline-flex;align-items:baseline;gap:10px;margin:0 0 16px;flex-wrap:wrap}.panel-head-title-wrap h3{margin:0;font-size:16px}.panel-head-sub{font-size:12.5px;font-weight:400;color:#64748b;user-select:none}.panel-head-sub b{color:#9e1b34;font-weight:700;font-size:13.5px;margin:0 2px}
 button,.button{cursor:pointer;font:inherit}button.primary{border:1px solid var(--red);background:var(--red);color:white;border-radius:7px;padding:9px 15px}
 button.secondary{border:1px solid #ced5de;background:white;color:#465260;border-radius:7px;padding:8px 12px}
 button.link{background:none;border:0;color:var(--red);padding:4px 6px}button.danger{color:#b32338}
@@ -114,7 +114,7 @@ textarea{resize:vertical;min-height:72px}.toolbar{justify-content:flex-start;mar
 .month-tag-btn{height:27px;padding:0 11px;font-size:12px;font-weight:600;border:1px solid #cbd5e1;background:#fff;color:#475569;border-radius:6px;cursor:pointer;transition:all .15s ease;user-select:none}
 .month-tag-btn:hover{background:#f8fafc;color:#0f172a;border-color:#94a3b8}
 .month-tag-btn.active{background:#fff0f3;color:var(--red);border-color:#fca5a5;font-weight:700;box-shadow:0 1px 3px rgba(185,25,55,.12)}
-.stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:18px}.stat{background:#fff;border:1px solid var(--line);border-radius:10px;padding:15px 17px;text-align:left;color:#596777;transition:border-color .15s,box-shadow .15s,transform .15s}.stat:hover{border-color:#df9ca8;box-shadow:0 5px 16px #b9193714;transform:translateY(-1px)}.stat.active{border-color:var(--red);background:#fff8f9;box-shadow:inset 0 0 0 1px var(--red)}.stat b{display:block;font-size:24px;color:#9e1b34;margin-top:5px}
+.stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:18px}.stat{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;text-align:left;color:#596777;transition:border-color .15s,box-shadow .15s,transform .15s;display:flex;flex-direction:column;justify-content:space-between}.stat:hover{border-color:#df9ca8;box-shadow:0 5px 16px #b9193714;transform:translateY(-1px)}.stat.active{border-color:var(--red);background:#fff8f9;box-shadow:inset 0 0 0 1px var(--red)}.stat b{display:block;font-size:24px;color:#9e1b34;margin-top:6px}.stat-sub-hint{display:block;font-size:11px;font-weight:400;color:#94a3b8;margin-top:3px;line-height:1.2}.stat.active .stat-sub-hint{color:#be123c;opacity:.9}
 .table-wrap{overflow:auto;width:100%;border:1px solid #e8edf2;border-radius:9px}table{border-collapse:separate;border-spacing:0;width:100%;min-width:850px;font-size:13px}th,td{text-align:left;border-bottom:1px solid #edf0f3;padding:14px 16px;vertical-align:middle;line-height:1.55}th{background:#f8fafc;color:#627082;white-space:nowrap;font-weight:650}tbody tr:last-child td{border-bottom:0}tbody tr:hover{background:#fafbfe}
 .records-table{min-width:1060px}.records-table th:nth-child(1){width:100px}.records-table th:nth-child(2){width:115px}.records-table th:nth-child(3){width:175px}.records-table th:nth-child(4){min-width:230px}.records-table th:nth-child(5){width:140px}.records-table th:last-child{width:260px;min-width:240px;text-align:right}.records-table td{overflow-wrap:anywhere}.records-table td:first-child,.records-table td:nth-child(2),.records-table td:last-child{white-space:nowrap}.cell-title{font-weight:620;color:#263543}.cell-sub{display:block;color:#758391;font-size:12px;margin-top:4px;line-height:1.5}.cell-notes{display:grid;gap:4px;color:#536172}.cell-notes:empty{display:none}.cell-actions{display:inline-flex;align-items:center;gap:6px;justify-content:flex-end;white-space:nowrap;flex-shrink:0}.records-table a{color:var(--red);text-decoration:none}.records-table a:hover{text-decoration:underline}
 .record-row{cursor:pointer;transition:background-color .15s ease}
@@ -437,6 +437,7 @@ dialog::backdrop{background:rgba(15,23,42,.48);backdrop-filter:blur(5px);-webkit
 .mini-tag.sub-tag{background:#f1f5f9;color:#475569}
 .mini-tag.deduct-tag{background:#fff1f2;color:#be123c}
 .mini-tag.group-tag{background:#ecfdf5;color:#047857}
+.mini-tag.bu-tag{background:#f5f3ff;color:#6d28d9}
 .mini-tag.role-tag{background:#fffbeb;color:#b45309}
 .active-filter-indicator{display:inline-flex;align-items:center;gap:2px;font-size:10px;font-weight:700;color:var(--red);background:#fff1f3;padding:1px 5px;border-radius:4px}
 .ranking-stat{display:flex;flex-direction:column;align-items:flex-end;gap:1px;flex-shrink:0}
@@ -689,7 +690,7 @@ dialog::backdrop{background:rgba(15,23,42,.48);backdrop-filter:blur(5px);-webkit
 <div class="records-container" id="records-container">
 <div class="records-main-col">
 <div class="stats" id="stats"></div>
-<div class="panel"><div class="panel-head"><h3>违规记录</h3>
+<div class="panel"><div class="panel-head"><div class="panel-head-title-wrap"><h3>违规记录</h3><span class="panel-head-sub" id="records-count-hint">当前记录 <b>0</b> 条</span></div>
 <div class="panel-head-actions">
 <button type="button" class="secondary export-btn" id="export-records-btn" title="导出当前筛选结果为 Excel CSV 表格"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg><span>导出列表</span></button>
 <button type="button" class="secondary" id="toggle-analytics-btn" title="显示或收起右侧态势分析看板"><span class="toggle-icon"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><path d="M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-4zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z"/></svg></span> <span class="toggle-text">收起分析</span></button>
@@ -736,8 +737,8 @@ dialog::backdrop{background:rgba(15,23,42,.48);backdrop-filter:blur(5px);-webkit
   </div>
   <div class="analytics-scope-bar">
     <div class="segmented-control" id="analytics-scope-control">
-      <button type="button" class="seg-btn active" data-analytics-scope="all">全部已发布</button>
-      <button type="button" class="seg-btn" data-analytics-scope="filtered">联动当前筛选</button>
+      <button type="button" class="seg-btn" data-analytics-scope="all">全部已发布</button>
+      <button type="button" class="seg-btn active" data-analytics-scope="filtered">联动当前筛选</button>
     </div>
     <span class="sample-badge" id="analytics-sample-badge">样本：0 起</span>
   </div>
@@ -1246,11 +1247,96 @@ const personBusinessUnits = person => Array.isArray(person?.businessUnitIds)?per
 const businessUnitName = id => (state.businessUnits || []).find(unit=>unit.id===id)?.value||'未知 BU';
 const categoryName = id => (state.deductionCategories || []).find(category=>category.id===id)?.value||'其他';
 const deductionFor = value => (state.deductions || []).find(item=>item.value===value);
+const roleList = rule => Array.isArray(rule?.roles) ? rule.roles : String(rule?.roles || '').split(/[,+/]/).map(x => x.trim()).filter(Boolean);
 const recordAttachments = record => {
   if (!record) return [];
   if (Array.isArray(record.attachments) && record.attachments.length) return record.attachments.filter(Boolean);
   if (record.attachment) return String(record.attachment).split(';').map(s => s.trim()).filter(Boolean);
   return [];
+};
+const recordCustomerGroupName = record => {
+  if (!record) return '待配置';
+  if (record.customerGroupId) {
+    const name = groupName(record.customerGroupId);
+    if (name && name !== '待配置') return name;
+  }
+  if (record.personSnapshot?.customerGroupName) {
+    return record.personSnapshot.customerGroupName;
+  }
+  if (record.personSnapshot?.customerGroupId) {
+    const name = groupName(record.personSnapshot.customerGroupId);
+    if (name && name !== '待配置') return name;
+  }
+  const rawRole = record.personSnapshot?.role || '';
+  const match = String(rawRole).match(/\(([^)]+)\)/);
+  if (match) {
+    const gText = match[1].trim();
+    const g = (state.customerGroups || []).find(x => x.value === gText || x.id === gText);
+    if (g) return g.value;
+  }
+  const p = personFor(record);
+  const pGroups = p ? personGroups(p) : [];
+  if (pGroups.length === 1) {
+    return groupName(pGroups[0]);
+  }
+  return '待配置';
+};
+const recordBusinessUnitName = record => {
+  if (!record) return '';
+  if (record.businessUnitId) {
+    const name = businessUnitName(record.businessUnitId);
+    if (name && name !== '未知 BU') return name;
+  }
+  if (record.personSnapshot?.buName) return record.personSnapshot.buName;
+  if (record.personSnapshot?.businessUnitId) {
+    const name = businessUnitName(record.personSnapshot.businessUnitId);
+    if (name && name !== '未知 BU') return name;
+  }
+  const rawRole = record.personSnapshot?.role || '';
+  const buClean = rawRole.replace(/\([^)]+\)/g, '').trim();
+  if (buClean && (state.businessUnits || []).some(b => b.value === buClean)) return buClean;
+  const livePerson = personFor(record);
+  const liveBUs = livePerson ? personBusinessUnits(livePerson) : [];
+  if (liveBUs.length) {
+    const name = businessUnitName(liveBUs[0]);
+    if (name && name !== '未知 BU') return name;
+  }
+  return '';
+};
+const recordRoleName = record => {
+  if (!record) return '未配置角色';
+  if (record.role) {
+    const rMatch = (state.roles || []).find(r => r.value.toLowerCase() === record.role.toLowerCase());
+    if (rMatch) return rMatch.value;
+  }
+  const rule = ruleFor(record) || record.ruleSnapshot || {};
+  const rRoles = roleList(rule);
+  const livePerson = personFor(record);
+  let pRoles = livePerson ? personRoles(livePerson) : [];
+  if (!pRoles.length && record.personSnapshot) {
+    pRoles = personRoles(record.personSnapshot);
+    pRoles = pRoles.flatMap(pr => {
+      const tokens = String(pr).replace(/[()]/g, '/').split(/[,+/]/).map(x => x.trim()).filter(Boolean);
+      const roleTokens = tokens.filter(tok => (state.roles || []).some(r => r.value.toLowerCase() === tok.toLowerCase()));
+      return roleTokens.length ? roleTokens : [pr];
+    });
+  }
+  if (!pRoles.length) return '未配置角色';
+
+  const matched = pRoles.filter(pr => {
+    const prNorm = pr.toLowerCase().replace(/[^a-z0-9]/g, '');
+    return rRoles.some(rr => {
+      const rrNorm = rr.toLowerCase().replace(/[^a-z0-9]/g, '');
+      return rrNorm === 'all' || rrNorm === '全员' || rrNorm === prNorm;
+    });
+  });
+
+  if (matched.length === 1) return matched[0];
+  if (matched.length > 1) {
+    if (livePerson?.role && matched.includes(livePerson.role)) return livePerson.role;
+    return matched[0];
+  }
+  return livePerson?.role || pRoles[0] || '未配置角色';
 };
 const configButtons = (kind,item) => '<button class="link" data-config-edit="'+kind+'" data-id="'+escapeHtml(item.id)+'">编辑</button><button class="link danger" data-config-delete="'+kind+'" data-id="'+escapeHtml(item.id)+'">删除</button>';
 const configChip = (kind,item) => '<span class="chip">'+escapeHtml(item.value)+configButtons(kind,item)+'</span>';
@@ -1500,7 +1586,6 @@ function openMessage({title='提示',message='',bannerType='info',icon='ℹ️',
 const uiAlert=(message,title='系统提示',bannerType='info',icon='ℹ️')=>openMessage({title,message,bannerType,icon,confirmText:'知道了'});
 const uiConfirm=(message,title='请确认操作',bannerType='danger',icon='⚠️')=>openMessage({title,message,bannerType,icon,confirmText:'确认操作'}).then(Boolean);
 const uiPrompt=(message,value='',title='请输入')=>openMessage({title,bannerType:'info',icon:'✏️',fields:[{name:'value',label:message,value}],confirmText:'确定'}).then(result=>result?.value??null);
-const roleList = rule => Array.isArray(rule?.roles) ? rule.roles : String(rule?.roles || '').split(/[,+/]/).map(x => x.trim()).filter(Boolean);
 function roleMatches(person,rule){if(!person||!rule)return null;const actual=new Set(personRoles(person).flatMap(role=>{const raw=String(role).toLowerCase();return [raw,...raw.replace(/[()]/g,'/').split(/[,+/]/).map(x=>x.trim())]}).map(x=>x.replace(/[^a-z0-9]/g,'')));return roleList(rule).some(role=>{const x=role.toLowerCase().replace(/[^a-z0-9]/g,'');return x==='all'||actual.has(x)});}
 async function request(path,options){const response=await fetch(API+path,{credentials:'same-origin',headers:{'Content-Type':'application/json'},...options});const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||'请求失败');return data;}
 async function refresh(){try{const raw=await request('/');state=Object.assign({personnel:[],rules:[],records:[],roles:[],deductions:[],deductionCategories:[],customerGroups:[],businessUnits:[]},raw);for(const k of ['personnel','rules','records','roles','deductions','deductionCategories','customerGroups','businessUnits']){if(!Array.isArray(state[k]))state[k]=[]} $('status').textContent='数据来自当前租户 · '+new Date().toLocaleString();$('import-legacy').hidden=!(state.canEdit&&!state.personnel.length&&!state.records.length&&localStorage.getItem('hw_dept_db_v11_filters_pagination'));render();if(view==='audit')await loadAudit();if(view==='security')await loadSecurity();}catch(error){$('status').textContent='读取失败：'+error.message;}}
@@ -1647,18 +1732,21 @@ function exportRecordsToCSV(recordsToExport){
   const headers=['记录状态','发生日期','责任人工号','责任人姓名','客户群','BU','适用角色','违规大类','违规子类','判定描述','扣罚标准','工单号','证据说明','备注说明','附件链接'];
   const statusMap={draft:'待发布草稿',published:'已发布',revoked:'已撤销',archived:'已归档'};
   const rows=recordsToExport.map(rec=>{
-    const p=rec.personSnapshot||personFor(rec)||{};
-    const r=rec.ruleSnapshot||ruleFor(rec)||{};
+    const p=personFor(rec)||rec.personSnapshot||{};
+    const r=ruleFor(rec)||rec.ruleSnapshot||{};
     const isArchived = rec.status === 'archived' || Boolean(rec.archived);
     const recStatus = isArchived ? 'archived' : rec.status;
+    const groupStr = recordCustomerGroupName(rec);
+    const buStr = recordBusinessUnitName(rec);
+    const roleStr = recordRoleName(rec);
     return [
       statusMap[recStatus]||recStatus||'',
       rec.date||'',
       rec.staffId||'',
       p.name||rec.staffId||'',
-      p.customerGroupName||groupName(rec.customerGroupId||p.customerGroupId)||'',
-      (personBusinessUnits(p).map(businessUnitName).join('; ')||''),
-      (personRoles(p).join('; ')||''),
+      groupStr,
+      buStr,
+      roleStr,
       r.svcModule||'',
       r.subModule||'',
       r.desc||'',
@@ -1806,7 +1894,12 @@ const roleMatch=roleMatches(person,rule);
 const needReview=recStatus!=='revoked'&&recStatus!=='archived'&&(roleMatch===false||(roleMatch===null&&Boolean(record.migrationWarning)));
 const reviewBadge=needReview?`<span class="tag" style="background:#fff1f2;color:#be123c;border:1px solid #fecdd3;" title="责任主体当前岗位角色与该规则适用范畴不符，需复核角色或规则">角色待复核</span>`:'';
 
-return `<tr class="record-row" data-row-record="${escapeHtml(record.id)}"><td><span class="tag ${escapeHtml(recStatus)}">${escapeHtml(statusLabel)}</span>${reviewBadge}</td><td>${escapeHtml(record.date)}</td><td><span class="cell-title">${escapeHtml(person.name||record.staffId)}</span><span class="cell-sub">${escapeHtml(person.customerGroupName||groupName(record.customerGroupId||person.customerGroupId))} · ${escapeHtml(personRoles(person).join('、')||'未配置角色')}</span></td><td><span class="cell-title">${escapeHtml(rule.desc||'')}</span><span class="cell-sub">${escapeHtml(rule.svcModule||'')} / ${escapeHtml(rule.subModule||'')}</span></td><td><span class="tag">${escapeHtml(record.deduct)}</span></td><td><div class="cell-notes">${notes}</div></td><td style="text-align:right;white-space:nowrap;"><div class="cell-actions">${actions}</div></td></tr>`;
+const groupText = recordCustomerGroupName(record);
+const buText = recordBusinessUnitName(record);
+const roleText = recordRoleName(record);
+const metaParts = [groupText, buText, roleText].filter(Boolean);
+
+return `<tr class="record-row" data-row-record="${escapeHtml(record.id)}"><td><span class="tag ${escapeHtml(recStatus)}">${escapeHtml(statusLabel)}</span>${reviewBadge}</td><td>${escapeHtml(record.date)}</td><td><span class="cell-title">${escapeHtml(person.name||record.staffId)}</span><span class="cell-sub">${escapeHtml(metaParts.join(' · '))}</span></td><td><span class="cell-title">${escapeHtml(rule.desc||'')}</span><span class="cell-sub">${escapeHtml(rule.svcModule||'')} / ${escapeHtml(rule.subModule||'')}</span></td><td><span class="tag">${escapeHtml(record.deduct)}</span></td><td><div class="cell-notes">${notes}</div></td><td style="text-align:right;white-space:nowrap;"><div class="cell-actions">${actions}</div></td></tr>`;
 }
 let analyticsSidebarOpen=true;
 let autoCollapseAnalyticsTimer=null;
@@ -1833,7 +1926,7 @@ if(text)text.textContent=analyticsSidebarOpen?'收起分析':'态势洞察';
 }
 localStorage.setItem('rp_analytics_open',analyticsSidebarOpen?'true':'false');
 }
-let analyticsScope='all';
+let analyticsScope='filtered';
 let personTrendExpanded=false;
 let lastAnalyticsFilteredRecords=[];
 function getInitials(name){const s=String(name||'').trim();if(!s)return '人';const parts=s.split(/\s+/).filter(Boolean);if(parts.length>=2)return (parts[0][0]+parts[parts.length-1][0]).toUpperCase();return s.slice(0,2).toUpperCase();}
@@ -1858,17 +1951,47 @@ ruleMap.get(key).count++;
 const sortedRules=[...ruleMap.values()].sort((a,b)=>b.count-a.count);
 const staffMap=new Map();
 targetRecords.forEach(r=>{
-const person=personFor(r)||r.personSnapshot||{};
+const livePerson=personFor(r);
 const staffId=r.staffId||'';
-const name=(r.personSnapshot?.name)||(person.name)||staffId||'未知人员';
-const group=r.personSnapshot?.customerGroupName||groupName(r.customerGroupId||r.personSnapshot?.customerGroupId);
-const roles=personRoles(Object.keys(r.personSnapshot||{}).length?r.personSnapshot:person);
+const name=livePerson?.name||r.personSnapshot?.name||staffId||'未知人员';
+const recGroup=recordCustomerGroupName(r);
+const recBU=recordBusinessUnitName(r);
+const recRole=recordRoleName(r);
+
 if(!staffMap.has(staffId)){
-staffMap.set(staffId,{staffId,name,groupName:group,rolesText:roles.join('、'),count:0});
-}
-staffMap.get(staffId).count++;
+staffMap.set(staffId,{
+staffId,
+name,
+groupsSet:new Set(),
+buSet:new Set(),
+rolesSet:new Set(),
+count:0
 });
-const sortedStaff=[...staffMap.values()].sort((a,b)=>b.count-a.count);
+}
+const entry=staffMap.get(staffId);
+entry.count++;
+if(recGroup&&recGroup!=='待配置'){
+entry.groupsSet.add(recGroup);
+}
+if(recBU&&recBU!=='未知 BU'){
+entry.buSet.add(recBU);
+}
+if(recRole&&recRole!=='未配置角色'){
+entry.rolesSet.add(recRole);
+}
+});
+const sortedStaff=[...staffMap.values()].map(s=>{
+let groupName=s.groupsSet.size?[...s.groupsSet].join('、'):'待配置';
+let buText=s.buSet.size?[...s.buSet].join('、'):'';
+let rolesText=s.rolesSet.size?[...s.rolesSet].join('、'):'';
+const p=personFor({staffId:s.staffId});
+if(!buText&&p){
+const pBUs=personBusinessUnits(p);
+if(pBUs.length===1)buText=businessUnitName(pBUs[0]);
+}
+if(!rolesText&&p?.role)rolesText=p.role;
+return {...s,groupName,buText,rolesText};
+}).sort((a,b)=>b.count-a.count);
 const uniqueRulesCount=sortedRules.length,uniquePeopleCount=sortedStaff.length,allActiveRulesCount=(state.rules||[]).filter(r=>!r.archived).length;
 const topRulePercent=totalCount>0&&sortedRules[0]?Math.round((sortedRules[0].count/totalCount)*1000)/10:0;
 const concentrationText=topRulePercent>=50?'高度集中 · 需定向专项治理':topRulePercent>=30?'中度集中 · 需重点关注宣贯':'违规诱因相对分散 · 保持常态监管';
@@ -1907,7 +2030,7 @@ const rank=idx+1,percent=totalCount>0?((item.count/totalCount)*100).toFixed(1):0
 const relativePercent=Math.min(100,Math.round((item.count/maxStaffCount)*100));
 const isFiltering=(currentPersonId&&currentPersonId===item.staffId)||(currentSearch&&currentSearch===item.name.toLowerCase());
 const initials=getInitials(item.name);
-return `<div class="ranking-item ${isFiltering?'is-active-filter':''}" data-filter-staff="${escapeHtml(item.staffId)}" data-filter-name="${escapeHtml(item.name)}" title="点击可查看该人员涉规记录"><div class="ranking-item-top"><div class="ranking-item-left"><span class="rank-badge rank-${rank<=3?rank:'other'}">${String(rank).padStart(2,'0')}</span><div class="person-avatar-circle">${escapeHtml(initials)}</div><div class="ranking-meta"><div class="ranking-name">${escapeHtml(item.name)}</div><div class="ranking-tags"><span class="mini-tag group-tag">${escapeHtml(item.groupName)}</span>${item.rolesText?`<span class="mini-tag role-tag">${escapeHtml(item.rolesText)}</span>`:''}${isFiltering?'<span class="active-filter-indicator">✓ 筛选中</span>':''}</div></div></div><div class="ranking-stat"><span class="ranking-count">${item.count}<span class="ranking-unit">次</span></span><span class="ranking-percent">${percent}%</span></div></div><div class="ranking-bar-track"><div class="ranking-bar-fill person-fill" style="width:${relativePercent}%;"></div></div></div>`;
+return `<div class="ranking-item ${isFiltering?'is-active-filter':''}" data-filter-staff="${escapeHtml(item.staffId)}" data-filter-name="${escapeHtml(item.name)}" title="点击可查看该人员涉规记录"><div class="ranking-item-top"><div class="ranking-item-left"><span class="rank-badge rank-${rank<=3?rank:'other'}">${String(rank).padStart(2,'0')}</span><div class="person-avatar-circle">${escapeHtml(initials)}</div><div class="ranking-meta"><div class="ranking-name">${escapeHtml(item.name)}</div><div class="ranking-tags"><span class="mini-tag group-tag" title="客户群">${escapeHtml(item.groupName)}</span>${item.buText?`<span class="mini-tag bu-tag" title="业务单元 BU">${escapeHtml(item.buText)}</span>`:''}${item.rolesText?`<span class="mini-tag role-tag" title="岗位角色">${escapeHtml(item.rolesText)}</span>`:''}${isFiltering?'<span class="active-filter-indicator">✓ 筛选中</span>':''}</div></div></div><div class="ranking-stat"><span class="ranking-count">${item.count}<span class="ranking-unit">次</span></span><span class="ranking-percent">${percent}%</span></div></div><div class="ranking-bar-track"><div class="ranking-bar-fill person-fill" style="width:${relativePercent}%;"></div></div></div>`;
 }).join('');
 if(personExpandEl){
 if(sortedStaff.length<=3){
@@ -2122,16 +2245,23 @@ function updateQuarterUI(){
   }
 }
 
+function closeQuarterFilter(shouldRender=false){
+  activeQuarter = null;
+  activeQuarterMonth = null;
+  const df = $('date-from'), dt = $('date-to');
+  if(df) df.value = '';
+  if(dt) dt.value = '';
+  updateQuarterUI();
+  if(shouldRender){
+    pages.records = 1;
+    render();
+  }
+}
+
 function applyQuarterFilter(q){
   const year = getRecordsFilterYear();
   if(activeQuarter === q && activeQuarterMonth === null){
-    activeQuarter = null;
-    activeQuarterMonth = null;
-    $('date-from').value = '';
-    $('date-to').value = '';
-    updateQuarterUI();
-    pages.records = 1;
-    render();
+    closeQuarterFilter(true);
     return;
   }
   activeQuarter = q;
@@ -2284,23 +2414,29 @@ const counts={draft:0,published:0,revoked:0,archived:0};
 const selectedStatus=$('record-status').value;
 const activeCount=counts.draft+counts.published;
 $('stats').innerHTML=[
-  ['全部记录',activeCount,'','默认显示待发布与已发布有效记录（不含已撤销与已归档）'],
-  ['待发布草稿',counts.draft,'draft','仅待发布草稿'],
-  ['已发布',counts.published,'published','仅已生效发布记录'],
-  ['已撤销',counts.revoked,'revoked','点击查看所有已撤销记录'],
-  ['已归档',counts.archived,'archived','点击查看所有已归档违规记录']
-].map(([label,n,status,title])=>'<button type="button" class="stat '+(selectedStatus===status?'active':'')+'" data-stat="'+status+'" aria-pressed="'+(selectedStatus===status)+'" title="'+escapeHtml(title||'点击筛选，再次点击取消')+'">'+escapeHtml(label)+'<b>'+n+'</b></button>').join('');
+  ['全部记录',activeCount,'','默认显示待发布与已发布有效记录（不含已撤销与已归档）','不包含撤销和归档'],
+  ['待发布草稿',counts.draft,'draft','仅待发布草稿',''],
+  ['已发布',counts.published,'published','仅已生效发布记录',''],
+  ['已撤销',counts.revoked,'revoked','点击查看所有已撤销记录',''],
+  ['已归档',counts.archived,'archived','点击查看所有已归档违规记录','']
+].map(([label,n,status,title,sub])=>'<button type="button" class="stat '+(selectedStatus===status?'active':'')+'" data-stat="'+status+'" aria-pressed="'+(selectedStatus===status)+'" title="'+escapeHtml(title||'点击筛选，再次点击取消')+'"><div class="stat-head-box"><span class="stat-label">'+escapeHtml(label)+'</span>'+(sub?('<span class="stat-sub-hint">'+escapeHtml(sub)+'</span>'):'')+'</div><b>'+n+'</b></button>').join('');
 renderMultiFilters();
 const search=$('record-search').value.toLowerCase(),from=$('date-from').value,to=$('date-to').value,status=$('record-status').value,person=$('record-person').value;
 let records=(state.records||[]).filter(record=>{
   const isRecArchived = record.status==='archived' || Boolean(record.archived);
   const recStatus = isRecArchived ? 'archived' : record.status;
   const statusMatch = status ? (recStatus===status) : (recStatus!=='revoked' && recStatus!=='archived');
-  const r=ruleFor(record)||record.ruleSnapshot||{},p=personFor(record)||record.personSnapshot||{},groupId=record.customerGroupId||p.customerGroupId,roles=personRoles(p),groups=groupId?[groupId]:personGroups(p),text=[record.tt,record.remark,r.desc,record.ruleSnapshot?.desc,p.name,record.personSnapshot?.name].filter(Boolean).join(' ').toLowerCase();
-  return(!search||text.includes(search))&&(!from||record.date>=from)&&(!to||record.date<=to)&&statusMatch&&(!person||record.staffId===person)&&(!recordFilters.groups.size||groups.some(id=>recordFilters.groups.has(id)))&&(!recordFilters.roles.size||roles.some(role=>recordFilters.roles.has(role)))&&(!recordFilters.deductions.size||recordFilters.deductions.has(record.deduct))
+  const r=ruleFor(record)||record.ruleSnapshot||{},p=personFor(record)||record.personSnapshot||{},groupId=record.customerGroupId||p.customerGroupId,roles=personRoles(p),groups=groupId?[groupId]:personGroups(p);
+  const recRole=recordRoleName(record);
+  const recGroup=recordCustomerGroupName(record);
+  const recBU=recordBusinessUnitName(record);
+  const text=[record.tt,record.remark,r.desc,record.ruleSnapshot?.desc,p.name,record.personSnapshot?.name,recGroup,recBU,recRole].filter(Boolean).join(' ').toLowerCase();
+  return(!search||text.includes(search))&&(!from||record.date>=from)&&(!to||record.date<=to)&&statusMatch&&(!person||record.staffId===person)&&(!recordFilters.groups.size||groups.some(id=>recordFilters.groups.has(id)))&&(!recordFilters.roles.size||recordFilters.roles.has(recRole)||roles.some(role=>recordFilters.roles.has(role)))&&(!recordFilters.deductions.size||recordFilters.deductions.has(record.deduct))
 });
 records.sort((a,b)=>$('record-sort').value==='date-asc'?a.date.localeCompare(b.date):b.date.localeCompare(a.date));
 lastRenderedRecords=records;
+const recordsCountHint=$('records-count-hint');
+if(recordsCountHint)recordsCountHint.innerHTML='当前记录 <b>'+records.length+'</b> 条';
 drawRows('rows-records',records,'records',recordRow);
 
 const totalRules=active('rules').length;
@@ -3078,8 +3214,9 @@ function openRecordDetail(id){
   const person = livePerson || record.personSnapshot || {};
   const pName = person.name || record.staffId;
   const pRoles = personRoles(person);
-  const pGroup = person.customerGroupName || groupName(record.customerGroupId || person.customerGroupId);
-  const pBUs = personBusinessUnits(person).map(businessUnitName).join('、') || '未分配';
+  const pGroup = recordCustomerGroupName(record);
+  const pRole = recordRoleName(record);
+  const pBU = recordBusinessUnitName(record) || '未分配';
 
   const roleMatch = roleMatches(person, rule);
   let roleMatchNotice = '';
@@ -3179,6 +3316,20 @@ function openRecordDetail(id){
     </div>
   ` : '';
 
+  const lifecyclePill = recStatus === 'published' ? '✅ 已发布' : (recStatus === 'revoked' ? '↩️ 已撤销' : (recStatus === 'archived' ? '📦 已归档' : '⏳ 待发布草稿'));
+  let lifecycleStatusHtml = '';
+  if(recStatus === 'published'){
+    lifecycleStatusHtml = record.publishedAt
+      ? `✅ 由 <b>${escapeHtml(record.publishedBy || 'admin')}</b> 于 ${escapeHtml(formatDateTime(record.publishedAt))} 审核发布`
+      : `✅ 已生效发布${record.createdBy === 'legacy-import' ? '（历史迁移已发布记录）' : ''}`;
+  }else if(recStatus === 'revoked'){
+    lifecycleStatusHtml = `${record.revokedAt ? `↩️ 由 <b>${escapeHtml(record.revokedBy || '管理员')}</b> 于 ${escapeHtml(formatDateTime(record.revokedAt))} 撤销作废` : '↩️ 已撤销作废'}${record.publishedAt ? `<div class="muted" style="font-size:12px;margin-top:2px;">(原发布时间: ${escapeHtml(formatDateTime(record.publishedAt))})</div>` : ''}`;
+  }else if(recStatus === 'archived'){
+    lifecycleStatusHtml = `${record.archivedAt ? `📦 由 <b>${escapeHtml(record.archivedBy || '管理员')}</b> 于 ${escapeHtml(formatDateTime(record.archivedAt))} 归档封存` : '📦 已归档封存'}${record.publishedAt ? `<div class="muted" style="font-size:12px;margin-top:2px;">(原发布时间: ${escapeHtml(formatDateTime(record.publishedAt))})</div>` : ''}`;
+  }else{
+    lifecycleStatusHtml = '⏳ 待审核发布草稿';
+  }
+
   const bodyEl = $('record-detail-body');
   if(bodyEl){
     bodyEl.innerHTML = `
@@ -3193,7 +3344,7 @@ function openRecordDetail(id){
             <span>责任主体与组织信息</span>
           </div>
           <div class="detail-card-head-right">
-            <span class="detail-collapsed-pill">${escapeHtml(pName)} · ${escapeHtml(record.staffId)} · ${escapeHtml(pGroup)}</span>
+            <span class="detail-collapsed-pill">${escapeHtml(pName)} · ${escapeHtml(record.staffId)} · ${escapeHtml(pGroup)} · ${escapeHtml(pBU)} · ${escapeHtml(pRole)}</span>
             <button type="button" class="card-collapse-btn" aria-label="展开/折叠"><svg class="chevron-icon" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
           </div>
         </div>
@@ -3214,14 +3365,14 @@ function openRecordDetail(id){
           </div>
           <div class="detail-grid-2">
             <div class="detail-item">
-              <span class="detail-label">岗位适用角色</span>
+              <span class="detail-label">涉规岗位角色</span>
               <div class="person-chips-cell" style="margin-top:2px;">
-                ${pRoles.map(r => `<span class="person-role-chip">${escapeHtml(r)}</span>`).join('') || '<span class="muted">未配置</span>'}
+                <span class="person-role-chip" style="font-weight:700;">${escapeHtml(pRole)}</span>${pRoles.length > 1 ? `<span class="muted" style="font-size:11.5px;margin-left:6px;" title="名册在职角色">(全员名册角色: ${escapeHtml(pRoles.join('、'))})</span>` : ''}
               </div>
             </div>
             <div class="detail-item">
               <span class="detail-label">所属 BU 业务单元</span>
-              <span class="detail-val">🌐 ${escapeHtml(pBUs)}</span>
+              <span class="detail-val">🌐 ${escapeHtml(pBU)}</span>
             </div>
           </div>
         </div>
@@ -3314,7 +3465,7 @@ function openRecordDetail(id){
             <span>生命周期与合规审计</span>
           </div>
           <div class="detail-card-head-right">
-            <span class="detail-collapsed-pill">${record.publishedAt ? '✅ 已发布' : (record.status === 'revoked' ? '↩️ 已撤销' : '⏳ 待发布草稿')}</span>
+            <span class="detail-collapsed-pill">${lifecyclePill}</span>
             <button type="button" class="card-collapse-btn" aria-label="展开/折叠"><svg class="chevron-icon" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
           </div>
         </div>
@@ -3325,9 +3476,9 @@ function openRecordDetail(id){
               <span class="detail-val">✍️ ${escapeHtml(record.createdBy || '系统录入')}</span>
             </div>
             <div class="detail-item">
-              <span class="detail-label">审核发布状态</span>
+              <span class="detail-label">当前流转与审核状态</span>
               <span class="detail-val">
-                ${record.publishedAt ? `✅ 由 <b>${escapeHtml(record.publishedBy || 'admin')}</b> 于 ${escapeHtml(formatDateTime(record.publishedAt))} 审核发布` : (record.status === 'revoked' ? '已撤销停用' : '⏳ 待审核发布草稿')}
+                ${lifecycleStatusHtml}
               </span>
             </div>
           </div>
@@ -3672,7 +3823,8 @@ closeAllDropdowns();
 return;
 }
 if(event.target.closest('[data-clear-more-records]')){
-for(const id of ['date-from','date-to','record-status','record-person']){const el=$(id);if(el)el.value='';}
+for(const id of ['record-status','record-person']){const el=$(id);if(el)el.value='';}
+closeQuarterFilter(false);
 pages.records=1;render();
 return;
 }
@@ -3708,13 +3860,7 @@ if(mBtn){
   return;
 }
 if(event.target.closest('#btn-close-quarter')){
-  activeQuarter=null;
-  activeQuarterMonth=null;
-  $('date-from').value='';
-  $('date-to').value='';
-  updateQuarterUI();
-  pages.records=1;
-  render();
+  closeQuarterFilter(true);
   return;
 }
 const ruleItem=event.target.closest('[data-filter-desc]');
@@ -3891,7 +4037,19 @@ if(el.dataset.publish)await recordAction(el.dataset.publish,'publish');
 if(el.dataset.revoke)await recordAction(el.dataset.revoke,'revoke');
 if(el.dataset.archive){const kind=el.dataset.archive,item=state[kind].find(x=>x.id===el.dataset.id);if(item&&await uiConfirm('归档后不可再用于新记录，确认归档？','归档确认'))await save(kind,{...item,archived:true})}
 if(el.dataset.selectAll){[...$(el.dataset.selectAll).options].forEach(option=>option.selected=true);return}
-if(el.dataset.stat!==undefined){const selected=el.dataset.stat;$('record-status').value=$('record-status').value===selected?'':selected;pages.records=1;render();return}
+if(el.dataset.stat!==undefined){
+closeAllDropdowns();
+const selected=el.dataset.stat;
+const targetStatus=($('record-status').value===selected && selected!=='') ? '' : selected;
+Object.values(recordFilters).forEach(set=>set.clear());
+for(const id of ['record-search','date-from','date-to','record-person']){const f=$(id);if(f)f.value='';}
+const sortEl=$('record-sort');if(sortEl)sortEl.value='date-desc';
+closeQuarterFilter(false);
+$('record-status').value=targetStatus;
+pages.records=1;
+render();
+return;
+}
 if(el.dataset.clearFilters){
 closeAllDropdowns();
 const scope=el.dataset.clearFilters;
@@ -3899,6 +4057,7 @@ if(scope==='records'){
 Object.values(recordFilters).forEach(set=>set.clear());
 for(const id of ['record-search','date-from','date-to','record-status','record-person']){const f=$(id);if(f)f.value='';}
 const sortEl=$('record-sort');if(sortEl)sortEl.value='date-desc';
+closeQuarterFilter(false);
 }else if(scope==='rules'){
 Object.values(ruleFilters).forEach(set=>set.clear());
 $('rule-search').value='';$('rule-module').value='';
@@ -4092,8 +4251,21 @@ $('pin-form')?.addEventListener('submit',async event=>{
 ['record-search','date-from','date-to','record-status','record-person','record-sort','rule-search','rule-module','person-search','search-group','search-bu','search-role','search-category','search-deduction'].forEach(id=>{
 const el=$(id);
 if(el){
-el.addEventListener('input',()=>{pages.records=pages.rules=pages.personnel=1;render()});
-el.addEventListener('change',()=>{pages.records=pages.rules=pages.personnel=1;render()});
+const handleFilterInput = () => {
+  if((id === 'date-from' || id === 'date-to') && activeQuarter){
+    const year = getRecordsFilterYear();
+    const expected = activeQuarterMonth !== null ? getMonthDateRange(year, activeQuarterMonth) : getQuarterDateRange(year, activeQuarter);
+    if($('date-from')?.value !== expected.start || $('date-to')?.value !== expected.end){
+      activeQuarter = null;
+      activeQuarterMonth = null;
+      updateQuarterUI();
+    }
+  }
+  pages.records=pages.rules=pages.personnel=1;
+  render();
+};
+el.addEventListener('input', handleFilterInput);
+el.addEventListener('change', handleFilterInput);
 }
 });
 const SIDEBAR_KEY='hw_dept_sidebar_collapsed';

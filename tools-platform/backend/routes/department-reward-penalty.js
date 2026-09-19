@@ -261,12 +261,12 @@ router.post('/records/:id/force-edit', respond(async (req, res) => {
         if (!matching(person, rule)) fail(`责任主体角色 ${personRoles(person).join('、')} 不匹配；本规则适用角色：${ruleRoles(rule).join('、')}`);
         deduct = rule.deduct;
         ruleSnapshot = { svcModule: rule.svcModule, subModule: rule.subModule, desc: rule.desc, roles: rule.roles, deduct };
-        personSnapshot = { name: person.name, role: person.role, roles: personRoles(person), customerGroupId: group.id, customerGroupName: group.value };
+        personSnapshot = { name: person.name, role: person.role, roles: personRoles(person), customerGroupId: group.id, customerGroupName: group.value, businessUnitId: personBusinessUnits(person)[0] || '', buName: state.businessUnits.find(b => b.id === personBusinessUnits(person)[0])?.value || '' };
     }
     if (body.deduct && clean(body.deduct, 100) !== deduct) fail('扣罚必须与原记录或新规则的标准一致');
     const curPerson = (await repo.list()).personnel.find(p => p.id === staffId) || personSnapshot;
     const curRule = (await repo.list()).rules.find(r => r.id === ruleId) || ruleSnapshot;
-    const value = { ...old, date, staffId, ruleId, customerGroupId, deduct, ruleSnapshot, personSnapshot, tt: clean(body.tt, 100), remark: clean(body.remark, 2000), evidence: clean(body.evidence, 500), attachment, attachments, forcedEditAt: new Date().toISOString(), forcedEditBy: req.user.username, forcedEditReason: reason, migrationWarning: !matching(curPerson, curRule) };
+    const value = { ...old, date, staffId, ruleId, customerGroupId, businessUnitId: old?.businessUnitId || personBusinessUnits(curPerson)[0] || '', deduct, ruleSnapshot, personSnapshot, tt: clean(body.tt, 100), remark: clean(body.remark, 2000), evidence: clean(body.evidence, 500), attachment, attachments, forcedEditAt: new Date().toISOString(), forcedEditBy: req.user.username, forcedEditReason: reason, migrationWarning: !matching(curPerson, curRule) };
     res.json(await repo.putPublishedWithPin(recordId, value, body.pin, req.user.username, reason));
 }));
 router.post('/records/:id/revoke', respond(async (req, res) => {
@@ -422,7 +422,7 @@ router.post('/:kind', respond(async (req, res) => {
         if (action === 'publish' && !reason) fail('发布理由必填');
         const attachments = parseAttachments(body);
         const attachment = attachments[0] || '';
-        value = { ...(old || {}), id: itemId, createdBy: old?.createdBy || actor, date, staffId, customerGroupId, ruleId, deduct, tt: clean(body.tt, 100), remark: clean(body.remark, 2000), evidence: clean(body.evidence, 500), attachment, attachments, status: action === 'publish' ? 'published' : 'draft', ruleSnapshot: { svcModule: rule.svcModule, subModule: rule.subModule, desc: rule.desc, roles: rule.roles, deduct: rule.deduct }, personSnapshot: { name: person.name, role: person.role, roles: personRoles(person), customerGroupId: group.id, customerGroupName: group.value }, ...(action === 'publish' ? { publishedAt: new Date().toISOString(), publishReason: reason } : {}), migrationWarning: !matching(person, rule) };
+        value = { ...(old || {}), id: itemId, createdBy: old?.createdBy || actor, date, staffId, customerGroupId, businessUnitId: old?.businessUnitId || personBusinessUnits(person)[0] || '', ruleId, deduct, tt: clean(body.tt, 100), remark: clean(body.remark, 2000), evidence: clean(body.evidence, 500), attachment, attachments, status: action === 'publish' ? 'published' : 'draft', ruleSnapshot: { svcModule: rule.svcModule, subModule: rule.subModule, desc: rule.desc, roles: rule.roles, deduct: rule.deduct }, personSnapshot: { name: person.name, role: person.role, roles: personRoles(person), customerGroupId: group.id, customerGroupName: group.value, businessUnitId: personBusinessUnits(person)[0] || '', buName: state.businessUnits.find(b => b.id === personBusinessUnits(person)[0])?.value || '' }, ...(action === 'publish' ? { publishedAt: new Date().toISOString(), publishReason: reason } : {}), migrationWarning: !matching(person, rule) };
     }
     res.json(await repo.put(kind, itemId, value, actor, body.action === 'publish' ? '发布' : '保存', clean(body.reason, 1000)));
 }));
