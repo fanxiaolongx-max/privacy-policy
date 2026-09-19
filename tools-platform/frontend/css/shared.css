@@ -238,6 +238,114 @@ body {
     font: 10px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
+/* ── 最近使用栏 (nav-more-recent) ── */
+.nav-more-recent {
+    flex: 0 0 auto;
+    padding: 8px 16px 10px;
+    background: linear-gradient(180deg, rgba(16, 28, 52, 0.72) 0%, rgba(10, 18, 35, 0.72) 100%);
+    border-bottom: 1px solid rgba(100, 255, 218, 0.16);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+}
+
+.nav-more-recent-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.nav-more-recent-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #7dd3fc;
+    font-size: 11.5px;
+    font-weight: 750;
+    letter-spacing: 0.3px;
+}
+
+.nav-more-recent-icon {
+    font-size: 12px;
+    line-height: 1;
+}
+
+.nav-more-recent-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 1.5px 7px;
+    border-radius: 999px;
+    background: rgba(100, 255, 218, 0.08);
+    border: 1px solid rgba(100, 255, 218, 0.22);
+    color: var(--cyber);
+    font-size: 10px;
+    font-weight: 650;
+    letter-spacing: 0.2px;
+}
+
+.nav-more-recent-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--recent-cols, 4), minmax(0, 1fr));
+    gap: 8px;
+}
+
+.nav-more-recent-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    height: 38px;
+    padding: 0 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(100, 255, 218, 0.18);
+    background: rgba(100, 255, 218, 0.045);
+    text-decoration: none;
+    color: #cbd5e1;
+    font-size: 12px;
+    font-weight: 650;
+    line-height: 1.2;
+    transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.nav-more-recent-item:hover {
+    background: rgba(100, 255, 218, 0.12);
+    border-color: rgba(100, 255, 218, 0.45);
+    color: #ffffff;
+    box-shadow: 0 3px 12px rgba(100, 255, 218, 0.14);
+    transform: translateY(-1px);
+}
+
+.nav-more-recent-item.active {
+    background: rgba(100, 255, 218, 0.16);
+    border-color: var(--cyber);
+    color: var(--cyber);
+    box-shadow: 0 0 12px rgba(100, 255, 218, 0.22);
+}
+
+.nav-more-recent-item-icon {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    flex: 0 0 24px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.065);
+    font-size: 13px;
+}
+
+.nav-more-recent-item-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.nav-more-recent[hidden],
+.nav-more-recent-item[hidden] {
+    display: none !important;
+}
+
 .nav-more-layout {
     display: grid;
     grid-template-columns: 156px minmax(0, 1fr);
@@ -425,6 +533,10 @@ body {
     }
     .nav-more-items {
         grid-template-columns: 1fr;
+    }
+    .nav-more-recent-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
     }
 }
 

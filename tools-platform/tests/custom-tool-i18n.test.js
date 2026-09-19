@@ -75,3 +75,31 @@ test('custom tool export keeps single-file tools as HTML and packages multi-file
     assert.match(await archive.file('index.html').async('string'), /toolsCustomLanguageButton/);
     assert.equal(await archive.file('assets/app.js').async('string'), 'window.toolReady = true;');
 });
+
+test('watermark with version and seconds-precision timestamp is injected into custom HTML tools and is idempotent', () => {
+    const rawHtml = '<!doctype html><html><head><title>Tool</title></head><body><h1>Content</h1></body></html>';
+    const specificDate = new Date('2026-09-19T14:38:25.000Z');
+    const served = i18nService.injectLanguageRuntime(rawHtml, 'department-reward-penalty', {
+        mtime: specificDate,
+        version: 'v1.0.239'
+    });
+
+    assert.match(served, /id="__tools_html_meta_watermark__"/);
+    assert.match(served, /class="tools-html-meta-watermark"/);
+    assert.match(served, /pointer-events:\s*none/);
+    assert.match(served, /tools-watermark-ver">v1\.0\.239</);
+    assert.match(served, /tools-watermark-slug">department-reward-penalty</);
+    // Verifies seconds precision: \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}
+    assert.match(served, /tools-watermark-time">更新: \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}</);
+    assert.match(served, /data-mtime-iso="2026-09-19T14:38:25\.000Z"/);
+
+    // Verify idempotency: calling injectLanguageRuntime again does not duplicate the watermark
+    const reInjected = i18nService.injectLanguageRuntime(served, 'department-reward-penalty', {
+        mtime: new Date('2026-09-19T14:39:00.000Z'),
+        version: 'v1.0.240'
+    });
+    const watermarkMatches = reInjected.match(/id="__tools_html_meta_watermark__"/g);
+    assert.equal(watermarkMatches.length, 1);
+    assert.match(reInjected, /tools-watermark-ver">v1\.0\.240</);
+});
+

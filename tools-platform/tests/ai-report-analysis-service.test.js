@@ -3,7 +3,9 @@ const assert = require('node:assert/strict');
 const {
     findMatchedMetricLabels,
     buildProactiveAlertCandidates,
-    buildProactiveTaskCandidates
+    buildProactiveTaskCandidates,
+    enrichProactiveAlertWithDeepContext,
+    generateRuleBasedDeepAnalysis
 } = require('../backend/models/ai-report-analysis-service');
 
 test('matches a uniquely identifying shortened Chinese metric name', () => {
@@ -102,4 +104,62 @@ test('aggregates tasks due in the next 7 days without exposing ticket ids', () =
         { kind: 'task', owner: '张三', taskType: '风险', count: 2, dueWindowDays: 7, nearestDays: 2, customerGroup: '张三', metric: '风险类临期任务', actual: '2个', target: '7天内处理' }
     ]);
     assert.doesNotMatch(JSON.stringify(candidates), /SECRET-/);
+});
+
+test('generateRuleBasedDeepAnalysis generates structured trend, attribution, and advice', () => {
+    const kpiContext = {
+        kpiDetails: [{
+            kind: 'kpi',
+            metric: '整改',
+            customerGroup: 'ET',
+            actual: '79%',
+            target: '≥ 80%',
+            gap: '1%',
+            onlyFailingGroup: true,
+            allGroups: [
+                { customerGroup: 'ET', actual: '79%', isFailing: true },
+                { customerGroup: 'ORG', actual: '82%', isFailing: false },
+                { customerGroup: 'TE', actual: '99%', isFailing: false }
+            ],
+            passingGroups: [
+                { customerGroup: 'ORG', actual: '82%' },
+                { customerGroup: 'TE', actual: '99%' }
+            ],
+            failingGroups: [
+                { customerGroup: 'ET', actual: '79%' }
+            ],
+            history: {
+                prevVal: '66%',
+                delta: 13,
+                continuousFailing: true
+            }
+        }],
+        taskDetails: []
+    };
+
+    const text = generateRuleBasedDeepAnalysis(kpiContext, 'zh');
+    assert.match(text, /【趋势对比】/);
+    assert.match(text, /环比回升13%/);
+    assert.match(text, /【归因分析】/);
+    assert.match(text, /ET为唯一落后短板/);
+    assert.match(text, /【跟进建议】/);
+
+    const taskContext = {
+        kpiDetails: [],
+        taskDetails: [{
+            kind: 'task',
+            owner: '张三',
+            taskType: '风险',
+            count: 2,
+            nearestDays: 1,
+            productLines: ['Cloud Core Network'],
+            prevCount: 1
+        }]
+    };
+
+    const taskText = generateRuleBasedDeepAnalysis(taskContext, 'zh');
+    assert.match(taskText, /【临期诊断】/);
+    assert.match(taskText, /最紧急任务仅剩1天/);
+    assert.match(taskText, /【快照对比】/);
+    assert.match(taskText, /新增1个/);
 });

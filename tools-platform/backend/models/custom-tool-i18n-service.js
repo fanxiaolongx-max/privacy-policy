@@ -2,6 +2,19 @@ const fs = require('fs');
 const path = require('path');
 const { getDataDir } = require('./store');
 
+let cachedPkgVersion = null;
+function getPkgVersion() {
+    if (!cachedPkgVersion) {
+        try {
+            const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '../../package.json'), 'utf8'));
+            cachedPkgVersion = pkg.version || '1.0.0';
+        } catch (_) {
+            cachedPkgVersion = '1.0.0';
+        }
+    }
+    return cachedPkgVersion;
+}
+
 const TRANSLATIONS_DIR = path.join(__dirname, '../custom-tool-i18n');
 const RUNTIME_FILE = path.join(__dirname, '../../frontend/js/shared/custom-tool-i18n-runtime.js');
 
@@ -26,6 +39,109 @@ function readTranslations(slug) {
     return {};
 }
 
+function formatLocalTimestamp(date) {
+    const d = date instanceof Date ? date : new Date(date || Date.now());
+    const pad = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+function buildWatermark(slug, options = {}) {
+    let mtime = options.mtime;
+    if (!mtime && options.filePath && fs.existsSync(options.filePath)) {
+        try {
+            mtime = fs.statSync(options.filePath).mtime;
+        } catch (_) {}
+    }
+    if (!mtime && slug) {
+        try {
+            const customToolsRepo = require('./custom-tools-repository');
+            const rootDir = customToolsRepo.getToolRootDir(slug);
+            if (rootDir) {
+                const target = path.join(rootDir, 'index.html');
+                if (fs.existsSync(target)) mtime = fs.statSync(target).mtime;
+            }
+        } catch (_) {}
+    }
+    if (!mtime && options.tool?.updatedAt) {
+        mtime = new Date(options.tool.updatedAt);
+    }
+    const resolvedDate = mtime instanceof Date ? mtime : (mtime ? new Date(mtime) : new Date());
+    const mtimeIso = !isNaN(resolvedDate.getTime()) ? resolvedDate.toISOString() : '';
+    const timeStr = formatLocalTimestamp(resolvedDate);
+    const ver = options.version || (options.tool && options.tool.version) || `v${getPkgVersion()}`;
+    const toolSlug = slug || options.tool?.slug || 'custom-tool';
+
+    return `<div id="__tools_html_meta_watermark__" class="tools-html-meta-watermark" aria-hidden="true" data-mtime-iso="${mtimeIso}" data-version="${ver}" data-slug="${toolSlug}" title="版本: ${ver} | 最近更新: ${timeStr} | 工具: ${toolSlug}"><span class="tools-watermark-ver">${ver}</span><span class="tools-watermark-sep">·</span><span class="tools-watermark-time">更新: ${timeStr}</span><span class="tools-watermark-sep">·</span><span class="tools-watermark-slug">${toolSlug}</span></div>
+<style id="__tools_html_meta_watermark_style__">
+.tools-html-meta-watermark {
+  position: fixed;
+  right: 12px;
+  bottom: 3px;
+  z-index: 2147483640;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", monospace;
+  font-size: 10px;
+  line-height: 1.2;
+  color: rgba(100, 116, 139, 0.42);
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.85);
+  transition: opacity 0.2s ease;
+}
+@media (prefers-color-scheme: dark) {
+  .tools-html-meta-watermark {
+    color: rgba(148, 163, 184, 0.38);
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.7);
+  }
+}
+[data-theme="dark"] .tools-html-meta-watermark,
+.dark .tools-html-meta-watermark,
+body.dark-theme .tools-html-meta-watermark {
+  color: rgba(148, 163, 184, 0.38);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.7);
+}
+@media print {
+  .tools-html-meta-watermark { display: none !important; }
+}
+@media (max-width: 560px) {
+  .tools-html-meta-watermark .tools-watermark-slug,
+  .tools-html-meta-watermark .tools-watermark-sep:last-of-type {
+    display: none;
+  }
+}
+</style>
+<script id="__tools_html_meta_watermark_script__">
+(function() {
+  try {
+    var el = document.getElementById('__tools_html_meta_watermark__');
+    if (!el) return;
+    if (window.self !== window.top) {
+      el.style.right = '84px';
+    }
+    var iso = el.getAttribute('data-mtime-iso');
+    if (iso) {
+      var d = new Date(iso);
+      if (!isNaN(d.getTime())) {
+        var pad = function(n) { return String(n).padStart(2, '0'); };
+        var clientStr = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' +
+                        pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+        var timeSpan = el.querySelector('.tools-watermark-time');
+        if (timeSpan) timeSpan.textContent = '更新: ' + clientStr;
+        var ver = el.getAttribute('data-version') || '';
+        var slug = el.getAttribute('data-slug') || '';
+        el.title = '版本: ' + ver + ' | 最近更新: ' + clientStr + ' | 工具: ' + slug;
+      }
+    }
+  } catch(_) {}
+})();
+</script>`;
+}
+
 function buildBootstrap(slug, options = {}) {
     const config = {
         slug,
@@ -41,15 +157,29 @@ function buildBootstrap(slug, options = {}) {
 }
 
 function injectLanguageRuntime(html, slug, options = {}) {
-    const source = String(html || '');
-    if (source.includes('__TOOLS_CUSTOM_I18N__')) return source;
+    let source = String(html || '');
+    if (source.includes('__tools_html_meta_watermark__')) {
+        source = source.replace(/<div id="__tools_html_meta_watermark__"[\s\S]*?<\/div>/gi, '');
+        source = source.replace(/<style id="__tools_html_meta_watermark_style__"[\s\S]*?<\/style>/gi, '');
+        source = source.replace(/<script id="__tools_html_meta_watermark_script__"[\s\S]*?<\/script>/gi, '');
+    }
+    const watermark = buildWatermark(slug, options);
+
+    if (source.includes('__TOOLS_CUSTOM_I18N__')) {
+        if (/<\/body\s*>/i.test(source)) return source.replace(/<\/body\s*>/i, `${watermark}\n</body>`);
+        return `${source}\n${watermark}`;
+    }
+
     const bootstrap = buildBootstrap(slug, options);
-    if (/<\/body\s*>/i.test(source)) return source.replace(/<\/body\s*>/i, `${bootstrap}\n</body>`);
-    return `${source}\n${bootstrap}`;
+    const combined = `${bootstrap}\n${watermark}`;
+    if (/<\/body\s*>/i.test(source)) return source.replace(/<\/body\s*>/i, `${combined}\n</body>`);
+    return `${source}\n${combined}`;
 }
 
 module.exports = {
     TRANSLATIONS_DIR,
     readTranslations,
+    formatLocalTimestamp,
+    buildWatermark,
     injectLanguageRuntime
 };

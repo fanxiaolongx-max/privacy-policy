@@ -59,10 +59,14 @@ test('proactive KPI APIs are authenticated and the wording route remains read-on
     assert.match(server, /req\.path === '\/ai\/proactive-alert-message'/);
     assert.match(routes, /item\?\.kind === 'task'/);
     assert.match(routes, /不得补充或索要单号/);
+    assert.match(routes, /enrichProactiveAlertWithDeepContext/);
+    assert.match(routes, /generateRuleBasedDeepAnalysis/);
+    assert.match(assistant, /alertAi: 'AI 深度分析'/);
+    assert.match(assistant, /alertAiCaption: '深度分析结果'/);
 });
 
 test('navbar loads the current proactive assistant asset version everywhere', () => {
-    const matches = navbar.match(/ai-assistant\.js\?v=20260914-10/g) || [];
+    const matches = navbar.match(/ai-assistant\.js\?v=20260919-01/g) || [];
     assert.equal(matches.length, 2);
-    assert.doesNotMatch(navbar, /ai-assistant\.js\?v=20260914-09/);
+    assert.doesNotMatch(navbar, /ai-assistant\.js\?v=20260914-10/);
 });

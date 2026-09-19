@@ -140,10 +140,11 @@
             background-size:100% 100%,240% 100%; box-shadow:0 5px 18px rgba(99,102,241,.10);
             animation:ai-polish-flow 4.5s linear infinite;
         }
-        .ai-proactive-alert.ai-polished .ai-proactive-alert-ai-panel { display:block; }
+        .ai-proactive-alert.ai-polished .ai-proactive-alert-ai-panel,
+        .ai-proactive-alert.ai-deep-analyzed .ai-proactive-alert-ai-panel { display:block; }
         .ai-proactive-alert-ai-head { display:flex; align-items:center; gap:7px; margin-bottom:5px; }
         .ai-proactive-alert-ai-caption { color:#7c3aed; font-size:10px; font-weight:800; letter-spacing:.04em; }
-        .ai-proactive-alert-ai-text { color:#556176; font-size:11px; line-height:1.55; }
+        .ai-proactive-alert-ai-text { color:#556176; font-size:11px; line-height:1.55; word-break:break-word; }
         .ai-proactive-alert-ai-char { display:inline-block; opacity:0; transform:translateY(4px); animation:ai-polish-char .32s cubic-bezier(.2,.8,.2,1) forwards; animation-delay:calc(var(--ai-char-index) * 16ms); }
         @keyframes ai-polish-flow { to { background-position:0 0,240% 0; } }
         @keyframes ai-polish-char { to { opacity:1; transform:translateY(0); } }
@@ -852,7 +853,7 @@
     const AI_TEXT = {
         zh: {
             open: '打开智能客服助手', title: '智能客服助手', titleCompact: '智能客服', subtitle: '项目知识 · 数据分析 · 运营建议', subtitleCompact: '知识 · 数据 · 运营',
-            alertKicker: '主动 KPI 提醒', alertTaskKicker: '近 7 天临期任务', alertHint: '点击打开助手继续追问', alertClose: '关闭提醒', alertAi: 'AI 润色', alertAiCaption: '润色建议', alertSnoozeToday: '今天不再提醒', alertCopy: '复制', alertCopied: '已复制',
+            alertKicker: '主动 KPI 提醒', alertTaskKicker: '近 7 天临期任务', alertHint: '点击打开助手继续追问', alertClose: '关闭提醒', alertAi: 'AI 深度分析', alertAiCaption: '深度分析结果', alertSnoozeToday: '今天不再提醒', alertCopy: '复制', alertCopied: '已复制',
             graph: '知识与指标图谱', history: '历史问答', archive: '查看归档会话', graphTheme: '切换图谱深色主题', lightTheme: '切换明亮主题', expand: '放大窗口', restore: '恢复默认大小',
             fullscreen: '全屏聊天', exitFullscreen: '退出全屏', close: '关闭', send: '发送消息', stop: '停止生成',
             welcome: '👋 你好！我是您的专属智能助手，正在为您加载页面上下文...', thinking: 'AI 正在思考...',
@@ -871,7 +872,7 @@
         },
         en: {
             open: 'Open AI Support Assistant', title: 'AI Support Assistant', titleCompact: 'AI Support', subtitle: 'Project knowledge · Data analysis · Operations', subtitleCompact: 'Knowledge · Data · Ops',
-            alertKicker: 'Proactive KPI alert', alertTaskKicker: 'Tasks due in 7 days', alertHint: 'Click to open the assistant and follow up', alertClose: 'Dismiss alert', alertAi: 'AI polished', alertAiCaption: 'Polished suggestion', alertSnoozeToday: 'Mute today', alertCopy: 'Copy', alertCopied: 'Copied',
+            alertKicker: 'Proactive KPI alert', alertTaskKicker: 'Tasks due in 7 days', alertHint: 'Click to open the assistant and follow up', alertClose: 'Dismiss alert', alertAi: 'AI Deep Analysis', alertAiCaption: 'Deep Analysis', alertSnoozeToday: 'Mute today', alertCopy: 'Copy', alertCopied: 'Copied',
             graph: 'Knowledge & Metrics Graph', history: 'Chat history', archive: 'View archived chats', graphTheme: 'Switch to graph dark theme', lightTheme: 'Switch to light theme', expand: 'Expand window', restore: 'Restore default size',
             fullscreen: 'Full-screen chat', exitFullscreen: 'Exit full screen', close: 'Close', send: 'Send message', stop: 'Stop generating',
             welcome: '👋 Hi! I’m your AI assistant. Loading the current page context…', thinking: 'AI is thinking…',
@@ -916,7 +917,7 @@
         <button class="ai-proactive-alert-close" type="button" aria-label="关闭提醒">×</button>
         <span class="ai-proactive-alert-kicker"><span class="ai-proactive-alert-kicker-label">主动 KPI 提醒</span></span>
         <span class="ai-proactive-alert-text"></span>
-        <span class="ai-proactive-alert-ai-panel"><span class="ai-proactive-alert-ai-head"><span class="ai-proactive-alert-ai-badge" title="AI 润色">✦ AI</span><span class="ai-proactive-alert-ai-caption">润色建议</span></span><span class="ai-proactive-alert-ai-text"></span></span>
+        <span class="ai-proactive-alert-ai-panel"><span class="ai-proactive-alert-ai-head"><span class="ai-proactive-alert-ai-badge" title="AI 深度分析">✦ AI</span><span class="ai-proactive-alert-ai-caption">深度分析结果</span></span><span class="ai-proactive-alert-ai-text"></span></span>
         <span class="ai-proactive-alert-footer"><span class="ai-proactive-alert-hint">点击打开助手继续追问</span><span class="ai-proactive-alert-actions"><button class="ai-proactive-alert-action ai-proactive-alert-snooze" type="button">今天不再提醒</button><button class="ai-proactive-alert-action ai-proactive-alert-copy" type="button">复制</button></span></span>`;
     document.body.appendChild(proactiveAlert);
 
@@ -1367,11 +1368,11 @@
         event.stopPropagation();
         const button = event.currentTarget;
         const original = proactiveAlert.querySelector('.ai-proactive-alert-text').textContent.trim();
-        const polished = proactiveAlert.classList.contains('ai-polished')
+        const polished = (proactiveAlert.classList.contains('ai-polished') || proactiveAlert.classList.contains('ai-deep-analyzed'))
             ? proactiveAlert.querySelector('.ai-proactive-alert-ai-text').textContent.replace(/\u00a0/g, ' ').trim()
             : '';
         const copyText = polished
-            ? `${original}\n${aiT('alertAiCaption')}：${polished}`
+            ? `${original}\n\n${aiT('alertAiCaption')}：\n${polished}`
             : original;
         try {
             await navigator.clipboard.writeText(copyText);
@@ -1957,17 +1958,21 @@
         const timeText = snapshot
             ? `目标月份 ${snapshot.month} 月，快照生成时间 ${snapshot.createdAt || '未知'}`
             : '最新入库报表';
-        return `请根据这条主动${isTask ? '临期任务' : ' KPI'}提醒继续分析，并给出优先跟进建议。不得展示或猜测具体单号。\n数据口径：${timeText}\n${lines.join('\n')}`;
+        return `请根据这条主动${isTask ? '临期任务' : ' KPI'}预警的深度分析结果（含细分维度与历史快照趋势）继续深入分析，并给出具体的优先整改推进建议。不得展示或猜测具体单号。\n数据口径：${timeText}\n${lines.join('\n')}`;
     }
 
     function revealProactiveAiText(message) {
         const target = proactiveAlert.querySelector('.ai-proactive-alert-ai-text');
         target.innerHTML = '';
         Array.from(message).forEach((char, index) => {
+            if (char === '\n') {
+                target.appendChild(document.createElement('br'));
+                return;
+            }
             const span = document.createElement('span');
             span.className = 'ai-proactive-alert-ai-char';
-            span.style.setProperty('--ai-char-index', String(Math.min(index, 120)));
-            span.textContent = /\s/.test(char) ? '\u00a0' : char;
+            span.style.setProperty('--ai-char-index', String(Math.min(index, 160)));
+            span.textContent = char === ' ' ? '\u00a0' : char;
             target.appendChild(span);
         });
     }
@@ -1987,12 +1992,12 @@
         if (reschedule) scheduleProactiveAlert();
     }
 
-    async function humanizeProactiveAlert(items, activeToken) {
+    async function humanizeProactiveAlert(items, activeToken, snapshot) {
         try {
             const response = await fetch('/api/ai/proactive-alert-message', {
                 method: 'POST',
                 headers: getAuthHeaders(),
-                body: JSON.stringify({ items, language: getAiLang() })
+                body: JSON.stringify({ items, snapshot, language: getAiLang() })
             });
             if (!response.ok) return;
             const data = await response.json();
@@ -2000,8 +2005,9 @@
             const message = String(data.message || '').trim();
             if (message) {
                 revealProactiveAiText(message);
-                if (data.source === 'ai') {
+                if (data.source === 'ai' || data.source === 'rule') {
                     proactiveAlert.classList.add('ai-polished');
+                    proactiveAlert.classList.add('ai-deep-analyzed');
                     if (proactiveHideTimer) window.clearTimeout(proactiveHideTimer);
                     proactiveHideTimer = window.setTimeout(() => hideProactiveAlert(), PROACTIVE_VISIBLE_MS);
                 }
@@ -2017,7 +2023,7 @@
         proactiveActive = activeToken;
         if (proactiveExitTimer) window.clearTimeout(proactiveExitTimer);
         proactiveExitTimer = null;
-        proactiveAlert.classList.remove('ai-polished', 'show', 'is-leaving', 'is-closing');
+        proactiveAlert.classList.remove('ai-polished', 'ai-deep-analyzed', 'show', 'is-leaving', 'is-closing');
         proactiveAlert.querySelector('.ai-proactive-alert-ai-text').innerHTML = '';
         proactiveAlert.dataset.kind = items[0]?.kind === 'task' ? 'task' : 'kpi';
         proactiveAlert.dataset.month = Number(snapshot?.month) ? String(snapshot.month) : '';
@@ -2030,7 +2036,7 @@
         positionProactiveAlert();
         if (proactiveHideTimer) window.clearTimeout(proactiveHideTimer);
         proactiveHideTimer = window.setTimeout(() => hideProactiveAlert(), PROACTIVE_VISIBLE_MS);
-        humanizeProactiveAlert(items, activeToken);
+        humanizeProactiveAlert(items, activeToken, snapshot);
     }
 
     async function loadProactiveAlert() {

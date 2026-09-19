@@ -292,6 +292,214 @@ async function getProactiveAlerts({ limit = 12 } = {}) {
     }
 }
 
+async function enrichProactiveAlertWithDeepContext(items = [], options = {}) {
+    const db = await openReadOnlyDb();
+    if (!db) {
+        return { available: false, kpiDetails: [], taskDetails: [] };
+    }
+    try {
+        const snapshotId = options.snapshotId;
+        let latest = null;
+        if (snapshotId) {
+            latest = await dbGet(db, `SELECT id, snapshot_id, month, created_at, stored_at, raw_data_json FROM ReportSnapshots WHERE snapshot_id = ? ORDER BY id DESC LIMIT 1`, [snapshotId]);
+        }
+        if (!latest) {
+            latest = await dbGet(db, `SELECT id, snapshot_id, month, created_at, stored_at, raw_data_json FROM ReportSnapshots ORDER BY id DESC LIMIT 1`);
+        }
+        if (!latest) return { available: false, kpiDetails: [], taskDetails: [] };
+
+        const histSnapshots = await dbAll(
+            db,
+            `SELECT s.id, s.snapshot_id, s.month, s.created_at, s.raw_data_json
+             FROM ReportSnapshots s
+             ORDER BY s.id DESC LIMIT 6`
+        );
+        const prevSnapshots = histSnapshots.filter(s => s.snapshot_id !== latest.snapshot_id);
+
+        const safeItems = Array.isArray(items) ? items : [];
+        const kpiItems = safeItems.filter(it => it && it.kind !== 'task');
+        const taskItems = safeItems.filter(it => it && it.kind === 'task');
+
+        const kpiDetails = [];
+        const taskDetails = [];
+
+        for (const item of kpiItems) {
+            const metric = String(item.metric || '').trim();
+            const customerGroup = String(item.customerGroup || '').trim();
+            if (!metric) continue;
+
+            const currentRows = await dbAll(
+                db,
+                `SELECT cat_name, raw_val, num_val, target_val, is_failing, gap, earned_score, weight
+                 FROM ReportMetricData
+                 WHERE snapshot_id = ? AND metric_label = ?
+                 ORDER BY cat_name`,
+                [latest.snapshot_id, metric]
+            );
+            const allGroups = currentRows.map(r => ({
+                customerGroup: r.cat_name,
+                actual: r.raw_val,
+                target: r.target_val,
+                isFailing: Boolean(Number(r.is_failing) === 1),
+                gap: r.gap
+            }));
+            const failingGroups = allGroups.filter(g => g.isFailing);
+            const passingGroups = allGroups.filter(g => !g.isFailing);
+            const onlyFailingGroup = failingGroups.length === 1 && failingGroups[0].customerGroup === customerGroup;
+
+            const histRows = await dbAll(
+                db,
+                `SELECT s.id, s.snapshot_id, s.month, s.created_at, m.cat_name, m.raw_val, m.num_val, m.target_val, m.is_failing, m.gap
+                 FROM ReportSnapshots s
+                 JOIN ReportMetricData m ON m.snapshot_id = s.snapshot_id
+                 WHERE m.metric_label = ? AND m.cat_name = ?
+                 ORDER BY s.id DESC LIMIT 6`,
+                [metric, customerGroup]
+            );
+
+            let history = null;
+            if (histRows.length > 1) {
+                const prev = histRows[1];
+                const currentNum = metricValueNumber(item.actual);
+                const prevNum = metricValueNumber(prev.raw_val);
+                const delta = (currentNum !== null && prevNum !== null) ? round(currentNum - prevNum) : null;
+                const turnedFailing = Number(prev.is_failing) === 0 && Number(item.is_failing ?? 1) === 1;
+                const continuousFailing = Number(prev.is_failing) === 1 && Number(item.is_failing ?? 1) === 1;
+                history = {
+                    prevSnapshotId: prev.snapshot_id,
+                    prevMonth: prev.month,
+                    prevCreatedAt: prev.created_at,
+                    prevVal: prev.raw_val,
+                    prevTarget: prev.target_val,
+                    prevFailing: Boolean(Number(prev.is_failing) === 1),
+                    delta,
+                    turnedFailing,
+                    continuousFailing,
+                    points: histRows.map(r => ({
+                        month: r.month,
+                        createdAt: r.created_at,
+                        actual: r.raw_val,
+                        target: r.target_val,
+                        isFailing: Number(r.is_failing) === 1,
+                        gap: r.gap
+                    }))
+                };
+            }
+
+            kpiDetails.push({
+                kind: 'kpi',
+                metric,
+                customerGroup,
+                actual: item.actual,
+                target: item.target,
+                gap: item.gap,
+                weight: item.weight,
+                allGroups,
+                failingGroups,
+                passingGroups,
+                onlyFailingGroup,
+                history
+            });
+        }
+
+        for (const item of taskItems) {
+            const owner = String(item.owner || '').trim();
+            const taskType = String(item.taskType || '').trim();
+            if (!owner) continue;
+
+            const rawLatest = parseSnapshotRaw(latest);
+            const tickets = Array.isArray(rawLatest.expiringTickets) ? rawLatest.expiringTickets : [];
+            const matchedTickets = tickets.filter(t => {
+                const o = getProactiveTaskOwner(t);
+                const type = cleanProactiveTaskText(t.title, PROACTIVE_TASK_TYPE_LABELS[t.collection] || '临期任务');
+                return o === owner && (!taskType || type === taskType || t.title?.includes(taskType));
+            });
+
+            const productLines = [...new Set(matchedTickets.map(t => t.data?.product_line_name || t.data?.itr_product_line_name).filter(Boolean))];
+            const regions = [...new Set(matchedTickets.map(t => t.data?.region_cn_name || t.data?.country_cn_name || t.data?.repoffice_cn_name).filter(Boolean))];
+            const slaDaysList = matchedTickets.map(t => Number(t._slaDays)).filter(Number.isFinite);
+            const nearestDays = slaDaysList.length ? Math.min(...slaDaysList) : item.nearestDays || 1;
+
+            let prevCount = null;
+            if (prevSnapshots.length) {
+                const rawPrev = parseSnapshotRaw(prevSnapshots[0]);
+                const prevTickets = Array.isArray(rawPrev.expiringTickets) ? rawPrev.expiringTickets : [];
+                const prevMatched = prevTickets.filter(t => getProactiveTaskOwner(t) === owner);
+                prevCount = prevMatched.length;
+            }
+
+            taskDetails.push({
+                kind: 'task',
+                owner,
+                taskType,
+                count: matchedTickets.length || item.count,
+                nearestDays,
+                productLines,
+                regions,
+                prevCount
+            });
+        }
+
+        return {
+            available: true,
+            snapshot: {
+                snapshotId: latest.snapshot_id,
+                month: latest.month,
+                createdAt: latest.created_at
+            },
+            kpiDetails,
+            taskDetails
+        };
+    } finally {
+        await closeDb(db);
+    }
+}
+
+function generateRuleBasedDeepAnalysis(enrichedContext, language = 'zh') {
+    const isEn = String(language).toLowerCase().startsWith('en');
+    const { kpiDetails, taskDetails } = enrichedContext || {};
+    if (kpiDetails && kpiDetails.length) {
+        const primary = kpiDetails[0];
+        const history = primary.history;
+        const parts = [];
+        if (history && history.prevVal !== null && history.prevVal !== undefined) {
+            const deltaText = history.delta !== null
+                ? (history.delta < 0 ? `环比下降${Math.abs(history.delta)}%` : history.delta > 0 ? `环比回升${history.delta}%` : '与上期持平')
+                : `上期快照为${history.prevVal}`;
+            const statusText = history.turnedFailing ? '由达标转降' : history.continuousFailing ? '持续未达标' : '';
+            parts.push(`【趋势对比】${primary.customerGroup}「${primary.metric}」当前${primary.actual}（目标${primary.target}），较上期快照（${history.prevVal}）${deltaText}${statusText ? `且${statusText}` : ''}，差距${primary.gap}。`);
+        } else {
+            parts.push(`【现状诊断】${primary.customerGroup}「${primary.metric}」当前实际${primary.actual}，目标${primary.target}，差距${primary.gap}。`);
+        }
+        if (primary.allGroups && primary.allGroups.length > 1) {
+            if (primary.onlyFailingGroup) {
+                const passSample = primary.passingGroups.slice(0, 2).map(g => `${g.customerGroup}${g.actual}`).join('、');
+                parts.push(`【归因分析】细分维度显示${primary.customerGroup}为唯一落后短板，其余客户群（${passSample}）均已达标。`);
+            } else {
+                const failSample = primary.failingGroups.slice(0, 3).map(g => `${g.customerGroup}(${g.actual})`).join('、');
+                parts.push(`【归因分析】多客户群承压，未达标项含${failSample}，存在全局性推进阻力。`);
+            }
+        }
+        parts.push(`【跟进建议】优先聚焦${primary.customerGroup}的不达标断点进行专项调度，锁定闭环节点以拉齐差距。`);
+        return parts.join('');
+    }
+    if (taskDetails && taskDetails.length) {
+        const primary = taskDetails[0];
+        const parts = [];
+        parts.push(`【临期诊断】负责人${primary.owner}未来7天有${primary.count}个${primary.taskType}临期，最紧急任务仅剩${primary.nearestDays}天。`);
+        if (primary.productLines && primary.productLines.length) {
+            parts.push(`【业务分布】任务主要涉及${primary.productLines.slice(0, 2).join('、')}业务线。`);
+        }
+        if (primary.prevCount !== null) {
+            const diff = primary.count - primary.prevCount;
+            parts.push(`【快照对比】较上期快照${diff > 0 ? `新增${diff}个` : diff < 0 ? `消减${Math.abs(diff)}个` : '数量持平'}。`);
+        }
+        parts.push(`【处置建议】建议今日优先分拨并闭环最短SLA任务，防范超时扣分风险。`);
+        return parts.join('');
+    }
+    return isEn ? 'Deep analysis unavailable.' : '暂无深度分析结果。';
+}
+
 function parseSnapshotTopMetrics(snapshot) {
     try {
         const raw = JSON.parse(snapshot?.raw_data_json || '{}');
@@ -1106,5 +1314,7 @@ module.exports = {
     getProactiveAlerts,
     findMatchedMetricLabels,
     parseRequestedHistoryCount,
-    loadMatchedMetricHistory
+    loadMatchedMetricHistory,
+    enrichProactiveAlertWithDeepContext,
+    generateRuleBasedDeepAnalysis
 };

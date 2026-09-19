@@ -206,3 +206,227 @@ test('BU assignment and forced published-record edits are tenant-scoped and audi
     const otherSecurity = (await request(app).get(base + '/security').set('x-test-tenant', 'other-force-edit-test').expect(200)).body;
     assert.equal(otherSecurity.hasCustomPin, false);
 });
+
+test('draft deletion enforces ownership and status, and revocation supports proof attachments with inline preview', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use((req, _res, next) => {
+        if (req.headers['x-test-role'] === 'user') req.user = { username: 'reporter', role: 'user' };
+        else if (req.headers['x-test-role'] === 'other-user') req.user = { username: 'other', role: 'user' };
+        else req.user = { username: 'admin', role: 'admin' };
+        runWithTenant('delete-test', next);
+    });
+    app.use('/api/department-reward-penalty', router);
+    const base = '/api/department-reward-penalty';
+
+    const group = (await request(app).post(base + '/config/customerGroups').send({ value: '测试群' }).expect(200)).body;
+    await request(app).post(base + '/personnel').send({ id: 'PERSON-1', name: '责任人', roles: ['MTD'], customerGroupIds: [group.id] }).expect(200);
+
+    const draft = { id: 'DRAFT-DEL-1', date: '2026-09-18', staffId: 'PERSON-1', customerGroupId: group.id, ruleId: 'R04', remark: '用户草稿' };
+    await request(app).post(base + '/records').set('x-test-role', 'user').send(draft).expect(200);
+
+    // Other user cannot delete reporter's draft
+    await request(app).delete(base + '/records/' + draft.id).set('x-test-role', 'other-user').expect(403);
+
+    // Creator can delete their own draft
+    const delRes = (await request(app).delete(base + '/records/' + draft.id).set('x-test-role', 'user').expect(200)).body;
+    assert.equal(delRes.success, true);
+    let state = (await request(app).get(base).expect(200)).body;
+    assert.equal(state.records.find(r => r.id === draft.id), undefined);
+
+    // Draft published cannot be deleted
+    const draft2 = { id: 'PUBLISHED-DEL-2', date: '2026-09-18', staffId: 'PERSON-1', customerGroupId: group.id, ruleId: 'R04', remark: '已发布记录' };
+    await request(app).post(base + '/records').send({ ...draft2, action: 'publish', reason: '发布' }).expect(200);
+    const failDel = await request(app).delete(base + '/records/' + draft2.id).expect(400);
+    assert.match(failDel.body.error, /只能删除待发布草稿/);
+
+    // Upload an evidence image
+    const uploaded = await request(app).post(base + '/evidence')
+        .attach('file', Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), { filename: 'revoke-proof.png', contentType: 'image/png' })
+        .expect(200);
+    assert.match(uploaded.body.path, /\.png$/);
+
+    // Test inline Content-Disposition for image
+    const imgRes = await request(app).get(uploaded.body.path).expect(200);
+    assert.equal(imgRes.headers['content-type'], 'image/png');
+    assert.match(imgRes.headers['content-disposition'], /^inline;/);
+
+    // Revoke with revokeAttachment
+    const revokeRes = (await request(app).post(base + '/records/' + draft2.id + '/revoke').send({
+        pin: '0000',
+        reason: '撤销事实成立并附凭证',
+        revokeAttachment: uploaded.body.path
+    }).expect(200)).body;
+    assert.equal(revokeRes.status, 'revoked');
+    assert.equal(revokeRes.revokeReason, '撤销事实成立并附凭证');
+    assert.equal(revokeRes.revokeAttachment, uploaded.body.path);
+
+    state = (await request(app).get(base).expect(200)).body;
+    const revokedInState = state.records.find(r => r.id === draft2.id);
+    assert.equal(revokedInState.revokeAttachment, uploaded.body.path);
+
+    // Test multi-file attachments and deletion
+    const uploaded2 = await request(app).post(base + '/evidence')
+        .attach('file', Buffer.from('%PDF-1.4 test pdf content'), { filename: 'evidence-doc.pdf', contentType: 'application/pdf' })
+        .expect(200);
+    assert.match(uploaded2.body.path, /\.pdf$/);
+
+    const draft3 = {
+        id: 'RECORD-MULTI-ATTACH',
+        date: '2026-09-18',
+        staffId: 'PERSON-1',
+        customerGroupId: group.id,
+        ruleId: 'R04',
+        remark: '多附件证据测试',
+        attachments: [uploaded.body.path, uploaded2.body.path]
+    };
+    await request(app).post(base + '/records').send(draft3).expect(200);
+    state = (await request(app).get(base).expect(200)).body;
+    const multiRecord = state.records.find(r => r.id === draft3.id);
+    assert.equal(multiRecord.attachments.length, 2);
+    assert.equal(multiRecord.attachment, uploaded.body.path);
+
+    // Test deleting attachments upon edit
+    await request(app).post(base + '/records').send({ ...draft3, attachments: [] }).expect(200);
+    state = (await request(app).get(base).expect(200)).body;
+    const clearedRecord = state.records.find(r => r.id === draft3.id);
+    assert.equal(clearedRecord.attachment, '');
+    assert.equal(clearedRecord.attachments.length, 0);
+
+    // Test archive attachments (zip, 7z)
+    const uploadedZip = await request(app).post(base + '/evidence')
+        .attach('file', Buffer.from('PK\x03\x04fake zip content'), { filename: 'archive.zip', contentType: 'application/zip' })
+        .expect(200);
+    assert.match(uploadedZip.body.path, /\.zip$/);
+    const zipRes = await request(app).get(uploadedZip.body.path).expect(200);
+    assert.equal(zipRes.headers['content-type'], 'application/zip');
+    assert.match(zipRes.headers['content-disposition'], /^attachment; filename="evidence\.zip"$/);
+
+    const uploaded7z = await request(app).post(base + '/evidence')
+        .attach('file', Buffer.from('7z\xbc\xaf\x27\x1c'), { filename: 'backup.7z', contentType: 'application/octet-stream' })
+        .expect(200);
+    assert.match(uploaded7z.body.path, /\.7z$/);
+
+    // Test email attachments (eml, msg)
+    const uploadedEml = await request(app).post(base + '/evidence')
+        .attach('file', Buffer.from('From: hr@example.com\nSubject: notice'), { filename: 'notice.eml', contentType: 'message/rfc822' })
+        .expect(200);
+    assert.match(uploadedEml.body.path, /\.eml$/);
+    const emlRes = await request(app).get(uploadedEml.body.path).expect(200);
+    assert.equal(emlRes.headers['content-type'], 'message/rfc822');
+    assert.match(emlRes.headers['content-disposition'], /^attachment; filename="evidence\.eml"$/);
+
+    const uploadedMsg = await request(app).post(base + '/evidence')
+        .attach('file', Buffer.from('fake outlook msg content'), { filename: 'notice.msg', contentType: 'application/octet-stream' })
+        .expect(200);
+    assert.match(uploadedMsg.body.path, /\.msg$/);
+    const msgRes = await request(app).get(uploadedMsg.body.path).expect(200);
+    assert.equal(msgRes.headers['content-type'], 'application/vnd.ms-outlook');
+    assert.match(msgRes.headers['content-disposition'], /^attachment; filename="evidence\.msg"$/);
+
+    // Test saving a record with archive and email attachments
+    const draftArchiveEmail = {
+        id: 'RECORD-ARCHIVE-EMAIL',
+        date: '2026-09-19',
+        staffId: 'PERSON-1',
+        customerGroupId: group.id,
+        ruleId: 'R04',
+        remark: '压缩包与邮件凭证测试',
+        attachments: [uploadedZip.body.path, uploadedEml.body.path, uploadedMsg.body.path]
+    };
+    await request(app).post(base + '/records').send(draftArchiveEmail).expect(200);
+    state = (await request(app).get(base).expect(200)).body;
+    const recArchiveEmail = state.records.find(r => r.id === draftArchiveEmail.id);
+    assert.equal(recArchiveEmail.attachments.length, 3);
+    assert.equal(recArchiveEmail.attachments[0], uploadedZip.body.path);
+    assert.equal(recArchiveEmail.attachments[1], uploadedEml.body.path);
+    assert.equal(recArchiveEmail.attachments[2], uploadedMsg.body.path);
+});
+
+test('batch edit personnel supports customer groups, BUs, and roles', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use((req, _res, next) => { req.user = { username: 'admin', role: 'admin' }; next(); });
+    app.use('/api/department-reward-penalty', router);
+    const base = '/api/department-reward-penalty';
+
+    // Create a few customer groups, BUs and roles
+    const g1 = (await request(app).post(base + '/config/customerGroups').send({ value: '客户群一' }).expect(200)).body;
+    const g2 = (await request(app).post(base + '/config/customerGroups').send({ value: '客户群二' }).expect(200)).body;
+    const bu1 = (await request(app).post(base + '/config/businessUnits').send({ value: 'BU-A' }).expect(200)).body;
+    const bu2 = (await request(app).post(base + '/config/businessUnits').send({ value: 'BU-B' }).expect(200)).body;
+
+    // Create 2 persons
+    await request(app).post(base + '/personnel').send({
+        id: 'BP-1',
+        name: '张三',
+        customerGroupIds: [g1.id],
+        businessUnitIds: [bu1.id],
+        roles: ['MTD']
+    }).expect(200);
+
+    await request(app).post(base + '/personnel').send({
+        id: 'BP-2',
+        name: '李四',
+        customerGroupIds: [g1.id],
+        businessUnitIds: [bu1.id],
+        roles: ['MTD']
+    }).expect(200);
+
+    // Batch add BU-B and customer group 2, replace role with TL
+    const batchRes = (await request(app).post(base + '/personnel/batch').send({
+        ids: ['BP-1', 'BP-2'],
+        groups: { mode: 'add', values: [g2.id] },
+        bus: { mode: 'add', values: [bu2.id] },
+        roles: { mode: 'replace', values: ['TL'] }
+    }).expect(200)).body;
+    assert.equal(batchRes.updatedCount, 2);
+
+    const state = (await request(app).get(base).expect(200)).body;
+    const p1 = state.personnel.find(p => p.id === 'BP-1');
+    const p2 = state.personnel.find(p => p.id === 'BP-2');
+
+    assert.ok(p1.customerGroupIds.includes(g1.id) && p1.customerGroupIds.includes(g2.id));
+    assert.ok(p1.businessUnitIds.includes(bu1.id) && p1.businessUnitIds.includes(bu2.id));
+    assert.deepEqual(p1.roles, ['TL']);
+
+    assert.ok(p2.customerGroupIds.includes(g1.id) && p2.customerGroupIds.includes(g2.id));
+    assert.ok(p2.businessUnitIds.includes(bu1.id) && p2.businessUnitIds.includes(bu2.id));
+    assert.deepEqual(p2.roles, ['TL']);
+});
+
+test('record archiving and unarchiving keeps state and audit log', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use((req, _res, next) => { req.user = { username: 'admin', role: 'admin' }; next(); });
+    app.use('/api/department-reward-penalty', router);
+    const base = '/api/department-reward-penalty';
+
+    const group = (await request(app).post(base + '/config/customerGroups').send({ value: '归档测试群' }).expect(200)).body;
+    await request(app).post(base + '/personnel').send({ id: 'P-ARCH', name: '王五', customerGroupIds: [group.id], roles: ['MTD'] }).expect(200);
+
+    const rec = { id: 'REC-ARCH-1', date: '2026-09-19', staffId: 'P-ARCH', customerGroupId: group.id, ruleId: 'R04', action: 'publish', reason: '正式发布' };
+    await request(app).post(base + '/records').send(rec).expect(200);
+
+    let state = (await request(app).get(base).expect(200)).body;
+    let r = state.records.find(item => item.id === rec.id);
+    assert.equal(r.status, 'published');
+    assert.equal(Boolean(r.archived), false);
+
+    // Archive the record
+    await request(app).post(base + `/records/${rec.id}/archive`).send({ reason: '历史记录归档封存' }).expect(200);
+    state = (await request(app).get(base).expect(200)).body;
+    r = state.records.find(item => item.id === rec.id);
+    assert.equal(r.status, 'archived');
+    assert.equal(r.archived, true);
+    assert.equal(r.previousStatus, 'published');
+
+    // Restore the record
+    await request(app).post(base + `/records/${rec.id}/unarchive`).expect(200);
+    state = (await request(app).get(base).expect(200)).body;
+    r = state.records.find(item => item.id === rec.id);
+    assert.equal(r.status, 'published');
+    assert.equal(Boolean(r.archived), false);
+});
+
+

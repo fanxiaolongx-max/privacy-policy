@@ -43,7 +43,7 @@ async function packageToolFiles(tool, files) {
     const standaloneIndex = Buffer.from(customToolI18nService.injectLanguageRuntime(
         indexEntry[1].toString('utf8'),
         tool.slug,
-        { inlineRuntime: true, standalone: true }
+        { inlineRuntime: true, standalone: true, tool }
     ), 'utf8');
     const exportName = safeDownloadName(tool.name || tool.nameEn, tool.slug);
     const contentFiles = files.filter(([relativePath]) => !INTERNAL_FILES.has(relativePath));

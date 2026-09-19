@@ -347,7 +347,8 @@ app.use('/api', (req, res, next) => {
     if (req.path.startsWith('/surveys')) return next(); // 调查模板和提交由模块内部控制权限
     if (req.method === 'POST' && req.path === '/db/config/monthly_report_titles') return next(); // 登录用户可编辑月报中英文标题，路由内继续校验数据
     if (/^\/custom-tools\/[^/]+\/(?:state(?:\/restore)?|history(?:\/[^/]+)?)$/.test(req.path)) return next(); // 登录用户可维护自定义工具业务数据
-    if (req.method === 'POST' && /^\/department-reward-penalty\/(?:records|evidence)$/.test(req.path)) return next(); // 普通用户可提交草稿和证据，路由内校验发布权限
+    if ((req.method === 'POST' && /^\/department-reward-penalty\/(?:records|evidence)$/.test(req.path)) ||
+        (req.method === 'DELETE' && /^\/department-reward-penalty\/records\/[^/]+$/.test(req.path))) return next(); // 普通用户可提交草稿、证据和删除草稿，路由内校验发布和归属权限
     if (/^\/chat-history\/(?:settings|conversations\/[^/]+\/(?:read|pin)|favorites\/[^/]+)$/.test(req.path)) return next(); // 聊天数据租户共享，普通用户只能维护个人状态
     if (req.method === 'DELETE' && /^\/slide-design\/assets\/[^/]+$/.test(req.path)) return next(); // 素材上传者或管理员可删除，路由内校验归属
     if (req.method === 'POST' && req.path === '/uiv/run-uivision-macro') return next(); // 只生成临时 runner，不修改业务数据
@@ -472,26 +473,44 @@ app.get('/custom-tools/:slug/index.html', async (req, res, next) => {
         const filePath = await customToolsRepo.getToolFilePath(req.params.slug);
         if (!tool || !filePath) return res.status(404).send('Custom tool not found');
         const html = fs.readFileSync(filePath, 'utf8');
+        const stat = fs.existsSync(filePath) ? fs.statSync(filePath) : null;
         if (req.query.download === '1') {
             const filename = `${String(tool.name || tool.slug).replace(/[\\/:*?"<>|]+/g, '_')}.html`;
-            const standaloneHtml = customToolI18nService.injectLanguageRuntime(html, tool.slug, { inlineRuntime: true, standalone: true });
+            const standaloneHtml = customToolI18nService.injectLanguageRuntime(html, tool.slug, {
+                inlineRuntime: true,
+                standalone: true,
+                mtime: stat ? stat.mtime : null,
+                filePath,
+                tool
+            });
             res.setHeader('Content-Type', 'text/html; charset=utf-8');
             res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`);
             return res.send(standaloneHtml);
         }
-        res.type('html').send(customToolI18nService.injectLanguageRuntime(html, tool.slug));
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+        res.type('html').send(customToolI18nService.injectLanguageRuntime(html, tool.slug, {
+            mtime: stat ? stat.mtime : null,
+            filePath,
+            tool
+        }));
     } catch (err) {
         next(err);
     }
 });
 app.use('/custom-tools/:slug', (req, res, next) => {
-    const requestedPath = req.path.endsWith('/') ? `${req.path}index.html` : req.path;
+    const requestedPath = (req.path.endsWith('/') || !req.path) ? `${req.path || '/'}index.html` : req.path;
     const assetPath = customToolsRepo.getToolAssetPath(req.params.slug, requestedPath);
     if (!assetPath) return next();
     if (/\.html?$/i.test(assetPath)) {
         try {
             const html = fs.readFileSync(assetPath, 'utf8');
-            return res.type('html').send(customToolI18nService.injectLanguageRuntime(html, req.params.slug));
+            const stat = fs.existsSync(assetPath) ? fs.statSync(assetPath) : null;
+            return res.type('html').send(customToolI18nService.injectLanguageRuntime(html, req.params.slug, {
+                mtime: stat ? stat.mtime : null,
+                filePath: assetPath
+            }));
         } catch (error) {
             return next(error);
         }

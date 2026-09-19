@@ -225,7 +225,8 @@
                     : 'autoplay; fullscreen; microphone; display-capture';
                 const frame = document.createElement('iframe');
                 frame.className = 'custom-tool-frame';
-                frame.src = tool.filePath;
+                const cleanFilePath = tool.filePath || '';
+                frame.src = cleanFilePath.includes('?') ? `${cleanFilePath}&_t=${Date.now()}` : `${cleanFilePath}?_t=${Date.now()}`;
                 frame.title = displayName;
                 frame.allow = allowedFeatures;
                 frame.hidden = true;
@@ -262,8 +263,32 @@
             if (event.origin !== window.location.origin || event.data?.type !== 'tools-custom-tool-language') return;
             window.ToolsI18n?.setLanguage?.(event.data.lang);
         });
+        window.addEventListener('keydown', event => {
+            if (event.key === 'Escape') {
+                const frame = document.querySelector('.custom-tool-frame');
+                frame?.contentWindow?.postMessage({ type: 'tools-platform-escape' }, '*');
+            }
+        }, true);
+        function forwardParentClose(event) {
+            const frame = document.querySelector('.custom-tool-frame');
+            if (frame?.contentWindow && !frame.contains(event.target)) {
+                frame.contentWindow.postMessage({ type: 'tools-platform-parent-click' }, '*');
+            }
+        }
+        document.addEventListener('pointerdown', forwardParentClose, true);
+        document.addEventListener('click', forwardParentClose, true);
         document.addEventListener('DOMContentLoaded', loadCustomTool);
         document.getElementById('toolLoadRetry').addEventListener('click', loadCustomTool);
+        document.getElementById('refreshToolButton')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            const frame = document.querySelector('.custom-tool-frame');
+            if (frame && currentCustomTool) {
+                const path = currentCustomTool.filePath || '';
+                frame.src = path.includes('?') ? `${path}&_t=${Date.now()}` : `${path}?_t=${Date.now()}`;
+            } else {
+                location.reload();
+            }
+        });
         window.addEventListener('beforeunload', () => toolLoadController?.abort());
     </script>
 </body>

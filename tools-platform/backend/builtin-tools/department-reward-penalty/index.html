@@ -108,21 +108,176 @@ textarea{resize:vertical;min-height:72px}.toolbar{justify-content:flex-start;mar
 .filter-select:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(185,25,55,.1)}
 .filter-clear-all-btn{height:34px;padding:0 10px;border:1px dashed #cbd5e1;border-radius:8px;background:transparent;color:#64748b;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .15s ease}
 .filter-clear-all-btn:hover{border-color:#fca5a5;color:var(--red);background:#fff5f6}
-.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}.stat{background:#fff;border:1px solid var(--line);border-radius:10px;padding:15px 17px;text-align:left;color:#596777;transition:border-color .15s,box-shadow .15s,transform .15s}.stat:hover{border-color:#df9ca8;box-shadow:0 5px 16px #b9193714;transform:translateY(-1px)}.stat.active{border-color:var(--red);background:#fff8f9;box-shadow:inset 0 0 0 1px var(--red)}.stat b{display:block;font-size:24px;color:#9e1b34;margin-top:5px}
+.quarter-tag-btn{height:30px;padding:0 12px;font-size:12.5px;font-weight:700;border:1px solid #cbd5e1;background:#fff;color:#475569;border-radius:7px;cursor:pointer;transition:all .15s ease;display:inline-flex;align-items:center;justify-content:center;user-select:none}
+.quarter-tag-btn:hover{background:#f1f5f9;color:#0f172a;border-color:#94a3b8}
+.quarter-tag-btn.active{background:var(--red);color:#fff;border-color:var(--red);box-shadow:0 1px 5px rgba(185,25,55,.3)}
+.month-tag-btn{height:27px;padding:0 11px;font-size:12px;font-weight:600;border:1px solid #cbd5e1;background:#fff;color:#475569;border-radius:6px;cursor:pointer;transition:all .15s ease;user-select:none}
+.month-tag-btn:hover{background:#f8fafc;color:#0f172a;border-color:#94a3b8}
+.month-tag-btn.active{background:#fff0f3;color:var(--red);border-color:#fca5a5;font-weight:700;box-shadow:0 1px 3px rgba(185,25,55,.12)}
+.stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:18px}.stat{background:#fff;border:1px solid var(--line);border-radius:10px;padding:15px 17px;text-align:left;color:#596777;transition:border-color .15s,box-shadow .15s,transform .15s}.stat:hover{border-color:#df9ca8;box-shadow:0 5px 16px #b9193714;transform:translateY(-1px)}.stat.active{border-color:var(--red);background:#fff8f9;box-shadow:inset 0 0 0 1px var(--red)}.stat b{display:block;font-size:24px;color:#9e1b34;margin-top:5px}
 .table-wrap{overflow:auto;width:100%;border:1px solid #e8edf2;border-radius:9px}table{border-collapse:separate;border-spacing:0;width:100%;min-width:850px;font-size:13px}th,td{text-align:left;border-bottom:1px solid #edf0f3;padding:14px 16px;vertical-align:middle;line-height:1.55}th{background:#f8fafc;color:#627082;white-space:nowrap;font-weight:650}tbody tr:last-child td{border-bottom:0}tbody tr:hover{background:#fafbfe}
-.records-table{min-width:1000px}.records-table th:nth-child(1){width:105px}.records-table th:nth-child(2){width:115px}.records-table th:nth-child(3){width:180px}.records-table th:nth-child(4){min-width:240px}.records-table th:nth-child(5){width:145px}.records-table th:last-child{width:200px;min-width:190px;text-align:right}.records-table td{overflow-wrap:anywhere}.records-table td:first-child,.records-table td:nth-child(2),.records-table td:last-child{white-space:nowrap}.cell-title{font-weight:620;color:#263543}.cell-sub{display:block;color:#758391;font-size:12px;margin-top:4px;line-height:1.5}.cell-notes{display:grid;gap:4px;color:#536172}.cell-notes:empty{display:none}.cell-actions{display:inline-flex;align-items:center;gap:7px;justify-content:flex-end;white-space:nowrap;flex-shrink:0}.records-table a{color:var(--red);text-decoration:none}.records-table a:hover{text-decoration:underline}
-.rec-action-btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;font-size:12px;font-weight:650;padding:5px 12px;min-height:29px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;white-space:nowrap;user-select:none;line-height:1;transition:all .15s cubic-bezier(.16,1,.3,1)}
+.records-table{min-width:1060px}.records-table th:nth-child(1){width:100px}.records-table th:nth-child(2){width:115px}.records-table th:nth-child(3){width:175px}.records-table th:nth-child(4){min-width:230px}.records-table th:nth-child(5){width:140px}.records-table th:last-child{width:260px;min-width:240px;text-align:right}.records-table td{overflow-wrap:anywhere}.records-table td:first-child,.records-table td:nth-child(2),.records-table td:last-child{white-space:nowrap}.cell-title{font-weight:620;color:#263543}.cell-sub{display:block;color:#758391;font-size:12px;margin-top:4px;line-height:1.5}.cell-notes{display:grid;gap:4px;color:#536172}.cell-notes:empty{display:none}.cell-actions{display:inline-flex;align-items:center;gap:6px;justify-content:flex-end;white-space:nowrap;flex-shrink:0}.records-table a{color:var(--red);text-decoration:none}.records-table a:hover{text-decoration:underline}
+.record-row{cursor:pointer;transition:background-color .15s ease}
+.record-row:hover{background:#f1f5f9!important}
+.rec-action-btn{display:inline-flex;align-items:center;justify-content:center;gap:4px;font-size:12px;font-weight:650;padding:5px 10px;min-height:29px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;white-space:nowrap;user-select:none;line-height:1;transition:all .15s cubic-bezier(.16,1,.3,1)}
 .rec-action-btn svg{width:13px;height:13px;flex-shrink:0}
+.rec-action-btn.view-detail{background:#f0f9ff;border-color:#bae6fd;color:#0369a1}
+.rec-action-btn.view-detail:hover{background:#0284c7;border-color:#0369a1;color:#fff;box-shadow:0 2px 6px rgba(2,132,199,.25);transform:translateY(-1px)}
 .rec-action-btn.edit{background:#f8fafc;border-color:#cbd5e1;color:#334155}
 .rec-action-btn.edit:hover{background:#eff6ff;border-color:#93c5fd;color:#1d4ed8;box-shadow:0 1px 4px rgba(29,78,216,.12);transform:translateY(-1px)}
+.rec-action-btn.delete-draft{background:#fff1f2;border-color:#fecdd3;color:#e11d48}
+.rec-action-btn.delete-draft:hover{background:#e11d48;border-color:#be123c;color:#fff;box-shadow:0 2px 6px rgba(225,29,72,.25);transform:translateY(-1px)}
 .rec-action-btn.publish{background:#f0fdf4;border-color:#86efac;color:#15803d}
 .rec-action-btn.publish:hover{background:#16a34a;border-color:#15803d;color:#fff;box-shadow:0 2px 6px rgba(22,163,74,.25);transform:translateY(-1px)}
 .rec-action-btn.force-edit{background:#fffbeb;border-color:#fde68a;color:#b45309}
 .rec-action-btn.force-edit:hover{background:#d97706;border-color:#b45309;color:#fff;box-shadow:0 2px 6px rgba(217,119,6,.25);transform:translateY(-1px)}
 .rec-action-btn.revoke{background:#fff5f5;border-color:#fecdd3;color:#be123c}
 .rec-action-btn.revoke:hover{background:#e11d48;border-color:#be123c;color:#fff;box-shadow:0 2px 6px rgba(225,29,72,.25);transform:translateY(-1px)}
+.rec-action-btn.archive-record{background:#f8fafc;border-color:#cbd5e1;color:#475569}
+.rec-action-btn.archive-record:hover{background:#475569;border-color:#334155;color:#fff;box-shadow:0 2px 6px rgba(71,85,105,.25);transform:translateY(-1px)}
+.rec-action-btn.unarchive-record{background:#f0fdf4;border-color:#bbf7d0;color:#16a34a}
+.rec-action-btn.unarchive-record:hover{background:#16a34a;border-color:#15803d;color:#fff;box-shadow:0 2px 6px rgba(22,163,74,.25);transform:translateY(-1px)}
 .rec-idle-tag{font-size:11.5px;color:#94a3b8;background:#f8fafc;border:1px solid #e2e8f0;padding:3px 8px;border-radius:6px;display:inline-block}
-.tag{display:inline-flex;align-items:center;background:#f2f4f7;color:#5d6977;border-radius:6px;padding:5px 9px;margin:2px 3px 2px 0;font-size:11px;line-height:1.3;white-space:nowrap}.tag.draft{background:#fff1df;color:#915b10}.tag.published{background:#eaf7eb;color:#287234}.tag.revoked{background:#f2f2f2;color:#777}
+.tag{display:inline-flex;align-items:center;background:#f2f4f7;color:#5d6977;border-radius:6px;padding:5px 9px;margin:2px 3px 2px 0;font-size:11px;line-height:1.3;white-space:nowrap}.tag.draft{background:#fff1df;color:#915b10}.tag.published{background:#eaf7eb;color:#287234}.tag.revoked{background:#f2f2f2;color:#777}.tag.archived{background:#f1f5f9;color:#475569;border:1px solid #cbd5e1}
+.msg-file-field-box{display:grid;gap:6px;margin-top:2px}
+.msg-drop-zone{border:2px dashed #cbd5e1;border-radius:10px;padding:14px;background:#f8fafc;text-align:center;cursor:pointer;transition:all .2s ease;user-select:none}
+.msg-drop-zone:hover{border-color:#94a3b8;background:#f1f5f9}
+.msg-drop-zone.drag-over{border-color:#2563eb;background:#eff6ff}
+.msg-drop-zone.has-file{border-style:solid;border-color:#93c5fd;background:#eff6ff}
+.msg-drop-empty{display:flex;flex-direction:column;align-items:center;gap:5px;color:#64748b}
+.msg-drop-text{font-size:13px;font-weight:600;color:#334155}
+.msg-drop-sub{font-size:11.5px;color:#94a3b8}
+.msg-drop-selected{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px}
+.msg-selected-info{display:flex;align-items:center;gap:10px;text-align:left;overflow:hidden}
+.msg-selected-icon{font-size:22px;flex-shrink:0}
+.msg-selected-names{display:flex;flex-direction:column;overflow:hidden}
+.msg-selected-name{font-size:13px;font-weight:650;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.msg-selected-size{font-size:11.5px;color:#64748b}
+.msg-clear-file-btn{border:0;background:#fee2e2;color:#b91c1c;font-size:11.5px;font-weight:600;padding:4px 9px;border-radius:6px;cursor:pointer;flex-shrink:0;transition:all .15s}
+.msg-clear-file-btn:hover{background:#fca5a5}
+#record-detail-dialog{width:min(940px,calc(100vw - 32px));max-height:min(90vh,920px);display:flex;flex-direction:column;border-radius:18px;box-shadow:0 30px 70px -15px rgba(15,23,42,.35),0 0 0 1px rgba(15,23,42,.06);background:#fff;border:1px solid #cbd5e1;overflow:hidden}
+.detail-dialog-head{padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:14px;border-bottom:1px solid #f1f5f9;background:#fff;flex-shrink:0}
+.detail-title-group{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.detail-title-group h3{margin:0;font-size:18px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:8px}
+.detail-fold-controls{display:flex;align-items:center;gap:6px}
+.detail-fold-btn{height:28px;padding:0 10px;font-size:12px;font-weight:600;border:1px solid #e2e8f0;background:#f8fafc;color:#475569;border-radius:6px;display:inline-flex;align-items:center;gap:4px;cursor:pointer;transition:all .15s}
+.detail-fold-btn:hover{background:#f1f5f9;color:#0f172a;border-color:#cbd5e1}
+.detail-status-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:650}
+.detail-status-pill.draft{background:#fef3c7;color:#b45309;border:1px solid #fde68a}
+.detail-status-pill.published{background:#dcfce7;color:#15803d;border:1px solid #bbf7d0}
+.detail-status-pill.revoked{background:#ffe4e6;color:#e11d48;border:1px solid #fecdd3}
+.detail-id-chip{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:11.5px;color:#64748b;background:#f1f5f9;padding:2px 8px;border-radius:6px;border:1px solid #e2e8f0}
+.detail-dialog-body{padding:20px 26px 28px;display:flex;flex-direction:column;gap:16px;overflow-y:auto;overflow-x:hidden;flex:1 1 auto;min-height:0;scroll-behavior:smooth}
+.detail-dialog-body::-webkit-scrollbar{width:8px}
+.detail-dialog-body::-webkit-scrollbar-track{background:#f8fafc;border-radius:4px}
+.detail-dialog-body::-webkit-scrollbar-thumb{background:#94a3b8;border-radius:4px;border:2px solid #f8fafc}
+.detail-dialog-body::-webkit-scrollbar-thumb:hover{background:#64748b}
+.detail-dialog-body > *{flex-shrink:0 !important;min-height:fit-content}
+#record-detail-foot{flex-shrink:0;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid #e2e8f0;background:#f8fafc;box-shadow:0 -4px 12px rgba(15,23,42,.03)}
+.revoked-notice-banner{background:linear-gradient(135deg,#fff1f2 0%,#ffe4e6 100%);border:1px solid #fecdd3;border-left:5px solid #e11d48;border-radius:12px;padding:14px 18px;display:flex;flex-direction:column;gap:12px;flex-shrink:0 !important;min-height:fit-content}
+.revoked-notice-banner.collapsed .revoked-body{display:none !important}
+.revoked-notice-banner.collapsed .chevron-icon{transform:rotate(-90deg)}
+.revoked-notice-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.revoked-notice-title{display:flex;align-items:center;gap:8px;font-size:14.5px;font-weight:750;color:#9f1239}
+.revoked-meta{font-size:12.5px;color:#be123c}
+.revoked-reason-box{background:#fff;border:1px solid #fecdd3;border-radius:8px;padding:11px 15px;font-size:13px;color:#334155;line-height:1.65;white-space:pre-wrap;box-shadow:0 1px 3px rgba(190,18,60,.05)}
+.detail-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.02);transition:border-color .15s ease,box-shadow .15s ease;flex-shrink:0 !important;min-height:fit-content}
+.detail-card:hover{border-color:#cbd5e1;box-shadow:0 3px 8px rgba(0,0,0,.04)}
+.detail-card-head{background:#f8fafc;padding:12px 18px;border-bottom:1px solid #edf2f7;font-size:13.5px;font-weight:700;color:#334155;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;transition:background .15s ease}
+.detail-card-head:hover{background:#f1f5f9}
+.detail-card-head-title{display:flex;align-items:center;gap:8px}
+.detail-card-head-right{display:flex;align-items:center;gap:10px}
+.detail-collapsed-pill{font-size:12px;color:#64748b;background:#f1f5f9;padding:3px 9px;border-radius:6px;border:1px solid #e2e8f0;max-width:320px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:none}
+.detail-card.collapsed .detail-collapsed-pill{display:inline-block}
+.detail-card.collapsed .detail-card-head{border-bottom-color:transparent}
+.detail-card.collapsed .detail-card-body{display:none !important}
+.card-collapse-btn{background:rgba(15,23,42,.04);border:1px solid rgba(15,23,42,.06);color:#64748b;width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s ease}
+.card-collapse-btn:hover{background:rgba(15,23,42,.09);color:#0f172a}
+.card-collapse-btn .chevron-icon{width:14px;height:14px;transition:transform .2s ease}
+.detail-card.collapsed .card-collapse-btn .chevron-icon,
+.revoked-notice-banner.collapsed .card-collapse-btn .chevron-icon{transform:rotate(-90deg)}
+.detail-card-body{padding:18px 20px;display:flex;flex-direction:column;gap:16px;min-height:fit-content}
+.detail-grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 20px}
+.detail-grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 18px}
+@media(max-width:768px){
+  .detail-grid-2,.detail-grid-3{grid-template-columns:1fr;gap:12px}
+}
+.detail-item{display:flex;flex-direction:column;gap:4px;min-height:fit-content}
+.detail-label{font-size:12px;font-weight:600;color:#64748b}
+.detail-val{font-size:13.5px;color:#1e293b;font-weight:500;line-height:1.55;overflow-wrap:anywhere}
+.detail-val.rule-desc{font-size:14px;font-weight:600;color:#0f172a;line-height:1.6;background:#f8fafc;padding:10px 14px;border-radius:8px;border:1px solid #e2e8f0}
+.detail-val.highlight-deduct{display:inline-flex;align-items:center;font-size:14px;font-weight:700;color:#991b1b;background:#fff1f2;padding:4px 10px;border-radius:6px;border:1px solid #fecdd3;width:fit-content}
+.detail-remark-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;font-size:13px;color:#334155;line-height:1.65;white-space:pre-wrap}
+.attachment-card{display:flex;align-items:center;gap:14px;padding:12px 16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;margin-top:4px;transition:all .15s}
+.attachment-card:hover{border-color:#cbd5e1;background:#f1f5f9}
+.attachment-thumb-box{position:relative;width:80px;height:80px;border-radius:8px;overflow:hidden;border:1px solid #cbd5e1;background:#fff;flex-shrink:0;cursor:zoom-in;display:flex;align-items:center;justify-content:center}
+.attachment-thumb-box img{width:100%;height:100%;object-fit:cover;transition:transform .2s ease}
+.attachment-thumb-box:hover img{transform:scale(1.06)}
+.attachment-thumb-overlay{position:absolute;inset:0;background:rgba(15,23,42,.4);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;color:#fff;font-size:11px;font-weight:600;gap:4px}
+.attachment-thumb-box:hover .attachment-thumb-overlay{opacity:1}
+.attachment-file-icon{width:48px;height:48px;border-radius:10px;background:#eff6ff;color:#2563eb;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;border:1px solid #bfdbfe}
+.attachment-file-icon.pdf{background:#fef2f2;color:#dc2626;border-color:#fecaca}
+.attachment-file-icon.zip{background:#fefce8;color:#ca8a04;border-color:#fef08a}
+.attachment-file-icon.email{background:#f0fdf4;color:#16a34a;border-color:#bbf7d0}
+.attachment-details{display:flex;flex-direction:column;gap:6px;flex:1;min-width:0}
+.attachment-name{font-size:13px;font-weight:650;color:#1e293b;word-break:break-all}
+.attachment-actions-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.attachment-btn{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;text-decoration:none;cursor:pointer;border:1px solid #cbd5e1;background:#fff;color:#334155;transition:all .15s}
+.attachment-btn:hover{background:#f1f5f9;color:#0f172a;border-color:#94a3b8}
+.attachment-btn.primary{background:#0284c7;border-color:#0369a1;color:#fff}
+.attachment-btn.primary:hover{background:#0369a1;box-shadow:0 2px 6px rgba(3,105,161,.25)}
+.attachment-none{color:#94a3b8;font-size:13px;font-style:italic;padding:4px 0}
+.attach-upload-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:6px;flex-wrap:wrap}
+.attach-upload-title-box{display:flex;flex-direction:column;gap:3px}
+.attach-small-hint{font-size:11.5px;color:#64748b;line-height:1.4}
+.attach-pick-btn{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:5px 12px;background:#fff;border:1px solid #cbd5e1;border-radius:7px;color:#334155;cursor:pointer;transition:all .15s ease}
+.attach-pick-btn:hover{background:#f1f5f9;border-color:#94a3b8;color:#0f172a;transform:translateY(-1px)}
+.attach-items-list{display:flex;flex-direction:column;gap:6px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;padding:8px 10px;min-height:48px}
+.attach-item-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 10px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;transition:all .15s ease}
+.attach-item-row.is-deleted{background:#fff1f2;border-color:#fecdd3;border-style:dashed}
+.attach-item-left{display:flex;align-items:center;gap:8px;min-width:0;flex:1}
+.attach-item-icon{font-size:16px;flex-shrink:0}
+.attach-item-info{display:flex;flex-direction:column;gap:2px;min-width:0}
+.attach-item-name{font-size:12.5px;font-weight:600;color:#1e293b;word-break:break-all;text-decoration:none}
+.attach-item-name:hover{text-decoration:underline}
+.attach-item-row.is-deleted .attach-item-name{text-decoration:line-through;color:#94a3b8}
+.attach-item-meta{display:flex;align-items:center;gap:6px;font-size:11px;color:#64748b}
+.attach-tag{display:inline-block;padding:1px 6px;border-radius:4px;font-size:10.5px;font-weight:600}
+.attach-tag.tag-existing{background:#eff6ff;color:#2563eb}
+.attach-tag.tag-new{background:#f0fdf4;color:#16a34a}
+.attach-tag.tag-deleted{background:#fee2e2;color:#dc2626}
+.attach-action-btn{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;padding:4px 8px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;transition:all .12s ease;flex-shrink:0}
+.attach-action-btn.delete-btn{color:#be123c;border-color:#fecdd3;background:#fff1f2}
+.attach-action-btn.delete-btn:hover{background:#ffe4e6;border-color:#fda4af}
+.attach-action-btn.undo-btn{color:#0284c7;border-color:#bae6fd;background:#f0f9ff}
+.attach-action-btn.undo-btn:hover{background:#e0f2fe;border-color:#7dd3fc}
+.attach-action-btn.remove-btn{color:#64748b}
+.attach-action-btn.remove-btn:hover{background:#f1f5f9;color:#0f172a;border-color:#94a3b8}
+.attach-empty-placeholder{font-size:12px;color:#94a3b8;text-align:center;padding:10px;user-select:none}
+#attachment-preview-dialog{width:min(1080px,calc(100vw - 32px));height:min(90vh,940px);max-height:calc(100vh - 32px);display:flex;flex-direction:column;border-radius:18px;overflow:hidden;box-shadow:0 35px 80px -10px rgba(15,23,42,.45),0 0 0 1px rgba(15,23,42,.1);background:#0f172a;border:1px solid #334155;padding:0}
+#attachment-preview-dialog::backdrop{background:rgba(15,23,42,.8);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.attach-modal-header{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 20px;background:rgba(30,41,59,.96);border-bottom:1px solid rgba(255,255,255,.1);color:#fff;flex-shrink:0}
+.attach-modal-title-wrap{display:flex;align-items:center;gap:12px;min-width:0}
+.attach-modal-icon{width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;border:1px solid rgba(255,255,255,.12)}
+.attach-modal-titles{display:flex;flex-direction:column;gap:2px;min-width:0}
+.attach-modal-title{margin:0;font-size:15px;font-weight:700;color:#f8fafc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.attach-modal-meta{font-size:11.5px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.attach-modal-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.attach-modal-actions .attachment-btn{background:rgba(255,255,255,.12);color:#f8fafc;border:1px solid rgba(255,255,255,.2);padding:6px 12px;font-size:12px}
+.attach-modal-actions .attachment-btn:hover{background:rgba(255,255,255,.22);color:#fff;border-color:rgba(255,255,255,.35)}
+.attach-modal-actions .attachment-btn.primary{background:#0284c7;border-color:#38bdf8;color:#fff}
+.attach-modal-actions .attachment-btn.primary:hover{background:#0369a1}
+.attach-modal-actions .dialog-close-btn{color:#cbd5e1;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08)}
+.attach-modal-actions .dialog-close-btn:hover{background:rgba(255,255,255,.2);color:#fff}
+.attach-modal-body{flex:1 1 auto;min-height:0;position:relative;background:#090d16;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:14px}
+.attach-preview-item{width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+.attach-preview-item img{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;box-shadow:0 15px 45px rgba(0,0,0,.6);background:#fff}
+.attach-preview-item iframe{width:100%;height:100%;border:0;border-radius:8px;background:#525659}
+.attach-text-view{width:100%;height:100%;margin:0;padding:16px 20px;background:#1e293b;color:#e2e8f0;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;line-height:1.6;overflow:auto;border-radius:8px;white-space:pre-wrap;word-break:break-word}
+.cell-attach-badge{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;color:#0284c7;background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;padding:2px 7px;cursor:pointer;transition:all .15s ease;line-height:1.4;white-space:nowrap}
+.cell-attach-badge:hover{background:#e0f2fe;color:#0369a1;border-color:#7dd3fc;transform:translateY(-1px);box-shadow:0 2px 5px rgba(2,132,199,.15)}
+.cell-attach-badge.revoke{color:#e11d48;background:#fff1f2;border-color:#fecdd3}
+.cell-attach-badge.revoke:hover{background:#ffe4e6;color:#be123c;border-color:#fda4af;box-shadow:0 2px 5px rgba(225,29,72,.15)}
 .pager{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap;margin-top:14px;font-size:13px}.pager input{width:64px}.empty{padding:28px;text-align:center;color:#8b96a2}
 .pager select{padding:6px 8px;min-width:82px}.pager label{display:inline-flex;align-items:center;gap:6px}.modal-message{margin:0 0 14px;line-height:1.6;color:#475569;font-size:14px;white-space:pre-wrap}.modal-inputs{display:grid;gap:12px}.modal-inputs label{display:grid;gap:6px;font-size:13px;font-weight:600;color:#334155}.modal-inputs input,.modal-inputs textarea{width:100%;font-size:14px}.modal-error{color:var(--red);font-size:13px;min-height:18px}.security-panel{max-width:650px}.security-panel .field{margin:14px 0}.security-note{padding:12px;border:1px solid #f3dfbd;background:#fff9ed;border-radius:8px;color:#805c1d;font-size:13px}
 dialog{border:1px solid #d8dfe7;border-radius:16px;padding:0;width:min(880px,calc(100vw - 32px));max-height:calc(100vh - 32px);box-shadow:0 25px 60px -12px rgba(15,23,42,.28),0 0 0 1px rgba(15,23,42,.05);background:#fff;animation:modal-pop .2s cubic-bezier(.16,1,.3,1);overflow:hidden}
@@ -140,7 +295,7 @@ dialog::backdrop{background:rgba(15,23,42,.48);backdrop-filter:blur(5px);-webkit
 .dialog-foot button.primary{background:linear-gradient(135deg,#c41e3d 0%,#9f1239 100%);border:1px solid #9f1239;color:#fff;box-shadow:0 2px 8px rgba(185,25,55,.28)}
 .dialog-foot button.primary:hover{box-shadow:0 4px 14px rgba(185,25,55,.4);transform:translateY(-1px)}
 .dialog-foot button.primary:active{transform:translateY(0)}
-#message-dialog{width:min(480px,calc(100vw - 24px));border-radius:16px}
+#message-dialog{width:min(520px,calc(100vw - 24px));border-radius:16px}
 #message-dialog .dialog-head{background:#fff;padding:18px 22px 14px;border-bottom:0}
 #message-dialog .dialog-head h3{font-size:17px;font-weight:650;color:#1e293b}
 #message-dialog .dialog-body{padding:0 22px 16px}
@@ -174,7 +329,7 @@ dialog::backdrop{background:rgba(15,23,42,.48);backdrop-filter:blur(5px);-webkit
 .tag-quick-btn{font-size:11px;font-weight:600;color:#475569;background:#fff;border:1px solid #d1d9e2;border-radius:6px;padding:2px 8px;cursor:pointer;transition:all .12s ease}
 .tag-quick-btn:hover{background:#f8fafc;border-color:#94a3b8;color:#0f172a}
 .role-chips-wrap{display:flex;flex-wrap:wrap;gap:8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px;min-height:48px;align-items:center;transition:all .15s ease}
-.role-chips-wrap.has-error{border-color:#f43f5e;background:#fff8f8;box-shadow:0 0 0 3px rgba(244,63,94,.12)}
+.role-chips-wrap.has-error{border-color:#f43f5e;background:#fff8f8;box-shadow:0 0 0 3px rgba(244,63,94,.12);animation:shake .25s ease-in-out}
 .role-chip-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;font-size:13px;font-weight:500;border-radius:7px;border:1px solid #cbd5e1;background:#fff;color:#475569;cursor:pointer;user-select:none;transition:all .15s ease}
 .role-chip-btn:hover{background:#f1f5f9;border-color:#94a3b8;color:#0f172a;transform:translateY(-1px)}
 .role-chip-btn.is-active{background:#fff1f3;border-color:#f43f5e;color:#9f1239;font-weight:650;box-shadow:0 1px 4px rgba(225,29,72,.16)}
@@ -215,11 +370,11 @@ dialog::backdrop{background:rgba(15,23,42,.48);backdrop-filter:blur(5px);-webkit
 .notice{font-size:12px;border-radius:7px;padding:10px;background:#f3f5f8;color:#66717c}.notice.bad{background:#fff0f0;color:#ad1d32}.notice.good{background:#ebf7ed;color:#267632}
 .config-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.chips{display:flex;gap:7px;flex-wrap:wrap}.chip{padding:6px 9px;background:#f2f4f7;border-radius:15px;font-size:12px;display:inline-flex;align-items:center;gap:5px}.chip button{border:0;background:transparent;color:var(--red);cursor:pointer;padding:1px 3px}.readonly-value{background:#f4f6f8;color:#44515e}
 .category-block{margin:12px 0}.category-block h4{margin:0 0 8px}
-.records-container{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:20px;align-items:start;transition:all .2s ease}
-.records-container.sidebar-collapsed{grid-template-columns:minmax(0,1fr)}
-.records-container.sidebar-collapsed .records-analytics-sidebar{display:none}
+.records-container{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:20px;align-items:start;transition:grid-template-columns .38s cubic-bezier(.2,.8,.2,1),gap .38s cubic-bezier(.2,.8,.2,1)}
+.records-container.sidebar-collapsed{grid-template-columns:minmax(0,1fr) 0px;gap:0}
 .records-main-col{min-width:0;display:flex;flex-direction:column}
-.records-analytics-sidebar{min-width:0;position:sticky;top:0;max-height:calc(100vh - 44px);overflow-y:auto;overscroll-behavior:contain;padding-bottom:12px}
+.records-analytics-sidebar{min-width:0;position:sticky;top:0;max-height:calc(100vh - 44px);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding-bottom:12px;opacity:1;transform:translateX(0);transition:opacity .25s ease,transform .38s cubic-bezier(.2,.8,.2,1),visibility .38s ease}
+.records-container.sidebar-collapsed .records-analytics-sidebar{opacity:0;transform:translateX(24px);visibility:hidden;pointer-events:none;overflow:hidden}
 .records-analytics-sidebar::-webkit-scrollbar{width:5px}
 .records-analytics-sidebar::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px}
 .panel-head-actions{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -398,7 +553,7 @@ dialog::backdrop{background:rgba(15,23,42,.48);backdrop-filter:blur(5px);-webkit
 .msg-context-banner.info .msg-banner-icon{background:#fff;color:#475569;border:1px solid #e2e8f0}
 .msg-banner-titles{flex:1;min-width:0}
 .msg-banner-title{font-size:16px;font-weight:700;color:#0f172a;line-height:1.3;margin:0}
-.msg-banner-sub{font-size:12.5px;color:#64748b;margin-top:2px;line-height:1.4}
+.msg-banner-sub{font-size:12.5px;color:#475569;margin-top:4px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
 .msg-dialog-body{padding:18px 22px}
 .pwd-input-wrap{position:relative;display:flex;align-items:center;width:100%}
 .pwd-lock-icon{position:absolute;left:10px;color:#94a3b8;width:15px;height:15px;pointer-events:none}
@@ -419,7 +574,8 @@ dialog::backdrop{background:rgba(15,23,42,.48);backdrop-filter:blur(5px);-webkit
 .chip-selector-actions{display:flex;align-items:center;gap:6px}
 .chip-count-pill{font-size:11.5px;padding:2px 7px;border-radius:10px;background:#e2e8f0;color:#475569;font-weight:600}
 .chip-count-pill.has-active{background:#dbeafe;color:#1d4ed8}
-.chips-flex-wrap{display:flex;flex-wrap:wrap;gap:6px}
+.chips-flex-wrap{display:flex;flex-wrap:wrap;gap:6px;transition:all .15s ease}
+.chips-flex-wrap.has-error{border:1px solid #f43f5e;border-radius:8px;padding:6px;background:#fff8f8;box-shadow:0 0 0 3px rgba(244,63,94,.12);animation:shake .25s ease-in-out}
 .chip-option-btn{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:500;padding:5px 10px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;color:#475569;cursor:pointer;transition:all .15s ease;user-select:none}
 .chip-option-btn:hover{background:#f1f5f9;border-color:#94a3b8;color:#0f172a}
 .chip-option-btn.active-group{background:#eff6ff;border-color:#93c5fd;color:#1d4ed8;font-weight:600;box-shadow:0 1px 3px rgba(37,99,235,.12)}
@@ -439,6 +595,8 @@ dialog::backdrop{background:rgba(15,23,42,.48);backdrop-filter:blur(5px);-webkit
 .role-check-banner.good{background:#f0fdf4;border:1px solid #86efac;color:#166534}
 .role-check-banner.bad{background:#fff1f2;border:1px solid #fecdd3;color:#9f1239}
 .role-check-banner.idle{background:#f8fafc;border:1px solid #e2e8f0;color:#64748b}
+@keyframes role-shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+.role-check-banner.shake{animation:role-shake .35s ease-in-out;border-color:#f43f5e!important;box-shadow:0 0 0 3px rgba(244,63,94,.22)!important}
 .audit-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:8px 12px}
 .audit-search-wrap{position:relative;flex:1 1 200px;max-width:300px}
 .audit-search-wrap svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:13px;height:13px;color:#94a3b8}
@@ -543,9 +701,24 @@ dialog::backdrop{background:rgba(15,23,42,.48);backdrop-filter:blur(5px);-webkit
 <div class="filter-dropdown" data-dropdown="record-group-filter"><button type="button" class="filter-btn" id="record-group-filter-btn" aria-haspopup="true" aria-expanded="false"><span id="record-group-filter-text">客户群</span><span class="filter-badge" id="record-group-filter-badge" hidden>0</span><svg class="filter-chevron" viewBox="0 0 12 12"><path d="M2.5 4.5L6 8L9.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="filter-popover" id="record-group-filter" hidden></div></div>
 <div class="filter-dropdown" data-dropdown="record-role-filter"><button type="button" class="filter-btn" id="record-role-filter-btn" aria-haspopup="true" aria-expanded="false"><span id="record-role-filter-text">角色</span><span class="filter-badge" id="record-role-filter-badge" hidden>0</span><svg class="filter-chevron" viewBox="0 0 12 12"><path d="M2.5 4.5L6 8L9.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="filter-popover" id="record-role-filter" hidden></div></div>
 <div class="filter-dropdown" data-dropdown="record-deduction-filter"><button type="button" class="filter-btn" id="record-deduction-filter-btn" aria-haspopup="true" aria-expanded="false"><span id="record-deduction-filter-text">扣罚</span><span class="filter-badge" id="record-deduction-filter-badge" hidden>0</span><svg class="filter-chevron" viewBox="0 0 12 12"><path d="M2.5 4.5L6 8L9.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="filter-popover" id="record-deduction-filter" hidden></div></div>
-<div class="filter-dropdown filter-more-dropdown" data-dropdown="record-more-popover"><button type="button" class="filter-btn" id="record-more-btn" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor"><path d="M6 10.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z"/></svg><span>更多筛选</span><span class="filter-badge" id="record-more-badge" hidden>0</span><svg class="filter-chevron" viewBox="0 0 12 12"><path d="M2.5 4.5L6 8L9.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="filter-popover filter-more-popover" id="record-more-popover" hidden><div class="filter-popover-head"><span class="filter-popover-title">高级筛选</span><button type="button" class="filter-action-btn" data-clear-more-records="1">重置</button></div><div class="filter-more-grid"><div class="filter-field"><label>发生日期范围</label><div class="date-range-row"><input type="date" id="date-from" aria-label="开始日期" placeholder="开始日期"><span class="date-sep">至</span><input type="date" id="date-to" aria-label="结束日期" placeholder="结束日期"></div></div><div class="filter-field"><label for="record-status">审核状态</label><select id="record-status"><option value="">全部状态</option><option value="draft">待发布草稿</option><option value="published">已发布</option><option value="revoked">已撤销</option></select></div><div class="filter-field"><label for="record-person">责任主体</label><select id="record-person"><option value="">全部人员</option></select></div><div class="filter-field"><label for="record-sort">排序方式</label><select id="record-sort"><option value="date-desc">发生日期从近到远</option><option value="date-asc">发生日期从远到近</option></select></div></div><div class="filter-popover-foot"><span></span><button type="button" class="filter-done-btn" data-close-dropdown="1">收起</button></div></div></div>
-<button type="button" class="filter-clear-all-btn" data-clear-filters="records" title="重置全部筛选条件"><svg viewBox="0 0 12 12" width="10" height="10"><path d="M2 2L10 10M10 2L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>清空筛选</button></div>
-<div class="table-wrap"><table class="records-table"><thead><tr><th>状态</th><th>发生日期</th><th>责任主体</th><th>规则</th><th>扣罚</th><th>工单 / 证据 / 备注</th><th style="width:200px;min-width:190px;text-align:right;">操作</th></tr></thead><tbody id="rows-records"></tbody></table></div><div class="pager" id="pager-records"></div></div>
+<div class="filter-dropdown filter-more-dropdown" data-dropdown="record-more-popover"><button type="button" class="filter-btn" id="record-more-btn" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor"><path d="M6 10.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z"/></svg><span>更多筛选</span><span class="filter-badge" id="record-more-badge" hidden>0</span><svg class="filter-chevron" viewBox="0 0 12 12"><path d="M2.5 4.5L6 8L9.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="filter-popover filter-more-popover" id="record-more-popover" hidden><div class="filter-popover-head"><span class="filter-popover-title">高级筛选</span><button type="button" class="filter-action-btn" data-clear-more-records="1">重置</button></div><div class="filter-more-grid"><div class="filter-field"><label>发生日期范围</label><div class="date-range-row"><input type="date" id="date-from" aria-label="开始日期" placeholder="开始日期"><span class="date-sep">至</span><input type="date" id="date-to" aria-label="结束日期" placeholder="结束日期"></div></div><div class="filter-field"><label for="record-status">审核状态</label><select id="record-status"><option value="">全部有效记录（不含已撤销与已归档）</option><option value="draft">待发布草稿</option><option value="published">已发布</option><option value="revoked">已撤销</option><option value="archived">已归档</option></select></div><div class="filter-field"><label for="record-person">责任主体</label><select id="record-person"><option value="">全部人员</option></select></div><div class="filter-field"><label for="record-sort">排序方式</label><select id="record-sort"><option value="date-desc">发生日期从近到远</option><option value="date-asc">发生日期从远到近</option></select></div></div><div class="filter-popover-foot"><span></span><button type="button" class="filter-done-btn" data-close-dropdown="1">收起</button></div></div></div>
+<button type="button" class="filter-clear-all-btn" data-clear-filters="records" title="重置全部筛选条件"><svg viewBox="0 0 12 12" width="10" height="10"><path d="M2 2L10 10M10 2L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>清空筛选</button>
+<div class="quarter-filter-cluster" id="quarter-filter-cluster" style="margin-left:auto;display:inline-flex;align-items:center;gap:5px;">
+  <span style="font-size:12px;font-weight:600;color:#64748b;">季度：</span>
+  <button type="button" class="quarter-tag-btn" data-quarter="Q1" title="快捷筛选 Q1 季度违规记录">Q1</button>
+  <button type="button" class="quarter-tag-btn" data-quarter="Q2" title="快捷筛选 Q2 季度违规记录">Q2</button>
+  <button type="button" class="quarter-tag-btn" data-quarter="Q3" title="快捷筛选 Q3 季度违规记录">Q3</button>
+  <button type="button" class="quarter-tag-btn" data-quarter="Q4" title="快捷筛选 Q4 季度违规记录">Q4</button>
+</div>
+</div>
+<div class="quarter-month-subbar" id="quarter-month-subbar" style="display:none;align-items:center;justify-content:space-between;gap:10px;padding:8px 14px;margin:-8px 0 16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:9px;">
+  <div style="display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;">
+    <span id="quarter-month-title" style="font-size:12.5px;font-weight:700;color:#334155;">Q1 季度月份筛选：</span>
+    <div id="quarter-month-buttons" style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;"></div>
+  </div>
+  <button type="button" class="filter-action-btn" id="btn-close-quarter" style="padding:2px 8px;font-size:11.5px;">关闭季度筛选</button>
+</div>
+<div class="table-wrap"><table class="records-table"><thead><tr><th>状态</th><th>发生日期</th><th>责任主体</th><th>规则</th><th>扣罚</th><th>工单 / 证据 / 备注</th><th style="width:260px;min-width:240px;text-align:right;">操作</th></tr></thead><tbody id="rows-records"></tbody></table></div><div class="pager" id="pager-records"></div></div>
 </div>
 <aside class="records-analytics-sidebar" id="records-analytics-sidebar">
 <div class="panel analytics-panel" id="analytics-panel">
@@ -603,13 +776,13 @@ dialog::backdrop{background:rgba(15,23,42,.48);backdrop-filter:blur(5px);-webkit
 <div class="filter-dropdown" data-dropdown="rule-deduction-filter"><button type="button" class="filter-btn" id="rule-deduction-filter-btn" aria-haspopup="true" aria-expanded="false"><span id="rule-deduction-filter-text">扣罚</span><span class="filter-badge" id="rule-deduction-filter-badge" hidden>0</span><svg class="filter-chevron" viewBox="0 0 12 12"><path d="M2.5 4.5L6 8L9.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="filter-popover" id="rule-deduction-filter" hidden></div></div>
 <button type="button" class="filter-clear-all-btn" data-clear-filters="rules" title="重置全部筛选条件"><svg viewBox="0 0 12 12" width="10" height="10"><path d="M2 2L10 10M10 2L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>清空筛选</button></div>
 <div class="table-wrap"><table><thead><tr><th>大类 / 子类</th><th>违规行为</th><th>适用角色</th><th>扣罚基准</th><th>权重</th><th style="width:190px;min-width:180px;text-align:right;">操作</th></tr></thead><tbody id="rows-rules"></tbody></table></div><div class="pager" id="pager-rules"></div></div></section>
-<section id="view-personnel" hidden><div class="panel"><div class="panel-head"><h3>人员名册</h3><div class="panel-head-actions"><button type="button" class="secondary" id="import-trigger"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/></svg><span>导入 CSV</span></button> <button type="button" class="secondary" id="export-personnel"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg><span>导出 CSV</span></button> <button type="button" class="primary" data-add="personnel"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg><span>新增人员</span></button></div></div><input id="import-file" type="file" accept=".csv,text/csv" hidden>
+<section id="view-personnel" hidden><div class="panel"><div class="panel-head"><h3>人员名册</h3><div class="panel-head-actions"><button type="button" class="secondary" id="btn-batch-personnel" disabled title="批量编辑勾选人员的客户群、BU、角色"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 2l3 3-9 9H2v-3l9-9z"/></svg><span>批量编辑 (<span id="batch-personnel-count">0</span>)</span></button> <button type="button" class="secondary" id="import-trigger"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/></svg><span>导入 CSV</span></button> <button type="button" class="secondary" id="export-personnel"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg><span>导出 CSV</span></button> <button type="button" class="primary" data-add="personnel"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg><span>新增人员</span></button></div></div><input id="import-file" type="file" accept=".csv,text/csv" hidden>
 <div class="overview-mini-stats" id="personnel-stats"></div>
 <div class="filter-bar"><div class="search-wrap"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg><input class="filter-search" id="person-search" placeholder="搜索工号、姓名、角色、客户群或 BU" aria-label="搜索人员"></div>
 <div class="filter-dropdown" data-dropdown="group-filter"><button type="button" class="filter-btn" id="group-filter-btn" aria-haspopup="true" aria-expanded="false"><span id="group-filter-text">客户群</span><span class="filter-badge" id="group-filter-badge" hidden>0</span><svg class="filter-chevron" viewBox="0 0 12 12"><path d="M2.5 4.5L6 8L9.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="filter-popover" id="group-filter" hidden></div></div>
 <div class="filter-dropdown" data-dropdown="bu-filter"><button type="button" class="filter-btn" id="bu-filter-btn" aria-haspopup="true" aria-expanded="false"><span id="bu-filter-text">BU</span><span class="filter-badge" id="bu-filter-badge" hidden>0</span><svg class="filter-chevron" viewBox="0 0 12 12"><path d="M2.5 4.5L6 8L9.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="filter-popover" id="bu-filter" hidden></div></div>
 <div class="filter-dropdown" data-dropdown="role-filter"><button type="button" class="filter-btn" id="role-filter-btn" aria-haspopup="true" aria-expanded="false"><span id="role-filter-text">角色</span><span class="filter-badge" id="role-filter-badge" hidden>0</span><svg class="filter-chevron" viewBox="0 0 12 12"><path d="M2.5 4.5L6 8L9.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="filter-popover" id="role-filter" hidden></div></div>
-<button type="button" class="filter-clear-all-btn" data-clear-filters="personnel" title="重置全部筛选条件"><svg viewBox="0 0 12 12" width="10" height="10"><path d="M2 2L10 10M10 2L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>清空筛选</button></div><div class="table-wrap"><table><thead><tr><th>工号</th><th>姓名 / 账户</th><th>客户群</th><th>BU</th><th>角色</th><th style="width:190px;min-width:180px;text-align:right;">操作</th></tr></thead><tbody id="rows-personnel"></tbody></table></div><div class="pager" id="pager-personnel"></div></div></section>
+<button type="button" class="filter-clear-all-btn" data-clear-filters="personnel" title="重置全部筛选条件"><svg viewBox="0 0 12 12" width="10" height="10"><path d="M2 2L10 10M10 2L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>清空筛选</button></div><div class="table-wrap"><table><thead><tr><th id="th-personnel-select-all" style="width:38px;text-align:center;cursor:pointer;padding:0;" title="点击全选/取消全选当前筛选出的所有人员"><label style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;min-height:36px;cursor:pointer;margin:0;"><input type="checkbox" id="personnel-select-all" aria-label="全选" style="width:16px;height:16px;accent-color:var(--red);cursor:pointer;vertical-align:middle;"></label></th><th>工号</th><th>姓名 / 账户</th><th>客户群</th><th>BU</th><th>角色</th><th style="width:190px;min-width:180px;text-align:right;">操作</th></tr></thead><tbody id="rows-personnel"></tbody></table></div><div class="pager" id="pager-personnel"></div></div></section>
 <section id="view-groups" hidden>
 <div class="org-overview-grid" id="org-overview-grid"></div>
 <div class="config-grid org-config-grid">
@@ -899,6 +1072,153 @@ dialog::backdrop{background:rgba(15,23,42,.48);backdrop-filter:blur(5px);-webkit
     </div>
   </form>
 </dialog>
+<dialog id="record-detail-dialog">
+  <div class="detail-dialog-head">
+    <div class="detail-title-group">
+      <span class="detail-status-pill" id="detail-status-pill"></span>
+      <h3 id="detail-title">违规记录详情</h3>
+      <span class="detail-id-chip" id="detail-id-chip"></span>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="detail-fold-controls">
+        <button type="button" class="detail-fold-btn" id="btn-fold-all-cards" title="折叠所有卡片">
+          <svg viewBox="0 0 16 16" width="12" height="12"><path d="M3 10l5-5 5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <span>全部折叠</span>
+        </button>
+        <button type="button" class="detail-fold-btn" id="btn-unfold-all-cards" title="展开所有卡片">
+          <svg viewBox="0 0 16 16" width="12" height="12"><path d="M3 6l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <span>全部展开</span>
+        </button>
+      </div>
+      <button type="button" class="dialog-close-btn" id="close-record-detail" aria-label="关闭" title="关闭窗口 (Esc)">
+        <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="detail-dialog-body" id="record-detail-body"></div>
+  <div class="dialog-foot" id="record-detail-foot">
+    <button type="button" class="secondary" id="detail-foot-close">关闭</button>
+    <div id="detail-actions-cluster" style="display:inline-flex;gap:8px;align-items:center;"></div>
+  </div>
+</dialog>
+<dialog id="batch-personnel-dialog" style="width:min(760px,calc(100vw - 32px));border-radius:16px;box-shadow:0 30px 70px -15px rgba(15,23,42,.35),0 0 0 1px rgba(15,23,42,.06);background:#fff;border:1px solid #cbd5e1;padding:0;overflow:hidden;">
+  <div class="dialog-head" style="padding:16px 22px;background:#fff;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;">
+    <div>
+      <h3 style="margin:0;font-size:17px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:8px;">
+        <span>👥</span>
+        <span>批量编辑人员属性</span>
+      </h3>
+      <div class="muted" style="margin-top:2px;">批量调整已选在册人员的客户群、BU 或适用角色配置</div>
+    </div>
+    <button type="button" class="dialog-close-btn" id="close-batch-personnel" aria-label="关闭" title="关闭 (Esc)">
+      <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg>
+    </button>
+  </div>
+  <form id="batch-personnel-form" style="display:flex;flex-direction:column;max-height:calc(85vh - 70px);">
+    <div style="padding:18px 22px;overflow-y:auto;display:flex;flex-direction:column;gap:16px;">
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;">
+        <div style="font-size:12.5px;font-weight:700;color:#475569;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;">
+          <span>已选中人员 (<span id="batch-dialog-person-count">0</span> 人)：</span>
+          <button type="button" class="link" id="btn-batch-clear-selection" style="font-size:12px;padding:0;">清空已选</button>
+        </div>
+        <div id="batch-selected-chips" style="display:flex;flex-wrap:wrap;gap:6px;max-height:86px;overflow-y:auto;"></div>
+      </div>
+
+      <div class="batch-edit-section" style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+          <div style="font-weight:750;font-size:14px;color:#1e293b;display:flex;align-items:center;gap:6px;">
+            <span>🏢</span><span>客户群归属调整</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <label for="batch-group-mode" style="font-size:12px;color:#64748b;font-weight:600;">调整方式：</label>
+            <select id="batch-group-mode" style="padding:4px 8px;font-size:12.5px;height:30px;">
+              <option value="keep">保持原样（不修改）</option>
+              <option value="replace">覆盖替换为所选客户群</option>
+              <option value="add">追加新增所选客户群</option>
+              <option value="remove">从现有配置中移除所选客户群</option>
+            </select>
+          </div>
+        </div>
+        <div id="batch-group-options" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;padding-top:4px;"></div>
+      </div>
+
+      <div class="batch-edit-section" style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+          <div style="font-weight:750;font-size:14px;color:#1e293b;display:flex;align-items:center;gap:6px;">
+            <span>🌐</span><span>BU 业务单元调整</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <label for="batch-bu-mode" style="font-size:12px;color:#64748b;font-weight:600;">调整方式：</label>
+            <select id="batch-bu-mode" style="padding:4px 8px;font-size:12.5px;height:30px;">
+              <option value="keep">保持原样（不修改）</option>
+              <option value="replace">覆盖替换为所选 BU</option>
+              <option value="add">追加新增所选 BU</option>
+              <option value="remove">从现有配置中移除所选 BU</option>
+            </select>
+          </div>
+        </div>
+        <div id="batch-bu-options" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;padding-top:4px;"></div>
+      </div>
+
+      <div class="batch-edit-section" style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+          <div style="font-weight:750;font-size:14px;color:#1e293b;display:flex;align-items:center;gap:6px;">
+            <span>👤</span><span>适用岗位角色调整</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <label for="batch-role-mode" style="font-size:12px;color:#64748b;font-weight:600;">调整方式：</label>
+            <select id="batch-role-mode" style="padding:4px 8px;font-size:12.5px;height:30px;">
+              <option value="keep">保持原样（不修改）</option>
+              <option value="replace">覆盖替换为所选角色</option>
+              <option value="add">追加新增所选角色</option>
+              <option value="remove">从现有配置中移除所选角色</option>
+            </select>
+          </div>
+        </div>
+        <div id="batch-role-options" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;padding-top:4px;"></div>
+      </div>
+    </div>
+    <div class="dialog-foot" style="padding:12px 22px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;justify-content:flex-end;gap:10px;">
+      <button type="button" class="secondary" id="cancel-batch-personnel">取消</button>
+      <button type="submit" class="primary" id="confirm-batch-personnel">确认批量更新</button>
+    </div>
+  </form>
+</dialog>
+<dialog id="attachment-preview-dialog" class="attachment-modal">
+  <div class="attach-modal-header">
+    <div class="attach-modal-title-wrap">
+      <span class="attach-modal-icon" id="attach-modal-icon">📄</span>
+      <div class="attach-modal-titles">
+        <h3 id="attach-modal-title" class="attach-modal-title">附件材料大弹窗预览</h3>
+        <span id="attach-modal-meta" class="attach-modal-meta"></span>
+      </div>
+    </div>
+    <div class="attach-modal-actions">
+      <a id="attach-modal-open-raw" href="#" target="_blank" class="attachment-btn" title="在新标签页中打开原始文件">
+        <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h4M10 2h4v4M6 10L14 2"/></svg>
+        <span>新标签打开</span>
+      </a>
+      <a id="attach-modal-dl-btn" href="#" download class="attachment-btn primary" title="下载原文件">
+        <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v9M4 7l4 4 4-4M2 13h12"/></svg>
+        <span>下载原件</span>
+      </a>
+      <button type="button" class="dialog-close-btn" id="attach-modal-close" aria-label="关闭" title="关闭 (Esc)">
+        <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="attach-modal-body" id="attach-modal-body">
+    <div id="attach-img-container" class="attach-preview-item" hidden>
+      <img id="attach-modal-img" src="" alt="证据大图预览">
+    </div>
+    <div id="attach-frame-container" class="attach-preview-item" hidden>
+      <iframe id="attach-modal-frame" src="" title="文档附件在线查阅"></iframe>
+    </div>
+    <div id="attach-text-container" class="attach-preview-item" hidden>
+      <pre id="attach-modal-text" class="attach-text-view"></pre>
+    </div>
+  </div>
+</dialog>
 <div id="toast-container" class="toast-container"></div>
 <script>
 'use strict';
@@ -926,6 +1246,12 @@ const personBusinessUnits = person => Array.isArray(person?.businessUnitIds)?per
 const businessUnitName = id => (state.businessUnits || []).find(unit=>unit.id===id)?.value||'未知 BU';
 const categoryName = id => (state.deductionCategories || []).find(category=>category.id===id)?.value||'其他';
 const deductionFor = value => (state.deductions || []).find(item=>item.value===value);
+const recordAttachments = record => {
+  if (!record) return [];
+  if (Array.isArray(record.attachments) && record.attachments.length) return record.attachments.filter(Boolean);
+  if (record.attachment) return String(record.attachment).split(';').map(s => s.trim()).filter(Boolean);
+  return [];
+};
 const configButtons = (kind,item) => '<button class="link" data-config-edit="'+kind+'" data-id="'+escapeHtml(item.id)+'">编辑</button><button class="link danger" data-config-delete="'+kind+'" data-id="'+escapeHtml(item.id)+'">删除</button>';
 const configChip = (kind,item) => '<span class="chip">'+escapeHtml(item.value)+configButtons(kind,item)+'</span>';
 let lastRenderedRecords = [];
@@ -1000,6 +1326,87 @@ function openMessage({title='提示',message='',bannerType='info',icon='ℹ️',
       wrap.append(input,eye);
       label.append(wrap);
       if(!firstInput)firstInput=input;
+    }else if(field.type==='file'){
+      const fileBox = document.createElement('div');
+      fileBox.className = 'msg-file-field-box';
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.name = field.name;
+      fileInput.accept = field.accept || '.pdf,.png,.jpg,.jpeg,.txt,.zip,.rar,.7z,.tar,.gz,.eml,.msg';
+      fileInput.style.display = 'none';
+
+      const dropZone = document.createElement('div');
+      dropZone.className = 'msg-drop-zone';
+      dropZone.innerHTML = `
+        <div class="msg-drop-empty">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+          </svg>
+          <div class="msg-drop-text">点击或拖拽文件至此选择证明材料</div>
+          <div class="msg-drop-sub">${escapeHtml(field.hint || '支持 PDF/图片、压缩包(ZIP/RAR/7Z/TAR/GZ)、邮件(EML/MSG)，≤ 10MB')}</div>
+        </div>
+        <div class="msg-drop-selected" hidden>
+          <div class="msg-selected-info">
+            <span class="msg-selected-icon">📄</span>
+            <div class="msg-selected-names">
+              <span class="msg-selected-name"></span>
+              <span class="msg-selected-size"></span>
+            </div>
+          </div>
+          <button type="button" class="msg-clear-file-btn" title="清除重新选择">移除</button>
+        </div>
+      `;
+
+      dropZone.onclick = (e) => {
+        if (e.target.closest('.msg-clear-file-btn')) {
+          e.stopPropagation();
+          fileInput.value = '';
+          updateSelected(null);
+          return;
+        }
+        fileInput.click();
+      };
+
+      const updateSelected = (file) => {
+        const emptyEl = dropZone.querySelector('.msg-drop-empty');
+        const selectedEl = dropZone.querySelector('.msg-drop-selected');
+        if (file) {
+          emptyEl.hidden = true;
+          selectedEl.hidden = false;
+          dropZone.classList.add('has-file');
+          selectedEl.querySelector('.msg-selected-name').textContent = file.name;
+          const sz = file.size >= 1048576 ? (file.size / 1048576).toFixed(1) + ' MB' : (file.size / 1024).toFixed(0) + ' KB';
+          selectedEl.querySelector('.msg-selected-size').textContent = sz;
+          const isImg = /\.(png|jpe?g)$/i.test(file.name);
+          const isArchive = /\.(zip|rar|7z|tar|gz)$/i.test(file.name);
+          const isEmail = /\.(eml|msg)$/i.test(file.name);
+          const icon = isImg ? '🖼️' : (isArchive ? '📦' : (isEmail ? '✉️' : (/\.pdf$/i.test(file.name) ? '📄' : '📝')));
+          selectedEl.querySelector('.msg-selected-icon').textContent = icon;
+        } else {
+          emptyEl.hidden = false;
+          selectedEl.hidden = true;
+          dropZone.classList.remove('has-file');
+        }
+      };
+
+      fileInput.onchange = () => {
+        const f = fileInput.files && fileInput.files[0];
+        updateSelected(f);
+      };
+
+      dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); };
+      dropZone.ondragleave = () => { dropZone.classList.remove('drag-over'); };
+      dropZone.ondrop = (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+        if (e.dataTransfer.files && e.dataTransfer.files.length) {
+          fileInput.files = e.dataTransfer.files;
+          updateSelected(e.dataTransfer.files[0]);
+        }
+      };
+
+      fileBox.append(fileInput, dropZone);
+      label.append(fileBox);
     }else if(field.multiline){
       const textarea=document.createElement('textarea');
       textarea.name=field.name;textarea.value=field.value||'';textarea.required=field.required!==false;textarea.maxLength=field.maxLength||1000;
@@ -1090,7 +1497,7 @@ function openMessage({title='提示',message='',bannerType='info',icon='ℹ️',
     (firstInput||confirmBtn).focus();
   });
 }
-const uiAlert=(message,title='系统提示')=>openMessage({title,message,bannerType:'info',icon:'ℹ️',confirmText:'知道了'});
+const uiAlert=(message,title='系统提示',bannerType='info',icon='ℹ️')=>openMessage({title,message,bannerType,icon,confirmText:'知道了'});
 const uiConfirm=(message,title='请确认操作',bannerType='danger',icon='⚠️')=>openMessage({title,message,bannerType,icon,confirmText:'确认操作'}).then(Boolean);
 const uiPrompt=(message,value='',title='请输入')=>openMessage({title,bannerType:'info',icon:'✏️',fields:[{name:'value',label:message,value}],confirmText:'确定'}).then(result=>result?.value??null);
 const roleList = rule => Array.isArray(rule?.roles) ? rule.roles : String(rule?.roles || '').split(/[,+/]/).map(x => x.trim()).filter(Boolean);
@@ -1238,12 +1645,14 @@ function exportRecordsToCSV(recordsToExport){
     return;
   }
   const headers=['记录状态','发生日期','责任人工号','责任人姓名','客户群','BU','适用角色','违规大类','违规子类','判定描述','扣罚标准','工单号','证据说明','备注说明','附件链接'];
-  const statusMap={draft:'待发布草稿',published:'已发布',revoked:'已撤销'};
+  const statusMap={draft:'待发布草稿',published:'已发布',revoked:'已撤销',archived:'已归档'};
   const rows=recordsToExport.map(rec=>{
     const p=rec.personSnapshot||personFor(rec)||{};
     const r=rec.ruleSnapshot||ruleFor(rec)||{};
+    const isArchived = rec.status === 'archived' || Boolean(rec.archived);
+    const recStatus = isArchived ? 'archived' : rec.status;
     return [
-      statusMap[rec.status]||rec.status||'',
+      statusMap[recStatus]||recStatus||'',
       rec.date||'',
       rec.staffId||'',
       p.name||rec.staffId||'',
@@ -1257,7 +1666,7 @@ function exportRecordsToCSV(recordsToExport){
       rec.tt||'',
       rec.evidence||'',
       rec.remark||'',
-      rec.attachment||''
+      recordAttachments(rec).join('; ')||rec.attachment||''
     ].map(v=>'"'+String(v||'').replace(/"/g,'""').replace(/\r?\n/g,' ')+'"').join(',');
   });
   const csvContent='\uFEFF'+headers.join(',')+'\r\n'+rows.join('\r\n');
@@ -1273,7 +1682,7 @@ function exportRecordsToCSV(recordsToExport){
   showToast(`已成功导出 ${recordsToExport.length} 条违规清单（Excel 兼容）`,'success');
 }
 const uniqueOptions = items => [...new Map(items.filter(item=>item&&item.id).map(item=>[item.id,item])).values()];
-const pickerSpecs={personGroups:{id:'group-filter',label:'客户群',set:personFilters.groups,items:()=>(state.customerGroups||[]).map(item=>({id:item.id,value:item.value}))},personRoles:{id:'role-filter',label:'角色',set:personFilters.roles,items:()=>(state.roles||[]).map(item=>({id:item.value,value:item.value}))},personBUs:{id:'bu-filter',label:'BU',set:personFilters.businessUnits,items:()=>(state.businessUnits||[]).map(item=>({id:item.id,value:item.value}))},recordGroups:{id:'record-group-filter',label:'客户群',set:recordFilters.groups,items:()=>uniqueOptions([...(state.records||[]).map(record=>({id:record.customerGroupId||record.personSnapshot?.customerGroupId,value:record.personSnapshot?.customerGroupName||groupName(record.customerGroupId)})),...(state.customerGroups||[]).map(item=>({id:item.id,value:item.value}))])},recordRoles:{id:'record-role-filter',label:'角色',set:recordFilters.roles,items:()=>uniqueOptions([...(state.records||[]).flatMap(record=>personRoles(record.personSnapshot||personFor(record)||{}).map(role=>({id:role,value:role}))),...(state.roles||[]).map(item=>({id:item.value,value:item.value}))])},recordDeductions:{id:'record-deduction-filter',label:'扣罚',set:recordFilters.deductions,items:()=>uniqueOptions([...(state.records||[]).map(record=>({id:record.deduct,value:record.deduct,category:categoryName(deductionFor(record.deduct)?.categoryId)})),...(state.deductions||[]).map(item=>({id:item.value,value:item.value,category:categoryName(item.categoryId)}))])},ruleRoles:{id:'rule-role-filter',label:'角色',set:ruleFilters.roles,items:()=>(state.roles||[]).map(item=>({id:item.value,value:item.value}))},ruleDeductions:{id:'rule-deduction-filter',label:'扣罚',set:ruleFilters.deductions,items:()=>(state.deductions||[]).map(item=>({id:item.value,value:item.value,category:categoryName(item.categoryId)}))}};
+const pickerSpecs={personGroups:{id:'group-filter',label:'客户群',set:personFilters.groups,items:()=>(state.customerGroups||[]).map(item=>({id:item.id,value:item.value}))},personRoles:{id:'role-filter',label:'角色',set:personFilters.roles,items:()=>(state.roles||[]).map(item=>({id:item.value,value:item.value}))},personBUs:{id:'bu-filter',label:'BU',set:personFilters.businessUnits,items:()=>(state.businessUnits||[]).map(item=>({id:item.id,value:item.value}))},recordGroups:{id:'record-group-filter',label:'客户群',set:recordFilters.groups,items:()=>uniqueOptions([...(state.records||[]).map(record=>({id:record.customerGroupId||record.personSnapshot?.customerGroupId,value:record.personSnapshot?.customerGroupName||groupName(record.customerGroupId)})),...(state.customerGroups||[]).map(item=>({id:item.id,value:item.value}))])},recordRoles:{id:'record-role-filter',label:'角色',set:recordFilters.roles,items:()=>uniqueOptions([...(state.records||[]).flatMap(record=>personRoles(personFor(record)||record.personSnapshot||{}).map(role=>({id:role,value:role}))),...(state.roles||[]).map(item=>({id:item.value,value:item.value}))])},recordDeductions:{id:'record-deduction-filter',label:'扣罚',set:recordFilters.deductions,items:()=>uniqueOptions([...(state.records||[]).map(record=>({id:record.deduct,value:record.deduct,category:categoryName(deductionFor(record.deduct)?.categoryId)})),...(state.deductions||[]).map(item=>({id:item.value,value:item.value,category:categoryName(item.categoryId)}))])},ruleRoles:{id:'rule-role-filter',label:'角色',set:ruleFilters.roles,items:()=>(state.roles||[]).map(item=>({id:item.value,value:item.value}))},ruleDeductions:{id:'rule-deduction-filter',label:'扣罚',set:ruleFilters.deductions,items:()=>(state.deductions||[]).map(item=>({id:item.value,value:item.value,category:categoryName(item.categoryId)}))}};
 let currentOpenDropdown = null;
 function closeAllDropdowns(){
 document.querySelectorAll('.filter-dropdown').forEach(el=>{
@@ -1356,26 +1765,62 @@ if(btn)btn.setAttribute('aria-expanded','true');
 }
 }
 function recordRow(record){
-const rule=record.ruleSnapshot||ruleFor(record)||{},person=record.personSnapshot||personFor(record)||{};
-const statusLabel={draft:'草稿',published:'已发布',revoked:'已撤销'}[record.status]||record.status;
+const liveRule=ruleFor(record), livePerson=personFor(record);
+const rule=liveRule||record.ruleSnapshot||{};
+const person=livePerson||record.personSnapshot||{};
+const isArchived = record.status==='archived' || Boolean(record.archived);
+const recStatus = isArchived ? 'archived' : record.status;
+const statusLabel={draft:'草稿',published:'已发布',revoked:'已撤销',archived:'已归档'}[recStatus]||recStatus;
 let actions='';
-if(record.status==='draft'){
+const detailBtn=`<button type="button" class="rec-action-btn view-detail" data-view-detail="${escapeHtml(record.id)}" title="查看该条违规记录完整详情与证明附件"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="6.5"/><path d="M8 7v4M8 4.5h.01"/></svg><span>详情</span></button>`;
+actions+=detailBtn;
+if(recStatus==='draft'){
 if(state.canEdit||record.createdBy===state.username){
 actions+=`<button type="button" class="rec-action-btn edit" data-edit="records" data-id="${escapeHtml(record.id)}" title="编辑此违规草稿"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 2l3 3-9 9H2v-3l9-9z"/></svg><span>编辑</span></button>`;
+actions+=`<button type="button" class="rec-action-btn delete-draft danger" data-delete-record="${escapeHtml(record.id)}" title="删除此待发布草稿"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2.5 4h11M5.5 4V2.5A1.5 1.5 0 0 1 7 1h2a1.5 1.5 0 0 1 1.5 1.5V4m2 0v9a1.5 1.5 0 0 1-1.5 1.5h-6A1.5 1.5 0 0 1 3.5 13V4"/></svg><span>删除</span></button>`;
 }
 if(state.canEdit){
 actions+=`<button type="button" class="rec-action-btn publish" data-publish="${escapeHtml(record.id)}" title="审核通过并正式发布此记录"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 8.5l3.5 3.5 7-7"/></svg><span>审核发布</span></button>`;
 }
-}else if(record.status==='published'&&state.canEdit){
+}else if(recStatus==='published'&&state.canEdit){
 actions+=`<button type="button" class="rec-action-btn force-edit" data-force-edit="${escapeHtml(record.id)}" title="输入口令强制修改已发布的违规记录"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8.5 1.5L2.5 9h5l-1 5.5L13.5 7h-5l1-5.5z"/></svg><span>强制修改</span></button>`;
 actions+=`<button type="button" class="rec-action-btn revoke" data-revoke="${escapeHtml(record.id)}" title="输入口令撤销此条已发布记录"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7h7a4 4 0 0 1 4 4v0a4 4 0 0 1-4 4H5"/><path d="M6 4L3 7l3 3"/></svg><span>撤销</span></button>`;
-}else if(record.status==='revoked'){
-actions=`<span class="rec-idle-tag">已撤销停用</span>`;
+actions+=`<button type="button" class="rec-action-btn archive-record" data-archive-record="${escapeHtml(record.id)}" title="将此记录归档封存（移出全部有效记录）"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 3V1h6v2M2 4h12M4 4v10h8V4"/></svg><span>归档</span></button>`;
+}else if(recStatus==='revoked'){
+actions=`<span class="rec-idle-tag" style="margin-right:4px;">已撤销</span>`+detailBtn;
+if(state.canEdit){
+actions+=`<button type="button" class="rec-action-btn archive-record" data-archive-record="${escapeHtml(record.id)}" title="将此撤销记录归档封存"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 3V1h6v2M2 4h12M4 4v10h8V4"/></svg><span>归档</span></button>`;
 }
-const notes=[record.tt,record.evidence,record.remark].filter(Boolean).map(value=>'<span>'+escapeHtml(value)+'</span>').join('')+(record.attachment?'<a href="'+escapeHtml(record.attachment)+'">查看附件</a>':'');
-return '<tr><td><span class="tag '+escapeHtml(record.status)+'">'+escapeHtml(statusLabel)+'</span>'+(record.migrationWarning?'<span class="tag" title="旧版历史记录的人员角色与规则不匹配，需复核规则">角色待复核</span>':'')+'</td><td>'+escapeHtml(record.date)+'</td><td><span class="cell-title">'+escapeHtml(person.name||record.staffId)+'</span><span class="cell-sub">'+escapeHtml(person.customerGroupName||groupName(record.customerGroupId||person.customerGroupId))+' · '+escapeHtml(personRoles(person).join('、'))+'</span></td><td><span class="cell-title">'+escapeHtml(rule.desc||'')+'</span><span class="cell-sub">'+escapeHtml(rule.svcModule||'')+' / '+escapeHtml(rule.subModule||'')+'</span></td><td><span class="tag">'+escapeHtml(record.deduct)+'</span></td><td><div class="cell-notes">'+notes+'</div></td><td style="text-align:right;white-space:nowrap;"><div class="cell-actions">'+actions+'</div></td></tr>';
+}else if(recStatus==='archived'){
+actions=`<span class="rec-idle-tag" style="margin-right:4px;background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;">已归档</span>`+detailBtn;
+if(state.canEdit){
+actions+=`<button type="button" class="rec-action-btn unarchive-record" data-unarchive-record="${escapeHtml(record.id)}" title="恢复此归档记录为已发布状态"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7h7a4 4 0 0 1 4 4v0a4 4 0 0 1-4 4H5"/><path d="M6 4L3 7l3 3"/></svg><span>恢复</span></button>`;
 }
-let analyticsSidebarOpen=localStorage.getItem('rp_analytics_open')!=='false';
+}
+const recAtts=recordAttachments(record);
+const attachBtn=recAtts.length?`<button type="button" class="cell-attach-badge" data-view-file="${escapeHtml(recAtts[0])}" data-file-title="违规证据附件 - ${escapeHtml(person.name||record.staffId)} (${escapeHtml(record.date)})" title="点击查阅证明材料${recAtts.length>1?` (共 ${recAtts.length} 份文件)`:''}"><svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 8.5V11a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><circle cx="6" cy="7" r="1"/><path d="M14 4l-4 4-2-2-4 4"/></svg><span>附件${recAtts.length>1?` (${recAtts.length})`:''}</span></button>`:'';
+const revokeAttachBtn=record.revokeAttachment?`<button type="button" class="cell-attach-badge revoke" data-view-file="${escapeHtml(record.revokeAttachment)}" data-file-title="撤销证明材料 - ${escapeHtml(person.name||record.staffId)} (${escapeHtml(record.date)})" title="点击在大弹窗中查阅撤销证明材料"><svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h7a4 4 0 0 1 4 4v0a4 4 0 0 1-4 4H5"/><path d="M6 4L3 7l3 3"/></svg><span>撤销证明</span></button>`:'';
+const notes=[record.tt,record.evidence,record.remark].filter(Boolean).map(value=>'<span>'+escapeHtml(value)+'</span>').join('')+attachBtn+revokeAttachBtn;
+
+const roleMatch=roleMatches(person,rule);
+const needReview=recStatus!=='revoked'&&recStatus!=='archived'&&(roleMatch===false||(roleMatch===null&&Boolean(record.migrationWarning)));
+const reviewBadge=needReview?`<span class="tag" style="background:#fff1f2;color:#be123c;border:1px solid #fecdd3;" title="责任主体当前岗位角色与该规则适用范畴不符，需复核角色或规则">角色待复核</span>`:'';
+
+return `<tr class="record-row" data-row-record="${escapeHtml(record.id)}"><td><span class="tag ${escapeHtml(recStatus)}">${escapeHtml(statusLabel)}</span>${reviewBadge}</td><td>${escapeHtml(record.date)}</td><td><span class="cell-title">${escapeHtml(person.name||record.staffId)}</span><span class="cell-sub">${escapeHtml(person.customerGroupName||groupName(record.customerGroupId||person.customerGroupId))} · ${escapeHtml(personRoles(person).join('、')||'未配置角色')}</span></td><td><span class="cell-title">${escapeHtml(rule.desc||'')}</span><span class="cell-sub">${escapeHtml(rule.svcModule||'')} / ${escapeHtml(rule.subModule||'')}</span></td><td><span class="tag">${escapeHtml(record.deduct)}</span></td><td><div class="cell-notes">${notes}</div></td><td style="text-align:right;white-space:nowrap;"><div class="cell-actions">${actions}</div></td></tr>`;
+}
+let analyticsSidebarOpen=true;
+let autoCollapseAnalyticsTimer=null;
+function scheduleAutoCollapseAnalytics(){
+if(autoCollapseAnalyticsTimer){clearTimeout(autoCollapseAnalyticsTimer);}
+autoCollapseAnalyticsTimer=setTimeout(()=>{
+if(analyticsSidebarOpen){
+analyticsSidebarOpen=false;
+updateAnalyticsSidebar();
+}
+autoCollapseAnalyticsTimer=null;
+},1500);
+}
+scheduleAutoCollapseAnalytics();
 function updateAnalyticsSidebar(){
 const container=$('records-container');
 const toggleBtn=$('toggle-analytics-btn');
@@ -1615,16 +2060,245 @@ return `<tr><td><div class="entity-cell"><span class="entity-avatar deduct-type"
 }
 }
 }
+
+let activeQuarter = null;
+let activeQuarterMonth = null;
+
+function getRecordsFilterYear(){
+  const dates = (state.records || []).map(r => r.date).filter(Boolean);
+  if(dates.length){
+    const latestYear = parseInt(dates.slice().sort().reverse()[0].slice(0, 4), 10);
+    if(latestYear && !isNaN(latestYear)) return latestYear;
+  }
+  return new Date().getFullYear();
+}
+
+const QUARTER_MONTH_MAP = {
+  Q1: [1, 2, 3],
+  Q2: [4, 5, 6],
+  Q3: [7, 8, 9],
+  Q4: [10, 11, 12]
+};
+
+function getMonthDateRange(year, month){
+  const pad = n => String(n).padStart(2, '0');
+  const start = `${year}-${pad(month)}-01`;
+  const lastDay = new Date(year, month, 0).getDate();
+  const end = `${year}-${pad(month)}-${pad(lastDay)}`;
+  return { start, end };
+}
+
+function getQuarterDateRange(year, quarter){
+  const months = QUARTER_MONTH_MAP[quarter] || [1, 2, 3];
+  const start = `${year}-${String(months[0]).padStart(2, '0')}-01`;
+  const endMonth = months[months.length - 1];
+  const lastDay = new Date(year, endMonth, 0).getDate();
+  const end = `${year}-${String(endMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+  return { start, end };
+}
+
+function updateQuarterUI(){
+  document.querySelectorAll('.quarter-tag-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.quarter === activeQuarter);
+  });
+  const subbar = $('quarter-month-subbar');
+  if(!subbar) return;
+  if(!activeQuarter){
+    subbar.style.display = 'none';
+    return;
+  }
+  subbar.style.display = 'flex';
+  const titleEl = $('quarter-month-title');
+  const year = getRecordsFilterYear();
+  if(titleEl) titleEl.textContent = `${year}年 ${activeQuarter} 月份快捷筛选：`;
+  const btnCluster = $('quarter-month-buttons');
+  if(btnCluster){
+    const months = QUARTER_MONTH_MAP[activeQuarter] || [];
+    let html = `<button type="button" class="month-tag-btn ${activeQuarterMonth === null ? 'active' : ''}" data-quarter-month="all">全季度 (${activeQuarter})</button>`;
+    months.forEach(m => {
+      html += `<button type="button" class="month-tag-btn ${activeQuarterMonth === m ? 'active' : ''}" data-quarter-month="${m}">${m}月</button>`;
+    });
+    btnCluster.innerHTML = html;
+  }
+}
+
+function applyQuarterFilter(q){
+  const year = getRecordsFilterYear();
+  if(activeQuarter === q && activeQuarterMonth === null){
+    activeQuarter = null;
+    activeQuarterMonth = null;
+    $('date-from').value = '';
+    $('date-to').value = '';
+    updateQuarterUI();
+    pages.records = 1;
+    render();
+    return;
+  }
+  activeQuarter = q;
+  activeQuarterMonth = null;
+  const range = getQuarterDateRange(year, q);
+  $('date-from').value = range.start;
+  $('date-to').value = range.end;
+  updateQuarterUI();
+  pages.records = 1;
+  render();
+}
+
+function applyMonthFilter(mVal){
+  const year = getRecordsFilterYear();
+  if(mVal === 'all' || mVal === null){
+    activeQuarterMonth = null;
+    const range = getQuarterDateRange(year, activeQuarter);
+    $('date-from').value = range.start;
+    $('date-to').value = range.end;
+  } else {
+    const m = parseInt(mVal, 10);
+    activeQuarterMonth = m;
+    const range = getMonthDateRange(year, m);
+    $('date-from').value = range.start;
+    $('date-to').value = range.end;
+  }
+  updateQuarterUI();
+  pages.records = 1;
+  render();
+}
+
+let selectedPersonnelIds=new Set();
+let lastFilteredPersonnel=[];
+let lastVisiblePersonnel=[];
+
+function updateBatchPersonnelBtn(){
+  const count=selectedPersonnelIds.size;
+  const countEl=$('batch-personnel-count');
+  if(countEl)countEl.textContent=count;
+  const btn=$('btn-batch-personnel');
+  if(btn){
+    btn.disabled=!count;
+    btn.classList.toggle('active',count>0);
+  }
+  const selectAllEl=$('personnel-select-all');
+  if(selectAllEl){
+    if(!lastFilteredPersonnel.length){
+      selectAllEl.checked=false;
+      selectAllEl.indeterminate=false;
+    }else{
+      const filteredCheckedCount=lastFilteredPersonnel.filter(p=>selectedPersonnelIds.has(p.id)).length;
+      selectAllEl.checked=filteredCheckedCount===lastFilteredPersonnel.length&&lastFilteredPersonnel.length>0;
+      selectAllEl.indeterminate=filteredCheckedCount>0&&filteredCheckedCount<lastFilteredPersonnel.length;
+    }
+  }
+}
+
+function toggleSelectAllFilteredPersonnel(){
+  if(!lastFilteredPersonnel.length)return;
+  const allSelected=lastFilteredPersonnel.length>0&&lastFilteredPersonnel.every(p=>selectedPersonnelIds.has(p.id));
+  if(allSelected){
+    lastFilteredPersonnel.forEach(p=>selectedPersonnelIds.delete(p.id));
+  }else{
+    lastFilteredPersonnel.forEach(p=>selectedPersonnelIds.add(p.id));
+  }
+  render();
+}
+
+async function openBatchPersonnelDialog(){
+  if(!selectedPersonnelIds.size){
+    await uiAlert('请先在下方勾选要批量编辑的人员');
+    return;
+  }
+  if(!state.canEdit){
+    await uiAlert('当前登录身份权限不足，仅管理员可批量编辑在册人员属性','权限受限','warning','🔒');
+    return;
+  }
+  const dialog=$('batch-personnel-dialog');
+  if(!dialog)return;
+  const countEl=$('batch-dialog-person-count');
+  if(countEl)countEl.textContent=selectedPersonnelIds.size;
+  const chipsEl=$('batch-selected-chips');
+  if(chipsEl){
+    const selectedPersons=state.personnel.filter(p=>selectedPersonnelIds.has(p.id));
+    chipsEl.innerHTML=selectedPersons.map(p=>`<span class="person-group-chip" style="font-size:12px;padding:3px 8px;background:#fff;border:1px solid #cbd5e1;">👤 <b>${escapeHtml(p.name)}</b> (${escapeHtml(p.id)})</span>`).join('');
+  }
+  const gMode=$('batch-group-mode');if(gMode)gMode.value='keep';
+  const bMode=$('batch-bu-mode');if(bMode)bMode.value='keep';
+  const rMode=$('batch-role-mode');if(rMode)rMode.value='keep';
+
+  const groupOpts=$('batch-group-options');
+  if(groupOpts){
+    groupOpts.innerHTML=active('customerGroups').map(g=>`
+      <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;padding:6px 10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;cursor:pointer;user-select:none;">
+        <input type="checkbox" name="batch-groups" value="${escapeHtml(g.id)}" style="accent-color:var(--red);width:15px;height:15px;cursor:pointer;">
+        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(g.value)}">${escapeHtml(g.value)}</span>
+      </label>
+    `).join('')||'<span class="muted">未配置客户群</span>';
+  }
+
+  const buOpts=$('batch-bu-options');
+  if(buOpts){
+    buOpts.innerHTML=active('businessUnits').map(b=>`
+      <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;padding:6px 10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;cursor:pointer;user-select:none;">
+        <input type="checkbox" name="batch-bus" value="${escapeHtml(b.id)}" style="accent-color:var(--red);width:15px;height:15px;cursor:pointer;">
+        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(b.value)}">${escapeHtml(b.value)}</span>
+      </label>
+    `).join('')||'<span class="muted">未配置 BU</span>';
+  }
+
+  const roleOpts=$('batch-role-options');
+  if(roleOpts){
+    roleOpts.innerHTML=active('roles').map(r=>`
+      <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;padding:6px 10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;cursor:pointer;user-select:none;">
+        <input type="checkbox" name="batch-roles" value="${escapeHtml(r.value)}" style="accent-color:var(--red);width:15px;height:15px;cursor:pointer;">
+        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(r.value)}">${escapeHtml(r.value)}</span>
+      </label>
+    `).join('')||'<span class="muted">未配置角色</span>';
+  }
+
+  dialog.showModal();
+}
+
 function render(){
 const names={records:'违规记录',rules:'规则字典',personnel:'人员名册',groups:'客户群与 BU 配置',config:'角色与扣罚配置',audit:'操作审计',security:'修改口令'};$('page-title').textContent=names[view];
 document.querySelectorAll('main section[id^="view-"]').forEach(el=>el.hidden=el.id!=='view-'+view);document.querySelectorAll('#nav button').forEach(el=>el.classList.toggle('active',el.dataset.view===view));
 $('nav').querySelector('[data-view="security"]').hidden=!state.canEdit;
-const personSelect=$('record-person'),prev=personSelect.value;personSelect.innerHTML=option('','全部人员')+(state.personnel||[]).map(person=>option(person.id,person.name+' ('+person.id+')')).join('');personSelect.value=prev;
+const personSelect=$('record-person'),prev=personSelect.value;
+const activePeople=active('personnel');
+const activeIds=new Set(activePeople.map(p=>p.id));
+const historicalStaffMap=new Map();
+(state.records||[]).forEach(rec=>{
+  if(rec.staffId&&!activeIds.has(rec.staffId)&&!historicalStaffMap.has(rec.staffId)){
+    const p=personFor(rec)||rec.personSnapshot||{};
+    historicalStaffMap.set(rec.staffId,{id:rec.staffId,name:p.name||rec.staffId,isArchived:true});
+  }
+});
+const filterPeopleList=[
+  ...activePeople.map(p=>({id:p.id,name:p.name,isArchived:false})),
+  ...historicalStaffMap.values()
+];
+personSelect.innerHTML=option('','全部人员')+filterPeopleList.map(p=>option(p.id,p.name+' ('+p.id+')'+(p.isArchived?' [已归档]':''))).join('');
+personSelect.value=prev;
 const moduleSelect=$('rule-module'),modulePrev=moduleSelect.value;moduleSelect.innerHTML=option('','全部大类')+[...new Set(active('rules').map(rule=>rule.svcModule))].map(x=>option(x,x)).join('');moduleSelect.value=modulePrev;
-const counts={draft:0,published:0,revoked:0};(state.records||[]).forEach(record=>{if(counts[record.status]!=null)counts[record.status]++});const selectedStatus=$('record-status').value;$('stats').innerHTML=[['全部记录',(state.records||[]).length,''],['待发布草稿',counts.draft,'draft'],['已发布',counts.published,'published'],['已撤销',counts.revoked,'revoked']].map(([label,n,status])=>'<button type="button" class="stat '+(selectedStatus===status?'active':'')+'" data-stat="'+status+'" aria-pressed="'+(selectedStatus===status)+'" title="点击筛选，再次点击取消">'+escapeHtml(label)+'<b>'+n+'</b></button>').join('');
+const counts={draft:0,published:0,revoked:0,archived:0};
+(state.records||[]).forEach(record=>{
+  const st=(record.status==='archived'||record.archived)?'archived':record.status;
+  if(counts[st]!=null)counts[st]++;
+});
+const selectedStatus=$('record-status').value;
+const activeCount=counts.draft+counts.published;
+$('stats').innerHTML=[
+  ['全部记录',activeCount,'','默认显示待发布与已发布有效记录（不含已撤销与已归档）'],
+  ['待发布草稿',counts.draft,'draft','仅待发布草稿'],
+  ['已发布',counts.published,'published','仅已生效发布记录'],
+  ['已撤销',counts.revoked,'revoked','点击查看所有已撤销记录'],
+  ['已归档',counts.archived,'archived','点击查看所有已归档违规记录']
+].map(([label,n,status,title])=>'<button type="button" class="stat '+(selectedStatus===status?'active':'')+'" data-stat="'+status+'" aria-pressed="'+(selectedStatus===status)+'" title="'+escapeHtml(title||'点击筛选，再次点击取消')+'">'+escapeHtml(label)+'<b>'+n+'</b></button>').join('');
 renderMultiFilters();
 const search=$('record-search').value.toLowerCase(),from=$('date-from').value,to=$('date-to').value,status=$('record-status').value,person=$('record-person').value;
-let records=(state.records||[]).filter(record=>{const r=ruleFor(record),p=personFor(record),snapshot=record.personSnapshot||{},groupId=record.customerGroupId||snapshot.customerGroupId,roles=personRoles(Object.keys(snapshot).length?snapshot:p||{}),groups=groupId?[groupId]:personGroups(p||{}),text=[record.tt,record.remark,r&&r.desc,record.ruleSnapshot&&record.ruleSnapshot.desc,p&&p.name,snapshot.name].join(' ').toLowerCase();return(!search||text.includes(search))&&(!from||record.date>=from)&&(!to||record.date<=to)&&(!status||record.status===status)&&(!person||record.staffId===person)&&(!recordFilters.groups.size||groups.some(id=>recordFilters.groups.has(id)))&&(!recordFilters.roles.size||roles.some(role=>recordFilters.roles.has(role)))&&(!recordFilters.deductions.size||recordFilters.deductions.has(record.deduct))});
+let records=(state.records||[]).filter(record=>{
+  const isRecArchived = record.status==='archived' || Boolean(record.archived);
+  const recStatus = isRecArchived ? 'archived' : record.status;
+  const statusMatch = status ? (recStatus===status) : (recStatus!=='revoked' && recStatus!=='archived');
+  const r=ruleFor(record)||record.ruleSnapshot||{},p=personFor(record)||record.personSnapshot||{},groupId=record.customerGroupId||p.customerGroupId,roles=personRoles(p),groups=groupId?[groupId]:personGroups(p),text=[record.tt,record.remark,r.desc,record.ruleSnapshot?.desc,p.name,record.personSnapshot?.name].filter(Boolean).join(' ').toLowerCase();
+  return(!search||text.includes(search))&&(!from||record.date>=from)&&(!to||record.date<=to)&&statusMatch&&(!person||record.staffId===person)&&(!recordFilters.groups.size||groups.some(id=>recordFilters.groups.has(id)))&&(!recordFilters.roles.size||roles.some(role=>recordFilters.roles.has(role)))&&(!recordFilters.deductions.size||recordFilters.deductions.has(record.deduct))
+});
 records.sort((a,b)=>$('record-sort').value==='date-asc'?a.date.localeCompare(b.date):b.date.localeCompare(a.date));
 lastRenderedRecords=records;
 drawRows('rows-records',records,'records',recordRow);
@@ -1645,17 +2319,30 @@ if(personStatsEl){
   personStatsEl.innerHTML=`<div class="mini-stat-card"><span class="mini-stat-num">${totalPersons}</span><span class="mini-stat-label">在册人员总数 (人)</span></div><div class="mini-stat-card"><span class="mini-stat-num">${coveredGroupsCount}</span><span class="mini-stat-label">覆盖客户群</span></div><div class="mini-stat-card"><span class="mini-stat-num">${coveredBUsCount}</span><span class="mini-stat-label">覆盖 BU 单元</span></div>`;
 }
 
+const validPersonnelIds=new Set(active('personnel').map(p=>p.id));
+for(const id of selectedPersonnelIds){
+  if(!validPersonnelIds.has(id))selectedPersonnelIds.delete(id);
+}
+
 const rs=$('rule-search').value.toLowerCase(),mod=$('rule-module').value;drawRows('rows-rules',active('rules').filter(rule=>(!mod||rule.svcModule===mod)&&(!rs||[rule.svcModule,rule.subModule,rule.desc,roleList(rule).join(' ')].join(' ').toLowerCase().includes(rs))&&(!ruleFilters.roles.size||roleList(rule).some(role=>ruleFilters.roles.has(role)))&&(!ruleFilters.deductions.size||ruleFilters.deductions.has(rule.deduct))),'rules',rule=>{
   const weightHtml=rule.weight==null?'<span class="weight-na-pill">不适用</span>':`<div class="weight-cell-wrap"><div class="weight-meter"><div class="weight-meter-bar ${rule.weight>=80?'max':rule.weight>=50?'high':''}" style="width:${Math.min(100,Math.max(0,rule.weight))}%"></div></div><span class="weight-meter-num">${escapeHtml(rule.weight)}%</span></div>`;
   const rolesHtml=roleList(rule).map(r=>`<span class="person-role-chip" style="font-size:11px;">${escapeHtml(r)}</span>`).join(' ') || '<span class="muted">全员</span>';
   return '<tr><td>'+escapeHtml(rule.svcModule)+'<br><span class="muted">'+escapeHtml(rule.subModule)+'</span></td><td>'+escapeHtml(rule.desc)+'</td><td><div class="person-chips-cell">'+rolesHtml+'</div></td><td><span class="muted">'+escapeHtml(categoryName(deductionFor(rule.deduct)?.categoryId))+'</span><br><b>'+escapeHtml(rule.deduct)+'</b></td><td>'+weightHtml+'</td><td style="text-align:right;white-space:nowrap;"><div class="row-actions-group"><button type="button" class="row-action-btn edit" data-edit="rules" data-id="'+escapeHtml(rule.id)+'" title="编辑规则"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 2l3 3-9 9H2v-3l9-9z"/></svg><span>编辑</span></button><button type="button" class="row-action-btn danger" data-archive="rules" data-id="'+escapeHtml(rule.id)+'" title="归档规则"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 3V1h6v2M2 4h12M4 4v10h8V4"/></svg><span>归档</span></button></div></td></tr>';
 });
-const ps=$('person-search').value.toLowerCase();drawRows('rows-personnel',active('personnel').filter(person=>[person.id,person.name,...personRoles(person),...personGroups(person).map(groupName),...personBusinessUnits(person).map(businessUnitName)].join(' ').toLowerCase().includes(ps)&&(!personFilters.groups.size||personGroups(person).some(id=>personFilters.groups.has(id)))&&(!personFilters.roles.size||personRoles(person).some(role=>personFilters.roles.has(role)))&&(!personFilters.businessUnits.size||personBusinessUnits(person).some(id=>personFilters.businessUnits.has(id)))),'personnel',person=>{
+const ps=$('person-search').value.toLowerCase();
+const filteredPersonnel=active('personnel').filter(person=>[person.id,person.name,...personRoles(person),...personGroups(person).map(groupName),...personBusinessUnits(person).map(businessUnitName)].join(' ').toLowerCase().includes(ps)&&(!personFilters.groups.size||personGroups(person).some(id=>personFilters.groups.has(id)))&&(!personFilters.roles.size||personRoles(person).some(role=>personFilters.roles.has(role)))&&(!personFilters.businessUnits.size||personBusinessUnits(person).some(id=>personFilters.businessUnits.has(id))));
+lastFilteredPersonnel=filteredPersonnel;
+const pSize=pageSizes.personnel||20,pPage=pages.personnel||1;
+lastVisiblePersonnel=filteredPersonnel.slice((pPage-1)*pSize,pPage*pSize);
+drawRows('rows-personnel',filteredPersonnel,'personnel',person=>{
+  const isChecked=selectedPersonnelIds.has(person.id);
+  const chkHtml=`<td style="width:38px;text-align:center;padding:0;"><label style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;min-height:36px;cursor:pointer;margin:0;"><input type="checkbox" class="person-select-item" data-person-id="${escapeHtml(person.id)}" ${isChecked?'checked':''} style="width:16px;height:16px;accent-color:var(--red);cursor:pointer;vertical-align:middle;"></label></td>`;
   const gChips=personGroups(person).map(g=>`<span class="person-group-chip">${escapeHtml(groupName(g))}</span>`).join('')||'<span class="muted">待配置</span>';
   const bChips=personBusinessUnits(person).map(b=>`<span class="person-bu-chip">${escapeHtml(businessUnitName(b))}</span>`).join('')||'<span class="muted">未配置</span>';
   const rChips=personRoles(person).map(r=>`<span class="person-role-chip">${escapeHtml(r)}</span>`).join('')||'<span class="muted">待配置</span>';
-  return '<tr><td><b>'+escapeHtml(person.id)+'</b></td><td>'+escapeHtml(person.name)+'</td><td><div class="person-chips-cell">'+gChips+'</div></td><td><div class="person-chips-cell">'+bChips+'</div></td><td><div class="person-chips-cell">'+rChips+'</div></td><td style="text-align:right;white-space:nowrap;"><div class="row-actions-group"><button type="button" class="row-action-btn edit" data-edit="personnel" data-id="'+escapeHtml(person.id)+'" title="编辑人员信息"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 2l3 3-9 9H2v-3l9-9z"/></svg><span>编辑</span></button><button type="button" class="row-action-btn danger" data-archive="personnel" data-id="'+escapeHtml(person.id)+'" title="归档人员"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 3V1h6v2M2 4h12M4 4v10h8V4"/></svg><span>归档</span></button></div></td></tr>';
+  return '<tr>'+chkHtml+'<td><b>'+escapeHtml(person.id)+'</b></td><td>'+escapeHtml(person.name)+'</td><td><div class="person-chips-cell">'+gChips+'</div></td><td><div class="person-chips-cell">'+bChips+'</div></td><td><div class="person-chips-cell">'+rChips+'</div></td><td style="text-align:right;white-space:nowrap;"><div class="row-actions-group"><button type="button" class="row-action-btn edit" data-edit="personnel" data-id="'+escapeHtml(person.id)+'" title="编辑人员信息"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 2l3 3-9 9H2v-3l9-9z"/></svg><span>编辑</span></button><button type="button" class="row-action-btn danger" data-archive="personnel" data-id="'+escapeHtml(person.id)+'" title="归档人员"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 3V1h6v2M2 4h12M4 4v10h8V4"/></svg><span>归档</span></button></div></td></tr>';
 });
+updateBatchPersonnelBtn();
 renderOrgView();
 renderConfigView();
 updateAnalyticsSidebar();
@@ -1681,34 +2368,134 @@ content=`<div class="field"><label for="f-group">客户群 ${groupRequired?'<spa
 `<div class="field"><label for="f-deduct-category">扣罚分类</label><input id="f-deduct-category" class="readonly-value" readonly placeholder="选择规则后自动带出"></div>`+
 `<div class="field"><label for="f-deduct">实际扣罚 <span class="req-mark">*</span></label><select id="f-deduct" required><option value="">先选择具体规则</option></select></div>`+
 `<div class="field"><label for="f-evidence">证据链接 / 编号</label><input id="f-evidence" maxlength="500" placeholder="工单截图链接、监控编号或录音索引"></div>`+
-`<div class="field"><label for="f-file">上传证据附件</label><input id="f-file" type="file" accept=".pdf,.png,.jpg,.jpeg,.txt"><div id="f-file-hint" class="file-hint"></div></div>`+
+`<div class="field full"><div class="attach-upload-header"><div class="attach-upload-title-box"><label class="field-label-text" for="f-file">证据附件材料（支持多文件与独立删除）</label><span class="attach-small-hint">💡 支持文档/图片(PDF/PNG/JPG/TXT)、压缩包(ZIP/RAR/7Z/TAR/GZ)、邮件(EML/MSG)；单文件 ≤ 10 MB</span></div><div class="attach-upload-actions"><label class="attach-pick-btn" for="f-file" title="点击添加一份或多份附件文件"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"/></svg><span>添加文件</span></label><input id="f-file" type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.txt,.zip,.rar,.7z,.tar,.gz,.eml,.msg" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;"></div></div><div class="attach-items-list" id="f-attachments-list"></div></div>`+
 `<div class="field full"><label for="f-remark">备注说明</label><textarea id="f-remark" maxlength="2000" placeholder="可详细说明违规经过、沟通结论或复核记录（窗口内仅支持纵向拉伸，绝不超出边缘）..."></textarea></div>`;
 $('editor-fields').innerHTML='<div class="form-grid">'+content+'</div>';
 
 $('date-btn-today').onclick=()=>{ $('f-date').value=new Date().toISOString().slice(0,10); };
 $('date-btn-yesterday').onclick=()=>{ const d=new Date(); d.setDate(d.getDate()-1); $('f-date').value=d.toISOString().slice(0,10); };
 
+editing.attachmentState = {
+  existing: item ? recordAttachments(item) : [],
+  deleted: new Set(),
+  pending: []
+};
+
 if(item){
-$('f-file').dataset.previous=item.attachment||'';
 $('f-tt').value=item.tt||'';
 $('f-evidence').value=item.evidence||'';
 $('f-remark').value=item.remark||'';
 }
 
-const updateFileHint=()=>{
-const prev=$('f-file').dataset.previous;
-const file=$('f-file').files&&$('f-file').files[0];
-const hint=$('f-file-hint');
-if(file){
-hint.innerHTML='<span class="file-chosen">📄 已选择新文件：'+escapeHtml(file.name)+'</span>';
-}else if(prev){
-hint.innerHTML='<span class="file-existing">📎 已有附件：<a href="'+escapeHtml(prev)+'" target="_blank">'+escapeHtml(prev.split('/').pop())+'</a> (选择新文件可替换)</span>';
-}else{
-hint.innerHTML='<span class="muted">支持 PDF、PNG、JPG、TXT 格式附件</span>';
-}
+const renderAttachmentsUI = () => {
+  const listEl = $('f-attachments-list');
+  if (!listEl) return;
+  const attState = editing.attachmentState;
+  let html = '';
+  attState.existing.forEach(url => {
+    const isDel = attState.deleted.has(url);
+    const fname = url.split('/').pop() || '附件';
+    const ext = (fname.split('.').pop() || '').toLowerCase();
+    const isImg = ['png', 'jpg', 'jpeg', 'webp', 'gif'].includes(ext);
+    const isArchive = ['zip', 'rar', '7z', 'tar', 'gz'].includes(ext);
+    const isEmail = ['eml', 'msg'].includes(ext);
+    const icon = isImg ? '🖼️' : (isArchive ? '📦' : (isEmail ? '✉️' : (ext === 'pdf' ? '📄' : '📝')));
+    html += `
+      <div class="attach-item-row ${isDel ? 'is-deleted' : ''}">
+        <div class="attach-item-left">
+          <span class="attach-item-icon">${icon}</span>
+          <div class="attach-item-info">
+            <a href="${escapeHtml(url)}" target="_blank" class="attach-item-name" title="点击新标签打开预览">${escapeHtml(fname)}</a>
+            <div class="attach-item-meta">
+              <span class="attach-tag ${isDel ? 'tag-deleted' : 'tag-existing'}">${isDel ? '已标记删除（保存后生效）' : '已有附件'}</span>
+            </div>
+          </div>
+        </div>
+        ${isDel
+          ? `<button type="button" class="attach-action-btn undo-btn" data-restore-url="${escapeHtml(url)}" title="撤销删除此附件">↩️ 撤销删除</button>`
+          : `<button type="button" class="attach-action-btn delete-btn" data-delete-url="${escapeHtml(url)}" title="删除此附件">🗑️ 删除附件</button>`
+        }
+      </div>
+    `;
+  });
+
+  attState.pending.forEach((file, idx) => {
+    const ext = (file.name.split('.').pop() || '').toLowerCase();
+    const isImg = ['png', 'jpg', 'jpeg', 'webp', 'gif'].includes(ext);
+    const isArchive = ['zip', 'rar', '7z', 'tar', 'gz'].includes(ext);
+    const isEmail = ['eml', 'msg'].includes(ext);
+    const icon = isImg ? '🖼️' : (isArchive ? '📦' : (isEmail ? '✉️' : (ext === 'pdf' ? '📄' : '📝')));
+    const sizeStr = file.size > 1024 * 1024 ? (file.size / 1024 / 1024).toFixed(2) + ' MB' : (file.size / 1024).toFixed(1) + ' KB';
+    html += `
+      <div class="attach-item-row">
+        <div class="attach-item-left">
+          <span class="attach-item-icon">${icon}</span>
+          <div class="attach-item-info">
+            <span class="attach-item-name">${escapeHtml(file.name)}</span>
+            <div class="attach-item-meta">
+              <span class="attach-tag tag-new">待上传</span>
+              <span>大小: ${sizeStr}</span>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="attach-action-btn remove-btn" data-remove-pending="${idx}" title="移除此文件">❌ 移除</button>
+      </div>
+    `;
+  });
+
+  if (!attState.existing.length && !attState.pending.length) {
+    html = `<div class="attach-empty-placeholder">暂未添加附件（支持工单截图、审批单、压缩包、邮件等材料，支持多文件，单文件 ≤ 10 MB）</div>`;
+  }
+  listEl.innerHTML = html;
 };
-$('f-file').addEventListener('change',updateFileHint);
-updateFileHint();
+
+$('f-file').addEventListener('change', async (e) => {
+  const files = Array.from(e.target.files || []);
+  if (!files.length) return;
+  const MAX_SIZE = 10 * 1024 * 1024;
+  const ALLOWED_EXTS = ['.pdf', '.png', '.jpg', '.jpeg', '.txt', '.zip', '.rar', '.7z', '.tar', '.gz', '.eml', '.msg'];
+  for (const file of files) {
+    const ext = '.' + (file.name.split('.').pop() || '').toLowerCase();
+    if (!ALLOWED_EXTS.includes(ext)) {
+      await uiAlert(`文件 "${file.name}" 格式不支持，系统支持文档/图片(PDF/PNG/JPG/TXT)、压缩包(ZIP/RAR/7Z/TAR/GZ)以及邮件(EML/MSG)格式！`, '格式不符', 'warning', '⚠️');
+      continue;
+    }
+    if (file.size > MAX_SIZE) {
+      await uiAlert(`文件 "${file.name}" 大小为 ${(file.size / 1024 / 1024).toFixed(1)} MB，超出 10 MB 上传限制！请压缩或另存后重试。`, '文件过大（超 10MB）', 'warning', '⚠️');
+      continue;
+    }
+    if (!editing.attachmentState.pending.some(f => f.name === file.name && f.size === file.size)) {
+      editing.attachmentState.pending.push(file);
+    }
+  }
+  e.target.value = '';
+  renderAttachmentsUI();
+});
+
+$('f-attachments-list').addEventListener('click', (e) => {
+  const delBtn = e.target.closest('[data-delete-url]');
+  if (delBtn) {
+    editing.attachmentState.deleted.add(delBtn.dataset.deleteUrl);
+    renderAttachmentsUI();
+    return;
+  }
+  const restoreBtn = e.target.closest('[data-restore-url]');
+  if (restoreBtn) {
+    editing.attachmentState.deleted.delete(restoreBtn.dataset.restoreUrl);
+    renderAttachmentsUI();
+    return;
+  }
+  const removeBtn = e.target.closest('[data-remove-pending]');
+  if (removeBtn) {
+    const idx = Number(removeBtn.dataset.removePending);
+    if (!isNaN(idx)) {
+      editing.attachmentState.pending.splice(idx, 1);
+      renderAttachmentsUI();
+    }
+    return;
+  }
+});
+renderAttachmentsUI();
 
 $('f-group').value=selectedGroupId;
 const updateStaff=()=>{
@@ -1767,7 +2554,7 @@ content=`<div class="field"><label for="f-svc">大类 <span class="req-mark">*</
 `<div class="field full"><label for="f-desc">违规行为判定描述 <span class="req-mark">*</span></label><textarea id="f-desc" required maxlength="1000" placeholder="请详细描述具体的违规判定场景、界定标准与触发条件..."></textarea></div>`+
 `<div class="field"><label for="f-deduct-category">扣罚分类 <span class="req-mark">*</span></label><select id="f-deduct-category" required>${categoriesOptions}</select></div>`+
 `<div class="field"><label for="f-deduct">扣罚基准 <span class="req-mark">*</span></label><select id="f-deduct" required><option value="">先选扣罚分类</option></select></div>`+
-`<div class="field full"><div class="role-selector-header"><label class="field-label-text">适用角色（可多选） <span class="req-mark">*</span></label><div class="role-selector-actions"><span class="role-count-badge" id="role-count-badge">已选 0 项</span><button type="button" class="tag-quick-btn" id="role-select-all">全选</button><button type="button" class="tag-quick-btn" id="role-clear-all">清空</button></div></div><div class="role-chips-wrap" id="role-chips-wrap">${rolesHtml}</div><select id="f-roles" multiple hidden required>${hiddenRoleOptions}</select></div>`+
+`<div class="field full"><div class="role-selector-header"><label class="field-label-text">适用角色（可多选） <span class="req-mark">*</span></label><div class="role-selector-actions"><span class="role-count-badge" id="role-count-badge">已选 0 项</span><button type="button" class="tag-quick-btn" id="role-select-all">全选</button><button type="button" class="tag-quick-btn" id="role-clear-all">清空</button></div></div><div class="role-chips-wrap" id="role-chips-wrap">${rolesHtml}</div><select id="f-roles" multiple hidden>${hiddenRoleOptions}</select></div>`+
 `<div class="field full"><div class="weight-card" id="weight-card"><div class="weight-card-head"><div class="weight-title-box"><span class="weight-main-label">权重考评</span><span class="weight-sub-hint">用于违规考核与多维统计分析，支持快捷预设与一键停用</span></div><label class="modern-switch-label" for="f-weight-na" title="勾选后此规则不计入权重考评"><input type="checkbox" id="f-weight-na"><span class="switch-track"><span class="switch-thumb"></span></span><span class="switch-text">不适用</span></label></div><div class="weight-body" id="weight-interactive-body"><div class="weight-slider-row"><div class="slider-track-container"><input type="range" id="f-weight" min="0" max="100" value="0" class="modern-range-slider" aria-label="权重百分比"><div class="slider-scale-ticks"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div></div><div class="weight-value-badge" id="weight-badge">0%</div></div><div class="weight-presets-row"><span class="presets-tag-label">快捷预设：</span><button type="button" class="preset-pill-btn" data-preset="0">0%</button><button type="button" class="preset-pill-btn" data-preset="20">20%</button><button type="button" class="preset-pill-btn" data-preset="50">50%</button><button type="button" class="preset-pill-btn" data-preset="80">80%</button><button type="button" class="preset-pill-btn" data-preset="100">100%</button></div></div></div></div>`;
 $('editor-fields').innerHTML='<div class="form-grid">'+content+'</div>';
 
@@ -1894,6 +2681,7 @@ if(kind==='personnel'){
       });
       badge.textContent=`已选 ${selVals.size} 项`;
       badge.classList.toggle('has-active',selVals.size>0);
+      wrap.classList.remove('has-error');
     };
     wrap.onclick=e=>{
       const btn=e.target.closest('.chip-option-btn');
@@ -1942,7 +2730,7 @@ function checkRole(){
     const pRoles = p ? personRoles(p).join('、') : '未分配';
     const rRoles = r ? roleList(r).join('、') : '未指定';
     el.className='role-check-banner bad';
-    el.innerHTML=`<span style="font-size:15px;">⚠️</span><div><b>角色范畴不匹配警告：</b>责任主体当前角色为 <code>${escapeHtml(pRoles||'未分配')}</code>，而本条规则设定仅适用于 <code>${escapeHtml(rRoles)}</code>。如确属违规，建议协同调整责任人角色或增补规则适用范畴。</div>`;
+    el.innerHTML=`<span style="font-size:16px;">🚫</span><div><b style="color:#991b1b;">角色范畴不匹配（无法保存）：</b>责任主体当前角色为 <code>${escapeHtml(pRoles||'未分配')}</code>，而本条规则设定仅适用于 <code>${escapeHtml(rRoles)}</code>。<div style="margin-top:4px;font-size:12px;color:#b91c1c;line-height:1.45;">系统合规管控：禁止跨角色错报违规。若确属违规，请在上方重新选择相符规则，或在「人员名册」/「规则字典」中协同调整角色配置。</div></div>`;
   }
   return valid===true;
 }
@@ -1960,33 +2748,91 @@ const sameDeduct=String(old.deduct||'')===String($('f-deduct').value||'');
 const sameTt=String(old.tt||'').trim()===String($('f-tt').value||'').trim();
 const sameEvidence=String(old.evidence||'').trim()===String($('f-evidence').value||'').trim();
 const sameRemark=String(old.remark||'').trim()===String($('f-remark').value||'').trim();
-const hasNewFile=Boolean($('f-file').files&&$('f-file').files.length>0);
-const sameAttachment=!hasNewFile&&(String(old.attachment||'')===String($('f-file').dataset.previous||''));
+const attState = editing.attachmentState || { existing: [], deleted: new Set(), pending: [] };
+const activeExisting = attState.existing.filter(u => !attState.deleted.has(u));
+const oldAttachments = old ? recordAttachments(old) : [];
+const sameAttachment = attState.pending.length === 0 &&
+  activeExisting.length === oldAttachments.length &&
+  activeExisting.every((u, i) => u === oldAttachments[i]);
 if(sameDate&&sameStaff&&sameGroup&&sameRule&&sameDeduct&&sameTt&&sameEvidence&&sameRemark&&sameAttachment){
 await uiAlert('违规记录内容未发生任何修改，无需保存');
 return;
 }
 }
 const unchangedPublished=old?.status==='published'&&$('f-staff').value===old.staffId&&$('f-rule').value===old.ruleId&&$('f-group').value===(old.customerGroupId||'');
-if(!unchangedPublished&&!checkRole())return;
-let attachment=$('f-file').dataset.previous||'';
-const file=$('f-file').files[0];
-if(file){
-const form=new FormData();form.append('file',file);
-try{
-const response=await fetch(API+'/evidence',{method:'POST',credentials:'same-origin',body:form});
-const result=await response.json();
-if(!response.ok)throw Error(result.error||'上传失败');
-attachment=result.path;
-}catch(error){await uiAlert(error.message);return;}
+if(!unchangedPublished&&!checkRole()){
+  const p=state.personnel.find(x=>x.id===$('f-staff').value);
+  const r=state.rules.find(x=>x.id===$('f-rule').value);
+  const banner=$('role-check');
+  if(banner){
+    banner.classList.remove('shake');
+    void banner.offsetWidth;
+    banner.classList.add('shake');
+    banner.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }
+  if(!p){
+    await uiAlert('请先在上方选择责任主体。','责任主体未选择','danger','⚠️');
+    $('f-staff')?.focus();
+    return;
+  }
+  if(!r){
+    await uiAlert('请先在上方选择违规大类、子类与具体规则。','违规规则未选择','danger','⚠️');
+    $('f-rule')?.focus();
+    return;
+  }
+  const pName=p.name||p.id;
+  const pRoles=personRoles(p).join('、')||'未分配角色';
+  const rRoles=roleList(r).join('、')||'未指定适用角色';
+  await uiAlert(
+    `当前违规记录无法保存：责任主体角色与所选规则适用范畴不匹配！\n\n`+
+    `👤 责任主体：${pName}（工号: ${p.id}）\n`+
+    `📌 当前具备角色：【${pRoles}】\n\n`+
+    `⚖️ 所选规则：${r.desc}\n`+
+    `🎯 规则限定角色：【${rRoles}】\n\n`+
+    `【为什么被系统拦截？】\n`+
+    `为确保奖惩合规严谨性，系统严格限制只能为具备对应岗位角色的责任人录入违规，禁止跨角色错报。\n\n`+
+    `【如何解决？】\n`+
+    `1. 重新选择规则：在上方下拉列表中挑选适用于【${pRoles}】的对应规则；\n`+
+    `2. 调整人员角色：若该责任人确已转岗或兼具该职责，可先前往「人员名册」为其勾选添加【${rRoles}】角色；\n`+
+    `3. 扩充规则角色：若该条规则确应适用于【${pRoles}】，请由管理员在「规则字典」中将该角色增补至适用范围。`,
+    '角色范畴不匹配，无法保存',
+    'danger',
+    '🚫'
+  );
+  return;
 }
-data={id:editing.id,attachment,date:$('f-date').value,staffId:$('f-staff').value,ruleId:$('f-rule').value,deduct:$('f-deduct').value,tt:$('f-tt').value,remark:$('f-remark').value,evidence:$('f-evidence').value};
+const attState = editing.attachmentState || { existing: [], deleted: new Set(), pending: [] };
+const activeExisting = attState.existing.filter(u => !attState.deleted.has(u));
+let finalAttachments = [...activeExisting];
+if (attState.pending.length > 0) {
+  for (const file of attState.pending) {
+    const form = new FormData();
+    form.append('file', file);
+    try {
+      const response = await fetch(API + '/evidence', { method: 'POST', credentials: 'same-origin', body: form });
+      const result = await response.json();
+      if (!response.ok) throw Error(result.error || `附件 "${file.name}" 上传失败`);
+      finalAttachments.push(result.path);
+    } catch (error) {
+      await uiAlert(error.message, '上传失败');
+      return;
+    }
+  }
+}
+const attachment = finalAttachments[0] || '';
+data={id:editing.id,attachment,attachments:finalAttachments,date:$('f-date').value,staffId:$('f-staff').value,customerGroupId:$('f-group').value,ruleId:$('f-rule').value,deduct:$('f-deduct').value,tt:$('f-tt').value,remark:$('f-remark').value,evidence:$('f-evidence').value};
 }else if(kind==='rules'){
 const selectedRoles=[...$('f-roles').selectedOptions].map(x=>x.value);
 if(!selectedRoles.length){
-$('role-chips-wrap')?.classList.add('has-error');
-await uiAlert('请至少选择一个适用角色');
-return;
+  const wrap=$('role-chips-wrap');
+  if(wrap){
+    wrap.classList.remove('has-error');
+    void wrap.offsetWidth;
+    wrap.classList.add('has-error');
+    wrap.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }
+  await uiAlert('适用角色为必选项，请至少勾选一个该规则适用的岗位角色（支持多选）','适用角色未选择','warning','⚠️');
+  return;
 }
 if(old){
 const sameSvc=String(old.svcModule||'').trim()===String($('f-svc').value||'').trim();
@@ -2006,15 +2852,37 @@ return;
 }
 data={id:editing.id,svcModule:$('f-svc').value,subModule:$('f-sub').value,desc:$('f-desc').value,roles:selectedRoles,deduct:$('f-deduct').value,weight:$('f-weight-na').checked?null:Number($('f-weight').value)};
 }else{
+const newRoles=[...$('f-role').selectedOptions].map(x=>x.value);
+const newGroups=[...$('f-group').selectedOptions].map(x=>x.value);
+const newBUs=[...$('f-bu').selectedOptions].map(x=>x.value);
+if(!newGroups.length){
+  const wrap=$('person-group-chips');
+  if(wrap){
+    wrap.classList.remove('has-error');
+    void wrap.offsetWidth;
+    wrap.classList.add('has-error');
+    wrap.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }
+  await uiAlert('归属客户群为必填项，请至少为人员勾选一个客户群','客户群未选择','warning','⚠️');
+  return;
+}
+if(!newRoles.length){
+  const wrap=$('person-role-chips');
+  if(wrap){
+    wrap.classList.remove('has-error');
+    void wrap.offsetWidth;
+    wrap.classList.add('has-error');
+    wrap.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }
+  await uiAlert('担任角色为必填项，请至少为人员勾选一个角色','担任角色未选择','warning','⚠️');
+  return;
+}
 if(old){
 const sameName=String(old.name||'').trim()===String($('f-name').value||'').trim();
-const newRoles=[...$('f-role').selectedOptions].map(x=>x.value).sort().join(',');
 const oldRoles=personRoles(old).slice().sort().join(',');
-const newGroups=[...$('f-group').selectedOptions].map(x=>x.value).sort().join(',');
 const oldGroups=personGroups(old).slice().sort().join(',');
-const newBUs=[...$('f-bu').selectedOptions].map(x=>x.value).sort().join(',');
 const oldBUs=personBusinessUnits(old).slice().sort().join(',');
-if(sameName&&newRoles===oldRoles&&newGroups===oldGroups&&newBUs===oldBUs){
+if(sameName&&newRoles.slice().sort().join(',')===oldRoles&&newGroups.slice().sort().join(',')===oldGroups&&newBUs.slice().sort().join(',')===oldBUs){
 await uiAlert('人员信息未发生任何修改，无需保存');
 return;
 }
@@ -2030,12 +2898,13 @@ if(!record)return;
 if(action==='revoke'){
 const result=await openMessage({
 title:'撤销已发布违规记录',
-message:'此操作将把违规记录标记为「已撤销」并写入安全审计日志。请输入安全口令与撤销理由。',
+message:'此操作将把违规记录标记为「已撤销」并写入安全审计日志。请输入安全口令、撤销理由，并可选择上传证明附件。',
 bannerType:'danger',
 icon:'↩️',
 fields:[
 {name:'pin',label:'安全口令',type:'password',maxLength:12,placeholder:'请输入安全管控口令（系统初始为 0000）'},
-{name:'reason',label:'撤销理由',multiline:true,maxLength:1000,placeholder:'请详细输入撤销此条违规记录的背景事实与处理依据...'}
+{name:'reason',label:'撤销理由',multiline:true,maxLength:1000,placeholder:'请详细输入撤销此条违规记录的背景事实与处理依据...'},
+{name:'revokeFile',label:'撤销证明材料 (可选)',type:'file',hint:'支持 PDF/图片、压缩包(ZIP/RAR/7Z/TAR/GZ)、邮件(EML/MSG)，≤ 10MB'}
 ],
 quickReasons:['数据录入错误','经复核事实不成立','当事人补充申诉成立','重复录入条目','已协商线下免除'],
 confirmText:'确认撤销记录',
@@ -2046,10 +2915,20 @@ if(!values.reason?.trim())return '请输入撤销理由';
 });
 if(!result)return;
 try{
+let revokeAttachment='';
+if(result.revokeFile && result.revokeFile.size > 0){
+  const form=new FormData();
+  form.append('file', result.revokeFile);
+  const upRes=await fetch(API+'/evidence',{method:'POST',credentials:'same-origin',body:form});
+  const upJson=await upRes.json();
+  if(!upRes.ok) throw Error(upJson.error || '上传撤销证明文件失败');
+  revokeAttachment=upJson.path;
+}
 await request('/records/'+encodeURIComponent(id)+'/revoke',{
 method:'POST',
-body:JSON.stringify({pin:result.pin.trim(),reason:result.reason.trim()})
+body:JSON.stringify({pin:result.pin.trim(),reason:result.reason.trim(),revokeAttachment})
 });
+closeRecordDetail();
 await refresh();
 showToast('违规记录已成功撤销','info');
 }catch(error){
@@ -2072,10 +2951,712 @@ if(!values.reason?.trim())return '请输入发布意见';
 if(!result?.reason?.trim())return;
 const person=personFor(record),rule=ruleFor(record);
 await save('records',{...record,customerGroupId:record.customerGroupId||person?.customerGroupId,deduct:rule?.deduct||record.deduct,action:'publish',reason:result.reason.trim()});
+closeRecordDetail();
+}
+
+function renderSingleAttachmentCard(cleanUrl, label='证据附件'){
+  if(!cleanUrl) return '';
+  const filename = cleanUrl.split('/').pop() || 'file';
+  const ext = (filename.split('.').pop() || '').toLowerCase();
+  const isImg = ['png', 'jpg', 'jpeg', 'webp', 'gif'].includes(ext);
+  const isPdf = ext === 'pdf';
+  const isArchive = ['zip', 'rar', '7z', 'tar', 'gz'].includes(ext);
+  const isEmail = ['eml', 'msg'].includes(ext);
+  if(isImg){
+    return `
+      <div class="attachment-card">
+        <div class="attachment-thumb-box" data-view-file="${escapeHtml(cleanUrl)}" data-file-title="${escapeHtml(label)}：${escapeHtml(filename)}" title="点击在大弹窗中预览原图">
+          <img src="${escapeHtml(cleanUrl)}" alt="${escapeHtml(label)}" loading="lazy">
+          <div class="attachment-thumb-overlay">
+            <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="5"/><path d="M11 11l3.5 3.5M7 4.5v5M4.5 7h5"/></svg>
+            <span>大图预览</span>
+          </div>
+        </div>
+        <div class="attachment-details">
+          <div class="attachment-name">🖼️ ${escapeHtml(label)}：${escapeHtml(filename)}</div>
+          <div class="attachment-actions-row">
+            <button type="button" class="attachment-btn primary" data-view-file="${escapeHtml(cleanUrl)}" data-file-title="${escapeHtml(label)}：${escapeHtml(filename)}">🔍 大弹窗预览</button>
+            <a href="${escapeHtml(cleanUrl)}" target="_blank" class="attachment-btn">↗️ 新标签打开</a>
+            <a href="${escapeHtml(cleanUrl)}?download=1" download class="attachment-btn">📥 下载原图</a>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  if(isPdf){
+    return `
+      <div class="attachment-card">
+        <div class="attachment-file-icon pdf" data-view-file="${escapeHtml(cleanUrl)}" data-file-title="${escapeHtml(label)}：${escapeHtml(filename)}" style="cursor:pointer;" title="点击在大弹窗中查阅 PDF">📄</div>
+        <div class="attachment-details">
+          <div class="attachment-name">📄 PDF 凭证文件：${escapeHtml(filename)}</div>
+          <div class="attachment-actions-row">
+            <button type="button" class="attachment-btn primary" data-view-file="${escapeHtml(cleanUrl)}" data-file-title="${escapeHtml(label)}：${escapeHtml(filename)}">🔍 大弹窗查阅</button>
+            <a href="${escapeHtml(cleanUrl)}" target="_blank" class="attachment-btn">↗️ 新标签打开</a>
+            <a href="${escapeHtml(cleanUrl)}?download=1" download class="attachment-btn">📥 下载 PDF</a>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  if(isArchive){
+    return `
+      <div class="attachment-card">
+        <div class="attachment-file-icon zip" data-view-file="${escapeHtml(cleanUrl)}" data-file-title="${escapeHtml(label)}：${escapeHtml(filename)}" style="cursor:pointer;" title="点击查看压缩包材料">📦</div>
+        <div class="attachment-details">
+          <div class="attachment-name">📦 压缩包材料：${escapeHtml(filename)}</div>
+          <div class="attachment-actions-row">
+            <button type="button" class="attachment-btn primary" data-view-file="${escapeHtml(cleanUrl)}" data-file-title="${escapeHtml(label)}：${escapeHtml(filename)}">🔍 查看材料信息</button>
+            <a href="${escapeHtml(cleanUrl)}" target="_blank" class="attachment-btn">↗️ 新标签打开</a>
+            <a href="${escapeHtml(cleanUrl)}?download=1" download class="attachment-btn">📥 下载压缩包</a>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  if(isEmail){
+    return `
+      <div class="attachment-card">
+        <div class="attachment-file-icon email" data-view-file="${escapeHtml(cleanUrl)}" data-file-title="${escapeHtml(label)}：${escapeHtml(filename)}" style="cursor:pointer;" title="点击查看邮件原件">✉️</div>
+        <div class="attachment-details">
+          <div class="attachment-name">✉️ 邮件原件：${escapeHtml(filename)}</div>
+          <div class="attachment-actions-row">
+            <button type="button" class="attachment-btn primary" data-view-file="${escapeHtml(cleanUrl)}" data-file-title="${escapeHtml(label)}：${escapeHtml(filename)}">🔍 查看邮件材料</button>
+            <a href="${escapeHtml(cleanUrl)}" target="_blank" class="attachment-btn">↗️ 新标签打开</a>
+            <a href="${escapeHtml(cleanUrl)}?download=1" download class="attachment-btn">📥 下载邮件原件</a>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  return `
+    <div class="attachment-card">
+      <div class="attachment-file-icon" data-view-file="${escapeHtml(cleanUrl)}" data-file-title="${escapeHtml(label)}：${escapeHtml(filename)}" style="cursor:pointer;" title="点击在大弹窗中查阅">📝</div>
+      <div class="attachment-details">
+        <div class="attachment-name">📝 凭据文件：${escapeHtml(filename)}</div>
+        <div class="attachment-actions-row">
+          <button type="button" class="attachment-btn primary" data-view-file="${escapeHtml(cleanUrl)}" data-file-title="${escapeHtml(label)}：${escapeHtml(filename)}">🔍 大弹窗查阅</button>
+          <a href="${escapeHtml(cleanUrl)}" target="_blank" class="attachment-btn">↗️ 新标签打开</a>
+          <a href="${escapeHtml(cleanUrl)}?download=1" download class="attachment-btn">📥 下载文件</a>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderAttachmentCard(urlOrList, label='证据附件'){
+  const list = Array.isArray(urlOrList) ? urlOrList.filter(Boolean) : (urlOrList ? [urlOrList] : []);
+  if(!list.length) return '<div class="attachment-none">未上传凭据材料</div>';
+  return list.map((url, idx) => {
+    const itemLabel = list.length > 1 ? `${label} (${idx+1}/${list.length})` : label;
+    return renderSingleAttachmentCard(String(url).trim(), itemLabel);
+  }).join('');
+}
+
+function formatDateTime(isoString){
+  if(!isoString) return '-';
+  try{
+    const d = new Date(isoString);
+    if(isNaN(d.getTime())) return isoString;
+    const pad = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }catch(e){
+    return isoString;
+  }
+}
+
+let lastDetailClosedAt = 0;
+function openRecordDetail(id){
+  if(Date.now() - lastDetailClosedAt < 300) return;
+  const record = (state.records || []).find(r => r.id === id);
+  if(!record) return;
+  const dialog = $('record-detail-dialog');
+  if(!dialog) return;
+  dialog.dataset.recordId = record.id;
+
+  const liveRule = ruleFor(record), livePerson = personFor(record);
+  const rule = liveRule || record.ruleSnapshot || {};
+  const person = livePerson || record.personSnapshot || {};
+  const pName = person.name || record.staffId;
+  const pRoles = personRoles(person);
+  const pGroup = person.customerGroupName || groupName(record.customerGroupId || person.customerGroupId);
+  const pBUs = personBusinessUnits(person).map(businessUnitName).join('、') || '未分配';
+
+  const roleMatch = roleMatches(person, rule);
+  let roleMatchNotice = '';
+  if (record.status !== 'revoked') {
+    if (roleMatch === false) {
+      const pRolesText = pRoles.join('、') || '未分配岗位角色';
+      const rRolesText = roleList(rule).join('、') || '全员';
+      roleMatchNotice = `
+        <div style="background:#fff1f2;border:1px solid #fecdd3;border-left:5px solid #e11d48;border-radius:10px;padding:12px 16px;font-size:13px;color:#9f1239;line-height:1.5;display:flex;align-items:flex-start;gap:10px;">
+          <span style="font-size:18px;line-height:1;">⚠️</span>
+          <div>
+            <div style="font-weight:750;font-size:13.5px;color:#991b1b;">责任主体角色范畴待复核</div>
+            <div style="margin-top:2px;">责任主体当前岗位角色（<code>${escapeHtml(pRolesText)}</code>）不在本条规则设定适用角色（<code>${escapeHtml(rRolesText)}</code>）范畴内。</div>
+            <div style="margin-top:4px;font-size:12px;color:#be123c;">💡 系统实时检测建议：若人员角色已调整，保存后此提示将自动实时解除；若确属违规但规则不符，可由管理员编辑记录调整为对应规则。</div>
+          </div>
+        </div>
+      `;
+    } else if (roleMatch === true && record.migrationWarning) {
+      roleMatchNotice = `
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-left:5px solid #16a34a;border-radius:10px;padding:10px 16px;font-size:13px;color:#166534;line-height:1.5;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:16px;line-height:1;">🛡️</span>
+          <div><b>角色校验已通过：</b>责任主体最新岗位角色已与违规规则适用范畴完全匹配，历史复核提示已自动解除。</div>
+        </div>
+      `;
+    }
+  }
+
+  const isArchived = record.status === 'archived' || Boolean(record.archived);
+  const recStatus = isArchived ? 'archived' : record.status;
+  const statusPill = $('detail-status-pill');
+  const statusText = { draft: '待发布草稿', published: '已生效发布', revoked: '已撤销作废', archived: '已归档封存' }[recStatus] || recStatus;
+  if(statusPill){
+    statusPill.className = 'detail-status-pill ' + recStatus;
+    statusPill.textContent = statusText;
+  }
+  const idChip = $('detail-id-chip');
+  if(idChip) idChip.textContent = '单号: ' + record.id;
+
+  let revokedBannerHtml = '';
+  if(recStatus === 'revoked'){
+    revokedBannerHtml = `
+      <div class="revoked-notice-banner collapsible collapsed" id="detail-card-revoked">
+        <div class="revoked-notice-head" data-toggle-card="detail-card-revoked" style="cursor:pointer;user-select:none;" title="点击折叠/展开撤销信息">
+          <div class="revoked-notice-title">
+            <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h7a4 4 0 0 1 4 4v0a4 4 0 0 1-4 4H5"/><path d="M6 4L3 7l3 3"/></svg>
+            <span>该违规记录已被撤销作废</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div class="revoked-meta">
+              撤销人：<b>${escapeHtml(record.revokedBy || '管理员')}</b> · 撤销时间：${escapeHtml(formatDateTime(record.revokedAt))}
+            </div>
+            <button type="button" class="card-collapse-btn" aria-label="展开/折叠"><svg class="chevron-icon" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          </div>
+        </div>
+        <div class="revoked-body" style="display:flex;flex-direction:column;gap:10px;margin-top:4px;">
+          <div class="detail-item">
+            <div class="detail-label" style="color:#9f1239;font-weight:700;">撤销处理依据与事实理由：</div>
+            <div class="revoked-reason-box">${escapeHtml(record.revokeReason || '未填写撤销理由')}</div>
+          </div>
+          <div class="detail-item" style="margin-top:2px;">
+            <div class="detail-label" style="color:#9f1239;font-weight:700;">撤销证明材料 / 附凭存证：</div>
+            ${renderAttachmentCard(record.revokeAttachment, '撤销证明材料')}
+          </div>
+        </div>
+      </div>
+    `;
+  }else if(recStatus === 'archived'){
+    revokedBannerHtml = `
+      <div class="revoked-notice-banner collapsible collapsed" id="detail-card-archived" style="background:#f8fafc;border-color:#cbd5e1;border-left-color:#64748b;">
+        <div class="revoked-notice-head" data-toggle-card="detail-card-archived" style="cursor:pointer;user-select:none;" title="点击折叠/展开归档信息">
+          <div class="revoked-notice-title" style="color:#334155;">
+            <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3V1h6v2M2 4h12M4 4v10h8V4"/></svg>
+            <span>该违规记录已被归档封存</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div class="revoked-meta" style="color:#64748b;">
+              归档人：<b>${escapeHtml(record.archivedBy || '管理员')}</b> · 归档时间：${escapeHtml(formatDateTime(record.archivedAt))}
+            </div>
+            <button type="button" class="card-collapse-btn" aria-label="展开/折叠"><svg class="chevron-icon" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          </div>
+        </div>
+        <div class="revoked-body" style="display:flex;flex-direction:column;gap:10px;margin-top:4px;">
+          <div class="detail-item">
+            <div class="detail-label" style="color:#475569;font-weight:700;">归档封存说明：</div>
+            <div class="revoked-reason-box" style="color:#334155;border-color:#cbd5e1;background:#fff;">${escapeHtml(record.archiveReason || '历史违规记录封存归档')}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  const forcedEditHtml = record.forcedEditAt ? `
+    <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;font-size:12.5px;color:#92400e;line-height:1.5;display:flex;flex-direction:column;gap:4px;">
+      <div style="font-weight:700;">⚡ 存在强制修改追溯记录：</div>
+      <div>由管理员 <b>${escapeHtml(record.forcedEditBy || 'admin')}</b> 于 ${escapeHtml(formatDateTime(record.forcedEditAt))} 强制修改。</div>
+      <div><b>修改说明：</b>${escapeHtml(record.forcedEditReason || '-')}</div>
+    </div>
+  ` : '';
+
+  const bodyEl = $('record-detail-body');
+  if(bodyEl){
+    bodyEl.innerHTML = `
+      ${roleMatchNotice}
+      ${revokedBannerHtml}
+      ${forcedEditHtml}
+
+      <div class="detail-card collapsible collapsed" id="detail-card-person">
+        <div class="detail-card-head" data-toggle-card="detail-card-person" title="点击折叠/展开此模块">
+          <div class="detail-card-head-title">
+            <span>👤</span>
+            <span>责任主体与组织信息</span>
+          </div>
+          <div class="detail-card-head-right">
+            <span class="detail-collapsed-pill">${escapeHtml(pName)} · ${escapeHtml(record.staffId)} · ${escapeHtml(pGroup)}</span>
+            <button type="button" class="card-collapse-btn" aria-label="展开/折叠"><svg class="chevron-icon" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          </div>
+        </div>
+        <div class="detail-card-body">
+          <div class="detail-grid-3">
+            <div class="detail-item">
+              <span class="detail-label">责任主体姓名</span>
+              <span class="detail-val" style="font-weight:700;font-size:15px;color:#0f172a;">${escapeHtml(pName)}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">工号 / 账号</span>
+              <span class="detail-val" style="font-family:monospace;font-weight:600;">${escapeHtml(record.staffId)}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">所属客户群</span>
+              <span class="detail-val" style="color:#0369a1;font-weight:600;">🏢 ${escapeHtml(pGroup)}</span>
+            </div>
+          </div>
+          <div class="detail-grid-2">
+            <div class="detail-item">
+              <span class="detail-label">岗位适用角色</span>
+              <div class="person-chips-cell" style="margin-top:2px;">
+                ${pRoles.map(r => `<span class="person-role-chip">${escapeHtml(r)}</span>`).join('') || '<span class="muted">未配置</span>'}
+              </div>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">所属 BU 业务单元</span>
+              <span class="detail-val">🌐 ${escapeHtml(pBUs)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-card collapsible collapsed" id="detail-card-rule">
+        <div class="detail-card-head" data-toggle-card="detail-card-rule" title="点击折叠/展开此模块">
+          <div class="detail-card-head-title">
+            <span>⚖️</span>
+            <span>违规判定标准与扣罚基准</span>
+          </div>
+          <div class="detail-card-head-right">
+            <span class="detail-collapsed-pill">${escapeHtml(rule.desc || '具体规则')} · 实际扣罚: ${escapeHtml(record.deduct)}</span>
+            <button type="button" class="card-collapse-btn" aria-label="展开/折叠"><svg class="chevron-icon" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          </div>
+        </div>
+        <div class="detail-card-body">
+          <div class="detail-grid-3">
+            <div class="detail-item">
+              <span class="detail-label">业务违规大类</span>
+              <span class="detail-val" style="font-weight:600;">${escapeHtml(rule.svcModule || '其他')}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">判定细分子类</span>
+              <span class="detail-val" style="font-weight:600;">${escapeHtml(rule.subModule || '-')}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">规则标准权重</span>
+              <span class="detail-val">${rule.weight != null ? escapeHtml(rule.weight) + '%' : '不适用'}</span>
+            </div>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">具体违规行为界定 (依规依据)</span>
+            <div class="detail-val rule-desc">${escapeHtml(rule.desc || '未知规则')}</div>
+          </div>
+          <div class="detail-grid-2">
+            <div class="detail-item">
+              <span class="detail-label">规则基准扣罚标准</span>
+              <span class="detail-val" style="color:#64748b;">${escapeHtml(rule.deduct || record.deduct || '标准扣罚')}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">实际执行扣罚认定</span>
+              <span class="detail-val highlight-deduct">🔴 ${escapeHtml(record.deduct)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-card collapsible collapsed" id="detail-card-facts">
+        <div class="detail-card-head" data-toggle-card="detail-card-facts" title="点击折叠/展开此模块">
+          <div class="detail-card-head-title">
+            <span>📋</span>
+            <span>违规事实、工单与证明材料</span>
+          </div>
+          <div class="detail-card-head-right">
+            <span class="detail-collapsed-pill">发生日期: ${escapeHtml(record.date)}${recordAttachments(record).length ? ` · 📎 ${recordAttachments(record).length}份附件` : ' · 无附件'}</span>
+            <button type="button" class="card-collapse-btn" aria-label="展开/折叠"><svg class="chevron-icon" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          </div>
+        </div>
+        <div class="detail-card-body">
+          <div class="detail-grid-3">
+            <div class="detail-item">
+              <span class="detail-label">违规发生日期</span>
+              <span class="detail-val" style="font-weight:600;">📅 ${escapeHtml(record.date)}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">关联工单编号 (TT)</span>
+              <span class="detail-val">${record.tt ? `🎫 <b>${escapeHtml(record.tt)}</b>` : '<span class="muted">未关联工单</span>'}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">证据编号 / 索引链接</span>
+              <span class="detail-val">${record.evidence ? escapeHtml(record.evidence) : '<span class="muted">未填写证据编号</span>'}</span>
+            </div>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">违规证据附件材料 (支持大弹窗查阅原件与下载)</span>
+            ${renderAttachmentCard(recordAttachments(record), '违规证据附件')}
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">详细事实备注与调查结论</span>
+            <div class="detail-remark-box">${escapeHtml(record.remark || '无额外备注说明')}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-card collapsible collapsed" id="detail-card-lifecycle">
+        <div class="detail-card-head" data-toggle-card="detail-card-lifecycle" title="点击折叠/展开此模块">
+          <div class="detail-card-head-title">
+            <span>🛡️</span>
+            <span>生命周期与合规审计</span>
+          </div>
+          <div class="detail-card-head-right">
+            <span class="detail-collapsed-pill">${record.publishedAt ? '✅ 已发布' : (record.status === 'revoked' ? '↩️ 已撤销' : '⏳ 待发布草稿')}</span>
+            <button type="button" class="card-collapse-btn" aria-label="展开/折叠"><svg class="chevron-icon" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          </div>
+        </div>
+        <div class="detail-card-body">
+          <div class="detail-grid-2">
+            <div class="detail-item">
+              <span class="detail-label">草稿录入创建人</span>
+              <span class="detail-val">✍️ ${escapeHtml(record.createdBy || '系统录入')}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">审核发布状态</span>
+              <span class="detail-val">
+                ${record.publishedAt ? `✅ 由 <b>${escapeHtml(record.publishedBy || 'admin')}</b> 于 ${escapeHtml(formatDateTime(record.publishedAt))} 审核发布` : (record.status === 'revoked' ? '已撤销停用' : '⏳ 待审核发布草稿')}
+              </span>
+            </div>
+          </div>
+          ${record.publishReason ? `
+            <div class="detail-item">
+              <span class="detail-label">发布审核意见批注</span>
+              <span class="detail-val" style="color:#15803d;background:#f0fdf4;padding:8px 12px;border-radius:6px;border:1px solid #bbf7d0;">${escapeHtml(record.publishReason)}</span>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  const cluster = $('detail-actions-cluster');
+  if(cluster){
+    let btns = '';
+    if(recStatus === 'draft'){
+      if(state.canEdit || record.createdBy === state.username){
+        btns += `<button type="button" class="rec-action-btn edit" data-detail-edit="${escapeHtml(record.id)}"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 2l3 3-9 9H2v-3l9-9z"/></svg><span>编辑草稿</span></button>`;
+        btns += `<button type="button" class="rec-action-btn delete-draft danger" data-detail-delete="${escapeHtml(record.id)}"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2.5 4h11M5.5 4V2.5A1.5 1.5 0 0 1 7 1h2a1.5 1.5 0 0 1 1.5 1.5V4m2 0v9a1.5 1.5 0 0 1-1.5 1.5h-6A1.5 1.5 0 0 1 3.5 13V4"/></svg><span>删除草稿</span></button>`;
+      }
+      if(state.canEdit){
+        btns += `<button type="button" class="rec-action-btn publish" data-detail-publish="${escapeHtml(record.id)}"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 8.5l3.5 3.5 7-7"/></svg><span>审核发布</span></button>`;
+      }
+    }else if(recStatus === 'published' && state.canEdit){
+      btns += `<button type="button" class="rec-action-btn force-edit" data-detail-force-edit="${escapeHtml(record.id)}"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8.5 1.5L2.5 9h5l-1 5.5L13.5 7h-5l1-5.5z"/></svg><span>强制修改</span></button>`;
+      btns += `<button type="button" class="rec-action-btn revoke" data-detail-revoke="${escapeHtml(record.id)}"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7h7a4 4 0 0 1 4 4v0a4 4 0 0 1-4 4H5"/><path d="M6 4L3 7l3 3"/></svg><span>撤销违规</span></button>`;
+      btns += `<button type="button" class="rec-action-btn archive-record" data-detail-archive="${escapeHtml(record.id)}"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 3V1h6v2M2 4h12M4 4v10h8V4"/></svg><span>归档记录</span></button>`;
+    }else if(recStatus === 'revoked' && state.canEdit){
+      btns += `<button type="button" class="rec-action-btn archive-record" data-detail-archive="${escapeHtml(record.id)}"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 3V1h6v2M2 4h12M4 4v10h8V4"/></svg><span>归档记录</span></button>`;
+    }else if(recStatus === 'archived' && state.canEdit){
+      btns += `<button type="button" class="rec-action-btn unarchive-record" data-detail-unarchive="${escapeHtml(record.id)}"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7h7a4 4 0 0 1 4 4v0a4 4 0 0 1-4 4H5"/><path d="M6 4L3 7l3 3"/></svg><span>恢复发布</span></button>`;
+    }
+    cluster.innerHTML = btns;
+  }
+
+  dialog.showModal();
+}
+
+function closeRecordDetail(){
+  const dialog = $('record-detail-dialog');
+  if(dialog && dialog.open){
+    lastDetailClosedAt = Date.now();
+    dialog.close();
+  }
+}
+
+const recordDetailDlg = $('record-detail-dialog');
+if(recordDetailDlg){
+  const dismissDetailOnBackdrop = (event) => {
+    if(!recordDetailDlg.open) return;
+    const rect = recordDetailDlg.getBoundingClientRect();
+    const isInside = (
+      rect.top <= event.clientY &&
+      event.clientY <= rect.top + rect.height &&
+      rect.left <= event.clientX &&
+      event.clientX <= rect.left + rect.width
+    );
+    if (!isInside || event.target === recordDetailDlg) {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      closeRecordDetail();
+    }
+  };
+  recordDetailDlg.addEventListener('click', dismissDetailOnBackdrop, true);
+  recordDetailDlg.addEventListener('pointerdown', (event) => {
+    if(event.target === recordDetailDlg){
+      event.stopPropagation();
+    }
+  }, true);
+  recordDetailDlg.addEventListener('cancel', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    closeRecordDetail();
+  });
+}
+
+async function openAttachmentModal(url, title){
+  if(!url) return;
+  const dialog = $('attachment-preview-dialog');
+  if(!dialog) return;
+
+  const cleanUrl = String(url).trim();
+  const filename = cleanUrl.split('/').pop() || 'file';
+  const ext = (filename.split('.').pop() || '').toLowerCase();
+  const isImg = ['png', 'jpg', 'jpeg', 'webp', 'gif'].includes(ext);
+  const isPdf = ext === 'pdf';
+  const isTxt = ext === 'txt';
+  const isArchive = ['zip', 'rar', '7z', 'tar', 'gz'].includes(ext);
+  const isEmail = ['eml', 'msg'].includes(ext);
+
+  $('attach-modal-title').textContent = title || ('证据附件：' + filename);
+  $('attach-modal-meta').textContent = `原文件名: ${filename} · 文件格式: ${ext.toUpperCase()}`;
+  $('attach-modal-icon').textContent = isImg ? '🖼️' : (isArchive ? '📦' : (isEmail ? '✉️' : (isPdf ? '📄' : '📝')));
+  $('attach-modal-open-raw').href = cleanUrl;
+  $('attach-modal-dl-btn').href = cleanUrl + '?download=1';
+  $('attach-modal-dl-btn').setAttribute('download', filename);
+
+  const imgBox = $('attach-img-container');
+  const frameBox = $('attach-frame-container');
+  const textBox = $('attach-text-container');
+  const imgEl = $('attach-modal-img');
+  const frameEl = $('attach-modal-frame');
+  const textEl = $('attach-modal-text');
+
+  imgBox.hidden = true;
+  frameBox.hidden = true;
+  textBox.hidden = true;
+
+  if(isImg){
+    imgEl.src = cleanUrl;
+    imgBox.hidden = false;
+  } else if(isPdf){
+    frameEl.src = cleanUrl;
+    frameBox.hidden = false;
+  } else if(isTxt){
+    textBox.hidden = false;
+    textEl.textContent = '正在读取文本内容…';
+    try{
+      const res = await fetch(cleanUrl);
+      if(res.ok){
+        textEl.textContent = await res.text();
+      } else {
+        textEl.textContent = '文本加载失败：HTTP ' + res.status;
+      }
+    }catch(e){
+      textEl.textContent = '读取文本内容失败：' + e.message;
+    }
+  } else if(isArchive){
+    textBox.hidden = false;
+    textEl.textContent = `📦 压缩包附件材料：${filename}\n\n文件类型：${ext.toUpperCase()} 归档压缩包\n\n💡 说明：浏览器环境无法直接在网页内解压查阅此文件。\n请点击右上角【下载原件】按钮保存到本地后进行解压查阅。`;
+  } else if(isEmail){
+    textBox.hidden = false;
+    textEl.textContent = `✉️ 邮件证据原件：${filename}\n\n文件类型：${ext.toUpperCase()} 邮件原件数据\n\n💡 说明：浏览器环境无法直接在线解析此邮件格式。\n请点击右上角【下载原件】按钮保存到本地后，使用 Outlook、Foxmail 或系统邮件客户端打开查阅完整邮件正文与原始发件记录。`;
+  } else {
+    frameEl.src = cleanUrl;
+    frameBox.hidden = false;
+  }
+
+  dialog.showModal();
+}
+
+let lastAttachmentClosedAt = 0;
+function closeAttachmentModal(){
+  const dialog = $('attachment-preview-dialog');
+  if(dialog && dialog.open){
+    lastAttachmentClosedAt = Date.now();
+    dialog.close();
+  }
+  $('attach-modal-img').src = '';
+  $('attach-modal-frame').src = '';
+}
+
+const attachmentPreviewDlg = $('attachment-preview-dialog');
+if(attachmentPreviewDlg){
+  const dismissAttachOnBackdrop = (event) => {
+    if(!attachmentPreviewDlg.open) return;
+    const rect = attachmentPreviewDlg.getBoundingClientRect();
+    const isInside = (
+      rect.top <= event.clientY &&
+      event.clientY <= rect.top + rect.height &&
+      rect.left <= event.clientX &&
+      event.clientX <= rect.left + rect.width
+    );
+    if (!isInside || event.target === attachmentPreviewDlg) {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      closeAttachmentModal();
+    }
+  };
+  attachmentPreviewDlg.addEventListener('click', dismissAttachOnBackdrop, true);
+  attachmentPreviewDlg.addEventListener('pointerdown', (event) => {
+    if(event.target === attachmentPreviewDlg){
+      event.stopPropagation();
+    }
+  }, true);
+  attachmentPreviewDlg.addEventListener('cancel', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    closeAttachmentModal();
+  });
+  attachmentPreviewDlg.addEventListener('close', () => {
+    $('attach-modal-img').src = '';
+    $('attach-modal-frame').src = '';
+  });
+}
+
+// 顶级捕获阶段监听：优先捕获点击与按键，无论在哪个元素上，只要处于弹窗外部或按下 Esc，第 1 次操作立即且干净关闭
+window.addEventListener('click', (event) => {
+  const attachDlg = $('attachment-preview-dialog');
+  if (attachDlg && attachDlg.open) {
+    const rect = attachDlg.getBoundingClientRect();
+    const isInside = (
+      rect.top <= event.clientY &&
+      event.clientY <= rect.top + rect.height &&
+      rect.left <= event.clientX &&
+      event.clientX <= rect.left + rect.width
+    );
+    if (!isInside || event.target === attachDlg) {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      closeAttachmentModal();
+      return;
+    }
+  }
+  const detailDlg = $('record-detail-dialog');
+  if (detailDlg && detailDlg.open) {
+    const rect = detailDlg.getBoundingClientRect();
+    const isInside = (
+      rect.top <= event.clientY &&
+      event.clientY <= rect.top + rect.height &&
+      rect.left <= event.clientX &&
+      event.clientX <= rect.left + rect.width
+    );
+    if (!isInside || event.target === detailDlg) {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      closeRecordDetail();
+      return;
+    }
+  }
+}, true);
+
+window.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') {
+    const attachDlg = $('attachment-preview-dialog');
+    if (attachDlg && attachDlg.open) {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      closeAttachmentModal();
+      return;
+    }
+    const detailDlg = $('record-detail-dialog');
+    if (detailDlg && detailDlg.open) {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      closeRecordDetail();
+      return;
+    }
+    closeAllDropdowns();
+  }
+}, true);
+
+window.addEventListener('message', (event) => {
+  if (event.data?.type === 'tools-platform-escape' || event.data?.type === 'tools-platform-parent-click') {
+    const attachDlg = $('attachment-preview-dialog');
+    if (attachDlg && attachDlg.open) {
+      closeAttachmentModal();
+      return;
+    }
+    const detailDlg = $('record-detail-dialog');
+    if (detailDlg && detailDlg.open) {
+      closeRecordDetail();
+      return;
+    }
+  }
+});
+
+function openLightbox(url, title){ openAttachmentModal(url, title); }
+function closeLightbox(){ closeAttachmentModal(); }
+
+async function deleteRecord(id){
+  const record = (state.records || []).find(x => x.id === id);
+  if(!record) return;
+  if(record.status !== 'draft'){
+    await uiAlert('只能删除待发布草稿', '操作受限');
+    return;
+  }
+  const confirmed = await uiConfirm('确定要删除该条待发布违规草稿吗？删除后不可恢复。', '删除草稿确认', 'danger', '🗑️');
+  if(!confirmed) return;
+  try{
+    await request('/records/' + encodeURIComponent(id), { method: 'DELETE' });
+    closeRecordDetail();
+    showToast('待发布违规草稿已成功删除', 'info');
+    await refresh();
+  }catch(error){
+    await uiAlert(error.message, '删除草稿失败');
+  }
+}
+async function archiveRecord(id){
+  const record = (state.records || []).find(x => x.id === id);
+  if(!record) return;
+  if(!state.canEdit){
+    await uiAlert('仅系统管理员具备违规记录归档权限，请切换管理员账号重试。', '权限受限', 'warning', '🔒');
+    return;
+  }
+  const isArchived = record.status === 'archived' || Boolean(record.archived);
+  if(isArchived){
+    await uiAlert('该记录已处于归档状态', '提示');
+    return;
+  }
+  const confirmed = await uiConfirm('确定要将此条违规记录归档封存吗？归档后该记录将移出全部有效记录列表，仅在「已归档」状态中展示。', '违规记录归档确认', 'warning', '📦');
+  if(!confirmed) return;
+  try{
+    await request('/records/' + encodeURIComponent(id) + '/archive', { method: 'POST', body: JSON.stringify({ reason: '历史记录归档' }) });
+    closeRecordDetail();
+    showToast('违规记录已成功归档', 'success');
+    await refresh();
+  }catch(error){
+    const msg = (error.status === 404 || (error.message && error.message.includes('404')))
+      ? '归档服务接口未响应（可能是后端服务尚未同步更新部署），请联系管理员更新服务'
+      : (error.message || '操作未执行');
+    await uiAlert(msg, '归档失败');
+  }
+}
+async function unarchiveRecord(id){
+  const record = (state.records || []).find(x => x.id === id);
+  if(!record) return;
+  const confirmed = await uiConfirm('确定要将此归档记录恢复为已发布状态吗？恢复后将重新纳入全部有效记录列表与态势统计。', '恢复违规记录确认', 'primary', '↩️');
+  if(!confirmed) return;
+  try{
+    await request('/records/' + encodeURIComponent(id) + '/unarchive', { method: 'POST' });
+    closeRecordDetail();
+    showToast('违规记录已恢复为已发布状态', 'success');
+    await refresh();
+  }catch(error){
+    await uiAlert(error.message, '恢复失败');
+  }
 }
 function csvParse(text){const rows=[];let row=[],cell='',quoted=false;for(let i=0;i<text.length;i++){const c=text[i];if(c==='"'){if(quoted&&text[i+1]==='"'){cell+='"';i++}else quoted=!quoted}else if(c===','&&!quoted){row.push(cell);cell=''}else if((c==='\n'||c==='\r')&&!quoted){if(c==='\r'&&text[i+1]==='\n')i++;row.push(cell);if(row.some(x=>x.trim()))rows.push(row);row=[];cell=''}else cell+=c}if(quoted)throw Error('CSV 引号未闭合');row.push(cell);if(row.some(x=>x.trim()))rows.push(row);return rows}
 const csvCell=value=>{let text=String(value||'');if(/^[=+\-@\t\r]/.test(text))text="'"+text;return '"'+text.replace(/"/g,'""')+'"'};
-$('export-personnel').onclick=()=>{const csv='Staff ID,Name,Roles,Customer Groups,BUs\r\n'+state.personnel.map(p=>[p.id,p.name,personRoles(p).join(';'),personGroups(p).map(groupName).join(';'),personBusinessUnits(p).map(businessUnitName).join(';')].map(csvCell).join(',')).join('\r\n');const url=URL.createObjectURL(new Blob(['\ufeff',csv],{type:'text/csv;charset=utf-8'}));const link=document.createElement('a');link.href=url;link.download='人员名册.csv';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
+$('export-personnel').onclick=()=>{const csv='Staff ID,Name,Roles,Customer Groups,BUs\r\n'+active('personnel').map(p=>[p.id,p.name,personRoles(p).join(';'),personGroups(p).map(groupName).join(';'),personBusinessUnits(p).map(businessUnitName).join(';')].map(csvCell).join(',')).join('\r\n');const url=URL.createObjectURL(new Blob(['\ufeff',csv],{type:'text/csv;charset=utf-8'}));const link=document.createElement('a');link.href=url;link.download='人员名册.csv';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
 $('import-trigger').onclick=()=>$('import-file').click();$('import-file').onchange=async event=>{const file=event.target.files[0];if(!file)return;try{const rows=csvParse(await file.text()).slice(1);let count=0;for(const row of rows){const [id,name,roleText,groupText,buText]=row.map(x=>x.trim());const roles=(roleText||'').split(';').map(x=>x.trim()).filter(Boolean),groups=(groupText||'').split(';').map(x=>x.trim()).filter(Boolean).map(value=>state.customerGroups.find(group=>group.id===value||group.value===value)?.id),businessUnitIds=(buText||'').split(';').map(x=>x.trim()).filter(Boolean).map(value=>state.businessUnits.find(unit=>unit.id===value||unit.value===value)?.id);if(!id||!name||!roles.length||!groups.length||!roles.every(role=>state.roles.some(x=>x.value===role))||groups.some(group=>!group)||businessUnitIds.some(unit=>!unit))continue;await request('/personnel',{method:'POST',body:JSON.stringify({id,name,roles,customerGroupIds:groups,businessUnitIds})});count++}await uiAlert('成功导入 '+count+' 条；角色、客户群或 BU 无效的行已跳过');await refresh()}catch(error){await uiAlert(error.message)}event.target.value=''};
 $('import-legacy').onclick=async()=>{if(!await uiConfirm('将当前浏览器的旧版人员、规则和违规记录导入当前租户。导入成功后清理旧版本地副本，确认继续？','导入旧版数据'))return;try{const key='hw_dept_db_v11_filters_pagination',legacy=JSON.parse(localStorage.getItem(key));const result=await request('/legacy-import',{method:'POST',body:JSON.stringify(legacy)});localStorage.removeItem(key);await uiAlert('已导入 '+result.imported.personnel+' 名人员、'+result.imported.rules+' 条规则、'+result.imported.records+' 条记录');await refresh()}catch(error){await uiAlert('导入未完成：'+error.message)}};
 document.addEventListener('click',async event=>{
@@ -2099,11 +3680,13 @@ if(!event.target.closest('.filter-dropdown')){
 closeAllDropdowns();
 }
 if(event.target.closest('#toggle-analytics-btn')){
+if(autoCollapseAnalyticsTimer){clearTimeout(autoCollapseAnalyticsTimer);autoCollapseAnalyticsTimer=null;}
 analyticsSidebarOpen=!analyticsSidebarOpen;
 updateAnalyticsSidebar();
 return;
 }
 if(event.target.closest('#close-analytics-btn')){
+if(autoCollapseAnalyticsTimer){clearTimeout(autoCollapseAnalyticsTimer);autoCollapseAnalyticsTimer=null;}
 analyticsSidebarOpen=false;
 updateAnalyticsSidebar();
 return;
@@ -2114,6 +3697,26 @@ analyticsScope=segBtn.dataset.analyticsScope;
 render();
 return;
 }
+const qBtn=event.target.closest('[data-quarter]');
+if(qBtn){
+  applyQuarterFilter(qBtn.dataset.quarter);
+  return;
+}
+const mBtn=event.target.closest('[data-quarter-month]');
+if(mBtn){
+  applyMonthFilter(mBtn.dataset.quarterMonth);
+  return;
+}
+if(event.target.closest('#btn-close-quarter')){
+  activeQuarter=null;
+  activeQuarterMonth=null;
+  $('date-from').value='';
+  $('date-to').value='';
+  updateQuarterUI();
+  pages.records=1;
+  render();
+  return;
+}
 const ruleItem=event.target.closest('[data-filter-desc]');
 if(ruleItem){
 const desc=ruleItem.dataset.filterDesc;
@@ -2121,6 +3724,7 @@ if($('record-search').value.trim()===desc){
 $('record-search').value='';
 }else{
 $('record-search').value=desc;
+$('record-person').value='';
 }
 pages.records=1;
 render();
@@ -2131,6 +3735,7 @@ const personItem=event.target.closest('[data-filter-staff]');
 if(personItem){
 const staffId=personItem.dataset.filterStaff;
 const name=personItem.dataset.filterName;
+$('record-search').value='';
 if(Array.from($('record-person').options).some(opt=>opt.value===staffId)){
 $('record-person').value=($('record-person').value===staffId)?'':staffId;
 }else{
@@ -2173,7 +3778,106 @@ selectedDeductCatTab=deductTabBtn.dataset.deductCatTab;
 renderConfigView();
 return;
 }
+const viewFileTrigger = event.target.closest('[data-view-file]');
+if(viewFileTrigger){
+  event.preventDefault();
+  event.stopPropagation();
+  openAttachmentModal(viewFileTrigger.dataset.viewFile, viewFileTrigger.dataset.fileTitle || '附件材料预览');
+  return;
+}
+if(event.target.closest('#btn-fold-all-cards')){
+  event.preventDefault();
+  document.querySelectorAll('#record-detail-body .collapsible').forEach(c => c.classList.add('collapsed'));
+  return;
+}
+if(event.target.closest('#btn-unfold-all-cards')){
+  event.preventDefault();
+  document.querySelectorAll('#record-detail-body .collapsible').forEach(c => c.classList.remove('collapsed'));
+  return;
+}
+const cardToggleTrigger = event.target.closest('[data-toggle-card]');
+if(cardToggleTrigger && !event.target.closest('a, [data-view-file], [data-lightbox]')){
+  event.preventDefault();
+  const cardId = cardToggleTrigger.dataset.toggleCard;
+  const card = $(cardId);
+  if(card){
+    card.classList.toggle('collapsed');
+  }
+  return;
+}
+const lbTrigger=event.target.closest('[data-lightbox]');
+if(lbTrigger){
+  event.preventDefault();
+  event.stopPropagation();
+  openLightbox(lbTrigger.dataset.lightbox,lbTrigger.dataset.lightboxTitle);
+  return;
+}
+if(event.target.closest('#th-personnel-select-all')){
+  if(event.target.id!=='personnel-select-all'&&!event.target.closest('label')){
+    toggleSelectAllFilteredPersonnel();
+    return;
+  }
+}
+if(event.target.closest('#btn-batch-personnel')){
+  openBatchPersonnelDialog();
+  return;
+}
+if(event.target.closest('#close-batch-personnel')||event.target.closest('#cancel-batch-personnel')){
+  $('batch-personnel-dialog')?.close();
+  return;
+}
+if(event.target.closest('#btn-batch-clear-selection')){
+  selectedPersonnelIds.clear();
+  updateBatchPersonnelBtn();
+  render();
+  $('batch-personnel-dialog')?.close();
+  return;
+}
+if(event.target.id==='batch-personnel-dialog'){
+  $('batch-personnel-dialog')?.close();
+  return;
+}
+if(event.target.closest('#close-record-detail')||event.target.closest('#detail-foot-close')){
+  closeRecordDetail();
+  return;
+}
+if(event.target.closest('#attach-modal-close')){
+  closeAttachmentModal();
+  return;
+}
+if(event.target.closest('#lightbox-close')){
+  closeLightbox();
+  return;
+}
+if(event.target.id==='record-detail-dialog'){
+  closeRecordDetail();
+  return;
+}
+if(event.target.id==='attachment-preview-dialog'||event.target.classList?.contains('attachment-modal')){
+  closeAttachmentModal();
+  return;
+}
+if(event.target.id==='image-lightbox-dialog'||event.target.classList?.contains('lightbox-container')){
+  closeLightbox();
+  return;
+}
+const rowRecordEl=event.target.closest('tr[data-row-record]');
+if(rowRecordEl&&!event.target.closest('button, a, input, select, textarea, [data-lightbox], [data-view-file]')){
+  openRecordDetail(rowRecordEl.dataset.rowRecord);
+  return;
+}
 const el=event.target.closest('button');if(!el)return;
+if(el.dataset.viewDetail){openRecordDetail(el.dataset.viewDetail);return;}
+if(el.dataset.deleteRecord){await deleteRecord(el.dataset.deleteRecord);return;}
+if(el.dataset.archiveRecord){await archiveRecord(el.dataset.archiveRecord);return;}
+if(el.dataset.unarchiveRecord){await unarchiveRecord(el.dataset.unarchiveRecord);return;}
+if(el.dataset.detailEdit){closeRecordDetail();openEditor('records',el.dataset.detailEdit);return;}
+if(el.dataset.detailDelete){await deleteRecord(el.dataset.detailDelete);return;}
+if(el.dataset.detailPublish){closeRecordDetail();await recordAction(el.dataset.detailPublish,'publish');return;}
+if(el.dataset.detailForceEdit){closeRecordDetail();openEditor('records',el.dataset.detailForceEdit);return;}
+if(el.dataset.detailRevoke){closeRecordDetail();await recordAction(el.dataset.detailRevoke,'revoke');return;}
+if(el.dataset.detailArchive){closeRecordDetail();await archiveRecord(el.dataset.detailArchive);return;}
+if(el.dataset.detailUnarchive){closeRecordDetail();await unarchiveRecord(el.dataset.detailUnarchive);return;}
 if(el.dataset.view){view=el.dataset.view;render();if(view==='audit')await loadAudit();if(view==='security')await loadSecurity()}
 if(el.dataset.add)openEditor(el.dataset.add);
 if(el.dataset.edit)openEditor(el.dataset.edit,el.dataset.id);
@@ -2233,7 +3937,11 @@ await request('/config/'+configKind+'/'+encodeURIComponent(item.id),{method:'DEL
 }
 }catch(error){await uiAlert(error.message)}
 });
-document.addEventListener('keydown',event=>{if(event.key==='Escape')closeAllDropdowns();});
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape') {
+    closeAllDropdowns();
+  }
+});
 document.addEventListener('input',event=>{
 const search=event.target.closest('.filter-quick-search');
 if(search){
@@ -2245,11 +3953,74 @@ opt.hidden=q?!txt.includes(q):false;
 }
 });
 document.addEventListener('change',event=>{
+if(event.target.id==='personnel-select-all'||event.target.closest('#th-personnel-select-all')){
+  toggleSelectAllFilteredPersonnel();
+  return;
+}
+const itemChk=event.target.closest('.person-select-item');
+if(itemChk){
+  const pid=itemChk.dataset.personId;
+  if(itemChk.checked)selectedPersonnelIds.add(pid);
+  else selectedPersonnelIds.delete(pid);
+  updateBatchPersonnelBtn();
+  return;
+}
 const key=event.target.dataset.filter;if(!key)return;
 const selected=pickerSpecs[key].set;
 if(event.target.checked)selected.add(event.target.value);else selected.delete(event.target.value);
 pages[key.startsWith('person')?'personnel':key.startsWith('record')?'records':'rules']=1;
 render();
+});
+$('batch-personnel-form')?.addEventListener('submit',async e=>{
+  e.preventDefault();
+  if(!selectedPersonnelIds.size){
+    await uiAlert('请先选择要批量编辑的人员');
+    return;
+  }
+  const gMode=$('batch-group-mode')?.value||'keep';
+  const buMode=$('batch-bu-mode')?.value||'keep';
+  const rMode=$('batch-role-mode')?.value||'keep';
+
+  if(gMode==='keep' && buMode==='keep' && rMode==='keep'){
+    await uiAlert('请至少选择一项需要调整的属性（客户群、BU 或角色）');
+    return;
+  }
+
+  const selectedGroups=[...document.querySelectorAll('input[name="batch-groups"]:checked')].map(i=>i.value);
+  const selectedBus=[...document.querySelectorAll('input[name="batch-bus"]:checked')].map(i=>i.value);
+  const selectedRoles=[...document.querySelectorAll('input[name="batch-roles"]:checked')].map(i=>i.value);
+
+  if(gMode!=='keep' && !selectedGroups.length){
+    await uiAlert('客户群已选择调整方式，请在下方勾选具体的客户群');
+    return;
+  }
+  if(buMode!=='keep' && !selectedBus.length){
+    await uiAlert('BU 已选择调整方式，请在下方勾选具体的 BU');
+    return;
+  }
+  if(rMode!=='keep' && !selectedRoles.length){
+    await uiAlert('角色已选择调整方式，请在下方勾选具体的角色');
+    return;
+  }
+
+  const confirmed=await uiConfirm(`确认对已选中的 ${selectedPersonnelIds.size} 位在册人员批量应用所选属性变更？`,'批量编辑确认','info','👥');
+  if(!confirmed)return;
+
+  try{
+    const payload={
+      ids:[...selectedPersonnelIds],
+      groups:{mode:gMode,values:selectedGroups},
+      bus:{mode:buMode,values:selectedBus},
+      roles:{mode:rMode,values:selectedRoles}
+    };
+    const res=await request('/personnel/batch',{method:'POST',body:JSON.stringify(payload)});
+    $('batch-personnel-dialog')?.close();
+    showToast(`成功批量更新 ${res.updatedCount||selectedPersonnelIds.size} 位人员属性！`,'success');
+    selectedPersonnelIds.clear();
+    await refresh();
+  }catch(err){
+    await uiAlert(err.message,'批量编辑失败');
+  }
 });
 document.addEventListener('change',async event=>{
 const kind=event.target.dataset.pageSize;
@@ -2262,7 +4033,7 @@ document.addEventListener('keydown',event=>{if(event.key==='Enter'&&event.target
 const expBtn=$('export-records-btn');
 if(expBtn){
   expBtn.onclick=()=>{
-    const list=(lastRenderedRecords&&lastRenderedRecords.length)?lastRenderedRecords:state.records;
+    const list=(lastRenderedRecords&&lastRenderedRecords.length)?lastRenderedRecords:(state.records||[]).filter(r=>r.status!=='revoked');
     exportRecordsToCSV(list);
   };
 }
@@ -2353,16 +4124,28 @@ function updateSidebarState(collapsed){
   try{ localStorage.setItem(SIDEBAR_KEY,collapsed?'true':'false'); }catch(_){}
 }
 
+let autoCollapseNavSidebarTimer=null;
+function scheduleAutoCollapseNavSidebar(){
+  if(autoCollapseNavSidebarTimer){
+    clearTimeout(autoCollapseNavSidebarTimer);
+  }
+  autoCollapseNavSidebarTimer=setTimeout(()=>{
+    if(!appContainer?.classList.contains('sidebar-collapsed')){
+      updateSidebarState(true);
+    }
+    autoCollapseNavSidebarTimer=null;
+  },1500);
+}
+scheduleAutoCollapseNavSidebar();
+
 function toggleSidebar(){
+  if(autoCollapseNavSidebarTimer){
+    clearTimeout(autoCollapseNavSidebarTimer);
+    autoCollapseNavSidebarTimer=null;
+  }
   const isCurrentlyCollapsed=appContainer?.classList.contains('sidebar-collapsed');
   updateSidebarState(!isCurrentlyCollapsed);
 }
-
-try{
-  if(localStorage.getItem(SIDEBAR_KEY)==='true'){
-    updateSidebarState(true);
-  }
-}catch(_){}
 
 if(topToggleBtn)topToggleBtn.addEventListener('click',toggleSidebar);
 if(footToggleBtn)footToggleBtn.addEventListener('click',toggleSidebar);
@@ -2402,6 +4185,75 @@ $('nav')?.addEventListener('click',()=>{
 });
 
 $('reload').onclick=refresh;$('close-editor').onclick=()=>$('editor').close();$('cancel-editor').onclick=()=>$('editor').close();refresh();
+</script>
+<div id="__tools_html_meta_watermark__" class="tools-html-meta-watermark" aria-hidden="true" data-version="v1.0.239" data-slug="department-reward-penalty" title="版本: v1.0.239 | 最近更新: 2026-09-19 17:43:00 | 工具: department-reward-penalty"><span class="tools-watermark-ver">v1.0.239</span><span class="tools-watermark-sep">·</span><span class="tools-watermark-time">更新: 2026-09-19 17:43:00</span><span class="tools-watermark-sep">·</span><span class="tools-watermark-slug">department-reward-penalty</span></div>
+<style id="__tools_html_meta_watermark_style__">
+.tools-html-meta-watermark {
+  position: fixed;
+  right: 12px;
+  bottom: 3px;
+  z-index: 2147483640;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", monospace;
+  font-size: 10px;
+  line-height: 1.2;
+  color: rgba(100, 116, 139, 0.42);
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.85);
+  transition: opacity 0.2s ease;
+}
+@media (prefers-color-scheme: dark) {
+  .tools-html-meta-watermark {
+    color: rgba(148, 163, 184, 0.38);
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.7);
+  }
+}
+[data-theme="dark"] .tools-html-meta-watermark,
+.dark .tools-html-meta-watermark,
+body.dark-theme .tools-html-meta-watermark {
+  color: rgba(148, 163, 184, 0.38);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.7);
+}
+@media print {
+  .tools-html-meta-watermark { display: none !important; }
+}
+@media (max-width: 560px) {
+  .tools-html-meta-watermark .tools-watermark-slug,
+  .tools-html-meta-watermark .tools-watermark-sep:last-of-type {
+    display: none;
+  }
+}
+</style>
+<script id="__tools_html_meta_watermark_script__">
+(function() {
+  try {
+    var el = document.getElementById('__tools_html_meta_watermark__');
+    if (!el) return;
+    if (window.self !== window.top) {
+      el.style.right = '84px';
+    }
+    var iso = el.getAttribute('data-mtime-iso');
+    if (iso) {
+      var d = new Date(iso);
+      if (!isNaN(d.getTime())) {
+        var pad = function(n) { return String(n).padStart(2, '0'); };
+        var clientStr = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' +
+                        pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+        var timeSpan = el.querySelector('.tools-watermark-time');
+        if (timeSpan) timeSpan.textContent = '更新: ' + clientStr;
+        var ver = el.getAttribute('data-version') || '';
+        var slug = el.getAttribute('data-slug') || '';
+        el.title = '版本: ' + ver + ' | 最近更新: ' + clientStr + ' | 工具: ' + slug;
+      }
+    }
+  } catch(_) {}
+})();
 </script>
 </body>
 </html>

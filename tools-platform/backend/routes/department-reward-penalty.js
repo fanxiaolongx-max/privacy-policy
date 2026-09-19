@@ -3,7 +3,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
-const { getDataDir } = require('../models/store');
+const { getDataDir, getTenantId } = require('../models/tenant-context');
 const { getDbPath } = require('../models/app-db');
 const repo = require('../models/department-reward-penalty-repository');
 const router = express.Router();
@@ -19,6 +19,26 @@ const personBusinessUnits = person => Array.isArray(person.businessUnitIds) ? pe
 const matching = (person, rule) => {
     const actual = new Set(personRoles(person).flatMap(role => [role.toLowerCase(), ...roleTokens(role.toLowerCase().replace(/[()]/g, '/'))]).map(part => part.replace(/[^a-z0-9]/g, '')));
     return roleTokens(rule.roles).some(part => { const allowed = part.replace(/[^a-z0-9]/g, ''); return allowed === 'all' || actual.has(allowed); });
+};
+const EVIDENCE_EXTENSIONS = new Set(['.pdf', '.png', '.jpg', '.jpeg', '.txt', '.zip', '.rar', '.7z', '.tar', '.gz', '.eml', '.msg']);
+const EVIDENCE_PATH_REGEX = /^\/api\/department-reward-penalty\/evidence\/[a-f0-9-]{36}\.(?:pdf|png|jpg|txt|zip|rar|7z|tar|gz|eml|msg)$/i;
+const EVIDENCE_FILENAME_REGEX = /^[a-f0-9-]{36}\.(?:pdf|png|jpg|txt|zip|rar|7z|tar|gz|eml|msg)$/i;
+
+const parseAttachments = (body) => {
+    let list = [];
+    if (Array.isArray(body?.attachments)) {
+        list = body.attachments;
+    } else if (body?.attachment) {
+        list = String(body.attachment).split(';').map(s => s.trim()).filter(Boolean);
+    }
+    const valid = [];
+    for (const item of list) {
+        const p = clean(item, 200);
+        if (!p) continue;
+        if (!EVIDENCE_PATH_REGEX.test(p)) fail('附件路径无效');
+        valid.push(p);
+    }
+    return valid;
 };
 const respond = handler => (req, res) => Promise.resolve(handler(req, res)).catch(error => res.status(error.status || 500).json({ error: error.message || '操作失败' }));
 const pinFailures = new Map();
@@ -139,27 +159,84 @@ router.post('/legacy-import', respond(async (req, res) => {
     }
     res.json({ imported: { personnel: people.length, rules: rules.length, records: records.length } });
 }));
+const getEvidenceDir = req => path.join(getDataDir(req?.user?.tenantId || getTenantId()), 'department-reward-penalty-evidence');
+const getEvidencePath = (filename, req) => {
+    const tenantFile = path.join(getEvidenceDir(req), filename);
+    if (fs.existsSync(tenantFile)) return tenantFile;
+    const defaultFile = path.join(getDataDir('default'), 'department-reward-penalty-evidence', filename);
+    if (fs.existsSync(defaultFile)) return defaultFile;
+    return tenantFile;
+};
+
 router.post('/evidence', evidenceUpload.single('file'), respond(async (req, res) => {
     if (!req.file) fail('请选择证据文件');
-    const allowed = new Map([['application/pdf', '.pdf'], ['image/png', '.png'], ['image/jpeg', '.jpg'], ['text/plain', '.txt']]);
-    const extension = allowed.get(req.file.mimetype);
-    if (!extension) fail('仅支持 PDF、PNG、JPG、TXT 文件');
+    const originalExt = path.extname(req.file.originalname || '').toLowerCase();
+    const mimeToExt = new Map([
+        ['application/pdf', '.pdf'],
+        ['image/png', '.png'],
+        ['image/jpeg', '.jpg'],
+        ['text/plain', '.txt'],
+        ['application/zip', '.zip'],
+        ['application/x-zip-compressed', '.zip'],
+        ['application/vnd.rar', '.rar'],
+        ['application/x-rar-compressed', '.rar'],
+        ['application/x-7z-compressed', '.7z'],
+        ['application/x-tar', '.tar'],
+        ['application/gzip', '.gz'],
+        ['application/x-gzip', '.gz'],
+        ['message/rfc822', '.eml'],
+        ['application/vnd.ms-outlook', '.msg'],
+        ['application/x-msg', '.msg']
+    ]);
+    let extension = mimeToExt.get(req.file.mimetype);
+    if (!extension && EVIDENCE_EXTENSIONS.has(originalExt)) {
+        extension = originalExt === '.jpeg' ? '.jpg' : originalExt;
+    }
+    if (!extension || !EVIDENCE_EXTENSIONS.has(extension)) {
+        fail('仅支持 PDF、PNG、JPG、TXT、压缩包(ZIP/RAR/7Z/TAR/GZ) 及邮件(EML/MSG) 格式');
+    }
     const filename = crypto.randomUUID() + extension;
-    const directory = path.join(getDataDir(), 'department-reward-penalty-evidence');
+    const directory = getEvidenceDir(req);
     fs.mkdirSync(directory, { recursive: true });
     fs.writeFileSync(path.join(directory, filename), req.file.buffer, { flag: 'wx' });
     await repo.ensureReady();
     await repo.audit(req.user.username, '上传证据', 'evidence', filename, null, { filename, size: req.file.size }, '');
-    res.json({ path: '/api/department-reward-penalty/evidence/' + filename });
+    res.json({ path: '/api/department-reward-penalty/evidence/' + filename, filename: req.file.originalname, size: req.file.size });
 }));
 router.get('/evidence/:filename', respond(async (req, res) => {
     const filename = req.params.filename;
-    if (!/^[a-f0-9-]{36}\.(?:pdf|png|jpg|txt)$/.test(filename)) fail('文件名无效');
-    const filepath = path.join(getDataDir(), 'department-reward-penalty-evidence', filename);
+    if (!EVIDENCE_FILENAME_REGEX.test(filename)) fail('文件名无效');
+    const filepath = getEvidencePath(filename, req);
     if (!fs.existsSync(filepath)) fail('文件不存在', 404);
     res.setHeader('Cache-Control', 'private, no-store');
-    res.setHeader('Content-Disposition', 'attachment; filename="evidence' + path.extname(filename) + '"');
+    const ext = path.extname(filename).toLowerCase();
+    const mimeTypes = {
+        '.pdf': 'application/pdf',
+        '.png': 'image/png',
+        '.jpg': 'image/jpeg',
+        '.txt': 'text/plain; charset=utf-8',
+        '.zip': 'application/zip',
+        '.rar': 'application/vnd.rar',
+        '.7z': 'application/x-7z-compressed',
+        '.tar': 'application/x-tar',
+        '.gz': 'application/gzip',
+        '.eml': 'message/rfc822',
+        '.msg': 'application/vnd.ms-outlook'
+    };
+    if (mimeTypes[ext]) res.setHeader('Content-Type', mimeTypes[ext]);
+    const inlineExts = new Set(['.pdf', '.png', '.jpg', '.txt']);
+    const isInline = req.query.download !== '1' && inlineExts.has(ext);
+    const disposition = isInline ? 'inline' : 'attachment';
+    res.setHeader('Content-Disposition', `${disposition}; filename="evidence${ext}"`);
     res.sendFile(filepath);
+}));
+router.delete('/records/:id', respond(async (req, res) => {
+    const recordId = clean(req.params.id, 100);
+    const old = await repo.item('records', recordId);
+    if (!old) fail('违规记录不存在', 404);
+    if (old.status !== 'draft') fail('只能删除待发布草稿');
+    if (req.user?.role !== 'admin' && old.createdBy !== req.user?.username) fail('只能删除本人草稿', 403);
+    res.json(await repo.remove('records', recordId, req.user?.username || 'user', '删除草稿', '删除待发布违规草稿'));
 }));
 router.post('/records/:id/force-edit', respond(async (req, res) => {
     if (req.user?.role !== 'admin') fail('仅管理员可强制修改已发布记录', 403);
@@ -170,8 +247,8 @@ router.post('/records/:id/force-edit', respond(async (req, res) => {
     await requireForceEditPin(req, body.pin);
     const date = clean(body.date, 10);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) fail('日期无效');
-    const attachment = clean(body.attachment, 200);
-    if (attachment && !/^\/api\/department-reward-penalty\/evidence\/[a-f0-9-]{36}\.(?:pdf|png|jpg|txt)$/.test(attachment)) fail('附件路径无效');
+    const attachments = parseAttachments(body);
+    const attachment = attachments[0] || '';
     const staffId = clean(body.staffId, 100), ruleId = clean(body.ruleId, 100), customerGroupId = clean(body.customerGroupId, 100);
     const changedReference = staffId !== old.staffId || ruleId !== old.ruleId || customerGroupId !== clean(old.customerGroupId, 100);
     let ruleSnapshot = old.ruleSnapshot, personSnapshot = old.personSnapshot, deduct = old.deduct;
@@ -187,7 +264,9 @@ router.post('/records/:id/force-edit', respond(async (req, res) => {
         personSnapshot = { name: person.name, role: person.role, roles: personRoles(person), customerGroupId: group.id, customerGroupName: group.value };
     }
     if (body.deduct && clean(body.deduct, 100) !== deduct) fail('扣罚必须与原记录或新规则的标准一致');
-    const value = { ...old, date, staffId, ruleId, customerGroupId, deduct, ruleSnapshot, personSnapshot, tt: clean(body.tt, 100), remark: clean(body.remark, 2000), evidence: clean(body.evidence, 500), attachment, forcedEditAt: new Date().toISOString(), forcedEditBy: req.user.username, forcedEditReason: reason };
+    const curPerson = (await repo.list()).personnel.find(p => p.id === staffId) || personSnapshot;
+    const curRule = (await repo.list()).rules.find(r => r.id === ruleId) || ruleSnapshot;
+    const value = { ...old, date, staffId, ruleId, customerGroupId, deduct, ruleSnapshot, personSnapshot, tt: clean(body.tt, 100), remark: clean(body.remark, 2000), evidence: clean(body.evidence, 500), attachment, attachments, forcedEditAt: new Date().toISOString(), forcedEditBy: req.user.username, forcedEditReason: reason, migrationWarning: !matching(curPerson, curRule) };
     res.json(await repo.putPublishedWithPin(recordId, value, body.pin, req.user.username, reason));
 }));
 router.post('/records/:id/revoke', respond(async (req, res) => {
@@ -198,8 +277,102 @@ router.post('/records/:id/revoke', respond(async (req, res) => {
     const reason = clean(req.body?.reason, 1000);
     if (!reason) fail('撤销理由必填');
     await requireForceEditPin(req, req.body?.pin);
-    const value = { ...old, status: 'revoked', revokedAt: new Date().toISOString(), revokeReason: reason, revokedBy: req.user.username };
+    const revokeAttachment = clean(req.body?.revokeAttachment, 200);
+    if (revokeAttachment && !EVIDENCE_PATH_REGEX.test(revokeAttachment)) fail('撤销证明附件路径无效');
+    const value = { ...old, status: 'revoked', revokedAt: new Date().toISOString(), revokeReason: reason, revokedBy: req.user.username, revokeAttachment: revokeAttachment || '' };
     res.json(await repo.put('records', recordId, value, req.user.username, '撤销已发布违规', reason));
+}));
+router.post('/records/:id/archive', respond(async (req, res) => {
+    if (req.user?.role !== 'admin') fail('仅管理员可归档记录', 403);
+    const recordId = clean(req.params.id, 100);
+    const old = await repo.item('records', recordId);
+    if (!old) fail('违规记录不存在', 404);
+    if (old.status === 'archived' || old.archived) fail('该记录已处于归档状态', 409);
+    const reason = clean(req.body?.reason, 1000) || '历史违规记录归档';
+    const previousStatus = old.status || 'published';
+    const value = { ...old, status: 'archived', archived: true, previousStatus, archivedAt: new Date().toISOString(), archivedBy: req.user.username, archiveReason: reason };
+    res.json(await repo.put('records', recordId, value, req.user.username, '归档违规记录', reason));
+}));
+router.post('/records/:id/unarchive', respond(async (req, res) => {
+    if (req.user?.role !== 'admin') fail('仅管理员可恢复归档记录', 403);
+    const recordId = clean(req.params.id, 100);
+    const old = await repo.item('records', recordId);
+    if (!old || (old.status !== 'archived' && !old.archived)) fail('只能恢复已归档记录', 409);
+    const restoreStatus = old.previousStatus || 'published';
+    const value = { ...old, status: restoreStatus, archived: false, unarchivedAt: new Date().toISOString(), unarchivedBy: req.user.username };
+    res.json(await repo.put('records', recordId, value, req.user.username, '恢复已归档违规', '从已归档恢复为' + (restoreStatus === 'published' ? '已发布' : restoreStatus)));
+}));
+router.post('/personnel/batch', respond(async (req, res) => {
+    if (req.user.role !== 'admin') fail('仅管理员可维护配置', 403);
+    const body = req.body || {}, actor = req.user.username;
+    const personIds = [...new Set((Array.isArray(body.ids) ? body.ids : []).map(id => clean(id, 100)).filter(Boolean))];
+    if (!personIds.length) fail('请选择要批量编辑的人员');
+    const state = await repo.list();
+    const existing = state.personnel.filter(p => !p.archived && personIds.includes(p.id));
+    if (!existing.length) fail('未找到有效的人员记录');
+
+    const groupOp = body.groups || { mode: 'keep' };
+    const buOp = body.bus || { mode: 'keep' };
+    const roleOp = body.roles || { mode: 'keep' };
+
+    const validGroupIds = new Set(state.customerGroups.filter(g => !g.archived).map(g => g.id));
+    const validBuIds = new Set(state.businessUnits.filter(b => !b.archived).map(b => b.id));
+    const validRoles = new Set(state.roles.filter(r => !r.archived).map(r => r.value));
+
+    const targetGroupIds = (Array.isArray(groupOp.values) ? groupOp.values : []).map(v => clean(v, 100)).filter(id => validGroupIds.has(id));
+    const targetBuIds = (Array.isArray(buOp.values) ? buOp.values : []).map(v => clean(v, 100)).filter(id => validBuIds.has(id));
+    const targetRoles = (Array.isArray(roleOp.values) ? roleOp.values : []).map(v => clean(v, 80)).filter(r => validRoles.has(r));
+
+    if (groupOp.mode === 'replace' && !targetGroupIds.length) fail('替换模式下必须至少选择一个有效客户群');
+    if (roleOp.mode === 'replace' && !targetRoles.length) fail('替换模式下必须至少选择一个有效角色');
+
+    const changes = [];
+    for (const person of existing) {
+        let currentGroups = personGroups(person);
+        let currentBus = personBusinessUnits(person);
+        let currentRoles = personRoles(person);
+
+        if (groupOp.mode === 'replace') {
+            currentGroups = [...targetGroupIds];
+        } else if (groupOp.mode === 'add') {
+            currentGroups = [...new Set([...currentGroups, ...targetGroupIds])];
+        } else if (groupOp.mode === 'remove') {
+            currentGroups = currentGroups.filter(g => !targetGroupIds.includes(g));
+        }
+
+        if (buOp.mode === 'replace') {
+            currentBus = [...targetBuIds];
+        } else if (buOp.mode === 'add') {
+            currentBus = [...new Set([...currentBus, ...targetBuIds])];
+        } else if (buOp.mode === 'remove') {
+            currentBus = currentBus.filter(b => !targetBuIds.includes(b));
+        }
+
+        if (roleOp.mode === 'replace') {
+            currentRoles = [...targetRoles];
+        } else if (roleOp.mode === 'add') {
+            currentRoles = [...new Set([...currentRoles, ...targetRoles])];
+        } else if (roleOp.mode === 'remove') {
+            currentRoles = currentRoles.filter(r => !targetRoles.includes(r));
+        }
+
+        if (!currentGroups.length) fail(`人员「${person.name} (${person.id})」调整后客户群为空，每位人员必须至少属于一个客户群`);
+        if (!currentRoles.length) fail(`人员「${person.name} (${person.id})」调整后角色为空，每位人员必须至少具有一个角色`);
+
+        const updated = {
+            ...person,
+            roles: currentRoles,
+            role: currentRoles[0],
+            customerGroupIds: currentGroups,
+            customerGroupId: currentGroups[0] || '',
+            businessUnitIds: currentBus,
+            archived: false
+        };
+        changes.push({ kind: 'personnel', id: person.id, payload: updated });
+    }
+
+    await repo.putMany(changes, actor, '批量编辑人员', `批量更新 ${changes.length} 位人员属性`);
+    res.json({ updatedCount: changes.length });
 }));
 router.post('/:kind', respond(async (req, res) => {
     const kind = req.params.kind, body = req.body || {}, actor = req.user.username;
@@ -233,7 +406,9 @@ router.post('/:kind', respond(async (req, res) => {
             if (!old || old.status !== 'published') fail('只能撤销已发布记录');
             const reason = clean(body.reason, 1000); if (!reason) fail('撤销理由必填');
             await requireForceEditPin(req, body.pin);
-            value = { ...old, status: 'revoked', revokedAt: new Date().toISOString(), revokeReason: reason, revokedBy: actor };
+            const revokeAttachment = clean(body.revokeAttachment, 200);
+            if (revokeAttachment && !EVIDENCE_PATH_REGEX.test(revokeAttachment)) fail('撤销证明附件路径无效');
+            value = { ...old, status: 'revoked', revokedAt: new Date().toISOString(), revokeReason: reason, revokedBy: actor, revokeAttachment: revokeAttachment || '' };
             return res.json(await repo.put(kind, itemId, value, actor, '撤销已发布违规', reason));
         }
         if (!person || !rule) fail('请选择有效的责任主体和规则');
@@ -245,9 +420,9 @@ router.post('/:kind', respond(async (req, res) => {
         const date = clean(body.date, 10); if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) fail('日期无效');
         const action = clean(body.action, 20), reason = clean(body.reason, 1000);
         if (action === 'publish' && !reason) fail('发布理由必填');
-        const attachment = clean(body.attachment, 200);
-        if (attachment && !/^\/api\/department-reward-penalty\/evidence\/[a-f0-9-]{36}\.(?:pdf|png|jpg|txt)$/.test(attachment)) fail('附件路径无效');
-        value = { ...(old || {}), id: itemId, createdBy: old?.createdBy || actor, date, staffId, customerGroupId, ruleId, deduct, tt: clean(body.tt, 100), remark: clean(body.remark, 2000), evidence: clean(body.evidence, 500), attachment, status: action === 'publish' ? 'published' : 'draft', ruleSnapshot: { svcModule: rule.svcModule, subModule: rule.subModule, desc: rule.desc, roles: rule.roles, deduct: rule.deduct }, personSnapshot: { name: person.name, role: person.role, roles: personRoles(person), customerGroupId: group.id, customerGroupName: group.value }, ...(action === 'publish' ? { publishedAt: new Date().toISOString(), publishReason: reason } : {}) };
+        const attachments = parseAttachments(body);
+        const attachment = attachments[0] || '';
+        value = { ...(old || {}), id: itemId, createdBy: old?.createdBy || actor, date, staffId, customerGroupId, ruleId, deduct, tt: clean(body.tt, 100), remark: clean(body.remark, 2000), evidence: clean(body.evidence, 500), attachment, attachments, status: action === 'publish' ? 'published' : 'draft', ruleSnapshot: { svcModule: rule.svcModule, subModule: rule.subModule, desc: rule.desc, roles: rule.roles, deduct: rule.deduct }, personSnapshot: { name: person.name, role: person.role, roles: personRoles(person), customerGroupId: group.id, customerGroupName: group.value }, ...(action === 'publish' ? { publishedAt: new Date().toISOString(), publishReason: reason } : {}), migrationWarning: !matching(person, rule) };
     }
     res.json(await repo.put(kind, itemId, value, actor, body.action === 'publish' ? '发布' : '保存', clean(body.reason, 1000)));
 }));

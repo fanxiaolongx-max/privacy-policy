@@ -165,4 +165,28 @@ async function putPublishedWithPin(id, payload, pin, actor, reason) {
     return current;
 }
 
-module.exports = { DEFAULT_ROLES, DEFAULT_DEDUCTIONS, DEFAULT_DEDUCTION_CATEGORIES, deductionCategory, ensureReady, list, listAudit, item, put, putMany, putPublishedWithPin, audit, hasCustomForceEditPin, verifyForceEditPin, changeForceEditPin };
+async function remove(kind, id, actor, action = '删除', reason = '') {
+    const key = getDbPath();
+    const previous = writeQueues.get(key) || Promise.resolve();
+    const current = previous.catch(() => {}).then(async () => {
+        await ensureReady();
+        await run('BEGIN IMMEDIATE');
+        try {
+            if (!KINDS.has(kind)) throw new Error('无效的数据类型');
+            const before = await item(kind, id);
+            if (!before) throw Object.assign(new Error('记录不存在'), { status: 404 });
+            await run('DELETE FROM department_reward_penalty_items WHERE kind = ? AND id = ?', [kind, id]);
+            await audit(actor, action, kind, id, before, null, reason);
+            await run('COMMIT');
+            return { success: true, id };
+        } catch (error) {
+            await run('ROLLBACK').catch(() => {});
+            throw error;
+        }
+    });
+    writeQueues.set(key, current);
+    current.then(() => { if (writeQueues.get(key) === current) writeQueues.delete(key); }, () => { if (writeQueues.get(key) === current) writeQueues.delete(key); });
+    return current;
+}
+
+module.exports = { DEFAULT_ROLES, DEFAULT_DEDUCTIONS, DEFAULT_DEDUCTION_CATEGORIES, deductionCategory, ensureReady, list, listAudit, item, put, putMany, putPublishedWithPin, remove, audit, hasCustomForceEditPin, verifyForceEditPin, changeForceEditPin };

@@ -344,6 +344,7 @@ function registerNavbarI18n() {
             'nav.moreSearchLabel': '搜索更多工具',
             'nav.moreAll': '全部',
             'nav.moreRecent': '最近使用',
+            'nav.moreRecentBadge': '常用直达',
             'nav.moreNoResults': '没有找到匹配的工具',
             'nav.requirements': '需求',
             'nav.alertCenter': '告警台',
@@ -790,6 +791,7 @@ function registerNavbarI18n() {
             'nav.moreSearchLabel': 'Search more tools',
             'nav.moreAll': 'All',
             'nav.moreRecent': 'Recently used',
+            'nav.moreRecentBadge': 'Quick Access',
             'nav.moreNoResults': 'No matching tools',
             'nav.requirements': 'Requests',
             'nav.alertCenter': 'Alerts',
@@ -1310,6 +1312,127 @@ function sortNavItems(items, orderIds) {
     });
 }
 
+const NAV_RECENT_STORAGE_KEY = 'tools_recent_nav_tools';
+
+function getRecentNavToolIds() {
+    try {
+        const tenantId = localStorage.getItem('tools_tenant_id') || 'default';
+        const raw = localStorage.getItem(`${NAV_RECENT_STORAGE_KEY}:${tenantId}`);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (_) {
+        return [];
+    }
+}
+
+function recordRecentNavTool(toolId) {
+    if (!toolId || typeof toolId !== 'string') return;
+    try {
+        const tenantId = localStorage.getItem('tools_tenant_id') || 'default';
+        const key = `${NAV_RECENT_STORAGE_KEY}:${tenantId}`;
+        const ids = getRecentNavToolIds().filter(id => id !== toolId);
+        ids.unshift(toolId);
+        localStorage.setItem(key, JSON.stringify(ids.slice(0, 16)));
+    } catch (_) {}
+}
+
+function trackCurrentPageAsRecentNavTool() {
+    try {
+        const path = window.location.pathname;
+        const allItems = getAllNavItems();
+        const currentItem = allItems.find(item => item && typeof item.match === 'function' && item.match(path));
+        if (currentItem && currentItem.id) {
+            recordRecentNavTool(currentItem.id);
+        }
+    } catch (_) {}
+}
+
+function getRecentNavDisplayItems(itemById, primaryIds, overflowItems) {
+    const recentIds = getRecentNavToolIds();
+    const recentItems = [];
+    const seenRecent = new Set();
+    for (const id of recentIds) {
+        const item = itemById.get(id);
+        if (item && !primaryIds.has(item.id) && !seenRecent.has(item.id)) {
+            seenRecent.add(item.id);
+            recentItems.push(item);
+            if (recentItems.length >= 4) break;
+        }
+    }
+    if (recentItems.length < 2) {
+        for (const item of overflowItems) {
+            if (!seenRecent.has(item.id)) {
+                seenRecent.add(item.id);
+                recentItems.push(item);
+                if (recentItems.length >= 4) break;
+            }
+        }
+    }
+    return recentItems;
+}
+
+function renderNavRecentSection(recentItems) {
+    if (!Array.isArray(recentItems) || !recentItems.length) return '';
+    const path = window.location.pathname;
+    const itemsHtml = recentItems.map(item => {
+        const label = navEscape(getNavLabel(item));
+        let badges = '';
+        if (isRecentlyChangedTool(item)) {
+            badges += `<span class="new-badge">NEW!</span>`;
+        }
+        if (item.id.startsWith('custom:') && item.builtIn === false) {
+            badges += `<span class="tool-kind-badge">${navEscape(navLocaleText('自定义', 'CUSTOM'))}</span>`;
+        }
+        return `
+            <a href="${item.href}" class="nav-more-recent-item ${item.match(path) ? 'active' : ''}" data-nav-item-id="${navEscape(item.id)}" data-nav-search="${navEscape(buildNavSearchIndex(item))}" title="${label}">
+                <span class="nav-more-recent-item-icon">${item.icon}</span>
+                <span class="nav-more-recent-item-label">${label}</span>
+                ${badges}
+            </a>
+        `;
+    }).join('');
+
+    return `
+        <section class="nav-more-recent" id="navMoreRecent">
+            <div class="nav-more-recent-header">
+                <div class="nav-more-recent-title">
+                    <span class="nav-more-recent-icon" aria-hidden="true">🕒</span>
+                    <span>${navEscape(navT('nav.moreRecent'))}</span>
+                </div>
+                <span class="nav-more-recent-badge">${navEscape(navT('nav.moreRecentBadge'))}</span>
+            </div>
+            <div class="nav-more-recent-grid" style="--recent-cols: ${recentItems.length}">
+                ${itemsHtml}
+            </div>
+        </section>
+    `;
+}
+
+function refreshNavMoreRecent() {
+    const menuEl = document.getElementById('navMoreMenu');
+    if (!menuEl) return;
+    const settings = navState.settings;
+    const allItems = getAllNavItems();
+    const itemById = new Map(allItems.map(item => [item.id, item]));
+    const primaryItems = (settings.primaryIds || []).map(id => itemById.get(id)).filter(Boolean);
+    const primaryIds = new Set(primaryItems.map(item => item.id));
+    const overflowItems = sortNavItems(allItems.filter(item => !primaryIds.has(item.id)), settings.itemOrder);
+    const recentItems = getRecentNavDisplayItems(itemById, primaryIds, overflowItems);
+
+    const existingBar = menuEl.querySelector('#navMoreRecent');
+    const newHtml = renderNavRecentSection(recentItems);
+    if (existingBar) {
+        const temp = document.createElement('div');
+        temp.innerHTML = newHtml;
+        const newBar = temp.firstElementChild;
+        if (newBar) existingBar.replaceWith(newBar);
+    } else {
+        const toolbar = menuEl.querySelector('.nav-more-toolbar');
+        if (toolbar) toolbar.insertAdjacentHTML('afterend', newHtml);
+    }
+}
+
 function renderNavItem(item, className) {
     const path = window.location.pathname;
     const label = navEscape(getNavLabel(item));
@@ -1352,6 +1475,8 @@ function renderNavLinksFromState() {
         categoryMap.get(catId).items.push(item);
     });
 
+    const recentItems = getRecentNavDisplayItems(itemById, primaryIds, overflowItems);
+
     const visibleCategories = Array.from(categoryMap.values()).filter(cat => cat.items.length);
     const categoryButtons = visibleCategories
         .map((cat, index) => `<button type="button" class="nav-more-category-btn ${index === 0 ? 'active' : ''}" data-nav-category-target="${navEscape(cat.id)}">${navEscape(getNavCategoryName(cat))}<span>${cat.items.length}</span></button>`)
@@ -1370,6 +1495,7 @@ function renderNavLinksFromState() {
                 placeholder="${navEscape(navT('nav.moreSearch'))}" aria-label="${navEscape(navT('nav.moreSearchLabel'))}">
             <kbd>Esc</kbd>
         </div>
+        ${renderNavRecentSection(recentItems)}
         <div class="nav-more-layout">
             <aside class="nav-more-sidebar" aria-label="${navEscape(navT('nav.more'))}">
                 ${categoryButtons}
@@ -1387,11 +1513,28 @@ function renderNavLinksFromState() {
 function filterNavMoreItems(query = '') {
     const menu = document.getElementById('navMoreMenu');
     if (!menu) return;
+    const trimmed = (query || '').trim();
+    const recentBar = menu.querySelector('#navMoreRecent');
+    let matchedRecentCount = 0;
+    if (recentBar) {
+        if (!trimmed) {
+            recentBar.hidden = false;
+            recentBar.querySelectorAll('.nav-more-recent-item').forEach(item => { item.hidden = false; });
+        } else {
+            recentBar.querySelectorAll('.nav-more-recent-item').forEach(item => {
+                const matches = matchesNavSearch(item.dataset.navSearch, trimmed);
+                item.hidden = !matches;
+                if (matches) matchedRecentCount += 1;
+            });
+            recentBar.hidden = matchedRecentCount === 0;
+        }
+    }
+
     let visibleItemCount = 0;
     menu.querySelectorAll('.nav-more-category').forEach(category => {
         let categoryCount = 0;
         category.querySelectorAll('.nav-more-item').forEach(item => {
-            const matches = matchesNavSearch(item.dataset.navSearch, query);
+            const matches = matchesNavSearch(item.dataset.navSearch, trimmed);
             item.hidden = !matches;
             if (matches) categoryCount += 1;
         });
@@ -1402,7 +1545,7 @@ function filterNavMoreItems(query = '') {
         if (sidebarButton) sidebarButton.hidden = categoryCount === 0;
     });
     const noResults = menu.querySelector('.nav-more-no-results');
-    if (noResults) noResults.hidden = visibleItemCount !== 0;
+    if (noResults) noResults.hidden = (visibleItemCount !== 0 || matchedRecentCount !== 0);
 }
 
 function bindNavMoreInteractions() {
@@ -1501,6 +1644,7 @@ async function loadNavigationData() {
     }
     notifyRequirementPageCategoriesChanged();
     renderNavLinksFromState();
+    trackCurrentPageAsRecentNavTool();
     if (document.getElementById('navSettingsModal')) renderNavSettingsContent();
 }
 
@@ -1662,7 +1806,16 @@ function renderNavbar() {
 
     renderNavLinksFromState();
     loadTenantNavigation();
+    trackCurrentPageAsRecentNavTool();
 }
+
+document.addEventListener('click', (event) => {
+    const link = event.target.closest('[data-nav-item-id]');
+    if (link) {
+        const itemId = link.getAttribute('data-nav-item-id');
+        if (itemId) recordRecentNavTool(itemId);
+    }
+}, true);
 
 window.refreshCustomToolNavLinks = loadNavigationData;
 
@@ -1696,6 +1849,7 @@ window.toggleNavMore = function (event) {
     more.classList.toggle('open', isOpening);
     document.getElementById('navMoreBtn')?.setAttribute('aria-expanded', String(isOpening));
     if (isOpening) {
+        refreshNavMoreRecent();
         const menu = document.getElementById('navMoreMenu');
         const buttonRect = document.getElementById('navMoreBtn')?.getBoundingClientRect();
         if (menu && buttonRect) {
@@ -6121,9 +6275,19 @@ window.doLogout = async function () {
     } catch (e) { }
     const language = localStorage.getItem('tools_language');
     const legacyLanguage = localStorage.getItem('tools_lang');
+    const preservedEntries = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('tools_recent_nav_tools') || key === 'tools_tenant_id')) {
+            preservedEntries.push([key, localStorage.getItem(key)]);
+        }
+    }
     localStorage.clear();
     if (language) localStorage.setItem('tools_language', language);
     if (legacyLanguage) localStorage.setItem('tools_lang', legacyLanguage);
+    for (const [key, val] of preservedEntries) {
+        if (val !== null) localStorage.setItem(key, val);
+    }
     sessionStorage.clear();
     document.cookie = 'tools_token=; path=/; max-age=0';
     window.location.href = '/login.html';
@@ -6251,7 +6415,7 @@ window.openToolsAIAssistant = function (options = {}) {
             script.addEventListener('load', resolve, { once: true });
             script.addEventListener('error', () => reject(new Error('AI 助手组件加载失败')), { once: true });
             if (!existing) {
-                script.src = '/js/shared/ai-assistant.js?v=20260914-10';
+                script.src = '/js/shared/ai-assistant.js?v=20260919-01';
                 document.body.appendChild(script);
             }
         }).catch(error => {
@@ -6274,7 +6438,7 @@ window.openToolsAIAssistant = function (options = {}) {
     // 确保不重复加载
     if (!document.querySelector('script[src^="/js/shared/ai-assistant.js"]')) {
         const aiScript = document.createElement('script');
-        aiScript.src = '/js/shared/ai-assistant.js?v=20260914-10';
+        aiScript.src = '/js/shared/ai-assistant.js?v=20260919-01';
         document.body.appendChild(aiScript);
     }
 })();
