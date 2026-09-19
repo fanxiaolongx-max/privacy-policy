@@ -1586,7 +1586,7 @@ function openMessage({title='提示',message='',bannerType='info',icon='ℹ️',
 const uiAlert=(message,title='系统提示',bannerType='info',icon='ℹ️')=>openMessage({title,message,bannerType,icon,confirmText:'知道了'});
 const uiConfirm=(message,title='请确认操作',bannerType='danger',icon='⚠️')=>openMessage({title,message,bannerType,icon,confirmText:'确认操作'}).then(Boolean);
 const uiPrompt=(message,value='',title='请输入')=>openMessage({title,bannerType:'info',icon:'✏️',fields:[{name:'value',label:message,value}],confirmText:'确定'}).then(result=>result?.value??null);
-function roleMatches(person,rule){if(!person||!rule)return null;const actual=new Set(personRoles(person).flatMap(role=>{const raw=String(role).toLowerCase();return [raw,...raw.replace(/[()]/g,'/').split(/[,+/]/).map(x=>x.trim())]}).map(x=>x.replace(/[^a-z0-9]/g,'')));return roleList(rule).some(role=>{const x=role.toLowerCase().replace(/[^a-z0-9]/g,'');return x==='all'||actual.has(x)});}
+function roleMatches(person,rule){if(!person||!rule)return null;const ruleRoles=roleList(rule);const realRolesList=(state.roles||[]).filter(r=>r.value.toUpperCase()!=='ALL');const isAll=ruleRoles.some(r=>r.toUpperCase()==='ALL')||(realRolesList.length>0&&realRolesList.every(r=>ruleRoles.includes(r.value)));if(isAll)return true;const actual=new Set(personRoles(person).flatMap(role=>{const raw=String(role).toLowerCase();return [raw,...raw.replace(/[()]/g,'/').split(/[,+/]/).map(x=>x.trim())]}).map(x=>x.replace(/[^a-z0-9]/g,'')));return ruleRoles.some(role=>{const x=role.toLowerCase().replace(/[^a-z0-9]/g,'');return x==='all'||actual.has(x)});}
 async function request(path,options){const response=await fetch(API+path,{credentials:'same-origin',headers:{'Content-Type':'application/json'},...options});const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||'请求失败');return data;}
 async function refresh(){try{const raw=await request('/');state=Object.assign({personnel:[],rules:[],records:[],roles:[],deductions:[],deductionCategories:[],customerGroups:[],businessUnits:[]},raw);for(const k of ['personnel','rules','records','roles','deductions','deductionCategories','customerGroups','businessUnits']){if(!Array.isArray(state[k]))state[k]=[]} $('status').textContent='数据来自当前租户 · '+new Date().toLocaleString();$('import-legacy').hidden=!(state.canEdit&&!state.personnel.length&&!state.records.length&&localStorage.getItem('hw_dept_db_v11_filters_pagination'));render();if(view==='audit')await loadAudit();if(view==='security')await loadSecurity();}catch(error){$('status').textContent='读取失败：'+error.message;}}
 async function loadAudit(){try{auditData=await request('/audit?page='+auditPage+'&pageSize='+auditPageSize);auditPage=auditData.page;auditPageSize=auditData.pageSize;localStorage.setItem('hw_dept_audit_page_size_v1',String(auditPageSize));renderAudit();}catch(error){$('pager-audit').textContent='审计读取失败：'+error.message;}}
@@ -2099,7 +2099,8 @@ let selectedDeductCatTab='all';
 function renderConfigView(){
 const activePersonnel=(state.personnel||[]).filter(p=>!p.archived);
 const activeRules=(state.rules||[]).filter(r=>!r.archived);
-const totalRoles=(state.roles||[]).length;
+const realRoles=(state.roles||[]).filter(r=>r.value.toUpperCase()!=='ALL');
+const totalRoles=realRoles.length;
 const totalCategories=(state.deductionCategories||[]).length;
 const totalDeductions=(state.deductions||[]).length;
 const rulesWithDeduct=activeRules.filter(r=>r.deduct).length;
@@ -2110,7 +2111,7 @@ configGrid.innerHTML=`<div class="org-kpi-card"><div class="org-kpi-label"><span
 }
 const roleBadge=$('role-total-badge');if(roleBadge)roleBadge.textContent='共 '+totalRoles+' 个角色';
 const roleSearch=($('search-role')?.value||'').trim().toLowerCase();
-const filteredRoles=(state.roles||[]).filter(r=>!roleSearch||String(r.value||'').toLowerCase().includes(roleSearch));
+const filteredRoles=realRoles.filter(r=>!roleSearch||String(r.value||'').toLowerCase().includes(roleSearch));
 const roleFilterCount=$('role-filter-count');if(roleFilterCount)roleFilterCount.textContent=roleSearch?`匹配 ${filteredRoles.length} 项`:'';
 const rowsRoles=$('rows-roles');
 if(rowsRoles){
@@ -2121,8 +2122,7 @@ rowsRoles.innerHTML=filteredRoles.map(role=>{
 const pCount=activePersonnel.filter(p=>personRoles(p).includes(role.value)).length;
 const rCount=activeRules.filter(r=>roleList(r).includes(role.value)).length;
 const totalRefs=pCount+rCount;
-const isAll=role.value==='ALL';
-return `<tr><td><div class="entity-cell"><span class="entity-avatar role-type">🎭</span><div class="entity-info"><span class="entity-title">${escapeHtml(role.value)}${isAll?' <span class="mini-tag module-tag">通用全员</span>':''}</span><span class="entity-sub">ID: ${escapeHtml(role.id)}</span></div></div></td><td>${totalRefs>0?`<span class="staff-count-btn bu-variant" style="cursor:default;"><span class="dot"></span><span>${pCount} 人 · ${rCount} 规则</span></span>`:`<span class="staff-count-idle">0 引用 · 闲置</span>`}</td><td style="text-align:right;white-space:nowrap;">${tableConfigActions('roles',role,totalRefs,`已有 ${pCount} 位人员、${rCount} 条规则引用此角色，无法删除`)}</td></tr>`;
+return `<tr><td><div class="entity-cell"><span class="entity-avatar role-type">🎭</span><div class="entity-info"><span class="entity-title">${escapeHtml(role.value)}</span><span class="entity-sub">ID: ${escapeHtml(role.id)}</span></div></div></td><td>${totalRefs>0?`<span class="staff-count-btn bu-variant" style="cursor:default;"><span class="dot"></span><span>${pCount} 人 · ${rCount} 规则</span></span>`:`<span class="staff-count-idle">0 引用 · 闲置</span>`}</td><td style="text-align:right;white-space:nowrap;">${tableConfigActions('roles',role,totalRefs,`已有 ${pCount} 位人员、${rCount} 条规则引用此角色，无法删除`)}</td></tr>`;
 }).join('');
 }
 }
@@ -2460,9 +2460,19 @@ for(const id of selectedPersonnelIds){
   if(!validPersonnelIds.has(id))selectedPersonnelIds.delete(id);
 }
 
-const rs=$('rule-search').value.toLowerCase(),mod=$('rule-module').value;drawRows('rows-rules',active('rules').filter(rule=>(!mod||rule.svcModule===mod)&&(!rs||[rule.svcModule,rule.subModule,rule.desc,roleList(rule).join(' ')].join(' ').toLowerCase().includes(rs))&&(!ruleFilters.roles.size||roleList(rule).some(role=>ruleFilters.roles.has(role)))&&(!ruleFilters.deductions.size||ruleFilters.deductions.has(rule.deduct))),'rules',rule=>{
+const rs=$('rule-search').value.toLowerCase(),mod=$('rule-module').value;drawRows('rows-rules',active('rules').filter(rule=>{
+  const rRoles=roleList(rule);
+  const realRolesList=(state.roles||[]).filter(r=>r.value.toUpperCase()!=='ALL');
+  const isAll=rRoles.some(r=>r.toUpperCase()==='ALL')||(realRolesList.length>0&&realRolesList.every(r=>rRoles.includes(r.value)));
+  return (!mod||rule.svcModule===mod)&&(!rs||[rule.svcModule,rule.subModule,rule.desc,isAll?'all':rRoles.join(' ')].join(' ').toLowerCase().includes(rs))&&(!ruleFilters.roles.size||isAll||rRoles.some(role=>ruleFilters.roles.has(role)))&&(!ruleFilters.deductions.size||ruleFilters.deductions.has(rule.deduct));
+}),'rules',rule=>{
   const weightHtml=rule.weight==null?'<span class="weight-na-pill">不适用</span>':`<div class="weight-cell-wrap"><div class="weight-meter"><div class="weight-meter-bar ${rule.weight>=80?'max':rule.weight>=50?'high':''}" style="width:${Math.min(100,Math.max(0,rule.weight))}%"></div></div><span class="weight-meter-num">${escapeHtml(rule.weight)}%</span></div>`;
-  const rolesHtml=roleList(rule).map(r=>`<span class="person-role-chip" style="font-size:11px;">${escapeHtml(r)}</span>`).join(' ') || '<span class="muted">全员</span>';
+  const rRoles=roleList(rule);
+  const realRolesList=(state.roles||[]).filter(r=>r.value.toUpperCase()!=='ALL');
+  const isAll=rRoles.some(r=>r.toUpperCase()==='ALL')||(realRolesList.length>0&&realRolesList.every(r=>rRoles.includes(r.value)));
+  const rolesHtml=isAll
+    ? '<span class="person-role-chip" style="font-size:11px;font-weight:700;background:#fef2f2;color:#9e1b34;border-color:#fecdd3;">ALL</span>'
+    : rRoles.map(r=>`<span class="person-role-chip" style="font-size:11px;">${escapeHtml(r)}</span>`).join(' ') || '<span class="muted">全员</span>';
   return '<tr><td>'+escapeHtml(rule.svcModule)+'<br><span class="muted">'+escapeHtml(rule.subModule)+'</span></td><td>'+escapeHtml(rule.desc)+'</td><td><div class="person-chips-cell">'+rolesHtml+'</div></td><td><span class="muted">'+escapeHtml(categoryName(deductionFor(rule.deduct)?.categoryId))+'</span><br><b>'+escapeHtml(rule.deduct)+'</b></td><td>'+weightHtml+'</td><td style="text-align:right;white-space:nowrap;"><div class="row-actions-group"><button type="button" class="row-action-btn edit" data-edit="rules" data-id="'+escapeHtml(rule.id)+'" title="编辑规则"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 2l3 3-9 9H2v-3l9-9z"/></svg><span>编辑</span></button><button type="button" class="row-action-btn danger" data-archive="rules" data-id="'+escapeHtml(rule.id)+'" title="归档规则"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 3V1h6v2M2 4h12M4 4v10h8V4"/></svg><span>归档</span></button></div></td></tr>';
 });
 const ps=$('person-search').value.toLowerCase();
@@ -2683,8 +2693,9 @@ checkRole();
 }
 if(kind==='rules'){
 const categoriesOptions=option('','请选择分类')+state.deductionCategories.map(c=>option(c.id,c.value)).join('');
-const rolesHtml=state.roles.map(r=>`<button type="button" class="role-chip-btn" data-role="${escapeHtml(r.value)}"><span class="role-chip-icon"><svg viewBox="0 0 16 16"><path d="M13.5 4.5L6.5 11.5L3 8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>${escapeHtml(r.value)}</span></button>`).join('');
-const hiddenRoleOptions=state.roles.map(x=>option(x.value,x.value)).join('');
+const realRoles=state.roles.filter(r=>r.value.toUpperCase()!=='ALL');
+const rolesHtml=realRoles.map(r=>`<button type="button" class="role-chip-btn" data-role="${escapeHtml(r.value)}"><span class="role-chip-icon"><svg viewBox="0 0 16 16"><path d="M13.5 4.5L6.5 11.5L3 8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>${escapeHtml(r.value)}</span></button>`).join('');
+const hiddenRoleOptions=realRoles.map(x=>option(x.value,x.value)).join('');
 content=`<div class="field"><label for="f-svc">大类 <span class="req-mark">*</span></label><input id="f-svc" required maxlength="100" placeholder="例如：交付质量、服务规范"></div>`+
 `<div class="field"><label for="f-sub">子类 <span class="req-mark">*</span></label><input id="f-sub" required maxlength="100" placeholder="例如：逾期响应、操作失误"></div>`+
 `<div class="field full"><label for="f-desc">违规行为判定描述 <span class="req-mark">*</span></label><textarea id="f-desc" required maxlength="1000" placeholder="请详细描述具体的违规判定场景、界定标准与触发条件..."></textarea></div>`+
@@ -2694,7 +2705,19 @@ content=`<div class="field"><label for="f-svc">大类 <span class="req-mark">*</
 `<div class="field full"><div class="weight-card" id="weight-card"><div class="weight-card-head"><div class="weight-title-box"><span class="weight-main-label">权重考评</span><span class="weight-sub-hint">用于违规考核与多维统计分析，支持快捷预设与一键停用</span></div><label class="modern-switch-label" for="f-weight-na" title="勾选后此规则不计入权重考评"><input type="checkbox" id="f-weight-na"><span class="switch-track"><span class="switch-thumb"></span></span><span class="switch-text">不适用</span></label></div><div class="weight-body" id="weight-interactive-body"><div class="weight-slider-row"><div class="slider-track-container"><input type="range" id="f-weight" min="0" max="100" value="0" class="modern-range-slider" aria-label="权重百分比"><div class="slider-scale-ticks"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div></div><div class="weight-value-badge" id="weight-badge">0%</div></div><div class="weight-presets-row"><span class="presets-tag-label">快捷预设：</span><button type="button" class="preset-pill-btn" data-preset="0">0%</button><button type="button" class="preset-pill-btn" data-preset="20">20%</button><button type="button" class="preset-pill-btn" data-preset="50">50%</button><button type="button" class="preset-pill-btn" data-preset="80">80%</button><button type="button" class="preset-pill-btn" data-preset="100">100%</button></div></div></div></div>`;
 $('editor-fields').innerHTML='<div class="form-grid">'+content+'</div>';
 
-const updateRoleUI=()=>{const selectedVals=new Set([...$('f-roles').selectedOptions].map(o=>o.value));document.querySelectorAll('#role-chips-wrap .role-chip-btn').forEach(btn=>{btn.classList.toggle('is-active',selectedVals.has(btn.dataset.role));});const count=selectedVals.size,badge=$('role-count-badge');if(badge){badge.textContent=`已选 ${count} 项`;badge.classList.toggle('has-selected',count>0);}$('role-chips-wrap').classList.remove('has-error');};
+const updateRoleUI=()=>{
+  const selectedVals=new Set([...$('f-roles').selectedOptions].map(o=>o.value));
+  document.querySelectorAll('#role-chips-wrap .role-chip-btn').forEach(btn=>{
+    btn.classList.toggle('is-active',selectedVals.has(btn.dataset.role));
+  });
+  const count=selectedVals.size, totalCount=realRoles.length, badge=$('role-count-badge');
+  if(badge){
+    const isAll = totalCount > 0 && count === totalCount;
+    badge.textContent = isAll ? `全选 (ALL · ${count}项)` : `已选 ${count} 项`;
+    badge.classList.toggle('has-selected', count > 0);
+  }
+  $('role-chips-wrap').classList.remove('has-error');
+};
 const updateDeductOptions=(selectedVal)=>{const catId=$('f-deduct-category').value,items=state.deductions.filter(d=>d.categoryId===catId);$('f-deduct').innerHTML=option('',items.length?'请选择具体扣罚':'该分类暂无具体扣罚')+items.map(d=>option(d.value,d.value)).join('');if(selectedVal&&items.some(d=>d.value===selectedVal))$('f-deduct').value=selectedVal;else $('f-deduct').value=items[0]?.value||'';};
 const syncWeightUI=()=>{const isNa=$('f-weight-na').checked,val=Number($('f-weight').value)||0,body=$('weight-interactive-body'),badge=$('weight-badge'),slider=$('f-weight');if(isNa){body.classList.add('is-na');badge.textContent='不适用';badge.className='weight-value-badge badge-na';slider.style.background='#e2e8f0';}else{body.classList.remove('is-na');badge.textContent=val+'%';badge.className='weight-value-badge';slider.style.background=`linear-gradient(to right, #b91937 0%, #b91937 ${val}%, #e2e8f0 ${val}%, #e2e8f0 100%)`;}document.querySelectorAll('.preset-pill-btn').forEach(btn=>{btn.classList.toggle('preset-active',!isNa&&Number(btn.dataset.preset)===val);});};
 
@@ -2712,7 +2735,8 @@ const currentDeduction=deductionFor(item.deduct);
 if(currentDeduction?.categoryId)$('f-deduct-category').value=currentDeduction.categoryId;
 updateDeductOptions(item.deduct);
 const roles=roleList(item);
-[...$('f-roles').options].forEach(o=>o.selected=roles.includes(o.value));
+const isAllItem = roles.some(r => r.toUpperCase() === 'ALL') || (realRoles.length > 0 && realRoles.every(r => roles.includes(r.value)));
+[...$('f-roles').options].forEach(o=>o.selected = isAllItem || roles.includes(o.value));
 updateRoleUI();
 $('f-weight-na').checked=item.weight==null;
 $('f-weight').value=item.weight==null?0:item.weight;
@@ -2970,23 +2994,25 @@ if(!selectedRoles.length){
   await uiAlert('适用角色为必选项，请至少勾选一个该规则适用的岗位角色（支持多选）','适用角色未选择','warning','⚠️');
   return;
 }
+const realRoles=state.roles.filter(r=>r.value.toUpperCase()!=='ALL');
+const isAllSelected=realRoles.length>0&&selectedRoles.length===realRoles.length;
+const finalRoles=isAllSelected?['ALL']:selectedRoles;
 if(old){
-const sameSvc=String(old.svcModule||'').trim()===String($('f-svc').value||'').trim();
-const sameSub=String(old.subModule||'').trim()===String($('f-sub').value||'').trim();
-const sameDesc=String(old.desc||'').trim()===String($('f-desc').value||'').trim();
-const newRoles=selectedRoles.slice().sort().join(',');
-const oldRoles=roleList(old).slice().sort().join(',');
-const sameRoles=newRoles===oldRoles;
-const sameDeduct=String(old.deduct||'')===String($('f-deduct').value||'');
-const newWeight=$('f-weight-na').checked?null:Number($('f-weight').value);
-const oldWeight=old.weight==null?null:Number(old.weight);
-const sameWeight=newWeight===oldWeight;
-if(sameSvc&&sameSub&&sameDesc&&sameRoles&&sameDeduct&&sameWeight){
-await uiAlert('规则内容未发生任何修改，无需保存');
-return;
+  const sameSvc=String(old.svcModule||'').trim()===String($('f-svc').value||'').trim();
+  const sameSub=String(old.subModule||'').trim()===String($('f-sub').value||'').trim();
+  const sameDesc=String(old.desc||'').trim()===String($('f-desc').value||'').trim();
+  const oldIsAll=roleList(old).some(r=>r.toUpperCase()==='ALL')||(realRoles.length>0&&realRoles.every(r=>roleList(old).includes(r.value)));
+  const sameRoles=(isAllSelected&&oldIsAll)||(!isAllSelected&&!oldIsAll&&selectedRoles.slice().sort().join(',')===roleList(old).slice().sort().join(','));
+  const sameDeduct=String(old.deduct||'')===String($('f-deduct').value||'');
+  const newWeight=$('f-weight-na').checked?null:Number($('f-weight').value);
+  const oldWeight=old.weight==null?null:Number(old.weight);
+  const sameWeight=newWeight===oldWeight;
+  if(sameSvc&&sameSub&&sameDesc&&sameRoles&&sameDeduct&&sameWeight){
+    await uiAlert('规则内容未发生任何修改，无需保存');
+    return;
+  }
 }
-}
-data={id:editing.id,svcModule:$('f-svc').value,subModule:$('f-sub').value,desc:$('f-desc').value,roles:selectedRoles,deduct:$('f-deduct').value,weight:$('f-weight-na').checked?null:Number($('f-weight').value)};
+data={id:editing.id,svcModule:$('f-svc').value,subModule:$('f-sub').value,desc:$('f-desc').value,roles:finalRoles,deduct:$('f-deduct').value,weight:$('f-weight-na').checked?null:Number($('f-weight').value)};
 }else{
 const newRoles=[...$('f-role').selectedOptions].map(x=>x.value);
 const newGroups=[...$('f-group').selectedOptions].map(x=>x.value);

@@ -392,7 +392,7 @@ router.post('/:kind', respond(async (req, res) => {
     } else if (kind === 'rules') {
         const svcModule = clean(body.svcModule, 100), subModule = clean(body.subModule, 100), desc = clean(body.desc, 1000), roles = Array.isArray(body.roles) ? body.roles.map(value => clean(value, 80)) : roleTokens(body.roles), deduct = clean(body.deduct, 100);
         if (!svcModule || !subModule || !desc || !roles.length || !deduct) fail('规则字段不完整');
-        if (!roles.every(role => state.roles.some(item => item.value === role)) || !state.deductions.some(item => item.value === deduct)) fail('角色或扣罚标准无效');
+        if (!roles.every(role => role.toUpperCase() === 'ALL' || state.roles.some(item => item.value === role)) || !state.deductions.some(item => item.value === deduct)) fail('角色或扣罚标准无效');
         const weight = body.weight === null ? null : Number(body.weight);
         if (weight !== null && (!Number.isInteger(weight) || weight < 0 || weight > 100)) fail('权重需为 0–100 或不适用');
         value = { id: itemId, svcModule, subModule, desc, roles, deduct, weight, archived: Boolean(body.archived) };

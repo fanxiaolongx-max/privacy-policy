@@ -93,9 +93,34 @@ jobs:
         working-directory: tools-platform
         run: npm install
 
+      - name: Cache electron-builder binaries
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~\AppData\Local\electron\Cache
+            ~\AppData\Local\electron-builder\Cache
+          key: ${{ runner.os }}-electron-builder-${{ hashFiles('tools-platform/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-electron-builder-
+
       - name: Build Application (Windows)
         working-directory: tools-platform
-        run: npm run build:win
+        shell: pwsh
+        run: |
+          for ($i=1; $i -le 3; $i++) {
+            Write-Host "Starting build attempt $i of 3..."
+            npm run build:win
+            if ($LASTEXITCODE -eq 0) {
+              Write-Host "Build succeeded on attempt $i."
+              break
+            }
+            if ($i -eq 3) {
+              Write-Error "Build failed after 3 attempts."
+              exit 1
+            }
+            Write-Host "Build attempt $i failed. Retrying in 10s..."
+            Start-Sleep -Seconds 10
+          }
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

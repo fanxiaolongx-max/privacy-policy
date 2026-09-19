@@ -2,7 +2,7 @@ const crypto = require('crypto');
 const { run, get, all, getDbPath } = require('./app-db');
 const defaultRules = require('../builtin-tools/department-reward-penalty/default-rules.json');
 
-const DEFAULT_ROLES = ['MTD', 'TL', 'TE', 'SPM', 'MS', 'SEC', 'Software', 'CS', 'NTD', 'FME', 'TD', 'PM', 'admin', 'Redline Resource', 'SP manager', 'SP admin', 'Virtual Account', 'ALL'];
+const DEFAULT_ROLES = ['MTD', 'TL', 'TE', 'SPM', 'MS', 'SEC', 'Software', 'CS', 'NTD', 'FME', 'TD', 'PM', 'admin', 'Redline Resource', 'SP manager', 'SP admin', 'Virtual Account'];
 const DEFAULT_DEDUCTIONS = ['1 Month/Time', '1 Month/Ticket', '1 Quarter/Time', '1 Quarter/Ticket', '0.5 Year/Time', '1 Month/Resource', '1 Month/FME', '1 Month/Account', 'Quarterly', '1 Monthly/Time', 'Custom'];
 const DEFAULT_DEDUCTION_CATEGORIES = [{ id: 'monthly', value: '按月' }, { id: 'quarterly', value: '按季度' }, { id: 'half-year', value: '按半年' }, { id: 'other', value: '其他' }];
 const deductionCategory = value => /quarter/i.test(value) ? 'quarterly' : /year/i.test(value) ? 'half-year' : /month/i.test(value) ? 'monthly' : 'other';
@@ -34,10 +34,10 @@ async function list() {
     for (const row of rows) if (KINDS.has(row.kind)) state[row.kind].push(JSON.parse(row.payload_json));
     const savedRules = new Map(state.rules.map(rule => [rule.id, rule]));
     state.rules = [...defaultRules.map(rule => savedRules.get(rule.id) || rule), ...state.rules.filter(rule => !defaultRules.some(seed => seed.id === rule.id))];
-    for (const [kind, defaults] of [['roles', [...new Set([...DEFAULT_ROLES, ...defaultRules.flatMap(rule => rule.roles)])]], ['deductions', [...new Set([...DEFAULT_DEDUCTIONS, ...defaultRules.map(rule => rule.deduct)])]]]) {
+    for (const [kind, defaults] of [['roles', [...new Set([...DEFAULT_ROLES, ...defaultRules.flatMap(rule => rule.roles).filter(r => r.toUpperCase() !== 'ALL')])]], ['deductions', [...new Set([...DEFAULT_DEDUCTIONS, ...defaultRules.map(rule => rule.deduct)])]]]) {
         const values = new Map(defaults.map(value => [value, { id: value, value, ...(kind === 'deductions' ? { categoryId: deductionCategory(value) } : {}) }]));
         for (const saved of state[kind]) values.set(saved.id, saved);
-        state[kind] = [...values.values()].filter(item => !item.archived).map(item => kind === 'deductions' ? { ...item, categoryId: item.categoryId || deductionCategory(item.value) } : item);
+        state[kind] = [...values.values()].filter(item => !item.archived && (kind !== 'roles' || item.value.toUpperCase() !== 'ALL')).map(item => kind === 'deductions' ? { ...item, categoryId: item.categoryId || deductionCategory(item.value) } : item);
     }
     const categories = new Map(DEFAULT_DEDUCTION_CATEGORIES.map(item => [item.id, item]));
     for (const saved of state.deductionCategories) categories.set(saved.id, saved);
