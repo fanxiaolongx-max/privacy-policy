@@ -499,13 +499,13 @@ dialog::backdrop{background:rgba(15,23,42,.48);backdrop-filter:blur(5px);-webkit
 .entity-info{display:flex;flex-direction:column;gap:2px;min-width:0}
 .entity-title{font-size:13.5px;font-weight:700;color:#1e293b;line-height:1.3}
 .entity-sub{font-size:11px;color:#94a3b8;font-family:monospace}
-.staff-count-btn{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:650;padding:4px 10px;border-radius:6px;border:1px solid #bbf7d0;background:#f0fdf4;color:#15803d;cursor:pointer;transition:all .15s ease}
+.staff-count-btn{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:650;padding:4px 10px;border-radius:6px;border:1px solid #bbf7d0;background:#f0fdf4;color:#15803d;cursor:pointer;transition:all .15s ease;white-space:nowrap}
 .staff-count-btn:hover{background:#dcfce7;border-color:#86efac;transform:translateY(-1px);box-shadow:0 2px 6px rgba(21,128,61,.12)}
 .staff-count-btn .dot{width:6px;height:6px;border-radius:50%;background:#22c55e}
 .staff-count-btn.bu-variant{border-color:#ddd6fe;background:#f5f3ff;color:#6d28d9}
 .staff-count-btn.bu-variant:hover{background:#ede9fe;border-color:#c4b5fd;box-shadow:0 2px 6px rgba(109,40,217,.12)}
 .staff-count-btn.bu-variant .dot{background:#8b5cf6}
-.staff-count-idle{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;color:#94a3b8;background:#f8fafc;border:1px solid #e2e8f0;padding:3px 8px;border-radius:6px}
+.staff-count-idle{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;color:#94a3b8;background:#f8fafc;border:1px solid #e2e8f0;padding:3px 8px;border-radius:6px;white-space:nowrap}
 .row-actions-group{display:inline-flex;align-items:center;gap:8px;justify-content:flex-end;white-space:nowrap;flex-shrink:0}
 .row-action-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:12.5px;font-weight:600;padding:6px 14px;min-width:68px;min-height:32px;border-radius:7px;border:1px solid #cbd5e1;background:#fff;color:#334155;cursor:pointer;white-space:nowrap;flex-shrink:0;user-select:none;line-height:1;transition:all .15s ease}
 .row-action-btn svg{width:14px;height:14px;flex-shrink:0}
@@ -889,7 +889,7 @@ dialog::backdrop{background:rgba(15,23,42,.48);backdrop-filter:blur(5px);-webkit
     </div>
     <div class="table-wrap org-table-wrap" style="max-height:420px;overflow-y:auto;">
       <table class="org-table">
-        <thead><tr><th>角色标识</th><th style="width:140px;">在册 / 规则引用</th><th style="width:190px;min-width:180px;text-align:right;">操作</th></tr></thead>
+        <thead><tr><th>角色标识</th><th style="width:200px;min-width:180px;">在册 / 规则引用</th><th style="width:190px;min-width:180px;text-align:right;">操作</th></tr></thead>
         <tbody id="rows-roles"></tbody>
       </table>
     </div>
@@ -923,7 +923,7 @@ dialog::backdrop{background:rgba(15,23,42,.48);backdrop-filter:blur(5px);-webkit
     </div>
     <div class="table-wrap org-table-wrap" style="max-height:420px;overflow-y:auto;">
       <table class="org-table">
-        <thead><tr><th>考核分类</th><th style="width:140px;">包含标准数</th><th style="width:190px;min-width:180px;text-align:right;">操作</th></tr></thead>
+        <thead><tr><th>考核分类</th><th style="width:200px;min-width:180px;">包含标准数</th><th style="width:190px;min-width:180px;text-align:right;">操作</th></tr></thead>
         <tbody id="rows-categories"></tbody>
       </table>
     </div>
@@ -961,7 +961,7 @@ dialog::backdrop{background:rgba(15,23,42,.48);backdrop-filter:blur(5px);-webkit
   </div>
   <div class="table-wrap org-table-wrap">
     <table class="org-table">
-      <thead><tr><th>扣罚执行标准</th><th style="width:160px;">所属考核分类</th><th style="width:160px;">规则库引用</th><th style="width:190px;min-width:180px;text-align:right;">操作</th></tr></thead>
+      <thead><tr><th>扣罚执行标准</th><th style="width:160px;">所属考核分类</th><th style="width:200px;min-width:180px;">规则库引用</th><th style="width:190px;min-width:180px;text-align:right;">操作</th></tr></thead>
       <tbody id="rows-deductions"></tbody>
     </table>
   </div>
@@ -2122,7 +2122,7 @@ rowsRoles.innerHTML=filteredRoles.map(role=>{
 const pCount=activePersonnel.filter(p=>personRoles(p).includes(role.value)).length;
 const rCount=activeRules.filter(r=>roleList(r).includes(role.value)).length;
 const totalRefs=pCount+rCount;
-return `<tr><td><div class="entity-cell"><span class="entity-avatar role-type">🎭</span><div class="entity-info"><span class="entity-title">${escapeHtml(role.value)}</span><span class="entity-sub">ID: ${escapeHtml(role.id)}</span></div></div></td><td>${totalRefs>0?`<span class="staff-count-btn bu-variant" style="cursor:default;"><span class="dot"></span><span>${pCount} 人 · ${rCount} 规则</span></span>`:`<span class="staff-count-idle">0 引用 · 闲置</span>`}</td><td style="text-align:right;white-space:nowrap;">${tableConfigActions('roles',role,totalRefs,`已有 ${pCount} 位人员、${rCount} 条规则引用此角色，无法删除`)}</td></tr>`;
+return `<tr><td><div class="entity-cell"><span class="entity-avatar role-type">🎭</span><div class="entity-info"><span class="entity-title">${escapeHtml(role.value)}</span><span class="entity-sub">ID: ${escapeHtml(role.id)}</span></div></div></td><td style="white-space:nowrap;">${totalRefs>0?`<button type="button" class="staff-count-btn bu-variant" data-jump-role-rules="${escapeHtml(role.value)}" title="点击前往规则字典查看适用于「${escapeHtml(role.value)}」的规则"><span class="dot"></span><span>${pCount} 人 · ${rCount} 规则</span><svg viewBox="0 0 12 12" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2l4 4-4 4"/></svg></button>`:`<span class="staff-count-idle">0 引用 · 闲置</span>`}</td><td style="text-align:right;white-space:nowrap;">${tableConfigActions('roles',role,totalRefs,`已有 ${pCount} 位人员、${rCount} 条规则引用此角色，无法删除`)}</td></tr>`;
 }).join('');
 }
 }
@@ -2137,7 +2137,7 @@ rowsCats.innerHTML=`<tr><td colspan="3" class="empty">${catSearch?'无匹配考�
 }else{
 rowsCats.innerHTML=filteredCats.map(cat=>{
 const dCount=(state.deductions||[]).filter(d=>!d.archived&&d.categoryId===cat.id).length;
-return `<tr><td><div class="entity-cell"><span class="entity-avatar category-type">⏱️</span><div class="entity-info"><span class="entity-title">${escapeHtml(cat.value)}</span><span class="entity-sub">ID: ${escapeHtml(cat.id)}</span></div></div></td><td>${dCount>0?`<span class="staff-count-btn has-staff" style="cursor:default;"><span class="dot"></span><span>${dCount} 项具体标准</span></span>`:`<span class="staff-count-idle">0 项 · 闲置</span>`}</td><td style="text-align:right;white-space:nowrap;">${tableConfigActions('deductionCategories',cat,dCount,`已有 ${dCount} 项具体标准归属此分类，无法删除`)}</td></tr>`;
+return `<tr><td><div class="entity-cell"><span class="entity-avatar category-type">⏱️</span><div class="entity-info"><span class="entity-title">${escapeHtml(cat.value)}</span><span class="entity-sub">ID: ${escapeHtml(cat.id)}</span></div></div></td><td style="white-space:nowrap;">${dCount>0?`<button type="button" class="staff-count-btn has-staff" data-jump-cat-rules="${escapeHtml(cat.id)}" title="点击前往规则字典查看属于「${escapeHtml(cat.value)}」分类的规则"><span class="dot"></span><span>${dCount} 项具体标准</span><svg viewBox="0 0 12 12" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2l4 4-4 4"/></svg></button>`:`<span class="staff-count-idle">0 项 · 闲置</span>`}</td><td style="text-align:right;white-space:nowrap;">${tableConfigActions('deductionCategories',cat,dCount,`已有 ${dCount} 项具体标准归属此分类，无法删除`)}</td></tr>`;
 }).join('');
 }
 }
@@ -2178,7 +2178,7 @@ const cName=categoryName(deduct.categoryId)||'未知分类';
 const rCount=activeRules.filter(r=>r.deduct===deduct.value).length;
 const draftCount=(state.records||[]).filter(rec=>rec.status==='draft'&&rec.deduct===deduct.value).length;
 const totalRefs=rCount+draftCount;
-return `<tr><td><div class="entity-cell"><span class="entity-avatar deduct-type">⚖️</span><div class="entity-info"><span class="entity-title">${escapeHtml(deduct.value)}</span><span class="entity-sub">ID: ${escapeHtml(deduct.id)}</span></div></div></td><td><span class="mini-tag module-tag" style="font-size:11.5px;padding:3px 8px;">${escapeHtml(cName)}</span></td><td>${totalRefs>0?`<span class="staff-count-btn has-staff" style="cursor:default;"><span class="dot"></span><span>${rCount} 条规则引用${draftCount?` (${draftCount}草稿)`:''}</span></span>`:`<span class="staff-count-idle">未绑定规则 · 闲置</span>`}</td><td style="text-align:right;white-space:nowrap;">${tableConfigActions('deductions',deduct,totalRefs,`已有 ${rCount} 条规则、${draftCount} 条草稿引用此标准，无法删除`)}</td></tr>`;
+return `<tr><td><div class="entity-cell"><span class="entity-avatar deduct-type">⚖️</span><div class="entity-info"><span class="entity-title">${escapeHtml(deduct.value)}</span><span class="entity-sub">ID: ${escapeHtml(deduct.id)}</span></div></div></td><td><span class="mini-tag module-tag" style="font-size:11.5px;padding:3px 8px;">${escapeHtml(cName)}</span></td><td style="white-space:nowrap;">${totalRefs>0?`<button type="button" class="staff-count-btn has-staff" data-jump-deduct-rules="${escapeHtml(deduct.value)}" title="点击前往规则字典查看引用「${escapeHtml(deduct.value)}」的规则"><span class="dot"></span><span>${rCount} 条规则引用${draftCount?` (${draftCount}草稿)`:''}</span><svg viewBox="0 0 12 12" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2l4 4-4 4"/></svg></button>`:`<span class="staff-count-idle">未绑定规则 · 闲置</span>`}</td><td style="text-align:right;white-space:nowrap;">${tableConfigActions('deductions',deduct,totalRefs,`已有 ${rCount} 条规则、${draftCount} 条草稿引用此标准，无法删除`)}</td></tr>`;
 }).join('');
 }
 }
@@ -3935,6 +3935,43 @@ view='personnel';
 personFilters.businessUnits.clear();
 personFilters.businessUnits.add(buId);
 pages.personnel=1;
+render();
+return;
+}
+const jumpRoleRulesBtn=event.target.closest('[data-jump-role-rules]');
+if(jumpRoleRulesBtn){
+const roleVal=jumpRoleRulesBtn.dataset.jumpRoleRules;
+view='rules';
+Object.values(ruleFilters).forEach(s=>s.clear());
+ruleFilters.roles.add(roleVal);
+if($('rule-search')) $('rule-search').value='';
+if($('rule-module')) $('rule-module').value='';
+pages.rules=1;
+render();
+return;
+}
+const jumpCatRulesBtn=event.target.closest('[data-jump-cat-rules]');
+if(jumpCatRulesBtn){
+const catId=jumpCatRulesBtn.dataset.jumpCatRules;
+view='rules';
+Object.values(ruleFilters).forEach(s=>s.clear());
+const catDeducts=(state.deductions||[]).filter(d=>!d.archived&&d.categoryId===catId).map(d=>d.value);
+catDeducts.forEach(v=>ruleFilters.deductions.add(v));
+if($('rule-search')) $('rule-search').value='';
+if($('rule-module')) $('rule-module').value='';
+pages.rules=1;
+render();
+return;
+}
+const jumpDeductRulesBtn=event.target.closest('[data-jump-deduct-rules]');
+if(jumpDeductRulesBtn){
+const deductVal=jumpDeductRulesBtn.dataset.jumpDeductRules;
+view='rules';
+Object.values(ruleFilters).forEach(s=>s.clear());
+ruleFilters.deductions.add(deductVal);
+if($('rule-search')) $('rule-search').value='';
+if($('rule-module')) $('rule-module').value='';
+pages.rules=1;
 render();
 return;
 }
