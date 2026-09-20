@@ -349,6 +349,9 @@ app.use('/api', (req, res, next) => {
     if (/^\/custom-tools\/[^/]+\/(?:state(?:\/restore)?|history(?:\/[^/]+)?)$/.test(req.path)) return next(); // 登录用户可维护自定义工具业务数据
     if ((req.method === 'POST' && /^\/department-reward-penalty\/(?:records|evidence)$/.test(req.path)) ||
         (req.method === 'DELETE' && /^\/department-reward-penalty\/records\/[^/]+$/.test(req.path))) return next(); // 普通用户可提交草稿、证据和删除草稿，路由内校验发布和归属权限
+    if ((req.method === 'POST' && /^\/reward-program\/(?:applications(?:\/[^/]+\/(?:save|submit|publish))?|evidence)$/.test(req.path)) ||
+        (req.method === 'DELETE' && /^\/reward-program\/applications\/[^/]+$/.test(req.path))) return next(); // 申报人可维护本人奖励草稿与发布、上传证明附件，路由内校验归属与状态
+    if (req.method === 'POST' && /^\/reward-program\/applications\/[^/]+\/objections$/.test(req.path)) return next(); // 登录用户可在公示期提出异议
     if (/^\/chat-history\/(?:settings|conversations\/[^/]+\/(?:read|pin)|favorites\/[^/]+)$/.test(req.path)) return next(); // 聊天数据租户共享，普通用户只能维护个人状态
     if (req.method === 'DELETE' && /^\/slide-design\/assets\/[^/]+$/.test(req.path)) return next(); // 素材上传者或管理员可删除，路由内校验归属
     if (req.method === 'POST' && req.path === '/uiv/run-uivision-macro') return next(); // 只生成临时 runner，不修改业务数据
@@ -376,6 +379,7 @@ app.use('/api/praudit', prauditRoutes); // PR审计配置 API
 app.use('/api/chat-history', chatHistoryRoutes); // 租户隔离的聊天记录中心
 app.use('/api/custom-tools', customToolsRoutes); // 自定义 HTML 工具注册 API
 app.use('/api/department-reward-penalty', require('./routes/department-reward-penalty'));
+app.use('/api/reward-program', require('./routes/reward-program'));
 app.use('/api/slide-design', slideDesignRoutes); // 胶片设计项目与 PPT 素材库
 app.use('/api/surveys', surveysRoutes); // 可配置调查模板与提交记录 API
 app.use('/api/nav-settings', navSettingsRoutes); // 顶部导航全局设置 API

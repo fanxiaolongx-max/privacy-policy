@@ -394,16 +394,17 @@ body {
 }
 
 .nav-more-content {
+    position: relative;
     min-height: 0;
     overflow-y: auto;
     scroll-behavior: smooth;
-    padding: 8px 16px 18px;
+    padding: 10px 16px 20px;
     scrollbar-width: thin;
     scrollbar-color: rgba(148,163,184,.32) transparent;
 }
 
 .nav-more-category {
-    scroll-margin-top: 8px;
+    scroll-margin-top: 16px;
 }
 
 .nav-more-items {

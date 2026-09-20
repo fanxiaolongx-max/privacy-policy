@@ -22,7 +22,7 @@ module.exports = {
     'tool-mr88gv9x': { nameEn: 'Platform Introduction', descriptionEn: 'Introduces the CS quality-operations platform, workflows, operating loop, and use cases.' },
     'tool-ms1saxuh': { nameEn: 'Satisfaction Analyzer', descriptionEn: 'Calculates satisfaction scores, simulates low-score impact, measures target gaps, and exports watchlists.' },
     'tool-mrrn48dc': { nameEn: 'Travel Countdown', descriptionEn: 'Countdown page for a Turkey seaside trip.' },
-    'tool-ms4xb66s': { nameEn: 'Incentive Statistics', descriptionEn: 'Imports overnight-operation Excel data, calculates incentives, and produces analysis and exports.' },
+    'tool-ms4xb66s': { nameEn: 'Operation Incentive Statistics', descriptionEn: 'Imports overnight-operation Excel data, calculates incentives, and produces analysis and exports.' },
     'f12-to-extension': { nameEn: 'F12 Extension Packager', descriptionEn: 'Converts F12 scripts into Manifest V3 Edge/Chrome extensions with compatibility checks and offline licensing.' },
     'pr-2': { nameEn: 'Outsourced PR', descriptionEn: 'Trilingual guide for outsourced PR/PO ordering, follow-up, approval, and handover.' },
     'tool-msbmscxd': { nameEn: 'Third-Party Software Analysis', descriptionEn: 'Analyzes employee, device, software, and department data and exports multidimensional CSV reports.' },

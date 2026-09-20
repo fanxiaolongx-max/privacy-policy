@@ -41,7 +41,7 @@
   "华为风格胶片编辑器；组件可增删、编辑、拖拽、缩放，支持项目工作区、PPTX 素材库以及 PDF/PPT 导出。": "Huawei-style slide editor; add, remove, edit, drag, and resize components, with project workspaces, a PPTX asset library, and PDF/PPT export.",
   "汇报胶片": "Presentation Slides",
   "会议考勤": "Meeting Attendance",
-  "激励统计": "Incentive Statistics",
+  "操作激励统计": "Operation Incentive Statistics",
   "计算总分和五项表现，模拟新增低分影响、评估目标差距、识别低分反馈人并导出关注名单。": "Calculate the total score and five performance dimensions, simulate the impact of new low scores, assess gaps to target, identify low-scoring respondents, and export a watchlist.",
   "将 F12 脚本转换为 Manifest V3 Edge/Chrome 扩展，支持混淆、兼容性检查、Popup 启动和离线月度 License。": "Convert F12 scripts into Manifest V3 Edge/Chrome extensions, with obfuscation, compatibility checks, Popup launch, and offline monthly Licenses.",
   "将文本或小文件编码为连续动态二维码，由手机摄像头接收；支持 PWA 与离线工作，内容不经过服务器。": "Encode text or small files as a continuous stream of dynamic QR codes for capture by a phone camera; supports PWA and offline use, with no content passing through the server.",

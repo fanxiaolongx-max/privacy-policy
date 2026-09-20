@@ -2188,7 +2188,7 @@
             sidebar.innerHTML = `<div class="ai-kg-node-type">${kgT('rootType')}</div><div class="ai-kg-node-title">Tools Platform</div><div class="ai-kg-node-stats"><div class="ai-kg-stat-card"><b>${stats.documents || 0}</b><span>${kgT('knowledgeFile')}</span></div><div class="ai-kg-stat-card"><b>${stats.chunks || 0}</b><span>${kgT('chunks')}</span></div><div class="ai-kg-stat-card"><b>${Number(stats.builtInTools || 0) + Number(stats.customTools || 0)}</b><span>${kgT('tools')}</span></div><div class="ai-kg-stat-card"><b>${stats.tables || 0}</b><span>${kgT('tables')}</span></div></div>`;
             return;
         }
-        if (['assetCategory', 'tool', 'database', 'assetFile', 'table'].includes(node.type)) {
+        if (['assetCategory', 'tool', 'database', 'table'].includes(node.type) || (node.type === 'assetFile' && !node.indexedKnowledge)) {
             const childEdges = state.edges.filter(edge => edge.type === 'contains' && edge.source === node.id);
             const relationEdges = state.edges.filter(edge => edge.source === node.id || edge.target === node.id);
             const related = relationEdges.map(edge => edge.source === node.id ? edge.targetNode : edge.sourceNode).filter(item => item && !childEdges.some(edge => edge.target === item.id));
@@ -3045,7 +3045,10 @@
                 const exit = document.exitFullscreen || document.webkitExitFullscreen;
                 if (exit) await exit.call(document);
             }
-            await window.openToolsAIAssistant({ prompt, displayText, context:'' });
+            await window.openToolsAIAssistant({
+                prompt, displayText, context:'',
+                codeAnalysis: { kind:'knowledge-file', codeStart:prompt.length - code.length, displayText }
+            });
         } catch (error) {
             sidebar.insertAdjacentHTML('afterbegin', `<div class="ai-kg-side-empty ai-kg-analysis-error">⚠️ ${escapeHtml(error.message)}</div>`);
         } finally {

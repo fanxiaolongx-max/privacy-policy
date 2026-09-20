@@ -5,6 +5,7 @@ const aiSettingsRepo = require('../models/ai-settings-repository');
 const aiChatRepo = require('../models/ai-chat-repository');
 const aiProviderClient = require('../models/ai-provider-client');
 const aiKnowledgeService = require('../models/ai-knowledge-service');
+const { getAnalysisCode, runAnalysisWithSizeFallback } = require('../models/ai-code-analysis-retry');
 const aiReportAnalysisService = require('../models/ai-report-analysis-service');
 const aiMetricGraphService = require('../models/ai-metric-graph-service');
 const aiBusinessConfigService = require('../models/ai-business-config-service');
@@ -542,7 +543,7 @@ router.post('/chat', checkAuth, async (req, res) => {
             });
         }
 
-        const { messages, context, pageTitle, pagePath, sessionId, persist, uiLanguage, stream } = req.body;
+        const { messages, context, pageTitle, pagePath, sessionId, persist, uiLanguage, stream, codeAnalysis } = req.body;
         const streamRequested = stream === true;
         const responseLanguage = String(uiLanguage || '').toLowerCase().startsWith('en') ? 'English' : '简体中文';
         
@@ -596,6 +597,9 @@ router.post('/chat', checkAuth, async (req, res) => {
             incomingMessages: messages,
             lastMessage
         });
+        const analysisCode = codeAnalysis?.kind === 'knowledge-file'
+            ? getAnalysisCode(lastMessage.content, codeAnalysis.codeStart)
+            : null;
         const followUpContext = getFollowUpContext(effectiveMessages, lastMessage.content);
         const expertGrounding = await buildExpertGrounding(lastMessage.content, {
             pageTitle,
@@ -643,11 +647,13 @@ ${sessionSummary ? `\n历史会话滚动摘要：\n---\n${sessionSummary}\n---\n
 ${aiSettings.systemPrompt ? `\n**管理员补充要求**：\n${aiSettings.systemPrompt}` : ''}`;
 
         const fullTargetListRequested = expertGrounding.businessConfig?.mode === 'full-target-list';
-        const result = await runAiWithRetry(async () => {
+        const generateResponse = async analysisContent => runAiWithRetry(async () => {
             try {
                 return await aiClient.generateChat({
                     systemInstruction,
-                    messages: effectiveMessages,
+                    messages: analysisContent
+                        ? [...effectiveMessages.slice(0, -1), { role: 'user', content: analysisContent }]
+                        : effectiveMessages,
                     maxOutputTokens: fullTargetListRequested
                         ? Math.min(Math.max(Number(aiSettings.maxOutputTokens) || 2048, 8192), 8192)
                         : aiSettings.maxOutputTokens,
@@ -663,6 +669,13 @@ ${aiSettings.systemPrompt ? `\n**管理员补充要求**：\n${aiSettings.system
                 throw error;
             }
         });
+        const analysisResult = analysisCode
+            ? await runAnalysisWithSizeFallback(analysisCode, generateResponse, ({ attempt, limit }) => {
+                writeStreamEvent({ type: 'status', status: { kind: 'code-analysis-retry', attempt, limit } });
+            })
+            : null;
+        const result = analysisResult ? analysisResult.result : await generateResponse();
+        const persistedQuestion = analysisResult ? analysisResult.content : lastMessage.content;
         const responseText = result.text;
         
         let totalTokens = 0;
@@ -688,7 +701,7 @@ ${aiSettings.systemPrompt ? `\n**管理员补充要求**：\n${aiSettings.system
                     pagePath: normalizedPath,
                     pageTitle,
                     role: 'user',
-                    content: lastMessage.content
+                    content: persistedQuestion
                 });
                 await aiChatRepo.addMessage({
                     sessionId: savedSessionId,
@@ -701,7 +714,7 @@ ${aiSettings.systemPrompt ? `\n**管理员补充要求**：\n${aiSettings.system
                 });
                 await aiChatRepo.recordQuestion({
                     pagePath: normalizedPath,
-                    question: lastMessage.content
+                    question: analysisResult ? String(codeAnalysis?.displayText || '分析知识文件').slice(0, 500) : lastMessage.content
                 });
             } catch (saveErr) {
                 console.warn('[AI] failed to persist chat history:', saveErr.message || saveErr);
@@ -710,6 +723,7 @@ ${aiSettings.systemPrompt ? `\n**管理员补充要求**：\n${aiSettings.system
 
         const responsePayload = {
             reply: responseText,
+            ...(analysisResult ? { codeAnalysisAttempts: analysisResult.attempts } : {}),
             tokens: totalTokens,
             cost: costMao,
             sessionId: savedSessionId,

@@ -1551,17 +1551,87 @@ function filterNavMoreItems(query = '') {
 function bindNavMoreInteractions() {
     const menu = document.getElementById('navMoreMenu');
     if (!menu) return;
+    const content = menu.querySelector('.nav-more-content');
+    const sidebar = menu.querySelector('.nav-more-sidebar');
+
     menu.querySelector('.nav-more-search')?.addEventListener('input', event => {
         filterNavMoreItems(event.target.value);
     });
+
+    let isClickScrolling = false;
+    let clickScrollTimeout = null;
+
+    function setActiveCategoryButton(targetId, shouldScrollSidebar = true) {
+        const buttons = menu.querySelectorAll('.nav-more-category-btn');
+        let activeButton = null;
+        buttons.forEach(btn => {
+            const isActive = btn.dataset.navCategoryTarget === targetId;
+            btn.classList.toggle('active', isActive);
+            if (isActive) activeButton = btn;
+        });
+        if (shouldScrollSidebar && activeButton && sidebar) {
+            activeButton.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+        }
+    }
+
     menu.querySelectorAll('.nav-more-category-btn').forEach(button => {
         button.addEventListener('click', () => {
-            menu.querySelectorAll('.nav-more-category-btn').forEach(item => item.classList.toggle('active', item === button));
-            const target = menu.querySelector(`[data-nav-category="${CSS.escape(button.dataset.navCategoryTarget)}"]`);
-            const content = menu.querySelector('.nav-more-content');
-            if (target && content) content.scrollTo({ top: target.offsetTop - 8, behavior: 'smooth' });
+            const catId = button.dataset.navCategoryTarget;
+            setActiveCategoryButton(catId, false);
+            const target = menu.querySelector(`[data-nav-category="${CSS.escape(catId)}"]`);
+            if (target && content) {
+                isClickScrolling = true;
+                clearTimeout(clickScrollTimeout);
+                clickScrollTimeout = setTimeout(() => { isClickScrolling = false; }, 450);
+
+                const contentRect = content.getBoundingClientRect();
+                const targetRect = target.getBoundingClientRect();
+                const targetScrollTop = content.scrollTop + (targetRect.top - contentRect.top);
+                const scrollOffset = 16;
+                content.scrollTo({ top: Math.max(0, targetScrollTop - scrollOffset), behavior: 'smooth' });
+            }
         });
     });
+
+    if (content) {
+        let scrollRaf = null;
+        content.addEventListener('scroll', () => {
+            if (isClickScrolling) return;
+            if (scrollRaf) return;
+            scrollRaf = requestAnimationFrame(() => {
+                scrollRaf = null;
+                if (isClickScrolling) return;
+
+                const categories = Array.from(content.querySelectorAll('.nav-more-category:not([hidden])'));
+                if (!categories.length) return;
+
+                // 若已滚动到底部，直接高亮最后一个可见分类
+                if (content.scrollTop + content.clientHeight >= content.scrollHeight - 10) {
+                    const lastCat = categories[categories.length - 1];
+                    if (lastCat) setActiveCategoryButton(lastCat.dataset.navCategory);
+                    return;
+                }
+
+                const contentRect = content.getBoundingClientRect();
+                // 判定线设在 content 可视区上方 40px 处，确保分类标题刚进入即精准识别
+                const threshold = contentRect.top + 40;
+                let currentCat = categories[0];
+
+                for (const cat of categories) {
+                    const rect = cat.getBoundingClientRect();
+                    if (rect.top <= threshold) {
+                        currentCat = cat;
+                    } else {
+                        break;
+                    }
+                }
+
+                if (currentCat) {
+                    setActiveCategoryButton(currentCat.dataset.navCategory);
+                }
+            });
+        }, { passive: true });
+    }
 }
 
 let navResponsiveRaf = null;
@@ -6391,7 +6461,7 @@ window.openToolsKnowledgeGraph = function (options = {}) {
             script.addEventListener('load', handleLoad, { once: true });
             script.addEventListener('error', handleError, { once: true });
             if (!existing) {
-                script.src = '/js/shared/ai-knowledge-graph-spatial-themes-v5.js?v=20260911-01';
+                script.src = '/js/shared/ai-knowledge-graph-spatial-themes-v5.js?v=20260920-02';
                 document.body.appendChild(script);
             }
         }).catch(error => {
@@ -6415,7 +6485,7 @@ window.openToolsAIAssistant = function (options = {}) {
             script.addEventListener('load', resolve, { once: true });
             script.addEventListener('error', () => reject(new Error('AI 助手组件加载失败')), { once: true });
             if (!existing) {
-                script.src = '/js/shared/ai-assistant.js?v=20260919-01';
+                script.src = '/js/shared/ai-assistant.js?v=20260920-03';
                 document.body.appendChild(script);
             }
         }).catch(error => {
@@ -6438,7 +6508,7 @@ window.openToolsAIAssistant = function (options = {}) {
     // 确保不重复加载
     if (!document.querySelector('script[src^="/js/shared/ai-assistant.js"]')) {
         const aiScript = document.createElement('script');
-        aiScript.src = '/js/shared/ai-assistant.js?v=20260919-01';
+        aiScript.src = '/js/shared/ai-assistant.js?v=20260920-03';
         document.body.appendChild(aiScript);
     }
 })();

@@ -726,7 +726,8 @@ async function buildAssetGraph(contentByDocument, documentSet, { onProgress, sig
             nodes.push({
                 id: fileId, type: 'assetFile', label: path.posix.basename(file.path), path: `backend/data/custom-tools/${tool.slug}/${file.path}`,
                 relativePath: file.path, toolId, toolSlug: tool.slug, group: builtIn ? 'builtin-tools' : 'custom-tools',
-                bytes: file.bytes, mtimeMs: file.mtimeMs, extension: path.posix.extname(file.path).toLowerCase(), size: 4.4
+                bytes: file.bytes, mtimeMs: file.mtimeMs, extension: path.posix.extname(file.path).toLowerCase(),
+                indexedKnowledge: contentByDocument.has(`backend/data/custom-tools/${tool.slug}/${file.path}`), size: 4.4
             });
             addEdge(toolId, fileId, 'contains');
         }

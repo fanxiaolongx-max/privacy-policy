@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>奖惩管理</title>
+<title>负向事件管理</title>
 <style>
 :root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#26313d;background:#f3f5f8;--red:#b91937;--line:#e1e6ed}
 *{box-sizing:border-box}body{margin:0;min-height:100vh;overflow:hidden}
@@ -654,15 +654,28 @@ dialog::backdrop{background:rgba(15,23,42,.48);backdrop-filter:blur(5px);-webkit
 .empty-state-desc{font-size:12.5px;color:#94a3b8;max-width:320px}
 .empty-state-btn{margin-top:10px;font-size:12px;font-weight:600;padding:5px 14px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;color:#475569;cursor:pointer;transition:all .15s}
 .empty-state-btn:hover{background:#f8fafc;border-color:var(--red);color:var(--red)}
+.backup-dropzone{border:2px dashed #cbd5e1;border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:all .2s ease;background:#f8fafc}
+.backup-dropzone:hover,.backup-dropzone.dragover{border-color:#3b82f6;background:#eff6ff}
+.dropzone-icon{font-size:32px;margin-bottom:4px}
+.dropzone-title{font-size:13px;font-weight:650;color:#1e293b}
+.dropzone-browse{color:#2563eb;text-decoration:underline}
+.dropzone-sub{font-size:11.5px;color:#94a3b8;margin-top:2px}
+.dropzone-selected{display:flex;align-items:center;justify-content:space-between;padding:4px}
+.restore-mode-card{border:1px solid #e2e8f0;border-radius:9px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start;background:#fff;transition:all .15s ease}
+.restore-mode-card.active{border-color:#3b82f6;background:#eff6ff;box-shadow:0 1px 4px rgba(59,130,246,.12)}
+.restore-mode-card.danger.active{border-color:#ef4444;background:#fff5f5;box-shadow:0 1px 4px rgba(239,68,68,.12)}
+.backup-diff-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+.backup-diff-table th{background:#f1f5f9;color:#475569;padding:6px 10px;text-align:left;font-weight:600}
+.backup-diff-table td{padding:6px 10px;border-bottom:1px solid #f1f5f9;color:#1e293b}
 </style>
 </head>
 <body>
 <div class="app">
 <aside id="main-sidebar">
   <div class="sidebar-head">
-    <div class="brand" title="奖惩管理系统">
+    <div class="brand" title="负向事件管理系统">
       <span class="brand-logo">⚖️</span>
-      <span class="brand-title">奖惩管理</span>
+      <span class="brand-title">负向事件管理</span>
     </div>
     <button type="button" class="sidebar-toggle-btn" id="sidebar-toggle-btn" title="收起侧边栏 (快捷键: [ )" aria-label="收起导航">
       <svg viewBox="0 0 16 16"><path d="M10.5 3.5L5.5 8L10.5 12.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -676,6 +689,7 @@ dialog::backdrop{background:rgba(15,23,42,.48);backdrop-filter:blur(5px);-webkit
     <button data-view="config" data-tooltip="角色与扣罚配置"><span class="nav-icon"><svg viewBox="0 0 16 16"><path d="M2 13.5h12M8 13.5V2.5M4 5.5l4-3 4 3M2.5 9l3-2.5M10.5 6.5l3 2.5"/><path d="M1.5 9a1.5 1.5 0 0 0 3 0l-1.5-3-1.5 3zM11.5 9a1.5 1.5 0 0 0 3 0l-1.5-3-1.5 3z"/></svg></span><span class="nav-text">角色与扣罚配置</span></button>
     <button data-view="audit" data-tooltip="操作审计"><span class="nav-icon"><svg viewBox="0 0 16 16"><path d="M8 1.5l5.5 2.5v4c0 3.5-2.5 6.5-5.5 7.5-3-1-5.5-4-5.5-7.5V4L8 1.5z"/><path d="M6 8l1.5 1.5L10.5 6"/></svg></span><span class="nav-text">操作审计</span></button>
     <button data-view="security" data-tooltip="修改口令"><span class="nav-icon"><svg viewBox="0 0 16 16"><circle cx="5.5" cy="8.5" r="3.5"/><path d="M9 8.5h5.5v2.5M12.5 11v-2.5"/></svg></span><span class="nav-text">修改口令</span></button>
+    <button data-view="backup" data-tooltip="数据备份与恢复"><span class="nav-icon"><svg viewBox="0 0 16 16"><path d="M2.5 13.5h11a1 1 0 0 0 1-1V5.5a1 1 0 0 0-1-1H9.5L8 3H2.5a1 1 0 0 0-1 1v8.5a1 1 0 0 0 1 1z" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 7v4m-2-2l2 2 2-2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="nav-text">数据备份与恢复</span></button>
   </nav>
   <div class="sidebar-foot">
     <button type="button" class="sidebar-foot-btn" id="sidebar-foot-btn" title="收起侧边栏 (快捷键: [ )">
@@ -1045,6 +1059,117 @@ dialog::backdrop{background:rgba(15,23,42,.48);backdrop-filter:blur(5px);-webkit
   </div>
 </div>
 </section>
+<section id="view-backup" hidden>
+  <div class="overview-mini-stats" id="backup-stats-overview" style="margin-bottom:18px;"></div>
+  <div class="config-grid org-config-grid" style="grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 20px;">
+    <div class="panel org-panel">
+      <div class="org-panel-head">
+        <div class="org-panel-title-group">
+          <div class="org-icon-badge" style="background:#eff6ff;color:#2563eb;">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </div>
+          <div>
+            <h3 class="org-panel-title">数据备份导出</h3>
+            <p class="org-panel-sub">将当前租户下所有关联数据完整导出为独立数据包</p>
+          </div>
+        </div>
+      </div>
+      <div style="padding:18px 20px;display:flex;flex-direction:column;gap:14px;">
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;font-size:12.5px;color:#475569;line-height:1.6;">
+          <div style="font-weight:700;color:#1e293b;margin-bottom:6px;display:flex;align-items:center;gap:6px;"><span>🛡️</span> 备份数据范围说明：</div>
+          <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:3px;">
+            <li><b>人员名册与规则字典</b>：在册/归档人员，内置及自定义规则与适用角色绑定</li>
+            <li><b>违规记录全生命周期</b>：已发布、待发布草稿、已撤销、已归档违规记录</li>
+            <li><b>全套组织与基准配置</b>：适用角色、考核周期分类、扣罚基准库、客户群与 BU</li>
+            <li><b>实际证据材料附件</b>：包含记录所上传的 PDF、图片、压缩包等实体文件</li>
+          </ul>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:6px;">
+          <button type="button" class="primary" id="btn-export-backup-zip" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:11px 18px;font-size:13.5px;font-weight:650;">
+            <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+            <span>导出完整备份包 (.zip)</span>
+            <span style="font-size:11.5px;opacity:.9;font-weight:400;">（推荐：含实体附件）</span>
+          </button>
+          <button type="button" class="secondary" id="btn-export-backup-json" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:9px 16px;font-size:13px;font-weight:600;">
+            <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5L14 4.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5h-2z"/></svg>
+            <span>仅导出纯数据包 (.json)</span>
+            <span style="font-size:11.5px;color:#64748b;font-weight:400;">（轻量结构化数据）</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel org-panel">
+      <div class="org-panel-head">
+        <div class="org-panel-title-group">
+          <div class="org-icon-badge" style="background:#f5f3ff;color:#7c3aed;">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <div>
+            <h3 class="org-panel-title">数据恢复与还原</h3>
+            <p class="org-panel-sub">通过备份数据包进行增量合并或全量覆盖恢复</p>
+          </div>
+        </div>
+      </div>
+      <div style="padding:18px 20px;display:flex;flex-direction:column;gap:14px;">
+        <div class="backup-dropzone" id="backup-dropzone">
+          <input type="file" id="backup-file-input" accept=".zip,.json" hidden>
+          <div class="dropzone-inner" id="dropzone-prompt">
+            <div class="dropzone-icon">📁</div>
+            <div class="dropzone-title">拖拽备份文件至此处，或 <span class="dropzone-browse">点击浏览选择</span></div>
+            <div class="dropzone-sub">支持 .zip 完整备份包 或 .json 纯数据文件</div>
+          </div>
+          <div class="dropzone-selected" id="dropzone-file-info" hidden>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:22px;">📦</span>
+              <div style="display:flex;flex-direction:column;gap:2px;">
+                <b id="selected-backup-name" style="font-size:13.5px;color:#0f172a;"></b>
+                <span id="selected-backup-size" style="font-size:11.5px;color:#64748b;"></span>
+              </div>
+            </div>
+            <button type="button" class="row-action-btn" id="btn-clear-backup-file" style="min-width:auto;padding:4px 10px;font-size:12px;">更换文件</button>
+          </div>
+        </div>
+
+        <div id="backup-inspect-container" hidden></div>
+
+        <div class="restore-mode-group" id="restore-mode-group" style="display:flex;flex-direction:column;gap:10px;">
+          <label style="font-size:13px;font-weight:700;color:#1e293b;">选择恢复模式：</label>
+          <div class="restore-mode-options" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <label class="restore-mode-card active" id="mode-card-merge" style="cursor:pointer;">
+              <input type="radio" name="restore-mode" value="merge" checked style="margin-top:2px;">
+              <div style="display:flex;flex-direction:column;gap:2px;">
+                <b style="color:#0f172a;font-size:13px;">🔄 增量恢复（推荐）</b>
+                <span style="font-size:11.5px;color:#64748b;line-height:1.35;">保留现有数据，按唯一 ID 更新或追加新记录，增量解压新附件</span>
+              </div>
+            </label>
+            <label class="restore-mode-card" id="mode-card-replace" style="cursor:pointer;">
+              <input type="radio" name="restore-mode" value="replace" style="margin-top:2px;">
+              <div style="display:flex;flex-direction:column;gap:2px;">
+                <b style="color:#be123c;font-size:13px;">⚠️ 覆盖恢复（完全替换）</b>
+                <span style="font-size:11.5px;color:#64748b;line-height:1.35;">清空系统当前所有数据并以数据包为准替换；需验证安全口令</span>
+              </div>
+            </label>
+          </div>
+
+          <div id="replace-pin-wrap" style="background:#fff1f2;border:1px solid #fecdd3;border-radius:8px;padding:12px 14px;margin-top:4px;" hidden>
+            <div style="font-size:12.5px;font-weight:600;color:#9f1239;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+              <span>🛡️</span> 高危操作口令确认（服务端将在覆盖前自动生成前置快照）：
+            </div>
+            <div class="pwd-input-wrap" style="max-width:280px;">
+              <svg class="pwd-lock-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a3.5 3.5 0 0 0-3.5 3.5V6H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-.5V4.5A3.5 3.5 0 0 0 8 1zm2 5H6V4.5a2 2 0 1 1 4 0V6z"/></svg>
+              <input id="restore-pin" type="password" inputmode="numeric" placeholder="请输入安全操作口令" maxlength="12">
+            </div>
+          </div>
+        </div>
+
+        <button type="button" class="primary" id="btn-execute-restore" disabled style="display:flex;align-items:center;justify-content:center;gap:8px;padding:11px 18px;font-size:13.5px;font-weight:650;margin-top:4px;">
+          <span>🚀 立即执行恢复</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
 </main></div>
 <dialog id="editor"><div class="dialog-head"><h3 id="editor-title"></h3><button type="button" class="dialog-close-btn" id="close-editor" aria-label="关闭" title="关闭窗口 (Esc)"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></button></div><form id="editor-form"><div class="dialog-body" id="editor-fields"></div><div class="dialog-foot"><button type="button" class="secondary" id="cancel-editor">取消</button><button class="primary" type="submit">保存</button></div></form></dialog>
 <dialog id="message-dialog">
@@ -1240,6 +1365,9 @@ const option = (value,label) => '<option value="'+escapeHtml(value)+'">'+escapeH
 const active = kind => (state[kind] || []).filter(item => !item.archived);
 const ruleFor = record => (state.rules || []).find(rule => rule.id === record.ruleId);
 const personFor = record => (state.personnel || []).find(person => person.id === record.staffId);
+const historicalRecord = record => record && record.status !== 'draft';
+const ruleForDisplay = record => historicalRecord(record) ? (record.ruleSnapshot || ruleFor(record)) : (ruleFor(record) || record.ruleSnapshot);
+const personForDisplay = record => historicalRecord(record) ? (record.personSnapshot || personFor(record)) : (personFor(record) || record.personSnapshot);
 const groupName = id => (state.customerGroups || []).find(group => group.id === id)?.value || '待配置';
 const personRoles = person => Array.isArray(person?.roles)?person.roles:[person?.role].filter(Boolean);
 const personGroups = person => Array.isArray(person?.customerGroupIds)?person.customerGroupIds:[person?.customerGroupId].filter(Boolean);
@@ -1256,7 +1384,7 @@ const recordAttachments = record => {
 };
 const recordCustomerGroupName = record => {
   if (!record) return '待配置';
-  if (record.customerGroupId) {
+  if (!historicalRecord(record) && record.customerGroupId) {
     const name = groupName(record.customerGroupId);
     if (name && name !== '待配置') return name;
   }
@@ -1274,7 +1402,11 @@ const recordCustomerGroupName = record => {
     const g = (state.customerGroups || []).find(x => x.value === gText || x.id === gText);
     if (g) return g.value;
   }
-  const p = personFor(record);
+  if (record.customerGroupId) {
+    const name = groupName(record.customerGroupId);
+    if (name && name !== '待配置') return name;
+  }
+  const p = personForDisplay(record);
   const pGroups = p ? personGroups(p) : [];
   if (pGroups.length === 1) {
     return groupName(pGroups[0]);
@@ -1283,7 +1415,7 @@ const recordCustomerGroupName = record => {
 };
 const recordBusinessUnitName = record => {
   if (!record) return '';
-  if (record.businessUnitId) {
+  if (!historicalRecord(record) && record.businessUnitId) {
     const name = businessUnitName(record.businessUnitId);
     if (name && name !== '未知 BU') return name;
   }
@@ -1295,7 +1427,11 @@ const recordBusinessUnitName = record => {
   const rawRole = record.personSnapshot?.role || '';
   const buClean = rawRole.replace(/\([^)]+\)/g, '').trim();
   if (buClean && (state.businessUnits || []).some(b => b.value === buClean)) return buClean;
-  const livePerson = personFor(record);
+  if (record.businessUnitId) {
+    const name = businessUnitName(record.businessUnitId);
+    if (name && name !== '未知 BU') return name;
+  }
+  const livePerson = personForDisplay(record);
   const liveBUs = livePerson ? personBusinessUnits(livePerson) : [];
   if (liveBUs.length) {
     const name = businessUnitName(liveBUs[0]);
@@ -1309,9 +1445,9 @@ const recordRoleName = record => {
     const rMatch = (state.roles || []).find(r => r.value.toLowerCase() === record.role.toLowerCase());
     if (rMatch) return rMatch.value;
   }
-  const rule = ruleFor(record) || record.ruleSnapshot || {};
+  const rule = ruleForDisplay(record) || {};
   const rRoles = roleList(rule);
-  const livePerson = personFor(record);
+  const livePerson = personForDisplay(record);
   let pRoles = livePerson ? personRoles(livePerson) : [];
   if (!pRoles.length && record.personSnapshot) {
     pRoles = personRoles(record.personSnapshot);
@@ -1324,9 +1460,9 @@ const recordRoleName = record => {
   if (!pRoles.length) return '未配置角色';
 
   const matched = pRoles.filter(pr => {
-    const prNorm = pr.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const prNorm = pr.normalize('NFKC').toLowerCase().replace(/[\s()_-]/g, '');
     return rRoles.some(rr => {
-      const rrNorm = rr.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const rrNorm = rr.normalize('NFKC').toLowerCase().replace(/[\s()_-]/g, '');
       return rrNorm === 'all' || rrNorm === '全员' || rrNorm === prNorm;
     });
   });
@@ -1586,9 +1722,9 @@ function openMessage({title='提示',message='',bannerType='info',icon='ℹ️',
 const uiAlert=(message,title='系统提示',bannerType='info',icon='ℹ️')=>openMessage({title,message,bannerType,icon,confirmText:'知道了'});
 const uiConfirm=(message,title='请确认操作',bannerType='danger',icon='⚠️')=>openMessage({title,message,bannerType,icon,confirmText:'确认操作'}).then(Boolean);
 const uiPrompt=(message,value='',title='请输入')=>openMessage({title,bannerType:'info',icon:'✏️',fields:[{name:'value',label:message,value}],confirmText:'确定'}).then(result=>result?.value??null);
-function roleMatches(person,rule){if(!person||!rule)return null;const ruleRoles=roleList(rule);const realRolesList=(state.roles||[]).filter(r=>r.value.toUpperCase()!=='ALL');const isAll=ruleRoles.some(r=>r.toUpperCase()==='ALL')||(realRolesList.length>0&&realRolesList.every(r=>ruleRoles.includes(r.value)));if(isAll)return true;const actual=new Set(personRoles(person).flatMap(role=>{const raw=String(role).toLowerCase();return [raw,...raw.replace(/[()]/g,'/').split(/[,+/]/).map(x=>x.trim())]}).map(x=>x.replace(/[^a-z0-9]/g,'')));return ruleRoles.some(role=>{const x=role.toLowerCase().replace(/[^a-z0-9]/g,'');return x==='all'||actual.has(x)});}
+function roleMatches(person,rule){if(!person||!rule)return null;const ruleRoles=roleList(rule);const realRolesList=(state.roles||[]).filter(r=>r.value.toUpperCase()!=='ALL');const isAll=ruleRoles.some(r=>r.toUpperCase()==='ALL')||(realRolesList.length>0&&realRolesList.every(r=>ruleRoles.includes(r.value)));if(isAll)return true;const canonicalRole=value=>String(value||'').normalize('NFKC').trim().toLocaleLowerCase().replace(/[\s()_-]/g,'');const actual=new Set(personRoles(person).flatMap(role=>{const raw=String(role);return [raw,...raw.replace(/[()]/g,'/').split(/[,+/]/).map(x=>x.trim())]}).map(canonicalRole).filter(Boolean));return ruleRoles.some(role=>{const x=canonicalRole(role);return x==='all'||actual.has(x)});}
 async function request(path,options){const response=await fetch(API+path,{credentials:'same-origin',headers:{'Content-Type':'application/json'},...options});const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||'请求失败');return data;}
-async function refresh(){try{const raw=await request('/');state=Object.assign({personnel:[],rules:[],records:[],roles:[],deductions:[],deductionCategories:[],customerGroups:[],businessUnits:[]},raw);for(const k of ['personnel','rules','records','roles','deductions','deductionCategories','customerGroups','businessUnits']){if(!Array.isArray(state[k]))state[k]=[]} $('status').textContent='数据来自当前租户 · '+new Date().toLocaleString();$('import-legacy').hidden=!(state.canEdit&&!state.personnel.length&&!state.records.length&&localStorage.getItem('hw_dept_db_v11_filters_pagination'));render();if(view==='audit')await loadAudit();if(view==='security')await loadSecurity();}catch(error){$('status').textContent='读取失败：'+error.message;}}
+async function refresh(){try{const raw=await request('/');state=Object.assign({personnel:[],rules:[],records:[],roles:[],deductions:[],deductionCategories:[],customerGroups:[],businessUnits:[]},raw);for(const k of ['personnel','rules','records','roles','deductions','deductionCategories','customerGroups','businessUnits']){if(!Array.isArray(state[k]))state[k]=[]} $('status').textContent='数据来自当前租户 · '+new Date().toLocaleString();$('import-legacy').hidden=!(state.canEdit&&!state.personnel.length&&!state.records.length&&localStorage.getItem('hw_dept_db_v11_filters_pagination'));render();if(view==='audit')await loadAudit();if(view==='security')await loadSecurity();if(view==='backup')renderBackupView();}catch(error){$('status').textContent='读取失败：'+error.message;}}
 async function loadAudit(){try{auditData=await request('/audit?page='+auditPage+'&pageSize='+auditPageSize);auditPage=auditData.page;auditPageSize=auditData.pageSize;localStorage.setItem('hw_dept_audit_page_size_v1',String(auditPageSize));renderAudit();}catch(error){$('pager-audit').textContent='审计读取失败：'+error.message;}}
 async function loadSecurity(){if(!state.canEdit)return;try{const result=await request('/security');const statusEl=$('pin-status');if(statusEl){if(result.hasCustomPin){statusEl.className='security-status-card custom-pin';statusEl.innerHTML='<span style="font-size:20px;">🛡️</span><div><b>安全防护生效中：</b>已配置企业自定义安全口令，强制修改或撤销已发布记录时须验证此口令。</div>';}else{statusEl.className='security-status-card default-pin';statusEl.innerHTML='<span style="font-size:20px;">⚠️</span><div><b>安全预警：</b>当前仍在使用系统默认口令 <code>0000</code>，强烈建议立即修改为您专属的企业管理口令！</div>';}}}catch(error){if($('pin-status'))$('pin-status').textContent='口令状态读取失败：'+error.message}}
 function formatDiff(before,after){
@@ -1711,6 +1847,34 @@ async function save(kind,data){
     await uiAlert(error.message,'保存失败');
   }
 }
+async function correctHistoricalRole(id){
+  const record=(state.records||[]).find(item=>item.id===id);
+  if(!state.canEdit||!record||record.status!=='published'||record.createdBy!=='legacy-import'||!record.migrationWarning)return;
+  const oldRole=record.personSnapshot?.role||'';
+  const applicable=roleList(record.ruleSnapshot||{}).filter(role=>role.toUpperCase()!=='ALL');
+  const result=await openMessage({
+    title:'更正迁移记录的历史角色',
+    message:`请依据 ${record.date} 当时的岗位职责核实 ${record.personSnapshot?.name||record.staffId}。本操作仅更正此条记录保存的角色快照，不修改人员名册、违规规则或扣罚，并写入操作审计。`,
+    bannerType:'security',icon:'🛡️',
+    fields:[
+      {name:'role',label:'核实后的历史角色（原：'+oldRole+'）',value:applicable.length===1?applicable[0]:'',maxLength:80},
+      {name:'pin',label:'安全口令',type:'password',maxLength:12},
+      {name:'reason',label:'核查依据与更正理由',multiline:true,maxLength:1000,placeholder:'说明发生时实际承担的职责及核查依据'}
+    ],
+    confirmText:'确认更正此条记录',
+    validate:values=>{
+      if(!applicable.some(role=>role.toLowerCase()===values.role?.trim().toLowerCase()))return '历史角色必须符合这条记录保存的规则适用范围';
+      if(!values.pin?.trim())return '请输入安全口令';
+      if(!values.reason?.trim())return '请填写核查依据与更正理由';
+    }
+  });
+  if(!result)return;
+  try{
+    await request('/records/'+encodeURIComponent(id)+'/correct-historical-role',{method:'POST',body:JSON.stringify({expectedRole:oldRole,role:result.role.trim(),pin:result.pin.trim(),reason:result.reason.trim()})});
+    showToast('历史角色已更正并留存审计记录','success');
+    await refresh();
+  }catch(error){await uiAlert(error.message,'更正失败')}
+}
 function drawRows(id,items,kind,row){
   const size=pageSizes[kind]||20,total=Math.max(1,Math.ceil(items.length/size));
   pages[kind]=Math.max(1,Math.min(pages[kind]||1,total));
@@ -1732,8 +1896,8 @@ function exportRecordsToCSV(recordsToExport){
   const headers=['记录状态','发生日期','责任人工号','责任人姓名','客户群','BU','适用角色','违规大类','违规子类','判定描述','扣罚标准','工单号','证据说明','备注说明','附件链接'];
   const statusMap={draft:'待发布草稿',published:'已发布',revoked:'已撤销',archived:'已归档'};
   const rows=recordsToExport.map(rec=>{
-    const p=personFor(rec)||rec.personSnapshot||{};
-    const r=ruleFor(rec)||rec.ruleSnapshot||{};
+    const p=personForDisplay(rec)||{};
+    const r=ruleForDisplay(rec)||{};
     const isArchived = rec.status === 'archived' || Boolean(rec.archived);
     const recStatus = isArchived ? 'archived' : rec.status;
     const groupStr = recordCustomerGroupName(rec);
@@ -1755,7 +1919,7 @@ function exportRecordsToCSV(recordsToExport){
       rec.evidence||'',
       rec.remark||'',
       recordAttachments(rec).join('; ')||rec.attachment||''
-    ].map(v=>'"'+String(v||'').replace(/"/g,'""').replace(/\r?\n/g,' ')+'"').join(',');
+    ].map(csvCell).join(',');
   });
   const csvContent='\uFEFF'+headers.join(',')+'\r\n'+rows.join('\r\n');
   const blob=new Blob([csvContent],{type:'text/csv;charset=utf-8;'});
@@ -1770,7 +1934,7 @@ function exportRecordsToCSV(recordsToExport){
   showToast(`已成功导出 ${recordsToExport.length} 条违规清单（Excel 兼容）`,'success');
 }
 const uniqueOptions = items => [...new Map(items.filter(item=>item&&item.id).map(item=>[item.id,item])).values()];
-const pickerSpecs={personGroups:{id:'group-filter',label:'客户群',set:personFilters.groups,items:()=>(state.customerGroups||[]).map(item=>({id:item.id,value:item.value}))},personRoles:{id:'role-filter',label:'角色',set:personFilters.roles,items:()=>(state.roles||[]).map(item=>({id:item.value,value:item.value}))},personBUs:{id:'bu-filter',label:'BU',set:personFilters.businessUnits,items:()=>(state.businessUnits||[]).map(item=>({id:item.id,value:item.value}))},recordGroups:{id:'record-group-filter',label:'客户群',set:recordFilters.groups,items:()=>uniqueOptions([...(state.records||[]).map(record=>({id:record.customerGroupId||record.personSnapshot?.customerGroupId,value:record.personSnapshot?.customerGroupName||groupName(record.customerGroupId)})),...(state.customerGroups||[]).map(item=>({id:item.id,value:item.value}))])},recordRoles:{id:'record-role-filter',label:'角色',set:recordFilters.roles,items:()=>uniqueOptions([...(state.records||[]).flatMap(record=>personRoles(personFor(record)||record.personSnapshot||{}).map(role=>({id:role,value:role}))),...(state.roles||[]).map(item=>({id:item.value,value:item.value}))])},recordDeductions:{id:'record-deduction-filter',label:'扣罚',set:recordFilters.deductions,items:()=>uniqueOptions([...(state.records||[]).map(record=>({id:record.deduct,value:record.deduct,category:categoryName(deductionFor(record.deduct)?.categoryId)})),...(state.deductions||[]).map(item=>({id:item.value,value:item.value,category:categoryName(item.categoryId)}))])},ruleRoles:{id:'rule-role-filter',label:'角色',set:ruleFilters.roles,items:()=>(state.roles||[]).map(item=>({id:item.value,value:item.value}))},ruleDeductions:{id:'rule-deduction-filter',label:'扣罚',set:ruleFilters.deductions,items:()=>(state.deductions||[]).map(item=>({id:item.value,value:item.value,category:categoryName(item.categoryId)}))}};
+const pickerSpecs={personGroups:{id:'group-filter',label:'客户群',set:personFilters.groups,items:()=>(state.customerGroups||[]).map(item=>({id:item.id,value:item.value}))},personRoles:{id:'role-filter',label:'角色',set:personFilters.roles,items:()=>(state.roles||[]).map(item=>({id:item.value,value:item.value}))},personBUs:{id:'bu-filter',label:'BU',set:personFilters.businessUnits,items:()=>(state.businessUnits||[]).map(item=>({id:item.id,value:item.value}))},recordGroups:{id:'record-group-filter',label:'客户群',set:recordFilters.groups,items:()=>uniqueOptions([...(state.records||[]).map(record=>({id:record.customerGroupId||record.personSnapshot?.customerGroupId,value:record.personSnapshot?.customerGroupName||groupName(record.customerGroupId)})),...(state.customerGroups||[]).map(item=>({id:item.id,value:item.value}))])},recordRoles:{id:'record-role-filter',label:'角色',set:recordFilters.roles,items:()=>uniqueOptions([...(state.records||[]).flatMap(record=>personRoles(personForDisplay(record)||{}).map(role=>({id:role,value:role}))),...(state.roles||[]).map(item=>({id:item.value,value:item.value}))])},recordDeductions:{id:'record-deduction-filter',label:'扣罚',set:recordFilters.deductions,items:()=>uniqueOptions([...(state.records||[]).map(record=>({id:record.deduct,value:record.deduct,category:categoryName(deductionFor(record.deduct)?.categoryId)})),...(state.deductions||[]).map(item=>({id:item.value,value:item.value,category:categoryName(item.categoryId)}))])},ruleRoles:{id:'rule-role-filter',label:'角色',set:ruleFilters.roles,items:()=>(state.roles||[]).map(item=>({id:item.value,value:item.value}))},ruleDeductions:{id:'rule-deduction-filter',label:'扣罚',set:ruleFilters.deductions,items:()=>(state.deductions||[]).map(item=>({id:item.value,value:item.value,category:categoryName(item.categoryId)}))}};
 let currentOpenDropdown = null;
 function closeAllDropdowns(){
 document.querySelectorAll('.filter-dropdown').forEach(el=>{
@@ -1853,7 +2017,7 @@ if(btn)btn.setAttribute('aria-expanded','true');
 }
 }
 function recordRow(record){
-const liveRule=ruleFor(record), livePerson=personFor(record);
+const liveRule=ruleForDisplay(record), livePerson=personForDisplay(record);
 const rule=liveRule||record.ruleSnapshot||{};
 const person=livePerson||record.personSnapshot||{};
 const isArchived = record.status==='archived' || Boolean(record.archived);
@@ -1892,7 +2056,7 @@ const notes=[record.tt,record.evidence,record.remark].filter(Boolean).map(value=
 
 const roleMatch=roleMatches(person,rule);
 const needReview=recStatus!=='revoked'&&recStatus!=='archived'&&(roleMatch===false||(roleMatch===null&&Boolean(record.migrationWarning)));
-const reviewBadge=needReview?`<span class="tag" style="background:#fff1f2;color:#be123c;border:1px solid #fecdd3;" title="责任主体当前岗位角色与该规则适用范畴不符，需复核角色或规则">角色待复核</span>`:'';
+const reviewBadge=needReview?`<span class="tag" style="background:#fff1f2;color:#be123c;border:1px solid #fecdd3;" title="记录中的岗位角色与规则适用范畴不符，需复核">角色待复核</span>`:'';
 
 const groupText = recordCustomerGroupName(record);
 const buText = recordBusinessUnitName(record);
@@ -1941,7 +2105,7 @@ document.querySelectorAll('#analytics-scope-control .seg-btn').forEach(btn=>{btn
 const sampleBadge=$('analytics-sample-badge');if(sampleBadge)sampleBadge.textContent='分析样本：'+totalCount+' 起';
 const ruleMap=new Map();
 targetRecords.forEach(r=>{
-const rule=ruleFor(r)||r.ruleSnapshot||{};
+const rule=ruleForDisplay(r)||{};
 const key=r.ruleId||rule.desc||'未知规则';
 if(!ruleMap.has(key)){
 ruleMap.set(key,{ruleId:r.ruleId||'',desc:rule.desc||key,svcModule:rule.svcModule||'其他大类',subModule:rule.subModule||'',deduct:r.deduct||rule.deduct||'标准扣罚',count:0});
@@ -1951,7 +2115,7 @@ ruleMap.get(key).count++;
 const sortedRules=[...ruleMap.values()].sort((a,b)=>b.count-a.count);
 const staffMap=new Map();
 targetRecords.forEach(r=>{
-const livePerson=personFor(r);
+const livePerson=personForDisplay(r);
 const staffId=r.staffId||'';
 const name=livePerson?.name||r.personSnapshot?.name||staffId||'未知人员';
 const recGroup=recordCustomerGroupName(r);
@@ -2386,16 +2550,18 @@ async function openBatchPersonnelDialog(){
 }
 
 function render(){
-const names={records:'违规记录',rules:'规则字典',personnel:'人员名册',groups:'客户群与 BU 配置',config:'角色与扣罚配置',audit:'操作审计',security:'修改口令'};$('page-title').textContent=names[view];
+const names={records:'违规记录',rules:'规则字典',personnel:'人员名册',groups:'客户群与 BU 配置',config:'角色与扣罚配置',audit:'操作审计',security:'修改口令',backup:'数据备份与恢复'};$('page-title').textContent=names[view];
 document.querySelectorAll('main section[id^="view-"]').forEach(el=>el.hidden=el.id!=='view-'+view);document.querySelectorAll('#nav button').forEach(el=>el.classList.toggle('active',el.dataset.view===view));
+$('nav').querySelector('[data-view="audit"]').hidden=!state.canEdit;
 $('nav').querySelector('[data-view="security"]').hidden=!state.canEdit;
+$('nav').querySelector('[data-view="backup"]').hidden=!state.canEdit;
 const personSelect=$('record-person'),prev=personSelect.value;
 const activePeople=active('personnel');
 const activeIds=new Set(activePeople.map(p=>p.id));
 const historicalStaffMap=new Map();
 (state.records||[]).forEach(rec=>{
   if(rec.staffId&&!activeIds.has(rec.staffId)&&!historicalStaffMap.has(rec.staffId)){
-    const p=personFor(rec)||rec.personSnapshot||{};
+    const p=personForDisplay(rec)||{};
     historicalStaffMap.set(rec.staffId,{id:rec.staffId,name:p.name||rec.staffId,isArchived:true});
   }
 });
@@ -2426,7 +2592,7 @@ let records=(state.records||[]).filter(record=>{
   const isRecArchived = record.status==='archived' || Boolean(record.archived);
   const recStatus = isRecArchived ? 'archived' : record.status;
   const statusMatch = status ? (recStatus===status) : (recStatus!=='revoked' && recStatus!=='archived');
-  const r=ruleFor(record)||record.ruleSnapshot||{},p=personFor(record)||record.personSnapshot||{},groupId=record.customerGroupId||p.customerGroupId,roles=personRoles(p),groups=groupId?[groupId]:personGroups(p);
+  const r=ruleForDisplay(record)||{},p=personForDisplay(record)||{},groupId=record.customerGroupId||p.customerGroupId,roles=personRoles(p),groups=groupId?[groupId]:personGroups(p);
   const recRole=recordRoleName(record);
   const recGroup=recordCustomerGroupName(record);
   const recBU=recordBusinessUnitName(record);
@@ -2950,7 +3116,7 @@ if(!unchangedPublished&&!checkRole()){
     `⚖️ 所选规则：${r.desc}\n`+
     `🎯 规则限定角色：【${rRoles}】\n\n`+
     `【为什么被系统拦截？】\n`+
-    `为确保奖惩合规严谨性，系统严格限制只能为具备对应岗位角色的责任人录入违规，禁止跨角色错报。\n\n`+
+    `为确保负向事件合规严谨性，系统严格限制只能为具备对应岗位角色的责任人录入违规，禁止跨角色错报。\n\n`+
     `【如何解决？】\n`+
     `1. 重新选择规则：在上方下拉列表中挑选适用于【${pRoles}】的对应规则；\n`+
     `2. 调整人员角色：若该责任人确已转岗或兼具该职责，可先前往「人员名册」为其勾选添加【${rRoles}】角色；\n`+
@@ -3235,7 +3401,7 @@ function openRecordDetail(id){
   if(!dialog) return;
   dialog.dataset.recordId = record.id;
 
-  const liveRule = ruleFor(record), livePerson = personFor(record);
+  const liveRule = ruleForDisplay(record), livePerson = personForDisplay(record);
   const rule = liveRule || record.ruleSnapshot || {};
   const person = livePerson || record.personSnapshot || {};
   const pName = person.name || record.staffId;
@@ -3255,8 +3421,8 @@ function openRecordDetail(id){
           <span style="font-size:18px;line-height:1;">⚠️</span>
           <div>
             <div style="font-weight:750;font-size:13.5px;color:#991b1b;">责任主体角色范畴待复核</div>
-            <div style="margin-top:2px;">责任主体当前岗位角色（<code>${escapeHtml(pRolesText)}</code>）不在本条规则设定适用角色（<code>${escapeHtml(rRolesText)}</code>）范畴内。</div>
-            <div style="margin-top:4px;font-size:12px;color:#be123c;">💡 系统实时检测建议：若人员角色已调整，保存后此提示将自动实时解除；若确属违规但规则不符，可由管理员编辑记录调整为对应规则。</div>
+            <div style="margin-top:2px;">${historicalRecord(record)?'记录快照中的':'责任主体当前'}岗位角色（<code>${escapeHtml(pRolesText)}</code>）不在本条规则适用角色（<code>${escapeHtml(rRolesText)}</code>）范畴内。</div>
+            <div style="margin-top:4px;font-size:12px;color:#be123c;">💡 请依据记录发生时的岗位职责与规则版本复核；已发布记录的更正须由管理员留存修改理由。</div>
           </div>
         </div>
       `;
@@ -3264,7 +3430,7 @@ function openRecordDetail(id){
       roleMatchNotice = `
         <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-left:5px solid #16a34a;border-radius:10px;padding:10px 16px;font-size:13px;color:#166534;line-height:1.5;display:flex;align-items:center;gap:10px;">
           <span style="font-size:16px;line-height:1;">🛡️</span>
-          <div><b>角色校验已通过：</b>责任主体最新岗位角色已与违规规则适用范畴完全匹配，历史复核提示已自动解除。</div>
+          <div><b>角色校验已通过：</b>记录中的岗位角色与规则适用范畴匹配；请结合历史迁移标记复核原始材料。</div>
         </div>
       `;
     }
@@ -3532,6 +3698,7 @@ function openRecordDetail(id){
       }
     }else if(recStatus === 'published' && state.canEdit){
       btns += `<button type="button" class="rec-action-btn force-edit" data-detail-force-edit="${escapeHtml(record.id)}"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8.5 1.5L2.5 9h5l-1 5.5L13.5 7h-5l1-5.5z"/></svg><span>强制修改</span></button>`;
+      if(record.createdBy==='legacy-import'&&record.migrationWarning&&roleMatch===false)btns += `<button type="button" class="rec-action-btn force-edit" data-correct-historical-role="${escapeHtml(record.id)}"><span>核实历史角色</span></button>`;
       btns += `<button type="button" class="rec-action-btn revoke" data-detail-revoke="${escapeHtml(record.id)}"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7h7a4 4 0 0 1 4 4v0a4 4 0 0 1-4 4H5"/><path d="M6 4L3 7l3 3"/></svg><span>撤销违规</span></button>`;
       btns += `<button type="button" class="rec-action-btn archive-record" data-detail-archive="${escapeHtml(record.id)}"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 3V1h6v2M2 4h12M4 4v10h8V4"/></svg><span>归档记录</span></button>`;
     }else if(recStatus === 'revoked' && state.canEdit){
@@ -3820,12 +3987,13 @@ async function archiveRecord(id){
 async function unarchiveRecord(id){
   const record = (state.records || []).find(x => x.id === id);
   if(!record) return;
-  const confirmed = await uiConfirm('确定要将此归档记录恢复为已发布状态吗？恢复后将重新纳入全部有效记录列表与态势统计。', '恢复违规记录确认', 'primary', '↩️');
+  const restoredStatus = record.previousStatus === 'revoked' ? '已撤销' : '已发布';
+  const confirmed = await uiConfirm(`确定要将此归档记录恢复为「${restoredStatus}」状态吗？`, '恢复违规记录确认', 'primary', '↩️');
   if(!confirmed) return;
   try{
     await request('/records/' + encodeURIComponent(id) + '/unarchive', { method: 'POST' });
     closeRecordDetail();
-    showToast('违规记录已恢复为已发布状态', 'success');
+    showToast(`违规记录已恢复为${restoredStatus}状态`, 'success');
     await refresh();
   }catch(error){
     await uiAlert(error.message, '恢复失败');
@@ -4077,6 +4245,7 @@ if(rowRecordEl&&!event.target.closest('button, a, input, select, textarea, [data
 }
 const el=event.target.closest('button');if(!el)return;
 if(el.dataset.viewDetail){openRecordDetail(el.dataset.viewDetail);return;}
+if(el.dataset.correctHistoricalRole){if($('record-detail-dialog')?.open)closeRecordDetail();await correctHistoricalRole(el.dataset.correctHistoricalRole);return;}
 if(el.dataset.deleteRecord){await deleteRecord(el.dataset.deleteRecord);return;}
 if(el.dataset.archiveRecord){await archiveRecord(el.dataset.archiveRecord);return;}
 if(el.dataset.unarchiveRecord){await unarchiveRecord(el.dataset.unarchiveRecord);return;}
@@ -4087,7 +4256,7 @@ if(el.dataset.detailForceEdit){closeRecordDetail();openEditor('records',el.datas
 if(el.dataset.detailRevoke){closeRecordDetail();await recordAction(el.dataset.detailRevoke,'revoke');return;}
 if(el.dataset.detailArchive){closeRecordDetail();await archiveRecord(el.dataset.detailArchive);return;}
 if(el.dataset.detailUnarchive){closeRecordDetail();await unarchiveRecord(el.dataset.detailUnarchive);return;}
-if(el.dataset.view){view=el.dataset.view;render();if(view==='audit')await loadAudit();if(view==='security')await loadSecurity()}
+if(el.dataset.view){view=el.dataset.view;render();if(view==='audit')await loadAudit();if(view==='security')await loadSecurity();if(view==='backup')renderBackupView();}
 if(el.dataset.add)openEditor(el.dataset.add);
 if(el.dataset.edit)openEditor(el.dataset.edit,el.dataset.id);
 if(el.dataset.forceEdit)openEditor('records',el.dataset.forceEdit);
@@ -4308,6 +4477,292 @@ $('pin-form')?.addEventListener('submit',async event=>{
     showToast('安全管控口令已成功更新！','success');
   }catch(error){
     await uiAlert(error.message,'更新失败');
+  }
+});
+
+let selectedBackupFile = null;
+let backupInspectionVersion = 0;
+
+function renderBackupView(){
+  const totalPersonnel = (state.personnel||[]).length;
+  const activePersonnel = active('personnel').length;
+  const totalRules = (state.rules||[]).length;
+  const activeRules = active('rules').length;
+  const totalRecords = (state.records||[]).length;
+  const publishedRecords = (state.records||[]).filter(r=>r.status==='published').length;
+  const draftRecords = (state.records||[]).filter(r=>r.status==='draft').length;
+  const totalConfigs = (state.roles||[]).length + (state.deductions||[]).length + (state.deductionCategories||[]).length + (state.customerGroups||[]).length + (state.businessUnits||[]).length;
+
+  const evidenceSet = new Set();
+  (state.records||[]).forEach(rec=>{
+    const atts = Array.isArray(rec.attachments) ? rec.attachments : [rec.attachment].filter(Boolean);
+    if(rec.revokeAttachment) atts.push(rec.revokeAttachment);
+    atts.forEach(p=>{
+      if(typeof p==='string'){
+        const fn = p.split('/').pop();
+        if(fn && /^[a-f0-9-]{36}\.[a-z0-9]+$/i.test(fn)) evidenceSet.add(fn);
+      }
+    });
+  });
+
+  const statsEl = $('backup-stats-overview');
+  if(statsEl){
+    statsEl.innerHTML = `
+      <div class="mini-stat-card"><span class="mini-stat-num">${totalPersonnel}</span><span class="mini-stat-label">人员总数 (在册 ${activePersonnel})</span></div>
+      <div class="mini-stat-card"><span class="mini-stat-num">${totalRules}</span><span class="mini-stat-label">规则字典 (有效 ${activeRules})</span></div>
+      <div class="mini-stat-card"><span class="mini-stat-num">${totalRecords}</span><span class="mini-stat-label">违规记录 (${publishedRecords}已生效 · ${draftRecords}草稿)</span></div>
+      <div class="mini-stat-card"><span class="mini-stat-num">${totalConfigs}</span><span class="mini-stat-label">组织与标准配置项</span></div>
+      <div class="mini-stat-card"><span class="mini-stat-num">${evidenceSet.size}</span><span class="mini-stat-label">引用证据材料附件</span></div>
+    `;
+  }
+}
+
+function resetBackupRestoreForm(){
+  backupInspectionVersion++;
+  selectedBackupFile = null;
+  const fileInput = $('backup-file-input');
+  if(fileInput) fileInput.value = '';
+  $('dropzone-prompt')?.removeAttribute('hidden');
+  $('dropzone-file-info')?.setAttribute('hidden', '');
+  const inspectEl = $('backup-inspect-container');
+  if(inspectEl){
+    inspectEl.hidden = true;
+    inspectEl.innerHTML = '';
+  }
+  const btn = $('btn-execute-restore');
+  if(btn){
+    btn.disabled = true;
+    btn.innerHTML = '<span>🚀 立即执行恢复</span>';
+  }
+  const pinInput = $('restore-pin');
+  if(pinInput) pinInput.value = '';
+}
+
+async function inspectSelectedBackupFile(file){
+  if(!file) return;
+  const inspectionVersion = ++backupInspectionVersion;
+  const inspectEl = $('backup-inspect-container');
+  const btn = $('btn-execute-restore');
+  if(inspectEl){
+    inspectEl.hidden = false;
+    inspectEl.innerHTML = '<div style="padding:14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;font-size:12.5px;color:#64748b;display:flex;align-items:center;gap:8px;"><span class="spin">⏳</span> 正在解析数据包结构并比对差异…</div>';
+  }
+  try{
+    const form = new FormData();
+    form.append('file', file);
+    form.append('mode', document.querySelector('input[name="restore-mode"]:checked')?.value || 'merge');
+    const res = await fetch(API + '/backup/inspect', { method: 'POST', credentials: 'same-origin', body: form });
+    const result = await res.json();
+    if(!res.ok) throw new Error(result.error || '解析失败');
+
+    if(inspectionVersion !== backupInspectionVersion || file !== selectedBackupFile) return;
+    const manifest = result.manifest || {};
+    const diff = result.diff || {};
+    const kindLabels = {
+      personnel: '人员名册', rules: '规则字典', records: '违规记录',
+      roles: '适用角色', deductions: '扣罚基准', deductionCategories: '考核分类',
+      customerGroups: '客户群', businessUnits: 'BU 单元'
+    };
+
+    let rowsHtml = '';
+    for(const [kind, label] of Object.entries(kindLabels)){
+      const d = diff[kind] || { new: 0, update: 0, total: 0, current: 0 };
+      rowsHtml += `<tr>
+        <td><b>${escapeHtml(label)}</b></td>
+        <td>${d.total} 项</td>
+        <td><span style="color:#16a34a;font-weight:600;">+${d.new} 新增</span>，<span style="color:#2563eb;font-weight:600;">~${d.update} 更新</span> <span style="color:#94a3b8;">(当前系统 ${d.current} 项)</span></td>
+      </tr>`;
+    }
+
+    inspectEl.innerHTML = `
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+          <div style="font-size:13px;font-weight:700;color:#166534;display:flex;align-items:center;gap:6px;">
+            <span>✅</span> 数据包解析成功（格式有效）
+          </div>
+          <div style="font-size:11.5px;color:#15803d;">
+            导出时间：${escapeHtml(manifest.exportedAt ? new Date(manifest.exportedAt).toLocaleString() : '未知')} · 附件数：${result.stats?.evidenceFiles || 0} 个
+          </div>
+        </div>
+        <table class="backup-diff-table">
+          <thead><tr><th>数据分类</th><th>数据包数量</th><th>与当前系统比对差异</th></tr></thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </div>
+    `;
+    if(btn) btn.disabled = false;
+  }catch(error){
+    if(inspectionVersion !== backupInspectionVersion || file !== selectedBackupFile) return;
+    if(inspectEl){
+      inspectEl.innerHTML = `<div style="padding:12px 14px;background:#fef2f2;border:1px solid #fecdd3;border-radius:8px;font-size:12.5px;color:#be123c;display:flex;align-items:center;gap:8px;"><span>❌</span> 解析失败：${escapeHtml(error.message)}</div>`;
+    }
+    if(btn) btn.disabled = true;
+  }
+}
+
+$('btn-export-backup-zip')?.addEventListener('click', async () => {
+  try {
+    const res = await fetch(API + '/backup/export', { credentials: 'same-origin' });
+    if (!res.ok) {
+      const err = await res.json().catch(()=>({}));
+      throw new Error(err.error || '导出失败');
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `department-reward-penalty-backup-${new Date().toISOString().slice(0, 10)}.zip`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('完整数据备份包 (.zip) 已开始下载', 'success');
+  } catch (error) {
+    await uiAlert(error.message, '导出失败');
+  }
+});
+
+$('btn-export-backup-json')?.addEventListener('click', async () => {
+  try {
+    const res = await fetch(API + '/backup/export-json', { credentials: 'same-origin' });
+    if (!res.ok) {
+      const err = await res.json().catch(()=>({}));
+      throw new Error(err.error || '导出失败');
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `department-reward-penalty-data-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('纯数据备份包 (.json) 已开始下载', 'success');
+  } catch (error) {
+    await uiAlert(error.message, '导出失败');
+  }
+});
+
+const dropzoneEl = $('backup-dropzone');
+const fileInputEl = $('backup-file-input');
+
+dropzoneEl?.addEventListener('click', e => {
+  if (e.target.closest('#btn-clear-backup-file')) return;
+  fileInputEl?.click();
+});
+
+dropzoneEl?.addEventListener('dragover', e => {
+  e.preventDefault();
+  dropzoneEl.classList.add('dragover');
+});
+
+dropzoneEl?.addEventListener('dragleave', () => {
+  dropzoneEl.classList.remove('dragover');
+});
+
+dropzoneEl?.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzoneEl.classList.remove('dragover');
+  const files = e.dataTransfer?.files;
+  if (files && files.length > 0) {
+    handleBackupFileSelected(files[0]);
+  }
+});
+
+fileInputEl?.addEventListener('change', () => {
+  if (fileInputEl.files && fileInputEl.files.length > 0) {
+    handleBackupFileSelected(fileInputEl.files[0]);
+  }
+});
+
+function handleBackupFileSelected(file) {
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (ext !== 'zip' && ext !== 'json') {
+    uiAlert('请选择 .zip 或 .json 格式的数据备份包文件', '文件格式不支持');
+    return;
+  }
+  selectedBackupFile = file;
+  backupInspectionVersion++;
+  const restoreButton = $('btn-execute-restore');
+  if(restoreButton) restoreButton.disabled = true;
+  $('dropzone-prompt')?.setAttribute('hidden', '');
+  $('dropzone-file-info')?.removeAttribute('hidden');
+  const nameEl = $('selected-backup-name');
+  if (nameEl) nameEl.textContent = file.name;
+  const sizeEl = $('selected-backup-size');
+  if (sizeEl) sizeEl.textContent = `${(file.size / 1024).toFixed(1)} KB · ${ext.toUpperCase()} 数据包`;
+  inspectSelectedBackupFile(file);
+}
+
+$('btn-clear-backup-file')?.addEventListener('click', e => {
+  e.stopPropagation();
+  resetBackupRestoreForm();
+});
+
+document.querySelectorAll('input[name="restore-mode"]').forEach(radio => {
+  radio.addEventListener('change', () => {
+    const isReplace = radio.value === 'replace';
+    $('replace-pin-wrap').hidden = !isReplace;
+    $('mode-card-replace').classList.toggle('active', isReplace);
+    $('mode-card-replace').classList.toggle('danger', isReplace);
+    $('mode-card-merge').classList.toggle('active', !isReplace);
+    if(selectedBackupFile){
+      $('btn-execute-restore').disabled = true;
+      inspectSelectedBackupFile(selectedBackupFile);
+    }
+  });
+});
+
+$('btn-execute-restore')?.addEventListener('click', async () => {
+  if (!selectedBackupFile) {
+    showToast('请先选择备份文件', 'warning');
+    return;
+  }
+  const mode = document.querySelector('input[name="restore-mode"]:checked')?.value || 'merge';
+  const pin = $('restore-pin')?.value.trim() || '';
+
+  if (mode === 'replace') {
+    if (!pin) {
+      showToast('请输入安全操作口令以执行覆盖恢复', 'warning');
+      $('restore-pin')?.focus();
+      return;
+    }
+    const ok = await uiConfirm('⚠️ 覆盖恢复将清空当前系统的全部数据并完全替换为数据包中的内容！\n\n服务端将在执行前自动创建一份当前状态的安全快照。\n\n确定要继续执行覆盖恢复吗？', '高危覆盖操作确认');
+    if (!ok) return;
+  } else {
+    const ok = await uiConfirm('增量恢复将把数据包中的数据合并到当前系统中（已有记录按唯一 ID 更新，新记录自动追加）。\n\n确定开始恢复吗？', '增量恢复确认');
+    if (!ok) return;
+  }
+
+  const btn = $('btn-execute-restore');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin">⏳</span> 正在执行数据恢复…';
+
+  try {
+    const form = new FormData();
+    form.append('file', selectedBackupFile);
+    form.append('mode', mode);
+    if (mode === 'replace') form.append('pin', pin);
+
+    const res = await fetch(API + '/backup/restore', {
+      method: 'POST',
+      credentials: 'same-origin',
+      body: form
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || '恢复失败');
+
+    const counts = result.counts || {};
+    showToast(`数据恢复成功！已处理：${counts.records || 0} 条记录、${counts.personnel || 0} 位人员、${counts.rules || 0} 条规则`, 'success');
+    await refresh();
+    resetBackupRestoreForm();
+    renderBackupView();
+  } catch (error) {
+    await uiAlert(error.message, '数据恢复失败');
+    btn.disabled = false;
+    btn.innerHTML = '<span>🚀 立即执行恢复</span>';
   }
 });
 

@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const JSZip = require('jszip');
 
 const sandbox = fs.mkdtempSync(path.join(os.tmpdir(), 'reward-penalty-'));
 process.env.TOOLS_DATA_DIR = path.join(sandbox, 'data');
@@ -58,6 +59,7 @@ test('record API checks roles, requires a publish reason, and keeps rule snapsho
     await request(app).post(base + '/personnel').send({ id: 'TEST-MTD', name: 'Reviewer', role: 'MTD', customerGroupId: group.body.id }).expect(200);
     await request(app).post(base + '/personnel').send({ id: 'TEST-TE', name: 'Engineer', role: 'TE', customerGroupId: anotherGroup.body.id }).expect(200);
     const draft = { id: 'test-record', date: '2026-09-17', customerGroupId: group.body.id, staffId: 'TEST-MTD', ruleId: 'R04', deduct: '1 Month/Time', remark: 'Test' };
+    await request(app).post(base + '/records').send({ ...draft, date: '2026-02-30' }).expect(400);
     await request(app).post(base + '/records').send({ ...draft, staffId: 'TEST-TE' }).expect(400);
     const mismatch = await request(app).post(base + '/records').send({ ...draft, staffId: 'TEST-TE', customerGroupId: anotherGroup.body.id }).expect(400);
     assert.match(mismatch.body.error, /MTD/);
@@ -75,6 +77,7 @@ test('record API checks roles, requires a publish reason, and keeps rule snapsho
     const revoked = await request(app).post(base + '/records').send({ id: draft.id, action: 'revoke', pin: '0000', reason: 'Incorrect finding' }).expect(200);
     assert.equal(revoked.body.status, 'revoked');
     const state = await request(app).get(base).expect(200);
+    await request(app).get(base + '/audit').set('x-test-role', 'user').expect(403);
     const auditPage = await request(app).get(base + '/audit?page=1&pageSize=2').expect(200);
     assert.equal(auditPage.body.rows.length, 2);
     assert.ok(auditPage.body.total > 2);
@@ -84,6 +87,33 @@ test('record API checks roles, requires a publish reason, and keeps rule snapsho
     const uploaded = await request(app).post(base + '/evidence').attach('file', Buffer.from('%PDF-1.4\n% test'), { filename: 'proof.pdf', contentType: 'application/pdf' }).expect(200);
     assert.match(uploaded.body.path, /^\/api\/department-reward-penalty\/evidence\/[a-f0-9-]+\.pdf$/);
     await request(app).get(uploaded.body.path).expect(200);
+});
+
+test('evidence remains tenant-isolated and Chinese role matching does not allow cross-role records', async () => {
+    const app = express();
+    const primaryTenant = 'role-evidence-test';
+    app.use(express.json());
+    app.use((req, _res, next) => {
+        const tenantId = req.headers['x-test-tenant'] || primaryTenant;
+        req.user = { username: 'admin', role: 'admin', tenantId };
+        runWithTenant(tenantId, next);
+    });
+    app.use('/api/department-reward-penalty', router);
+    const base = '/api/department-reward-penalty';
+
+    const uploaded = await request(app)
+        .post(base + '/evidence')
+        .attach('file', Buffer.from('tenant-only'), { filename: 'proof.txt', contentType: 'text/plain' })
+        .expect(200);
+    await request(app).get(uploaded.body.path).expect(200);
+    await request(app).get(uploaded.body.path).set('x-test-tenant', 'other-evidence-tenant').expect(404);
+
+    const group = (await request(app).post(base + '/config/customerGroups').send({ value: '中文角色客户群' }).expect(200)).body;
+    await request(app).post(base + '/config/roles').send({ value: '客服' }).expect(200);
+    await request(app).post(base + '/config/roles').send({ value: '技术' }).expect(200);
+    await request(app).post(base + '/personnel').send({ id: 'CN-ROLE-1', name: '中文角色人员', role: '客服', customerGroupId: group.id }).expect(200);
+    const rule = (await request(app).post(base + '/rules').send({ id: 'CN-RULE-1', svcModule: '测试', subModule: '角色', desc: '仅技术适用', roles: ['技术'], deduct: '1 Month/Time', weight: null }).expect(200)).body;
+    await request(app).post(base + '/records').send({ id: 'CN-RECORD-1', date: '2026-09-20', customerGroupId: group.id, staffId: 'CN-ROLE-1', ruleId: rule.id }).expect(400);
 });
 
 test('legacy import moves browser records into a separate tenant without bundling people', async () => {
@@ -105,7 +135,46 @@ test('legacy import moves browser records into a separate tenant without bundlin
     assert.equal(amended.body.status, 'published');
     assert.equal(amended.body.remark, '历史备注修正');
     assert.equal(amended.body.customerGroupId, '');
+    const legacyBackup = await request(app).get('/api/department-reward-penalty/backup/export-json').expect(200);
+    await request(app).post('/api/department-reward-penalty/backup/inspect').send(JSON.parse(legacyBackup.text)).expect(200);
     await request(app).post('/api/department-reward-penalty/legacy-import').send(legacy).expect(409);
+});
+
+test('historical FME duty can be corrected one migrated record at a time with PIN and audit', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use((req, _res, next) => {
+        req.user = req.headers['x-test-role'] === 'user' ? { username: 'reporter', role: 'user' } : { username: 'admin', role: 'admin' };
+        runWithTenant('historical-role-correction-test', next);
+    });
+    app.use('/api/department-reward-penalty', router);
+    const base = '/api/department-reward-penalty';
+    await request(app).post(base + '/legacy-import').send({
+        personnel: [{ id: 'W-1', name: '已核实 FME', role: 'MS' }, { id: 'W-2', name: '尚未核实', role: 'MS' }],
+        rules: [],
+        records: ['PUB-17', 'PUB-18'].map((id, index) => ({ id, status: '已发布', date: '2026-06-30', staffId: index ? 'W-2' : 'W-1', ruleId: 'R44', deduct: '1 Month/Time' }))
+    }).expect(200);
+    const path = base + '/records/PUB-17/correct-historical-role';
+    const body = { expectedRole: 'MS', role: 'fme', reason: '经原始职责材料核实，发生时承担 FME 职责', pin: '0000' };
+    await request(app).post(path).set('x-test-role', 'user').send(body).expect(403);
+    await request(app).post(path).send({ ...body, role: 'TE' }).expect(400);
+    await request(app).post(path).send({ ...body, reason: '' }).expect(400);
+    await request(app).post(path).send({ ...body, pin: 'wrong' }).expect(403);
+    const corrected = (await request(app).post(path).send(body).expect(200)).body;
+    assert.equal(corrected.personSnapshot.role, 'FME');
+    assert.deepEqual(corrected.personSnapshot.roles, ['FME']);
+    assert.equal(corrected.migrationWarning, false);
+    assert.equal(corrected.ruleId, 'R44');
+    assert.equal(corrected.status, 'published');
+    assert.equal(corrected.historicalRoleCorrection.from, 'MS');
+    await request(app).post(path).send(body).expect(409);
+    const state = (await request(app).get(base).expect(200)).body;
+    assert.equal(state.records.find(item => item.id === 'PUB-18').personSnapshot.role, 'MS');
+    assert.equal(state.records.find(item => item.id === 'PUB-18').migrationWarning, true);
+    assert.equal(state.personnel.find(item => item.id === 'W-1').role, 'MS');
+    const audit = (await request(app).get(base + '/audit').expect(200)).body;
+    assert.ok(audit.rows.some(row => row.action === '更正迁移记录历史角色' && row.item_id === 'PUB-17' && row.before.personSnapshot.role === 'MS' && row.after.personSnapshot.role === 'FME'));
+    assert.equal(JSON.stringify(audit).includes('0000'), false);
 });
 
 test('configuration CRUD updates references, blocks used deletion, and paginates audit', async () => {
@@ -172,6 +241,7 @@ test('BU assignment and forced published-record edits are tenant-scoped and audi
     const unitB = (await request(app).post(base + '/config/businessUnits').send({ value: 'BU B' }).expect(200)).body;
     const group = (await request(app).post(base + '/config/customerGroups').send({ value: '客户群' }).expect(200)).body;
     await request(app).post(base + '/personnel').send({ id: 'BU-1', name: '人员', roles: ['MTD'], customerGroupIds: [group.id], businessUnitIds: [unitA.id, unitB.id] }).expect(200);
+    await request(app).post(base + '/personnel').send({ id: 'BU-2', name: '第二责任人', roles: ['MTD'], customerGroupIds: [group.id], businessUnitIds: [unitB.id] }).expect(200);
     let state = (await request(app).get(base).expect(200)).body;
     assert.deepEqual(state.personnel[0].businessUnitIds, [unitA.id, unitB.id]);
     await request(app).delete(base + '/config/businessUnits/' + unitA.id).expect(409);
@@ -184,6 +254,10 @@ test('BU assignment and forced published-record edits are tenant-scoped and audi
     assert.equal(updated.status, 'published');
     assert.equal(updated.remark, '新备注');
     assert.equal(updated.forcedEditReason, '修正误录');
+    assert.equal(updated.publishedBy, 'admin');
+    const reassigned = (await request(app).post(base + '/records/PUBLISHED-1/force-edit').send({ ...draft, staffId: 'BU-2', pin: '0000', reason: '更正责任人' }).expect(200)).body;
+    assert.equal(reassigned.businessUnitId, unitB.id);
+    assert.equal(reassigned.personSnapshot.businessUnitId, unitB.id);
     await request(app).put(base + '/security/pin').send({ currentPin: '0000', newPin: '123456' }).expect(200);
     await request(app).post(base + '/records/PUBLISHED-1/force-edit').send({ ...draft, pin: '0000', reason: '旧口令' }).expect(403);
     await request(app).post(base + '/records/PUBLISHED-1/force-edit').send({ ...draft, pin: '123456', reason: '再次修正', remark: '再次修改' }).expect(200);
@@ -407,12 +481,13 @@ test('record archiving and unarchiving keeps state and audit log', async () => {
 
     const rec = { id: 'REC-ARCH-1', date: '2026-09-19', staffId: 'P-ARCH', customerGroupId: group.id, ruleId: 'R04', action: 'publish', reason: '正式发布' };
     await request(app).post(base + '/records').send(rec).expect(200);
+    await request(app).post(base + '/records').send({ ...rec, id: 'REC-DRAFT-NO-ARCHIVE', action: 'save' }).expect(200);
+    await request(app).post(base + '/records/REC-DRAFT-NO-ARCHIVE/archive').expect(409);
 
     let state = (await request(app).get(base).expect(200)).body;
     let r = state.records.find(item => item.id === rec.id);
     assert.equal(r.status, 'published');
     assert.equal(Boolean(r.archived), false);
-
     // Archive the record
     await request(app).post(base + `/records/${rec.id}/archive`).send({ reason: '历史记录归档封存' }).expect(200);
     state = (await request(app).get(base).expect(200)).body;
@@ -427,6 +502,153 @@ test('record archiving and unarchiving keeps state and audit log', async () => {
     r = state.records.find(item => item.id === rec.id);
     assert.equal(r.status, 'published');
     assert.equal(Boolean(r.archived), false);
+    const revoked = (await request(app).post(base + `/records/${rec.id}/revoke`).send({ pin: '0000', reason: '复核撤销' }).expect(200)).body;
+    assert.equal(revoked.status, 'revoked');
+    await request(app).post(base + `/records/${rec.id}/archive`).expect(200);
+    const restoredRevoked = (await request(app).post(base + `/records/${rec.id}/unarchive`).expect(200)).body;
+    assert.equal(restoredRevoked.status, 'revoked');
 });
 
+test('data backup and restore: export zip/json, inspect diff, merge restore, and protected replace restore', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use((req, _res, next) => {
+        req.user = req.headers['x-test-role'] === 'user' ? { username: 'reporter', role: 'user' } : { username: 'admin', role: 'admin' };
+        next();
+    });
+    app.use('/api/department-reward-penalty', router);
+    const base = '/api/department-reward-penalty';
 
+    // 1. Regular user is forbidden
+    await request(app).get(base + '/backup/export').set('x-test-role', 'user').expect(403);
+    await request(app).get(base + '/backup/export-json').set('x-test-role', 'user').expect(403);
+    await request(app).post(base + '/backup/inspect').set('x-test-role', 'user').expect(403);
+    await request(app).post(base + '/backup/restore').set('x-test-role', 'user').expect(403);
+
+    // 2. Export ZIP and JSON as admin
+    const zipRes = await request(app)
+        .get(base + '/backup/export')
+        .buffer(true)
+        .parse((res, callback) => {
+            const chunks = [];
+            res.on('data', chunk => chunks.push(chunk));
+            res.on('end', () => callback(null, Buffer.concat(chunks)));
+        })
+        .expect(200);
+    assert.equal(zipRes.headers['content-type'], 'application/zip');
+    assert.ok(zipRes.body.length > 0);
+
+    const jsonRes = await request(app).get(base + '/backup/export-json').expect(200);
+    assert.equal(jsonRes.headers['content-type'], 'application/json; charset=utf-8');
+    const exportedJson = JSON.parse(jsonRes.text);
+    assert.ok(exportedJson.manifest);
+    assert.equal(exportedJson.manifest.type, 'department-reward-penalty-backup');
+    assert.ok(Array.isArray(exportedJson.data.rules));
+
+    // 3. Inspect the exported package
+    const inspectRes = await request(app)
+        .post(base + '/backup/inspect')
+        .attach('file', zipRes.body, 'backup.zip')
+        .expect(200);
+    assert.equal(inspectRes.body.valid, true);
+    assert.ok(inspectRes.body.diff.rules);
+    assert.ok(inspectRes.body.stats.rules > 0);
+
+    // 4. Test incremental merge restore with new person
+    const customBackup = {
+        manifest: { type: 'department-reward-penalty-backup', version: 1, exportedAt: new Date().toISOString() },
+        data: {
+            personnel: [{ id: 'P-MERGE-1', name: '合并新增人员', roles: ['MTD'], role: 'MTD', customerGroupIds: ['G-MERGE-1'], businessUnitIds: [], archived: false }],
+            rules: [], records: [], roles: [], deductions: [], deductionCategories: [],
+            customerGroups: [{ id: 'G-MERGE-1', value: '合并客户群', archived: false }], businessUnits: []
+        }
+    };
+    const oldEvidence = await request(app)
+        .post(base + '/evidence')
+        .attach('file', Buffer.from('old evidence'), { filename: 'old.txt', contentType: 'text/plain' })
+        .expect(200);
+    await request(app)
+        .post(base + '/backup/restore')
+        .attach('file', Buffer.from(JSON.stringify({ data: { personnel: [{ id: 'duplicate' }, { id: 'duplicate' }] } })), 'invalid.json')
+        .field('mode', 'merge')
+        .expect(400);
+    await request(app)
+        .post(base + '/backup/inspect')
+        .attach('file', Buffer.from(JSON.stringify({ data: {} })), 'empty.json')
+        .expect(400);
+    await request(app)
+        .post(base + '/backup/restore')
+        .attach('file', Buffer.from(JSON.stringify({ data: {} })), 'empty.json')
+        .field('mode', 'replace')
+        .field('pin', '0000')
+        .expect(400);
+    await request(app)
+        .post(base + '/backup/restore')
+        .attach('file', Buffer.from(JSON.stringify({ data: Object.fromEntries(Object.keys(customBackup.data).map(kind => [kind, []])) })), 'all-empty.json')
+        .field('mode', 'replace')
+        .field('pin', '0000')
+        .expect(400);
+    await request(app)
+        .post(base + '/backup/inspect')
+        .attach('file', Buffer.from(JSON.stringify({ data: { personnel: null } })), 'null.json')
+        .expect(400);
+    await request(app)
+        .post(base + '/backup/restore')
+        .attach('file', Buffer.from(JSON.stringify({ data: { ...customBackup.data, personnel: [{ ...customBackup.data.personnel[0], customerGroupIds: ['missing-group'] }] } })), 'broken-reference.json')
+        .field('mode', 'merge')
+        .expect(400);
+    const rollbackZip = new JSZip();
+    rollbackZip.file('data.json', JSON.stringify(customBackup.data));
+    rollbackZip.file(`evidence/${oldEvidence.body.path.split('/').pop()}`, Buffer.from('replacement evidence'));
+    const rollbackBuffer = await rollbackZip.generateAsync({ type: 'nodebuffer' });
+    await db.run("CREATE TRIGGER reward_penalty_restore_failure BEFORE INSERT ON department_reward_penalty_audit WHEN NEW.action = '增量恢复数据包' BEGIN SELECT RAISE(ABORT, 'restore test failure'); END");
+    try {
+        await request(app).post(base + '/backup/restore').attach('file', rollbackBuffer, 'rollback.zip').field('mode', 'merge').expect(500);
+    } finally {
+        await db.run('DROP TRIGGER reward_penalty_restore_failure');
+    }
+    const originalEvidence = await request(app).get(oldEvidence.body.path).expect(200);
+    assert.equal(originalEvidence.text, 'old evidence');
+    const mergeRes = await request(app)
+        .post(base + '/backup/restore')
+        .attach('file', Buffer.from(JSON.stringify(customBackup)), 'custom.json')
+        .field('mode', 'merge')
+        .expect(200);
+    assert.equal(mergeRes.body.success, true);
+    assert.equal(mergeRes.body.mode, 'merge');
+    assert.equal(mergeRes.body.counts.personnel, 1);
+
+    let state = (await request(app).get(base).expect(200)).body;
+    assert.ok(state.personnel.some(p => p.id === 'P-MERGE-1' && p.name === '合并新增人员'));
+
+    // 5. Test replace restore: verify PIN protection
+    await request(app)
+        .post(base + '/backup/restore')
+        .attach('file', Buffer.from(JSON.stringify(customBackup)), 'custom.json')
+        .field('mode', 'replace')
+        .field('pin', 'wrong-pin')
+        .expect(403);
+
+    // Correct PIN replaces data
+    const replaceRes = await request(app)
+        .post(base + '/backup/restore')
+        .attach('file', Buffer.from(JSON.stringify(customBackup)), 'custom.json')
+        .field('mode', 'replace')
+        .field('pin', '0000')
+        .expect(200);
+    assert.equal(replaceRes.body.success, true);
+    assert.equal(replaceRes.body.mode, 'replace');
+
+    state = (await request(app).get(base).expect(200)).body;
+    assert.equal(state.personnel.length, 1);
+    assert.equal(state.personnel[0].id, 'P-MERGE-1');
+    await request(app).get(oldEvidence.body.path).expect(404);
+
+    // 6. Restore original ZIP backup to return system to original state
+    await request(app)
+        .post(base + '/backup/restore')
+        .attach('file', zipRes.body, 'backup.zip')
+        .field('mode', 'replace')
+        .field('pin', '0000')
+        .expect(200);
+});

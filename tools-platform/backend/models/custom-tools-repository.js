@@ -770,11 +770,30 @@ async function reconcileToolsFromDisk() {
         const registered = new Set(tools.map(item => item.slug));
         const recovered = [];
         const unregistered = [];
+        let updatedCount = 0;
 
         for (const tool of tools) {
             const indexPath = path.join(getCustomToolsDir(), tool.slug, 'index.html');
             if (!fs.existsSync(indexPath)) continue;
-            if (!readToolManifest(tool.slug)) writeToolManifest(tool);
+            const manifest = readToolManifest(tool.slug);
+            if (!manifest) {
+                writeToolManifest(tool);
+                continue;
+            }
+            if (manifest.tool) {
+                const normalized = normalizeToolRecord(manifest.tool, tool.slug);
+                if (
+                    normalized.name !== tool.name ||
+                    normalized.nameEn !== tool.nameEn ||
+                    normalized.description !== tool.description ||
+                    normalized.descriptionEn !== tool.descriptionEn ||
+                    normalized.icon !== tool.icon ||
+                    JSON.stringify(normalized.tags) !== JSON.stringify(tool.tags)
+                ) {
+                    await insertOrReplaceToolRow({ ...tool, ...normalized }, tools.indexOf(tool));
+                    updatedCount++;
+                }
+            }
         }
 
         for (const slug of listToolDirs()) {
@@ -794,10 +813,12 @@ async function reconcileToolsFromDisk() {
             }
         }
 
-        if (recovered.length) {
-            for (const slug of recovered) {
-                const tool = tools.find(item => item.slug === slug);
-                await insertOrReplaceToolRow(tool, tools.indexOf(tool));
+        if (recovered.length || updatedCount > 0) {
+            if (recovered.length) {
+                for (const slug of recovered) {
+                    const tool = tools.find(item => item.slug === slug);
+                    await insertOrReplaceToolRow(tool, tools.indexOf(tool));
+                }
             }
             await syncLegacyRegistryMirror();
         }

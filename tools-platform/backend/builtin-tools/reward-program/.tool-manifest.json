@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "tool": {
+    "slug": "reward-program",
+    "name": "奖励申报与评优",
+    "nameEn": "Reward Programs",
+    "icon": "🏆",
+    "description": "独立的悬赏奖、岗位激励、操作激励与代表处评优申报、规则和审批公示工作台。",
+    "descriptionEn": "Bounty, position and operation incentives, and office excellence awards with applications, rules, approval and publicity.",
+    "tags": ["奖励", "激励", "审批", "公示"],
+    "href": "/tools/reward-program",
+    "filePath": "/custom-tools/reward-program/index.html",
+    "publicAccess": false,
+    "createdAt": "2026-09-20T00:00:00.000Z",
+    "updatedAt": "2026-09-20T00:00:00.000Z"
+  },
+  "history": null
+}

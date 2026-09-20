@@ -3,12 +3,13 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
-const { getDataDir, getTenantId } = require('../models/tenant-context');
+const { getDataDir } = require('../models/tenant-context');
 const { getDbPath } = require('../models/app-db');
 const repo = require('../models/department-reward-penalty-repository');
 const router = express.Router();
 const evidenceUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024, files: 1 } });
 const clean = (value, limit = 500) => String(value ?? '').trim().slice(0, limit);
+const validDate = value => /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00Z`)) && new Date(`${value}T00:00:00Z`).toISOString().slice(0, 10) === value;
 const fail = (message, status = 400) => { throw Object.assign(new Error(message), { status }); };
 const id = () => crypto.randomUUID();
 const roleTokens = value => String(value || '').split(/[,+/]/).map(part => part.trim().toLowerCase()).filter(Boolean);
@@ -16,9 +17,16 @@ const ruleRoles = rule => Array.isArray(rule.roles) ? rule.roles : String(rule.r
 const personRoles = person => Array.isArray(person.roles) ? person.roles : [clean(person.role, 80)].filter(Boolean);
 const personGroups = person => Array.isArray(person.customerGroupIds) ? person.customerGroupIds : [clean(person.customerGroupId, 100)].filter(Boolean);
 const personBusinessUnits = person => Array.isArray(person.businessUnitIds) ? person.businessUnitIds : [];
+const canonicalRole = value => String(value || '').normalize('NFKC').trim().toLocaleLowerCase().replace(/[\s()_-]/g, '');
 const matching = (person, rule) => {
-    const actual = new Set(personRoles(person).flatMap(role => [role.toLowerCase(), ...roleTokens(role.toLowerCase().replace(/[()]/g, '/'))]).map(part => part.replace(/[^a-z0-9]/g, '')));
-    return roleTokens(rule.roles).some(part => { const allowed = part.replace(/[^a-z0-9]/g, ''); return allowed === 'all' || actual.has(allowed); });
+    const actual = new Set(personRoles(person)
+        .flatMap(role => [role, ...roleTokens(String(role).replace(/[()]/g, '/'))])
+        .map(canonicalRole)
+        .filter(Boolean));
+    return roleTokens(rule.roles).some(part => {
+        const allowed = canonicalRole(part);
+        return allowed === 'all' || actual.has(allowed);
+    });
 };
 const EVIDENCE_EXTENSIONS = new Set(['.pdf', '.png', '.jpg', '.jpeg', '.txt', '.zip', '.rar', '.7z', '.tar', '.gz', '.eml', '.msg']);
 const EVIDENCE_PATH_REGEX = /^\/api\/department-reward-penalty\/evidence\/[a-f0-9-]{36}\.(?:pdf|png|jpg|txt|zip|rar|7z|tar|gz|eml|msg)$/i;
@@ -53,7 +61,11 @@ async function requireForceEditPin(req, pin) {
 }
 
 router.get('/', respond(async (req, res) => { res.setHeader('Cache-Control', 'no-store'); res.json({ ...await repo.list(), canEdit: req.user?.role === 'admin', username: req.user?.username || '' }); }));
-router.get('/audit', respond(async (req, res) => { res.setHeader('Cache-Control', 'no-store'); res.json(await repo.listAudit(req.query)); }));
+router.get('/audit', respond(async (req, res) => {
+    if (req.user?.role !== 'admin') fail('仅管理员可查看操作审计', 403);
+    res.setHeader('Cache-Control', 'no-store');
+    res.json(await repo.listAudit(req.query));
+}));
 router.get('/security', respond(async (req, res) => { if (req.user?.role !== 'admin') fail('仅管理员可查看口令设置', 403); res.setHeader('Cache-Control', 'no-store'); res.json({ hasCustomPin: await repo.hasCustomForceEditPin() }); }));
 router.put('/security/pin', respond(async (req, res) => {
     if (req.user?.role !== 'admin') fail('仅管理员可修改口令', 403);
@@ -62,6 +74,59 @@ router.put('/security/pin', respond(async (req, res) => {
     await requireForceEditPin(req, currentPin);
     await repo.changeForceEditPin(currentPin, newPin, req.user.username);
     res.json({ success: true });
+}));
+
+const backupUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024, files: 1 } });
+
+router.get('/backup/export', respond(async (req, res) => {
+    if (req.user?.role !== 'admin') fail('仅管理员可导出数据备份包', 403);
+    const includeEvidence = req.query.includeEvidence !== 'false' && req.query.includeEvidence !== '0';
+    const result = await repo.exportBackupPackage({ includeEvidence, actor: req.user.username, tenantId: req.user?.tenantId });
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
+    res.setHeader('Cache-Control', 'no-store');
+    res.send(result.zipBuffer);
+}));
+
+router.get('/backup/export-json', respond(async (req, res) => {
+    if (req.user?.role !== 'admin') fail('仅管理员可导出数据备份包', 403);
+    const result = await repo.exportBackupPackage({ includeEvidence: false, actor: req.user.username, tenantId: req.user?.tenantId });
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="department-reward-penalty-data-${new Date().toISOString().slice(0, 10)}.json"`);
+    res.setHeader('Cache-Control', 'no-store');
+    res.send(result.jsonString);
+}));
+
+router.post('/backup/inspect', backupUpload.single('file'), respond(async (req, res) => {
+    if (req.user?.role !== 'admin') fail('仅管理员可解析备份包', 403);
+    let payload = req.file?.buffer;
+    if (!payload && req.body && typeof req.body === 'object') {
+        payload = req.body;
+    }
+    if (!payload) fail('请选择要解析的备份数据包文件（.zip 或 .json）');
+    const mode = clean(req.body?.mode, 20) || 'merge';
+    if (!['merge', 'replace'].includes(mode)) fail('无效的恢复模式');
+    const inspection = await repo.inspectBackupPackage(payload, { mode });
+    res.json(inspection);
+}));
+
+router.post('/backup/restore', backupUpload.single('file'), respond(async (req, res) => {
+    if (req.user?.role !== 'admin') fail('仅管理员可恢复数据备份包', 403);
+    let payload = req.file?.buffer;
+    const body = req.body || {};
+    if (!payload && body.data) {
+        payload = body.data;
+    }
+    if (!payload) fail('请选择要恢复的备份数据包文件（.zip 或 .json）');
+    const mode = clean(body.mode, 20) || 'merge';
+    const pin = String(body.pin ?? '');
+    const result = await repo.restoreBackupPackage(payload, {
+        mode,
+        pin,
+        actor: req.user.username,
+        tenantId: req.user?.tenantId
+    });
+    res.json(result);
 }));
 const CONFIG_KINDS = new Set(['roles', 'deductions', 'deductionCategories', 'customerGroups', 'businessUnits']);
 const configKind = req => { if (!CONFIG_KINDS.has(req.params.kind)) fail('配置类型无效'); return req.params.kind; };
@@ -159,14 +224,8 @@ router.post('/legacy-import', respond(async (req, res) => {
     }
     res.json({ imported: { personnel: people.length, rules: rules.length, records: records.length } });
 }));
-const getEvidenceDir = req => path.join(getDataDir(req?.user?.tenantId || getTenantId()), 'department-reward-penalty-evidence');
-const getEvidencePath = (filename, req) => {
-    const tenantFile = path.join(getEvidenceDir(req), filename);
-    if (fs.existsSync(tenantFile)) return tenantFile;
-    const defaultFile = path.join(getDataDir('default'), 'department-reward-penalty-evidence', filename);
-    if (fs.existsSync(defaultFile)) return defaultFile;
-    return tenantFile;
-};
+const getEvidenceDir = req => path.join(getDataDir(req?.user?.tenantId || 'default'), 'department-reward-penalty-evidence');
+const getEvidencePath = (filename, req) => path.join(getEvidenceDir(req), filename);
 
 router.post('/evidence', evidenceUpload.single('file'), respond(async (req, res) => {
     if (!req.file) fail('请选择证据文件');
@@ -246,7 +305,7 @@ router.post('/records/:id/force-edit', respond(async (req, res) => {
     if (!reason) fail('强制修改理由必填');
     await requireForceEditPin(req, body.pin);
     const date = clean(body.date, 10);
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) fail('日期无效');
+    if (!validDate(date)) fail('日期无效');
     const attachments = parseAttachments(body);
     const attachment = attachments[0] || '';
     const staffId = clean(body.staffId, 100), ruleId = clean(body.ruleId, 100), customerGroupId = clean(body.customerGroupId, 100);
@@ -266,8 +325,28 @@ router.post('/records/:id/force-edit', respond(async (req, res) => {
     if (body.deduct && clean(body.deduct, 100) !== deduct) fail('扣罚必须与原记录或新规则的标准一致');
     const curPerson = (await repo.list()).personnel.find(p => p.id === staffId) || personSnapshot;
     const curRule = (await repo.list()).rules.find(r => r.id === ruleId) || ruleSnapshot;
-    const value = { ...old, date, staffId, ruleId, customerGroupId, businessUnitId: old?.businessUnitId || personBusinessUnits(curPerson)[0] || '', deduct, ruleSnapshot, personSnapshot, tt: clean(body.tt, 100), remark: clean(body.remark, 2000), evidence: clean(body.evidence, 500), attachment, attachments, forcedEditAt: new Date().toISOString(), forcedEditBy: req.user.username, forcedEditReason: reason, migrationWarning: !matching(curPerson, curRule) };
+    const businessUnitId = staffId !== old.staffId
+        ? personBusinessUnits(curPerson)[0] || ''
+        : old?.businessUnitId || personBusinessUnits(curPerson)[0] || '';
+    const value = { ...old, date, staffId, ruleId, customerGroupId, businessUnitId, deduct, ruleSnapshot, personSnapshot, tt: clean(body.tt, 100), remark: clean(body.remark, 2000), evidence: clean(body.evidence, 500), attachment, attachments, forcedEditAt: new Date().toISOString(), forcedEditBy: req.user.username, forcedEditReason: reason, migrationWarning: !matching(curPerson, curRule) };
     res.json(await repo.putPublishedWithPin(recordId, value, body.pin, req.user.username, reason));
+}));
+router.post('/records/:id/correct-historical-role', respond(async (req, res) => {
+    if (req.user?.role !== 'admin') fail('仅管理员可更正历史角色', 403);
+    const id = clean(req.params.id, 100), body = req.body || {};
+    const old = await repo.item('records', id);
+    if (!old || old.status !== 'published' || old.createdBy !== 'legacy-import' || !old.migrationWarning) fail('仅可更正待复核的已发布迁移记录', 409);
+    const requestedRole = clean(body.role, 80), reason = clean(body.reason, 1000);
+    if (!requestedRole || !reason || !clean(body.expectedRole, 80)) fail('须填写历史角色、更正理由及原角色');
+    if (body.expectedRole !== old.personSnapshot?.role) fail('记录已变更，请刷新后重试', 409);
+    const role = ruleRoles(old.ruleSnapshot || {}).find(allowed => canonicalRole(allowed) === canonicalRole(requestedRole));
+    if (!role || !matching({ role }, old.ruleSnapshot || {})) fail(`历史角色 ${requestedRole} 不在记录保存的规则适用范围内`);
+    if (matching(old.personSnapshot || {}, old.ruleSnapshot || {})) fail('历史角色已匹配，无需更正', 409);
+    await requireForceEditPin(req, body.pin);
+    res.json(await repo.correctHistoricalRoleWithPin(id, {
+        expectedRole: old.personSnapshot.role, expectedRuleId: old.ruleId, expectedRuleSnapshot: old.ruleSnapshot,
+        role, pin: body.pin, actor: req.user.username, reason
+    }));
 }));
 router.post('/records/:id/revoke', respond(async (req, res) => {
     if (req.user.role !== 'admin') fail('仅管理员可发布或撤销', 403);
@@ -288,6 +367,7 @@ router.post('/records/:id/archive', respond(async (req, res) => {
     const old = await repo.item('records', recordId);
     if (!old) fail('违规记录不存在', 404);
     if (old.status === 'archived' || old.archived) fail('该记录已处于归档状态', 409);
+    if (!['published', 'revoked'].includes(old.status)) fail('只能归档已发布或已撤销记录', 409);
     const reason = clean(req.body?.reason, 1000) || '历史违规记录归档';
     const previousStatus = old.status || 'published';
     const value = { ...old, status: 'archived', archived: true, previousStatus, archivedAt: new Date().toISOString(), archivedBy: req.user.username, archiveReason: reason };
@@ -298,7 +378,7 @@ router.post('/records/:id/unarchive', respond(async (req, res) => {
     const recordId = clean(req.params.id, 100);
     const old = await repo.item('records', recordId);
     if (!old || (old.status !== 'archived' && !old.archived)) fail('只能恢复已归档记录', 409);
-    const restoreStatus = old.previousStatus || 'published';
+    const restoreStatus = old.previousStatus === 'revoked' ? 'revoked' : 'published';
     const value = { ...old, status: restoreStatus, archived: false, unarchivedAt: new Date().toISOString(), unarchivedBy: req.user.username };
     res.json(await repo.put('records', recordId, value, req.user.username, '恢复已归档违规', '从已归档恢复为' + (restoreStatus === 'published' ? '已发布' : restoreStatus)));
 }));
@@ -417,12 +497,13 @@ router.post('/:kind', respond(async (req, res) => {
         if (!matching(person, rule)) fail(`责任主体角色 ${personRoles(person).join('、')} 不匹配；本规则适用角色：${ruleRoles(rule).join('、')}`);
         const deduct = rule.deduct;
         if (body.deduct && clean(body.deduct, 100) !== deduct) fail('实际扣罚必须与所选规则的扣罚基准一致');
-        const date = clean(body.date, 10); if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) fail('日期无效');
+        const date = clean(body.date, 10); if (!validDate(date)) fail('日期无效');
         const action = clean(body.action, 20), reason = clean(body.reason, 1000);
         if (action === 'publish' && !reason) fail('发布理由必填');
         const attachments = parseAttachments(body);
         const attachment = attachments[0] || '';
-        value = { ...(old || {}), id: itemId, createdBy: old?.createdBy || actor, date, staffId, customerGroupId, businessUnitId: old?.businessUnitId || personBusinessUnits(person)[0] || '', ruleId, deduct, tt: clean(body.tt, 100), remark: clean(body.remark, 2000), evidence: clean(body.evidence, 500), attachment, attachments, status: action === 'publish' ? 'published' : 'draft', ruleSnapshot: { svcModule: rule.svcModule, subModule: rule.subModule, desc: rule.desc, roles: rule.roles, deduct: rule.deduct }, personSnapshot: { name: person.name, role: person.role, roles: personRoles(person), customerGroupId: group.id, customerGroupName: group.value, businessUnitId: personBusinessUnits(person)[0] || '', buName: state.businessUnits.find(b => b.id === personBusinessUnits(person)[0])?.value || '' }, ...(action === 'publish' ? { publishedAt: new Date().toISOString(), publishReason: reason } : {}), migrationWarning: !matching(person, rule) };
+        const businessUnitId = staffId !== old?.staffId ? personBusinessUnits(person)[0] || '' : old?.businessUnitId || personBusinessUnits(person)[0] || '';
+        value = { ...(old || {}), id: itemId, createdBy: old?.createdBy || actor, date, staffId, customerGroupId, businessUnitId, ruleId, deduct, tt: clean(body.tt, 100), remark: clean(body.remark, 2000), evidence: clean(body.evidence, 500), attachment, attachments, status: action === 'publish' ? 'published' : 'draft', ruleSnapshot: { svcModule: rule.svcModule, subModule: rule.subModule, desc: rule.desc, roles: rule.roles, deduct: rule.deduct }, personSnapshot: { name: person.name, role: person.role, roles: personRoles(person), customerGroupId: group.id, customerGroupName: group.value, businessUnitId: personBusinessUnits(person)[0] || '', buName: state.businessUnits.find(b => b.id === personBusinessUnits(person)[0])?.value || '' }, ...(action === 'publish' ? { publishedAt: new Date().toISOString(), publishedBy: actor, publishReason: reason } : {}), migrationWarning: !matching(person, rule) };
     }
     res.json(await repo.put(kind, itemId, value, actor, body.action === 'publish' ? '发布' : '保存', clean(body.reason, 1000)));
 }));

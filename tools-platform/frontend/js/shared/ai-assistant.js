@@ -417,7 +417,8 @@
         }
         .ai-markdown-table {
             width: 100%;
-            min-width: 520px;
+            min-width: max(520px, calc(var(--ai-table-columns) * 160px));
+            table-layout: fixed;
             border-collapse: separate;
             border-spacing: 0;
             font-size: 12px;
@@ -432,14 +433,16 @@
             background: linear-gradient(180deg, #f5f7ff, #eef1fa);
             color: #36415a;
             font-weight: 700;
-            white-space: nowrap;
+            overflow-wrap: anywhere;
         }
         .ai-markdown-table td {
             padding: 10px 12px;
             border-bottom: 1px solid #edf0f5;
             color: #46536a;
             vertical-align: top;
+            overflow-wrap: anywhere;
         }
+        .ai-markdown-table td code, .ai-markdown-table th code { white-space: normal; overflow-wrap: anywhere; }
         .ai-markdown-table tbody tr:last-child td { border-bottom: 0; }
         .ai-markdown-table tbody tr:nth-child(even) td { background: #fafbfe; }
         .ai-markdown-table tbody tr:hover td { background: #f2f5ff; }
@@ -1101,7 +1104,7 @@
         if (!knowledgeGraphLoader) {
             knowledgeGraphLoader = new Promise((resolve, reject) => {
                 const script = document.createElement('script');
-                script.src = '/js/shared/ai-knowledge-graph-spatial-themes-v5.js?v=20260911-01';
+                script.src = '/js/shared/ai-knowledge-graph-spatial-themes-v5.js?v=20260920-02';
                 script.onload = resolve;
                 script.onerror = () => reject(new Error(aiT('graphLoadFailed')));
                 document.body.appendChild(script);
@@ -1645,7 +1648,7 @@
                     const numeric = /^[-+]?\d[\d,.]*(?:%|分|条|个)?$/.test(cell.trim()) ? ' numeric' : '';
                     return `<td class="${alignments[cellIndex] || 'align-left'}${numeric}">${inline(cell)}</td>`;
                 }).join('')}</tr>`).join('');
-                blocks.push(`<div class="ai-table-wrap" role="region" aria-label="AI 分析表格" tabindex="0"><table class="ai-markdown-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`);
+                blocks.push(`<div class="ai-table-wrap" role="region" aria-label="AI 分析表格" tabindex="0"><table class="ai-markdown-table" style="--ai-table-columns:${headers.length}"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`);
                 continue;
             }
 
@@ -2112,6 +2115,23 @@
     function createCompressionStatusHandler(anchorNode) {
         let notice = null;
         return status => {
+            if (status?.kind === 'code-analysis-retry') {
+                if (!notice) {
+                    notice = document.createElement('div');
+                    notice.className = 'ai-context-notice';
+                    chatBody.insertBefore(notice, anchorNode || typing);
+                }
+                notice.classList.remove('is-working', 'is-done', 'is-failed');
+                notice.classList.add(status.phase === 'done' ? 'is-done' : status.phase === 'failed' ? 'is-failed' : 'is-working');
+                notice.textContent = status.phase === 'done'
+                    ? (getAiLang() === 'en' ? 'Analysis completed with a smaller code range.' : '已缩减代码范围并完成分析。')
+                    : status.phase === 'failed'
+                        ? (getAiLang() === 'en' ? 'The AI service still rejected the smaller request.' : '缩减代码后，AI 服务仍拒绝请求。')
+                        : getAiLang() === 'en'
+                            ? `The AI service rejected the request size. Retrying with ${Math.round(status.limit / 1024)}k characters (${status.attempt}/3)…`
+                            : `AI 服务拒绝了请求大小，正缩减为 ${Math.round(status.limit / 1024)}k 字符重试（第 ${status.attempt}/3 次）…`;
+                return;
+            }
             if (!status || status.kind !== 'context-compression') return;
             if (!notice) {
                 notice = document.createElement('div');
@@ -2511,7 +2531,8 @@
                 pageTitle,
                 pagePath: getPagePath(),
                 uiLanguage: getAiLang(),
-                sessionId: currentSessionId
+                sessionId: currentSessionId,
+                codeAnalysis: options.codeAnalysis
             }, {
                 signal: controller.signal,
                 onDelta: delta => {
@@ -2523,11 +2544,14 @@
             });
 
             if (data.sessionId) currentSessionId = data.sessionId;
+            if (options.codeAnalysis && data.sessionId) messages[messages.length - 1].content = displayText;
+            if (options.codeAnalysis && data.codeAnalysisAttempts > 1) handleCompressionStatus({ kind:'code-analysis-retry', phase:'done' });
             const finalText = streamRenderer.finish(data.reply || streamRenderer.current());
             messages.push({ role: 'model', content: finalText });
             finalizeStreamMessage(streamMessage, finalText, data);
             loadSuggestions();
         } catch (e) {
+            if (options.codeAnalysis && /请求限制|request size/i.test(String(e.message || ''))) handleCompressionStatus({ kind:'code-analysis-retry', phase:'failed' });
             const partialText = streamRenderer.finish();
             if (e && e.name === 'AbortError') {
                 if (partialText) {
@@ -2584,7 +2608,7 @@
             while (activeChatController) {
                 await new Promise(resolve => window.setTimeout(resolve, 100));
             }
-            await sendMessage(prompt, { displayText: options.displayText, context: options.context });
+            await sendMessage(prompt, { displayText: options.displayText, context: options.context, codeAnalysis: options.codeAnalysis });
         } else if (isFirstOpen) {
             isFirstOpen = false;
             await initChat();

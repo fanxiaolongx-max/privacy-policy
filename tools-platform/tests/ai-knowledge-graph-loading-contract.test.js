@@ -67,7 +67,7 @@ test('shared navbar checks built-in tools after page load unless the market was 
         .map(filePath => fs.readFileSync(filePath, 'utf8').match(/navbar\.js\?v=([^"']+)/)?.[1])
         .filter(Boolean);
     assert.ok(navbarReferences.length > 1);
-    assert.deepEqual([...new Set(navbarReferences)], ['20260916-02']);
+    assert.deepEqual([...new Set(navbarReferences)], ['20260920-03']);
 });
 
 test('built-in tool preview worker returns a serializable preview off the main thread', async t => {
