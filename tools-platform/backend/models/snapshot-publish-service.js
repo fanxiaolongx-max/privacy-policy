@@ -7,6 +7,7 @@ const { promisify } = require('util');
 const { run, get, all, getDbPath } = require('./app-db');
 const { getTenantId, runWithTenant } = require('./tenant-context');
 const { buildSnapshot, buildPagesSnapshot } = require('./department-reward-penalty-snapshot');
+const { updatePublishMenu, MENU_FILE } = require('./snapshot-publish-menu');
 
 const execGit = promisify(execFile);
 const git = (file, args, options = {}) => execGit(file, args, {
@@ -90,6 +91,7 @@ function validate(settings) {
     if (!['single', 'pages'].includes(publishMode)) throw bad('推送格式无效');
     if (repoDir.length > 500 || remoteUrl.length > 500 || !/^[\w./-]+$/.test(branch) || branch.startsWith('-') || branch.includes('..')) throw bad('仓库配置格式无效');
     const resolvedFile = resolvePublishPath(file);
+    if (resolvedFile === 'index.html') throw bad('仓库根目录 index.html 保留为工具菜单，请使用 {toolSlug}/index.html 等子路径');
     if (remoteUrl) {
         if (/^https:\/\//i.test(remoteUrl)) {
             let url;
@@ -226,8 +228,11 @@ async function publish(job, tenantId, settings) {
             }
             fs.unlinkSync(marker);
         }
+        await updateJob(job, 'running', '更新仓库介绍', 62, '正在同步首页菜单和仓库工具说明');
+        const tool = await require('./custom-tools-repository').getTool(TOOL_SLUG);
+        const { guideName } = updatePublishMenu(checkout, { slug: TOOL_SLUG, name: tool?.name || '负向事件管理', description: tool?.description || '查看负向事件、人员、规则及审计数据的只读快照。', href: './' + config.resolvedFile });
         await updateJob(job, 'running', '检查变更', 68, config.publishMode === 'pages' ? '正在逐文件比较 HTML、JSON 和证据附件' : '已生成只读单文件 HTML，正在检查目标文件变更');
-        const paths = [config.resolvedFile];
+        const paths = [config.resolvedFile, 'index.html', MENU_FILE, guideName];
         if (fs.existsSync(dataDir)) paths.push(dataRelative);
         await git('git', ['-C', checkout, 'add', '-A', '--', ...paths], { timeout: 30000 });
         const changed = (await git('git', ['-C', checkout, 'diff', '--cached', '--name-only', '--', ...paths])).stdout.trim().split('\n').filter(Boolean);
