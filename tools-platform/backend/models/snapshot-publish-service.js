@@ -12,7 +12,14 @@ const { updatePublishMenu, MENU_FILE } = require('./snapshot-publish-menu');
 const execGit = promisify(execFile);
 const git = (file, args, options = {}) => execGit(file, args, {
     ...options,
-    env: { ...process.env, GIT_TERMINAL_PROMPT: '0', GCM_INTERACTIVE: 'Never' }
+    env: {
+        ...process.env,
+        GIT_TERMINAL_PROMPT: '0',
+        GCM_INTERACTIVE: 'never',
+        GIT_SSH_COMMAND: 'ssh -o BatchMode=yes',
+        GIT_ASKPASS: '',
+        SSH_ASKPASS: ''
+    }
 });
 const active = new Set();
 const scheduleTimers = new Map();
@@ -188,8 +195,20 @@ async function publish(job, tenantId, settings) {
         if (!remote) throw bad('本地仓库未配置 origin');
         staging = fs.mkdtempSync(path.join(os.tmpdir(), 'tools-snapshot-push-'));
         const checkout = path.join(staging, 'checkout');
-        await updateJob(job, 'running', '获取分支', 26, '在隔离目录中获取远端分支，原仓库工作区不会被修改');
-        await git('git', ['clone', '--single-branch', '--branch', config.branch, '--', remote, checkout], { timeout: 120000 });
+        const hasLocalMirror = Boolean(config.repoDir && fs.existsSync(path.join(config.repoDir, '.git')));
+        const cloneArgs = ['clone', '--depth', '1', '--single-branch', '--branch', config.branch];
+        if (hasLocalMirror) cloneArgs.push('--reference-if-able', config.repoDir);
+        cloneArgs.push('--', remote, checkout);
+
+        const cloneDesc = hasLocalMirror
+            ? '在隔离目录中浅克隆远端分支（已开启本地镜像加速），原仓库工作区不会被修改'
+            : '在隔离目录中浅克隆远端分支（depth=1），原仓库工作区不会被修改';
+        await updateJob(job, 'running', '获取分支', 26, cloneDesc);
+        const cloneStart = Date.now();
+        await git('git', cloneArgs, { timeout: 300000 });
+        const cloneSec = ((Date.now() - cloneStart) / 1000).toFixed(1);
+        await updateJob(job, 'running', '获取分支', 38, `远端分支获取完成（耗时 ${cloneSec}s）`);
+
         await updateJob(job, 'running', '生成快照', 48, config.publishMode === 'pages' ? '正在生成 Pages 页面、分区 JSON 和独立证据文件' : '正在读取事件、人员、审计与证据附件');
         const output = config.publishMode === 'pages' ? await buildPagesSnapshot(tenantId) : { html: await buildSnapshot(tenantId), files: new Map() };
         const destination = path.join(checkout, config.resolvedFile);
@@ -241,20 +260,36 @@ async function publish(job, tenantId, settings) {
             await updateJob(job, 'running', '检查变更', 75, '本次变更 ' + changed.length + ' 个文件：' + changed.slice(0, 4).join('、') + (changed.length > 4 ? ' 等' : ''));
             await git('git', ['-C', checkout, '-c', 'user.name=Tools Platform', '-c', 'user.email=tools-platform@localhost', 'commit', '-m', 'Update readonly department reward penalty snapshot'], { timeout: 30000 });
             await updateJob(job, 'running', '推送远端', 86, '仅提交发生变化的发布文件；正在更新远端 ' + config.branch + ' 分支');
-            await git('git', ['-C', checkout, 'push', 'origin', 'HEAD:refs/heads/' + config.branch], { timeout: 120000 });
+            const pushStart = Date.now();
+            await git('git', ['-C', checkout, 'push', 'origin', 'HEAD:refs/heads/' + config.branch], { timeout: 300000 });
+            const pushSec = ((Date.now() - pushStart) / 1000).toFixed(1);
+            await updateJob(job, 'running', '推送远端', 95, `远端更新成功（耗时 ${pushSec}s）`);
         } else {
             await updateJob(job, 'running', '检查变更', 86, '目标文件与远端一致，无需新提交');
         }
         const commit = (await git('git', ['-C', checkout, 'rev-parse', 'HEAD'])).stdout.trim();
         await updateJob(job, 'success', '完成', 100, dirty ? '推送完成；Pages 发布可能仍需等待托管平台部署' : '远端内容已是最新', commit);
     } catch (error) {
-        // Never persist raw git stderr: remote URLs and credential helpers may contain secrets.
-        const message = error.status === 400 ? error.message : error.code === 'ENOENT'
-            ? '未找到 Git 命令：请在运行服务或绿色版的电脑上安装 Git 并加入 PATH'
-            : '推送失败：请检查仓库 origin、目标分支、Git 凭据和远端并发更新';
+        console.error('[SNAPSHOT-PUBLISH] Push job failed:', job.id, 'stage:', job.stage, error.message || error.code || error);
+        let message;
+        if (error.status === 400) {
+            message = error.message;
+        } else if (error.code === 'ENOENT') {
+            message = '未找到 Git 命令：请在运行服务或绿色版的电脑上安装 Git 并加入 PATH';
+        } else if (error.code === 'ETIMEDOUT' || error.killed) {
+            message = `操作超时（超过 300 秒）：阶段 [${job.stage}] 网络连接较慢或远端无响应。建议配置“本地 Git 镜像仓库”加速。`;
+        } else {
+            message = '推送失败：请检查仓库 origin、目标分支、Git 凭据和远端并发更新';
+        }
         await updateJob(job, 'failed', '失败', job.progress, message);
     } finally {
-        if (staging) fs.rmSync(staging, { recursive: true, force: true });
+        if (staging) {
+            try {
+                fs.rmSync(staging, { recursive: true, force: true, maxRetries: 3, retryDelay: 200 });
+            } catch (cleanupErr) {
+                console.warn('[SNAPSHOT-PUBLISH] Clean staging directory warning:', staging, cleanupErr.message);
+            }
+        }
         active.delete(key);
     }
 }

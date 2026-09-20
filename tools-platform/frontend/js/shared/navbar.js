@@ -3349,13 +3349,13 @@ window.openSnapshotPublishProgress = function (jobId, initialError = '') {
     let modal = document.getElementById('snapshotProgressModal');
     if (!modal) {
         modal = document.createElement('div'); modal.id = 'snapshotProgressModal'; modal.className = 'snapshot-progress-overlay';
-        modal.innerHTML = `<section class="snapshot-progress-dialog" role="dialog" aria-modal="true" aria-labelledby="snapshotProgressTitle"><button type="button" class="snapshot-progress-close" aria-label="Close" onclick="closeSnapshotPublishProgress()">×</button><div class="snapshot-progress-eyebrow">PUBLISHING WORKFLOW</div><h2 id="snapshotProgressTitle"></h2><p id="snapshotProgressDetail"></p><div class="snapshot-progress-bar"><i id="snapshotProgressFill"></i></div><div id="snapshotProgressMeta" class="snapshot-progress-meta"></div><div id="snapshotProgressEntries" class="snapshot-progress-entries" aria-live="polite"></div><button type="button" class="snapshot-config-shortcut" onclick="closeSnapshotPublishProgress(); navState.settingsTab='snapshotPublish'; openNavSettingsModal()">${navEscape(snapshotText('查看推送配置与历史', 'View destination & history'))} ↗</button></section>`;
+        modal.innerHTML = `<section class="snapshot-progress-dialog" role="dialog" aria-modal="true" aria-labelledby="snapshotProgressTitle"><button type="button" class="snapshot-progress-close" aria-label="Close" onclick="closeSnapshotPublishProgress()">×</button><div class="snapshot-progress-eyebrow">PUBLISHING WORKFLOW</div><h2 id="snapshotProgressTitle"></h2><p id="snapshotProgressDetail"></p><div class="snapshot-progress-bar"><i id="snapshotProgressFill"></i></div><div id="snapshotProgressMeta" class="snapshot-progress-meta"></div><div id="snapshotProgressEntries" class="snapshot-progress-entries" aria-live="polite"></div><div class="snapshot-progress-logs-section"><div class="snapshot-progress-logs-head"><span><strong>${navEscape(snapshotText('详细执行日志', 'Detailed Execution Logs'))}</strong></span><button type="button" class="snapshot-progress-log-btn" onclick="copySnapshotPublishLogs()">${navEscape(snapshotText('复制日志', 'Copy Logs'))}</button></div><div id="snapshotProgressTerminal" class="snapshot-progress-terminal" role="region" aria-label="Detailed logs"></div></div><button type="button" class="snapshot-config-shortcut" onclick="closeSnapshotPublishProgress(); navState.settingsTab='snapshotPublish'; openNavSettingsModal()">${navEscape(snapshotText('查看推送配置与历史', 'View destination & history'))} ↗</button></section>`;
         document.body.appendChild(modal);
     }
     modal.hidden = false;
     snapshotProgressJobId = jobId || '';
     clearTimeout(snapshotProgressTimer);
-    if (initialError) { renderSnapshotProgress({ status: 'failed', stage: snapshotText('无法启动推送', 'Could not start'), progress: 0, entries: [{ at: new Date().toISOString(), message: initialError }] }); return; }
+    if (initialError) { renderSnapshotProgress({ status: 'failed', stage: snapshotText('无法启动推送', 'Could not start'), progress: 0, entries: [{ at: new Date().toISOString(), stage: snapshotText('启动失败', 'Start Error'), message: initialError }] }); return; }
     pollSnapshotProgress();
 };
 
@@ -3363,6 +3363,37 @@ window.closeSnapshotPublishProgress = function () {
     const modal = document.getElementById('snapshotProgressModal');
     if (modal) modal.hidden = true;
     clearTimeout(snapshotProgressTimer);
+};
+
+window.copySnapshotPublishLogs = async function () {
+    const terminal = document.getElementById('snapshotProgressTerminal');
+    const button = document.querySelector('.snapshot-progress-log-btn');
+    if (!terminal) return;
+    const lines = Array.from(terminal.querySelectorAll('.snapshot-terminal-line'))
+        .map(el => el.textContent.trim())
+        .filter(Boolean);
+    const text = lines.length ? lines.join('\n') : terminal.textContent.trim();
+    if (!text) return;
+    try {
+        await navigator.clipboard.writeText(text);
+        if (button) {
+            const orig = button.textContent;
+            button.textContent = snapshotText('已复制 ✓', 'Copied ✓');
+            setTimeout(() => { button.textContent = orig; }, 2000);
+        }
+    } catch {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        if (button) {
+            const orig = button.textContent;
+            button.textContent = snapshotText('已复制 ✓', 'Copied ✓');
+            setTimeout(() => { button.textContent = orig; }, 2000);
+        }
+    }
 };
 
 function renderSnapshotProgress(job) {
@@ -3374,6 +3405,21 @@ function renderSnapshotProgress(job) {
     modal.querySelector('#snapshotProgressFill').className = job.status;
     modal.querySelector('#snapshotProgressMeta').textContent = `${job.progress || 0}%${job.commit ? ' · ' + job.commit.slice(0, 12) : ''}`;
     modal.querySelector('#snapshotProgressEntries').innerHTML = (job.entries || []).map(entry => `<div class="snapshot-progress-entry"><time>${navEscape(new Date(entry.at).toLocaleTimeString())}</time><span>${navEscape(entry.message)}</span></div>`).join('');
+    const terminal = modal.querySelector('#snapshotProgressTerminal');
+    if (terminal) {
+        const entries = job.entries || [];
+        if (!entries.length) {
+            terminal.innerHTML = `<div class="snapshot-terminal-empty">${navEscape(snapshotText('等待日志输出…', 'Waiting for logs…'))}</div>`;
+        } else {
+            terminal.innerHTML = entries.map((entry, idx) => {
+                const isError = (job.status === 'failed' || job.status === 'interrupted') && idx === entries.length - 1;
+                const timeStr = new Date(entry.at).toLocaleTimeString();
+                const stageTag = entry.stage ? `[${entry.stage}] ` : '';
+                return `<div class="snapshot-terminal-line ${isError ? 'error' : ''}"><span class="snapshot-terminal-time">${navEscape(timeStr)}</span><span class="snapshot-terminal-stage">${navEscape(stageTag)}</span><span class="snapshot-terminal-msg">${navEscape(entry.message)}</span></div>`;
+            }).join('');
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+    }
 }
 
 async function pollSnapshotProgress() {
@@ -3386,7 +3432,7 @@ async function pollSnapshotProgress() {
         if (job.status === 'running') snapshotProgressTimer = setTimeout(pollSnapshotProgress, 1400);
         else if (navState.settingsTab === 'snapshotPublish' && document.getElementById('navSettingsModal')?.style.display === 'flex') renderSnapshotPublishSettings(document.getElementById('navSettingsContent'));
     } catch (error) {
-        renderSnapshotProgress({ status: 'failed', stage: snapshotText('读取进度失败', 'Could not read progress'), progress: 0, entries: [{ at: new Date().toISOString(), message: error.message }] });
+        renderSnapshotProgress({ status: 'failed', stage: snapshotText('读取进度失败', 'Could not read progress'), progress: 0, entries: [{ at: new Date().toISOString(), stage: snapshotText('网络错误', 'Network Error'), message: error.message }] });
     }
 }
 

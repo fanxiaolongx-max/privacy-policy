@@ -2327,9 +2327,27 @@ dialog#mediaFormDialog.is-importing {
 .snapshot-progress-entry { position: relative; display: grid; grid-template-columns: 72px 1fr; gap: 10px; padding: 7px 0; font-size: 12px; line-height: 1.5; }
 .snapshot-progress-entry:before { content: ''; position: absolute; left: -22px; top: 12px; width: 8px; height: 8px; border-radius: 50%; background: #75a5db; }
 .snapshot-progress-entry time { color: #8392a4; }
-.snapshot-config-shortcut { margin-top: 22px; width: 100%; border: 1px solid #b9d0e9; border-radius: 10px; padding: 11px; color: #205eb4; background: #f4f9ff; font-weight: 700; cursor: pointer; }
+.snapshot-progress-logs-section { margin-top: 18px; border-top: 1px solid #e5edf5; padding-top: 14px; }
+.snapshot-progress-logs-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 12px; color: #4b6382; }
+.snapshot-progress-log-btn { background: #f0f4f9; border: 1px solid #d0dbe7; border-radius: 6px; padding: 3px 10px; font-size: 11px; cursor: pointer; color: #32537a; font-weight: 600; transition: background .15s ease; }
+.snapshot-progress-log-btn:hover { background: #e2ecf7; }
+.snapshot-progress-terminal { background: #0e1726; color: #c8d6e5; border-radius: 10px; padding: 12px 14px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 11.5px; line-height: 1.6; max-height: 160px; overflow-y: auto; border: 1px solid #1e293b; box-shadow: inset 0 2px 6px rgba(0,0,0,0.2); }
+.snapshot-terminal-empty { color: #64748b; font-style: italic; }
+.snapshot-terminal-line { display: flex; gap: 8px; word-break: break-all; margin-bottom: 2px; }
+.snapshot-terminal-line.error { color: #f87171; background: rgba(239, 68, 68, 0.12); border-radius: 4px; padding: 2px 6px; }
+.snapshot-terminal-time { color: #64748b; flex-shrink: 0; }
+.snapshot-terminal-stage { color: #38bdf8; font-weight: 600; flex-shrink: 0; }
+.snapshot-terminal-msg { flex: 1; }
+.snapshot-config-shortcut { margin-top: 18px; width: 100%; border: 1px solid #b9d0e9; border-radius: 10px; padding: 11px; color: #205eb4; background: #f4f9ff; font-weight: 700; cursor: pointer; }
 @media (max-width: 600px) { .snapshot-fields,.snapshot-schedule { grid-template-columns: 1fr; } .snapshot-fields label:first-child,.snapshot-fields label:nth-child(2) { grid-column: auto; } .snapshot-prerequisites { flex-direction: column; align-items: stretch; } .snapshot-prereq-actions { justify-content: flex-start; } .snapshot-schedule-status { text-align: left; } .snapshot-progress-dialog { padding: 22px; } }
-@media (prefers-color-scheme: dark) { .snapshot-progress-dialog { background: #172437; color: #e2ebf5; border-color: #31465e; } }
+@media (prefers-color-scheme: dark) {
+    .snapshot-progress-dialog { background: #172437; color: #e2ebf5; border-color: #31465e; }
+    .snapshot-progress-logs-section { border-top-color: #2b394e; }
+    .snapshot-progress-logs-head { color: #94a3b8; }
+    .snapshot-progress-log-btn { background: #1e293b; border-color: #334155; color: #93c5fd; }
+    .snapshot-progress-log-btn:hover { background: #2a3749; }
+    .snapshot-config-shortcut { background: #132034; border-color: #2b456b; color: #7db5f5; }
+}
 
 .nav-security-grid {
     display: grid;
