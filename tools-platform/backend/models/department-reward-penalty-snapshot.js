@@ -57,11 +57,15 @@ async function collectSnapshot(tenantId, evidenceMode) {
     return { snapshot: { ...data, canEdit: true, username: '', audit }, evidenceFiles };
 }
 
-async function buildSnapshot(tenantId) {
+const { injectGatekeeper } = require('./snapshot-gatekeeper');
+
+async function buildSnapshot(tenantId, options = {}) {
     let { html, apiMarker, requestMarker } = await loadSource();
     const { snapshot } = await collectSnapshot(tenantId, 'inline');
+    const enc = options.encryption?.enabled && (options.encryption?.passwordHash || options.encryption?.hash) ? options.encryption : null;
     html = html.replace(apiMarker, apiMarker + '\nconst OFFLINE_SNAPSHOT = ' + safeJson(snapshot) + ';\nconst originalOfflineFetch = window.fetch.bind(window); window.fetch = (url, options) => { if(String(url).startsWith("data:")) return originalOfflineFetch(url, options); uiAlert("无权限，仅供查看。请联系管理员。", "只读快照", "warning", "🔒"); return Promise.reject(new Error("无权限，仅供查看。请联系管理员。")); };');
     const offlineRequest = `async function request(path,options){
+  if(typeof window !== 'undefined' && typeof window.tpIsUnlocked === 'function' && !window.tpIsUnlocked()) { throw new Error('请先输入访问密码解锁页面'); }
   if(options?.method && options.method !== 'GET') { await uiAlert('无权限，仅供查看。请联系管理员。','只读快照','warning','🔒'); throw new Error('无权限，仅供查看。请联系管理员。'); }
   if(path === '/') return OFFLINE_SNAPSHOT;
   if(path.startsWith('/audit')) { const params = new URLSearchParams(path.split('?')[1] || ''); const size = Math.min(200,Math.max(1,Number(params.get('pageSize')) || 20)); const total = OFFLINE_SNAPSHOT.audit.length; const totalPages = Math.max(1,Math.ceil(total/size)); const page = Math.min(totalPages,Math.max(1,Number(params.get('page')) || 1)); return {rows:OFFLINE_SNAPSHOT.audit.slice((page-1)*size,page*size),total,page,pageSize:size,totalPages}; }
@@ -70,17 +74,20 @@ async function buildSnapshot(tenantId) {
 }`;
     html = html.replace(requestMarker, offlineRequest);
     html = html.replace(/<head([^>]*)>/i, `<head$1>\n<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; connect-src data:; object-src blob: data:; frame-src blob: data:; form-action 'none'; base-uri 'none'">`);
+    if (enc) html = injectGatekeeper(html, enc);
     return html;
 }
 
-async function buildPagesSnapshot(tenantId) {
+async function buildPagesSnapshot(tenantId, options = {}) {
     let { html, apiMarker, requestMarker } = await loadSource();
     const { snapshot, evidenceFiles } = await collectSnapshot(tenantId, 'files');
+    const enc = options.encryption?.enabled && (options.encryption?.passwordHash || options.encryption?.hash) ? options.encryption : null;
     html = html.replace(apiMarker, apiMarker + `
 let PAGES_SNAPSHOT = null;
 const pagesFetch = window.fetch.bind(window);
 window.fetch = (url, options) => { uiAlert('无权限，仅供查看。请联系管理员。', '只读页面', 'warning', '🔒'); return Promise.reject(new Error('无权限，仅供查看。请联系管理员。')); };`);
     const pagesRequest = `async function request(path,options){
+  if(typeof window !== 'undefined' && typeof window.tpIsUnlocked === 'function' && !window.tpIsUnlocked()) { throw new Error('请先输入访问密码解锁页面'); }
   if(options?.method && options.method !== 'GET') { await uiAlert('无权限，仅供查看。请联系管理员。','只读页面','warning','🔒'); throw new Error('无权限，仅供查看。请联系管理员。'); }
   if(path === '/') {
     const names = ['state','records','audit'];
@@ -104,6 +111,7 @@ window.fetch = (url, options) => { uiAlert('无权限，仅供查看。请联系
 }`;
     html = html.replace(requestMarker, pagesRequest);
     html = html.replace(/<head([^>]*)>/i, `<head$1>\n<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data: blob:; font-src data:; object-src 'self' blob: data:; frame-src 'self' blob: data:; form-action 'none'; base-uri 'none'">`);
+    if (enc) html = injectGatekeeper(html, enc);
     const { records, audit, ...state } = snapshot;
     const files = new Map([
         ['data/state.json', safeJson(state) + '\n'],

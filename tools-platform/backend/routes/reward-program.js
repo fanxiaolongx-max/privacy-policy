@@ -218,4 +218,41 @@ router.delete('/rules/:id', wrap(async (req, res) => {
     if (!admin(req)) fail('仅管理员可维护奖励规则', 403);
     res.json(await repo.deleteRule(req.params.id));
 }));
+
+const snapshotPublish = require('../models/snapshot-publish-service');
+const { buildSnapshot } = require('../models/reward-program-snapshot');
+
+const snapshotAdmin = req => { if (!admin(req)) fail('仅管理员可配置或发布静态页面', 403); };
+
+router.get('/snapshot/html', wrap(async (req, res) => {
+    snapshotAdmin(req);
+    const toolSecurity = await snapshotPublish.getToolSettings('reward-program', true);
+    const html = await buildSnapshot(req.user?.tenantId || 'default', {
+        encryption: {
+            enabled: Boolean(toolSecurity.encryptionEnabled && toolSecurity.passwordHash),
+            passwordHash: toolSecurity.passwordHash,
+            passwordSalt: toolSecurity.passwordSalt
+        }
+    });
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="reward-program-readonly.html"');
+    res.send(html);
+}));
+
+router.get('/snapshot/settings', wrap(async (req, res) => {
+    snapshotAdmin(req);
+    res.setHeader('Cache-Control', 'no-store');
+    res.json(await snapshotPublish.getToolSettings('reward-program'));
+}));
+
+router.put('/snapshot/settings', wrap(async (req, res) => {
+    snapshotAdmin(req);
+    res.json(await snapshotPublish.saveToolSettings('reward-program', req.body || {}));
+}));
+
+router.post('/snapshot/publish', wrap(async (req, res) => {
+    snapshotAdmin(req);
+    res.status(202).json(await snapshotPublish.startJob(req.user?.tenantId || 'default', { toolSlug: 'reward-program' }));
+}));
+
 module.exports = router;

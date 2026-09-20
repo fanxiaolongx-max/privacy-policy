@@ -3258,21 +3258,111 @@ async function snapshotApi(path, options = {}) {
     return data;
 }
 
+const SNAPSHOT_PREREQ_CACHE_KEY = 'tools_snapshot_prereq_cache';
+const SNAPSHOT_PREREQ_TTL = 10 * 60 * 1000;
+
+function getSnapshotConfigKey(settings) {
+    if (!settings) {
+        const remoteUrl = document.getElementById('snapshotRemoteUrl')?.value || '';
+        const repoDir = document.getElementById('snapshotRepoDir')?.value || '';
+        const branch = document.getElementById('snapshotBranch')?.value || '';
+        return `${remoteUrl.trim()}::${repoDir.trim()}::${branch.trim()}`;
+    }
+    return `${(settings.remoteUrl || '').trim()}::${(settings.repoDir || '').trim()}::${(settings.branch || '').trim()}`;
+}
+
+function getSnapshotPrereqCache(configKey) {
+    try {
+        const raw = sessionStorage.getItem(SNAPSHOT_PREREQ_CACHE_KEY);
+        if (!raw) return null;
+        const data = JSON.parse(raw);
+        if (!data || !data.result || !data.checkedAt) return null;
+        if (Date.now() - data.checkedAt > SNAPSHOT_PREREQ_TTL) return null;
+        if (configKey && data.configKey !== configKey) return null;
+        return data;
+    } catch {
+        return null;
+    }
+}
+
+function setSnapshotPrereqCache(result, configKey) {
+    try {
+        sessionStorage.setItem(SNAPSHOT_PREREQ_CACHE_KEY, JSON.stringify({
+            result,
+            checkedAt: Date.now(),
+            configKey: configKey || ''
+        }));
+    } catch (_) {}
+}
+
+let lastSnapshotPrereqResult = null;
+
+function formatSnapshotPrereqHtml(result) {
+    lastSnapshotPrereqResult = result;
+    const isReady = result.gitFound && result.branchReady;
+    const latencyHtml = result.latencyMs != null
+        ? `<span class="snapshot-prereq-latency ${result.latencyMs > 1000 ? 'warn' : ''}">⚡ ${result.latencyMs}ms</span>`
+        : '';
+    const attemptText = result.attempts ? ` · ${snapshotText('尝试', 'Attempt')} ${result.attempts}/${result.maxAttempts || 10}` : '';
+    return `<div><strong>${isReady ? navEscape(snapshotText('运行环境就绪', 'Environment ready')) : navEscape(snapshotText('运行前检查', 'Preflight check'))}${latencyHtml}</strong><p>${navEscape(result.message)}${attemptText}</p>${result.gitVersion ? `<small>${navEscape(result.gitVersion)}</small>` : ''}</div><div class="snapshot-prereq-actions">${!result.gitFound ? `<a href="https://git-scm.com/install/windows" target="_blank" rel="noopener noreferrer">${navEscape(snapshotText('Git 官方安装页', 'Official Git installer'))} ↗</a>` : ''}<a href="https://open.codehub.huawei.com/" target="_blank" rel="noopener noreferrer">${navEscape(snapshotText('打开 CodeHub · 查看右上角帮助中心', 'Open CodeHub · Help Center'))} ↗</a><button type="button" class="snapshot-prereq-log-btn" onclick="openSnapshotPrereqLogs()">${navEscape(snapshotText('详细检测日志', 'Detailed check logs'))}</button><button type="button" onclick="checkSnapshotPrerequisites({ force: true })">${navEscape(snapshotText('重新检测', 'Check again'))}</button></div>`;
+}
+
 async function renderSnapshotPublishSettings(content) {
     content.innerHTML = `<div class="nav-settings-empty">${navEscape(snapshotText('正在读取推送配置与历史…', 'Loading publishing settings and history…'))}</div>`;
     try {
         const [settings, jobs] = await Promise.all([snapshotApi('/settings'), snapshotApi('/jobs')]);
         if (navState.settingsTab !== 'snapshotPublish') return;
+        const configKey = getSnapshotConfigKey(settings);
+        const cached = getSnapshotPrereqCache(configKey);
+        const prereqClass = cached ? (cached.result.gitFound && cached.result.branchReady ? 'ready' : 'attention') : '';
+        const prereqContent = cached ? formatSnapshotPrereqHtml(cached.result) : navEscape(snapshotText('正在检测 Git 与 CodeHub 连接…', 'Checking Git and CodeHub access…'));
         content.innerHTML = `
             <div class="snapshot-settings">
-                <div id="snapshotPrerequisites" class="snapshot-prerequisites" role="status">${navEscape(snapshotText('正在检测 Git 与 CodeHub 连接…', 'Checking Git and CodeHub access…'))}</div>
-                <div class="snapshot-hero"><span class="snapshot-hero-icon">↗</span><div><strong>${navEscape(snapshotText('负向事件管理 · 静态只读发布', 'Negative Events · Read-only Publishing'))}</strong><p>${navEscape(snapshotText('可推送单文件快照或 Pages 分离版。人员、事件和证据会对仓库及 Pages 的访问者可见，请先确认访问范围。', 'Publish a single-file snapshot or split Pages assets. Personnel, incidents and evidence are visible to repository and Pages visitors. Confirm the access policy.'))}</p></div></div>
+                <div id="snapshotPrerequisites" class="snapshot-prerequisites ${prereqClass}" role="status">${prereqContent}</div>
+                <div class="snapshot-hero"><span class="snapshot-hero-icon">↗</span><div><strong>${navEscape(snapshotText('平台工具 · 静态页面发布（Git Pages）', 'Platform Tools · Static Page Publishing (Git Pages)'))}</strong><p>${navEscape(snapshotText('将平台工具生成只读快照并推送到静态 Git 托管仓库，支持统一门户入口、定时自动推送及各工具独立密码保护。', 'Publish read-only snapshots of platform tools to a static Git repository with a unified portal, automatic scheduling and independent password protection.'))}</p></div></div>
                 <div class="snapshot-fields">
                     <label>${navEscape(snapshotText('推送格式', 'Publishing format'))}<select id="snapshotPublishMode" class="nav-settings-input" onchange="updateSnapshotPublishPathPreview()"><option value="single" ${settings.publishMode !== 'pages' ? 'selected' : ''}>${navEscape(snapshotText('单文件 HTML（数据内嵌）', 'Single HTML (embedded data)'))}</option><option value="pages" ${settings.publishMode === 'pages' ? 'selected' : ''}>${navEscape(snapshotText('Pages 分离版（HTML + JSON + 附件）', 'Split Pages (HTML + JSON + evidence)'))}</option></select><small>${navEscape(snapshotText('下载按钮始终导出可离线查看的单 HTML。Pages 分离版按工具目录存储文件，仅提交有变化的文件。', 'The download button always exports a standalone offline HTML. Split Pages stores assets under the tool directory and commits only changed files.'))}</small></label>
                     <label>${navEscape(snapshotText('远端仓库地址（推荐）', 'Remote Git URL (recommended)'))}<input id="snapshotRemoteUrl" class="nav-settings-input" value="${navEscape(settings.remoteUrl || '')}" placeholder="https://codehub.example.com/team/project.git" autocomplete="off"><small>${navEscape(snapshotText('HTTPS 或 SSH；不要在地址中包含密码或 Token。服务器需已配置 Git 认证。填写后优先使用此地址。', 'HTTPS or SSH; never put a password or token in the URL. Git authentication must be configured on the server. This takes priority when set.'))}</small></label>
                     <label>${navEscape(snapshotText('本地 Git 镜像仓库（可选）', 'Local Git mirror (optional)'))}<input id="snapshotRepoDir" class="nav-settings-input" value="${navEscape(settings.repoDir || '')}" placeholder="D:\\03-工具开发\\privacy-policy-main\\CNBG\\_CS\\_Tools\\_Platform" autocomplete="off"><small>${navEscape(snapshotText('远端地址留空时读取此目录的 origin；不覆盖镜像工作区。', 'When the remote URL is empty, its origin is used. The mirror checkout remains untouched.'))}</small></label>
                     <label>${navEscape(snapshotText('目标分支', 'Target branch'))}<input id="snapshotBranch" class="nav-settings-input" value="${navEscape(settings.branch || 'master')}" autocomplete="off"></label>
-                    <label>${navEscape(snapshotText('仓库内 HTML 路径模板', 'HTML path template in repository'))}<input id="snapshotFile" class="nav-settings-input" value="${navEscape(settings.file || '{toolSlug}/index.html')}" placeholder="{toolSlug}/index.html" autocomplete="off" oninput="updateSnapshotPublishPathPreview()"><small>${navEscape(snapshotText('{toolSlug} 使用工具市场的稳定标识。仓库根目录 index.html 将作为工具菜单；更改路径不会自动删除旧路径。', '{toolSlug} uses the stable marketplace identifier. Root index.html is reserved for the tool menu; changing paths does not delete old files.'))}</small><small id="snapshotPathPreview" class="snapshot-path-preview">${navEscape(snapshotText('实际页面：', 'Resolved page: '))}${navEscape(settings.resolvedFile || 'department-reward-penalty/index.html')}${settings.publishMode === 'pages' ? ` · ${navEscape(snapshotText('数据目录：', 'Data directory: '))}${navEscape((settings.resolvedFile || 'department-reward-penalty/index.html').replace(/[^/]+$/, 'data/'))}` : ''}</small></label>
+                    <label>${navEscape(snapshotText('仓库内 HTML 路径模板', 'HTML path template in repository'))}<input id="snapshotFile" class="nav-settings-input" value="${navEscape(settings.file || '{toolSlug}/index.html')}" placeholder="{toolSlug}/index.html" autocomplete="off" oninput="updateSnapshotPublishPathPreview()"><small>${navEscape(snapshotText('{toolSlug} 使用工具市场的稳定标识。仓库根目录 index.html 将作为工具菜单；更改路径不会自动删除旧路径。', '{toolSlug} uses the stable marketplace identifier. Root index.html is reserved for the tool menu; changing paths does not delete old files.'))}</small><small id="snapshotPathPreview" class="snapshot-path-preview">${navEscape(snapshotText('实际页面：', 'Resolved page: '))}${navEscape(settings.resolvedFile || '{toolSlug}/index.html')}${settings.publishMode === 'pages' ? ` · ${navEscape(snapshotText('数据目录：', 'Data directory: '))}${navEscape((settings.resolvedFile || '{toolSlug}/index.html').replace(/[^/]+$/, 'data/'))}` : ''}</small></label>
+                </div>
+                <div class="snapshot-security">
+                    <div class="snapshot-security-head">
+                        <div>
+                            <strong>${navEscape(snapshotText('已接入静态发布的工具', 'Tools with Snapshot Publishing'))}</strong>
+                            <p>${navEscape(snapshotText('可独立控制各工具是否参与推送，以及是否开启访问密码保护。开启密码后，静态托管页面需输入对应密码方可解锁。', 'Independently control whether each tool is published and protected with an access password. Protected pages require a password to view.'))}</p>
+                        </div>
+                    </div>
+                    <div class="snapshot-tools-list">
+                        ${(settings.tools || [
+                            { toolSlug: 'department-reward-penalty', name: '负向事件管理', encryptionEnabled: settings.encryptionEnabled, hasPassword: settings.hasPassword, enabled: true },
+                            { toolSlug: 'reward-program', name: '奖励申报与评优', encryptionEnabled: false, hasPassword: false, enabled: true }
+                        ]).map(t => `
+                            <div class="snapshot-tool-item" data-tool-slug="${navEscape(t.toolSlug)}">
+                                <div class="snapshot-tool-row">
+                                    <label class="snapshot-tool-enable">
+                                        <input type="checkbox" id="snapshotToolEnabled_${navEscape(t.toolSlug)}" ${t.enabled !== false ? 'checked' : ''}>
+                                        <strong>${navEscape(t.name || t.toolSlug)}</strong>
+                                        <small class="snapshot-tool-slug">${navEscape(t.toolSlug)}</small>
+                                    </label>
+                                    <label class="snapshot-security-toggle">
+                                        <input id="snapshotEncryptionEnabled_${navEscape(t.toolSlug)}" type="checkbox" ${t.encryptionEnabled ? 'checked' : ''} onchange="toggleSnapshotToolPassword('${navEscape(t.toolSlug)}')">
+                                        <span>${navEscape(snapshotText('密码保护', 'Password protected'))}</span>
+                                    </label>
+                                </div>
+                                <div id="snapshotPasswordRow_${navEscape(t.toolSlug)}" class="snapshot-password-row" style="${t.encryptionEnabled ? '' : 'display: none;'}">
+                                    <label>
+                                        <div class="snapshot-password-field">
+                                            <input id="snapshotPassword_${navEscape(t.toolSlug)}" class="nav-settings-input" type="password" placeholder="${t.hasPassword ? navEscape(snapshotText('留空表示保持当前已设置的密码', 'Leave blank to keep existing password')) : navEscape(snapshotText('请输入访问密码（至少 4 位）', 'Enter password (at least 4 chars)'))}" autocomplete="new-password">
+                                            <button type="button" class="snapshot-password-toggle" onclick="toggleSnapshotToolPasswordVisibility('${navEscape(t.toolSlug)}')" aria-label="${navEscape(snapshotText('切换密码可见性', 'Toggle password visibility'))}">👁</button>
+                                        </div>
+                                        <small>${t.hasPassword ? navEscape(snapshotText('当前已配置访问密码。如需修改请输入新密码，留空则保持原密码。', 'Password configured. Enter a new password to change it, or leave blank to keep.')) : navEscape(snapshotText('静态页面内置客户端 SHA-256 加密验证。', 'Includes client-side SHA-256 password protection.'))}</small>
+                                    </label>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
                 </div>
                 <div class="snapshot-schedule"><div><strong>${navEscape(snapshotText('自动同步', 'Automatic sync'))}</strong><p>${navEscape(snapshotText('后台按周期生成最新只读快照；不需要打开工具页面。仅在服务端或绿色版程序运行时执行。', 'The backend periodically generates a fresh read-only snapshot without opening the tool page. It runs only while the server or portable app is running.'))}</p></div><label class="snapshot-schedule-toggle"><input id="snapshotScheduleEnabled" type="checkbox" ${settings.scheduleEnabled ? 'checked' : ''}> ${navEscape(snapshotText('启用定时推送', 'Enable scheduled publishing'))}</label><label class="snapshot-interval">${navEscape(snapshotText('每隔', 'Every'))} <input id="snapshotIntervalMinutes" class="nav-settings-input" type="number" min="5" max="1440" step="1" value="${Number(settings.intervalMinutes) || 60}"> ${navEscape(snapshotText('分钟', 'minutes'))}</label><div class="snapshot-schedule-status">${settings.scheduleEnabled ? `${navEscape(snapshotText('下次计划执行：', 'Next scheduled run: '))}${navEscape(settings.nextRunAt ? new Date(settings.nextRunAt).toLocaleString() : '-')}` : navEscape(snapshotText('自动推送未启用', 'Scheduled publishing is off'))}${settings.lastAutoError ? `<br>${navEscape(snapshotText('最近调度错误：', 'Last scheduling error: '))}${navEscape(settings.lastAutoError)}` : ''}</div></div>
                 <div class="snapshot-actions"><button type="button" onclick="saveSnapshotPublishSettings()">${navEscape(snapshotText('保存推送配置', 'Save destination'))}</button><button type="button" class="snapshot-primary" onclick="startSnapshotPublish()">${navEscape(snapshotText('生成并推送快照', 'Generate & publish'))}</button></div>
@@ -3280,23 +3370,179 @@ async function renderSnapshotPublishSettings(content) {
                 <div class="snapshot-history">${jobs.length ? jobs.map(job => `<button type="button" class="snapshot-history-item" data-job-id="${navEscape(job.id)}"><span class="snapshot-dot ${navEscape(job.status)}"></span><span><strong>${job.trigger === 'scheduled' ? navEscape(snapshotText('定时', 'Scheduled')) + ' · ' : ''}${navEscape(job.stage)}</strong><small>${navEscape(new Date(job.createdAt).toLocaleString())} · ${navEscape(job.path)}</small></span><span class="snapshot-percent">${Number(job.progress)}%</span></button>`).join('') : `<div class="snapshot-history-empty">${navEscape(snapshotText('还没有推送记录', 'No publishing runs yet'))}</div>`}</div>
             </div>`;
         content.querySelectorAll('[data-job-id]').forEach(button => button.addEventListener('click', () => openSnapshotPublishProgress(button.dataset.jobId)));
-        checkSnapshotPrerequisites();
+        if (!cached) {
+            checkSnapshotPrerequisites({ settings });
+        }
     } catch (error) {
         content.innerHTML = `<div class="nav-settings-empty">${navEscape(snapshotText('读取失败：', 'Failed to load: '))}${navEscape(error.message)}</div>`;
     }
 }
 
-window.checkSnapshotPrerequisites = async function () {
+window.toggleSnapshotToolPassword = function (slug) {
+    const enabled = document.getElementById('snapshotEncryptionEnabled_' + slug)?.checked;
+    const row = document.getElementById('snapshotPasswordRow_' + slug);
+    if (row) row.style.display = enabled ? '' : 'none';
+};
+
+window.toggleSnapshotToolPasswordVisibility = function (slug) {
+    const input = document.getElementById('snapshotPassword_' + slug);
+    if (!input) return;
+    input.type = input.type === 'password' ? 'text' : 'password';
+};
+
+window.toggleSnapshotPasswordInput = function () {
+    window.toggleSnapshotToolPassword('department-reward-penalty');
+};
+
+window.toggleSnapshotPasswordVisibility = function () {
+    window.toggleSnapshotToolPasswordVisibility('department-reward-penalty');
+};
+
+window.checkSnapshotPrerequisites = async function (options = {}) {
     const panel = document.getElementById('snapshotPrerequisites');
     if (!panel) return;
+    const configKey = getSnapshotConfigKey(options.settings);
+    if (!options.force) {
+        const cached = getSnapshotPrereqCache(configKey);
+        if (cached) {
+            lastSnapshotPrereqResult = cached.result;
+            panel.className = 'snapshot-prerequisites ' + (cached.result.gitFound && cached.result.branchReady ? 'ready' : 'attention');
+            panel.innerHTML = formatSnapshotPrereqHtml(cached.result);
+            return;
+        }
+    }
     panel.className = 'snapshot-prerequisites';
-    panel.textContent = snapshotText('正在检测 Git 与 CodeHub 连接…', 'Checking Git and CodeHub access…');
+    panel.innerHTML = `<div><strong>${navEscape(snapshotText('正在检测 Git 与 CodeHub 连接…', 'Checking Git and CodeHub access…'))}</strong><p>${navEscape(snapshotText('正在探测本地 Git 环境与远端分支连通性（最多自动重试 10 次）…', 'Testing local Git and remote branch access (up to 10 retries)…'))}</p></div><div class="snapshot-prereq-actions">${lastSnapshotPrereqResult ? `<button type="button" class="snapshot-prereq-log-btn" onclick="openSnapshotPrereqLogs()">${navEscape(snapshotText('查看上次日志', 'View last logs'))}</button>` : ''}</div>`;
     try {
         const result = await snapshotApi('/prerequisites');
         if (!panel.isConnected) return;
+        lastSnapshotPrereqResult = result;
+        setSnapshotPrereqCache(result, configKey);
         panel.classList.add(result.gitFound && result.branchReady ? 'ready' : 'attention');
-        panel.innerHTML = `<div><strong>${result.gitFound && result.branchReady ? navEscape(snapshotText('运行环境就绪', 'Environment ready')) : navEscape(snapshotText('运行前检查', 'Preflight check'))}</strong><p>${navEscape(result.message)}</p>${result.gitVersion ? `<small>${navEscape(result.gitVersion)}</small>` : ''}</div><div class="snapshot-prereq-actions">${!result.gitFound ? `<a href="https://git-scm.com/install/windows" target="_blank" rel="noopener noreferrer">${navEscape(snapshotText('Git 官方安装页', 'Official Git installer'))} ↗</a>` : ''}<a href="https://open.codehub.huawei.com/" target="_blank" rel="noopener noreferrer">${navEscape(snapshotText('打开 CodeHub · 查看右上角帮助中心', 'Open CodeHub · Help Center'))} ↗</a><button type="button" onclick="checkSnapshotPrerequisites()">${navEscape(snapshotText('重新检测', 'Check again'))}</button></div>`;
-    } catch (error) { panel.classList.add('attention'); panel.textContent = snapshotText('环境检测失败：', 'Preflight failed: ') + error.message; }
+        panel.innerHTML = formatSnapshotPrereqHtml(result);
+        const modal = document.getElementById('snapshotPrereqLogModal');
+        if (modal && !modal.hidden) {
+            renderSnapshotPrereqLogs(result);
+        }
+    } catch (error) {
+        panel.classList.add('attention');
+        panel.textContent = snapshotText('环境检测失败：', 'Preflight failed: ') + error.message;
+    }
+};
+
+window.openSnapshotPrereqLogs = function () {
+    let modal = document.getElementById('snapshotPrereqLogModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'snapshotPrereqLogModal';
+        modal.className = 'snapshot-progress-overlay';
+        modal.innerHTML = `
+            <section class="snapshot-progress-dialog" role="dialog" aria-modal="true" aria-labelledby="snapshotPrereqLogTitle">
+                <button type="button" class="snapshot-progress-close" aria-label="Close" onclick="closeSnapshotPrereqLogs()">×</button>
+                <div class="snapshot-progress-eyebrow">GIT &amp; CODEHUB PREFLIGHT CHECK</div>
+                <h2 id="snapshotPrereqLogTitle">${navEscape(snapshotText('连接检测详情', 'Connection Check Details'))}</h2>
+                <p id="snapshotPrereqLogDetail"></p>
+                <div id="snapshotPrereqLogMeta" class="snapshot-progress-meta"></div>
+                <div class="snapshot-progress-logs-section">
+                    <div class="snapshot-progress-logs-head">
+                        <span><strong>${navEscape(snapshotText('详细执行与探测日志', 'Detailed Diagnostic Logs'))}</strong></span>
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" class="snapshot-progress-log-btn" onclick="checkSnapshotPrerequisites({ force: true })">${navEscape(snapshotText('重新检测', 'Re-check'))}</button>
+                            <button type="button" class="snapshot-progress-log-btn" onclick="copySnapshotPrereqLogs()">${navEscape(snapshotText('复制日志', 'Copy Logs'))}</button>
+                        </div>
+                    </div>
+                    <div id="snapshotPrereqTerminal" class="snapshot-progress-terminal" role="region" aria-label="Preflight check logs"></div>
+                </div>
+                <div style="margin-top: 16px; display: flex; justify-content: flex-end;">
+                    <button type="button" class="snapshot-progress-log-btn" style="padding: 8px 16px; font-size: 12px; font-weight: 700;" onclick="closeSnapshotPrereqLogs()">${navEscape(snapshotText('关闭', 'Close'))}</button>
+                </div>
+            </section>
+        `;
+        document.body.appendChild(modal);
+    }
+    modal.hidden = false;
+    const result = lastSnapshotPrereqResult || getSnapshotPrereqCache(getSnapshotConfigKey())?.result;
+    if (result) {
+        renderSnapshotPrereqLogs(result);
+    } else {
+        checkSnapshotPrerequisites({ force: true });
+    }
+};
+
+window.closeSnapshotPrereqLogs = function () {
+    const modal = document.getElementById('snapshotPrereqLogModal');
+    if (modal) modal.hidden = true;
+};
+
+function renderSnapshotPrereqLogs(result) {
+    const modal = document.getElementById('snapshotPrereqLogModal');
+    if (!modal) return;
+    const isReady = result.gitFound && result.branchReady;
+    modal.querySelector('#snapshotPrereqLogTitle').textContent = isReady
+        ? snapshotText('运行环境就绪', 'Environment Ready')
+        : snapshotText('环境检测未完成', 'Check Incomplete');
+    modal.querySelector('#snapshotPrereqLogDetail').textContent = result.message || '';
+    const metaParts = [];
+    if (result.gitVersion) metaParts.push(result.gitVersion);
+    if (result.latencyMs != null) metaParts.push(snapshotText(`往返延迟: ${result.latencyMs}ms`, `Latency: ${result.latencyMs}ms`));
+    if (result.attempts != null) metaParts.push(snapshotText(`尝试次数: ${result.attempts}/${result.maxAttempts || 10}`, `Attempts: ${result.attempts}/${result.maxAttempts || 10}`));
+    if (result.branch) metaParts.push(snapshotText(`目标分支: ${result.branch}`, `Branch: ${result.branch}`));
+    modal.querySelector('#snapshotPrereqLogMeta').textContent = metaParts.join(' · ');
+
+    const terminal = modal.querySelector('#snapshotPrereqTerminal');
+    if (!terminal) return;
+    const logs = Array.isArray(result.logs) ? result.logs : [];
+    if (!logs.length) {
+        terminal.innerHTML = `<div class="snapshot-terminal-item info"><span class="snapshot-terminal-msg">${navEscape(snapshotText('暂无详细日志。可点击“重新检测”立即执行实时探测。', 'No logs available. Click Re-check to run diagnostic.'))}</span></div>`;
+        terminal.dataset.copyText = result.message || '';
+        return;
+    }
+
+    const copyLines = [];
+    terminal.innerHTML = logs.map(l => {
+        const timeStr = l.at ? new Date(l.at).toLocaleTimeString() : '';
+        const durStr = l.latencyMs != null ? `${l.latencyMs}ms` : '';
+        const lineText = `[${timeStr}] [${l.stage}]${durStr ? ' (' + durStr + ')' : ''} ${l.msg}${l.cmd ? ' | $ ' + l.cmd : ''}`;
+        copyLines.push(lineText);
+        return `<div class="snapshot-terminal-item ${navEscape(l.type || 'info')}">` +
+            `<div class="snapshot-terminal-cmd-row">` +
+                `<span class="snapshot-terminal-time">${navEscape(timeStr)}</span>` +
+                `<span class="snapshot-terminal-badge" style="font-size: 10px; background: rgba(255,255,255,0.1); padding: 1px 5px; border-radius: 3px; margin-right: 6px;">[${navEscape(l.stage)}]</span>` +
+                (l.cmd ? `<span class="snapshot-terminal-cmd" style="margin-right: 6px; color: #7dd3fc;">$ ${navEscape(l.cmd)}</span>` : '') +
+                `<span class="snapshot-terminal-msg">${navEscape(l.msg)}</span>` +
+                (durStr ? `<span class="snapshot-terminal-duration" style="margin-left: auto;">${navEscape(durStr)}</span>` : '') +
+            `</div>` +
+        `</div>`;
+    }).join('');
+    terminal.dataset.copyText = copyLines.join('\n');
+}
+
+window.copySnapshotPrereqLogs = async function () {
+    const terminal = document.getElementById('snapshotPrereqTerminal');
+    const button = document.querySelector('#snapshotPrereqLogModal .snapshot-progress-log-btn:last-child');
+    if (!terminal) return;
+    const text = terminal.dataset.copyText || terminal.textContent.trim();
+    if (!text) return;
+    try {
+        await navigator.clipboard.writeText(text);
+        if (button) {
+            const orig = button.textContent;
+            button.textContent = snapshotText('已复制 ✓', 'Copied ✓');
+            setTimeout(() => { button.textContent = orig; }, 2000);
+        }
+    } catch {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        if (button) {
+            const orig = button.textContent;
+            button.textContent = snapshotText('已复制 ✓', 'Copied ✓');
+            setTimeout(() => { button.textContent = orig; }, 2000);
+        }
+    }
 };
 
 window.updateSnapshotPublishPathPreview = function () {
@@ -3313,18 +3559,40 @@ window.saveSnapshotPublishSettings = async function () {
     const indicator = document.getElementById('navSettingsSaveState');
     if (button) button.disabled = true;
     if (indicator) indicator.textContent = snapshotText('正在保存…', 'Saving…');
+    const toolsList = [];
+    document.querySelectorAll('.snapshot-tool-item[data-tool-slug]').forEach(el => {
+        const slug = el.dataset.toolSlug;
+        const en = document.getElementById('snapshotToolEnabled_' + slug)?.checked !== false;
+        const enc = document.getElementById('snapshotEncryptionEnabled_' + slug)?.checked || false;
+        const pwd = document.getElementById('snapshotPassword_' + slug)?.value || '';
+        toolsList.push({ toolSlug: slug, enabled: en, encryptionEnabled: enc, password: pwd });
+    });
+    const drpTool = toolsList.find(t => t.toolSlug === 'department-reward-penalty') || {};
+    const newSettings = {
+        remoteUrl: document.getElementById('snapshotRemoteUrl').value,
+        repoDir: document.getElementById('snapshotRepoDir').value,
+        branch: document.getElementById('snapshotBranch').value,
+        file: document.getElementById('snapshotFile').value,
+        publishMode: document.getElementById('snapshotPublishMode').value,
+        scheduleEnabled: document.getElementById('snapshotScheduleEnabled').checked,
+        intervalMinutes: Number(document.getElementById('snapshotIntervalMinutes').value),
+        encryptionEnabled: drpTool.encryptionEnabled || false,
+        password: drpTool.password || '',
+        tools: toolsList
+    };
     try {
-        await snapshotApi('/settings', { method: 'PUT', body: JSON.stringify({
-            remoteUrl: document.getElementById('snapshotRemoteUrl').value,
-            repoDir: document.getElementById('snapshotRepoDir').value,
-            branch: document.getElementById('snapshotBranch').value,
-            file: document.getElementById('snapshotFile').value,
-            publishMode: document.getElementById('snapshotPublishMode').value,
-            scheduleEnabled: document.getElementById('snapshotScheduleEnabled').checked,
-            intervalMinutes: Number(document.getElementById('snapshotIntervalMinutes').value)
-        }) });
+        const saved = await snapshotApi('/settings', { method: 'PUT', body: JSON.stringify(newSettings) });
         if (indicator) indicator.textContent = snapshotText('推送配置已保存', 'Destination saved');
-        checkSnapshotPrerequisites();
+        (saved.tools || []).forEach(t => {
+            const pwdInput = document.getElementById('snapshotPassword_' + t.toolSlug);
+            if (pwdInput) {
+                pwdInput.value = '';
+                if (t.hasPassword) {
+                    pwdInput.placeholder = snapshotText('留空表示保持当前已设置的密码', 'Leave blank to keep existing password');
+                }
+            }
+        });
+        checkSnapshotPrerequisites({ force: true, settings: newSettings });
     } catch (error) {
         if (indicator) indicator.textContent = snapshotText('保存失败：', 'Save failed: ') + error.message;
     } finally { if (button) button.disabled = false; }
@@ -3333,7 +3601,7 @@ window.saveSnapshotPublishSettings = async function () {
 window.startSnapshotPublish = async function () {
     const confirmed = await showNavbarConfirm({
         title: snapshotText('确认发布只读快照', 'Publish read-only snapshot?'),
-        message: snapshotText('本次快照包含当前租户的人员、事件、审计和证据附件。请确认目标仓库及 Pages 的访问权限。', 'This snapshot includes this tenant’s personnel, incidents, audit and evidence. Confirm repository and Pages access first.'),
+        message: snapshotText('本次将根据配置生成各已启用工具的只读快照，并推送到目标仓库。请确认目标仓库及 Pages 的访问权限。', 'This will generate read-only snapshots of all enabled tools and publish them to the target repository. Confirm repository and Pages access first.'),
         confirmText: snapshotText('生成并推送', 'Generate & publish'), cancelText: snapshotText('取消', 'Cancel')
     });
     if (!confirmed) return;
@@ -3369,10 +3637,7 @@ window.copySnapshotPublishLogs = async function () {
     const terminal = document.getElementById('snapshotProgressTerminal');
     const button = document.querySelector('.snapshot-progress-log-btn');
     if (!terminal) return;
-    const lines = Array.from(terminal.querySelectorAll('.snapshot-terminal-line'))
-        .map(el => el.textContent.trim())
-        .filter(Boolean);
-    const text = lines.length ? lines.join('\n') : terminal.textContent.trim();
+    const text = terminal.dataset.copyText || terminal.textContent.trim();
     if (!text) return;
     try {
         await navigator.clipboard.writeText(text);
@@ -3407,17 +3672,51 @@ function renderSnapshotProgress(job) {
     modal.querySelector('#snapshotProgressEntries').innerHTML = (job.entries || []).map(entry => `<div class="snapshot-progress-entry"><time>${navEscape(new Date(entry.at).toLocaleTimeString())}</time><span>${navEscape(entry.message)}</span></div>`).join('');
     const terminal = modal.querySelector('#snapshotProgressTerminal');
     if (terminal) {
-        const entries = job.entries || [];
-        if (!entries.length) {
-            terminal.innerHTML = `<div class="snapshot-terminal-empty">${navEscape(snapshotText('等待日志输出…', 'Waiting for logs…'))}</div>`;
-        } else {
-            terminal.innerHTML = entries.map((entry, idx) => {
-                const isError = (job.status === 'failed' || job.status === 'interrupted') && idx === entries.length - 1;
-                const timeStr = new Date(entry.at).toLocaleTimeString();
-                const stageTag = entry.stage ? `[${entry.stage}] ` : '';
-                return `<div class="snapshot-terminal-line ${isError ? 'error' : ''}"><span class="snapshot-terminal-time">${navEscape(timeStr)}</span><span class="snapshot-terminal-stage">${navEscape(stageTag)}</span><span class="snapshot-terminal-msg">${navEscape(entry.message)}</span></div>`;
+        const commandLogs = job.commandLogs && job.commandLogs.length ? job.commandLogs : null;
+        if (commandLogs) {
+            const copyLines = [];
+            terminal.innerHTML = commandLogs.map(log => {
+                const timeStr = log.at ? new Date(log.at).toLocaleTimeString() : '';
+                if (log.cmd) {
+                    const durStr = log.durationMs != null ? `${(log.durationMs / 1000).toFixed(1)}s` : '';
+                    copyLines.push(`[${timeStr}] $ ${log.cmd}${durStr ? ' (' + durStr + ')' : ''}${log.output ? '\n' + log.output : ''}`);
+                    return `<div class="snapshot-terminal-item snapshot-terminal-cmd-block ${log.failed ? 'error' : ''}">` +
+                        `<div class="snapshot-terminal-cmd-row">` +
+                            `<span class="snapshot-terminal-time">${navEscape(timeStr)}</span>` +
+                            `<span class="snapshot-terminal-prompt">$</span>` +
+                            `<span class="snapshot-terminal-cmd">${navEscape(log.cmd)}</span>` +
+                            (durStr ? `<span class="snapshot-terminal-duration">${navEscape(durStr)}</span>` : '') +
+                        `</div>` +
+                        (log.output ? `<pre class="snapshot-terminal-out">${navEscape(log.output)}</pre>` : '') +
+                    `</div>`;
+                }
+                const msg = log.msg || '';
+                copyLines.push(`[${timeStr}] [INFO] ${msg}`);
+                return `<div class="snapshot-terminal-item snapshot-terminal-info-row">` +
+                    `<span class="snapshot-terminal-time">${navEscape(timeStr)}</span>` +
+                    `<span class="snapshot-terminal-info-tag">ℹ</span>` +
+                    `<span class="snapshot-terminal-info-text">${navEscape(msg)}</span>` +
+                `</div>`;
             }).join('');
+            terminal.dataset.copyText = copyLines.join('\n');
             terminal.scrollTop = terminal.scrollHeight;
+        } else {
+            const entries = job.entries || [];
+            if (!entries.length) {
+                terminal.innerHTML = `<div class="snapshot-terminal-empty">${navEscape(snapshotText('等待日志输出…', 'Waiting for logs…'))}</div>`;
+                terminal.dataset.copyText = '';
+            } else {
+                const copyLines = [];
+                terminal.innerHTML = entries.map((entry, idx) => {
+                    const isError = (job.status === 'failed' || job.status === 'interrupted') && idx === entries.length - 1;
+                    const timeStr = new Date(entry.at).toLocaleTimeString();
+                    const stageTag = entry.stage ? `[${entry.stage}] ` : '';
+                    copyLines.push(`[${timeStr}] ${stageTag}${entry.message || ''}`);
+                    return `<div class="snapshot-terminal-line ${isError ? 'error' : ''}"><span class="snapshot-terminal-time">${navEscape(timeStr)}</span><span class="snapshot-terminal-stage">${navEscape(stageTag)}</span><span class="snapshot-terminal-msg">${navEscape(entry.message)}</span></div>`;
+                }).join('');
+                terminal.dataset.copyText = copyLines.join('\n');
+                terminal.scrollTop = terminal.scrollHeight;
+            }
         }
     }
 }
@@ -3430,7 +3729,16 @@ async function pollSnapshotProgress() {
         if (snapshotProgressJobId !== id) return;
         renderSnapshotProgress(job);
         if (job.status === 'running') snapshotProgressTimer = setTimeout(pollSnapshotProgress, 1400);
-        else if (navState.settingsTab === 'snapshotPublish' && document.getElementById('navSettingsModal')?.style.display === 'flex') renderSnapshotPublishSettings(document.getElementById('navSettingsContent'));
+        else {
+            if (job.status === 'success') {
+                const cached = getSnapshotPrereqCache();
+                if (cached) {
+                    cached.checkedAt = Date.now();
+                    sessionStorage.setItem(SNAPSHOT_PREREQ_CACHE_KEY, JSON.stringify(cached));
+                }
+            }
+            if (navState.settingsTab === 'snapshotPublish' && document.getElementById('navSettingsModal')?.style.display === 'flex') renderSnapshotPublishSettings(document.getElementById('navSettingsContent'));
+        }
     } catch (error) {
         renderSnapshotProgress({ status: 'failed', stage: snapshotText('读取进度失败', 'Could not read progress'), progress: 0, entries: [{ at: new Date().toISOString(), stage: snapshotText('网络错误', 'Network Error'), message: error.message }] });
     }

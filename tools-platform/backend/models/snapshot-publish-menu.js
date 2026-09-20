@@ -18,11 +18,21 @@ function validateItem(item) {
         || item.href.slice(2).split('/').some(part => !part || part === '.' || part === '..')) {
         throw bad('仓库工具菜单清单格式无效，请检查 ' + MENU_FILE);
     }
-    return { slug: item.slug, name: item.name.trim(), description: String(item.description || '').replace(/\s+/g, ' ').trim(), href: item.href };
+    return {
+        slug: item.slug,
+        name: item.name.trim(),
+        description: String(item.description || '').replace(/\s+/g, ' ').trim(),
+        href: item.href,
+        encrypted: Boolean(item.encrypted)
+    };
 }
 
 function renderGuide(items) {
-    const rows = items.map(item => `| ${escapeTable(item.name)} | \`${item.slug}\` | ${escapeTable(item.description || '查看最新只读数据快照')} | [打开页面](${item.href}) |`).join('\n');
+    const rows = items.map(item => {
+        const lock = item.encrypted ? ' 🔒' : '';
+        const desc = (item.description || '查看最新只读数据快照') + (item.encrypted ? '（受密码保护）' : '');
+        return `| ${escapeTable(item.name)}${lock} | \`${item.slug}\` | ${escapeTable(desc)} | [打开页面](${item.href}) |`;
+    }).join('\n');
     return `${GUIDE_START}
 ## 已发布工具
 
@@ -63,12 +73,17 @@ function chooseGuideFile(checkout) {
 }
 
 function renderMenu(items) {
-    const links = items.map(item => `        <a class="tp-menu-card" href="${escapeHtml(item.href)}"><span class="tp-menu-icon" aria-hidden="true">↗</span><span class="tp-menu-card-text"><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.slug)} · 只读页面</small></span><span class="tp-menu-arrow" aria-hidden="true">→</span></a>`).join('\n');
+    const links = items.map(item => {
+        const badge = item.encrypted ? `<span class="tp-menu-badge tp-menu-encrypted" title="访问此工具需输入密码">🔒 密码保护</span>` : '';
+        return `        <a class="tp-menu-card" href="${escapeHtml(item.href)}"><span class="tp-menu-icon" aria-hidden="true">${item.encrypted ? '🔒' : '↗'}</span><span class="tp-menu-card-text"><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.slug)} · 只读页面</small>${badge}</span><span class="tp-menu-arrow" aria-hidden="true">→</span></a>`;
+    }).join('\n');
     return `${START}
 <style>
 .tp-publish-menu{box-sizing:border-box;max-width:1180px;margin:20px auto;padding:25px 28px;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#1e293b;background:#f8fafc;border:1px solid #e2e8f0;border-radius:20px;box-shadow:0 12px 35px rgba(15,23,42,.06)}
 .tp-publish-menu *{box-sizing:border-box}.tp-menu-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:19px}.tp-menu-kicker{display:block;color:#396b9e;font-size:11px;font-weight:800;letter-spacing:.15em}.tp-menu-head h2{margin:5px 0 0;color:#15263c;font-size:22px;line-height:1.3}.tp-menu-head p{margin:0;color:#52657a;font-size:12px;line-height:1.6}
 .tp-menu-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px}.tp-menu-card{display:flex;align-items:center;gap:13px;min-height:76px;padding:15px;border:1px solid #dce5ef;border-radius:14px;background:#fff;color:#20334c;text-decoration:none;box-shadow:0 2px 7px rgba(15,23,42,.03);transition:transform .18s,border-color .18s,box-shadow .18s}.tp-menu-card:hover,.tp-menu-card:focus-visible{transform:translateY(-2px);border-color:#7aa9d8;box-shadow:0 10px 24px rgba(29,78,130,.12);outline:none}.tp-menu-icon{display:grid;place-items:center;flex:0 0 38px;height:38px;border-radius:11px;background:#eaf3ff;color:#1b61a8;font-size:21px}.tp-menu-card-text{display:grid;gap:4px;min-width:0}.tp-menu-card-text strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}.tp-menu-card-text small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#60758b;font-size:11px}.tp-menu-arrow{margin-left:auto;color:#6285aa;font-size:18px}
+.tp-menu-badge{display:inline-flex;align-items:center;gap:3px;margin-top:2px;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;width:fit-content}
+.tp-menu-encrypted{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
 @media(max-width:640px){.tp-publish-menu{margin:12px;padding:18px}.tp-menu-head{display:block}.tp-menu-head p{margin-top:7px}}
 </style>
 <nav class="tp-publish-menu" aria-label="只读工具入口">
