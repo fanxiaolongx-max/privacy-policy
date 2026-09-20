@@ -66,7 +66,7 @@ test('proactive KPI APIs are authenticated and the wording route remains read-on
 });
 
 test('navbar loads the current proactive assistant asset version everywhere', () => {
-    const matches = navbar.match(/ai-assistant\.js\?v=20260919-01/g) || [];
+    const matches = navbar.match(/ai-assistant\.js\?v=20260920-04/g) || [];
     assert.equal(matches.length, 2);
     assert.doesNotMatch(navbar, /ai-assistant\.js\?v=20260914-10/);
 });

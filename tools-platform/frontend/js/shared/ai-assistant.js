@@ -9,7 +9,7 @@
         /* AI Assistant 样式定义 */
         .ai-fab {
             position: fixed;
-            bottom: 48px;
+            bottom: 92px;
             right: 40px;
             width: 64px;
             height: 64px;
@@ -184,10 +184,10 @@
         }
         .ai-panel {
             position: fixed;
-            bottom: 110px;
+            bottom: 154px;
             right: 40px;
             width: 420px;
-            height: min(640px, calc(100vh - 140px));
+            height: min(640px, calc(100vh - 180px));
             background: #f7f9fd !important;
             color: #334155 !important;
             border-radius: 20px;
@@ -812,14 +812,14 @@
         @media (max-width: 520px) {
             .ai-fab {
                 right: 18px;
-                bottom: 28px;
+                bottom: 76px;
                 width: 60px;
                 height: 60px;
             }
             .ai-panel,
             .ai-panel.expanded {
                 right: 12px;
-                bottom: 92px;
+                bottom: 140px;
                 width: calc(100vw - 24px);
                 height: min(70vh, 550px);
                 max-width: none;

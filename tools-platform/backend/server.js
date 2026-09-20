@@ -103,6 +103,7 @@ dailyFileConsole.setRuntimeLogSink(event => {
     });
 });
 const globalBackupRepo = require('./models/global-backup-repository');
+const snapshotPublishService = require('./models/snapshot-publish-service');
 const remoteBackupSyncRepo = require('./models/remote-backup-sync-repository');
 const legacyJsonMigration = require('./models/legacy-json-migration');
 const configChangeMonitor = require('./models/config-change-monitor');
@@ -595,6 +596,11 @@ async function startServer() {
                 console.error('[friend-links] 启动自动探测调度失败：', err);
             });
         }, 4000);
+        setTimeout(() => {
+            snapshotPublishService.startScheduler().catch(err => {
+                console.error('[snapshot-publish] 启动定时推送失败：', err.message);
+            });
+        }, 4500);
     });
 
     server.on('error', (err) => {

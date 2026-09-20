@@ -944,6 +944,13 @@ privacy-policy/
 | `TOOLS_DESKTOP_RUNTIME` | `0` | 是否处于 Windows Electron 桌面壳运行时环境 |
 | `GEMINI_API_KEY` | - | Google Gemini AI 默认 API Key（设置中心配置优先于此变量） |
 | `NODE_ENV` | `development` | 运行环境（`production` / `development`） |
+| `TOOLS_SNAPSHOT_REPO_DIR` | - | 负向事件只读页面推送所参考的本地 Git 仓库路径；未在“全局设置 → 静态页面推送”保存配置时作为默认值。服务端读取其 `origin`，在临时目录克隆目标分支，只提交一个 HTML，不改写该仓库工作区。远端认证由服务器的 Git 凭据负责。 |
+| `TOOLS_SNAPSHOT_BRANCH` | `master` | 推送目标分支的默认值，须已存在；也可在全局设置中修改。 |
+| `TOOLS_SNAPSHOT_PATH` | `{toolSlug}/index.html` | 仓库内目标 HTML 路径模板的默认值；`{toolSlug}` 发布时替换为工具市场的稳定 slug（当前为 `department-reward-penalty`）。也可在全局设置中修改。 |
+
+负向事件独立 HTML 的下载、配置及仓库推送仅限管理员。下载按钮始终生成内嵌数据与证据附件的单文件 HTML，供离线查看（附件总量超过 100 MB 时导出失败）。全局设置中的“静态页面推送”可按租户保存 HTTPS/SSH 远端仓库地址（推荐）或服务器可访问的本地 Git 镜像目录、目标分支、HTML 路径模板和推送格式。路径模板默认 `{toolSlug}/index.html`，当前工具的 `toolSlug` 为 `department-reward-penalty`，实际发布到 `department-reward-penalty/index.html`；已保存的具体路径保持不变。旧配置默认保持“单文件 HTML”；可切换到“Pages 分离版”，在解析后的 HTML 同目录 `data/` 下生成 `state.json`、`records.json`、`audit.json` 和 `evidence/` 附件。仓库根目录的 `index.html` 可继续用作 Pages 站点首页；工具子页面应使用完整路径访问，具体发布规则以 CodeHub Pages 实测为准。Pages 分离版必须通过支持同域静态文件访问的 Pages 服务打开，直接下载 HTML 不含数据；页面请求 JSON 时使用 `cache: 'no-store'`，托管服务自身的缓存与发布规则仍须实测。
+
+服务端每次从远端克隆目标分支最新内容，仅暂存本工具已变化的发布文件，再提交并推送；事件更新时通常仅变更 `records.json` 与 `audit.json`，未变化的 HTML、JSON 和附件不会重复提交。已删除的证据会从本工具的 `data/evidence/` 清理；在同一 HTML 路径下从分离版切回单文件时清理本工具生成的 JSON 和证据文件，不清空仓库其他代码。更改 HTML 路径不会自动删除旧路径，需人工检查并清理旧发布文件。可选择启用每 5–1440 分钟自动推送，后台启动后按租户调度，无需打开工具页面；数据未变化时不重复提交。定时任务仅在服务端进程运行时执行：绿色版 EXE 关闭窗口但仍在托盘运行时会继续，完全退出程序后停止。Windows 绿色版未内置 Git，运行电脑须安装 `git.exe` 并使其在 `PATH` 中，且预先配置 CodeHub Git 凭据；设置页提供 Git 检查及安装链接，CodeHub 认证可参照其页面右上角帮助中心。不要在远端地址里填写密码或 Token。快照包含当前租户的人员、事件、审计和证据附件，发布前请确认仓库及 Pages 的可见范围；外部证据链接仍依赖原站点。只读页面中的按钮保留，但写入操作会提示联系管理员；该提示不构成数据保密或访问控制，访问权限应由静态托管平台配置。
 
 ---
 

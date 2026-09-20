@@ -130,6 +130,7 @@ async function archiveTenant(idValue) {
     if (!result.changes) throw tenantError('租户不存在或已归档', 404);
     await run('UPDATE auth_sessions SET active_tenant_id=? WHERE active_tenant_id=?', [DEFAULT_TENANT_ID, id]);
     require('./global-backup-repository').stopAutoBackupScheduler(id);
+    require('./snapshot-publish-service').stopTenantScheduler(id);
     return { success: true, id };
 }
 
@@ -142,6 +143,9 @@ async function restoreTenant(idValue) {
     await run(`UPDATE tenants SET status='active',updated_at=CURRENT_TIMESTAMP WHERE id=?`, [id]);
     require('./global-backup-repository').startTenantAutoBackupScheduler(id).catch(error => {
         console.warn(`[tenants] 恢复租户 ${id} 后启动自动备份调度失败：${error.message}`);
+    });
+    await require('./snapshot-publish-service').scheduleTenant(id).catch(error => {
+        console.warn(`[tenants] 恢复租户 ${id} 后启动静态推送调度失败：${error.message}`);
     });
     return publicTenant(await get('SELECT * FROM tenants WHERE id=?', [id]));
 }
@@ -160,6 +164,7 @@ async function deleteTenantPermanently(idValue) {
     const hasDirectory = fs.existsSync(tenantDir);
 
     require('./global-backup-repository').stopAutoBackupScheduler(id);
+    require('./snapshot-publish-service').stopTenantScheduler(id);
     await Promise.all([appDb.closeTenant(id), tenantPool.closeTenant(id)]);
     if (hasDirectory) fs.renameSync(tenantDir, tombstone);
     try {

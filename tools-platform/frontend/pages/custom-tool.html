@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>自定义工具 - Tools Platform</title>
-    <link rel="stylesheet" href="/css/shared.css?v=20260911-03">
+    <link rel="stylesheet" href="/css/shared.css?v=20260920-07">
     <style>
         body {
             margin: 0;
@@ -70,6 +70,7 @@
             color: #1762ae;
             background: #f7fbff;
         }
+        .tool-action[hidden] { display: none; }
         .custom-tool-frame {
             width: 100%;
             height: 100%;
@@ -117,6 +118,8 @@
             </div>
             <div class="custom-tool-actions">
                 <a class="tool-action" id="openRawTool" href="#" target="_blank" rel="noopener">新窗口打开</a>
+                <button class="tool-action" id="downloadReadonlyTool" type="button" hidden>下载只读独立 HTML</button>
+                <button class="tool-action" id="publishReadonlyTool" type="button" hidden>推送只读页面到仓库</button>
                 <button class="tool-action" id="refreshToolButton" onclick="location.reload()">刷新</button>
             </div>
         </div>
@@ -134,7 +137,7 @@
 
     <script src="/js/shared/api.js?v=20260824-01"></script>
     <script src="/js/shared/toast.js?v=20260530-03"></script>
-    <script src="/js/shared/navbar.js?v=20260920-03"></script>
+    <script src="/js/shared/navbar.js?v=20260920-07"></script>
     <script>
         let currentCustomTool = null;
         let toolLoadSequence = 0;
@@ -159,6 +162,8 @@
             document.title = `${displayName} - Tools Platform`;
             document.getElementById('toolName').textContent = displayName;
             document.getElementById('openRawTool').textContent = shellText('新窗口打开', 'Open in New Window');
+            document.getElementById('downloadReadonlyTool').textContent = shellText('下载只读独立 HTML', 'Download Read-only HTML');
+            document.getElementById('publishReadonlyTool').textContent = shellText('推送只读页面到仓库', 'Publish Read-only HTML');
             document.getElementById('refreshToolButton').textContent = shellText('刷新', 'Refresh');
             document.getElementById('toolLoadRetry').textContent = shellText('重试加载', 'Retry');
             const frame = document.querySelector('.custom-tool-frame');
@@ -217,6 +222,8 @@
                     return;
                 }
                 currentCustomTool = tool;
+                document.getElementById('downloadReadonlyTool').hidden = tool.slug !== 'department-reward-penalty';
+                document.getElementById('publishReadonlyTool').hidden = tool.slug !== 'department-reward-penalty';
                 const displayName = getCustomToolDisplayName(tool);
                 document.getElementById('toolIcon').textContent = tool.icon || '🧩';
                 document.getElementById('openRawTool').href = tool.filePath;
@@ -279,6 +286,25 @@
         document.addEventListener('click', forwardParentClose, true);
         document.addEventListener('DOMContentLoaded', loadCustomTool);
         document.getElementById('toolLoadRetry').addEventListener('click', loadCustomTool);
+        function snapshotHeaders() {
+            const token = localStorage.getItem('tools_token');
+            return token ? { Authorization: `Bearer ${token}` } : {};
+        }
+        async function snapshotAction(kind) {
+            const button = document.getElementById(kind === 'download' ? 'downloadReadonlyTool' : 'publishReadonlyTool');
+            if (kind === 'publish') return window.startSnapshotPublish();
+            button.disabled = true;
+            try {
+                const response = await fetch('/api/department-reward-penalty/snapshot/html', { headers: snapshotHeaders() });
+                if (!response.ok) { const body = await response.json().catch(() => ({})); throw new Error(body.error || `HTTP ${response.status}`); }
+                const blobUrl = URL.createObjectURL(await response.blob());
+                const link = document.createElement('a'); link.href = blobUrl; link.download = 'department-reward-penalty-readonly.html'; link.click();
+                setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+            } catch (error) { alert(error.message); }
+            finally { button.disabled = false; }
+        }
+        document.getElementById('downloadReadonlyTool').addEventListener('click', () => snapshotAction('download'));
+        document.getElementById('publishReadonlyTool').addEventListener('click', () => snapshotAction('publish'));
         document.getElementById('refreshToolButton')?.addEventListener('click', (e) => {
             e.preventDefault();
             const frame = document.querySelector('.custom-tool-frame');

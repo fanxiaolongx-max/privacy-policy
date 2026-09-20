@@ -6,6 +6,8 @@ const multer = require('multer');
 const { getDataDir } = require('../models/tenant-context');
 const { getDbPath } = require('../models/app-db');
 const repo = require('../models/department-reward-penalty-repository');
+const { buildSnapshot } = require('../models/department-reward-penalty-snapshot');
+const snapshotPublish = require('../models/snapshot-publish-service');
 const router = express.Router();
 const evidenceUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024, files: 1 } });
 const clean = (value, limit = 500) => String(value ?? '').trim().slice(0, limit);
@@ -77,6 +79,32 @@ router.put('/security/pin', respond(async (req, res) => {
 }));
 
 const backupUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024, files: 1 } });
+
+router.get('/snapshot/html', respond(async (req, res) => {
+    if (req.user?.role !== 'admin') fail('仅管理员可导出包含人员及证据的独立页面', 403);
+    const html = await buildSnapshot(req.user?.tenantId || 'default');
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="department-reward-penalty-readonly.html"');
+    res.setHeader('Cache-Control', 'no-store');
+    res.send(html);
+}));
+
+const snapshotAdmin = req => { if (req.user?.role !== 'admin') fail('仅管理员可配置或发布静态页面', 403); };
+router.get('/snapshot/settings', respond(async (req, res) => { snapshotAdmin(req); res.setHeader('Cache-Control', 'no-store'); res.json(await snapshotPublish.getSettings()); }));
+router.get('/snapshot/prerequisites', respond(async (req, res) => { snapshotAdmin(req); res.setHeader('Cache-Control', 'no-store'); res.json(await snapshotPublish.getPrerequisites()); }));
+router.put('/snapshot/settings', respond(async (req, res) => { snapshotAdmin(req); res.json(await snapshotPublish.saveSettings(req.body || {})); }));
+router.get('/snapshot/jobs', respond(async (req, res) => { snapshotAdmin(req); res.setHeader('Cache-Control', 'no-store'); res.json(await snapshotPublish.listJobs()); }));
+router.get('/snapshot/jobs/:id', respond(async (req, res) => {
+    snapshotAdmin(req);
+    res.setHeader('Cache-Control', 'no-store');
+    const job = await snapshotPublish.getJob(req.params.id);
+    if (!job) fail('推送任务不存在', 404);
+    res.json(job);
+}));
+router.post('/snapshot/publish', respond(async (req, res) => {
+    snapshotAdmin(req);
+    res.status(202).json(await snapshotPublish.startJob(req.user?.tenantId || 'default'));
+}));
 
 router.get('/backup/export', respond(async (req, res) => {
     if (req.user?.role !== 'admin') fail('仅管理员可导出数据备份包', 403);

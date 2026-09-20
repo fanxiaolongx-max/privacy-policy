@@ -2267,6 +2267,70 @@ dialog#mediaFormDialog.is-importing {
     background: #2563eb;
 }
 
+.snapshot-settings { display: grid; gap: 18px; color: #243449; }
+.snapshot-prerequisites { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 13px 16px; border-radius: 12px; border: 1px solid #d9e3ef; background: #f6f9fd; color: #334155; font-size: 12px; }
+.snapshot-prerequisites.ready { border-color: #9bd9bd; background: #f0fbf5; }
+.snapshot-prerequisites.attention { border-color: #f5d49b; background: #fffaf0; }
+.snapshot-prerequisites strong { color: #27364b; font-size: 13px; }
+.snapshot-prerequisites p { margin: 4px 0; line-height: 1.5; }
+.snapshot-prerequisites small { color: #52657a; }
+.snapshot-prereq-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.snapshot-prereq-actions a,.snapshot-prereq-actions button { border: 1px solid #b9cce3; border-radius: 8px; padding: 7px 9px; background: #fff; color: #205eb4; font-size: 11px; font-weight: 700; text-decoration: none; cursor: pointer; }
+.snapshot-hero { display: flex; gap: 15px; align-items: flex-start; padding: 20px; border: 1px solid #c7d9ed; border-radius: 16px; background: linear-gradient(125deg,#edf5ff,#f9fbff 60%,#f4f0ff); }
+.snapshot-hero-icon { display: grid; place-items: center; flex: 0 0 40px; height: 40px; border-radius: 12px; background: #205eb4; color: white; font-size: 24px; }
+.snapshot-hero strong { font-size: 16px; }
+.snapshot-hero p { margin: 6px 0 0; color: #596b83; font-size: 12px; line-height: 1.7; }
+.snapshot-fields { display: grid; gap: 16px; grid-template-columns: repeat(2,minmax(0,1fr)); align-items: start; }
+.snapshot-fields label { display: flex; flex-direction: column; align-self: start; gap: 7px; color: #334155; font-size: 13px; font-weight: 700; min-width: 0; }
+.snapshot-fields label:first-child { grid-column: 1 / -1; }
+.snapshot-fields label:nth-child(2) { grid-column: 1 / -1; }
+.snapshot-fields input,.snapshot-fields select { width: 100%; min-width: 0; height: 40px; box-sizing: border-box; background: #fff; color: #172033; }
+.snapshot-fields small { font-size: 12px; font-weight: 400; color: #52657a; line-height: 1.5; }
+.snapshot-fields .snapshot-path-preview { color: #245581; font-weight: 650; overflow-wrap: anywhere; }
+.snapshot-schedule { display: grid; grid-template-columns: 1fr auto; gap: 12px 20px; align-items: center; padding: 16px 18px; border: 1px solid #c8dddc; border-radius: 14px; background: linear-gradient(130deg,#f2fbf9,#f8fbff); }
+.snapshot-schedule strong { font-size: 13px; }
+.snapshot-schedule p { margin: 4px 0 0; color: #63817f; font-size: 11px; line-height: 1.6; }
+.snapshot-schedule-toggle { color: #235f59; font-size: 12px; font-weight: 800; white-space: nowrap; }
+.snapshot-schedule-toggle input { accent-color: #0d9488; vertical-align: middle; }
+.snapshot-interval { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #3f596a; }
+.snapshot-interval input { width: 100px; min-width: 80px; }
+.snapshot-schedule-status { color: #63817f; font-size: 11px; text-align: right; line-height: 1.5; }
+.snapshot-actions { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+.snapshot-actions button, .snapshot-history-head button { cursor: pointer; border: 1px solid #b9cce3; border-radius: 9px; padding: 9px 15px; background: #fff; color: #234369; font-weight: 700; }
+.snapshot-actions .snapshot-primary { background: #205eb4; border-color: #205eb4; color: #fff; box-shadow: 0 6px 15px #205eb429; }
+.snapshot-actions button:disabled { opacity: .5; cursor: wait; }
+.snapshot-history-head { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #e4ebf3; padding-top: 18px; }
+.snapshot-history-head button { padding: 5px 10px; font-size: 12px; }
+.snapshot-history { display: grid; gap: 8px; max-height: 290px; overflow: auto; }
+.snapshot-history-item { width: 100%; display: flex; align-items: center; text-align: left; gap: 12px; padding: 12px; border: 1px solid #e3eaf2; border-radius: 11px; background: #fff; cursor: pointer; color: #25354b; }
+.snapshot-history-item:hover { border-color: #8bb5ed; background: #f7fbff; }
+.snapshot-history-item span:nth-child(2) { flex: 1; min-width: 0; }
+.snapshot-history-item strong,.snapshot-history-item small { display: block; }
+.snapshot-history-item small { color: #718197; font-size: 11px; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.snapshot-dot { flex: 0 0 9px; height: 9px; border-radius: 50%; background: #f59e0b; box-shadow: 0 0 0 4px #fef3c7; }
+.snapshot-dot.success { background: #16a34a; box-shadow: 0 0 0 4px #dcfce7; }
+.snapshot-dot.failed,.snapshot-dot.interrupted { background: #e11d48; box-shadow: 0 0 0 4px #ffe4e6; }
+.snapshot-percent { color: #53708f; font-size: 12px; font-weight: 800; }
+.snapshot-history-empty { border: 1px dashed #cad7e6; border-radius: 11px; color: #718197; padding: 20px; text-align: center; }
+.snapshot-progress-overlay { position: fixed; inset: 0; z-index: 100050; display: grid; place-items: center; padding: 20px; background: #101c32aa; backdrop-filter: blur(6px); }
+.snapshot-progress-overlay[hidden] { display: none; }
+.snapshot-progress-dialog { position: relative; width: min(580px, 100%); max-height: min(680px, 90vh); overflow: auto; border: 1px solid #d6e4f4; border-radius: 22px; padding: 30px; background: #fff; box-shadow: 0 30px 90px #0c20365c; color: #1d3048; }
+.snapshot-progress-close { position: absolute; top: 18px; right: 20px; border: 0; background: #eef3f9; border-radius: 8px; width: 32px; height: 32px; font-size: 22px; cursor: pointer; }
+.snapshot-progress-eyebrow { letter-spacing: .16em; color: #3476bc; font-size: 10px; font-weight: 800; }
+.snapshot-progress-dialog h2 { margin: 9px 0 5px; font-size: 24px; }
+.snapshot-progress-dialog p { color: #6c7d91; font-size: 13px; }
+.snapshot-progress-bar { margin-top: 25px; height: 10px; border-radius: 20px; overflow: hidden; background: #e8eef5; }
+.snapshot-progress-bar i { display: block; height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg,#397bd0,#40b6a0); transition: width .5s ease; }
+.snapshot-progress-bar i.failed,.snapshot-progress-bar i.interrupted { background: #e11d48; }
+.snapshot-progress-meta { margin: 8px 0 22px; text-align: right; color: #53708f; font-size: 12px; font-weight: 700; }
+.snapshot-progress-entries { display: grid; gap: 0; border-left: 2px solid #d9e7f6; margin-left: 5px; padding-left: 17px; }
+.snapshot-progress-entry { position: relative; display: grid; grid-template-columns: 72px 1fr; gap: 10px; padding: 7px 0; font-size: 12px; line-height: 1.5; }
+.snapshot-progress-entry:before { content: ''; position: absolute; left: -22px; top: 12px; width: 8px; height: 8px; border-radius: 50%; background: #75a5db; }
+.snapshot-progress-entry time { color: #8392a4; }
+.snapshot-config-shortcut { margin-top: 22px; width: 100%; border: 1px solid #b9d0e9; border-radius: 10px; padding: 11px; color: #205eb4; background: #f4f9ff; font-weight: 700; cursor: pointer; }
+@media (max-width: 600px) { .snapshot-fields,.snapshot-schedule { grid-template-columns: 1fr; } .snapshot-fields label:first-child,.snapshot-fields label:nth-child(2) { grid-column: auto; } .snapshot-prerequisites { flex-direction: column; align-items: stretch; } .snapshot-prereq-actions { justify-content: flex-start; } .snapshot-schedule-status { text-align: left; } .snapshot-progress-dialog { padding: 22px; } }
+@media (prefers-color-scheme: dark) { .snapshot-progress-dialog { background: #172437; color: #e2ebf5; border-color: #31465e; } }
+
 .nav-security-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
