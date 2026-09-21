@@ -2,7 +2,7 @@
     'use strict';
 
     const allowedTags = new Set(['DIV', 'P', 'H1', 'H2', 'H3', 'H4', 'TABLE', 'THEAD', 'TBODY', 'TFOOT', 'TR', 'TD', 'TH', 'SPAN', 'STRONG', 'B', 'EM', 'I', 'BR', 'UL', 'OL', 'LI', 'A']);
-    const styleNames = ['color', 'background-color', 'font-family', 'font-size', 'font-weight', 'font-style', 'text-decoration', 'text-align', 'line-height', 'padding', 'border-top', 'border-right', 'border-bottom', 'border-left'];
+    const styleNames = ['color', 'background-color', 'font-family', 'font-size', 'font-weight', 'font-style', 'text-decoration', 'text-align', 'line-height', 'padding', 'margin', 'border-radius', 'border-top', 'border-right', 'border-bottom', 'border-left'];
 
     function formatBytes(bytes) {
         if (!bytes || bytes <= 0) return '0 B';
@@ -378,11 +378,24 @@
     function copyForEmail(source) {
         if (source.nodeType === Node.TEXT_NODE) return document.createTextNode(source.textContent || '');
         if (source.nodeType !== Node.ELEMENT_NODE) return null;
-        const style = getComputedStyle(source);
-        if (style.display === 'none' || style.visibility === 'hidden') return null;
+        if (source.hasAttribute && source.hasAttribute('data-html2canvas-ignore')) return null;
+        if (source.classList && (source.classList.contains('print-hide') || source.classList.contains('topic-sync-chip') || source.classList.contains('topic-gutter-badge') || source.classList.contains('topic-ai-translate-btn') || source.classList.contains('topic-diff-popover'))) return null;
+        const style = typeof getComputedStyle === 'function' ? getComputedStyle(source) : { display: 'block', visibility: 'visible', getPropertyValue: () => '' };
+        const isAnchorTarget = source.tagName === 'A' && ((source.getAttribute && (source.getAttribute('name') || source.getAttribute('id'))) || source.name || source.id);
+        if (!isAnchorTarget && (style.display === 'none' || style.visibility === 'hidden')) return null;
         const tag = allowedTags.has(source.tagName) ? source.tagName.toLowerCase() : 'div';
         const target = document.createElement(tag);
-        if (tag === 'a' && /^https?:\/\//i.test(source.href)) target.href = source.href;
+        if (tag === 'a') {
+            const href = source.getAttribute ? source.getAttribute('href') : source.href;
+            if (href && (/^https?:\/\//i.test(href) || href.startsWith('#'))) {
+                target.setAttribute('href', href);
+            }
+            const name = source.getAttribute ? source.getAttribute('name') : source.name;
+            if (name) target.setAttribute('name', name);
+        }
+        if (source.getAttribute && source.getAttribute('id')) {
+            target.setAttribute('id', source.getAttribute('id'));
+        }
         const inline = styleNames.map(name => {
             const value = style.getPropertyValue(name);
             return value && value !== 'none' && value !== 'normal' && value !== 'rgba(0, 0, 0, 0)' ? `${name}:${value}` : '';
@@ -523,6 +536,6 @@
         }
     }
 
-    window.ReportMsgExport = { download, showError };
+    window.ReportMsgExport = { download, showError, copyForEmail };
 })();
 

@@ -44,15 +44,31 @@
                     <label>报告月份<select id="eosMonthlyMonth" aria-label="EOS 月报月份"></select></label>
                     <button id="eosCopyResetMonth" type="button" disabled>恢复本月自动文案</button>
                     <button id="eosCopyResetFixed" type="button">恢复固定文案</button>
+                    <button id="eosToggleSourceTimeBtn" class="topic-monthly-btn" type="button" title="点击隐藏或显示月报顶部的导入时间与数据源小字">
+                        <span id="eosToggleSourceTimeIcon">👁️</span> <span id="eosToggleSourceTimeText">隐藏导入时间</span>
+                    </button>
                     <button id="eosConfigBtn" class="topic-monthly-btn" type="button" title="配置客户名称映射规则与重点设备套数展示阈值">映射与阈值配置</button>
+                    <button id="eosExportProjectBtn" class="topic-monthly-btn" type="button" title="导出包含离线完整数据与全部中英文编辑的工程文件">📦 导出工程</button>
+                    <button id="eosImportProjectBtn" class="topic-monthly-btn" type="button" title="导入他人分享或历史备份的月报工程文件">📂 导入工程</button>
+                    <input type="file" id="eosProjectFileInput" accept=".json,.eos.json" style="display:none">
                     <button id="eosDownloadPng" class="topic-monthly-btn" type="button" title="下载当前月报长图 PNG">下载月报 PNG</button>
+                    <button id="eosDownloadPdf" class="topic-monthly-btn" type="button" title="下载排版精美的高清 PDF 格式月报">下载月报 PDF</button>
+                    <button id="eosDownloadHtml" class="topic-monthly-btn" type="button" title="下载排版完整且离线可交互浏览的 HTML 格式月报">下载月报 HTML</button>
                     <button id="eosDownloadExcel" class="topic-monthly-btn topic-monthly-btn-primary" type="button" title="下载包含月报、多维度分析及详表的多 Sheet Excel">下载月报 Excel</button>
                     <button id="eosDownloadMsg" class="topic-monthly-btn" type="button" title="下载可在 Outlook 中继续编辑的 HTML 月报邮件">下载月报 MSG</button>
                 </div>
             </div>
-            <p class="topic-monthly-edit-hint">点击月报文字可修改；选中文字可加粗或改色。当前浏览器会按租户和月份记忆动态文案，按租户记忆固定文案。<span
-                    id="eosCopyStatus" role="status"></span></p>
+            <p class="topic-monthly-edit-hint">点击月报文字或表格可修改；选中文字可加粗或改色。当前浏览器会按租户和月份记忆动态文案与表格，按租户记忆固定文案。<span
+                    id="eosCopyStatus" role="status"></span>
+                <span id="eosSyncCapsule" class="topic-sync-capsule" role="status" hidden title="点击快速查看或定位待同步的英文内容"></span>
+            </p>
             <div id="eosReportSheet" class="topic-report-sheet">
+                <div id="eosReportGutter" class="topic-report-gutter print-hide" data-html2canvas-ignore="true" aria-label="修改状态导航导轨"></div>
+                <a name="eos-section-cn" id="eos-section-cn" class="topic-section-anchor"></a>
+                <div id="eosReportNavCn" class="topic-report-nav-bar">
+                    <span class="topic-report-nav-tag">🇨🇳 中文版简报</span>
+                    <a href="#eos-section-en" class="topic-report-nav-link" title="点击跳转至下方英文版简报">Jump to English / 跳转至英文版 ➔</a>
+                </div>
                 <p id="eosMonthlySource" class="topic-monthly-source"></p>
                 <div id="eosMonthlyReport" class="topic-monthly-report" aria-live="polite">正在生成月报…</div>
                 <div class="topic-fixed-progress">
@@ -63,7 +79,7 @@
                             <p>重点关注：982 个已停服网元仍在网络运行，故障发生时服务支持受限，风险高，建议系统部加速推动设备替换退网或例外销售，其中 e&amp; 522套（MA5600 272套/Metro 1000 134套）、Vodafone 419套（ATN910 306套/PTN6900 47套）、TE 24套（UAC3000 2套）、Orange 17套（CE12804S 8套)。</p>
                         </div>
                         <div class="topic-table-wrap topic-report-table-wrap">
-                            <table class="topic-fixed-table">
+                            <table class="topic-fixed-table" id="fixedProductTable">
                                 <thead>
                                     <tr>
                                         <th rowspan="2">客户</th>
@@ -167,7 +183,7 @@
                             <p class="topic-fixed-version-focus">重点关注：25,783套网元虽然已完成客户界面风险预警，但仍存在软件缺陷无法及时补丁修复的风险，同时也是软件升级销售机会点，建议系统部持续推动客户进行版本升级。其中e&amp; 14,512套（RTN950 4,217套/RTN320 1,948套/BTS3900A 1,031套等）、Vodafone 4,989套（RTN380 2,427套/RTN905 1,607套/RTN980 326套)、TE 5290套（DBS3900 1,798套/RTN905 1,313套/MA5800 691套等)、Orange 992套（BTS3900 877套等）</p>
                         </div>
                         <div class="topic-table-wrap topic-report-table-wrap">
-                            <table class="topic-fixed-table">
+                            <table class="topic-fixed-table" id="fixedVersionTable">
                                 <thead>
                                     <tr>
                                         <th rowspan="2">客户</th>
@@ -269,7 +285,12 @@
                 </footer>
 
                 <!-- English Version · 英文对照月报 -->
+                <a name="eos-section-en" id="eos-section-en" class="topic-section-anchor"></a>
                 <div class="topic-report-divider-en"><span class="topic-report-divider-badge">ENGLISH VERSION · 英文对照简报</span></div>
+                <div id="eosReportNavEn" class="topic-report-nav-bar topic-report-nav-bar-en">
+                    <span class="topic-report-nav-tag">🇬🇧 English Version</span>
+                    <a href="#eos-section-cn" class="topic-report-nav-link" title="点击跳转至上方中文版简报">➔ 跳转至中文版 / Jump to Chinese</a>
+                </div>
                 <div id="eosMonthlyReportEn" class="topic-monthly-report topic-monthly-report-en" aria-live="polite">正在生成英文月报…</div>
                 <div class="topic-fixed-progress topic-fixed-progress-en">
                     <section class="topic-fixed-block" aria-labelledby="fixedProductTitleEn">
@@ -541,6 +562,7 @@
     <script src="/js/shared/api.js?v=20260911-03"></script>
     <script src="/js/shared/navbar.js?v=20260920-08"></script>
     <script src="/js/shared/html2canvas.min.js?v=20260911-03"></script>
+    <script src="/js/shared/jspdf.umd.min.js?v=20260920-08"></script>
     <script src="/js/shared/exceljs.min.js?v=20260916-01"></script>
     <script src="/js/shared/report-msg-export.js?v=20260917-07"></script>
     <script src="/js/topic-analysis.js?v=20260917-06"></script>

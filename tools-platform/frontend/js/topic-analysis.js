@@ -37,7 +37,7 @@
         }
     };
 
-    const state = { items: [], total: 0, topicKey: 'netcare-eos-product', metricKey: 'pending', detailRows: [], detailColumns: [], detailPage: 1, detailPageSize: 50, detailSortColumn: '', detailSortAscending: true, detailFilter: '', eosMonthlyReport: null, eosMonthlySnapshot: null, fixedCopyDefaults: new Map() };
+    const state = { items: [], total: 0, topicKey: 'netcare-eos-product', metricKey: 'pending', detailRows: [], detailColumns: [], detailPage: 1, detailPageSize: 50, detailSortColumn: '', detailSortAscending: true, detailFilter: '', eosMonthlyReport: null, eosMonthlySnapshot: null, fixedCopyDefaults: new Map(), copyDefaults: new Map(), isImportedProject: false, importedProjectMeta: null, isAiConnected: false, aiSettings: null };
     const elements = {};
     const DETAIL_LABELS = { customer_name: '客户', product_line_name: '产品线', product_line_map: '产品线', product_name: '产品', software_version: '版本', task_id: '任务单号', need_reduce_cnt: '需消减', reduced_cnt: '已消减', incorporation_total_nes: '数量', incorporated_nes: '已收编', to_be_incorporated_nes: '待收编', current_phase_name: '阶段', scope: '范围', year: '年份', month: '月份', task_count: '变更任务数', operation_success_rate: '操作成功率', rollback_count: '回退数', high_core_total_count: '高危核心', interception_cnt: '拦截数', commands_interception_cnt: '命令行拦截', graphical_interception_cnt: '图形化拦截', period: '期间', sr_total: 'SR 数', sr_frt: 'FRT', unclose_sr_cnt: '未关闭', overdue_sr_cnt: '逾期', minor_sr_cnt: 'Minor', major_sr_cnt: 'Major', critical_sr_cnt: 'Critical' };
     const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
@@ -314,12 +314,13 @@
         const rows = accounts.map(item => `<tr><th scope="row">${escapeHtml(mapCustomerName(item.customer))}</th>${cells(item)}</tr>`).join('');
         const copyHtml = label === '产品' ? buildProductCopyHtml(section) : buildVersionCopyHtml(section);
         const tableNum = label === '产品' ? 1 : 2;
+        const tableId = label === '产品' ? 'prod' : 'ver';
 
         return `<section class="topic-monthly-section">
             <h3 class="topic-report-item-title">➤ 退网收编进展（重急EOS${label}）：</h3>
             ${copyHtml}
             <div class="topic-table-wrap topic-report-table-wrap">
-                <table class="topic-monthly-table">
+                <table class="topic-monthly-table" id="eosMonthlyTable_${tableId}" data-table-id="${tableId}">
                     <thead>
                         <tr><th rowspan="3">客户</th><th colspan="7">重急 EOS · ${label}</th></tr>
                         <tr><th rowspan="2">总量</th><th rowspan="2">已收编</th><th rowspan="2">当前收编率</th><th colspan="3">待收编</th><th rowspan="2">计划后收编率</th></tr>
@@ -445,12 +446,13 @@
         const rows = accounts.map(item => `<tr><th scope="row">${escapeHtml(mapCustomerName(item.customer))}</th>${cells(item)}</tr>`).join('');
         const copyHtml = labelEn === 'Product' ? buildProductCopyHtmlEn(section) : buildVersionCopyHtmlEn(section);
         const tableNum = labelEn === 'Product' ? 1 : 2;
+        const tableId = labelEn === 'Product' ? 'prod' : 'ver';
 
         return `<section class="topic-monthly-section">
             <h3 class="topic-report-item-title">➤ Retirement &amp; Incorporation Progress (Critical &amp; Urgent EOS ${labelEn}):</h3>
             ${copyHtml}
             <div class="topic-table-wrap topic-report-table-wrap">
-                <table class="topic-monthly-table">
+                <table class="topic-monthly-table" id="eosMonthlyTableEn_${tableId}" data-table-id="${tableId}">
                     <thead>
                         <tr><th rowspan="3">Customer</th><th colspan="7">Critical &amp; Urgent EOS · ${labelEn}</th></tr>
                         <tr><th rowspan="2">Total</th><th rowspan="2">Incorporated</th><th rowspan="2">Current Rate</th><th colspan="3">Pending</th><th rowspan="2">Post-Plan Rate</th></tr>
@@ -484,10 +486,73 @@
         } catch (_) { return {}; }
     }
 
+    function syncedCnStorageKey(scope) {
+        let tenant = 'default';
+        try { tenant = localStorage.getItem('tools_tenant_id') || tenant; } catch (_) { /* storage may be disabled */ }
+        const baseScope = scope.replace(/-en$/, '');
+        return `topic-eos:synced-cn:v1:${tenant}:${baseScope.startsWith('fixed') ? baseScope : `month:${baseScope}:${state.eosMonthlyReport?.month || ''}`}`;
+    }
+
+    function readSyncedCnPreferences(scope) {
+        try {
+            const value = JSON.parse(localStorage.getItem(syncedCnStorageKey(scope)) || '{}');
+            return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+        } catch (_) { return {}; }
+    }
+
+    function saveSyncedCn(scope, key, cnHtml) {
+        const baseScope = scope.replace(/-en$/, '');
+        const prefs = readSyncedCnPreferences(baseScope);
+        prefs[key] = sanitizeCopyHtml(cnHtml).trim();
+        try {
+            localStorage.setItem(syncedCnStorageKey(baseScope), JSON.stringify(prefs));
+        } catch (_) {}
+    }
+
+    function clearSyncedCn(scope, key) {
+        const baseScope = scope.replace(/-en$/, '');
+        const prefs = readSyncedCnPreferences(baseScope);
+        if (prefs[key]) {
+            delete prefs[key];
+            try {
+                localStorage.setItem(syncedCnStorageKey(baseScope), JSON.stringify(prefs));
+            } catch (_) {}
+        }
+    }
+
+    function preTranslateStorageKey(scope) {
+        let tenant = 'default';
+        try { tenant = localStorage.getItem('tools_tenant_id') || tenant; } catch (_) {}
+        return `topic-eos:pre-trans:v1:${tenant}:${scope.startsWith('fixed') ? scope : `month:${scope}:${state.eosMonthlyReport?.month || ''}`}`;
+    }
+
+    function readPreTranslatePreferences(scope) {
+        try {
+            const value = JSON.parse(localStorage.getItem(preTranslateStorageKey(scope)) || '{}');
+            return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+        } catch (_) { return {}; }
+    }
+
+    function savePreTranslate(scope, key, html) {
+        const prefs = readPreTranslatePreferences(scope);
+        if (!prefs[key]) {
+            prefs[key] = sanitizeCopyHtml(html).trim();
+            try { localStorage.setItem(preTranslateStorageKey(scope), JSON.stringify(prefs)); } catch (_) {}
+        }
+    }
+
+    function clearPreTranslate(scope, key) {
+        const prefs = readPreTranslatePreferences(scope);
+        if (prefs[key]) {
+            delete prefs[key];
+            try { localStorage.setItem(preTranslateStorageKey(scope), JSON.stringify(prefs)); } catch (_) {}
+        }
+    }
+
     function sanitizeCopyHtml(html) {
         const parsed = new DOMParser().parseFromString(`<div>${String(html || '').slice(0, 10000)}</div>`, 'text/html');
         const result = document.createElement('div');
-        const safeColor = value => /^#[0-9a-f]{6}$/i.test(value || '') || /^rgba?\([\d\s.,%]+\)$/i.test(value || '') ? value : '';
+        const safeColor = value => /^#[0-9a-f]{3,8}$/i.test(value || '') || /^rgba?\([\d\s.,%]+\)$/i.test(value || '') ? value : '';
         function copyNode(source, target) {
             if (source.nodeType === Node.TEXT_NODE) { target.appendChild(document.createTextNode(source.textContent)); return; }
             if (source.nodeType !== Node.ELEMENT_NODE) return;
@@ -507,6 +572,37 @@
         return result.innerHTML.replace(/(?:<br>)+$/i, '');
     }
 
+    const SOURCE_TIME_HIDDEN_KEY = 'topic-eos:hide-source-time';
+
+    function updateSourceTimeVisibility(hidden) {
+        const sourceEl = elements?.eosMonthlySource || (typeof document !== 'undefined' ? document.getElementById('eosMonthlySource') : null);
+        const icon = elements?.eosToggleSourceTimeIcon || (typeof document !== 'undefined' ? document.getElementById('eosToggleSourceTimeIcon') : null);
+        const text = elements?.eosToggleSourceTimeText || (typeof document !== 'undefined' ? document.getElementById('eosToggleSourceTimeText') : null);
+        const btn = elements?.eosToggleSourceTimeBtn || (typeof document !== 'undefined' ? document.getElementById('eosToggleSourceTimeBtn') : null);
+        if (sourceEl) {
+            if (hidden) {
+                sourceEl.classList.add('is-hidden');
+                if (icon) icon.textContent = '👁️‍🗨️';
+                if (text) text.textContent = '显示导入时间';
+                if (btn) btn.classList.add('is-active');
+            } else {
+                sourceEl.classList.remove('is-hidden');
+                if (icon) icon.textContent = '👁️';
+                if (text) text.textContent = '隐藏导入时间';
+                if (btn) btn.classList.remove('is-active');
+            }
+        }
+        if (typeof document !== 'undefined' && typeof document.querySelectorAll === 'function') {
+            const navTags = document.querySelectorAll('.topic-report-nav-tag');
+            const dividerBadges = document.querySelectorAll('.topic-report-divider-badge');
+            const dividerEns = document.querySelectorAll('.topic-report-divider-en');
+
+            navTags.forEach(el => el.classList.toggle('is-hidden', Boolean(hidden)));
+            dividerBadges.forEach(el => el.classList.toggle('is-hidden', Boolean(hidden)));
+            dividerEns.forEach(el => el.classList.toggle('is-hidden', Boolean(hidden)));
+        }
+    }
+
     function setCopyStatus(message) { elements.eosCopyStatus.textContent = message; }
 
     function saveCopy(block) {
@@ -518,23 +614,824 @@
     }
 
     function activateCopy(root, selector, scope) {
+        if (!root) return;
         const preferences = readCopyPreferences(scope);
         root.querySelectorAll(selector).forEach((block, index) => {
             const key = `copy-${index}`;
             const defaultKey = `${scope}-${key}`;
-            if (scope.startsWith('fixed') && !state.fixedCopyDefaults.has(defaultKey)) state.fixedCopyDefaults.set(defaultKey, block.innerHTML);
-            if (typeof preferences[key] === 'string') block.innerHTML = sanitizeCopyHtml(preferences[key]);
-            block.contentEditable = 'true'; block.spellcheck = false;
-            block.classList.add('topic-editable'); block.dataset.eosCopyKey = key; block.dataset.eosCopyScope = scope;
-            block.title = '点击修改，修改后自动保存';
-            block.addEventListener('input', () => saveCopy(block));
-            block.addEventListener('blur', () => { const clean = sanitizeCopyHtml(block.innerHTML); if (block.innerHTML !== clean) block.innerHTML = clean; });
+            if (!state.copyDefaults.has(defaultKey)) {
+                state.copyDefaults.set(defaultKey, sanitizeCopyHtml(block.innerHTML));
+            }
+            if (scope.startsWith('fixed') && !state.fixedCopyDefaults.has(defaultKey)) {
+                state.fixedCopyDefaults.set(defaultKey, block.innerHTML);
+            }
+            if (typeof preferences[key] === 'string') {
+                block.innerHTML = sanitizeCopyHtml(preferences[key]);
+            }
+            block.contentEditable = 'true';
+            block.spellcheck = false;
+            block.classList.add('topic-editable');
+            block.dataset.eosCopyKey = key;
+            block.dataset.eosCopyScope = scope;
+            block.title = '点击修改文字；选中文字可加粗或改色';
+            block.addEventListener('focus', () => {
+                hideDiffPopover(true);
+            });
+            block.addEventListener('input', () => {
+                saveCopy(block);
+                if (scope.endsWith('-en')) {
+                    const cnScope = scope.replace(/-en$/, '');
+                    const sheet = elements?.eosReportSheet || document.getElementById('eosReportSheet');
+                    const cnEl = sheet ? sheet.querySelector(`[data-eos-copy-scope="${cnScope}"][data-eos-copy-key="${key}"]`) : null;
+                    if (cnEl) {
+                        saveSyncedCn(scope, key, cnEl.innerHTML);
+                    }
+                }
+                updateBilingualSyncStatus();
+            });
+            block.addEventListener('blur', () => {
+                const clean = sanitizeCopyHtml(block.innerHTML);
+                if (block.innerHTML !== clean) block.innerHTML = clean;
+                if (scope.endsWith('-en')) {
+                    const cnScope = scope.replace(/-en$/, '');
+                    const sheet = elements?.eosReportSheet || document.getElementById('eosReportSheet');
+                    const cnEl = sheet ? sheet.querySelector(`[data-eos-copy-scope="${cnScope}"][data-eos-copy-key="${key}"]`) : null;
+                    if (cnEl) {
+                        saveSyncedCn(scope, key, cnEl.innerHTML);
+                    }
+                }
+                updateBilingualSyncStatus();
+            });
             block.addEventListener('paste', event => {
                 event.preventDefault();
                 document.execCommand('insertText', false, event.clipboardData.getData('text/plain'));
             });
             block.addEventListener('drop', event => event.preventDefault());
         });
+    }
+
+    function activateTableCells(table, tableId, scope) {
+        if (!table) return;
+        const preferences = readCopyPreferences(scope);
+        const tbody = table.querySelector('tbody') || table;
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        rows.forEach((tr, rIndex) => {
+            const cells = Array.from(tr.querySelectorAll('td, th[scope="row"]'));
+            cells.forEach((cell, cIndex) => {
+                const key = `cell-${tableId}-r${rIndex}-c${cIndex}`;
+                const defaultKey = `${scope}-${key}`;
+                if (!state.copyDefaults.has(defaultKey)) {
+                    state.copyDefaults.set(defaultKey, sanitizeCopyHtml(cell.innerHTML));
+                }
+                if (scope.startsWith('fixed') && !state.fixedCopyDefaults.has(defaultKey)) {
+                    state.fixedCopyDefaults.set(defaultKey, sanitizeCopyHtml(cell.innerHTML));
+                }
+                if (typeof preferences[key] === 'string') {
+                    cell.innerHTML = sanitizeCopyHtml(preferences[key]);
+                }
+                cell.contentEditable = 'true';
+                cell.spellcheck = false;
+                cell.classList.add('topic-editable', 'topic-cell-editable');
+                cell.dataset.eosCopyKey = key;
+                cell.dataset.eosCopyScope = scope;
+                cell.dataset.eosTableId = tableId;
+                cell.title = '点击修改表格文字；选中文字可加粗或改色';
+
+                cell.addEventListener('focus', () => {
+                    hideDiffPopover(true);
+                });
+                cell.addEventListener('input', () => {
+                    saveCopy(cell);
+                    if (scope.endsWith('-en')) {
+                        const cnScope = scope.replace(/-en$/, '');
+                        const sheet = elements?.eosReportSheet || document.getElementById('eosReportSheet');
+                        const cnEl = sheet ? sheet.querySelector(`[data-eos-copy-scope="${cnScope}"][data-eos-copy-key="${key}"]`) : null;
+                        if (cnEl) {
+                            saveSyncedCn(scope, key, cnEl.innerHTML);
+                        }
+                    }
+                    updateBilingualSyncStatus();
+                });
+                cell.addEventListener('blur', () => {
+                    const clean = sanitizeCopyHtml(cell.innerHTML);
+                    if (cell.innerHTML !== clean) cell.innerHTML = clean;
+                    if (scope.endsWith('-en')) {
+                        const cnScope = scope.replace(/-en$/, '');
+                        const sheet = elements?.eosReportSheet || document.getElementById('eosReportSheet');
+                        const cnEl = sheet ? sheet.querySelector(`[data-eos-copy-scope="${cnScope}"][data-eos-copy-key="${key}"]`) : null;
+                        if (cnEl) {
+                            saveSyncedCn(scope, key, cnEl.innerHTML);
+                        }
+                    }
+                    updateBilingualSyncStatus();
+                });
+                cell.addEventListener('keydown', event => {
+                    if (event.key === 'Enter' && !event.shiftKey) {
+                        event.preventDefault();
+                        const nextRow = rows[rIndex + 1];
+                        const nextCell = nextRow ? Array.from(nextRow.querySelectorAll('td, th[scope="row"]'))[cIndex] : null;
+                        if (nextCell) nextCell.focus();
+                        else cell.blur();
+                    }
+                });
+                cell.addEventListener('paste', event => {
+                    event.preventDefault();
+                    document.execCommand('insertText', false, event.clipboardData.getData('text/plain'));
+                });
+                cell.addEventListener('drop', event => event.preventDefault());
+            });
+        });
+    }
+
+    function getBlockLabel(el) {
+        if (!el) return '正文';
+        if (el.tagName === 'H3' || el.tagName === 'H4') return el.textContent.replace(/[➤:：]/g, '').trim().slice(0, 14);
+        if (el.dataset.eosTableId) {
+            const tableMap = { prod: '产品收编表', ver: '版本收编表', 'fixed-prod': '产品风险进展表', 'fixed-ver': '版本风险告知表' };
+            const tableName = tableMap[el.dataset.eosTableId] || '表格';
+            const row = el.closest('tr');
+            const rowHeader = row ? row.querySelector('th[scope="row"]')?.textContent.trim() : '';
+            return rowHeader ? `${tableName} (${rowHeader})` : tableName;
+        }
+        const titleEl = el.closest('section, div')?.querySelector?.('h3, h4, .topic-report-section-bar');
+        if (titleEl) return titleEl.textContent.replace(/[➤:：]/g, '').trim().slice(0, 14);
+        return el.textContent.slice(0, 12).trim() || '正文段落';
+    }
+
+    async function checkAiAssistantStatus() {
+        try {
+            const settings = await API.get('/api/ai-settings');
+            state.aiSettings = settings;
+            state.isAiConnected = Boolean(settings && settings.hasApiKey && settings.keyLooksValid);
+        } catch (_) {
+            state.aiSettings = null;
+            state.isAiConnected = false;
+        }
+        updateBilingualSyncStatus();
+    }
+
+    async function performAiTranslate(cnEl, enEl, btn) {
+        if (!cnEl || !enEl) return;
+        if (!state.isAiConnected) {
+            alert('未在全局配置中对接 AI 助手，请管理员在导航栏「设置 > AI 助手」中配置 API Token。');
+            return;
+        }
+        const originalHtml = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="topic-ai-spinner"></span> 正在翻译…';
+        }
+        try {
+            const cnHtml = cnEl.innerHTML.trim();
+            const res = await API.post('/api/ai/translate', {
+                text: cnHtml,
+                context: 'Egypt Rep Office EOS Monthly Report'
+            });
+            if (!res || !res.translatedText) {
+                throw new Error('AI 服务未返回翻译结果');
+            }
+            savePreTranslate(enEl.dataset.eosCopyScope, enEl.dataset.eosCopyKey, enEl.innerHTML);
+            enEl._preTranslateHtml = enEl.innerHTML;
+            enEl.innerHTML = res.translatedText;
+            saveCopy(enEl);
+            saveSyncedCn(enEl.dataset.eosCopyScope, enEl.dataset.eosCopyKey, cnEl.innerHTML);
+            enEl.dispatchEvent(new Event('input', { bubbles: true }));
+            updateBilingualSyncStatus();
+            setCopyStatus('已由 AI 助手完成专业翻译，粗体与颜色格式已精准对齐！');
+        } catch (err) {
+            console.error('AI 翻译失败:', err);
+            alert(`AI 翻译失败：${err.message || '网络异常'}`);
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        }
+    }
+
+    async function performAiTranslateAll(items, btn) {
+        if (!items || !items.length) return;
+        if (!state.isAiConnected) {
+            alert('未在全局配置中对接 AI 助手，请管理员在导航栏「设置 > AI 助手」中配置 API Token。');
+            return;
+        }
+        const originalHtml = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="topic-ai-spinner"></span> 批量翻译中…';
+        }
+        let successCount = 0;
+        try {
+            for (const item of items) {
+                if (item.cnEl && item.enEl) {
+                    const cnHtml = item.cnEl.innerHTML.trim();
+                    const res = await API.post('/api/ai/translate', {
+                        text: cnHtml,
+                        context: 'Egypt Rep Office EOS Monthly Report'
+                    });
+                    if (res && res.translatedText) {
+                        savePreTranslate(item.enEl.dataset.eosCopyScope, item.enEl.dataset.eosCopyKey, item.enEl.innerHTML);
+                        item.enEl._preTranslateHtml = item.enEl.innerHTML;
+                        item.enEl.innerHTML = res.translatedText;
+                        saveCopy(item.enEl);
+                        saveSyncedCn(item.enEl.dataset.eosCopyScope, item.enEl.dataset.eosCopyKey, item.cnEl.innerHTML);
+                        item.enEl.dispatchEvent(new Event('input', { bubbles: true }));
+                        successCount++;
+                    }
+                }
+            }
+            updateBilingualSyncStatus();
+            setCopyStatus(`已由 AI 助手完成全部 ${successCount} 处内容的同步翻译与格式对齐！`);
+        } catch (err) {
+            console.error('批量 AI 翻译异常:', err);
+            alert(`批量翻译部分完成：成功 ${successCount} 处，错误：${err.message}`);
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        }
+    }
+
+    // Floating Diff Popover Controller
+    let diffPopoverEl = null;
+    let popoverHideTimer = null;
+    let activePopoverContext = null;
+
+    function getOrCreateDiffPopover() {
+        if (diffPopoverEl && document.body.contains(diffPopoverEl)) return diffPopoverEl;
+
+        const popover = document.createElement('div');
+        popover.id = 'eosDiffPopover';
+        popover.className = 'topic-diff-popover print-hide';
+        popover.setAttribute('data-html2canvas-ignore', 'true');
+        popover.innerHTML = `
+            <div class="topic-diff-header">
+                <div class="topic-diff-title-wrap">
+                    <span class="topic-diff-icon">🔍</span>
+                    <span class="topic-diff-title">中文修改对比与参考</span>
+                    <span class="topic-diff-status-tag" id="eosDiffStatusTag">⚠️ 英文待同步</span>
+                </div>
+                <button type="button" class="topic-diff-close" title="关闭">✕</button>
+            </div>
+            <div class="topic-diff-body">
+                <div class="topic-diff-section is-before">
+                    <div class="topic-diff-section-header">
+                        <span class="topic-diff-section-label">【以前 / 修改前】</span>
+                        <span class="topic-diff-section-sub">原始模板或上次同步的中文</span>
+                    </div>
+                    <div class="topic-diff-content" id="eosDiffBeforeContent"></div>
+                </div>
+                <div class="topic-diff-arrow">⬇ 当前修改为 ⬇</div>
+                <div class="topic-diff-section is-after">
+                    <div class="topic-diff-section-header">
+                        <span class="topic-diff-section-label">【现在 / 修改后】</span>
+                        <span class="topic-diff-section-sub">当前最新中文内容（含粗体/颜色格式）</span>
+                    </div>
+                    <div class="topic-diff-content" id="eosDiffAfterContent"></div>
+                </div>
+            </div>
+            <div class="topic-diff-footer">
+                <div class="topic-diff-tip">💡 提示：可一键复制修改后的中文，或直接点击 AI 翻译同步</div>
+                <div class="topic-diff-actions">
+                    <button type="button" class="topic-diff-copy-btn" id="eosDiffCopyBtn">
+                        <span class="topic-diff-copy-icon">📋</span>
+                        <span class="topic-diff-copy-label">一键复制文字</span>
+                    </button>
+                    <button type="button" class="topic-diff-revert-btn" id="eosDiffRevertBtn" title="撤回本段英文的翻译，恢复为翻译前的内容" style="display: none;">
+                        <span>↩ 撤回翻译</span>
+                    </button>
+                    <button type="button" class="topic-diff-ai-btn" id="eosDiffAiBtn">
+                        <span>✨ AI 翻译同步</span>
+                    </button>
+                </div>
+            </div>
+        `;
+
+        popover.addEventListener('mouseenter', () => {
+            if (popoverHideTimer) {
+                clearTimeout(popoverHideTimer);
+                popoverHideTimer = null;
+            }
+        });
+
+        popover.addEventListener('mouseleave', () => {
+            popoverHideTimer = setTimeout(() => hideDiffPopover(true), 250);
+        });
+
+        const closeBtn = popover.querySelector('.topic-diff-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                hideDiffPopover(true);
+            });
+        }
+
+        const copyBtn = popover.querySelector('#eosDiffCopyBtn');
+        if (copyBtn) {
+            copyBtn.addEventListener('click', async () => {
+                if (!activePopoverContext) return;
+                const textToCopy = (activePopoverContext.afterPlain || '').trim();
+                if (!textToCopy) return;
+
+                let copied = false;
+                try {
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        await navigator.clipboard.writeText(textToCopy);
+                        copied = true;
+                    }
+                } catch (_) {}
+                if (!copied) {
+                    try {
+                        const textarea = document.createElement('textarea');
+                        textarea.value = textToCopy;
+                        textarea.style.position = 'fixed';
+                        textarea.style.left = '-9999px';
+                        document.body.appendChild(textarea);
+                        textarea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textarea);
+                        copied = true;
+                    } catch (_) {}
+                }
+
+                if (copied) {
+                    const label = copyBtn.querySelector('.topic-diff-copy-label');
+                    copyBtn.classList.add('is-copied');
+                    if (label) label.textContent = '✓ 已复制！';
+                    setCopyStatus('已将修改后的中文文字复制到剪贴板');
+                    setTimeout(() => {
+                        copyBtn.classList.remove('is-copied');
+                        if (label) label.textContent = '一键复制文字';
+                    }, 2000);
+                }
+            });
+        }
+
+        const revertBtn = popover.querySelector('#eosDiffRevertBtn');
+        if (revertBtn) {
+            revertBtn.addEventListener('click', () => {
+                if (!activePopoverContext || !activePopoverContext.enEl) return;
+                const targetEn = activePopoverContext.enEl;
+                const enScope = targetEn.dataset.eosCopyScope;
+                const enKey = targetEn.dataset.eosCopyKey;
+                const enDefaultKey = `${enScope}-${enKey}`;
+                const defaultHtml = (state.copyDefaults.get(enDefaultKey) || '').trim();
+
+                const preTransPrefs = readPreTranslatePreferences(enScope);
+                const preHtml = targetEn._preTranslateHtml || preTransPrefs[enKey] || defaultHtml;
+
+                // 1. Revert HTML in targetEn
+                targetEn.innerHTML = sanitizeCopyHtml(preHtml);
+
+                // 2. Update copy preferences
+                const copyPrefs = readCopyPreferences(enScope);
+                if (targetEn.innerHTML.trim() === defaultHtml) {
+                    delete copyPrefs[enKey];
+                } else {
+                    copyPrefs[enKey] = targetEn.innerHTML;
+                }
+                try {
+                    localStorage.setItem(copyStorageKey(enScope), JSON.stringify(copyPrefs));
+                } catch (_) {}
+
+                // 3. Clear pre-translate snapshot
+                clearPreTranslate(enScope, enKey);
+                delete targetEn._preTranslateHtml;
+
+                // 4. Clear synced baseline for this item
+                clearSyncedCn(enScope, enKey);
+
+                // 5. Update bilingual sync status (do not dispatch input to prevent re-marking as synced)
+                updateBilingualSyncStatus();
+
+                // 6. Immediate feedback in popover
+                revertBtn.classList.add('is-reverted');
+                revertBtn.innerHTML = '<span>✓ 已撤回</span>';
+                revertBtn.disabled = true;
+
+                const statusTag = popover.querySelector('#eosDiffStatusTag');
+                if (statusTag) {
+                    statusTag.className = 'topic-diff-status-tag is-warn';
+                    statusTag.textContent = '⚠️ 英文待同步';
+                }
+
+                const aiBtn = popover.querySelector('#eosDiffAiBtn');
+                if (aiBtn) {
+                    aiBtn.style.display = 'inline-flex';
+                    aiBtn.disabled = !state.isAiConnected;
+                    aiBtn.classList.toggle('is-disabled', !state.isAiConnected);
+                }
+
+                if (activePopoverContext) {
+                    activePopoverContext.isSynced = false;
+                }
+
+                setCopyStatus('已成功撤回该段翻译，已恢复为翻译前版本！');
+
+                setTimeout(() => {
+                    if (revertBtn) {
+                        revertBtn.classList.remove('is-reverted');
+                        revertBtn.innerHTML = '<span>↩ 撤回翻译</span>';
+                        revertBtn.disabled = false;
+                        revertBtn.style.display = 'none';
+                    }
+                }, 1500);
+            });
+        }
+
+        const aiBtn = popover.querySelector('#eosDiffAiBtn');
+        if (aiBtn) {
+            aiBtn.addEventListener('click', async () => {
+                if (!activePopoverContext || !activePopoverContext.cnEl || !activePopoverContext.enEl) return;
+                const targetCn = activePopoverContext.cnEl;
+                const targetEn = activePopoverContext.enEl;
+                await performAiTranslate(targetCn, targetEn, aiBtn);
+                if (activePopoverContext && activePopoverContext.enEl === targetEn) {
+                    const statusTag = popover.querySelector('#eosDiffStatusTag');
+                    if (statusTag) {
+                        statusTag.className = 'topic-diff-status-tag is-synced';
+                        statusTag.textContent = '✓ 英文已同步';
+                    }
+                    aiBtn.style.display = 'none';
+                    const revertBtnEl = popover.querySelector('#eosDiffRevertBtn');
+                    if (revertBtnEl) {
+                        revertBtnEl.style.display = 'inline-flex';
+                        revertBtnEl.classList.remove('is-reverted');
+                        revertBtnEl.innerHTML = '<span>↩ 撤回翻译</span>';
+                        revertBtnEl.disabled = false;
+                    }
+                    activePopoverContext.isSynced = true;
+                }
+            });
+        }
+
+        document.body.appendChild(popover);
+        diffPopoverEl = popover;
+        return popover;
+    }
+
+    function showDiffPopover(anchorEl, context) {
+        if (!anchorEl || !context || !context.isModified) return;
+        if (popoverHideTimer) {
+            clearTimeout(popoverHideTimer);
+            popoverHideTimer = null;
+        }
+
+        const popover = getOrCreateDiffPopover();
+        activePopoverContext = context;
+
+        const statusTag = popover.querySelector('#eosDiffStatusTag');
+        const beforeContent = popover.querySelector('#eosDiffBeforeContent');
+        const afterContent = popover.querySelector('#eosDiffAfterContent');
+        const aiBtn = popover.querySelector('#eosDiffAiBtn');
+        const revertBtn = popover.querySelector('#eosDiffRevertBtn');
+
+        const enEl = context.enEl;
+        const enScope = enEl?.dataset?.eosCopyScope;
+        const enKey = enEl?.dataset?.eosCopyKey;
+        const hasPreTrans = Boolean(
+            (enEl && enEl._preTranslateHtml) ||
+            (enScope && enKey && readPreTranslatePreferences(enScope)[enKey])
+        );
+        const canRevert = Boolean(context.isSynced || hasPreTrans);
+
+        if (context.isSynced) {
+            if (statusTag) {
+                statusTag.className = 'topic-diff-status-tag is-synced';
+                statusTag.textContent = '✓ 英文已同步';
+            }
+            if (aiBtn) aiBtn.style.display = 'none';
+            if (revertBtn) {
+                revertBtn.style.display = 'inline-flex';
+                revertBtn.classList.remove('is-reverted');
+                revertBtn.innerHTML = '<span>↩ 撤回翻译</span>';
+                revertBtn.disabled = false;
+            }
+        } else {
+            if (statusTag) {
+                statusTag.className = 'topic-diff-status-tag is-warn';
+                statusTag.textContent = '⚠️ 英文待同步';
+            }
+            if (aiBtn) {
+                aiBtn.style.display = 'inline-flex';
+                aiBtn.disabled = !state.isAiConnected;
+                aiBtn.classList.toggle('is-disabled', !state.isAiConnected);
+            }
+            if (revertBtn) {
+                if (canRevert) {
+                    revertBtn.style.display = 'inline-flex';
+                    revertBtn.classList.remove('is-reverted');
+                    revertBtn.innerHTML = '<span>↩ 撤回翻译</span>';
+                    revertBtn.disabled = false;
+                } else {
+                    revertBtn.style.display = 'none';
+                }
+            }
+        }
+
+        if (beforeContent) beforeContent.innerHTML = context.beforeHtml || '<span style="color:#94a3b8;">（无历史内容）</span>';
+        if (afterContent) afterContent.innerHTML = context.afterHtml || '<span style="color:#94a3b8;">（无修改内容）</span>';
+
+        const rect = anchorEl.getBoundingClientRect();
+        const popoverWidth = 450;
+        let left = rect.left + (rect.width / 2) - (popoverWidth / 2);
+        left = Math.max(16, Math.min(window.innerWidth - popoverWidth - 16, left));
+
+        popover.style.left = `${left}px`;
+        popover.classList.add('is-visible');
+
+        const popoverHeight = popover.offsetHeight || 300;
+        let top;
+        if (rect.top > popoverHeight + 16) {
+            top = rect.top - popoverHeight - 8;
+        } else {
+            top = rect.bottom + 8;
+        }
+        top = Math.max(10, Math.min(window.innerHeight - popoverHeight - 10, top));
+        popover.style.top = `${top}px`;
+    }
+
+    function hideDiffPopover(immediate = false) {
+        if (!diffPopoverEl) return;
+        if (immediate) {
+            if (popoverHideTimer) {
+                clearTimeout(popoverHideTimer);
+                popoverHideTimer = null;
+            }
+            diffPopoverEl.classList.remove('is-visible');
+            activePopoverContext = null;
+        } else {
+            if (popoverHideTimer) clearTimeout(popoverHideTimer);
+            popoverHideTimer = setTimeout(() => {
+                if (diffPopoverEl) diffPopoverEl.classList.remove('is-visible');
+                activePopoverContext = null;
+            }, 250);
+        }
+    }
+
+    function attachDiffPopoverListeners(targetEl, getContext) {
+        if (!targetEl) return;
+        targetEl._getDiffPopoverContext = getContext;
+        if (!targetEl._hasDiffPopoverListeners) {
+            targetEl._hasDiffPopoverListeners = true;
+            targetEl.addEventListener('mouseenter', () => {
+                const ctx = typeof targetEl._getDiffPopoverContext === 'function' ? targetEl._getDiffPopoverContext() : targetEl._getDiffPopoverContext;
+                if (ctx && ctx.isModified) {
+                    showDiffPopover(targetEl, ctx);
+                }
+            });
+            targetEl.addEventListener('mouseleave', () => {
+                hideDiffPopover(false);
+            });
+        }
+    }
+
+    function renderGutterBadges(modifiedItems) {
+        const gutter = elements?.eosReportGutter || (typeof document !== 'undefined' ? document.getElementById('eosReportGutter') : null);
+        const sheet = elements?.eosReportSheet || (typeof document !== 'undefined' ? document.getElementById('eosReportSheet') : null);
+        if (!gutter || !sheet) return;
+        gutter.innerHTML = '';
+        if (!modifiedItems || !modifiedItems.length) return;
+
+        const sheetRect = sheet.getBoundingClientRect();
+        const placedTops = [];
+
+        modifiedItems.forEach(item => {
+            const { type, cnEl, enEl, label } = item;
+            if (cnEl && cnEl.isConnected) {
+                const cnRect = cnEl.getBoundingClientRect();
+                let top = cnRect.top - sheetRect.top + (cnRect.height / 2) - 12;
+                top = Math.max(0, top);
+                while (placedTops.some(t => Math.abs(t - top) < 24)) {
+                    top += 24;
+                }
+                placedTops.push(top);
+
+                const badge = document.createElement('div');
+                badge.className = 'topic-gutter-badge is-cn print-hide';
+                badge.setAttribute('data-html2canvas-ignore', 'true');
+                badge.style.top = `${Math.round(top)}px`;
+                badge.title = `点击定位到修改的中文内容（${label || '正文'}）`;
+                badge.innerHTML = '<span>✏️ 中文已改</span>';
+                badge.addEventListener('click', () => {
+                    cnEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    cnEl.focus();
+                });
+                gutter.appendChild(badge);
+            }
+
+            if (enEl && enEl.isConnected) {
+                const enRect = enEl.getBoundingClientRect();
+                let top = enRect.top - sheetRect.top + (enRect.height / 2) - 12;
+                top = Math.max(0, top);
+                while (placedTops.some(t => Math.abs(t - top) < 24)) {
+                    top += 24;
+                }
+                placedTops.push(top);
+
+                const badge = document.createElement('div');
+                badge.className = `topic-gutter-badge ${type === 'needs-sync' ? 'is-en-warn' : 'is-en-ok'} print-hide`;
+                badge.setAttribute('data-html2canvas-ignore', 'true');
+                badge.style.top = `${Math.round(top)}px`;
+                badge.title = type === 'needs-sync' ? `点击定位到待核对的英文内容（${label || '正文'}，悬停查看对比）` : `点击定位到已同步的英文内容（${label || '正文'}，悬停查看对比）`;
+
+                attachDiffPopoverListeners(badge, () => ({
+                    isModified: true,
+                    isSynced: type === 'synced',
+                    cnEl,
+                    enEl,
+                    beforeHtml: item.beforeHtml,
+                    afterHtml: item.afterHtml,
+                    afterPlain: (cnEl && cnEl.textContent) ? cnEl.textContent.trim() : ''
+                }));
+
+                if (type === 'needs-sync') {
+                    const isAiConnected = state.isAiConnected === true;
+                    badge.innerHTML = `<span>⚠️ 待同步</span> <button type="button" class="topic-ai-translate-btn topic-ai-translate-mini-btn${isAiConnected ? '' : ' is-disabled'}" ${isAiConnected ? '' : 'disabled'} title="${isAiConnected ? `点击通过 AI 翻译并同步此项（${label || '正文'}）` : '未对接 AI 助手，请配置 API Token'}">${isAiConnected ? '✨ 翻译' : '✨ 禁用'}</button>`;
+                    badge.addEventListener('click', event => {
+                        const transBtn = event.target.closest('.topic-ai-translate-btn');
+                        if (transBtn) {
+                            event.stopPropagation();
+                            if (isAiConnected) {
+                                performAiTranslate(cnEl, enEl, transBtn);
+                            }
+                            return;
+                        }
+                        enEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        enEl.focus();
+                    });
+                } else {
+                    badge.innerHTML = '<span>✓ 英文已改</span>';
+                    badge.addEventListener('click', () => {
+                        enEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        enEl.focus();
+                    });
+                }
+                gutter.appendChild(badge);
+            }
+        });
+    }
+
+    function updateSyncCapsule(modifiedItems) {
+        const capsule = elements?.eosSyncCapsule || (typeof document !== 'undefined' ? document.getElementById('eosSyncCapsule') : null);
+        if (!capsule) return;
+        if (!modifiedItems || !modifiedItems.length) {
+            capsule.hidden = true;
+            return;
+        }
+        const total = modifiedItems.length;
+        const pending = modifiedItems.filter(i => i.type === 'needs-sync').length;
+        if (pending > 0) {
+            const isAiConnected = state.isAiConnected === true;
+            capsule.className = 'topic-sync-capsule has-pending';
+            capsule.innerHTML = `<span>📝 ${total} 处修改</span> · <span style="color:#b45309;font-weight:700;">⚠️ ${pending} 处待同步英文</span> <button type="button" class="topic-ai-translate-btn topic-ai-translate-mini-btn${isAiConnected ? '' : ' is-disabled'}" ${isAiConnected ? '' : 'disabled'} title="${isAiConnected ? '点击使用 AI 助手一键同步翻译所有待同步英文内容' : '未在全局配置中对接 AI 助手，请配置 API Token'}">${isAiConnected ? '✨ 全部 AI 翻译' : '✨ AI 未对接'}</button>`;
+            capsule.onclick = event => {
+                const btn = event.target.closest('.topic-ai-translate-btn');
+                if (btn) {
+                    event.stopPropagation();
+                    if (isAiConnected) {
+                        performAiTranslateAll(modifiedItems.filter(i => i.type === 'needs-sync'), btn);
+                    }
+                    return;
+                }
+                const firstPending = modifiedItems.find(i => i.type === 'needs-sync');
+                if (firstPending && firstPending.enEl) {
+                    firstPending.enEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    firstPending.enEl.focus();
+                }
+            };
+        } else {
+            capsule.className = 'topic-sync-capsule';
+            capsule.innerHTML = `<span>📝 ${total} 处修改</span> · <span style="color:#047857;font-weight:700;">✓ 英文全部已同步</span>`;
+            capsule.title = `共有 ${total} 处内容被修改，中英文均已完成同步。`;
+            capsule.onclick = null;
+        }
+        capsule.hidden = false;
+    }
+
+    function updateBilingualSyncStatus() {
+        const sheet = elements?.eosReportSheet || (typeof document !== 'undefined' ? document.getElementById('eosReportSheet') : null);
+        if (!sheet) return;
+
+        sheet.querySelectorAll('.topic-sync-chip').forEach(chip => chip.remove());
+        sheet.querySelectorAll('.topic-block-modified').forEach(el => el.classList.remove('topic-block-modified'));
+        sheet.querySelectorAll('.topic-en-needs-sync').forEach(el => el.classList.remove('topic-en-needs-sync'));
+        sheet.querySelectorAll('.topic-en-synced').forEach(el => el.classList.remove('topic-en-synced'));
+
+        const modifiedItems = [];
+        const cnBlocks = sheet.querySelectorAll('[data-eos-copy-scope="monthly"], [data-eos-copy-scope="fixed"]');
+
+        cnBlocks.forEach(cnEl => {
+            const scope = cnEl.dataset.eosCopyScope;
+            const key = cnEl.dataset.eosCopyKey;
+            const defaultKey = `${scope}-${key}`;
+            const defaultHtml = (state.copyDefaults.get(defaultKey) || '').trim();
+            const currentHtml = sanitizeCopyHtml(cnEl.innerHTML).trim();
+
+            const syncedMap = readSyncedCnPreferences(scope);
+            const syncedHtml = (syncedMap[key] || '').trim();
+
+            // Chinese is modified if:
+            // 1. Different from template (defaultHtml)
+            // 2. OR different from last synced Chinese (syncedHtml)
+            const isDiffFromTemplate = Boolean(defaultHtml && currentHtml !== defaultHtml);
+            const isDiffFromLastSync = Boolean(syncedHtml && currentHtml !== syncedHtml);
+            const isCnModified = isDiffFromTemplate || isDiffFromLastSync;
+
+            if (isCnModified) {
+                cnEl.classList.add('topic-block-modified');
+                const enScope = `${scope}-en`;
+                const enEl = sheet.querySelector(`[data-eos-copy-scope="${enScope}"][data-eos-copy-key="${key}"]`);
+
+                if (enEl) {
+                    const enDefaultKey = `${enScope}-${key}`;
+                    const enDefaultHtml = (state.copyDefaults.get(enDefaultKey) || '').trim();
+                    const enCurrentHtml = sanitizeCopyHtml(enEl.innerHTML).trim();
+
+                    // Baseline for comparison in popover:
+                    const beforeHtml = syncedHtml || defaultHtml;
+                    const afterHtml = currentHtml;
+
+                    // English is in sync if syncedHtml equals currentHtml AND Chinese was modified from template
+                    const isEnSynced = Boolean(syncedHtml && currentHtml === syncedHtml && isDiffFromTemplate);
+
+                    const getPopoverContext = () => ({
+                        isModified: true,
+                        isSynced: isEnSynced,
+                        cnEl,
+                        enEl,
+                        beforeHtml,
+                        afterHtml,
+                        afterPlain: cnEl.textContent ? cnEl.textContent.trim() : ''
+                    });
+
+                    attachDiffPopoverListeners(enEl, getPopoverContext);
+
+                    if (isEnSynced) {
+                        enEl.classList.add('topic-en-synced');
+                        if (enEl.tagName !== 'TD' && enEl.tagName !== 'TH') {
+                            const chip = document.createElement('div');
+                            chip.className = 'topic-sync-chip topic-sync-chip-synced print-hide';
+                            chip.setAttribute('data-html2canvas-ignore', 'true');
+                            chip.setAttribute('contenteditable', 'false');
+                            chip.innerHTML = '<span>✓ 英文已同步修改</span>';
+                            attachDiffPopoverListeners(chip, getPopoverContext);
+                            enEl.parentElement.insertBefore(chip, enEl);
+                        } else {
+                            enEl.title = '✓ 英文已同步修改（对应中文已改，悬停可查看对比）';
+                        }
+                        modifiedItems.push({ type: 'synced', cnEl, enEl, key, label: getBlockLabel(cnEl), beforeHtml, afterHtml });
+                    } else {
+                        enEl.classList.add('topic-en-needs-sync');
+                        const isAiConnected = state.isAiConnected === true;
+                        const aiBtnTitle = isAiConnected
+                            ? '基于已修改的中文内容，通过 AI 助手专业翻译并同步英文（自动保全粗体和颜色格式）'
+                            : '未在全局配置中对接 AI 助手 API Token（灰色显示），请在导航栏「设置 > AI 助手」中配置';
+
+                        if (enEl.tagName !== 'TD' && enEl.tagName !== 'TH') {
+                            const chip = document.createElement('div');
+                            chip.className = 'topic-sync-chip topic-sync-chip-warn print-hide';
+                            chip.setAttribute('data-html2canvas-ignore', 'true');
+                            chip.setAttribute('contenteditable', 'false');
+
+                            const warnSpan = document.createElement('span');
+                            warnSpan.textContent = '⚠️ 对应中文已修改，建议同步修改英文';
+                            chip.appendChild(warnSpan);
+
+                            const aiBtn = document.createElement('button');
+                            aiBtn.type = 'button';
+                            aiBtn.className = `topic-ai-translate-btn${isAiConnected ? '' : ' is-disabled'}`;
+                            aiBtn.disabled = !isAiConnected;
+                            aiBtn.title = aiBtnTitle;
+                            aiBtn.innerHTML = isAiConnected ? '✨ AI 翻译' : '✨ AI 翻译 (未对接AI)';
+                            aiBtn.addEventListener('click', event => {
+                                event.stopPropagation();
+                                hideDiffPopover(true);
+                                performAiTranslate(cnEl, enEl, aiBtn);
+                            });
+                            chip.appendChild(aiBtn);
+
+                            attachDiffPopoverListeners(chip, getPopoverContext);
+                            enEl.parentElement.insertBefore(chip, enEl);
+                        } else {
+                            enEl.title = isAiConnected
+                                ? '⚠️ 对应中文表格内容已修改，可点击外侧翻译按钮或悬停查看修改对比'
+                                : '⚠️ 对应中文表格内容已修改，建议同步核对修改英文（AI 未对接）';
+                        }
+                        modifiedItems.push({ type: 'needs-sync', cnEl, enEl, key, label: getBlockLabel(cnEl), beforeHtml, afterHtml });
+                    }
+                } else {
+                    modifiedItems.push({ type: 'cn-only', cnEl, enEl: null, key, label: getBlockLabel(cnEl), beforeHtml: defaultHtml, afterHtml: currentHtml });
+                }
+            } else {
+                const enScope = `${scope}-en`;
+                const enEl = sheet.querySelector(`[data-eos-copy-scope="${enScope}"][data-eos-copy-key="${key}"]`);
+                if (enEl) enEl._getDiffPopoverContext = null;
+            }
+        });
+
+        renderGutterBadges(modifiedItems);
+        updateSyncCapsule(modifiedItems);
     }
 
     function hideTextToolbar() { elements.eosTextToolbar.hidden = true; editingBlock = null; editingRange = null; }
@@ -602,6 +1499,7 @@
         if (command === 'foreColor') document.execCommand('styleWithCSS', false, true);
         document.execCommand(command, false, value || null);
         saveCopy(editingBlock);
+        updateBilingualSyncStatus();
         rememberTextSelection();
     }
 
@@ -663,9 +1561,9 @@
     }
 
     function reportExcelRichText(block) {
-        const computed = getComputedStyle(block);
-        const base = { bold: Number.parseInt(computed.fontWeight, 10) >= 600, color: computed.color };
-        const size = Math.max(9, Math.round(Number.parseFloat(computed.fontSize) * 0.75));
+        const computed = typeof getComputedStyle === 'function' ? getComputedStyle(block) : { fontWeight: '400', color: '#000000', fontSize: '14px' };
+        const base = { bold: Number.parseInt(computed.fontWeight || '400', 10) >= 600, color: computed.color || '#000000' };
+        const size = Math.max(9, Math.round(Number.parseFloat(computed.fontSize || '14') * 0.75));
         const runs = [];
         const visit = (node, format) => {
             if (node.nodeType === Node.TEXT_NODE) {
@@ -795,7 +1693,12 @@
                     const text = cell.textContent.trim();
                     const isPercent = /^[\d.]+%$/.test(text);
                     const isNumeric = /^-?\d+(?:,\d+)*(?:\.\d+)?$/.test(text);
-                    xlCell.value = isPercent ? text : (isNumeric ? Number(text.replace(/,/g, '')) : text);
+                    const hasRichFormat = typeof cell.querySelector === 'function' && cell.querySelector('strong, b, span[style*="color"], font[color]');
+                    if (hasRichFormat && typeof reportExcelRichText === 'function') {
+                        xlCell.value = reportExcelRichText(cell);
+                    } else {
+                        xlCell.value = isPercent ? text : (isNumeric ? Number(text.replace(/,/g, '')) : text);
+                    }
                     const isComplete = cell.classList.contains('topic-fixed-complete');
                     xlCell.font = {
                         name: 'Microsoft YaHei',
@@ -822,6 +1725,14 @@
 
         const appendNode = node => {
             if (!node || node.nodeType !== Node.ELEMENT_NODE) return;
+            if (node.classList?.contains('topic-report-gutter') || node.classList?.contains('topic-sync-chip') || node.hasAttribute?.('data-html2canvas-ignore')) {
+                return;
+            }
+            if (node.classList?.contains('topic-monthly-source')) {
+                if (node.classList.contains('is-hidden') || node.style?.display === 'none') {
+                    return;
+                }
+            }
             if (node.classList?.contains('topic-report-caption')) {
                 appendCaption(node);
             } else if (node.tagName === 'TABLE') {
@@ -1284,7 +2195,8 @@
                 backgroundColor: '#ffffff',
                 scale: 2,
                 useCORS: true,
-                logging: false
+                logging: false,
+                ignoreElements: el => el.hasAttribute && (el.hasAttribute('data-html2canvas-ignore') || el.classList.contains('print-hide') || el.classList.contains('topic-sync-chip') || el.classList.contains('topic-report-gutter'))
             });
             const month = state.eosMonthlyReport.month || '当期';
             const link = document.createElement('a');
@@ -1300,6 +2212,195 @@
             }
             button.classList.remove('is-loading');
             button.textContent = originalText;
+        }
+    }
+
+    async function exportMonthlyPdf() {
+        if (!state.eosMonthlyReport) {
+            alert('当前暂无月报数据可供导出。');
+            return;
+        }
+        if (typeof html2canvas !== 'function') {
+            alert('图片转换依赖（html2canvas）未加载，请刷新页面后重试。');
+            return;
+        }
+        const jsPdfConstructor = window.jspdf?.jsPDF || (typeof jsPDF === 'function' ? jsPDF : null);
+        if (!jsPdfConstructor) {
+            alert('PDF 导出依赖（jsPDF）未加载，请刷新页面后重试。');
+            return;
+        }
+        const sheet = elements.eosReportSheet || document.getElementById('eosReportSheet');
+        if (!sheet) return;
+        hideTextToolbar();
+        hideDiffPopover(true);
+        if (document.activeElement && document.activeElement.classList?.contains('topic-editable')) {
+            document.activeElement.blur();
+        }
+        const button = elements.eosDownloadPdf;
+        const originalText = button ? button.textContent : '';
+        if (button) {
+            button.classList.add('is-loading');
+            button.textContent = '正在生成 PDF...';
+        }
+
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        if (currentTheme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'light');
+        }
+        try {
+            await new Promise(resolve => setTimeout(resolve, 50));
+            const canvas = await html2canvas(sheet, {
+                backgroundColor: '#ffffff',
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                ignoreElements: el => el.hasAttribute && (
+                    el.hasAttribute('data-html2canvas-ignore') ||
+                    el.classList.contains('print-hide') ||
+                    el.classList.contains('topic-sync-chip') ||
+                    el.classList.contains('topic-report-gutter') ||
+                    el.classList.contains('topic-diff-popover')
+                )
+            });
+
+            const imgData = canvas.toDataURL('image/jpeg', 0.96);
+            const pdfWidth = 595.28;
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+            const pdf = new jsPdfConstructor({
+                orientation: 'p',
+                unit: 'pt',
+                format: [pdfWidth, pdfHeight],
+                compress: true
+            });
+            pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+
+            const month = state.eosMonthlyReport.month || '当期';
+            const filename = `埃及代表处EOS退网收编简报_${month}.pdf`;
+            pdf.save(filename);
+            setCopyStatus('月报 PDF 导出成功！');
+        } catch (error) {
+            console.error('月报 PDF 导出失败:', error);
+            alert(`月报 PDF 导出失败：${error.message}`);
+        } finally {
+            if (currentTheme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+            if (button) {
+                button.classList.remove('is-loading');
+                button.textContent = originalText;
+            }
+        }
+    }
+
+    async function exportMonthlyHtml() {
+        if (!state.eosMonthlyReport) {
+            alert('当前暂无月报数据可供导出。');
+            return;
+        }
+        const sheet = elements.eosReportSheet || document.getElementById('eosReportSheet');
+        if (!sheet) return;
+        hideTextToolbar();
+        hideDiffPopover(true);
+        if (document.activeElement && document.activeElement.classList?.contains('topic-editable')) {
+            document.activeElement.blur();
+        }
+        const button = elements.eosDownloadHtml;
+        const originalText = button ? button.textContent : '';
+        if (button) {
+            button.classList.add('is-loading');
+            button.textContent = '正在生成 HTML...';
+        }
+        try {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            let cleanDom;
+            try {
+                if (currentTheme === 'dark') document.documentElement.setAttribute('data-theme', 'light');
+                cleanDom = window.ReportMsgExport?.copyForEmail ? window.ReportMsgExport.copyForEmail(sheet) : null;
+            } finally {
+                if (currentTheme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+            }
+            if (!cleanDom) {
+                throw new Error('未能提取月报排版内容');
+            }
+
+            const month = state.eosMonthlyReport.month || '当期';
+            const htmlDocument = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>埃及代表处EOS退网收编简报（${escapeHtml(month)}）</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 28px 16px;
+            background: #f1f5f9;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+            color: #0f172a;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+        .topic-html-page {
+            max-width: 980px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 36px 32px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e2e8f0;
+        }
+        table {
+            border-collapse: collapse !important;
+            width: 100% !important;
+        }
+        a {
+            color: #1d4ed8;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        @media print {
+            body {
+                background: #ffffff !important;
+                padding: 0 !important;
+            }
+            .topic-html-page {
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="topic-html-page">
+        ${cleanDom.outerHTML}
+    </div>
+</body>
+</html>`;
+
+            const blob = new Blob([htmlDocument], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.download = `埃及代表处EOS退网收编简报_${month}.html`;
+            link.href = url;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 2000);
+            setCopyStatus('月报 HTML 导出成功！');
+        } catch (error) {
+            console.error('月报 HTML 导出失败:', error);
+            alert(`月报 HTML 导出失败：${error.message}`);
+        } finally {
+            if (button) {
+                button.classList.remove('is-loading');
+                button.textContent = originalText;
+            }
         }
     }
 
@@ -1366,6 +2467,175 @@
         } finally {
             button.disabled = false;
             button.textContent = originalText;
+        }
+    }
+
+    function exportProjectFile() {
+        if (!state.eosMonthlyReport) {
+            alert('当前没有可导出的月报数据。');
+            return;
+        }
+        const report = state.eosMonthlyReport;
+        const month = report.month || '当月';
+        const project = {
+            fileType: 'topic-eos-monthly-project',
+            schemaVersion: 1,
+            exportedAt: new Date().toISOString(),
+            month: month,
+            sourceTimeHidden: elements.eosMonthlySource ? elements.eosMonthlySource.classList.contains('is-hidden') : false,
+            customerMappingConfig: readMappingConfig(),
+            reportData: report,
+            snapshot: state.eosMonthlySnapshot || report.snapshot || null,
+            copyPreferences: {
+                monthly: readCopyPreferences('monthly'),
+                monthlyEn: readCopyPreferences('monthly-en'),
+                fixed: readCopyPreferences('fixed'),
+                fixedEn: readCopyPreferences('fixed-en')
+            },
+            syncedCnPreferences: {
+                monthly: readSyncedCnPreferences('monthly'),
+                fixed: readSyncedCnPreferences('fixed')
+            }
+        };
+
+        const jsonStr = JSON.stringify(project, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        const pad = (n, len = 2) => String(n).padStart(len, '0');
+        const now = new Date();
+        const dateStr = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+        link.download = `EOS月报编辑工程_${month}_${dateStr}.eos.json`;
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+        setCopyStatus(`已导出「${month}」月报工程文件（含完整离线数据与定制编辑）`);
+    }
+
+    async function importProjectFile(file) {
+        if (!file) return;
+        try {
+            const text = await file.text();
+            let project;
+            try {
+                project = JSON.parse(text);
+            } catch (err) {
+                throw new Error('选中的文件不是合法的 JSON 格式。');
+            }
+            if (!project || typeof project !== 'object') {
+                throw new Error('工程文件内容为空或格式无效。');
+            }
+            if (project.fileType !== 'topic-eos-monthly-project' && !project.copyPreferences && !project.reportData) {
+                throw new Error('文件类型不匹配，请选择有效的 EOS 月报工程文件 (*.eos.json 或 *.json)。');
+            }
+
+            const month = project.month || project.reportData?.month;
+            if (!month) {
+                throw new Error('工程文件中缺少有效的报告月份信息。');
+            }
+
+            // 1. Restore customer mapping config if provided
+            if (project.customerMappingConfig && typeof project.customerMappingConfig === 'object') {
+                try {
+                    localStorage.setItem(MAPPING_STORAGE_KEY, JSON.stringify(project.customerMappingConfig));
+                } catch (_) {}
+            }
+
+            // 2. Restore copyPreferences into localStorage for the project month & fixed
+            if (project.copyPreferences && typeof project.copyPreferences === 'object') {
+                const savePrefsForScope = (scope, prefs) => {
+                    if (!prefs || typeof prefs !== 'object') return;
+                    let tenant = 'default';
+                    try { tenant = localStorage.getItem('tools_tenant_id') || tenant; } catch (_) {}
+                    const key = `topic-eos:monthly-copy:v1:${tenant}:${scope.startsWith('fixed') ? scope : `month:${scope}:${month}`}`;
+                    try { localStorage.setItem(key, JSON.stringify(prefs)); } catch (_) {}
+                };
+
+                savePrefsForScope('monthly', project.copyPreferences.monthly);
+                savePrefsForScope('monthly-en', project.copyPreferences.monthlyEn || project.copyPreferences['monthly-en']);
+                savePrefsForScope('fixed', project.copyPreferences.fixed);
+                savePrefsForScope('fixed-en', project.copyPreferences.fixedEn || project.copyPreferences['fixed-en']);
+            }
+
+            // 2.1 Restore syncedCnPreferences into localStorage
+            if (project.syncedCnPreferences && typeof project.syncedCnPreferences === 'object') {
+                const saveSyncedForScope = (scope, prefs) => {
+                    if (!prefs || typeof prefs !== 'object') return;
+                    let tenant = 'default';
+                    try { tenant = localStorage.getItem('tools_tenant_id') || tenant; } catch (_) {}
+                    const key = `topic-eos:synced-cn:v1:${tenant}:${scope.startsWith('fixed') ? scope : `month:${scope}:${month}`}`;
+                    try { localStorage.setItem(key, JSON.stringify(prefs)); } catch (_) {}
+                };
+
+                saveSyncedForScope('monthly', project.syncedCnPreferences.monthly);
+                saveSyncedForScope('fixed', project.syncedCnPreferences.fixed);
+            }
+
+            // 3. Restore source time hidden setting
+            if (typeof project.sourceTimeHidden === 'boolean') {
+                try {
+                    localStorage.setItem(SOURCE_TIME_HIDDEN_KEY, project.sourceTimeHidden ? '1' : '0');
+                } catch (_) {}
+                updateSourceTimeVisibility(project.sourceTimeHidden);
+            }
+
+            // 4. Use project.reportData as the active report (guarantees complete offline data)
+            const report = project.reportData || createDefaultReport();
+            report.month = month;
+            state.eosMonthlyReport = report;
+            state.eosMonthlySnapshot = project.snapshot || report.snapshot || null;
+            state.isImportedProject = true;
+            state.importedProjectMeta = {
+                filename: file.name,
+                exportedAt: project.exportedAt,
+                month: month
+            };
+
+            // Ensure month dropdown has this month selected
+            let monthFound = false;
+            Array.from(elements.eosMonthlyMonth.options).forEach(opt => {
+                if (opt.value === month) {
+                    opt.selected = true;
+                    monthFound = true;
+                }
+            });
+            if (!monthFound) {
+                const opt = document.createElement('option');
+                opt.value = month;
+                opt.textContent = `${month} (工程文件)`;
+                opt.selected = true;
+                elements.eosMonthlyMonth.appendChild(opt);
+            }
+
+            // 5. Update UI & banner/source text
+            elements.eosCopyResetMonth.disabled = false;
+            if (elements.eosDownloadPng) elements.eosDownloadPng.disabled = false;
+            if (elements.eosDownloadPdf) elements.eosDownloadPdf.disabled = false;
+            if (elements.eosDownloadHtml) elements.eosDownloadHtml.disabled = false;
+            if (elements.eosDownloadExcel) elements.eosDownloadExcel.disabled = false;
+            if (elements.eosDownloadMsg) elements.eosDownloadMsg.disabled = false;
+            elements.eosReportEndmark.textContent = `-- 埃及代表处EOS退网收编简报（${report.month}） --`;
+            if (elements.eosReportEndmarkEn) {
+                elements.eosReportEndmarkEn.textContent = `-- Egypt Rep Office EOS Retirement & Incorporation Monthly Report (${report.month}) --`;
+            }
+
+            // Prominent notification of project file data source
+            const exportTimeStr = project.exportedAt ? formatTime(project.exportedAt) : '近期';
+            elements.eosMonthlySource.innerHTML = `<span class="topic-imported-badge">📦 来自导入工程文件</span> 数据月份 ${report.month} · 数据源：已导入离线工程文件《${escapeHtml(file.name)}》（导出于 ${exportTimeStr}） · 包含完整离线数据与定制编辑`;
+
+            renderEosMonthlyReport(report);
+            renderEosMonthlyReportEn(report);
+            updateFixedTablesCustomerNames();
+            updateBilingualSyncStatus();
+
+            hideTextToolbar();
+            setCopyStatus(`已成功导入工程文件《${file.name}》，数据与中英文编辑已全部恢复！`);
+            alert(`【工程文件导入成功】\n\n数据月份：${report.month}\n来源文件：${file.name}\n导出时间：${exportTimeStr}\n\n已完整载入离线报表数据、中英文文案与表格修改，您可直接继续编辑、调整格式或导出。`);
+        } catch (error) {
+            console.error('导入工程文件失败:', error);
+            alert(`导入工程文件失败：${error.message}`);
         }
     }
 
@@ -1463,6 +2733,9 @@
             ${renderMonthlySection(report.version, '版本')}
         `;
         activateCopy(elements.eosMonthlyReport, MONTHLY_COPY_SELECTOR, 'monthly');
+        activateTableCells(elements.eosMonthlyReport.querySelector('#eosMonthlyTable_prod'), 'prod', 'monthly');
+        activateTableCells(elements.eosMonthlyReport.querySelector('#eosMonthlyTable_ver'), 'ver', 'monthly');
+        updateBilingualSyncStatus();
     }
 
     function renderEosMonthlyReportEn(report) {
@@ -1481,6 +2754,9 @@
             ${renderMonthlySectionEn(report.version, 'Version')}
         `;
         activateCopy(elements.eosMonthlyReportEn, MONTHLY_COPY_SELECTOR, 'monthly-en');
+        activateTableCells(elements.eosMonthlyReportEn.querySelector('#eosMonthlyTableEn_prod'), 'prod', 'monthly-en');
+        activateTableCells(elements.eosMonthlyReportEn.querySelector('#eosMonthlyTableEn_ver'), 'ver', 'monthly-en');
+        updateBilingualSyncStatus();
     }
 
     function updateFixedTablesCustomerNames() {
@@ -1488,6 +2764,12 @@
         if (!sheet) return;
         sheet.querySelectorAll('th[data-cust]').forEach(th => {
             const rawCust = th.getAttribute('data-cust');
+            const key = th.dataset?.eosCopyKey;
+            const scope = th.dataset?.eosCopyScope;
+            const prefs = scope ? readCopyPreferences(scope) : {};
+            if (key && typeof prefs[key] === 'string') {
+                return;
+            }
             th.textContent = mapCustomerName(rawCust);
         });
 
@@ -1626,6 +2908,8 @@
     }
 
     async function loadMonthlyReport(month = '') {
+        state.isImportedProject = false;
+        state.importedProjectMeta = null;
         elements.eosMonthlyReport.textContent = '正在生成月报…';
         if (elements.eosMonthlyReportEn) elements.eosMonthlyReportEn.textContent = 'Generating English monthly report…';
         state.eosMonthlySnapshot = null;
@@ -1641,6 +2925,8 @@
             state.eosMonthlyReport = report;
             elements.eosCopyResetMonth.disabled = false;
             if (elements.eosDownloadPng) elements.eosDownloadPng.disabled = false;
+            if (elements.eosDownloadPdf) elements.eosDownloadPdf.disabled = false;
+            if (elements.eosDownloadHtml) elements.eosDownloadHtml.disabled = false;
             if (elements.eosDownloadExcel) elements.eosDownloadExcel.disabled = false;
             if (elements.eosDownloadMsg) elements.eosDownloadMsg.disabled = false;
             elements.eosReportEndmark.textContent = `-- 埃及代表处EOS退网收编简报（${report.month}） --`;
@@ -1651,11 +2937,14 @@
             renderEosMonthlyReport(report);
             renderEosMonthlyReportEn(report);
             updateFixedTablesCustomerNames();
+            updateBilingualSyncStatus();
         } catch (error) {
             const report = createDefaultReport();
             state.eosMonthlyReport = report;
             elements.eosCopyResetMonth.disabled = false;
             if (elements.eosDownloadPng) elements.eosDownloadPng.disabled = false;
+            if (elements.eosDownloadPdf) elements.eosDownloadPdf.disabled = false;
+            if (elements.eosDownloadHtml) elements.eosDownloadHtml.disabled = false;
             if (elements.eosDownloadExcel) elements.eosDownloadExcel.disabled = false;
             if (elements.eosDownloadMsg) elements.eosDownloadMsg.disabled = false;
             elements.eosReportEndmark.textContent = `-- 埃及代表处EOS退网收编简报（${report.month}） --`;
@@ -1666,6 +2955,7 @@
             renderEosMonthlyReport(report);
             renderEosMonthlyReportEn(report);
             updateFixedTablesCustomerNames();
+            updateBilingualSyncStatus();
         }
     }
 
@@ -1695,8 +2985,10 @@
             'totalCount', 'netcareCount', 'datafabCount', 'latestTime', 'themeToggleButton', 'themeToggleIcon', 'themeToggleText', 'refreshButton',
             'topicFilter', 'metricFilter', 'analysisTitle', 'metricDefinition', 'topicKpis', 'trendChart', 'metricColumnTitle', 'loadStatus',
             'historyBody', 'emptyState', 'eosMonthlyMonth', 'eosMonthlySource', 'eosMonthlyReport', 'eosCopyResetMonth', 'eosCopyResetFixed',
-            'eosConfigBtn', 'eosDownloadPng', 'eosDownloadExcel', 'eosDownloadMsg', 'eosReportEndmark', 'eosReportSheet', 'eosCopyStatus', 'eosTextToolbar',
+            'eosConfigBtn', 'eosDownloadPng', 'eosDownloadPdf', 'eosDownloadHtml', 'eosDownloadExcel', 'eosDownloadMsg', 'eosReportEndmark', 'eosReportSheet', 'eosCopyStatus', 'eosTextToolbar',
             'eosMonthlyReportEn', 'eosReportEndmarkEn',
+            'eosToggleSourceTimeBtn', 'eosToggleSourceTimeIcon', 'eosToggleSourceTimeText', 'eosSyncCapsule', 'eosReportGutter',
+            'eosExportProjectBtn', 'eosImportProjectBtn', 'eosProjectFileInput',
             'eosMappingModal', 'closeEosMappingModal', 'eosCancelMappingConfigBtn', 'eosSaveMappingConfigBtn', 'eosResetDefaultMappingsBtn', 'eosAddMappingBtn',
             'eosMinThresholdInput', 'eosMappingTableBody', 'eosNewMapKey', 'eosNewMapVal', 'eosMappingStatusMsg',
             'detailModal', 'detailTitle', 'detailSummary', 'detailTable', 'detailJson', 'downloadDetail', 'viewRaw', 'toggleDetailFullscreen',
@@ -1741,11 +3033,69 @@
             }
         });
         if (elements.eosDownloadPng) elements.eosDownloadPng.addEventListener('click', exportMonthlyPng);
+        if (elements.eosDownloadPdf) elements.eosDownloadPdf.addEventListener('click', exportMonthlyPdf);
+        if (elements.eosDownloadHtml) elements.eosDownloadHtml.addEventListener('click', exportMonthlyHtml);
         if (elements.eosDownloadExcel) elements.eosDownloadExcel.addEventListener('click', exportMonthlyExcel);
         if (elements.eosDownloadMsg) elements.eosDownloadMsg.addEventListener('click', exportMonthlyMsg);
+        if (elements.eosExportProjectBtn) elements.eosExportProjectBtn.addEventListener('click', exportProjectFile);
+        if (elements.eosImportProjectBtn && elements.eosProjectFileInput) {
+            elements.eosImportProjectBtn.addEventListener('click', () => {
+                elements.eosProjectFileInput.value = '';
+                elements.eosProjectFileInput.click();
+            });
+            elements.eosProjectFileInput.addEventListener('change', event => {
+                const file = event.target.files && event.target.files[0];
+                if (file) {
+                    importProjectFile(file);
+                }
+            });
+        }
+        document.addEventListener('click', event => {
+            const navLink = event.target.closest('.topic-report-nav-link');
+            if (navLink) {
+                const href = navLink.getAttribute('href');
+                if (href && href.startsWith('#')) {
+                    const targetId = href.slice(1);
+                    const targetEl = document.getElementById(targetId) || document.querySelector(`a[name="${targetId}"]`);
+                    if (targetEl) {
+                        event.preventDefault();
+                        targetEl.scrollIntoView({ behavior: 'smooth' });
+                    }
+                }
+            }
+        });
+        let hideSourceTime = false;
+        try {
+            hideSourceTime = localStorage.getItem(SOURCE_TIME_HIDDEN_KEY) === '1';
+        } catch (_) {}
+        updateSourceTimeVisibility(hideSourceTime);
+        if (elements.eosToggleSourceTimeBtn) {
+            elements.eosToggleSourceTimeBtn.addEventListener('click', () => {
+                const sourceEl = elements.eosMonthlySource || document.getElementById('eosMonthlySource');
+                const isHiddenNow = sourceEl ? sourceEl.classList.contains('is-hidden') : false;
+                const nextHidden = !isHiddenNow;
+                updateSourceTimeVisibility(nextHidden);
+                try {
+                    localStorage.setItem(SOURCE_TIME_HIDDEN_KEY, nextHidden ? '1' : '0');
+                } catch (_) {}
+            });
+        }
+
         activateCopy(document.querySelector('.topic-fixed-progress:not(.topic-fixed-progress-en)'), FIXED_COPY_SELECTOR, 'fixed');
         const fixedEnProgress = document.querySelector('.topic-fixed-progress-en');
         if (fixedEnProgress) activateCopy(fixedEnProgress, FIXED_COPY_SELECTOR, 'fixed-en');
+
+        activateTableCells(document.getElementById('fixedProductTable'), 'fixed-prod', 'fixed');
+        activateTableCells(document.getElementById('fixedVersionTable'), 'fixed-ver', 'fixed');
+        activateTableCells(document.getElementById('fixedProductTableEn'), 'fixed-prod', 'fixed-en');
+        activateTableCells(document.getElementById('fixedVersionTableEn'), 'fixed-ver', 'fixed-en');
+        updateFixedTablesCustomerNames();
+        updateBilingualSyncStatus();
+
+        window.addEventListener('resize', () => {
+            updateBilingualSyncStatus();
+        });
+
         document.addEventListener('selectionchange', rememberTextSelection);
         document.addEventListener('mousedown', event => { if (!event.target.closest('.topic-report-sheet .topic-editable, #eosTextToolbar')) hideTextToolbar(); });
         elements.eosTextToolbar.addEventListener('mousedown', event => event.preventDefault());
@@ -1759,27 +3109,37 @@
             try {
                 localStorage.removeItem(copyStorageKey('monthly'));
                 localStorage.removeItem(copyStorageKey('monthly-en'));
+                localStorage.removeItem(syncedCnStorageKey('monthly'));
+                localStorage.removeItem(preTranslateStorageKey('monthly-en'));
             } catch (_) { setCopyStatus('浏览器未能清除偏好'); return; }
             renderEosMonthlyReport(state.eosMonthlyReport);
             renderEosMonthlyReportEn(state.eosMonthlyReport);
             hideTextToolbar();
+            hideDiffPopover(true);
+            updateBilingualSyncStatus();
             setCopyStatus('已恢复本月中英文自动文案');
         });
         elements.eosCopyResetFixed.addEventListener('click', () => {
             try {
                 localStorage.removeItem(copyStorageKey('fixed'));
                 localStorage.removeItem(copyStorageKey('fixed-en'));
+                localStorage.removeItem(syncedCnStorageKey('fixed'));
+                localStorage.removeItem(preTranslateStorageKey('fixed-en'));
             } catch (_) { setCopyStatus('浏览器未能清除偏好'); return; }
             document.querySelectorAll('.topic-fixed-progress:not(.topic-fixed-progress-en) .topic-editable').forEach(block => {
                 const defaultKey = `fixed-${block.dataset.eosCopyKey}`;
                 if (state.fixedCopyDefaults.has(defaultKey)) block.innerHTML = state.fixedCopyDefaults.get(defaultKey);
+                else if (state.copyDefaults.has(defaultKey)) block.innerHTML = state.copyDefaults.get(defaultKey);
             });
             document.querySelectorAll('.topic-fixed-progress-en .topic-editable').forEach(block => {
                 const defaultKey = `fixed-en-${block.dataset.eosCopyKey}`;
                 if (state.fixedCopyDefaults.has(defaultKey)) block.innerHTML = state.fixedCopyDefaults.get(defaultKey);
+                else if (state.copyDefaults.has(defaultKey)) block.innerHTML = state.copyDefaults.get(defaultKey);
             });
             updateFixedTablesCustomerNames();
             hideTextToolbar();
+            hideDiffPopover(true);
+            updateBilingualSyncStatus();
             setCopyStatus('已恢复中英文固定文案');
         });
         elements.eosMonthlyMonth.addEventListener('change', event => loadMonthlyReport(event.target.value));
@@ -1787,6 +3147,6 @@
         elements.topicFilter.addEventListener('change', event => { state.topicKey = event.target.value; state.metricKey = topic().metrics[0].key; renderTopicControls(); renderAnalysis(); });
         elements.metricFilter.addEventListener('change', event => { state.metricKey = event.target.value; renderAnalysis(); });
         elements.historyBody.addEventListener('click', handleTableAction); elements.downloadDetail.addEventListener('click', () => { if (state.detailSnapshot) downloadDetailTable(state.detailSnapshot.snapshot); }); elements.viewRaw.addEventListener('click', () => { if (!state.detailSnapshot) return; const showingRaw = !elements.detailJson.hidden; elements.detailJson.textContent = JSON.stringify(state.detailSnapshot.snapshot, null, 2); elements.detailJson.hidden = showingRaw; elements.detailTable.hidden = !showingRaw; elements.detailTools.hidden = !showingRaw; elements.viewRaw.textContent = showingRaw ? '原始 JSON' : '返回详表'; }); elements.detailSearch.addEventListener('input', event => { state.detailFilter = event.target.value.trim().toLowerCase(); state.detailPage = 1; renderDetailTable(); }); elements.detailPageSize.addEventListener('change', event => { state.detailPageSize = Number(event.target.value) || 50; state.detailPage = 1; renderDetailTable(); }); elements.detailSortColumn.addEventListener('change', event => { state.detailSortColumn = event.target.value; state.detailPage = 1; renderDetailTable(); }); elements.detailSortDirection.addEventListener('click', () => { state.detailSortAscending = !state.detailSortAscending; elements.detailSortDirection.textContent = state.detailSortAscending ? '升序' : '降序'; renderDetailTable(); }); elements.detailTable.addEventListener('click', event => { const button = event.target.closest('[data-detail-page]'); if (!button) return; state.detailPage += button.dataset.detailPage === 'next' ? 1 : -1; renderDetailTable(); }); elements.toggleDetailFullscreen.addEventListener('click', () => { elements.detailModal.classList.toggle('is-fullscreen'); elements.toggleDetailFullscreen.textContent = elements.detailModal.classList.contains('is-fullscreen') ? '退出全屏' : '全屏'; }); elements.closeDetail.addEventListener('click', () => { elements.detailModal.classList.remove('is-fullscreen'); elements.toggleDetailFullscreen.textContent = '全屏'; elements.detailModal.hidden = true; });
-        elements.detailModal.addEventListener('click', event => { if (event.target === elements.detailModal) elements.detailModal.hidden = true; }); loadData();
+        elements.detailModal.addEventListener('click', event => { if (event.target === elements.detailModal) elements.detailModal.hidden = true; }); loadData(); checkAiAssistantStatus();
     });
 }());

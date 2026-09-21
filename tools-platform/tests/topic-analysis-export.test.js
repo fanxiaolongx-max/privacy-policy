@@ -37,12 +37,15 @@ test('monthly Excel export handles multi-row table headers', async () => {
     assert.ok(buffer.length > 0);
 });
 
-test('frontend static assets for html2canvas and exceljs exist and are valid', () => {
+test('frontend static assets for html2canvas, jspdf and exceljs exist and are valid', () => {
     const html2canvasPath = path.join(__dirname, '../frontend/js/shared/html2canvas.min.js');
+    const jspdfPath = path.join(__dirname, '../frontend/js/shared/jspdf.umd.min.js');
     const exceljsPath = path.join(__dirname, '../frontend/js/shared/exceljs.min.js');
     assert.ok(fs.existsSync(html2canvasPath), 'html2canvas.min.js should exist');
+    assert.ok(fs.existsSync(jspdfPath), 'jspdf.umd.min.js should exist');
     assert.ok(fs.existsSync(exceljsPath), 'exceljs.min.js should exist');
     assert.ok(fs.statSync(html2canvasPath).size > 50000, 'html2canvas size should be > 50KB');
+    assert.ok(fs.statSync(jspdfPath).size > 100000, 'jspdf size should be > 100KB');
     assert.ok(fs.statSync(exceljsPath).size > 500000, 'exceljs size should be > 500KB');
 });
 
@@ -50,11 +53,14 @@ test('topic-analysis.html contains theme toggle and export controls', () => {
     const html = fs.readFileSync(path.join(__dirname, '../frontend/pages/topic-analysis.html'), 'utf-8');
     assert.ok(html.includes('id="themeToggleButton"'), 'Must have theme toggle button');
     assert.ok(html.includes('id="eosDownloadPng"'), 'Must have EOS PNG download button');
+    assert.ok(html.includes('id="eosDownloadPdf"'), 'Must have EOS PDF download button');
+    assert.ok(html.includes('id="eosDownloadHtml"'), 'Must have EOS HTML download button');
     assert.ok(html.includes('id="eosDownloadExcel"'), 'Must have EOS Excel download button');
     assert.ok(html.includes('id="eosDownloadMsg"'), 'Must have EOS MSG download button');
     assert.ok(html.includes('src="/js/shared/report-msg-export.js'), 'Must load MSG export helper');
     assert.ok(html.includes('id="eosReportSheet"'), 'Must have eosReportSheet ID');
     assert.ok(html.includes('src="/js/shared/html2canvas.min.js'), 'Must load html2canvas');
+    assert.ok(html.includes('src="/js/shared/jspdf.umd.min.js'), 'Must load jspdf');
     assert.ok(html.includes('src="/js/shared/exceljs.min.js'), 'Must load exceljs');
 });
 
@@ -108,4 +114,15 @@ test('ExcelJS can construct the 4 required sheets for EOS monthly report', async
     assert.equal(readBack.worksheets[1].name, '多维度统计分析');
     assert.equal(readBack.worksheets[2].name, '产品收编详表');
     assert.equal(readBack.worksheets[3].name, '版本收编详表');
+});
+
+test('topic-analysis.js provides exportMonthlyPdf and exportMonthlyHtml with full styling', () => {
+    const js = fs.readFileSync(path.join(__dirname, '../frontend/js/topic-analysis.js'), 'utf-8');
+    assert.match(js, /async function exportMonthlyPdf\(/, 'Must define exportMonthlyPdf');
+    assert.match(js, /async function exportMonthlyHtml\(/, 'Must define exportMonthlyHtml');
+    assert.match(js, /eosDownloadPdf/, 'Must wire eosDownloadPdf');
+    assert.match(js, /eosDownloadHtml/, 'Must wire eosDownloadHtml');
+    assert.match(js, /pdf\.save\(/, 'Must save PDF using jsPDF');
+    assert.match(js, /埃及代表处EOS退网收编简报_.*\.html/, 'Must name exported HTML appropriately');
+    assert.match(js, /埃及代表处EOS退网收编简报_.*\.pdf/, 'Must name exported PDF appropriately');
 });
