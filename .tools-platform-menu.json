@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "slug": "department-reward-penalty",
+      "name": "负向事件管理",
+      "description": "用于维护部门负向事件与违规记录、扣罚规则、人员名册与操作审计日志，支持草稿发布、规则分类筛选和人员 CSV 导入导出。",
+      "href": "./department-reward-penalty/index.html",
+      "encrypted": true
+    },
+    {
+      "slug": "reward-program",
+      "name": "奖励申报与评优",
+      "description": "独立的悬赏奖、岗位激励、操作激励与代表处评优申报、规则和审批公示工作台。",
+      "href": "./reward-program/index.html",
+      "encrypted": false
+    }
+  ]
+}
