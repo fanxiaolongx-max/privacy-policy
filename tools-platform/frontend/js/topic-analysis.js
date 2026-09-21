@@ -162,11 +162,15 @@
 
     function readMappingConfig() {
         try {
-            const raw = JSON.parse(localStorage.getItem(getMappingStorageKey()) || '{}');
+            const rawStr = localStorage.getItem(getMappingStorageKey());
+            if (!rawStr) {
+                return { minThreshold: DEFAULT_MIN_THRESHOLD, aliases: { ...DEFAULT_MAPPINGS } };
+            }
+            const raw = JSON.parse(rawStr);
             const thresh = Number(raw?.minThreshold);
             const minThreshold = Number.isFinite(thresh) ? Math.max(0, Math.floor(thresh)) : DEFAULT_MIN_THRESHOLD;
-            const aliases = raw?.aliases && typeof raw.aliases === 'object' && !Array.isArray(raw.aliases)
-                ? { ...DEFAULT_MAPPINGS, ...raw.aliases }
+            const aliases = (raw?.aliases && typeof raw.aliases === 'object' && !Array.isArray(raw.aliases))
+                ? { ...raw.aliases }
                 : { ...DEFAULT_MAPPINGS };
             return { minThreshold, aliases };
         } catch (_) {
@@ -1714,8 +1718,16 @@
                 const btn = event.target.closest('.topic-mapping-del-btn');
                 if (!btn) return;
                 const tr = btn.closest('tr');
-                if (tr) tr.remove();
-                if (elements.eosMappingStatusMsg) elements.eosMappingStatusMsg.textContent = '已删除一条映射规则';
+                if (tr) {
+                    const keyInput = tr.querySelector('.topic-mapping-key-cell');
+                    const keyName = keyInput ? keyInput.value.trim() : '';
+                    tr.remove();
+                    if (elements.eosMappingStatusMsg) {
+                        elements.eosMappingStatusMsg.textContent = keyName
+                            ? `已删除「${keyName}」映射（点击下方“保存并应用”即可持久生效）`
+                            : '已删除一条映射规则（点击下方“保存并应用”生效）';
+                    }
+                }
             });
         }
         [elements.eosNewMapKey, elements.eosNewMapVal].forEach(input => {

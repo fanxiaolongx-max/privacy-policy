@@ -939,6 +939,8 @@
         .report-footer .report-footer-contact { padding:8px 12px; text-align:center; font-size:13px; font-style:italic; }
         .report-footer .report-footer-attachment { padding:2px 12px 8px; text-align:center; font-size:12px; color:#475569; }
         .report-footer .report-footer-brand { margin:0; background:#dceef4; padding:12px; text-align:center; font-size:18px; font-weight:800; color:#0f172a; }
+        .report-divider-en { position:relative; margin:28px 0 16px; border-top:2px dashed #94a3b8; text-align:center; }
+        .report-divider-badge { display:inline-block; position:relative; top:-12px; background:#0f172a; color:#f8fafc; font-size:11px; font-weight:700; letter-spacing:.08em; padding:3px 16px; border-radius:9999px; box-shadow:0 2px 6px rgba(0,0,0,.15); }
         .report-sheet table,.source-detail-table { border-collapse:collapse; width:100%; font-size:12px; }
         .report-sheet th,.report-sheet td { border:1px solid #94a3b8; padding:5px 8px; text-align:center; color:#334155; }
         .report-sheet th { background:#f1f5f9; }
@@ -3529,7 +3531,51 @@
             renderReportOrderList('report-scenario-order', [...new Set(rows.map(row => reportColumnValue(row, 'report-scenario')))], 'scenario');
             renderReportOrderList('report-line-order', [...new Set(rows.map(row => reportColumnValue(row, 'report-line')))], 'line');
         }
-        function addReportTable(host, title, rows, dimensionId) {
+        const STATUS_EN_MAP = {
+            '过期': 'Expired',
+            '临期': 'Expiring Soon',
+            '正常': 'Normal',
+            '未识别': 'Unidentified'
+        };
+        function mapScenarioEn(val) {
+            const str = String(val || '').trim();
+            if (/^no\s*po|无\s*po$/i.test(str)) return 'No PO';
+            if (/^have\s*po|有\s*po|后付费$/i.test(str)) return 'Have PO';
+            if (/软件测试|software\s*testing/i.test(str)) return 'Software Testing';
+            if (/工程调测|network\s*rollout/i.test(str)) return 'Network Rollout';
+            if (/紧急恢复|emergency/i.test(str)) return 'Emergency Recovery';
+            if (/销售/i.test(str)) return 'Sales Scenario';
+            return str;
+        }
+        function mapProductLineEn(val) {
+            const str = String(val || '').trim();
+            if (/无线/i.test(str)) return 'Wireless';
+            if (/云核心网/i.test(str)) return 'Cloud Core Network';
+            if (/核心网/i.test(str)) return 'Core Network';
+            if (/数通|数据通信/i.test(str)) return 'Datacom';
+            if (/传输/i.test(str)) return 'Transmission';
+            if (/光网络|光纤/i.test(str)) return 'Optical Network';
+            if (/固定网络|固网/i.test(str)) return 'Fixed Network';
+            if (/^it/i.test(str)) return 'IT';
+            if (/网络能源|数字能源/i.test(str)) return 'Digital Power';
+            if (/企业/i.test(str)) return 'Enterprise';
+            if (/其他|未分类/i.test(str)) return 'Others';
+            return str;
+        }
+        function mapAccountEn(val) {
+            if (!val) return '';
+            const str = String(val).trim();
+            if (str.includes('、') || str.includes(',')) {
+                return str.split(/[、,]/).map(p => mapAccountEn(p.trim())).filter(Boolean).join(', ');
+            }
+            if (/etisalat|e&/i.test(str)) return 'e&';
+            if (/orange/i.test(str)) return 'Orange Telecom';
+            if (/telecom\s*egypt|^egypt$|te$|^we$/i.test(str)) return 'TE';
+            if (/vodafone/i.test(str)) return 'Vodafone';
+            if (/nile\s*on\s*line|nol/i.test(str)) return 'e&';
+            return str.replace(/系统部/g, '').trim();
+        }
+        function addReportTable(host, title, rows, dimensionId, isEn = false) {
             const dimension = dimensionId === 'report-status' ? 'status' : dimensionId === 'report-line' ? 'line' : 'scenario';
             const valueForRow = row => dimension === 'status' ? reportLicenseStatus(row) : reportColumnValue(row, dimensionId);
             const dims = dimension === 'status' ? ['过期', '临期', '正常', '未识别'].filter(name => name !== '未识别' || rows.some(row => valueForRow(row) === name))
@@ -3543,35 +3589,45 @@
                 [name, note].forEach(value => { const part = document.createElement('span'); part.textContent = value; wrapper.appendChild(part); });
                 cell.appendChild(wrapper);
             };
-            ['系统部 / Account', ...dims, '总计'].forEach(label => {
+            const mapDimLabel = name => {
+                if (!isEn) return name;
+                if (dimension === 'status') return STATUS_EN_MAP[name] || name;
+                if (dimension === 'scenario') return mapScenarioEn(name);
+                if (dimension === 'line') return mapProductLineEn(name);
+                return name;
+            };
+            const headerFirst = isEn ? 'Account / System Dept' : '系统部 / Account';
+            const headerTotal = isEn ? 'Total' : '总计';
+            [headerFirst, ...dims.map(mapDimLabel), headerTotal].forEach(label => {
                 const th = document.createElement('th');
                 if (/^(?:no\s*po|have\s*po|无\s*po|有\s*po)$/i.test(label)) th.classList.add('report-metric-group');
-                const group = (reportPreference.columnGroups || []).find(item => item.dimension === dimension && item.name === label);
+                const group = !isEn && (reportPreference.columnGroups || []).find(item => item.dimension === dimension && item.name === label);
                 splitName(th, label, group?.note);
                 head.appendChild(th);
             });
             const isCriticalValue = (label, value) => {
                 const count = Number(value);
                 if (!Number.isFinite(count) || count <= 0) return false;
-                return (dimension === 'status' && /过期|临期/.test(label))
-                    || (dimension === 'line' && /无线/.test(label) && count >= 100);
+                return (dimension === 'status' && /过期|临期|expired|expiring/i.test(label))
+                    || (dimension === 'line' && /无线|wireless/i.test(label) && count >= 100);
             };
             const body = table.createTBody();
             accounts.forEach(account => {
                 const tr = body.insertRow();
                 const subset = rows.filter(r => reportAccount(r) === account);
-                [account, ...dims.map(d => subset.filter(r => valueForRow(r) === d).length || '—'), subset.length].forEach((value, index) => {
+                const displayAccount = isEn ? mapAccountEn(account) : account;
+                [displayAccount, ...dims.map(d => subset.filter(r => valueForRow(r) === d).length || '—'), subset.length].forEach((value, index) => {
                     const cell = tr.insertCell();
                     if (index > 0 && index <= dims.length && isCriticalValue(dims[index - 1], value)) cell.classList.add('report-metric-critical');
-                    const group = index === 0 && (reportPreference.groups || []).find(item => item.name === account);
+                    const group = !isEn && index === 0 && (reportPreference.groups || []).find(item => item.name === account);
                     if (group) splitName(cell, value, group.note); else cell.textContent = value;
                 });
             });
             const foot = table.createTFoot().insertRow();
-            ['总计', ...dims.map(d => rows.filter(r => valueForRow(r) === d).length || '—'), rows.length].forEach((value, index) => {
+            [headerTotal, ...dims.map(d => rows.filter(r => valueForRow(r) === d).length || '—'), rows.length].forEach((value, index) => {
                 const th = document.createElement('th'); th.textContent = value;
                 if ((index > 0 && index <= dims.length && isCriticalValue(dims[index - 1], value))
-                    || (index === dims.length + 1 && (title === '（表 1）' || dimension === 'line'))) th.classList.add('report-metric-critical');
+                    || (index === dims.length + 1 && (title === '（表 1）' || title === '(Table 1)' || dimension === 'line'))) th.classList.add('report-metric-critical');
                 foot.appendChild(th);
             });
             host.appendChild(table);
@@ -3858,7 +3914,17 @@
                 });
             };
             const appendNode = node => {
-                if (node.classList?.contains('report-copy')) appendCopy(node);
+                if (node.classList?.contains('report-divider-en')) {
+                    const row = worksheet.getRow(rowNumber++);
+                    worksheet.mergeCells(row.number, 1, row.number, columns);
+                    const cell = row.getCell(1);
+                    cell.value = '━━━━━━━━  ENGLISH VERSION · 英文对照简报  ━━━━━━━━';
+                    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+                    cell.font = { name: 'Microsoft YaHei', size: 10, bold: true, color: { argb: 'FF475569' } };
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+                    row.height = 26;
+                }
+                else if (node.classList?.contains('report-copy')) appendCopy(node);
                 else if (node.classList?.contains('report-table-caption')) appendCaption(node);
                 else if (node.tagName === 'TABLE') appendTable(node);
                 else Array.from(node.children || []).forEach(appendNode);
@@ -4033,6 +4099,91 @@
             appendReportCopy(footer, 'footer-contact', '若您对此报告数据有疑问，请联系范晓龙wx154337，于祥00877023，谢谢！', 'report-footer-contact', overrides, storageKey);
             appendReportCopy(footer, 'footer-attachment', '原始数据见附件', 'report-footer-attachment', overrides, storageKey);
             appendReportCopy(footer, 'footer-brand', '埃及网络保障与运维服务部', 'report-title report-footer-brand', overrides, storageKey);
+
+            // ================= 英文对照月报 (English Version) =================
+            const divider = document.createElement('div');
+            divider.className = 'report-divider-en';
+            divider.innerHTML = '<span class="report-divider-badge">ENGLISH VERSION · 英文对照简报</span>';
+            host.appendChild(divider);
+
+            const monthNamesEn = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            const monthIdx = Number(month.slice(5, 7)) - 1;
+            const periodLabelEn = period === 'all' ? 'All-Time' : period === 'year' ? `${year}` : `${monthNamesEn[monthIdx] || month} ${month.slice(0, 4)}`;
+            const trendEn = (current, previous) => previous
+                ? `${current >= previous ? 'up' : 'down'} ${Math.abs((current - previous) / previous * 100).toFixed(1)}%`
+                : 'no comparable data';
+            const priorLabelEn = period === 'year' ? 'previous year' : 'previous month';
+            const trendTextEn = period === 'all' ? 'no period-over-period calculation for all-time' : `${trendEn(rows.length, priorRows.length)} compared to ${priorLabelEn}`;
+            const lineTrendEn = period === 'all' ? 'no period-over-period calculation for all-time' : `${trendEn(topLine[1], linePrior)} compared to ${priorLabelEn}`;
+            const topLineEn = mapProductLineEn(topLine[0]);
+            const overdueTopEn = overdueTop ? [mapAccountEn(overdueTop[0]), overdueTop[1]] : null;
+            const nearTopEn = nearTop ? [mapAccountEn(nearTop[0]), nearTop[1]] : null;
+
+            const renumberSavedIntroEn = (block, key, number) => {
+                if (!overrides[key]) return;
+                let first = block;
+                while (first.firstChild) first = first.firstChild;
+                if (first.nodeType === Node.TEXT_NODE) first.textContent = first.textContent.replace(/^\s*[23][、.．]/, `${number}. `);
+            };
+
+            const reportTitleEn = `Egypt Operators Temporary License Usage & Commercial Conversion Monthly Report (${periodLabelEn})`;
+            copy('en-title', reportTitleEn, 'report-title');
+            copy('en-objective', 'Overall Objective: Zero License non-compliant usage, zero incidents and major issues caused by License expiration, driving orderly commercial conversion of temporary Licenses, increasing revenue, and reducing costs.', 'report-objective');
+
+            const progressEn = document.createElement('div'); progressEn.className = 'report-progress-block'; host.appendChild(progressEn);
+            const progressCopyEn = (key, text, className = '') => appendReportCopy(progressEn, key, text, className, overrides, storageKey);
+            progressCopyEn('en-progress-heading', 'Executive Summary:', 'report-progress-heading');
+            progressCopyEn('en-trend', ['[Overall Trend] The total number of active temporary Licenses in the network is ', blue(rows.length), ', ', blue(trendTextEn),
+                `; including ${noPo + havePo} in sales scenarios (No PO ${noPo}, Have PO ${havePo}), with No PO accounting for ${noPoShare}%.`,
+                noPoAccount ? red(` Key attention is requested from ${mapAccountEn(noPoAccount)} Dept.`) : '', ' (See Table 1)']);
+            progressCopyEn('en-risk', ['[Core Risks] No PO temporary Licenses on core network elements should be prioritized for clearance. Currently, ', blue(coreNoPo),
+                ' core NEs use No PO temporary Licenses (See Table 2).', coreAccounts ? red(` Please ${mapAccountEn(coreAccounts)} Dept expedite commercial License PO acquisition.`) : '']);
+            progressCopyEn('en-redline', ['[Redline Violations] ', blue('Licenses for "Software Testing" and "Network Rollout" scenarios are strictly prohibited in commercial networks'),
+                `, currently leaving ${engineering} Network Rollout and ${software} Software Testing Licenses (See Table 1).`,
+                redlineAccounts ? red(` Please ${mapAccountEn(redlineAccounts)} Dept adhere to License compliance specifications.`) : '']);
+            progressCopyEn('en-expiry', ['[Expired & Expiring Soon] License expiration may lead to network disruptions. Currently, a total of ', overdue ? red(overdue) : '0',
+                ' expired and ', near ? red(near) : '0', ' expiring-soon Licenses are running (See Table 4). ',
+                red(`Key focus is requested from ${mapAccountEn(expiryAccounts) || 'relevant'} Dept and CS.`), ' Please apply for and replace them in a timely manner.']);
+
+            copy('en-section-heading', '➤ Total Temporary Licenses:', 'report-section-heading');
+            copy('en-table1-intro', `1. A substantial quantity of temporary Licenses exists. By scenario breakdown, No PO Licenses total ${noPo} (${noPoShare}%), lacking contractual protection with high routine O&M load, high replacement operational risks, and network running risks!`, 'report-table-intro');
+            copy('en-table1-redline', [blue('Licenses for "Software Testing" and "Network Rollout" scenarios are strictly prohibited in commercial networks'), ', Rep Office NTD and Marketing are requested to monitor and phase them out from commercial networks upon expiration.']);
+            addReportTable(host, '(Table 1)', rows, 'report-scenario', true);
+
+            renumberSavedIntroEn(copy('en-table3-intro', `2. ${coreNoPo} core high-risk NEs use No PO temporary Licenses. Acquisition of commercial License POs for these devices must be accelerated to prevent significant network impact caused by expiration.`, 'report-table-intro'), 'en-table3-intro', 2);
+            addReportTable(host, '(Table 2)', highRiskRows, 'report-scenario', true);
+
+            renumberSavedIntroEn(copy('en-table2-intro', `3. Breakdown by product line is shown below. ${topLineEn} has the largest inventory of ${topLine[1]}, ${lineTrendEn}.`, 'report-table-intro'), 'en-table2-intro', 3);
+            addReportTable(host, '(Table 3)', rows, 'report-line', true);
+
+            copy('en-status-heading', '➤ Expired and Expiring-Soon Licenses', 'report-section-heading');
+            copy('en-table4-intro', 'To ensure every expired License is proactively monitored and managed, a "timely replacement rate" requirement has been instituted. Status is evaluated based on the selected License status column.', 'report-table-intro');
+            copy('en-table4-overdue', `A total of ${overdue} expired Licenses are running in the network${overdueTopEn ? `, with ${overdueTopEn[0]} having the highest count of ${overdueTopEn[1]}` : ''}; key attention is required.`);
+            copy('en-table4-near', `A total of ${near} expiring-soon Licenses are running in the network${nearTopEn ? `, with ${nearTopEn[0]} having the highest count of ${nearTopEn[1]}` : ''}.`);
+            copy('en-table4-reminder', 'Please ensure timely application and replacement of expired Licenses, and advance application and replacement of expiring-soon Licenses, preventing severe network impact.');
+            addReportTable(host, '(Table 4)', rows, 'report-status', true);
+
+            const enEmergency = document.createElement('section'); enEmergency.className = 'report-emergency'; host.appendChild(enEmergency);
+            appendReportCopy(enEmergency, 'en-emergency-heading', '➤ Emergency Recovery Scenario Licenses', 'report-section-heading', overrides, storageKey);
+            appendReportCopy(enEmergency, 'en-emergency-note', '(None so far this year. Data will be supplemented here when available.)', 'report-emergency-note', overrides, storageKey);
+            appendReportCopy(enEmergency, 'en-emergency-placeholder', 'Reserved Table Area', 'report-emergency-placeholder', overrides, storageKey);
+
+            const enGuidance = document.createElement('section'); enGuidance.className = 'report-guidance'; host.appendChild(enGuidance);
+            appendReportCopy(enGuidance, 'en-guidance-heading', '➤ License Management Regulations & Guidelines', 'report-section-heading', overrides, storageKey);
+            appendReportCopy(enGuidance, 'en-guidance-policy', '《ICT BG Carrier Business Fixed-Term License Management Regulations V3.0》', '', overrides, storageKey);
+            const addEnGuidanceLink = url => {
+                const row = document.createElement('div'); row.className = 'report-copy report-guidance-link';
+                const link = document.createElement('a'); link.href = url; link.target = '_blank'; link.rel = 'noopener noreferrer';
+                link.textContent = url; row.appendChild(link); enGuidance.appendChild(row);
+            };
+            addEnGuidanceLink('https://w3.huawei.com/info/cn/doc/viewDoc.do?did=19787023&cata=333961');
+            appendReportCopy(enGuidance, 'en-guidance-service', '《Carrier Maintenance Service Scenario License Risk Control Guidelines (Trial)》', '', overrides, storageKey);
+            addEnGuidanceLink('https://w3.huawei.com/pdmcplus/#/workflowAssets/detail/zh_CN/14/BP0002976353/3?treeId=a709931a-5415-4346-94f2-4756538100d3&flowAdapt=true&orgCode=1001');
+
+            const enFooter = document.createElement('footer'); enFooter.className = 'report-footer'; host.appendChild(enFooter);
+            appendReportCopy(enFooter, 'en-footer-contact', 'If you have any questions regarding this report data, please contact Fan Xiaolong wx154337, Yu Xiang 00877023. Thank you!', 'report-footer-contact', overrides, storageKey);
+            appendReportCopy(enFooter, 'en-footer-attachment', 'Original raw data is attached.', 'report-footer-attachment', overrides, storageKey);
+            appendReportCopy(enFooter, 'en-footer-brand', 'Egypt Network Assurance & Maintenance Service Dept', 'report-title report-footer-brand', overrides, storageKey);
         }
         function sourceDetailRows(type) {
             return type === 'base'

@@ -70,3 +70,88 @@ test('temporary License monthly Excel gives wrapped copy and table cells enough 
     assert.equal(readBack.worksheets[0].getRow(1).height, worksheet.getRow(1).height);
     assert.equal(readBack.worksheets[0].getRow(2).height, worksheet.getRow(2).height);
 });
+
+test('temporary License monthly report includes synchronous English report, department signature, and Excel divider', async () => {
+    const source = fs.readFileSync(path.join(__dirname, '../backend/builtin-tools/esn-check/index.html'), 'utf8');
+    const topicHtml = fs.readFileSync(path.join(__dirname, '../frontend/pages/topic-analysis.html'), 'utf8');
+    const topicJs = fs.readFileSync(path.join(__dirname, '../frontend/js/topic-analysis.js'), 'utf8');
+
+    // 1. Department signature check in topic-analysis and esn-check
+    const expectedSig = 'Egypt Network Assurance & Maintenance Service Dept';
+    assert.match(topicHtml, /Egypt Network Assurance &amp; Maintenance Service Dept/);
+    assert.doesNotMatch(topicHtml, /Operations Service Dept/, 'Legacy Operations Service Dept should be replaced');
+    assert.match(source, /Egypt Network Assurance & Maintenance Service Dept/);
+
+    // 2. Bilingual English monthly report generation check
+    assert.match(source, /ENGLISH VERSION · 英文对照简报/);
+    assert.match(source, /Egypt Operators Temporary License Usage & Commercial Conversion Monthly Report/);
+    assert.match(source, /Overall Objective: Zero License non-compliant usage/);
+    assert.match(source, /Executive Summary:/);
+    assert.match(source, /\[Overall Trend\] The total number of active temporary Licenses/);
+    assert.match(source, /\[Core Risks\] No PO temporary Licenses on core network elements/);
+    assert.match(source, /\[Redline Violations\]/);
+    assert.match(source, /\[Expired & Expiring Soon\] License expiration may lead to network disruptions/);
+    assert.match(source, /addReportTable\(host, '\(Table 1\)', rows, 'report-scenario', true\)/);
+    assert.match(source, /addReportTable\(host, '\(Table 2\)', highRiskRows, 'report-scenario', true\)/);
+    assert.match(source, /addReportTable\(host, '\(Table 3\)', rows, 'report-line', true\)/);
+    assert.match(source, /addReportTable\(host, '\(Table 4\)', rows, 'report-status', true\)/);
+
+    // 3. Excel worksheet divider check
+    const start = source.indexOf('        function reportExcelTextHeight(');
+    const end = source.indexOf('        async function downloadExcelWorkbook(', start);
+    const dividerNode = {
+        classList: { contains: name => name === 'report-divider-en' }
+    };
+    const sheet = { children: [dividerNode], querySelectorAll: () => [] };
+    const append = vm.runInNewContext(`(() => { ${source.slice(start, end)} return appendMonthlyWorksheet; })()`, {
+        document: { getElementById: () => sheet },
+        getComputedStyle: () => ({ fontWeight: '400', fontSize: '12px', color: 'rgb(0, 0, 0)' }),
+        reportExcelRichText: block => block.textContent,
+        excelReportColor: () => 'FF000000'
+    });
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = append(workbook);
+    assert.match(worksheet.getRow(1).getCell(1).value, /ENGLISH VERSION/);
+    assert.equal(worksheet.getRow(1).getCell(1).alignment.horizontal, 'center');
+
+    // 4. Topic analysis mapping deletion persistence check (Egypt deleted should stay deleted)
+    const storage = {};
+    const mockLocalStorage = {
+        getItem: key => storage[key] ?? null,
+        setItem: (key, val) => { storage[key] = String(val); }
+    };
+    const readMappingConfigFn = vm.runInNewContext(`(() => {
+        const DEFAULT_MAPPINGS = {
+            'Etisalat Misr': 'e&',
+            'Orange Egypt for Telecommunications': 'Orange Telecom',
+            'Egypt': 'TE',
+            'Vodafone Egypt': 'Vodafone',
+            'Telecom Egypt': 'TE',
+            'NILE ON LINE (NOL)': 'e&'
+        };
+        const DEFAULT_MIN_THRESHOLD = 10;
+        function getMappingStorageKey() { return 'topic-eos:mapping-config:v1:default'; }
+        ${topicJs.slice(topicJs.indexOf('    function readMappingConfig() {'), topicJs.indexOf('    function saveMappingConfig('))}
+        return readMappingConfig;
+    })()`, {
+        localStorage: mockLocalStorage
+    });
+
+    // Default when no storage
+    const initialConfig = readMappingConfigFn();
+    assert.equal(initialConfig.aliases['Egypt'], 'TE', 'Initial default has Egypt -> TE');
+
+    // User deletes Egypt and saves
+    delete initialConfig.aliases['Egypt'];
+    mockLocalStorage.setItem('topic-eos:mapping-config:v1:default', JSON.stringify({
+        minThreshold: 10,
+        aliases: initialConfig.aliases
+    }));
+
+    // Re-read configuration: Egypt must NOT be resurrected
+    const reloadedConfig = readMappingConfigFn();
+    assert.equal(reloadedConfig.aliases['Egypt'], undefined, 'Deleted Egypt mapping must remain deleted');
+    assert.equal(reloadedConfig.aliases['Etisalat Misr'], 'e&');
+    assert.equal(reloadedConfig.aliases['Vodafone Egypt'], 'Vodafone');
+});
+
