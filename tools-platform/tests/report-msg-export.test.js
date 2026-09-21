@@ -37,8 +37,13 @@ test('report MSG export creates a real Outlook file with editable HTML body', as
         });
     assert.equal(response.status, 200);
     assert.equal(response.headers['content-type'], 'application/vnd.ms-outlook');
+    assert.ok(response.headers['x-report-msg-html-size']);
+    assert.ok(response.headers['x-report-msg-rtf-size']);
+    assert.equal(response.headers['x-report-msg-attachment-count'], '1');
     assert.equal(response.body.subarray(0, 8).toString('hex'), 'd0cf11e0a1b11ae1');
     const compound = CFB.read(response.body, { type: 'buffer' });
+    const rtfStream = CFB.find(compound, '/__substg1.0_10090102');
+    assert.ok(rtfStream, 'MSG should contain PR_RTF_COMPRESSED for Outlook WordMail');
     const htmlStream = CFB.find(compound, '/__substg1.0_10130102');
     assert.ok(htmlStream, 'MSG should contain PR_HTML');
     assert.match(Buffer.from(htmlStream.content).toString('utf8'), /可编辑月报/);
@@ -64,6 +69,14 @@ test('report MSG export creates a real Outlook file with editable HTML body', as
     const attachmentData = compound.FullPaths.find(value => /__attach_version1\.0_#00000000\/__substg1\.0_37010102$/.test(value));
     assert.ok(attachmentData, 'MSG should include the source workbook attachment');
     assert.equal(Buffer.from(CFB.find(compound, attachmentData).content).toString(), 'xlsx-fixture');
+});
+
+test('encapsulateHtmlToRtf converts Unicode codepoints > 32767 to signed 16-bit negative integers', () => {
+    const { encapsulateHtmlToRtf } = require('../backend/routes/report-msg');
+    // '部' is 0x90E8 = 37096 > 32767 -> signed is 37096 - 65536 = -28440
+    const rtf = encapsulateHtmlToRtf('<table><tr><td>部门</td></tr></table>');
+    assert.ok(rtf.includes('\\fromhtml1'), 'Must have fromhtml1 marker');
+    assert.ok(rtf.includes('\\u-28440?'), 'Must convert 37096 to signed negative -28440');
 });
 
 test('report MSG export rejects empty content', async () => {

@@ -2,19 +2,23 @@ const GATEKEEPER_STYLE = `
 html.tp-locked, body.tp-locked {
   overflow: hidden !important;
   height: 100% !important;
+  user-select: auto !important;
+  -webkit-user-select: auto !important;
 }
-html.tp-locked body > *:not(#tpGatekeeperModal):not(#tpGatekeeperStyle):not(#tpGatekeeperBootScript),
-body.tp-locked > *:not(#tpGatekeeperModal):not(#tpGatekeeperStyle):not(#tpGatekeeperBootScript) {
+html.tp-locked body > *:not(.tp-gatekeeper-keep),
+body.tp-locked > *:not(.tp-gatekeeper-keep) {
   display: none !important;
 }
-.tp-gatekeeper-overlay {
+.tp-gatekeeper-root {
   position: fixed !important;
   inset: 0 !important;
   top: 0 !important;
   left: 0 !important;
   right: 0 !important;
   bottom: 0 !important;
+  width: 100% !important;
   width: 100vw !important;
+  height: 100% !important;
   height: 100vh !important;
   z-index: 2147483647 !important;
   display: flex !important;
@@ -22,29 +26,44 @@ body.tp-locked > *:not(#tpGatekeeperModal):not(#tpGatekeeperStyle):not(#tpGateke
   justify-content: center !important;
   padding: 20px !important;
   box-sizing: border-box !important;
-  background: rgba(15, 23, 42, 0.88) !important;
-  backdrop-filter: blur(14px) !important;
-  -webkit-backdrop-filter: blur(14px) !important;
-  font-family: system-ui, -apple-system, sans-serif !important;
-  color: #1e293b !important;
   pointer-events: auto !important;
   user-select: auto !important;
   -webkit-user-select: auto !important;
+  font-family: system-ui, -apple-system, sans-serif !important;
+  isolation: isolate !important;
+}
+.tp-gatekeeper-backdrop {
+  position: absolute !important;
+  inset: 0 !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: rgba(15, 23, 42, 0.88) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  pointer-events: none !important;
+  z-index: 1 !important;
 }
 .tp-gatekeeper-dialog {
   position: relative !important;
-  z-index: 2147483647 !important;
+  z-index: 2 !important;
   width: min(420px, 92vw) !important;
   box-sizing: border-box !important;
   background: #ffffff !important;
   border-radius: 20px !important;
   padding: 32px 28px !important;
-  box-shadow: 0 25px 60px rgba(0,0,0,0.35) !important;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.45) !important;
   text-align: center !important;
   border: 1px solid rgba(255,255,255,0.2) !important;
   pointer-events: auto !important;
   user-select: auto !important;
   -webkit-user-select: auto !important;
+  isolation: isolate !important;
+  transform: translateZ(0) !important;
+  -webkit-transform: translateZ(0) !important;
 }
 .tp-gatekeeper-icon {
   font-size: 40px !important;
@@ -52,6 +71,7 @@ body.tp-locked > *:not(#tpGatekeeperModal):not(#tpGatekeeperStyle):not(#tpGateke
   line-height: 1 !important;
   user-select: none !important;
   -webkit-user-select: none !important;
+  pointer-events: none !important;
 }
 .tp-gatekeeper-dialog h3 {
   margin: 0 0 8px !important;
@@ -71,7 +91,7 @@ body.tp-locked > *:not(#tpGatekeeperModal):not(#tpGatekeeperStyle):not(#tpGateke
 }
 .tp-gatekeeper-form {
   position: relative !important;
-  z-index: 2147483647 !important;
+  z-index: 2 !important;
   display: flex !important;
   flex-direction: column !important;
   gap: 12px !important;
@@ -81,7 +101,7 @@ body.tp-locked > *:not(#tpGatekeeperModal):not(#tpGatekeeperStyle):not(#tpGateke
 }
 .tp-gatekeeper-input {
   position: relative !important;
-  z-index: 2147483647 !important;
+  z-index: 2 !important;
   width: 100% !important;
   box-sizing: border-box !important;
   padding: 12px 14px !important;
@@ -98,6 +118,7 @@ body.tp-locked > *:not(#tpGatekeeperModal):not(#tpGatekeeperStyle):not(#tpGateke
   -webkit-user-select: text !important;
   -webkit-appearance: none !important;
   appearance: none !important;
+  touch-action: manipulation !important;
   transition: border-color .2s, box-shadow .2s !important;
 }
 .tp-gatekeeper-input:focus {
@@ -106,7 +127,7 @@ body.tp-locked > *:not(#tpGatekeeperModal):not(#tpGatekeeperStyle):not(#tpGateke
 }
 .tp-gatekeeper-btn {
   position: relative !important;
-  z-index: 2147483647 !important;
+  z-index: 2 !important;
   width: 100% !important;
   box-sizing: border-box !important;
   padding: 12px !important;
@@ -120,6 +141,7 @@ body.tp-locked > *:not(#tpGatekeeperModal):not(#tpGatekeeperStyle):not(#tpGateke
   pointer-events: auto !important;
   user-select: none !important;
   -webkit-user-select: none !important;
+  touch-action: manipulation !important;
   transition: opacity .2s, transform .1s !important;
 }
 .tp-gatekeeper-btn:hover {
@@ -163,21 +185,22 @@ function injectGatekeeper(html, encryption, toolSlug = 'department-reward-penalt
     const salt = String(encryption.passwordSalt || encryption.salt || '');
     if (!hash) return html;
 
-    const modalHtml = `<style id="tpGatekeeperStyle">${GATEKEEPER_STYLE}</style>
-<div id="tpGatekeeperModal" class="tp-gatekeeper-overlay" role="dialog" aria-modal="true" aria-labelledby="tpGatekeeperTitle">
+    const modalHtml = `<style id="tpGatekeeperStyle" class="tp-gatekeeper-keep">${GATEKEEPER_STYLE}</style>
+<div id="tpGatekeeperModal" class="tp-gatekeeper-root tp-gatekeeper-keep" role="dialog" aria-modal="true" aria-labelledby="tpGatekeeperTitle">
+  <div class="tp-gatekeeper-backdrop" aria-hidden="true"></div>
   <div class="tp-gatekeeper-dialog">
     <div class="tp-gatekeeper-icon" aria-hidden="true">🔒</div>
     <h3 id="tpGatekeeperTitle">访问受限 · 密码保护</h3>
     <p>该静态页面已启用访问保护，请输入访问密码以继续浏览。</p>
-    <div class="tp-gatekeeper-form">
-      <input type="password" id="tpGatekeeperInput" class="tp-gatekeeper-input" placeholder="请输入访问密码" autocomplete="off" autofocus tabindex="1" onkeydown="if(event.key==='Enter')tpUnlockSnapshot(event)" />
-      <button type="button" id="tpGatekeeperSubmit" class="tp-gatekeeper-btn" tabindex="2" onclick="tpUnlockSnapshot(event)">解锁页面</button>
-    </div>
+    <form class="tp-gatekeeper-form" onsubmit="tpUnlockSnapshot(event); return false;" action="#">
+      <input type="password" id="tpGatekeeperInput" class="tp-gatekeeper-input" placeholder="请输入访问密码" autocomplete="current-password" autofocus tabindex="1" />
+      <button type="submit" id="tpGatekeeperSubmit" class="tp-gatekeeper-btn" tabindex="2">解锁页面</button>
+    </form>
     <div id="tpGatekeeperError" class="tp-gatekeeper-error" hidden></div>
   </div>
 </div>`;
 
-    const bootScript = `<script id="tpGatekeeperBootScript">
+    const bootScript = `<script id="tpGatekeeperBootScript" class="tp-gatekeeper-keep">
 (function() {
     var KEY = 'tp_unlocked_' + ${JSON.stringify(toolSlug)};
     window.tpIsUnlocked = function() {
@@ -190,7 +213,7 @@ function injectGatekeeper(html, encryption, toolSlug = 'department-reward-penalt
 })();
 </script>`;
 
-    const script = `<script>
+    const script = `<script id="tpGatekeeperScript" class="tp-gatekeeper-keep">
 (function() {
     var HASH = ${JSON.stringify(hash)};
     var SALT = ${JSON.stringify(salt)};
@@ -277,6 +300,8 @@ function injectGatekeeper(html, encryption, toolSlug = 'department-reward-penalt
         if (style) style.remove();
         var boot = document.getElementById('tpGatekeeperBootScript');
         if (boot) boot.remove();
+        var scriptEl = document.getElementById('tpGatekeeperScript');
+        if (scriptEl) scriptEl.remove();
         if (typeof window.refresh === 'function') window.refresh();
         else if (typeof window.renderAll === 'function') window.renderAll();
         else if (typeof window.load === 'function') window.load();
@@ -327,45 +352,14 @@ function injectGatekeeper(html, encryption, toolSlug = 'department-reward-penalt
         if (style) style.remove();
         var boot = document.getElementById('tpGatekeeperBootScript');
         if (boot) boot.remove();
+        var scriptEl = document.getElementById('tpGatekeeperScript');
+        if (scriptEl) scriptEl.remove();
     } else {
         document.documentElement.classList.add('tp-locked');
         if (document.body) document.body.classList.add('tp-locked');
-
-        var inp = document.getElementById('tpGatekeeperInput');
-        var btn = document.getElementById('tpGatekeeperSubmit');
-        var modal = document.getElementById('tpGatekeeperModal');
-
-        if (inp) {
-            inp.addEventListener('keydown', function(e) {
-                e.stopPropagation();
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    window.tpUnlockSnapshot(e);
-                }
-            });
-            inp.addEventListener('click', function(e) {
-                e.stopPropagation();
-                inp.focus();
-            });
-        }
-
-        if (btn) {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                window.tpUnlockSnapshot(e);
-            });
-        }
-
-        if (modal) {
-            modal.addEventListener('click', function(e) {
-                if (e.target !== btn) tryFocusInput();
-            });
-        }
-
         tryFocusInput();
-        setTimeout(tryFocusInput, 40);
-        setTimeout(tryFocusInput, 180);
+        setTimeout(tryFocusInput, 50);
+        setTimeout(tryFocusInput, 200);
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', tryFocusInput);
         }
@@ -389,16 +383,14 @@ function injectGatekeeper(html, encryption, toolSlug = 'department-reward-penalt
             } else {
                 nextAttrs = ` class="tp-locked"${nextAttrs}`;
             }
-            return `<body${nextAttrs}>\n${modalHtml}`;
+            return `<body${nextAttrs}>`;
         });
-    } else {
-        res = `${modalHtml}\n${res}`;
     }
 
     if (res.includes('</body>')) {
-        res = res.replace('</body>', `${script}\n</body>`);
+        res = res.replace('</body>', `${modalHtml}\n${script}\n</body>`);
     } else {
-        res = `${res}\n${script}`;
+        res = `${res}\n${modalHtml}\n${script}`;
     }
 
     return res;
