@@ -198,7 +198,7 @@
     function updateButton() {
         const button = document.getElementById('toolsCustomLanguageButton');
         if (!button) return;
-        button.innerHTML = `<span aria-hidden="true">🌐</span><span>${currentLang === 'en' ? '中' : 'EN'}</span>`;
+        button.innerHTML = `<span aria-hidden="true" style="font-size:13px;line-height:1">🌐</span><span style="font-weight:700;font-size:11px;letter-spacing:0.5px">${currentLang === 'en' ? '中' : 'EN'}</span>`;
         button.title = currentLang === 'en' ? 'Switch to Chinese' : '切换为英文';
         button.setAttribute('aria-label', button.title);
     }
@@ -213,7 +213,11 @@
         const explicitSelectors = lang === 'en'
             ? ['button[data-set-lang="en"]', 'button[data-lang="en"]', 'button[data-lang-btn="en"]', '#langEn']
             : ['button[data-set-lang="zh"]', 'button[data-lang="zh"]', 'button[data-lang-btn="zh"]', '#langZh'];
-        return document.querySelector(explicitSelectors.join(','));
+        for (const selector of explicitSelectors) {
+            const el = document.querySelector(selector);
+            if (el && el.id !== 'toolsCustomLanguageButton') return el;
+        }
+        return null;
     }
 
     function syncNativeLanguageControl(lang) {
@@ -254,7 +258,7 @@
         if (document.getElementById('toolsCustomLanguageButton')) return;
         const style = document.createElement('style');
         style.dataset.toolsI18nIgnore = '1';
-        style.textContent = `#toolsCustomLanguageButton{position:fixed;right:16px;bottom:16px;z-index:2147483647;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:58px;height:36px;padding:0 12px;border:1px solid rgba(148,163,184,.38);border-radius:999px;background:rgba(15,23,42,.88);box-shadow:0 8px 28px rgba(2,6,23,.28);backdrop-filter:blur(14px);color:#f8fafc;font:700 12px/1 system-ui,-apple-system,sans-serif;cursor:pointer}#toolsCustomLanguageButton:hover{border-color:#67e8f9;background:rgba(15,23,42,.96);transform:translateY(-1px)}@media print{#toolsCustomLanguageButton{display:none!important}}`;
+        style.textContent = `#toolsCustomLanguageButton{position:fixed;right:0;bottom:84px;z-index:2147483647;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:54px;height:38px;padding:0 10px 0 12px;border:1px solid rgba(148,163,184,.38);border-right:none;border-radius:19px 0 0 19px;background:rgba(15,23,42,.88);box-shadow:-4px 6px 20px rgba(2,6,23,.24);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:#f8fafc;font:600 12px/1 system-ui,-apple-system,sans-serif;cursor:pointer;user-select:none;touch-action:manipulation;transition:transform .22s cubic-bezier(.2,.8,.2,1),background .22s,border-color .22s,box-shadow .22s;outline:none}#toolsCustomLanguageButton:hover{border-color:rgba(103,232,249,.65);background:rgba(15,23,42,.98);transform:translateX(-5px);box-shadow:-6px 8px 24px rgba(2,6,23,.32),0 0 16px rgba(103,232,249,.18)}#toolsCustomLanguageButton:active{transform:translateX(-2px) scale(.97)}@media (max-width:520px){#toolsCustomLanguageButton{bottom:74px;height:34px;min-width:48px;padding:0 8px 0 10px;border-radius:17px 0 0 17px;font-size:11px}}@media print{#toolsCustomLanguageButton{display:none!important}}`;
         document.head.appendChild(style);
         const button = document.createElement('button');
         button.type = 'button';

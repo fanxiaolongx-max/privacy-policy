@@ -9,25 +9,28 @@
         /* AI Assistant 样式定义 */
         .ai-fab {
             position: fixed;
-            bottom: 92px;
-            right: 40px;
-            width: 64px;
-            height: 64px;
-            border-radius: 50%;
-            background: transparent;
-            border: 1px solid rgba(126,151,222,0.58);
+            bottom: 140px;
+            right: 0;
+            width: 52px;
+            height: 50px;
+            border-radius: 25px 0 0 25px;
+            background: rgba(15, 23, 42, 0.88);
+            border: 1px solid rgba(126, 151, 222, 0.55);
+            border-right: none;
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
             box-shadow:
-                0 8px 22px rgba(13,18,46,0.16),
-                0 0 0 1px rgba(20,31,82,0.18),
-                0 0 20px rgba(104,118,255,0.14),
-                inset 0 0 0 1px rgba(236,245,255,0.12);
+                -4px 8px 24px rgba(13, 18, 46, 0.22),
+                0 0 0 1px rgba(20, 31, 82, 0.18),
+                0 0 18px rgba(104, 118, 255, 0.18),
+                inset 0 0 0 1px rgba(236, 245, 255, 0.12);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
             cursor: pointer;
             z-index: 100000;
-            transition: transform 0.22s cubic-bezier(.2,.8,.2,1), box-shadow 0.22s, border-color 0.22s;
+            transition: transform 0.22s cubic-bezier(.2,.8,.2,1), box-shadow 0.22s, border-color 0.22s, background 0.22s;
             user-select: none;
             touch-action: none;
             isolation: isolate;
@@ -37,10 +40,10 @@
         .ai-fab::before {
             content: "";
             position: absolute;
-            inset: -5px;
+            inset: -3px;
             z-index: -1;
             border-radius: inherit;
-            background: radial-gradient(circle, rgba(118,138,255,0.18), rgba(97,232,255,0.05) 52%, transparent 72%);
+            background: radial-gradient(circle at 35% 50%, rgba(118, 138, 255, 0.22), rgba(97, 232, 255, 0.08) 52%, transparent 75%);
             opacity: 0.72;
             transition: opacity 0.22s, transform 0.22s;
             pointer-events: none;
@@ -55,28 +58,29 @@
             pointer-events: none;
         }
         .ai-fab:hover {
-            transform: translateY(-2px) scale(1.06);
-            border-color: rgba(211,225,255,0.56);
+            transform: translateX(-5px);
+            border-color: rgba(211, 225, 255, 0.75);
+            background: rgba(15, 23, 42, 0.98);
             box-shadow:
-                0 12px 30px rgba(13,18,46,0.22),
-                0 0 0 1px rgba(20,31,82,0.2),
-                0 0 28px rgba(104,150,255,0.24),
-                inset 0 0 0 1px rgba(236,245,255,0.2);
+                -6px 12px 32px rgba(13, 18, 46, 0.32),
+                0 0 0 1px rgba(20, 31, 82, 0.22),
+                0 0 26px rgba(104, 150, 255, 0.28),
+                inset 0 0 0 1px rgba(236, 245, 255, 0.22);
         }
         .ai-fab:hover::before,
         .ai-fab:focus-visible::before {
             opacity: 1;
-            transform: scale(1.08);
+            transform: scale(1.05);
         }
         .ai-fab:focus-visible {
             box-shadow:
-                0 14px 34px rgba(13,18,46,0.3),
-                0 0 0 3px rgba(255,255,255,0.72),
-                0 0 0 6px rgba(103,121,255,0.36);
+                -6px 12px 32px rgba(13, 18, 46, 0.35),
+                0 0 0 3px rgba(255, 255, 255, 0.72),
+                0 0 0 6px rgba(103, 121, 255, 0.36);
         }
         .ai-fab.dragging {
             transform: scale(1.04);
-            box-shadow: 0 10px 28px rgba(0,0,0,0.34);
+            box-shadow: -4px 10px 28px rgba(0, 0, 0, 0.34);
             cursor: grabbing;
         }
         .ai-proactive-alert {
@@ -184,10 +188,10 @@
         }
         .ai-panel {
             position: fixed;
-            bottom: 154px;
-            right: 40px;
+            bottom: 80px;
+            right: 62px;
             width: 420px;
-            height: min(640px, calc(100vh - 180px));
+            height: min(640px, calc(100vh - 120px));
             background: #f7f9fd !important;
             color: #334155 !important;
             border-radius: 20px;
@@ -811,15 +815,16 @@
         .ai-panel[data-theme="graph"] .ai-markdown-table tbody tr:nth-child(even) td, .ai-panel[data-theme="graph"] .ai-markdown-table tbody tr:hover td { background:#141e31; }
         @media (max-width: 520px) {
             .ai-fab {
-                right: 18px;
-                bottom: 76px;
-                width: 60px;
-                height: 60px;
+                right: 0;
+                bottom: 124px;
+                width: 46px;
+                height: 44px;
+                border-radius: 22px 0 0 22px;
             }
             .ai-panel,
             .ai-panel.expanded {
                 right: 12px;
-                bottom: 140px;
+                bottom: 130px;
                 width: calc(100vw - 24px);
                 height: min(70vh, 550px);
                 max-width: none;
