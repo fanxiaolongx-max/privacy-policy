@@ -1504,6 +1504,7 @@ function showToast(message, type='info', duration=2600){
 }
 
 function openMessage({title='提示',message='',bannerType='info',icon='ℹ️',fields=[],confirmText='确定',cancelText='取消',validate,quickReasons=[]}={}){
+  if(typeof window!=='undefined'&&typeof window.tpIsUnlocked==='function'&&!window.tpIsUnlocked())return Promise.resolve(null);
   const dialog=$('message-dialog'),form=$('message-form'),container=$('message-fields');
   const banner=$('message-banner'),iconEl=$('message-icon'),titleEl=$('message-title'),subEl=$('message-text');
   const errEl=$('message-error'),quickBox=$('message-quick-box'),quickTags=$('message-quick-tags');

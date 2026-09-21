@@ -63,7 +63,7 @@ async function buildSnapshot(tenantId, options = {}) {
     let { html, apiMarker, requestMarker } = await loadSource();
     const { snapshot } = await collectSnapshot(tenantId, 'inline');
     const enc = options.encryption?.enabled && (options.encryption?.passwordHash || options.encryption?.hash) ? options.encryption : null;
-    html = html.replace(apiMarker, apiMarker + '\nconst OFFLINE_SNAPSHOT = ' + safeJson(snapshot) + ';\nconst originalOfflineFetch = window.fetch.bind(window); window.fetch = (url, options) => { if(String(url).startsWith("data:")) return originalOfflineFetch(url, options); uiAlert("无权限，仅供查看。请联系管理员。", "只读快照", "warning", "🔒"); return Promise.reject(new Error("无权限，仅供查看。请联系管理员。")); };');
+    html = html.replace(apiMarker, apiMarker + '\nconst OFFLINE_SNAPSHOT = ' + safeJson(snapshot) + ';\nconst originalOfflineFetch = window.fetch.bind(window); window.fetch = (url, options) => { if(String(url).startsWith("data:")) return originalOfflineFetch(url, options); console.warn("[只读快照] 网络请求已拦截:", url); return Promise.reject(new Error("无权限，仅供查看。请联系管理员。")); };');
     const offlineRequest = `async function request(path,options){
   if(typeof window !== 'undefined' && typeof window.tpIsUnlocked === 'function' && !window.tpIsUnlocked()) { throw new Error('请先输入访问密码解锁页面'); }
   if(options?.method && options.method !== 'GET') { await uiAlert('无权限，仅供查看。请联系管理员。','只读快照','warning','🔒'); throw new Error('无权限，仅供查看。请联系管理员。'); }
@@ -85,7 +85,7 @@ async function buildPagesSnapshot(tenantId, options = {}) {
     html = html.replace(apiMarker, apiMarker + `
 let PAGES_SNAPSHOT = null;
 const pagesFetch = window.fetch.bind(window);
-window.fetch = (url, options) => { uiAlert('无权限，仅供查看。请联系管理员。', '只读页面', 'warning', '🔒'); return Promise.reject(new Error('无权限，仅供查看。请联系管理员。')); };`);
+window.fetch = (url, options) => { console.warn('[只读页面] 网络请求已拦截:', url); return Promise.reject(new Error('无权限，仅供查看。请联系管理员。')); };`);
     const pagesRequest = `async function request(path,options){
   if(typeof window !== 'undefined' && typeof window.tpIsUnlocked === 'function' && !window.tpIsUnlocked()) { throw new Error('请先输入访问密码解锁页面'); }
   if(options?.method && options.method !== 'GET') { await uiAlert('无权限，仅供查看。请联系管理员。','只读页面','warning','🔒'); throw new Error('无权限，仅供查看。请联系管理员。'); }

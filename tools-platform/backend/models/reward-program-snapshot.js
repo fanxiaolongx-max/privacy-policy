@@ -83,7 +83,7 @@ async function buildSnapshot(tenantId, options = {}) {
     const { snapshot } = await collectSnapshot(tenantId, 'inline');
     const enc = options.encryption?.enabled && (options.encryption?.passwordHash || options.encryption?.hash) ? options.encryption : null;
 
-    html = html.replace(apiMarker, apiMarker + '\nconst OFFLINE_SNAPSHOT = ' + safeJson(snapshot) + `;\nconst originalOfflineFetch = window.fetch.bind(window); window.fetch = (url, options) => { if(String(url).startsWith("data:") || String(url).startsWith("blob:")) return originalOfflineFetch(url, options); if(typeof toast==='function') toast("无权限，仅供查看。请联系管理员。"); return Promise.reject(new Error("无权限，仅供查看。请联系管理员。")); };`);
+    html = html.replace(apiMarker, apiMarker + '\nconst OFFLINE_SNAPSHOT = ' + safeJson(snapshot) + `;\nconst originalOfflineFetch = window.fetch.bind(window); window.fetch = (url, options) => { if(String(url).startsWith("data:") || String(url).startsWith("blob:")) return originalOfflineFetch(url, options); console.warn("[只读快照] 网络请求已拦截:", url); return Promise.reject(new Error("无权限，仅供查看。请联系管理员。")); };`);
 
     const offlineApiRegex = /async function api\(path,\s*method\s*=\s*'GET',\s*body\)\s*\{[\s\S]*?\n  \}/;
     const offlineApiFn = `async function api(path, method = 'GET', body) {
@@ -120,7 +120,7 @@ let PAGES_SNAPSHOT = null;
 const pagesFetch = window.fetch.bind(window);
 window.fetch = (url, options) => {
   if (String(url).startsWith('./data/') || String(url).startsWith('blob:') || String(url).startsWith('data:')) return pagesFetch(url, options);
-  if (typeof toast === 'function') toast('无权限，仅供查看。请联系管理员。');
+  console.warn('[只读页面] 网络请求已拦截:', url);
   return Promise.reject(new Error('无权限，仅供查看。请联系管理员。'));
 };`);
 

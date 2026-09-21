@@ -9,6 +9,10 @@ html.tp-locked body > *:not(.tp-gatekeeper-keep),
 body.tp-locked > *:not(.tp-gatekeeper-keep) {
   display: none !important;
 }
+html.tp-locked dialog, body.tp-locked dialog {
+  display: none !important;
+  pointer-events: none !important;
+}
 .tp-gatekeeper-root {
   position: fixed !important;
   inset: 0 !important;
@@ -209,6 +213,18 @@ function injectGatekeeper(html, encryption, toolSlug = 'department-reward-penalt
     if (!window.tpIsUnlocked()) {
         document.documentElement.classList.add('tp-locked');
         if (document.body) document.body.classList.add('tp-locked');
+
+        if (typeof window.HTMLDialogElement !== 'undefined' && HTMLDialogElement.prototype && HTMLDialogElement.prototype.showModal) {
+            var _origShowModal = HTMLDialogElement.prototype.showModal;
+            window.__tpOrigShowModal = _origShowModal;
+            HTMLDialogElement.prototype.showModal = function() {
+                if (!window.tpIsUnlocked()) {
+                    console.warn('[门禁锁定] 解锁前阻止模态对话框打开并抢占顶层:', this.id || this.className);
+                    return;
+                }
+                return _origShowModal.apply(this, arguments);
+            };
+        }
     }
 })();
 </script>`;
@@ -294,6 +310,10 @@ function injectGatekeeper(html, encryption, toolSlug = 'department-reward-penalt
         try { sessionStorage.setItem(KEY, '1'); } catch (_) {}
         document.documentElement.classList.remove('tp-locked');
         if (document.body) document.body.classList.remove('tp-locked');
+        if (window.__tpOrigShowModal && window.HTMLDialogElement && HTMLDialogElement.prototype) {
+            HTMLDialogElement.prototype.showModal = window.__tpOrigShowModal;
+            delete window.__tpOrigShowModal;
+        }
         var modal = document.getElementById('tpGatekeeperModal');
         if (modal) modal.remove();
         var style = document.getElementById('tpGatekeeperStyle');
@@ -337,6 +357,13 @@ function injectGatekeeper(html, encryption, toolSlug = 'department-reward-penalt
     };
 
     function tryFocusInput() {
+        if (window.tpIsUnlocked()) return;
+        try {
+            var openDialogs = document.querySelectorAll('dialog[open]');
+            for (var i = 0; i < openDialogs.length; i++) {
+                try { openDialogs[i].close(); } catch (_) {}
+            }
+        } catch (_) {}
         var inp = document.getElementById('tpGatekeeperInput');
         if (inp && document.activeElement !== inp) {
             try { inp.focus(); } catch (_) {}

@@ -38,3 +38,16 @@ test('gatekeeper style preserves user-select on input and hides unkept body elem
     assert.ok(GATEKEEPER_STYLE.includes('user-select: text !important;'), 'Must allow text selection in password input');
     assert.ok(GATEKEEPER_STYLE.includes('cursor: text !important;'), 'Input must have text cursor');
 });
+
+test('gatekeeper intercepts HTMLDialogElement showModal while locked to prevent top layer inert barrier', () => {
+    const rawHtml = `<!doctype html><html><head><title>Test</title></head><body><div class="content">App</div></body></html>`;
+    const enc = {
+        enabled: true,
+        passwordHash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+        passwordSalt: 'test-salt'
+    };
+    const html = injectGatekeeper(rawHtml, enc, 'test-tool');
+    assert.ok(html.includes('HTMLDialogElement.prototype.showModal'), 'Must intercept showModal on HTMLDialogElement');
+    assert.ok(GATEKEEPER_STYLE.includes('html.tp-locked dialog'), 'Must hide dialogs while locked');
+});
+
