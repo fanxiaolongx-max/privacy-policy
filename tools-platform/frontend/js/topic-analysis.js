@@ -61,6 +61,140 @@
 
     const state = { items: [], total: 0, topicKey: 'netcare-eos-product', metricKey: 'pending', detailRows: [], detailColumns: [], detailPage: 1, detailPageSize: 50, detailSortColumn: '', detailSortAscending: true, detailFilter: '', eosMonthlyReport: null, eosMonthlySnapshot: null, fixedCopyDefaults: new Map(), copyDefaults: new Map(), isImportedProject: false, importedProjectMeta: null, isAiConnected: false, aiSettings: null };
     const elements = {};
+    const monthlyEngine = window.TopicMonthlyEngine;
+    state.monthlyTopicKey = 'eos';
+    let monthlyLoadVersion = 0;
+    const monthlySessions = new Map();
+    let monthlyBusy = 0;
+    const isGenericMonthly = () => state.monthlyTopicKey !== 'eos';
+    const monthlyDefinition = () => monthlyEngine.get(state.monthlyTopicKey);
+    const monthlyFilename = () => monthlyDefinition().filename;
+
+    function genericStorageKey(kind, scope, month = state.eosMonthlyReport?.month) {
+        let tenant = 'default';
+        try { tenant = localStorage.getItem('tools_tenant_id') || tenant; } catch (_) {}
+        return monthlyEngine.storageKey(state.monthlyTopicKey, kind, tenant, scope, month);
+    }
+
+    async function monthlyTask(action) {
+        monthlyBusy++;
+        const controls = [document.getElementById('monthlyTopic'), elements.eosMonthlyMonth, elements.refreshButton];
+        controls.forEach(control => { if (control) control.disabled = true; });
+        try { return await action(); }
+        finally {
+            monthlyBusy--;
+            if (!monthlyBusy) controls.forEach(control => { if (control) control.disabled = false; });
+        }
+    }
+
+    function configureMonthlyTopic(key) {
+        state.monthlyTopicKey = key;
+        const definition = monthlyDefinition();
+        document.getElementById('monthlyTopic').value = key;
+        document.getElementById('eosMonthlyTitle').textContent = definition.title;
+        document.querySelector('#eosMonthlyTitle + p').textContent = key === 'eos'
+            ? '每月采用该数据月份最后导入的一份 NetCare 快照；计划数和目标沿用该快照保存的设置。'
+            : `每月采用该专题数据月份最后导入的一份 ${definition.platform === 'netcare' ? 'NetCare' : 'DataFab'} 快照；统计与目标沿用历史快照。`;
+        document.querySelectorAll('.topic-fixed-progress').forEach(node => { node.hidden = key !== 'eos'; });
+        elements.eosCopyResetFixed.hidden = key !== 'eos';
+        elements.eosConfigBtn.hidden = key !== 'eos';
+        elements.eosMonthlyMonth.setAttribute('aria-label', '月报月份');
+        const hint = document.querySelector('.topic-monthly-edit-hint').firstChild;
+        if (!state.eosEditHint) state.eosEditHint = hint.textContent;
+        hint.textContent = key === 'eos' ? state.eosEditHint : '点击月报文字或表格可修改；选中文字可加粗或改色。当前浏览器按专题、租户和月份保存编辑；跨设备可导出工程继续编辑。';
+    }
+
+    async function switchMonthlyTopic(key, load = true) {
+        if (!monthlyEngine.get(key)) return;
+        if (monthlyBusy) { document.getElementById('monthlyTopic').value = state.monthlyTopicKey; return; }
+        if (document.activeElement?.classList?.contains('topic-editable')) document.activeElement.blur();
+        hideTextToolbar(); hideDiffPopover(true); closePngDropdown();
+        monthlyLoadVersion++;
+        monthlySessions.set(state.monthlyTopicKey, {
+            report: state.eosMonthlyReport, snapshot: state.eosMonthlySnapshot,
+            imported: state.isImportedProject, meta: state.importedProjectMeta,
+            source: elements.eosMonthlySource.innerHTML, months: elements.eosMonthlyMonth.innerHTML,
+            defaults: state.copyDefaults
+        });
+        configureMonthlyTopic(key);
+        const cached = monthlySessions.get(key);
+        state.copyDefaults = cached?.defaults || new Map();
+        state.eosMonthlyReport = cached?.report || null;
+        state.eosMonthlySnapshot = cached?.snapshot || null;
+        state.isImportedProject = cached?.imported || false;
+        state.importedProjectMeta = cached?.meta || null;
+        elements.eosMonthlyMonth.innerHTML = cached?.months || '';
+        elements.eosMonthlySource.innerHTML = cached?.source || '';
+        setCopyStatus('');
+        if (!load) return;
+        if (cached?.report) {
+            elements.eosMonthlyMonth.value = cached.report.month;
+            setMonthlyEnabled(true);
+            renderEosMonthlyReport(cached.report); renderEosMonthlyReportEn(cached.report);
+            if (!isGenericMonthly()) updateFixedTablesCustomerNames();
+            updateBilingualSyncStatus();
+        } else await loadMonthlyReport();
+    }
+
+    function setMonthlyEnabled(enabled) {
+        ['eosCopyResetMonth', 'eosDownloadPng', 'eosDownloadPdf', 'eosDownloadHtml', 'eosDownloadExcel', 'eosDownloadMsg', 'eosExportProjectBtn'].forEach(key => { if (elements[key]) elements[key].disabled = !enabled; });
+    }
+
+    function renderGenericMonthly(report, language) {
+        const root = language === 'en' ? elements.eosMonthlyReportEn : elements.eosMonthlyReport;
+        const tr = value => value && typeof value === 'object' ? String(value[language] ?? value.zh ?? '') : String(value ?? '');
+        const cell = (row, col) => row[col.key] === null || row[col.key] === undefined ? '—' : col.unit ? monthlyEngine.fmt(row[col.key], col.unit) : typeof row[col.key] === 'number' ? monthlyEngine.fmt(row[col.key]) : tr(row[col.key]);
+        root.innerHTML = `<h3 class="topic-report-title">${escapeHtml(language === 'en' ? monthlyDefinition().en : monthlyDefinition().title)} (${escapeHtml(report.month)})</h3>
+            <div class="topic-monthly-copy topic-report-overview-copy">${report.overview.map(item => `<p>${escapeHtml(tr(item))}</p>`).join('')}</div>
+            ${report.sections.map(item => `<section class="topic-monthly-section"><h3 class="topic-report-item-title">${escapeHtml(tr(item))}</h3><div class="topic-table-wrap"><table class="topic-monthly-table" data-monthly-table="${escapeHtml(item.id)}"><thead><tr>${item.columns.map(col => `<th>${escapeHtml(tr(col))}</th>`).join('')}</tr></thead><tbody>${item.rows.map(row => `<tr>${item.columns.map((col, i) => i === 0 ? `<th scope="row">${escapeHtml(cell(row, col))}</th>` : `<td>${escapeHtml(cell(row, col))}</td>`).join('')}</tr>`).join('')}</tbody></table></div>${!item.rows.length ? `<p class="topic-monthly-footnote">${language === 'en' ? 'No records available in this snapshot.' : '当前快照暂无该项记录。'}</p>` : ''}</section>`).join('')}
+            ${report.notes.map(note => `<p class="topic-monthly-footnote">${escapeHtml(tr(note))}</p>`).join('')}`;
+        const scope = language === 'en' ? 'monthly-en' : 'monthly';
+        activateCopy(root, MONTHLY_COPY_SELECTOR, scope);
+        root.querySelectorAll('[data-monthly-table]').forEach(table => activateTableCells(table, table.dataset.monthlyTable, scope));
+        updateBilingualSyncStatus();
+    }
+
+    async function loadGenericMonthlyReport(month, requestVersion) {
+        const key = state.monthlyTopicKey;
+        state.eosMonthlyReport = null; state.eosMonthlySnapshot = null;
+        setMonthlyEnabled(false);
+        elements.eosMonthlySource.textContent = '';
+        try {
+            const result = await API.get(`/api/topic-snapshots/monthly-report?topic=${encodeURIComponent(key)}${month ? `&month=${encodeURIComponent(month)}` : ''}`);
+            if (requestVersion !== monthlyLoadVersion) return;
+            elements.eosMonthlyMonth.innerHTML = (result.months || []).map(value => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`).join('');
+            if (month && !(result.months || []).includes(month)) elements.eosMonthlyMonth.add(new Option(month, month));
+            if (month || result.report?.month) elements.eosMonthlyMonth.value = month || result.report.month;
+            if (!result.report) {
+                elements.eosMonthlyReport.textContent = '该月份暂无此专题数据。请导入包含该专题的快照，或选择其他月份。';
+                elements.eosMonthlyReportEn.textContent = 'No data for this topic and month. Import a snapshot or select another month.';
+                updateBilingualSyncStatus(); return;
+            }
+            state.eosMonthlyReport = result.report;
+            const source = result.report.snapshot;
+            elements.eosMonthlySource.textContent = `数据月份 ${result.report.month} · 数据时间 ${formatTime(source.capturedAt)} · 导入时间 ${formatTime(source.importedAt)}${source.name ? ` · ${source.name}` : ''}`;
+            setMonthlyEnabled(true);
+            renderEosMonthlyReport(result.report); renderEosMonthlyReportEn(result.report);
+        } catch (error) {
+            if (requestVersion !== monthlyLoadVersion) return;
+            elements.eosMonthlyReport.textContent = `月报读取失败：${error.message}。请点击“刷新数据”重试。`;
+            elements.eosMonthlyReportEn.textContent = 'Unable to load this report. Please refresh to retry.';
+            updateBilingualSyncStatus();
+        }
+    }
+
+    function appendGenericWorksheets(workbook, report) {
+        for (const [index, data] of report.detailSheets.entries()) {
+            const worksheet = workbook.addWorksheet(`${index + 1}-${data.name}`.replace(/[\\/*?:\[\]]/g, '').slice(0, 31));
+            const keys = [...new Set(data.rows.flatMap(row => Object.keys(row)))];
+            worksheet.addRow(keys);
+            data.rows.forEach(row => worksheet.addRow(keys.map(key => typeof row[key] === 'object' && row[key] !== null ? JSON.stringify(row[key]) : row[key] ?? '')));
+            worksheet.getRow(1).font = { bold: true };
+            worksheet.views = [{ state: 'frozen', ySplit: 1 }];
+            keys.forEach((key, i) => { worksheet.getColumn(i + 1).width = 22; });
+            if (keys.length) worksheet.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: keys.length } };
+        }
+    }
     const DETAIL_LABELS = { customer_name: '客户', product_line_name: '产品线', product_line_map: '产品线', product_name: '产品', software_version: '版本', task_id: '任务单号', need_reduce_cnt: '需消减', reduced_cnt: '已消减', incorporation_total_nes: '数量', incorporated_nes: '已收编', to_be_incorporated_nes: '待收编', current_phase_name: '阶段', scope: '范围', year: '年份', month: '月份', task_count: '变更任务数', operation_success_rate: '操作成功率', rollback_count: '回退数', high_core_total_count: '高危核心', interception_cnt: '拦截数', commands_interception_cnt: '命令行拦截', graphical_interception_cnt: '图形化拦截', period: '期间', sr_total: 'SR 数', sr_frt: 'FRT', unclose_sr_cnt: '未关闭', overdue_sr_cnt: '逾期', minor_sr_cnt: 'Minor', major_sr_cnt: 'Major', critical_sr_cnt: 'Critical' };
     const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
     const formatTime = value => { const date = new Date(value || ''); return Number.isNaN(date.getTime()) ? '--' : date.toLocaleString('zh-CN', { hour12: false }); };
@@ -513,6 +647,7 @@
     let editingRange = null;
 
     function copyStorageKey(scope) {
+        if (state.monthlyTopicKey && state.monthlyTopicKey !== 'eos') return genericStorageKey('monthly-copy', scope);
         let tenant = 'default';
         try { tenant = localStorage.getItem('tools_tenant_id') || tenant; } catch (_) { /* storage may be disabled */ }
         return `topic-eos:monthly-copy:v1:${tenant}:${scope.startsWith('fixed') ? scope : `month:${scope}:${state.eosMonthlyReport?.month || ''}`}`;
@@ -526,6 +661,7 @@
     }
 
     function syncedCnStorageKey(scope) {
+        if (state.monthlyTopicKey && state.monthlyTopicKey !== 'eos') return genericStorageKey('synced-cn', scope.replace(/-en$/, ''));
         let tenant = 'default';
         try { tenant = localStorage.getItem('tools_tenant_id') || tenant; } catch (_) { /* storage may be disabled */ }
         const baseScope = scope.replace(/-en$/, '');
@@ -560,6 +696,7 @@
     }
 
     function preTranslateStorageKey(scope) {
+        if (state.monthlyTopicKey && state.monthlyTopicKey !== 'eos') return genericStorageKey('pre-trans', scope);
         let tenant = 'default';
         try { tenant = localStorage.getItem('tools_tenant_id') || tenant; } catch (_) {}
         return `topic-eos:pre-trans:v1:${tenant}:${scope.startsWith('fixed') ? scope : `month:${scope}:${state.eosMonthlyReport?.month || ''}`}`;
@@ -815,6 +952,7 @@
             alert('未在全局配置中对接 AI 助手，请管理员在导航栏「设置 > AI 助手」中配置 API Token。');
             return;
         }
+        const contextReport = state.eosMonthlyReport;
         const originalHtml = btn ? btn.innerHTML : '';
         if (btn) {
             btn.disabled = true;
@@ -824,14 +962,15 @@
             const cnHtml = cnEl.innerHTML.trim();
             const res = await API.post('/api/ai/translate', {
                 text: cnHtml,
-                context: 'Egypt Rep Office EOS Monthly Report'
+                context: isGenericMonthly() ? monthlyDefinition().en : 'Egypt Rep Office EOS Monthly Report'
             });
             if (!res || !res.translatedText) {
                 throw new Error('AI 服务未返回翻译结果');
             }
+            if (state.eosMonthlyReport !== contextReport || !enEl.isConnected) return;
             savePreTranslate(enEl.dataset.eosCopyScope, enEl.dataset.eosCopyKey, enEl.innerHTML);
             enEl._preTranslateHtml = enEl.innerHTML;
-            enEl.innerHTML = res.translatedText;
+            enEl.innerHTML = sanitizeCopyHtml(res.translatedText);
             saveCopy(enEl);
             saveSyncedCn(enEl.dataset.eosCopyScope, enEl.dataset.eosCopyKey, cnEl.innerHTML);
             enEl.dispatchEvent(new Event('input', { bubbles: true }));
@@ -854,6 +993,7 @@
             alert('未在全局配置中对接 AI 助手，请管理员在导航栏「设置 > AI 助手」中配置 API Token。');
             return;
         }
+        const contextReport = state.eosMonthlyReport;
         const originalHtml = btn ? btn.innerHTML : '';
         if (btn) {
             btn.disabled = true;
@@ -862,16 +1002,18 @@
         let successCount = 0;
         try {
             for (const item of items) {
+                if (state.eosMonthlyReport !== contextReport) break;
                 if (item.cnEl && item.enEl) {
                     const cnHtml = item.cnEl.innerHTML.trim();
                     const res = await API.post('/api/ai/translate', {
                         text: cnHtml,
-                        context: 'Egypt Rep Office EOS Monthly Report'
+                        context: isGenericMonthly() ? monthlyDefinition().en : 'Egypt Rep Office EOS Monthly Report'
                     });
+                    if (state.eosMonthlyReport !== contextReport || !item.enEl.isConnected) break;
                     if (res && res.translatedText) {
                         savePreTranslate(item.enEl.dataset.eosCopyScope, item.enEl.dataset.eosCopyKey, item.enEl.innerHTML);
                         item.enEl._preTranslateHtml = item.enEl.innerHTML;
-                        item.enEl.innerHTML = res.translatedText;
+                        item.enEl.innerHTML = sanitizeCopyHtml(res.translatedText);
                         saveCopy(item.enEl);
                         saveSyncedCn(item.enEl.dataset.eosCopyScope, item.enEl.dataset.eosCopyKey, item.cnEl.innerHTML);
                         item.enEl.dispatchEvent(new Event('input', { bubbles: true }));
@@ -1362,6 +1504,7 @@
 
         cnBlocks.forEach(cnEl => {
             const scope = cnEl.dataset.eosCopyScope;
+            if (state.monthlyTopicKey && state.monthlyTopicKey !== 'eos' && scope === 'fixed') return;
             const key = cnEl.dataset.eosCopyKey;
             const defaultKey = `${scope}-${key}`;
             const defaultHtml = (state.copyDefaults.get(defaultKey) || '').trim();
@@ -1764,6 +1907,7 @@
 
         const appendNode = node => {
             if (!node || node.nodeType !== Node.ELEMENT_NODE) return;
+            if (node.hidden) return;
             if (node.classList?.contains('topic-report-gutter') || node.classList?.contains('topic-sync-chip') || node.hasAttribute?.('data-html2canvas-ignore')) {
                 return;
             }
@@ -2256,7 +2400,7 @@
             });
 
             const link = document.createElement('a');
-            link.download = `埃及代表处EOS退网收编简报_${month}${suffix}.png`;
+            link.download = isGenericMonthly() ? `${monthlyFilename()}_${month}${suffix}.png` : `埃及代表处EOS退网收编简报_${month}${suffix}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
         } finally {
@@ -2390,7 +2534,7 @@
             pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
 
             const month = state.eosMonthlyReport.month || '当期';
-            const filename = `埃及代表处EOS退网收编简报_${month}.pdf`;
+            const filename = isGenericMonthly() ? `${monthlyFilename()}_${month}.pdf` : `埃及代表处EOS退网收编简报_${month}.pdf`;
             pdf.save(filename);
             setCopyStatus('月报 PDF 导出成功！');
         } catch (error) {
@@ -2444,7 +2588,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>埃及代表处EOS退网收编简报（${escapeHtml(month)}）</title>
+    <title>${escapeHtml(monthlyFilename())}（${escapeHtml(month)}）</title>
     <style>
         * { box-sizing: border-box; }
         body {
@@ -2501,7 +2645,7 @@
             const blob = new Blob([htmlDocument], { type: 'text/html;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
-            link.download = `埃及代表处EOS退网收编简报_${month}.html`;
+            link.download = isGenericMonthly() ? `${monthlyFilename()}_${month}.html` : `埃及代表处EOS退网收编简报_${month}.html`;
             link.href = url;
             document.body.appendChild(link);
             link.click();
@@ -2536,7 +2680,7 @@
             const workbook = await buildMonthlyWorkbook();
 
             const month = state.eosMonthlyReport.month || '当期';
-            await downloadExcelWorkbook(workbook, `埃及代表处EOS退网收编简报_${month}.xlsx`);
+            await downloadExcelWorkbook(workbook, isGenericMonthly() ? `${monthlyFilename()}_${month}.xlsx` : `埃及代表处EOS退网收编简报_${month}.xlsx`);
         } catch (error) {
             console.error('月报 Excel 导出失败:', error);
             alert(`月报 Excel 导出失败：${error.message}`);
@@ -2547,8 +2691,17 @@
     }
 
     async function buildMonthlyWorkbook() {
+        if (isGenericMonthly()) {
+            const workbook = new ExcelJS.Workbook();
+            workbook.creator = monthlyDefinition().en;
+            workbook.created = new Date();
+            appendMonthlyWorksheet(workbook);
+            workbook.worksheets[0].name = '专题进展月报';
+            appendGenericWorksheets(workbook, state.eosMonthlyReport);
+            return workbook;
+        }
         let snapshot = state.eosMonthlySnapshot;
-        if (!snapshot && state.eosMonthlyReport?.snapshot?.id) {
+        if (!snapshot && state.eosMonthlyReport?.snapshot?.id && state.eosMonthlyReport.snapshot.id !== 'default') {
             const item = await getFullSnapshot(state.eosMonthlyReport.snapshot.id);
             snapshot = item?.snapshot;
             state.eosMonthlySnapshot = snapshot;
@@ -2574,8 +2727,8 @@
             const workbook = await buildMonthlyWorkbook();
             const bytes = await workbook.xlsx.writeBuffer();
             await window.ReportMsgExport.download(elements.eosReportSheet,
-                `埃及代表处EOS退网收编简报（${month}）`, `埃及代表处EOS退网收编简报_${month}.msg`,
-                { filename: `埃及代表处EOS退网收编简报_${month}.xlsx`, bytes });
+                `${monthlyFilename()}（${month}）`, `${monthlyFilename()}_${month}.msg`,
+                { filename: `${monthlyFilename()}_${month}.xlsx`, bytes });
         } catch (error) {
             console.error('月报 MSG 导出失败:', error);
             window.ReportMsgExport.showError(error);
@@ -2585,15 +2738,20 @@
         }
     }
 
-    function exportProjectFile() {
+    async function exportProjectFile() {
         if (!state.eosMonthlyReport) {
             alert('当前没有可导出的月报数据。');
             return;
         }
         const report = state.eosMonthlyReport;
+        if (!state.eosMonthlySnapshot && report.snapshot?.id && report.snapshot.id !== 'default') {
+            try { state.eosMonthlySnapshot = (await getFullSnapshot(report.snapshot.id))?.snapshot || null; }
+            catch (error) { alert(`读取工程源数据失败：${error.message}`); return; }
+        }
         const month = report.month || '当月';
         const project = {
             fileType: 'topic-eos-monthly-project',
+            topicKey: state.monthlyTopicKey,
             schemaVersion: 1,
             exportedAt: new Date().toISOString(),
             month: month,
@@ -2610,9 +2768,11 @@
             syncedCnPreferences: {
                 monthly: readSyncedCnPreferences('monthly'),
                 fixed: readSyncedCnPreferences('fixed')
-            }
+            },
+            preTranslatePreferences: { monthlyEn: readPreTranslatePreferences('monthly-en'), fixedEn: readPreTranslatePreferences('fixed-en') }
         };
 
+        if (isGenericMonthly()) project.fileType = 'topic-monthly-project';
         const jsonStr = JSON.stringify(project, null, 2);
         const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
         const url = URL.createObjectURL(blob);
@@ -2620,7 +2780,7 @@
         const pad = (n, len = 2) => String(n).padStart(len, '0');
         const now = new Date();
         const dateStr = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
-        link.download = `EOS月报编辑工程_${month}_${dateStr}.eos.json`;
+        link.download = isGenericMonthly() ? `${monthlyFilename()}_编辑工程_${month}_${dateStr}.json` : `EOS月报编辑工程_${month}_${dateStr}.eos.json`;
         link.href = url;
         document.body.appendChild(link);
         link.click();
@@ -2642,6 +2802,14 @@
             if (!project || typeof project !== 'object') {
                 throw new Error('工程文件内容为空或格式无效。');
             }
+            if (project.fileType === 'topic-monthly-project') {
+                await importGenericProject(project, file);
+                return;
+            }
+            // Old EOS projects have no topicKey. Keep their existing format and keys.
+            if (project.reportData) monthlyEngine.validateProject({ ...project, topicKey: 'eos', month: project.month || project.reportData.month });
+            if (isGenericMonthly()) await switchMonthlyTopic('eos', false);
+            monthlyLoadVersion++;
             if (project.fileType !== 'topic-eos-monthly-project' && !project.copyPreferences && !project.reportData) {
                 throw new Error('文件类型不匹配，请选择有效的 EOS 月报工程文件 (*.eos.json 或 *.json)。');
             }
@@ -2698,6 +2866,7 @@
             const report = project.reportData || createDefaultReport();
             report.month = month;
             state.eosMonthlyReport = report;
+            restorePreTranslate(project);
             state.eosMonthlySnapshot = project.snapshot || report.snapshot || null;
             state.isImportedProject = true;
             state.importedProjectMeta = {
@@ -2738,6 +2907,15 @@
             const exportTimeStr = project.exportedAt ? formatTime(project.exportedAt) : '近期';
             elements.eosMonthlySource.innerHTML = `<span class="topic-imported-badge">📦 来自导入工程文件</span> 数据月份 ${report.month} · 数据源：已导入离线工程文件《${escapeHtml(file.name)}》（导出于 ${exportTimeStr}） · 包含完整离线数据与定制编辑`;
 
+            for (const scope of ['fixed', 'fixed-en']) {
+                const preferences = readCopyPreferences(scope);
+                document.querySelectorAll(`[data-eos-copy-scope="${scope}"]`).forEach(block => {
+                    const key = block.dataset.eosCopyKey;
+                    const saved = preferences[key];
+                    const original = state.fixedCopyDefaults.get(`${scope}-${key}`) || state.copyDefaults.get(`${scope}-${key}`);
+                    if (typeof saved === 'string' || typeof original === 'string') block.innerHTML = sanitizeCopyHtml(typeof saved === 'string' ? saved : original);
+                });
+            }
             renderEosMonthlyReport(report);
             renderEosMonthlyReportEn(report);
             updateFixedTablesCustomerNames();
@@ -2750,6 +2928,39 @@
             console.error('导入工程文件失败:', error);
             alert(`导入工程文件失败：${error.message}`);
         }
+    }
+
+    function restorePreTranslate(project) {
+        for (const [field, scope] of [['monthlyEn', 'monthly-en'], ['fixedEn', 'fixed-en']]) {
+            try {
+                const value = project.preTranslatePreferences?.[field] || {};
+                localStorage.setItem(preTranslateStorageKey(scope), JSON.stringify(value));
+            } catch (_) {}
+        }
+    }
+
+    async function importGenericProject(project, file) {
+        const key = monthlyEngine.validateProject(project);
+        if (key !== state.monthlyTopicKey) await switchMonthlyTopic(key, false);
+        monthlyLoadVersion++;
+        state.eosMonthlyReport = project.reportData;
+        state.eosMonthlySnapshot = project.snapshot || null;
+        state.isImportedProject = true;
+        state.importedProjectMeta = { filename: file.name, exportedAt: project.exportedAt, month: project.month };
+        for (const defaultKey of state.copyDefaults.keys()) if (defaultKey.startsWith('monthly-')) state.copyDefaults.delete(defaultKey);
+        for (const [field, scope] of [['monthly', 'monthly'], ['monthlyEn', 'monthly-en']]) {
+            const value = project.copyPreferences?.[field] || project.copyPreferences?.[scope] || {};
+            localStorage.setItem(copyStorageKey(scope), JSON.stringify(value));
+        }
+        localStorage.setItem(syncedCnStorageKey('monthly'), JSON.stringify(project.syncedCnPreferences?.monthly || {}));
+        restorePreTranslate(project);
+        updateSourceTimeVisibility(Boolean(project.sourceTimeHidden));
+        try { localStorage.setItem(SOURCE_TIME_HIDDEN_KEY, project.sourceTimeHidden ? '1' : '0'); } catch (_) {}
+        elements.eosMonthlyMonth.innerHTML = `<option value="${escapeHtml(project.month)}">${escapeHtml(project.month)} (工程文件)</option>`;
+        elements.eosMonthlySource.innerHTML = `<span class="topic-imported-badge">📦 来自导入工程文件</span> 数据月份 ${escapeHtml(project.month)} · ${escapeHtml(file.name)}`;
+        setMonthlyEnabled(true);
+        renderEosMonthlyReport(project.reportData); renderEosMonthlyReportEn(project.reportData);
+        setCopyStatus(`已恢复「${monthlyDefinition().title}」工程及中英文编辑`);
     }
 
     function createDefaultReport() {
@@ -2832,6 +3043,7 @@
     }
 
     function renderEosMonthlyReport(report) {
+        if (isGenericMonthly()) { renderGenericMonthly(report, 'zh'); return; }
         elements.eosMonthlyReport.innerHTML = `
             <h3 class="topic-report-title">埃及代表处EOS退网收编简报（${escapeHtml(report.month)}）</h3>
             <div class="topic-report-objective">
@@ -2852,6 +3064,7 @@
     }
 
     function renderEosMonthlyReportEn(report) {
+        if (isGenericMonthly()) { renderGenericMonthly(report, 'en'); return; }
         if (!elements.eosMonthlyReportEn) return;
         elements.eosMonthlyReportEn.innerHTML = `
             <h3 class="topic-report-title">Egypt Rep Office EOS Retirement &amp; Incorporation Monthly Report (${escapeHtml(report.month)})</h3>
@@ -2873,6 +3086,7 @@
     }
 
     function updateFixedTablesCustomerNames() {
+        if (isGenericMonthly()) return;
         const sheet = elements.eosReportSheet || document.getElementById('eosReportSheet');
         if (!sheet) return;
         sheet.querySelectorAll('th[data-cust]').forEach(th => {
@@ -3021,13 +3235,20 @@
     }
 
     async function loadMonthlyReport(month = '') {
+        const requestVersion = ++monthlyLoadVersion;
         state.isImportedProject = false;
         state.importedProjectMeta = null;
         elements.eosMonthlyReport.textContent = '正在生成月报…';
         if (elements.eosMonthlyReportEn) elements.eosMonthlyReportEn.textContent = 'Generating English monthly report…';
         state.eosMonthlySnapshot = null;
+        // Defaults are tied to the rendered month, while fixed EOS defaults remain intact.
+        state.eosMonthlyReport = null;
+        for (const key of state.copyDefaults.keys()) if (key.startsWith('monthly-')) state.copyDefaults.delete(key);
+        if (isGenericMonthly()) return loadGenericMonthlyReport(month, requestVersion);
+        setMonthlyEnabled(false);
         try {
             const result = await API.get(`/api/topic-snapshots/eos-monthly-report${month ? `?month=${encodeURIComponent(month)}` : ''}`);
+            if (requestVersion !== monthlyLoadVersion) return;
             let report = result.report;
             if (!report) {
                 report = createDefaultReport();
@@ -3036,6 +3257,7 @@
                 elements.eosMonthlyMonth.innerHTML = (result.months || []).map(value => `<option value="${escapeHtml(value)}"${result.report?.month === value ? ' selected' : ''}>${escapeHtml(value)}</option>`).join('');
             }
             state.eosMonthlyReport = report;
+            setMonthlyEnabled(true);
             elements.eosCopyResetMonth.disabled = false;
             if (elements.eosDownloadPng) elements.eosDownloadPng.disabled = false;
             if (elements.eosDownloadPdf) elements.eosDownloadPdf.disabled = false;
@@ -3052,8 +3274,10 @@
             updateFixedTablesCustomerNames();
             updateBilingualSyncStatus();
         } catch (error) {
+            if (requestVersion !== monthlyLoadVersion) return;
             const report = createDefaultReport();
             state.eosMonthlyReport = report;
+            setMonthlyEnabled(true);
             elements.eosCopyResetMonth.disabled = false;
             if (elements.eosDownloadPng) elements.eosDownloadPng.disabled = false;
             if (elements.eosDownloadPdf) elements.eosDownloadPdf.disabled = false;
@@ -3073,13 +3297,14 @@
     }
 
     async function loadData() {
+        const requestVersion = monthlyLoadVersion;
         elements.loadStatus.textContent = '正在读取…';
         try {
             const result = await API.get('/api/topic-snapshots?limit=200');
             state.items = Array.isArray(result.items) ? result.items : []; state.total = Number(result.total) || state.items.length;
             updateStats(); renderAnalysis(); elements.loadStatus.textContent = `已读取 ${state.items.length} 份快照`;
         } catch (error) { elements.loadStatus.textContent = `读取失败：${error.message}`; elements.trendChart.innerHTML = '<div class="topic-chart-empty">暂时无法读取趋势数据</div>'; }
-        await loadMonthlyReport(elements.eosMonthlyMonth.value);
+        if (requestVersion === monthlyLoadVersion) await loadMonthlyReport(elements.eosMonthlyMonth.value);
     }
 
     async function getFullSnapshot(id) { return (await API.get(`/api/topic-snapshots/${encodeURIComponent(id)}`)).item; }
@@ -3158,7 +3383,7 @@
                 event.stopPropagation();
                 const scope = item.getAttribute('data-png-scope') || 'both';
                 closePngDropdown();
-                exportMonthlyPng(scope);
+                if (!monthlyBusy) monthlyTask(() => exportMonthlyPng(scope));
             });
         }
         if (elements.eosPngDropdown) {
@@ -3171,11 +3396,9 @@
                 timer = setTimeout(() => closePngDropdown(), 250);
             });
         }
-        if (elements.eosDownloadPdf) elements.eosDownloadPdf.addEventListener('click', exportMonthlyPdf);
-        if (elements.eosDownloadHtml) elements.eosDownloadHtml.addEventListener('click', exportMonthlyHtml);
-        if (elements.eosDownloadExcel) elements.eosDownloadExcel.addEventListener('click', exportMonthlyExcel);
-        if (elements.eosDownloadMsg) elements.eosDownloadMsg.addEventListener('click', exportMonthlyMsg);
-        if (elements.eosExportProjectBtn) elements.eosExportProjectBtn.addEventListener('click', exportProjectFile);
+        for (const [key, action] of [['eosDownloadPdf', exportMonthlyPdf], ['eosDownloadHtml', exportMonthlyHtml], ['eosDownloadExcel', exportMonthlyExcel], ['eosDownloadMsg', exportMonthlyMsg], ['eosExportProjectBtn', exportProjectFile]]) {
+            if (elements[key]) elements[key].addEventListener('click', () => { if (!monthlyBusy) monthlyTask(action); });
+        }
         if (elements.eosImportProjectBtn && elements.eosProjectFileInput) {
             elements.eosImportProjectBtn.addEventListener('click', () => {
                 elements.eosProjectFileInput.value = '';
@@ -3183,7 +3406,7 @@
             });
             elements.eosProjectFileInput.addEventListener('change', event => {
                 const file = event.target.files && event.target.files[0];
-                if (file) {
+                if (file && !monthlyBusy) {
                     importProjectFile(file);
                 }
             });
@@ -3283,6 +3506,9 @@
             updateBilingualSyncStatus();
             setCopyStatus('已恢复中英文固定文案');
         });
+        const monthlyTopicSelect = document.getElementById('monthlyTopic');
+        monthlyTopicSelect.innerHTML = monthlyEngine.list.map(item => `<option value="${item.key}">${escapeHtml(item.title)}</option>`).join('');
+        monthlyTopicSelect.addEventListener('change', event => switchMonthlyTopic(event.target.value));
         elements.eosMonthlyMonth.addEventListener('change', event => loadMonthlyReport(event.target.value));
         renderTopicControls(); elements.refreshButton.addEventListener('click', loadData);
         elements.topicFilter.addEventListener('change', event => { state.topicKey = event.target.value; state.metricKey = topic().metrics[0].key; renderTopicControls(); renderAnalysis(); });

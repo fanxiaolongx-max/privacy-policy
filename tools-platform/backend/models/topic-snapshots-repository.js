@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const { run, get, all } = require('./app-db');
+const monthlyEngine = require('../../frontend/js/shared/topic-monthly-engine');
 
 const SNAPSHOT_SCHEMA = 'uivf12-topic-snapshot';
 const SNAPSHOT_VERSION = 1;
@@ -401,6 +402,37 @@ async function deleteSnapshot(id) {
     return result.changes > 0;
 }
 
+async function getMonthlyReport(topicKey, month = '') {
+    const definition = monthlyEngine.get(topicKey);
+    if (!definition) throw topicSnapshotError('不支持的月报专题');
+    if (month && !/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) throw topicSnapshotError('月份格式应为 YYYY-MM');
+    if (topicKey === 'eos') return getEosMonthlyReport(month);
+    await ensureReady();
+    // Read only the period fields while finding the latest import; fetch one full payload.
+    const source = ['change', 'interception', 'sr'].includes(topicKey) ? topicKey : 'sr';
+    const rows = await all(`SELECT id, captured_at,
+        json_extract(payload_json, '$.settings.year') AS settings_year,
+        json_extract(payload_json, '$.settings.month') AS settings_month,
+        json_extract(payload_json, '$.data.sr.currentYear') AS sr_year,
+        json_extract(payload_json, '$.data.sr.currentMonth') AS sr_month,
+        json_extract(payload_json, '$.data.${source}.currentYear') AS source_year,
+        json_extract(payload_json, '$.data.${source}.currentMonth') AS source_month
+        FROM topic_snapshots WHERE platform = ? ORDER BY imported_at DESC, rowid DESC`, [definition.platform]);
+    const byMonth = new Map();
+    for (const row of rows) {
+        const period = monthlyEngine.period({ capturedAt: row.captured_at, settings: { year: row.settings_year, month: row.settings_month }, data: { sr: { currentYear: row.sr_year, currentMonth: row.sr_month }, [source]: { currentYear: row.source_year, currentMonth: row.source_month } } }, topicKey);
+        if (period && !byMonth.has(period)) byMonth.set(period, row.id);
+    }
+    const months = [...byMonth.keys()].sort().reverse();
+    const selectedMonth = month || months[0];
+    if (!byMonth.has(selectedMonth)) return { months, report: null };
+    const item = await getSnapshot(byMonth.get(selectedMonth));
+    if (!item || !monthlyEngine.available(item.snapshot, topicKey)) return { months, report: null };
+    const report = monthlyEngine.build(item.snapshot, topicKey, selectedMonth);
+    report.snapshot = { id: item.id, name: item.name, capturedAt: item.capturedAt, importedAt: item.importedAt };
+    return { months, report };
+}
+
 async function getMappingConfig() {
     await ensureReady();
     const row = await get('SELECT value_json FROM topic_settings WHERE key = ?', ['customer_mapping']);
@@ -430,6 +462,7 @@ module.exports = {
     getLatestSnapshot,
     getSeries,
     getEosMonthlyReport,
+    getMonthlyReport,
     getSnapshot,
     getMappingConfig,
     saveMappingConfig,

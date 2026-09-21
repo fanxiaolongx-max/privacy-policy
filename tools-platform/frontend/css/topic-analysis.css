@@ -1078,4 +1078,12 @@ td.topic-en-synced, th.topic-en-synced { border-left:3px solid #10b981!important
 .topic-report-sheet.export-mode-en #eosReportNavEn .topic-report-nav-link {
     display: none !important;
 }
+.topic-fixed-progress[hidden] { display: none !important; }
+.topic-monthly-controls label { min-width: 0; }
+#monthlyTopic { max-width: 100%; }
+@media (max-width: 640px) {
+    .topic-monthly-controls { width: 100%; }
+    .topic-monthly-controls label { flex: 1 1 180px; }
+    #monthlyTopic { width: 100%; }
+}
 

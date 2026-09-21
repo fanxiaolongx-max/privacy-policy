@@ -50,6 +50,16 @@ router.get('/eos-monthly-report', async (req, res) => {
     }
 });
 
+router.get('/monthly-report', async (req, res) => {
+    try {
+        const result = await topicSnapshotsRepo.getMonthlyReport(req.query.topic, req.query.month);
+        res.setHeader('X-Data-Source', 'sqlite');
+        res.json(result);
+    } catch (error) {
+        sendError(res, error, '读取专题月报失败');
+    }
+});
+
 router.get('/mapping-config', async (req, res) => {
     try {
         const config = await topicSnapshotsRepo.getMappingConfig();
