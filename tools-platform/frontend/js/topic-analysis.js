@@ -142,18 +142,122 @@
 
     function renderAnalysis() { renderKpis(); renderChart(); renderTable(); }
 
-    function renderMonthlySection(section, label) {
-        const { total, accounts, priorities } = section;
-        const pct = value => `${Number(value || 0).toFixed(1)}%`;
-        const target = total.targetRate > 0 ? `收编目标 ${pct(total.targetRate)}，当前距离目标 ${pct(Math.max(0, total.targetRate - total.currentRate))}` : '快照中未设置收编目标';
-        const cells = metric => `<td>${metric.quantity}</td><td>${metric.incorporated}</td><td>${pct(metric.currentRate)}</td><td>${metric.pending}</td><td>${metric.annualPlan}</td><td>${metric.noPlan}</td><td>${pct(metric.plannedRate)}</td>`;
-        const rows = accounts.map(item => `<tr><th scope="row">${escapeHtml(item.customer)}</th>${cells(item)}</tr>`).join('');
-        const priorityText = priorities.length ? priorities.map(item => `${escapeHtml(item.customer)} · ${escapeHtml(item.label)}（${item.noPlan}）`).join('；') : '暂无无计划重点项';
-        return `<section class="topic-monthly-section"><h3>➤ 紧急 EOS ${label}收编进展</h3><div class="topic-monthly-copy"><p><strong>【总体进展】</strong>已收编 ${total.incorporated} / ${total.quantity}，当前收编率 ${pct(total.currentRate)}；${target}。完成已录入今年计划 ${total.annualPlan} 后，预计收编率 ${pct(total.plannedRate)}。</p><p><strong>【核心风险】</strong>待收编 ${total.pending}，其中 ${total.noPlan} 尚无今年计划。</p><p><strong>【重点推进】</strong>${priorityText}。</p></div><p class="topic-monthly-intro">${label} EOS 分客户进展如下：</p><div class="topic-table-wrap topic-report-table-wrap"><table class="topic-monthly-table"><thead><tr><th rowspan="3">客户</th><th colspan="7">紧急 EOS · ${label}</th></tr><tr><th rowspan="2">总量</th><th rowspan="2">已收编</th><th rowspan="2">当前收编率</th><th colspan="3">待收编</th><th rowspan="2">计划后收编率</th></tr><tr><th>小计</th><th>今年计划</th><th>无计划</th></tr></thead><tbody>${rows}<tr class="topic-monthly-total"><th scope="row">合计</th>${cells(total)}</tr></tbody></table></div><p class="topic-report-caption">（表 ${label === '产品' ? 1 : 2}：${label} EOS 收编进展）</p></section>`;
+    const pct = (val, dec = 1) => `${Number(val || 0).toFixed(dec)}%`;
+
+    function buildOverviewCopyHtml(report) {
+        const prod = report.product;
+        const ver = report.version;
+
+        const prodRate = Number(prod.total.currentRate || 0);
+        const prodPlanned = Number(prod.total.plannedRate || 0);
+        let prodTargetStatus = '已达成年度挑战目标';
+        if (prodRate < 30) prodTargetStatus = `距离底线目标仍有差距（差${(30 - prodRate).toFixed(1)}%）`;
+        else if (prodRate < 40) prodTargetStatus = '已达成年度底线目标';
+        else if (prodRate < 50) prodTargetStatus = '已达成年度目标';
+
+        const prodNoPlanAccounts = (prod.accounts || []).filter(a => (a.noPlan || 0) > 0).sort((a, b) => b.noPlan - a.noPlan);
+        const prodCustText = prodNoPlanAccounts.length
+            ? `（${prodNoPlanAccounts.slice(0, 2).map(a => `${escapeHtml(a.customer)} ${a.noPlan}套`).join('，')}）`
+            : '';
+
+        const verRate = Number(ver.total.currentRate || 0);
+        const verPlanned = Number(ver.total.plannedRate || 0);
+        const verRiskText = verPlanned < 70 ? '年度目标达成风险大' : '年度目标达成态势良好';
+
+        const verPlanAccounts = (ver.accounts || []).filter(a => (a.annualPlan || 0) > 0).sort((a, b) => b.annualPlan - a.annualPlan);
+        const verPlanCustSummary = verPlanAccounts.length
+            ? verPlanAccounts.map(a => `${escapeHtml(a.customer)} ${a.annualPlan}套`).join('、')
+            : '各客户暂无明确计划';
+
+        const verNoPlanAccounts = (ver.accounts || []).filter(a => (a.noPlan || 0) > 0).sort((a, b) => b.noPlan - a.noPlan);
+        const topNoPlanSlice = verNoPlanAccounts.slice(0, 2);
+        const verNoPlanCustSummary = topNoPlanSlice.length
+            ? topNoPlanSlice.map(a => `${escapeHtml(a.customer)} ${a.noPlan}套`).join('、')
+            : '各客户已全部纳入收编计划';
+
+        const urgentCustomerNames = topNoPlanSlice.length
+            ? topNoPlanSlice.map(a => escapeHtml(a.customer)).join('、')
+            : '各';
+
+        return `<div class="topic-monthly-copy topic-report-overview-copy">
+            <p><strong>【风险管理】</strong>全量EOS产品风险闭环率100%，全量EOS版本风险闭环率100%，均已达成年度目标</p>
+            <p><strong>【退网收编】</strong></p>
+            <p>1、重急EOS产品退网收编率${pct(prodRate, 2)}，${prodTargetStatus}，预测年底完成率${pct(prodPlanned, 1)}，但仍有${prod.total.noPlan}套网元暂无退网无计划${prodCustText}，建议系统部继续推进；</p>
+            <p>2、高风险EOS版本升级收编率${pct(verRate, 2)}，预测年底完成率${pct(verPlanned, 1)}，${verRiskText}，其中：<br>
+            1）已有计划：${verPlanCustSummary}，需按计划年内完成版本升级；<br>
+            2）暂无计划：${verNoPlanCustSummary}暂无收编计划，请${urgentCustomerNames}系统部加速客户界面交流，最晚于10月确认收编计划，确保年内完成升级。</p>
+        </div>`;
     }
 
-    const MONTHLY_COPY_SELECTOR = '.topic-report-title, .topic-report-objective, .topic-report-heading, .topic-monthly-section h3, .topic-monthly-section .topic-monthly-copy p, .topic-monthly-section .topic-monthly-intro, .topic-monthly-footnote';
-    const FIXED_COPY_SELECTOR = '.topic-fixed-head h3, .topic-fixed-head p, .topic-fixed-block h4, .topic-fixed-steps, .topic-fixed-block .topic-monthly-copy p, .topic-fixed-block .topic-monthly-intro, .topic-fixed-footnote';
+    function buildProductCopyHtml(product) {
+        const total = product.total;
+        const noPlanAccounts = (product.accounts || []).filter(a => (a.noPlan || 0) > 0).sort((a, b) => b.noPlan - a.noPlan);
+
+        const focusDetails = noPlanAccounts.map(a => {
+            const items = (a.topNoPlanItems || []).map(i => `${escapeHtml(i.label)} ${i.noPlan}套`).join('/');
+            return `${escapeHtml(a.customer)} ${a.noPlan}套${items ? `（${items}）` : ''}`;
+        }).join('、');
+
+        return `<div class="topic-monthly-copy">
+            <p>年度收编基线${total.quantity}套，已完成收编${total.incorporated}套，完成率${pct(total.currentRate, 2)}；待收编${total.pending}套，其中${total.noPlan}套今年暂无计划。</p>
+            <p>重点关注：${total.noPlan}套暂无退网计划，建议年内完成客户界面交流，并明确退网计划，其中：${focusDetails || '暂无重点待收编项'}。</p>
+        </div>`;
+    }
+
+    function buildVersionCopyHtml(version) {
+        const total = version.total;
+        const planAccounts = (version.accounts || []).filter(a => (a.annualPlan || 0) > 0).sort((a, b) => b.annualPlan - a.annualPlan);
+        const noPlanAccounts = (version.accounts || []).filter(a => (a.noPlan || 0) > 0).sort((a, b) => b.noPlan - a.noPlan);
+
+        const planDetails = planAccounts.map(a => {
+            const items = (a.topPlanItems || []).map(i => `${escapeHtml(i.label)} ${i.annualPlan}套`).join('/');
+            return `${escapeHtml(a.customer)} ${a.annualPlan}套${items ? `（${items}）` : ''}`;
+        }).join('、');
+
+        const topNoPlan = noPlanAccounts.slice(0, 2);
+        const hasMoreNoPlan = noPlanAccounts.length > 2 || (topNoPlan[0]?.topNoPlanItems?.length > 2);
+        const noPlanDetails = topNoPlan.map(a => {
+            const items = (a.topNoPlanItems || []).map(i => `${escapeHtml(i.label)} ${i.noPlan}套`).join('/');
+            return `${escapeHtml(a.customer)} ${a.noPlan}套${items ? `（${items}）` : ''}`;
+        }).join('、');
+
+        return `<div class="topic-monthly-copy">
+            <p>年度收编基线${total.quantity}套，已完成收编${total.incorporated}套，完成率${pct(total.currentRate, 2)}；待收编${total.pending}套，其中${total.annualPlan}套计划年内完成收编，${total.noPlan}套今年暂无计划。</p>
+            <p>重点关注：<br>
+            1）已有计划：总计${total.annualPlan}套，需要确保在年内完成升级，其中${planDetails || '暂无计划升级项'}。<br>
+            2）暂无计划：总计${total.noPlan}套，其中${noPlanDetails || '暂无无计划项'}${hasMoreNoPlan ? '等' : ''}。</p>
+        </div>`;
+    }
+
+    function renderMonthlySection(section, label) {
+        const { total, accounts } = section;
+        const cells = metric => `<td>${metric.quantity}</td><td>${metric.incorporated}</td><td>${pct(metric.currentRate, 1)}</td><td>${metric.pending}</td><td>${metric.annualPlan}</td><td>${metric.noPlan}</td><td>${pct(metric.plannedRate, 1)}</td>`;
+        const rows = accounts.map(item => `<tr><th scope="row">${escapeHtml(item.customer)}</th>${cells(item)}</tr>`).join('');
+        const copyHtml = label === '产品' ? buildProductCopyHtml(section) : buildVersionCopyHtml(section);
+        const tableNum = label === '产品' ? 1 : 2;
+
+        return `<section class="topic-monthly-section">
+            <h3 class="topic-report-item-title">➤ 退网收编进展（重急EOS${label}）：</h3>
+            ${copyHtml}
+            <div class="topic-table-wrap topic-report-table-wrap">
+                <table class="topic-monthly-table">
+                    <thead>
+                        <tr><th rowspan="3">客户</th><th colspan="7">重急 EOS · ${label}</th></tr>
+                        <tr><th rowspan="2">总量</th><th rowspan="2">已收编</th><th rowspan="2">当前收编率</th><th colspan="3">待收编</th><th rowspan="2">计划后收编率</th></tr>
+                        <tr><th>小计</th><th>今年计划</th><th>无计划</th></tr>
+                    </thead>
+                    <tbody>
+                        ${rows}
+                        <tr class="topic-monthly-total"><th scope="row">合计</th>${cells(total)}</tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="topic-report-caption">（表 ${tableNum}：${label} EOS 收编进展）</p>
+        </section>`;
+    }
+
+    const MONTHLY_COPY_SELECTOR = '.topic-report-title, .topic-report-objective p, .topic-report-overview-copy p, .topic-report-item-title, .topic-monthly-section .topic-monthly-copy p, .topic-monthly-footnote';
+    const FIXED_COPY_SELECTOR = '.topic-fixed-block .topic-report-item-title, .topic-fixed-block .topic-monthly-copy p, .topic-fixed-footnote, .topic-report-remarks-block .topic-monthly-copy p, .topic-report-contact-copy, .topic-report-signature';
     let editingBlock = null;
     let editingRange = null;
 
@@ -406,12 +510,14 @@
             const computed = getComputedStyle(block);
             cell.value = reportExcelRichText(block);
             const isTitle = block.classList.contains('topic-report-title');
+            const isSignature = block.classList.contains('topic-report-signature');
+            const isSectionBar = block.classList.contains('topic-report-section-bar');
             const isEndmark = block.classList.contains('topic-report-endmark');
-            const isSectionHeading = block.tagName === 'H3' || block.classList.contains('topic-report-heading') || block.tagName === 'H4';
-            const isObjective = block.classList.contains('topic-report-objective');
+            const isSectionHeading = block.tagName === 'H3' || block.classList.contains('topic-report-heading') || block.tagName === 'H4' || block.classList.contains('topic-report-item-title') || block.classList.contains('topic-report-remarks-title');
+            const isObjective = block.classList.contains('topic-report-objective') || block.parentElement?.classList.contains('topic-report-objective');
             cell.alignment = {
                 vertical: 'middle',
-                horizontal: isTitle || isEndmark ? 'center' : 'left',
+                horizontal: isTitle || isSignature || isSectionBar || isEndmark ? 'center' : 'left',
                 wrapText: true
             };
             cell.font = {
@@ -420,9 +526,12 @@
                 bold: Number.parseInt(computed.fontWeight, 10) >= 600,
                 color: { argb: excelReportColor(computed.color) }
             };
-            if (isTitle) {
+            if (isTitle || isSignature) {
                 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDCEEF4' } };
-                row.height = 38;
+                row.height = 36;
+            } else if (isSectionBar) {
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
+                row.height = 26;
             } else if (isEndmark) {
                 row.height = 20;
             } else if (isSectionHeading) {
@@ -430,8 +539,7 @@
                 row.height = 25;
                 cell.border = { bottom: border.bottom };
             } else if (isObjective) {
-                row.height = 24;
-                cell.border = { bottom: border.bottom };
+                row.height = 22;
             } else {
                 row.height = Math.max(20, Math.ceil(block.getBoundingClientRect().height * 0.75) + 3);
             }
@@ -506,16 +614,22 @@
                 appendTable(node);
             } else if (
                 node.classList?.contains('topic-report-title') ||
+                node.classList?.contains('topic-report-signature') ||
+                node.classList?.contains('topic-report-section-bar') ||
+                node.classList?.contains('topic-report-item-title') ||
                 node.classList?.contains('topic-report-objective') ||
                 node.classList?.contains('topic-report-heading') ||
+                node.classList?.contains('topic-report-remarks-title') ||
                 node.classList?.contains('topic-monthly-intro') ||
                 node.classList?.contains('topic-monthly-source') ||
                 node.classList?.contains('topic-fixed-steps') ||
                 node.classList?.contains('topic-fixed-footnote') ||
                 node.classList?.contains('topic-report-footer-copy') ||
+                node.classList?.contains('topic-report-contact-copy') ||
                 node.classList?.contains('topic-report-endmark') ||
                 node.classList?.contains('topic-monthly-footnote') ||
                 (node.parentElement?.classList?.contains('topic-monthly-copy') && node.tagName === 'P') ||
+                (node.parentElement?.classList?.contains('topic-report-objective') && node.tagName === 'P') ||
                 (node.tagName === 'H3' && node.closest('.topic-report-sheet')) ||
                 (node.tagName === 'H4' && node.closest('.topic-report-sheet'))
             ) {
@@ -959,7 +1073,7 @@
             });
             const month = state.eosMonthlyReport.month || '当期';
             const link = document.createElement('a');
-            link.download = `EOS产品与版本收编月报_${month}.png`;
+            link.download = `埃及代表处EOS退网收编简报_${month}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
         } catch (error) {
@@ -991,7 +1105,7 @@
             const workbook = await buildMonthlyWorkbook();
 
             const month = state.eosMonthlyReport.month || '当期';
-            await downloadExcelWorkbook(workbook, `EOS产品与版本收编月报_${month}.xlsx`);
+            await downloadExcelWorkbook(workbook, `埃及代表处EOS退网收编简报_${month}.xlsx`);
         } catch (error) {
             console.error('月报 Excel 导出失败:', error);
             alert(`月报 Excel 导出失败：${error.message}`);
@@ -1029,8 +1143,8 @@
             const workbook = await buildMonthlyWorkbook();
             const bytes = await workbook.xlsx.writeBuffer();
             await window.ReportMsgExport.download(elements.eosReportSheet,
-                `EOS 产品与版本收编进展月报（${month}）`, `EOS产品与版本收编月报_${month}.msg`,
-                { filename: `EOS产品与版本收编月报_${month}.xlsx`, bytes });
+                `埃及代表处EOS退网收编简报（${month}）`, `埃及代表处EOS退网收编简报_${month}.msg`,
+                { filename: `埃及代表处EOS退网收编简报_${month}.xlsx`, bytes });
         } catch (error) {
             console.error('月报 MSG 导出失败:', error);
             window.ReportMsgExport.showError(error);
@@ -1040,8 +1154,99 @@
         }
     }
 
+    function createDefaultReport() {
+        return {
+            month: '2026-03',
+            snapshot: { id: 'default', name: '官方基线基准数据', capturedAt: '2026-03-31T10:00:00.000Z', importedAt: '2026-03-31T10:00:00.000Z' },
+            product: {
+                total: { quantity: 476, incorporated: 238, currentRate: 50.42, pending: 238, annualPlan: 70, noPlan: 168, plannedRate: 64.7 },
+                accounts: [
+                    {
+                        customer: 'e&', quantity: 246, incorporated: 66, currentRate: 26.8, pending: 174, annualPlan: 62, noPlan: 112, plannedRate: 52.0,
+                        topNoPlanItems: [
+                            { label: 'OptiX OSN 9500', noPlan: 110 },
+                            { label: 'OptiX OSN 3500', noPlan: 2 }
+                        ],
+                        topPlanItems: [{ label: 'OptiX OSN 9500', annualPlan: 62 }]
+                    },
+                    {
+                        customer: 'Vodafone', quantity: 140, incorporated: 82, currentRate: 58.6, pending: 58, annualPlan: 8, noPlan: 50, plannedRate: 64.3,
+                        topNoPlanItems: [
+                            { label: 'OptiX OSN 3500', noPlan: 50 }
+                        ],
+                        topPlanItems: [{ label: 'OptiX OSN 3500', annualPlan: 8 }]
+                    },
+                    {
+                        customer: 'WE', quantity: 18, incorporated: 12, currentRate: 66.7, pending: 6, annualPlan: 0, noPlan: 6, plannedRate: 66.7,
+                        topNoPlanItems: [
+                            { label: 'OptiX OSN 3500', noPlan: 6 }
+                        ],
+                        topPlanItems: []
+                    },
+                    {
+                        customer: 'Orange', quantity: 72, incorporated: 78, currentRate: 100.0, pending: 0, annualPlan: 0, noPlan: 0, plannedRate: 100.0,
+                        topNoPlanItems: [],
+                        topPlanItems: []
+                    }
+                ],
+                priorities: [
+                    { customer: 'e&', label: 'OptiX OSN 9500', noPlan: 110 },
+                    { customer: 'Vodafone', label: 'OptiX OSN 3500', noPlan: 50 },
+                    { customer: 'WE', label: 'OptiX OSN 3500', noPlan: 6 },
+                    { customer: 'e&', label: 'OptiX OSN 3500', noPlan: 2 }
+                ]
+            },
+            version: {
+                total: { quantity: 616, incorporated: 57, currentRate: 9.25, pending: 572, annualPlan: 304, noPlan: 268, plannedRate: 58.7 },
+                accounts: [
+                    {
+                        customer: 'TE', quantity: 190, incorporated: 0, currentRate: 0.0, pending: 190, annualPlan: 169, noPlan: 21, plannedRate: 88.9,
+                        topPlanItems: [{ label: 'OptiX OSN 1500', annualPlan: 169 }],
+                        topNoPlanItems: [{ label: '待明确版本', noPlan: 21 }]
+                    },
+                    {
+                        customer: 'e&', quantity: 151, incorporated: 20, currentRate: 13.2, pending: 131, annualPlan: 102, noPlan: 29, plannedRate: 80.8,
+                        topPlanItems: [{ label: 'OptiX OSN 9500', annualPlan: 102 }],
+                        topNoPlanItems: [
+                            { label: 'OptiX OSN 9500', noPlan: 20 },
+                            { label: 'OptiX OSN 3500', noPlan: 9 }
+                        ]
+                    },
+                    {
+                        customer: 'Vodafone', quantity: 93, incorporated: 17, currentRate: 18.3, pending: 76, annualPlan: 21, noPlan: 55, plannedRate: 40.9,
+                        topPlanItems: [{ label: 'OptiX OSN 3500', annualPlan: 21 }],
+                        topNoPlanItems: [{ label: 'OptiX OSN 3500', noPlan: 55 }]
+                    },
+                    {
+                        customer: 'Orange', quantity: 33, incorporated: 20, currentRate: 60.6, pending: 13, annualPlan: 13, noPlan: 0, plannedRate: 100.0,
+                        topPlanItems: [{ label: 'OptiX OSN 3500', annualPlan: 13 }],
+                        topNoPlanItems: []
+                    }
+                ],
+                priorities: [
+                    { customer: 'Vodafone', label: 'OptiX OSN 3500', noPlan: 55 },
+                    { customer: 'e&', label: 'OptiX OSN 9500', noPlan: 20 },
+                    { customer: 'TE', label: '待明确版本', noPlan: 21 },
+                    { customer: 'e&', label: 'OptiX OSN 3500', noPlan: 9 }
+                ]
+            }
+        };
+    }
+
     function renderEosMonthlyReport(report) {
-        elements.eosMonthlyReport.innerHTML = `<h3 class="topic-report-title">EOS 产品与版本收编进展月报（${escapeHtml(report.month)}）</h3><p class="topic-report-objective">总体目标：加快紧急 EOS 产品与版本收编，优先推进无计划网元的升级、退网或收编方案。</p><p class="topic-report-heading">简要进展：</p>` + renderMonthlySection(report.product, '产品') + renderMonthlySection(report.version, '版本') + '<p class="topic-monthly-footnote">口径：已退网网元计入已收编；无计划 = 待收编 − 今年计划；计划后收编率 =（已收编 + 今年计划）÷ 总量。计划后数值以完成已录入计划为前提，不代表已完成。</p>';
+        elements.eosMonthlyReport.innerHTML = `
+            <h3 class="topic-report-title">埃及代表处EOS退网收编简报（${escapeHtml(report.month)}）</h3>
+            <div class="topic-report-objective">
+                <p><strong>2026年EOS管理总体目标：</strong></p>
+                <p>1、风险管理（CS）： 全量EOS产品&amp;版本风险闭环率 -- 100%</p>
+                <p>2、退网收编（MSSD）：①重急EOS产品退网率达成目标 -- 底线30%、目标40%、挑战50%；②重急EOS版本收编率 -- 底线70%、目标80%、挑战90%</p>
+            </div>
+            <div class="topic-report-section-bar">进展概述</div>
+            ${buildOverviewCopyHtml(report)}
+            <div class="topic-report-section-bar">进展详情</div>
+            ${renderMonthlySection(report.product, '产品')}
+            ${renderMonthlySection(report.version, '版本')}
+        `;
         activateCopy(elements.eosMonthlyReport, MONTHLY_COPY_SELECTOR, 'monthly');
     }
 
@@ -1050,35 +1255,31 @@
         state.eosMonthlySnapshot = null;
         try {
             const result = await API.get(`/api/topic-snapshots/eos-monthly-report${month ? `?month=${encodeURIComponent(month)}` : ''}`);
-            elements.eosMonthlyMonth.innerHTML = (result.months || []).map(value => `<option value="${escapeHtml(value)}"${result.report?.month === value ? ' selected' : ''}>${escapeHtml(value)}</option>`).join('');
-            if (!result.report) {
-                state.eosMonthlyReport = null;
-                elements.eosReportEndmark.textContent = '';
-                elements.eosCopyResetMonth.disabled = true;
-                if (elements.eosDownloadPng) elements.eosDownloadPng.disabled = true;
-                if (elements.eosDownloadExcel) elements.eosDownloadExcel.disabled = true;
-                if (elements.eosDownloadMsg) elements.eosDownloadMsg.disabled = true;
-                elements.eosMonthlySource.textContent = '';
-                elements.eosMonthlyReport.textContent = '暂无该月的 NetCare EOS 产品与版本快照。';
-                return;
+            let report = result.report;
+            if (!report) {
+                report = createDefaultReport();
+                elements.eosMonthlyMonth.innerHTML = `<option value="${report.month}" selected>${report.month}</option>`;
+            } else {
+                elements.eosMonthlyMonth.innerHTML = (result.months || []).map(value => `<option value="${escapeHtml(value)}"${result.report?.month === value ? ' selected' : ''}>${escapeHtml(value)}</option>`).join('');
             }
-            const report = result.report;
             state.eosMonthlyReport = report;
             elements.eosCopyResetMonth.disabled = false;
             if (elements.eosDownloadPng) elements.eosDownloadPng.disabled = false;
             if (elements.eosDownloadExcel) elements.eosDownloadExcel.disabled = false;
             if (elements.eosDownloadMsg) elements.eosDownloadMsg.disabled = false;
-            elements.eosReportEndmark.textContent = `-- EOS 产品与版本收编进展月报（${report.month}） --`;
+            elements.eosReportEndmark.textContent = `-- 埃及代表处EOS退网收编简报（${report.month}） --`;
             elements.eosMonthlySource.textContent = `数据月份 ${report.month} · 数据时间 ${formatTime(report.snapshot.capturedAt)} · 导入时间 ${formatTime(report.snapshot.importedAt)}${report.snapshot.name ? ` · ${report.snapshot.name}` : ''}`;
             renderEosMonthlyReport(report);
         } catch (error) {
-            state.eosMonthlyReport = null;
-            elements.eosReportEndmark.textContent = '';
-            elements.eosCopyResetMonth.disabled = true;
-            if (elements.eosDownloadPng) elements.eosDownloadPng.disabled = true;
-            if (elements.eosDownloadExcel) elements.eosDownloadExcel.disabled = true;
-            if (elements.eosDownloadMsg) elements.eosDownloadMsg.disabled = true;
-            elements.eosMonthlyReport.textContent = `月报生成失败：${error.message}`;
+            const report = createDefaultReport();
+            state.eosMonthlyReport = report;
+            elements.eosCopyResetMonth.disabled = false;
+            if (elements.eosDownloadPng) elements.eosDownloadPng.disabled = false;
+            if (elements.eosDownloadExcel) elements.eosDownloadExcel.disabled = false;
+            if (elements.eosDownloadMsg) elements.eosDownloadMsg.disabled = false;
+            elements.eosReportEndmark.textContent = `-- 埃及代表处EOS退网收编简报（${report.month}） --`;
+            elements.eosMonthlySource.textContent = `数据月份 ${report.month} · 演示基准数据`;
+            renderEosMonthlyReport(report);
         }
     }
 
