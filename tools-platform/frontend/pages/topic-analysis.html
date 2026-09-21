@@ -44,6 +44,7 @@
                     <label>报告月份<select id="eosMonthlyMonth" aria-label="EOS 月报月份"></select></label>
                     <button id="eosCopyResetMonth" type="button" disabled>恢复本月自动文案</button>
                     <button id="eosCopyResetFixed" type="button">恢复固定文案</button>
+                    <button id="eosConfigBtn" class="topic-monthly-btn" type="button" title="配置客户名称映射规则与重点设备套数展示阈值">映射与阈值配置</button>
                     <button id="eosDownloadPng" class="topic-monthly-btn" type="button" title="下载当前月报长图 PNG">下载月报 PNG</button>
                     <button id="eosDownloadExcel" class="topic-monthly-btn topic-monthly-btn-primary" type="button" title="下载包含月报、多维度分析及详表的多 Sheet Excel">下载月报 Excel</button>
                     <button id="eosDownloadMsg" class="topic-monthly-btn" type="button" title="下载可在 Outlook 中继续编辑的 HTML 月报邮件">下载月报 MSG</button>
@@ -85,7 +86,7 @@
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <th scope="row">TE</th>
+                                        <th scope="row" data-cust="TE">TE</th>
                                         <td>38,244</td>
                                         <td>22,728</td>
                                         <td>22,728</td>
@@ -99,7 +100,7 @@
                                         <td>—</td>
                                     </tr>
                                     <tr>
-                                        <th scope="row">Vodafone</th>
+                                        <th scope="row" data-cust="Vodafone">Vodafone</th>
                                         <td>22,814</td>
                                         <td>1,452</td>
                                         <td>1,452</td>
@@ -113,7 +114,7 @@
                                         <td>—</td>
                                     </tr>
                                     <tr>
-                                        <th scope="row">e&amp;</th>
+                                        <th scope="row" data-cust="e&">e&amp;</th>
                                         <td>30,814</td>
                                         <td>1,206</td>
                                         <td>1,206</td>
@@ -127,7 +128,7 @@
                                         <td>—</td>
                                     </tr>
                                     <tr>
-                                        <th scope="row">Orange</th>
+                                        <th scope="row" data-cust="Orange">Orange</th>
                                         <td>14,362</td>
                                         <td>82</td>
                                         <td>82</td>
@@ -163,7 +164,7 @@
                         <h3 id="fixedVersionTitle" class="topic-report-item-title">➤ 风险管理进展（版本EOS）：</h3>
                         <div class="topic-monthly-copy">
                             <p>年度风险管理基线32,206套，其中已发送预警函件25,783套，退网6,419套，风险消减完成率100%。</p>
-                            <p>重点关注：25,783套网元虽然已完成客户界面风险预警，但仍存在软件缺陷无法及时补丁修复的风险，同时也是软件升级销售机会点，建议系统部持续推动客户进行版本升级。其中e&amp; 14,512套（RTN950 4,217套/RTN320 1,948套/BTS3900A 1,031套等）、Vodafone 4,989套（RTN380 2,427套/RTN905 1,607套/RTN980 326套)、TE 5290套（DBS3900 1,798套/RTN905 1,313套/MA5800 691套等)、Orange 992套（BTS3900 877套等）</p>
+                            <p class="topic-fixed-version-focus">重点关注：25,783套网元虽然已完成客户界面风险预警，但仍存在软件缺陷无法及时补丁修复的风险，同时也是软件升级销售机会点，建议系统部持续推动客户进行版本升级。其中e&amp; 14,512套（RTN950 4,217套/RTN320 1,948套/BTS3900A 1,031套等）、Vodafone 4,989套（RTN380 2,427套/RTN905 1,607套/RTN980 326套)、TE 5290套（DBS3900 1,798套/RTN905 1,313套/MA5800 691套等)、Orange 992套（BTS3900 877套等）</p>
                         </div>
                         <div class="topic-table-wrap topic-report-table-wrap">
                             <table class="topic-fixed-table">
@@ -187,7 +188,7 @@
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <th scope="row">e&amp;</th>
+                                        <th scope="row" data-cust="e&">e&amp;</th>
                                         <td>30,814</td>
                                         <td>19,471</td>
                                         <td>19,471</td>
@@ -199,7 +200,7 @@
                                         <td>—</td>
                                     </tr>
                                     <tr>
-                                        <th scope="row">Vodafone</th>
+                                        <th scope="row" data-cust="Vodafone">Vodafone</th>
                                         <td>22,814</td>
                                         <td>6,143</td>
                                         <td>6,143</td>
@@ -211,7 +212,7 @@
                                         <td>—</td>
                                     </tr>
                                     <tr>
-                                        <th scope="row">TE</th>
+                                        <th scope="row" data-cust="TE">TE</th>
                                         <td>38,244</td>
                                         <td>5,323</td>
                                         <td>5,323</td>
@@ -223,7 +224,7 @@
                                         <td>—</td>
                                     </tr>
                                     <tr>
-                                        <th scope="row">Orange</th>
+                                        <th scope="row" data-cust="Orange">Orange</th>
                                         <td>14,362</td>
                                         <td>1,269</td>
                                         <td>1,269</td>
@@ -265,6 +266,131 @@
                     <p class="topic-report-contact-copy">若您对此报告数据有疑问，请联系范晓龙wx154337，于祥00877023，谢谢！原始数据见附件！</p>
                     <div class="topic-report-signature">埃及网络保障与运维服务部</div>
                     <p id="eosReportEndmark" class="topic-report-endmark"></p>
+                </footer>
+
+                <!-- English Version · 英文对照月报 -->
+                <div class="topic-report-divider-en"><span class="topic-report-divider-badge">ENGLISH VERSION · 英文对照简报</span></div>
+                <div id="eosMonthlyReportEn" class="topic-monthly-report topic-monthly-report-en" aria-live="polite">正在生成英文月报…</div>
+                <div class="topic-fixed-progress topic-fixed-progress-en">
+                    <section class="topic-fixed-block" aria-labelledby="fixedProductTitleEn">
+                        <h3 id="fixedProductTitleEn" class="topic-report-item-title">➤ Risk Management Progress (Product EOS):</h3>
+                        <div class="topic-monthly-copy">
+                            <p>Annual risk management baseline: 25,468 sets, of which EOL: 982 sets, exception sale: 23,141 sets, retirement: 1,345 sets, risk reduction completion rate: 100%.</p>
+                            <p class="topic-fixed-product-focus-en">Key Focus: 982 EOL NEs are still running on the live network with restricted service support and high risk upon failure. System departments are recommended to accelerate equipment replacement, retirement, or exception sales, including: e&amp; 522 sets (MA5600 272 sets / Metro 1000 134 sets), Vodafone 419 sets (ATN910 306 sets / PTN6900 47 sets), TE 24 sets (UAC3000 2 sets), Orange 17 sets (CE12804S 8 sets).</p>
+                        </div>
+                        <div class="topic-table-wrap topic-report-table-wrap">
+                            <table class="topic-fixed-table" id="fixedProductTableEn">
+                                <thead>
+                                    <tr>
+                                        <th rowspan="2">Customer</th>
+                                        <th rowspan="2">Baseline NEs</th>
+                                        <th rowspan="2">2026 Product EOS</th>
+                                        <th colspan="5">Closed</th>
+                                        <th colspan="4">Unclosed</th>
+                                    </tr>
+                                    <tr>
+                                        <th>Subtotal</th>
+                                        <th>Closure Rate</th>
+                                        <th>EOL</th>
+                                        <th>Exception Sale</th>
+                                        <th>Retirement</th>
+                                        <th>Subtotal</th>
+                                        <th>Plan Formulated</th>
+                                        <th>In Execution</th>
+                                        <th>Pending Confirmation</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <th scope="row" data-cust="TE">TE</th>
+                                        <td>38,244</td><td>22,728</td><td>22,728</td><td class="topic-fixed-complete">100%</td><td>24</td><td>22,014</td><td>690</td><td>—</td><td>—</td><td>—</td><td>—</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row" data-cust="Vodafone">Vodafone</th>
+                                        <td>22,814</td><td>1,452</td><td>1,452</td><td class="topic-fixed-complete">100%</td><td>419</td><td>479</td><td>554</td><td>—</td><td>—</td><td>—</td><td>—</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row" data-cust="e&">e&amp;</th>
+                                        <td>30,814</td><td>1,206</td><td>1,206</td><td class="topic-fixed-complete">100%</td><td>522</td><td>610</td><td>74</td><td>—</td><td>—</td><td>—</td><td>—</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row" data-cust="Orange">Orange</th>
+                                        <td>14,362</td><td>82</td><td>82</td><td class="topic-fixed-complete">100%</td><td>17</td><td>38</td><td>27</td><td>—</td><td>—</td><td>—</td><td>—</td>
+                                    </tr>
+                                    <tr class="topic-monthly-total">
+                                        <th scope="row">Total</th>
+                                        <td>106,234</td><td>25,468</td><td>25,468</td><td class="topic-fixed-complete">100%</td><td>982</td><td>23,141</td><td>1,345</td><td>—</td><td>—</td><td>—</td><td>—</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="topic-report-caption">(Table 3: Product EOS Risk Elimination Progress)</p>
+                    </section>
+                    <section class="topic-fixed-block" aria-labelledby="fixedVersionTitleEn">
+                        <h3 id="fixedVersionTitleEn" class="topic-report-item-title">➤ Risk Management Progress (Version EOS):</h3>
+                        <div class="topic-monthly-copy">
+                            <p>Annual risk management baseline: 32,206 sets, of which warning letters issued: 25,783 sets, retirement: 6,419 sets, risk reduction completion rate: 100%.</p>
+                            <p class="topic-fixed-version-focus-en">Key Focus: Although risk warnings on the customer interface have been completed for 25,783 NEs, software defects that cannot be patched in time still pose risks and represent software upgrade sales opportunities. System departments are advised to continue promoting version upgrades with customers. Including: e&amp; 14,512 sets (RTN950 4,217 sets / RTN320 1,948 sets / BTS3900A 1,031 sets etc.), Vodafone 4,989 sets (RTN380 2,427 sets / RTN905 1,607 sets / RTN980 326 sets), TE 5,290 sets (DBS3900 1,798 sets / RTN905 1,313 sets / MA5800 691 sets etc.), Orange 992 sets (BTS3900 877 sets etc.).</p>
+                        </div>
+                        <div class="topic-table-wrap topic-report-table-wrap">
+                            <table class="topic-fixed-table" id="fixedVersionTableEn">
+                                <thead>
+                                    <tr>
+                                        <th rowspan="2">Customer</th>
+                                        <th rowspan="2">Baseline NEs</th>
+                                        <th rowspan="2">2026 Version EOS</th>
+                                        <th colspan="4">Closed</th>
+                                        <th colspan="3">Unclosed</th>
+                                    </tr>
+                                    <tr>
+                                        <th>Subtotal*</th>
+                                        <th>Closure Rate</th>
+                                        <th>Warning Letters</th>
+                                        <th>Retirement</th>
+                                        <th>Subtotal</th>
+                                        <th>Risk Assessment &amp; Release</th>
+                                        <th>Dispatching Warning Letters</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <th scope="row" data-cust="e&">e&amp;</th>
+                                        <td>30,814</td><td>19,471</td><td>19,471</td><td class="topic-fixed-complete">100%</td><td>14,512</td><td>4,959</td><td>—</td><td>—</td><td>—</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row" data-cust="Vodafone">Vodafone</th>
+                                        <td>22,814</td><td>6,143</td><td>6,143</td><td class="topic-fixed-complete">100%</td><td>4,989</td><td>1,154</td><td>—</td><td>—</td><td>—</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row" data-cust="TE">TE</th>
+                                        <td>38,244</td><td>5,323</td><td>5,323</td><td class="topic-fixed-complete">100%</td><td>5,290</td><td>29</td><td>—</td><td>—</td><td>—</td>
+                                    </tr>
+                                    <tr>
+                                        <th scope="row" data-cust="Orange">Orange</th>
+                                        <td>14,362</td><td>1,269</td><td>1,269</td><td class="topic-fixed-complete">100%</td><td>992</td><td>277</td><td>—</td><td>—</td><td>—</td>
+                                    </tr>
+                                    <tr class="topic-monthly-total">
+                                        <th scope="row">Total</th>
+                                        <td>106,234</td><td>32,206</td><td>32,206</td><td class="topic-fixed-complete">100%</td><td>25,783</td><td>6,419</td><td>—</td><td>—</td><td>—</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="topic-report-caption">(Table 4: Version EOS Risk Notification Progress)</p>
+                    </section>
+                    <p class="topic-fixed-footnote">Fixed baseline is compiled according to official NetCare materials, and NE baseline is a fixed figure set at the beginning of the year. *Version closed subtotal includes 4 new NEs added from NetCare official IBMS updates, which may be slightly higher than the initial baseline; closure rate is displayed as 100%.</p>
+                    <section class="topic-report-remarks-block">
+                        <h4 class="topic-report-remarks-title">Remarks: Risk Management Closed-Loop Process</h4>
+                        <div class="topic-monthly-copy">
+                            <p>Product EOS Risk Handling Process: Initial Risk Assessment → Risk Release → Retirement Solution Formulation → EOL or Exception Sale Approval → Customer Confirmation → Closed-Loop Acceptance;</p>
+                            <p>Version EOS Risk Handling Process: Initial Risk Assessment → Risk Release → Assign &amp; Dispatch Warning Letter → Customer Receipt Confirmation → Closed-Loop Acceptance;</p>
+                        </div>
+                    </section>
+                </div>
+                <footer class="topic-report-footer">
+                    <p class="topic-report-contact-copy">If you have any questions regarding this report, please contact Fan Xiaolong (wx154337), Yu Xiang (00877023). Thank you! Raw data attached.</p>
+                    <div class="topic-report-signature">Egypt Network Assurance &amp; Operations Service Dept</div>
+                    <p id="eosReportEndmarkEn" class="topic-report-endmark"></p>
                 </footer>
             </div>
         </section>
@@ -342,6 +468,63 @@
                     id="detailSortDirection" type="button">升序</button></div>
             <div id="detailTable" class="topic-detail-table-wrap"></div>
             <pre id="detailJson"></pre>
+        </div>
+    </div>
+
+    <div id="eosMappingModal" class="topic-modal" hidden>
+        <div class="topic-modal-card topic-mapping-modal-card" role="dialog" aria-modal="true" aria-labelledby="eosMappingTitle">
+            <div class="topic-modal-head">
+                <div>
+                    <h2 id="eosMappingTitle">客户名称映射与显示阈值配置</h2>
+                    <p>配置月报表格与文案中自动替换的客户映射规则，以及重点设备最小套数展示阈值。</p>
+                </div>
+                <div class="topic-modal-actions">
+                    <button id="closeEosMappingModal" type="button" aria-label="关闭">×</button>
+                </div>
+            </div>
+            <div class="topic-mapping-modal-body">
+                <div class="topic-mapping-section">
+                    <div class="topic-mapping-section-title">📊 重点关注设备展示阈值</div>
+                    <p class="topic-mapping-tip">在文案中展开列出设备具体型号时，仅显示数量大于或等于该阈值的条目，避免显示过多碎小项。</p>
+                    <div class="topic-mapping-threshold-row">
+                        <label for="eosMinThresholdInput">最小设备套数展示阈值：</label>
+                        <input id="eosMinThresholdInput" type="number" min="0" max="9999" value="10" step="1">
+                        <span class="topic-mapping-unit">套（默认 10 套，小于该值的型号自动折叠）</span>
+                    </div>
+                </div>
+                <div class="topic-mapping-section">
+                    <div class="topic-mapping-section-head">
+                        <div class="topic-mapping-section-title">🏷️ 客户名称映射表（自动替换表格与文案客户名）</div>
+                        <button id="eosResetDefaultMappingsBtn" class="topic-mapping-btn-small" type="button">恢复默认4条映射</button>
+                    </div>
+                    <p class="topic-mapping-tip">原始名称匹配成功后，将在中文月报表格、英文月报表格及所有动态文案中自动替换为映射显示名称。</p>
+                    <div class="topic-mapping-table-wrap">
+                        <table class="topic-mapping-table">
+                            <thead>
+                                <tr>
+                                    <th>原始客户名称 (Original)</th>
+                                    <th>映射显示名称 (Display)</th>
+                                    <th style="width:70px;text-align:center">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="eosMappingTableBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="topic-mapping-add-row">
+                        <input id="eosNewMapKey" type="text" placeholder="原始客户名称，如 Etisalat Misr" aria-label="原始客户名称">
+                        <span class="topic-mapping-arrow">➔</span>
+                        <input id="eosNewMapVal" type="text" placeholder="映射显示名称，如 e&" aria-label="映射显示名称">
+                        <button id="eosAddMappingBtn" type="button">添加映射</button>
+                    </div>
+                </div>
+            </div>
+            <div class="topic-mapping-modal-foot">
+                <span id="eosMappingStatusMsg" class="topic-mapping-status-msg"></span>
+                <div class="topic-mapping-actions">
+                    <button id="eosSaveMappingConfigBtn" class="topic-monthly-btn topic-monthly-btn-primary" type="button">保存并应用</button>
+                    <button id="eosCancelMappingConfigBtn" class="topic-monthly-btn" type="button">取消</button>
+                </div>
+            </div>
         </div>
     </div>
 

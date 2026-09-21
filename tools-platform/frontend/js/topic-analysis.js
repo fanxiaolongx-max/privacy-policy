@@ -144,6 +144,62 @@
 
     const pct = (val, dec = 1) => `${Number(val || 0).toFixed(dec)}%`;
 
+    const DEFAULT_MAPPINGS = {
+        'Etisalat Misr': 'e&',
+        'Orange Egypt for Telecommunications': 'Orange Telecom',
+        'Egypt': 'TE',
+        'Vodafone Egypt': 'Vodafone',
+        'Telecom Egypt': 'TE',
+        'NILE ON LINE (NOL)': 'e&'
+    };
+    const DEFAULT_MIN_THRESHOLD = 10;
+
+    function getMappingStorageKey() {
+        let tenant = 'default';
+        try { tenant = localStorage.getItem('tools_tenant_id') || tenant; } catch (_) {}
+        return `topic-eos:mapping-config:v1:${tenant}`;
+    }
+
+    function readMappingConfig() {
+        try {
+            const raw = JSON.parse(localStorage.getItem(getMappingStorageKey()) || '{}');
+            const thresh = Number(raw?.minThreshold);
+            const minThreshold = Number.isFinite(thresh) ? Math.max(0, Math.floor(thresh)) : DEFAULT_MIN_THRESHOLD;
+            const aliases = raw?.aliases && typeof raw.aliases === 'object' && !Array.isArray(raw.aliases)
+                ? { ...DEFAULT_MAPPINGS, ...raw.aliases }
+                : { ...DEFAULT_MAPPINGS };
+            return { minThreshold, aliases };
+        } catch (_) {
+            return { minThreshold: DEFAULT_MIN_THRESHOLD, aliases: { ...DEFAULT_MAPPINGS } };
+        }
+    }
+
+    function saveMappingConfig(config) {
+        try {
+            localStorage.setItem(getMappingStorageKey(), JSON.stringify(config));
+        } catch (_) {}
+    }
+
+    function mapCustomerName(rawName) {
+        const trimmed = String(rawName || '').trim();
+        if (!trimmed) return '未分类客户';
+        const config = readMappingConfig();
+        if (config.aliases[trimmed]) return config.aliases[trimmed];
+        if (trimmed === 'Orange' && config.aliases['Orange Egypt for Telecommunications']) {
+            return config.aliases['Orange Egypt for Telecommunications'];
+        }
+        if (trimmed === 'TE' && (config.aliases['Telecom Egypt'] || config.aliases['Egypt'])) {
+            return config.aliases['Telecom Egypt'] || config.aliases['Egypt'];
+        }
+        if (trimmed === 'Vodafone' && config.aliases['Vodafone Egypt']) {
+            return config.aliases['Vodafone Egypt'];
+        }
+        if (trimmed === 'e&' && config.aliases['Etisalat Misr']) {
+            return config.aliases['Etisalat Misr'];
+        }
+        return trimmed;
+    }
+
     function buildOverviewCopyHtml(report) {
         const prod = report.product;
         const ver = report.version;
@@ -157,7 +213,7 @@
 
         const prodNoPlanAccounts = (prod.accounts || []).filter(a => (a.noPlan || 0) > 0).sort((a, b) => b.noPlan - a.noPlan);
         const prodCustText = prodNoPlanAccounts.length
-            ? `（${prodNoPlanAccounts.slice(0, 2).map(a => `${escapeHtml(a.customer)} ${a.noPlan}套`).join('，')}）`
+            ? `（${prodNoPlanAccounts.slice(0, 2).map(a => `${escapeHtml(mapCustomerName(a.customer))} ${a.noPlan}套`).join('，')}）`
             : '';
 
         const verRate = Number(ver.total.currentRate || 0);
@@ -166,17 +222,17 @@
 
         const verPlanAccounts = (ver.accounts || []).filter(a => (a.annualPlan || 0) > 0).sort((a, b) => b.annualPlan - a.annualPlan);
         const verPlanCustSummary = verPlanAccounts.length
-            ? verPlanAccounts.map(a => `${escapeHtml(a.customer)} ${a.annualPlan}套`).join('、')
+            ? verPlanAccounts.map(a => `${escapeHtml(mapCustomerName(a.customer))} ${a.annualPlan}套`).join('、')
             : '各客户暂无明确计划';
 
         const verNoPlanAccounts = (ver.accounts || []).filter(a => (a.noPlan || 0) > 0).sort((a, b) => b.noPlan - a.noPlan);
         const topNoPlanSlice = verNoPlanAccounts.slice(0, 2);
         const verNoPlanCustSummary = topNoPlanSlice.length
-            ? topNoPlanSlice.map(a => `${escapeHtml(a.customer)} ${a.noPlan}套`).join('、')
+            ? topNoPlanSlice.map(a => `${escapeHtml(mapCustomerName(a.customer))} ${a.noPlan}套`).join('、')
             : '各客户已全部纳入收编计划';
 
         const urgentCustomerNames = topNoPlanSlice.length
-            ? topNoPlanSlice.map(a => escapeHtml(a.customer)).join('、')
+            ? topNoPlanSlice.map(a => escapeHtml(mapCustomerName(a.customer))).join('、')
             : '各';
 
         return `<div class="topic-monthly-copy topic-report-overview-copy">
@@ -190,13 +246,20 @@
     }
 
     function buildProductCopyHtml(product) {
+        const config = readMappingConfig();
+        const minThreshold = config.minThreshold;
         const total = product.total;
         const noPlanAccounts = (product.accounts || []).filter(a => (a.noPlan || 0) > 0).sort((a, b) => b.noPlan - a.noPlan);
 
         const focusDetails = noPlanAccounts.map(a => {
-            const items = (a.topNoPlanItems || []).map(i => `${escapeHtml(i.label)} ${i.noPlan}套`).join('/');
-            return `${escapeHtml(a.customer)} ${a.noPlan}套${items ? `（${items}）` : ''}`;
-        }).join('、');
+            const cust = mapCustomerName(a.customer);
+            const filteredItems = (a.topNoPlanItems || []).filter(i => (i.noPlan || 0) >= minThreshold);
+            if (!filteredItems.length) {
+                return (a.noPlan || 0) >= minThreshold ? `${escapeHtml(cust)} ${a.noPlan}套` : '';
+            }
+            const items = filteredItems.map(i => `${escapeHtml(i.label)} ${i.noPlan}套`).join('/');
+            return `${escapeHtml(cust)} ${a.noPlan}套（${items}）`;
+        }).filter(Boolean).join('、');
 
         return `<div class="topic-monthly-copy">
             <p>年度收编基线${total.quantity}套，已完成收编${total.incorporated}套，完成率${pct(total.currentRate, 2)}；待收编${total.pending}套，其中${total.noPlan}套今年暂无计划。</p>
@@ -205,21 +268,33 @@
     }
 
     function buildVersionCopyHtml(version) {
+        const config = readMappingConfig();
+        const minThreshold = config.minThreshold;
         const total = version.total;
         const planAccounts = (version.accounts || []).filter(a => (a.annualPlan || 0) > 0).sort((a, b) => b.annualPlan - a.annualPlan);
         const noPlanAccounts = (version.accounts || []).filter(a => (a.noPlan || 0) > 0).sort((a, b) => b.noPlan - a.noPlan);
 
         const planDetails = planAccounts.map(a => {
-            const items = (a.topPlanItems || []).map(i => `${escapeHtml(i.label)} ${i.annualPlan}套`).join('/');
-            return `${escapeHtml(a.customer)} ${a.annualPlan}套${items ? `（${items}）` : ''}`;
-        }).join('、');
+            const cust = mapCustomerName(a.customer);
+            const filteredItems = (a.topPlanItems || []).filter(i => (i.annualPlan || 0) >= minThreshold);
+            if (!filteredItems.length) {
+                return (a.annualPlan || 0) >= minThreshold ? `${escapeHtml(cust)} ${a.annualPlan}套` : '';
+            }
+            const items = filteredItems.map(i => `${escapeHtml(i.label)} ${i.annualPlan}套`).join('/');
+            return `${escapeHtml(cust)} ${a.annualPlan}套（${items}）`;
+        }).filter(Boolean).join('、');
 
         const topNoPlan = noPlanAccounts.slice(0, 2);
         const hasMoreNoPlan = noPlanAccounts.length > 2 || (topNoPlan[0]?.topNoPlanItems?.length > 2);
         const noPlanDetails = topNoPlan.map(a => {
-            const items = (a.topNoPlanItems || []).map(i => `${escapeHtml(i.label)} ${i.noPlan}套`).join('/');
-            return `${escapeHtml(a.customer)} ${a.noPlan}套${items ? `（${items}）` : ''}`;
-        }).join('、');
+            const cust = mapCustomerName(a.customer);
+            const filteredItems = (a.topNoPlanItems || []).filter(i => (i.noPlan || 0) >= minThreshold);
+            if (!filteredItems.length) {
+                return (a.noPlan || 0) >= minThreshold ? `${escapeHtml(cust)} ${a.noPlan}套` : '';
+            }
+            const items = filteredItems.map(i => `${escapeHtml(i.label)} ${i.noPlan}套`).join('/');
+            return `${escapeHtml(cust)} ${a.noPlan}套（${items}）`;
+        }).filter(Boolean).join('、');
 
         return `<div class="topic-monthly-copy">
             <p>年度收编基线${total.quantity}套，已完成收编${total.incorporated}套，完成率${pct(total.currentRate, 2)}；待收编${total.pending}套，其中${total.annualPlan}套计划年内完成收编，${total.noPlan}套今年暂无计划。</p>
@@ -232,7 +307,7 @@
     function renderMonthlySection(section, label) {
         const { total, accounts } = section;
         const cells = metric => `<td>${metric.quantity}</td><td>${metric.incorporated}</td><td>${pct(metric.currentRate, 1)}</td><td>${metric.pending}</td><td>${metric.annualPlan}</td><td>${metric.noPlan}</td><td>${pct(metric.plannedRate, 1)}</td>`;
-        const rows = accounts.map(item => `<tr><th scope="row">${escapeHtml(item.customer)}</th>${cells(item)}</tr>`).join('');
+        const rows = accounts.map(item => `<tr><th scope="row">${escapeHtml(mapCustomerName(item.customer))}</th>${cells(item)}</tr>`).join('');
         const copyHtml = label === '产品' ? buildProductCopyHtml(section) : buildVersionCopyHtml(section);
         const tableNum = label === '产品' ? 1 : 2;
 
@@ -256,6 +331,137 @@
         </section>`;
     }
 
+    function buildOverviewCopyHtmlEn(report) {
+        const prod = report.product;
+        const ver = report.version;
+
+        const prodRate = Number(prod.total.currentRate || 0);
+        const prodPlanned = Number(prod.total.plannedRate || 0);
+        let prodTargetStatus = 'annual challenge target reached';
+        if (prodRate < 30) prodTargetStatus = `gap of ${(30 - prodRate).toFixed(1)}% to bottom-line target`;
+        else if (prodRate < 40) prodTargetStatus = 'annual bottom-line target reached';
+        else if (prodRate < 50) prodTargetStatus = 'annual target reached';
+
+        const prodNoPlanAccounts = (prod.accounts || []).filter(a => (a.noPlan || 0) > 0).sort((a, b) => b.noPlan - a.noPlan);
+        const prodCustText = prodNoPlanAccounts.length
+            ? `(${prodNoPlanAccounts.slice(0, 2).map(a => `${escapeHtml(mapCustomerName(a.customer))} ${a.noPlan} sets`).join(', ')})`
+            : '';
+
+        const verRate = Number(ver.total.currentRate || 0);
+        const verPlanned = Number(ver.total.plannedRate || 0);
+        const verRiskText = verPlanned < 70 ? 'high risk in reaching annual target' : 'positive momentum in reaching annual target';
+
+        const verPlanAccounts = (ver.accounts || []).filter(a => (a.annualPlan || 0) > 0).sort((a, b) => b.annualPlan - a.annualPlan);
+        const verPlanCustSummary = verPlanAccounts.length
+            ? verPlanAccounts.map(a => `${escapeHtml(mapCustomerName(a.customer))} ${a.annualPlan} sets`).join(', ')
+            : 'No clear plan from customers currently';
+
+        const verNoPlanAccounts = (ver.accounts || []).filter(a => (a.noPlan || 0) > 0).sort((a, b) => b.noPlan - a.noPlan);
+        const topNoPlanSlice = verNoPlanAccounts.slice(0, 2);
+        const verNoPlanCustSummary = topNoPlanSlice.length
+            ? topNoPlanSlice.map(a => `${escapeHtml(mapCustomerName(a.customer))} ${a.noPlan} sets`).join(', ')
+            : 'All customers included in incorporation plans';
+
+        const urgentCustomerNames = topNoPlanSlice.length
+            ? topNoPlanSlice.map(a => escapeHtml(mapCustomerName(a.customer))).join(', ')
+            : 'system';
+
+        return `<div class="topic-monthly-copy topic-report-overview-copy">
+            <p><strong>[Risk Management]</strong> 100% risk closure rate for all EOS products, 100% risk closure rate for all EOS versions, both reaching annual targets.</p>
+            <p><strong>[Retirement &amp; Incorporation]</strong></p>
+            <p>1. Critical &amp; urgent EOS product retirement/incorporation rate is ${pct(prodRate, 2)}, ${prodTargetStatus}, forecast year-end completion rate is ${pct(prodPlanned, 1)}, but ${prod.total.noPlan} sets still have no retirement plan ${prodCustText}, recommend system departments to continue driving;</p>
+            <p>2. High-risk EOS version upgrade/incorporation rate is ${pct(verRate, 2)}, forecast year-end completion rate is ${pct(verPlanned, 1)}, ${verRiskText}, of which:<br>
+            1) Planned: ${verPlanCustSummary}, version upgrades must be completed within the year according to schedule;<br>
+            2) Unplanned: ${verNoPlanCustSummary} currently have no incorporation plans, please have ${urgentCustomerNames} system departments accelerate customer alignment and confirm incorporation plans by October at the latest to ensure upgrades are completed within the year.</p>
+        </div>`;
+    }
+
+    function buildProductCopyHtmlEn(product) {
+        const config = readMappingConfig();
+        const minThreshold = config.minThreshold;
+        const total = product.total;
+        const noPlanAccounts = (product.accounts || []).filter(a => (a.noPlan || 0) > 0).sort((a, b) => b.noPlan - a.noPlan);
+
+        const focusDetails = noPlanAccounts.map(a => {
+            const cust = mapCustomerName(a.customer);
+            const filteredItems = (a.topNoPlanItems || []).filter(i => (i.noPlan || 0) >= minThreshold);
+            if (!filteredItems.length) {
+                return (a.noPlan || 0) >= minThreshold ? `${escapeHtml(cust)} ${a.noPlan} sets` : '';
+            }
+            const items = filteredItems.map(i => `${escapeHtml(i.label)} ${i.noPlan} sets`).join('/');
+            return `${escapeHtml(cust)} ${a.noPlan} sets (${items})`;
+        }).filter(Boolean).join(', ');
+
+        return `<div class="topic-monthly-copy">
+            <p>Annual baseline: ${total.quantity} sets, completed incorporation: ${total.incorporated} sets, completion rate: ${pct(total.currentRate, 2)}; pending incorporation: ${total.pending} sets, of which ${total.noPlan} sets have no plan for this year.</p>
+            <p>Key Focus: ${total.noPlan} sets currently have no retirement plan, recommend completing customer communication and confirming retirement plans within the year, including: ${focusDetails || 'No key items pending'}.</p>
+        </div>`;
+    }
+
+    function buildVersionCopyHtmlEn(version) {
+        const config = readMappingConfig();
+        const minThreshold = config.minThreshold;
+        const total = version.total;
+        const planAccounts = (version.accounts || []).filter(a => (a.annualPlan || 0) > 0).sort((a, b) => b.annualPlan - a.annualPlan);
+        const noPlanAccounts = (version.accounts || []).filter(a => (a.noPlan || 0) > 0).sort((a, b) => b.noPlan - a.noPlan);
+
+        const planDetails = planAccounts.map(a => {
+            const cust = mapCustomerName(a.customer);
+            const filteredItems = (a.topPlanItems || []).filter(i => (i.annualPlan || 0) >= minThreshold);
+            if (!filteredItems.length) {
+                return (a.annualPlan || 0) >= minThreshold ? `${escapeHtml(cust)} ${a.annualPlan} sets` : '';
+            }
+            const items = filteredItems.map(i => `${escapeHtml(i.label)} ${i.annualPlan} sets`).join('/');
+            return `${escapeHtml(cust)} ${a.annualPlan} sets (${items})`;
+        }).filter(Boolean).join(', ');
+
+        const topNoPlan = noPlanAccounts.slice(0, 2);
+        const hasMoreNoPlan = noPlanAccounts.length > 2 || (topNoPlan[0]?.topNoPlanItems?.length > 2);
+        const noPlanDetails = topNoPlan.map(a => {
+            const cust = mapCustomerName(a.customer);
+            const filteredItems = (a.topNoPlanItems || []).filter(i => (i.noPlan || 0) >= minThreshold);
+            if (!filteredItems.length) {
+                return (a.noPlan || 0) >= minThreshold ? `${escapeHtml(cust)} ${a.noPlan} sets` : '';
+            }
+            const items = filteredItems.map(i => `${escapeHtml(i.label)} ${i.noPlan} sets`).join('/');
+            return `${escapeHtml(cust)} ${a.noPlan} sets (${items})`;
+        }).filter(Boolean).join(', ');
+
+        return `<div class="topic-monthly-copy">
+            <p>Annual baseline: ${total.quantity} sets, completed incorporation: ${total.incorporated} sets, completion rate: ${pct(total.currentRate, 2)}; pending incorporation: ${total.pending} sets, of which ${total.annualPlan} sets are planned for completion this year, and ${total.noPlan} sets have no plan for this year.</p>
+            <p>Key Focus:<br>
+            1) Planned: Total ${total.annualPlan} sets, ensure completion of upgrades within the year, including: ${planDetails || 'None'}.<br>
+            2) Unplanned: Total ${total.noPlan} sets, including: ${noPlanDetails || 'None'}${hasMoreNoPlan ? ' etc.' : ''}.</p>
+        </div>`;
+    }
+
+    function renderMonthlySectionEn(section, labelEn) {
+        const { total, accounts } = section;
+        const cells = metric => `<td>${metric.quantity}</td><td>${metric.incorporated}</td><td>${pct(metric.currentRate, 1)}</td><td>${metric.pending}</td><td>${metric.annualPlan}</td><td>${metric.noPlan}</td><td>${pct(metric.plannedRate, 1)}</td>`;
+        const rows = accounts.map(item => `<tr><th scope="row">${escapeHtml(mapCustomerName(item.customer))}</th>${cells(item)}</tr>`).join('');
+        const copyHtml = labelEn === 'Product' ? buildProductCopyHtmlEn(section) : buildVersionCopyHtmlEn(section);
+        const tableNum = labelEn === 'Product' ? 1 : 2;
+
+        return `<section class="topic-monthly-section">
+            <h3 class="topic-report-item-title">➤ Retirement &amp; Incorporation Progress (Critical &amp; Urgent EOS ${labelEn}):</h3>
+            ${copyHtml}
+            <div class="topic-table-wrap topic-report-table-wrap">
+                <table class="topic-monthly-table">
+                    <thead>
+                        <tr><th rowspan="3">Customer</th><th colspan="7">Critical &amp; Urgent EOS · ${labelEn}</th></tr>
+                        <tr><th rowspan="2">Total</th><th rowspan="2">Incorporated</th><th rowspan="2">Current Rate</th><th colspan="3">Pending</th><th rowspan="2">Post-Plan Rate</th></tr>
+                        <tr><th>Subtotal</th><th>This Year's Plan</th><th>No Plan</th></tr>
+                    </thead>
+                    <tbody>
+                        ${rows}
+                        <tr class="topic-monthly-total"><th scope="row">Total</th>${cells(total)}</tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="topic-report-caption">(Table ${tableNum}: ${labelEn} EOS Incorporation Progress)</p>
+        </section>`;
+    }
+
     const MONTHLY_COPY_SELECTOR = '.topic-report-title, .topic-report-objective p, .topic-report-overview-copy p, .topic-report-item-title, .topic-monthly-section .topic-monthly-copy p, .topic-monthly-footnote';
     const FIXED_COPY_SELECTOR = '.topic-fixed-block .topic-report-item-title, .topic-fixed-block .topic-monthly-copy p, .topic-fixed-footnote, .topic-report-remarks-block .topic-monthly-copy p, .topic-report-contact-copy, .topic-report-signature';
     let editingBlock = null;
@@ -264,7 +470,7 @@
     function copyStorageKey(scope) {
         let tenant = 'default';
         try { tenant = localStorage.getItem('tools_tenant_id') || tenant; } catch (_) { /* storage may be disabled */ }
-        return `topic-eos:monthly-copy:v1:${tenant}:${scope === 'fixed' ? 'fixed' : `month:${state.eosMonthlyReport?.month || ''}`}`;
+        return `topic-eos:monthly-copy:v1:${tenant}:${scope.startsWith('fixed') ? scope : `month:${scope}:${state.eosMonthlyReport?.month || ''}`}`;
     }
 
     function readCopyPreferences(scope) {
@@ -311,7 +517,8 @@
         const preferences = readCopyPreferences(scope);
         root.querySelectorAll(selector).forEach((block, index) => {
             const key = `copy-${index}`;
-            if (scope === 'fixed' && !state.fixedCopyDefaults.has(key)) state.fixedCopyDefaults.set(key, block.innerHTML);
+            const defaultKey = `${scope}-${key}`;
+            if (scope.startsWith('fixed') && !state.fixedCopyDefaults.has(defaultKey)) state.fixedCopyDefaults.set(defaultKey, block.innerHTML);
             if (typeof preferences[key] === 'string') block.innerHTML = sanitizeCopyHtml(preferences[key]);
             block.contentEditable = 'true'; block.spellcheck = false;
             block.classList.add('topic-editable'); block.dataset.eosCopyKey = key; block.dataset.eosCopyScope = scope;
@@ -437,8 +644,7 @@
         return 0;
     };
 
-    const aliases = { 'NILE ON LINE (NOL)': 'Etisalat Misr' };
-    const customerName = row => aliases[String(row?.customer_name || '').trim()] || String(row?.customer_name || '').trim() || '未分类客户';
+    const customerName = row => mapCustomerName(row?.customer_name);
 
     function excelReportColor(value, fallback = 'FF0F172A') {
         const color = String(value || '').trim();
@@ -513,22 +719,26 @@
             const isSignature = block.classList.contains('topic-report-signature');
             const isSectionBar = block.classList.contains('topic-report-section-bar');
             const isEndmark = block.classList.contains('topic-report-endmark');
+            const isDivider = block.classList.contains('topic-report-divider-badge') || block.classList.contains('topic-report-divider-en');
             const isSectionHeading = block.tagName === 'H3' || block.classList.contains('topic-report-heading') || block.tagName === 'H4' || block.classList.contains('topic-report-item-title') || block.classList.contains('topic-report-remarks-title');
             const isObjective = block.classList.contains('topic-report-objective') || block.parentElement?.classList.contains('topic-report-objective');
             cell.alignment = {
                 vertical: 'middle',
-                horizontal: isTitle || isSignature || isSectionBar || isEndmark ? 'center' : 'left',
+                horizontal: isTitle || isSignature || isSectionBar || isEndmark || isDivider ? 'center' : 'left',
                 wrapText: true
             };
             cell.font = {
                 name: 'Microsoft YaHei',
                 size: Math.max(9, Math.round(Number.parseFloat(computed.fontSize) * 0.75)),
-                bold: Number.parseInt(computed.fontWeight, 10) >= 600,
+                bold: Number.parseInt(computed.fontWeight, 10) >= 600 || isDivider,
                 color: { argb: excelReportColor(computed.color) }
             };
             if (isTitle || isSignature) {
                 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDCEEF4' } };
                 row.height = 36;
+            } else if (isDivider) {
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0F2FE' } };
+                row.height = 28;
             } else if (isSectionBar) {
                 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
                 row.height = 26;
@@ -628,6 +838,7 @@
                 node.classList?.contains('topic-report-contact-copy') ||
                 node.classList?.contains('topic-report-endmark') ||
                 node.classList?.contains('topic-monthly-footnote') ||
+                node.classList?.contains('topic-report-divider-badge') ||
                 (node.parentElement?.classList?.contains('topic-monthly-copy') && node.tagName === 'P') ||
                 (node.parentElement?.classList?.contains('topic-report-objective') && node.tagName === 'P') ||
                 (node.tagName === 'H3' && node.closest('.topic-report-sheet')) ||
@@ -1250,8 +1461,169 @@
         activateCopy(elements.eosMonthlyReport, MONTHLY_COPY_SELECTOR, 'monthly');
     }
 
+    function renderEosMonthlyReportEn(report) {
+        if (!elements.eosMonthlyReportEn) return;
+        elements.eosMonthlyReportEn.innerHTML = `
+            <h3 class="topic-report-title">Egypt Rep Office EOS Retirement &amp; Incorporation Monthly Report (${escapeHtml(report.month)})</h3>
+            <div class="topic-report-objective">
+                <p><strong>Overall EOS Management Objectives for 2026:</strong></p>
+                <p>1. Risk Management (CS): 100% risk closure rate for all EOS products &amp; versions</p>
+                <p>2. Retirement &amp; Incorporation (MSSD): (1) Critical &amp; urgent EOS product retirement rate -- Bottom-line 30%, Target 40%, Challenge 50%; (2) Critical &amp; urgent EOS version incorporation rate -- Bottom-line 70%, Target 80%, Challenge 90%</p>
+            </div>
+            <div class="topic-report-section-bar">Progress Overview</div>
+            ${buildOverviewCopyHtmlEn(report)}
+            <div class="topic-report-section-bar">Progress Details</div>
+            ${renderMonthlySectionEn(report.product, 'Product')}
+            ${renderMonthlySectionEn(report.version, 'Version')}
+        `;
+        activateCopy(elements.eosMonthlyReportEn, MONTHLY_COPY_SELECTOR, 'monthly-en');
+    }
+
+    function updateFixedTablesCustomerNames() {
+        const sheet = elements.eosReportSheet || document.getElementById('eosReportSheet');
+        if (!sheet) return;
+        sheet.querySelectorAll('th[data-cust]').forEach(th => {
+            const rawCust = th.getAttribute('data-cust');
+            th.textContent = mapCustomerName(rawCust);
+        });
+
+        const fixedPrefs = readCopyPreferences('fixed');
+        const fixedEnPrefs = readCopyPreferences('fixed-en');
+
+        const custE = escapeHtml(mapCustomerName('e&'));
+        const custV = escapeHtml(mapCustomerName('Vodafone'));
+        const custT = escapeHtml(mapCustomerName('TE'));
+        const custO = escapeHtml(mapCustomerName('Orange'));
+
+        const prodFocusCn = document.querySelector('.topic-fixed-product-focus');
+        if (prodFocusCn && !fixedPrefs[prodFocusCn.dataset?.eosCopyKey]) {
+            prodFocusCn.innerHTML = `重点关注：982套EOL网元仍在网运行，服务支持受限，故障后风险高，建议系统部加快推动设备替换、退网或申请例外销售，其中：${custE} 522套（MA5600 272套/Metro 1000 134套）、${custV} 419套（ATN910 306套/PTN6900 47套）、${custT} 24套（UAC3000 2套）、${custO} 17套（CE12804S 8套）。`;
+        }
+        const verFocusCn = document.querySelector('.topic-fixed-version-focus');
+        if (verFocusCn && !fixedPrefs[verFocusCn.dataset?.eosCopyKey]) {
+            verFocusCn.innerHTML = `重点关注：25,783套网元虽然已完成客户界面风险预警，但仍存在软件缺陷无法及时补丁修复的风险，同时也是软件升级销售机会点，建议系统部持续推动客户进行版本升级。其中${custE} 14,512套（RTN950 4,217套/RTN320 1,948套/BTS3900A 1,031套等）、${custV} 4,989套（RTN380 2,427套/RTN905 1,607套/RTN980 326套)、${custT} 5290套（DBS3900 1,798套/RTN905 1,313套/MA5800 691套等)、${custO} 992套（BTS3900 877套等）`;
+        }
+
+        const prodFocusEn = document.querySelector('.topic-fixed-product-focus-en');
+        if (prodFocusEn && !fixedEnPrefs[prodFocusEn.dataset?.eosCopyKey]) {
+            prodFocusEn.innerHTML = `Key Focus: 982 EOL NEs are still running on the live network with restricted service support and high risk upon failure. System departments are recommended to accelerate equipment replacement, retirement, or exception sales, including: ${custE} 522 sets (MA5600 272 sets / Metro 1000 134 sets), ${custV} 419 sets (ATN910 306 sets / PTN6900 47 sets), ${custT} 24 sets (UAC3000 2 sets), ${custO} 17 sets (CE12804S 8 sets).`;
+        }
+        const verFocusEn = document.querySelector('.topic-fixed-version-focus-en');
+        if (verFocusEn && !fixedEnPrefs[verFocusEn.dataset?.eosCopyKey]) {
+            verFocusEn.innerHTML = `Key Focus: Although risk warnings on the customer interface have been completed for 25,783 NEs, software defects that cannot be patched in time still pose risks and represent software upgrade sales opportunities. System departments are advised to continue promoting version upgrades with customers. Including: ${custE} 14,512 sets (RTN950 4,217 sets / RTN320 1,948 sets / BTS3900A 1,031 sets etc.), ${custV} 4,989 sets (RTN380 2,427 sets / RTN905 1,607 sets / RTN980 326 sets), ${custT} 5,290 sets (DBS3900 1,798 sets / RTN905 1,313 sets / MA5800 691 sets etc.), ${custO} 992 sets (BTS3900 877 sets etc.).`;
+        }
+    }
+
+    function openMappingModal() {
+        if (!elements.eosMappingModal) return;
+        const config = readMappingConfig();
+        if (elements.eosMinThresholdInput) {
+            elements.eosMinThresholdInput.value = config.minThreshold;
+        }
+        if (elements.eosNewMapKey) elements.eosNewMapKey.value = '';
+        if (elements.eosNewMapVal) elements.eosNewMapVal.value = '';
+        if (elements.eosMappingStatusMsg) elements.eosMappingStatusMsg.textContent = '';
+        renderMappingTableRows(config.aliases);
+        elements.eosMappingModal.hidden = false;
+        elements.eosMinThresholdInput?.focus();
+    }
+
+    function closeMappingModal() {
+        if (!elements.eosMappingModal) return;
+        elements.eosMappingModal.hidden = true;
+    }
+
+    function renderMappingTableRows(aliases) {
+        if (!elements.eosMappingTableBody) return;
+        const entries = Object.entries(aliases || {});
+        if (!entries.length) {
+            elements.eosMappingTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:#64748b;padding:14px;">暂无映射规则，可在下方输入添加</td></tr>`;
+            return;
+        }
+        elements.eosMappingTableBody.innerHTML = entries.map(([key, val]) => `
+            <tr data-map-row>
+                <td><input type="text" class="topic-mapping-key-cell" value="${escapeHtml(key)}" placeholder="原始客户名称"></td>
+                <td><input type="text" class="topic-mapping-val-cell" value="${escapeHtml(val)}" placeholder="映射显示名称"></td>
+                <td style="text-align:center"><button type="button" class="topic-mapping-del-btn" title="删除此规则" aria-label="删除此规则">✕</button></td>
+            </tr>
+        `).join('');
+    }
+
+    function addMappingRuleFromInputs() {
+        const key = elements.eosNewMapKey?.value.trim();
+        const val = elements.eosNewMapVal?.value.trim();
+        if (!key) {
+            if (elements.eosMappingStatusMsg) elements.eosMappingStatusMsg.textContent = '请输入原始客户名称';
+            elements.eosNewMapKey?.focus();
+            return;
+        }
+        if (!val) {
+            if (elements.eosMappingStatusMsg) elements.eosMappingStatusMsg.textContent = '请输入映射显示名称';
+            elements.eosNewMapVal?.focus();
+            return;
+        }
+        let updated = false;
+        elements.eosMappingTableBody.querySelectorAll('tr[data-map-row]').forEach(tr => {
+            const kInput = tr.querySelector('.topic-mapping-key-cell');
+            if (kInput && kInput.value.trim() === key) {
+                const vInput = tr.querySelector('.topic-mapping-val-cell');
+                if (vInput) vInput.value = val;
+                updated = true;
+            }
+        });
+        if (updated) {
+            if (elements.eosMappingStatusMsg) elements.eosMappingStatusMsg.textContent = `已更新已存在的客户「${key}」映射`;
+        } else {
+            const tr = document.createElement('tr');
+            tr.setAttribute('data-map-row', '');
+            tr.innerHTML = `
+                <td><input type="text" class="topic-mapping-key-cell" value="${escapeHtml(key)}" placeholder="原始客户名称"></td>
+                <td><input type="text" class="topic-mapping-val-cell" value="${escapeHtml(val)}" placeholder="映射显示名称"></td>
+                <td style="text-align:center"><button type="button" class="topic-mapping-del-btn" title="删除此规则" aria-label="删除此规则">✕</button></td>
+            `;
+            elements.eosMappingTableBody.appendChild(tr);
+            if (elements.eosMappingStatusMsg) elements.eosMappingStatusMsg.textContent = `已添加映射「${key} ➔ ${val}」`;
+        }
+        elements.eosNewMapKey.value = '';
+        elements.eosNewMapVal.value = '';
+        elements.eosNewMapKey.focus();
+    }
+
+    function resetDefaultMappingsInModal() {
+        if (!window.confirm('确定恢复默认映射配置？（Etisalat Misr ➔ e&，Orange Egypt for Telecommunications ➔ Orange Telecom，Egypt ➔ TE，Vodafone Egypt ➔ Vodafone，默认阈值 10 套）')) return;
+        if (elements.eosMinThresholdInput) elements.eosMinThresholdInput.value = DEFAULT_MIN_THRESHOLD;
+        renderMappingTableRows(DEFAULT_MAPPINGS);
+        if (elements.eosMappingStatusMsg) elements.eosMappingStatusMsg.textContent = '已重置为内置默认4条映射规则与阈值';
+    }
+
+    function saveAndApplyMappingConfig() {
+        const minThreshold = Math.max(0, parseInt(elements.eosMinThresholdInput?.value, 10) || 0);
+        const aliases = {};
+        elements.eosMappingTableBody?.querySelectorAll('tr[data-map-row]').forEach(tr => {
+            const key = tr.querySelector('.topic-mapping-key-cell')?.value.trim();
+            const val = tr.querySelector('.topic-mapping-val-cell')?.value.trim();
+            if (key) {
+                aliases[key] = val || key;
+            }
+        });
+        const newKey = elements.eosNewMapKey?.value.trim();
+        const newVal = elements.eosNewMapVal?.value.trim();
+        if (newKey && newVal) {
+            aliases[newKey] = newVal;
+        }
+        saveMappingConfig({ minThreshold, aliases });
+        closeMappingModal();
+        if (state.eosMonthlyReport) {
+            renderEosMonthlyReport(state.eosMonthlyReport);
+            renderEosMonthlyReportEn(state.eosMonthlyReport);
+            updateFixedTablesCustomerNames();
+        }
+        setCopyStatus('映射与阈值配置已保存并实时生效');
+    }
+
     async function loadMonthlyReport(month = '') {
         elements.eosMonthlyReport.textContent = '正在生成月报…';
+        if (elements.eosMonthlyReportEn) elements.eosMonthlyReportEn.textContent = 'Generating English monthly report…';
         state.eosMonthlySnapshot = null;
         try {
             const result = await API.get(`/api/topic-snapshots/eos-monthly-report${month ? `?month=${encodeURIComponent(month)}` : ''}`);
@@ -1268,8 +1640,13 @@
             if (elements.eosDownloadExcel) elements.eosDownloadExcel.disabled = false;
             if (elements.eosDownloadMsg) elements.eosDownloadMsg.disabled = false;
             elements.eosReportEndmark.textContent = `-- 埃及代表处EOS退网收编简报（${report.month}） --`;
+            if (elements.eosReportEndmarkEn) {
+                elements.eosReportEndmarkEn.textContent = `-- Egypt Rep Office EOS Retirement & Incorporation Monthly Report (${report.month}) --`;
+            }
             elements.eosMonthlySource.textContent = `数据月份 ${report.month} · 数据时间 ${formatTime(report.snapshot.capturedAt)} · 导入时间 ${formatTime(report.snapshot.importedAt)}${report.snapshot.name ? ` · ${report.snapshot.name}` : ''}`;
             renderEosMonthlyReport(report);
+            renderEosMonthlyReportEn(report);
+            updateFixedTablesCustomerNames();
         } catch (error) {
             const report = createDefaultReport();
             state.eosMonthlyReport = report;
@@ -1278,8 +1655,13 @@
             if (elements.eosDownloadExcel) elements.eosDownloadExcel.disabled = false;
             if (elements.eosDownloadMsg) elements.eosDownloadMsg.disabled = false;
             elements.eosReportEndmark.textContent = `-- 埃及代表处EOS退网收编简报（${report.month}） --`;
+            if (elements.eosReportEndmarkEn) {
+                elements.eosReportEndmarkEn.textContent = `-- Egypt Rep Office EOS Retirement & Incorporation Monthly Report (${report.month}) --`;
+            }
             elements.eosMonthlySource.textContent = `数据月份 ${report.month} · 演示基准数据`;
             renderEosMonthlyReport(report);
+            renderEosMonthlyReportEn(report);
+            updateFixedTablesCustomerNames();
         }
     }
 
@@ -1305,13 +1687,53 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        ['totalCount', 'netcareCount', 'datafabCount', 'latestTime', 'themeToggleButton', 'themeToggleIcon', 'themeToggleText', 'refreshButton', 'topicFilter', 'metricFilter', 'analysisTitle', 'metricDefinition', 'topicKpis', 'trendChart', 'metricColumnTitle', 'loadStatus', 'historyBody', 'emptyState', 'eosMonthlyMonth', 'eosMonthlySource', 'eosMonthlyReport', 'eosCopyResetMonth', 'eosCopyResetFixed', 'eosDownloadPng', 'eosDownloadExcel', 'eosDownloadMsg', 'eosReportEndmark', 'eosReportSheet', 'eosCopyStatus', 'eosTextToolbar', 'detailModal', 'detailTitle', 'detailSummary', 'detailTable', 'detailJson', 'downloadDetail', 'viewRaw', 'toggleDetailFullscreen', 'detailTools', 'detailSearch', 'detailPageSize', 'detailSortColumn', 'detailSortDirection', 'closeDetail'].forEach(id => { elements[id] = document.getElementById(id); });
+        [
+            'totalCount', 'netcareCount', 'datafabCount', 'latestTime', 'themeToggleButton', 'themeToggleIcon', 'themeToggleText', 'refreshButton',
+            'topicFilter', 'metricFilter', 'analysisTitle', 'metricDefinition', 'topicKpis', 'trendChart', 'metricColumnTitle', 'loadStatus',
+            'historyBody', 'emptyState', 'eosMonthlyMonth', 'eosMonthlySource', 'eosMonthlyReport', 'eosCopyResetMonth', 'eosCopyResetFixed',
+            'eosConfigBtn', 'eosDownloadPng', 'eosDownloadExcel', 'eosDownloadMsg', 'eosReportEndmark', 'eosReportSheet', 'eosCopyStatus', 'eosTextToolbar',
+            'eosMonthlyReportEn', 'eosReportEndmarkEn',
+            'eosMappingModal', 'closeEosMappingModal', 'eosCancelMappingConfigBtn', 'eosSaveMappingConfigBtn', 'eosResetDefaultMappingsBtn', 'eosAddMappingBtn',
+            'eosMinThresholdInput', 'eosMappingTableBody', 'eosNewMapKey', 'eosNewMapVal', 'eosMappingStatusMsg',
+            'detailModal', 'detailTitle', 'detailSummary', 'detailTable', 'detailJson', 'downloadDetail', 'viewRaw', 'toggleDetailFullscreen',
+            'detailTools', 'detailSearch', 'detailPageSize', 'detailSortColumn', 'detailSortDirection', 'closeDetail'
+        ].forEach(id => { elements[id] = document.getElementById(id); });
         initTheme();
         if (elements.themeToggleButton) elements.themeToggleButton.addEventListener('click', toggleTheme);
+        if (elements.eosConfigBtn) elements.eosConfigBtn.addEventListener('click', openMappingModal);
+        if (elements.closeEosMappingModal) elements.closeEosMappingModal.addEventListener('click', closeMappingModal);
+        if (elements.eosCancelMappingConfigBtn) elements.eosCancelMappingConfigBtn.addEventListener('click', closeMappingModal);
+        if (elements.eosSaveMappingConfigBtn) elements.eosSaveMappingConfigBtn.addEventListener('click', saveAndApplyMappingConfig);
+        if (elements.eosResetDefaultMappingsBtn) elements.eosResetDefaultMappingsBtn.addEventListener('click', resetDefaultMappingsInModal);
+        if (elements.eosAddMappingBtn) elements.eosAddMappingBtn.addEventListener('click', addMappingRuleFromInputs);
+        if (elements.eosMappingModal) {
+            elements.eosMappingModal.addEventListener('click', event => { if (event.target === elements.eosMappingModal) closeMappingModal(); });
+        }
+        if (elements.eosMappingTableBody) {
+            elements.eosMappingTableBody.addEventListener('click', event => {
+                const btn = event.target.closest('.topic-mapping-del-btn');
+                if (!btn) return;
+                const tr = btn.closest('tr');
+                if (tr) tr.remove();
+                if (elements.eosMappingStatusMsg) elements.eosMappingStatusMsg.textContent = '已删除一条映射规则';
+            });
+        }
+        [elements.eosNewMapKey, elements.eosNewMapVal].forEach(input => {
+            if (input) {
+                input.addEventListener('keydown', event => {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        addMappingRuleFromInputs();
+                    }
+                });
+            }
+        });
         if (elements.eosDownloadPng) elements.eosDownloadPng.addEventListener('click', exportMonthlyPng);
         if (elements.eosDownloadExcel) elements.eosDownloadExcel.addEventListener('click', exportMonthlyExcel);
         if (elements.eosDownloadMsg) elements.eosDownloadMsg.addEventListener('click', exportMonthlyMsg);
-        activateCopy(document.querySelector('.topic-fixed-progress'), FIXED_COPY_SELECTOR, 'fixed');
+        activateCopy(document.querySelector('.topic-fixed-progress:not(.topic-fixed-progress-en)'), FIXED_COPY_SELECTOR, 'fixed');
+        const fixedEnProgress = document.querySelector('.topic-fixed-progress-en');
+        if (fixedEnProgress) activateCopy(fixedEnProgress, FIXED_COPY_SELECTOR, 'fixed-en');
         document.addEventListener('selectionchange', rememberTextSelection);
         document.addEventListener('mousedown', event => { if (!event.target.closest('.topic-report-sheet .topic-editable, #eosTextToolbar')) hideTextToolbar(); });
         elements.eosTextToolbar.addEventListener('mousedown', event => event.preventDefault());
@@ -1322,13 +1744,31 @@
         });
         elements.eosCopyResetMonth.addEventListener('click', () => {
             if (!state.eosMonthlyReport) return;
-            try { localStorage.removeItem(copyStorageKey('monthly')); } catch (_) { setCopyStatus('浏览器未能清除偏好'); return; }
-            renderEosMonthlyReport(state.eosMonthlyReport); hideTextToolbar(); setCopyStatus('已恢复本月自动文案');
+            try {
+                localStorage.removeItem(copyStorageKey('monthly'));
+                localStorage.removeItem(copyStorageKey('monthly-en'));
+            } catch (_) { setCopyStatus('浏览器未能清除偏好'); return; }
+            renderEosMonthlyReport(state.eosMonthlyReport);
+            renderEosMonthlyReportEn(state.eosMonthlyReport);
+            hideTextToolbar();
+            setCopyStatus('已恢复本月中英文自动文案');
         });
         elements.eosCopyResetFixed.addEventListener('click', () => {
-            try { localStorage.removeItem(copyStorageKey('fixed')); } catch (_) { setCopyStatus('浏览器未能清除偏好'); return; }
-            document.querySelectorAll('.topic-fixed-progress .topic-editable').forEach(block => { block.innerHTML = state.fixedCopyDefaults.get(block.dataset.eosCopyKey) || ''; });
-            hideTextToolbar(); setCopyStatus('已恢复固定文案');
+            try {
+                localStorage.removeItem(copyStorageKey('fixed'));
+                localStorage.removeItem(copyStorageKey('fixed-en'));
+            } catch (_) { setCopyStatus('浏览器未能清除偏好'); return; }
+            document.querySelectorAll('.topic-fixed-progress:not(.topic-fixed-progress-en) .topic-editable').forEach(block => {
+                const defaultKey = `fixed-${block.dataset.eosCopyKey}`;
+                if (state.fixedCopyDefaults.has(defaultKey)) block.innerHTML = state.fixedCopyDefaults.get(defaultKey);
+            });
+            document.querySelectorAll('.topic-fixed-progress-en .topic-editable').forEach(block => {
+                const defaultKey = `fixed-en-${block.dataset.eosCopyKey}`;
+                if (state.fixedCopyDefaults.has(defaultKey)) block.innerHTML = state.fixedCopyDefaults.get(defaultKey);
+            });
+            updateFixedTablesCustomerNames();
+            hideTextToolbar();
+            setCopyStatus('已恢复中英文固定文案');
         });
         elements.eosMonthlyMonth.addEventListener('change', event => loadMonthlyReport(event.target.value));
         renderTopicControls(); elements.refreshButton.addEventListener('click', loadData);
