@@ -778,17 +778,26 @@ async function publish(job, tenantId, settings, options = {}) {
         const diffRes = await runGit(job, ['-C', checkout, 'diff', '--cached', '--name-only', '--', ...uniquePaths], {}, 'git diff --cached --name-only');
         const changed = diffRes.stdout.trim().split('\n').filter(Boolean);
         const dirty = changed.length > 0;
+        const forceDeploy = Boolean(options.force);
+        const summaryNames = targetSlugs.map(s => providers.get(s)?.name || s).join('、');
         if (dirty) {
             await updateJob(job, 'running', '检查变更', 75, '本次变更 ' + changed.length + ' 个文件：' + changed.slice(0, 4).join('、') + (changed.length > 4 ? ' 等' : ''));
-            const summaryNames = targetSlugs.map(s => providers.get(s)?.name || s).join('、');
             await runGit(job, ['-C', checkout, '-c', 'user.name=Tools Platform', '-c', 'user.email=tools-platform@localhost', 'commit', '-m', `Update readonly tools snapshot (${summaryNames})`], { timeout: 30000 }, `git commit -m "Update readonly tools snapshot (${summaryNames})"`);
             await updateJob(job, 'running', '推送远端', 86, '仅提交发生变化的发布文件；正在更新远端 ' + config.branch + ' 分支');
             const pushStart = Date.now();
             await runGit(job, ['-C', checkout, 'push', 'origin', 'HEAD:refs/heads/' + config.branch], { timeout: 300000 }, `git push origin HEAD:refs/heads/${config.branch}`);
             const pushSec = ((Date.now() - pushStart) / 1000).toFixed(1);
             await updateJob(job, 'running', '推送远端', 96, `远端更新成功（耗时 ${pushSec}s）`);
+        } else if (forceDeploy) {
+            await updateJob(job, 'running', '检查变更', 75, '发布文件无变化，按强制推送模式创建空提交以触发 Pages 重新部署');
+            await runGit(job, ['-C', checkout, '-c', 'user.name=Tools Platform', '-c', 'user.email=tools-platform@localhost', 'commit', '--allow-empty', '-m', `Force redeploy readonly tools snapshot (${summaryNames})`], { timeout: 30000 }, `git commit --allow-empty -m "Force redeploy readonly tools snapshot (${summaryNames})"`);
+            await updateJob(job, 'running', '推送远端', 86, '强制提交完成；正在更新远端 ' + config.branch + ' 分支');
+            const pushStart = Date.now();
+            await runGit(job, ['-C', checkout, 'push', 'origin', 'HEAD:refs/heads/' + config.branch], { timeout: 300000 }, `git push origin HEAD:refs/heads/${config.branch}`);
+            const pushSec = ((Date.now() - pushStart) / 1000).toFixed(1);
+            await updateJob(job, 'running', '推送远端', 96, `远端强制更新成功（耗时 ${pushSec}s）`);
         } else {
-            await updateJob(job, 'running', '检查变更', 96, '发布内容无变化，跳过 git commit/push');
+            await updateJob(job, 'running', '检查变更', 96, '发布内容无变化，跳过 git commit/push（如需刷新平台部署可使用“强制推送”）');
         }
         const rev = await runGit(job, ['-C', checkout, 'rev-parse', 'HEAD'], {}, 'git rev-parse HEAD');
         const commit = rev.stdout.trim();

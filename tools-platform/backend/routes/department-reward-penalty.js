@@ -103,7 +103,7 @@ router.get('/snapshot/jobs/:id', respond(async (req, res) => {
 }));
 router.post('/snapshot/publish', respond(async (req, res) => {
     snapshotAdmin(req);
-    res.status(202).json(await snapshotPublish.startJob(req.user?.tenantId || 'default'));
+    res.status(202).json(await snapshotPublish.startJob(req.user?.tenantId || 'default', req.body || {}));
 }));
 
 router.get('/backup/export', respond(async (req, res) => {

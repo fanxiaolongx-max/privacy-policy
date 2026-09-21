@@ -3365,7 +3365,7 @@ async function renderSnapshotPublishSettings(content) {
                     </div>
                 </div>
                 <div class="snapshot-schedule"><div><strong>${navEscape(snapshotText('自动同步', 'Automatic sync'))}</strong><p>${navEscape(snapshotText('后台按周期生成最新只读快照；不需要打开工具页面。仅在服务端或绿色版程序运行时执行。', 'The backend periodically generates a fresh read-only snapshot without opening the tool page. It runs only while the server or portable app is running.'))}</p></div><label class="snapshot-schedule-toggle"><input id="snapshotScheduleEnabled" type="checkbox" ${settings.scheduleEnabled ? 'checked' : ''}> ${navEscape(snapshotText('启用定时推送', 'Enable scheduled publishing'))}</label><label class="snapshot-interval">${navEscape(snapshotText('每隔', 'Every'))} <input id="snapshotIntervalMinutes" class="nav-settings-input" type="number" min="5" max="1440" step="1" value="${Number(settings.intervalMinutes) || 60}"> ${navEscape(snapshotText('分钟', 'minutes'))}</label><div class="snapshot-schedule-status">${settings.scheduleEnabled ? `${navEscape(snapshotText('下次计划执行：', 'Next scheduled run: '))}${navEscape(settings.nextRunAt ? new Date(settings.nextRunAt).toLocaleString() : '-')}` : navEscape(snapshotText('自动推送未启用', 'Scheduled publishing is off'))}${settings.lastAutoError ? `<br>${navEscape(snapshotText('最近调度错误：', 'Last scheduling error: '))}${navEscape(settings.lastAutoError)}` : ''}</div></div>
-                <div class="snapshot-actions"><button type="button" onclick="saveSnapshotPublishSettings()">${navEscape(snapshotText('保存推送配置', 'Save destination'))}</button><button type="button" class="snapshot-primary" onclick="startSnapshotPublish()">${navEscape(snapshotText('生成并推送快照', 'Generate & publish'))}</button></div>
+                <div class="snapshot-actions"><button type="button" onclick="saveSnapshotPublishSettings()">${navEscape(snapshotText('保存推送配置', 'Save destination'))}</button><button type="button" onclick="startSnapshotPublish({ force: true })" title="${navEscape(snapshotText('即使文件未变更，也强制向远端提交并推送，以触发 Pages 重新部署', 'Force a Git commit & push even if no file changes, triggering Pages redeploy'))}">${navEscape(snapshotText('强制推送', 'Force publish'))}</button><button type="button" class="snapshot-primary" onclick="startSnapshotPublish()">${navEscape(snapshotText('生成并推送快照', 'Generate & publish'))}</button></div>
                 <div class="snapshot-history-head"><strong>${navEscape(snapshotText('推送历史', 'Publishing history'))}</strong><button type="button" onclick="renderSnapshotPublishSettings(document.getElementById('navSettingsContent'))">↻ ${navEscape(snapshotText('刷新', 'Refresh'))}</button></div>
                 <div class="snapshot-history">${jobs.length ? jobs.map(job => `<button type="button" class="snapshot-history-item" data-job-id="${navEscape(job.id)}"><span class="snapshot-dot ${navEscape(job.status)}"></span><span><strong>${job.trigger === 'scheduled' ? navEscape(snapshotText('定时', 'Scheduled')) + ' · ' : ''}${navEscape(job.stage)}</strong><small>${navEscape(new Date(job.createdAt).toLocaleString())} · ${navEscape(job.path)}</small></span><span class="snapshot-percent">${Number(job.progress)}%</span></button>`).join('') : `<div class="snapshot-history-empty">${navEscape(snapshotText('还没有推送记录', 'No publishing runs yet'))}</div>`}</div>
             </div>`;
@@ -3554,11 +3554,11 @@ window.updateSnapshotPublishPathPreview = function () {
     preview.textContent = valid ? snapshotText('实际页面：', 'Resolved page: ') + path + (document.getElementById('snapshotPublishMode')?.value === 'pages' ? ' · ' + snapshotText('数据目录：', 'Data directory: ') + path.replace(/[^/]+$/, 'data/') : '') : snapshotText('路径格式无效，请使用 {toolSlug}/index.html 等相对路径', 'Invalid path. Use a relative path such as {toolSlug}/index.html');
 };
 
-window.saveSnapshotPublishSettings = async function () {
+window.saveSnapshotPublishSettings = async function (options = {}) {
     const button = document.querySelector('.snapshot-actions button');
     const indicator = document.getElementById('navSettingsSaveState');
     if (button) button.disabled = true;
-    if (indicator) indicator.textContent = snapshotText('正在保存…', 'Saving…');
+    if (indicator && !options.silent) indicator.textContent = snapshotText('正在保存…', 'Saving…');
     const toolsList = [];
     document.querySelectorAll('.snapshot-tool-item[data-tool-slug]').forEach(el => {
         const slug = el.dataset.toolSlug;
@@ -3592,21 +3592,38 @@ window.saveSnapshotPublishSettings = async function () {
                 }
             }
         });
-        checkSnapshotPrerequisites({ force: true, settings: newSettings });
+        if (!options.skipPrereq) {
+            checkSnapshotPrerequisites({ force: true, settings: newSettings });
+        }
+        return { ok: true, saved };
     } catch (error) {
         if (indicator) indicator.textContent = snapshotText('保存失败：', 'Save failed: ') + error.message;
+        return { ok: false, error: error.message };
     } finally { if (button) button.disabled = false; }
 };
 
-window.startSnapshotPublish = async function () {
+window.startSnapshotPublish = async function (options = {}) {
+    if (document.getElementById('snapshotBranch') && document.getElementById('snapshotFile')) {
+        const saveRes = await window.saveSnapshotPublishSettings({ silent: true, skipPrereq: true });
+        if (saveRes && !saveRes.ok) {
+            alert(snapshotText('保存推送配置失败，无法启动推送：', 'Failed to save snapshot settings before publish: ') + saveRes.error);
+            return;
+        }
+    }
+    const isForce = Boolean(options.force);
     const confirmed = await showNavbarConfirm({
-        title: snapshotText('确认发布只读快照', 'Publish read-only snapshot?'),
-        message: snapshotText('本次将根据配置生成各已启用工具的只读快照，并推送到目标仓库。请确认目标仓库及 Pages 的访问权限。', 'This will generate read-only snapshots of all enabled tools and publish them to the target repository. Confirm repository and Pages access first.'),
-        confirmText: snapshotText('生成并推送', 'Generate & publish'), cancelText: snapshotText('取消', 'Cancel')
+        title: isForce
+            ? snapshotText('确认强制重新发布快照', 'Force republish snapshot?')
+            : snapshotText('确认发布只读快照', 'Publish read-only snapshot?'),
+        message: isForce
+            ? snapshotText('即使文件未发生变化，本次也将强制创建 Git 提交并推送到远端仓库，以触发静态托管平台（Pages）的重新构建与部署。', 'Even if no files have changed, this will create a Git commit and push to remote to trigger a Pages redeploy. Continue?')
+            : snapshotText('本次将根据配置生成各已启用工具的只读快照，并推送到目标仓库。请确认目标仓库及 Pages 的访问权限。', 'This will generate read-only snapshots of all enabled tools and publish them to the target repository. Confirm repository and Pages access first.'),
+        confirmText: isForce ? snapshotText('强制推送', 'Force publish') : snapshotText('生成并推送', 'Generate & publish'),
+        cancelText: snapshotText('取消', 'Cancel')
     });
     if (!confirmed) return;
     try {
-        const job = await snapshotApi('/publish', { method: 'POST' });
+        const job = await snapshotApi('/publish', { method: 'POST', body: JSON.stringify(options) });
         openSnapshotPublishProgress(job.id);
     } catch (error) {
         openSnapshotPublishProgress(null, error.message);

@@ -252,7 +252,7 @@ router.put('/snapshot/settings', wrap(async (req, res) => {
 
 router.post('/snapshot/publish', wrap(async (req, res) => {
     snapshotAdmin(req);
-    res.status(202).json(await snapshotPublish.startJob(req.user?.tenantId || 'default', { toolSlug: 'reward-program' }));
+    res.status(202).json(await snapshotPublish.startJob(req.user?.tenantId || 'default', { ...(req.body || {}), toolSlug: 'reward-program' }));
 }));
 
 module.exports = router;

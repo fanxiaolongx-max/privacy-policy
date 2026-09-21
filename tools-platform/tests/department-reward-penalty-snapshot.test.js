@@ -474,3 +474,73 @@ test('consecutive Pages pushes handle CRLF line endings and existing data direct
     assert.equal(res2.status, 'success', JSON.stringify(res2.entries));
 });
 
+test('disabling encryption removes password gatekeeper and force push redeploys without changes', async () => {
+    const service = require('../backend/models/snapshot-publish-service');
+    const bare = path.join(temp, 'remote-force.git');
+    const mirror = path.join(temp, 'mirror-force');
+    execFileSync('git', ['init', '--bare', bare]);
+    execFileSync('git', ['clone', bare, mirror]);
+    execFileSync('git', ['-C', mirror, 'checkout', '-b', 'master']);
+    fs.writeFileSync(path.join(mirror, 'init.txt'), 'init');
+    execFileSync('git', ['-C', mirror, 'add', 'init.txt']);
+    execFileSync('git', ['-C', mirror, '-c', 'user.name=Test', '-c', 'user.email=test@localhost', 'commit', '-m', 'Init']);
+    execFileSync('git', ['-C', mirror, 'push', '-u', 'origin', 'master']);
+
+    // 1. Save with encryption enabled
+    await service.saveSettings({
+        repoDir: mirror, branch: 'master', file: '{toolSlug}/index.html', publishMode: 'pages',
+        encryptionEnabled: true, password: 'InitialPassword123'
+    });
+    const job1 = await service.startJob('default');
+    let res1;
+    for (let i = 0; i < 100; i++) {
+        res1 = await service.getJob(job1.id);
+        if (res1.status !== 'running') break;
+        await new Promise(r => setTimeout(r, 30));
+    }
+    assert.equal(res1.status, 'success');
+    const encHtml = execFileSync('git', ['--git-dir', bare, 'show', 'master:department-reward-penalty/index.html']).toString();
+    assert.match(encHtml, /id="tpGatekeeperModal"/);
+
+    // 2. Disable encryption
+    const unencSettings = await service.saveSettings({
+        repoDir: mirror, branch: 'master', file: '{toolSlug}/index.html', publishMode: 'pages',
+        encryptionEnabled: false,
+        tools: [{ toolSlug: 'department-reward-penalty', enabled: true, encryptionEnabled: false, password: '' }]
+    });
+    assert.equal(unencSettings.encryptionEnabled, false);
+    const job2 = await service.startJob('default');
+    let res2;
+    for (let i = 0; i < 100; i++) {
+        res2 = await service.getJob(job2.id);
+        if (res2.status !== 'running') break;
+        await new Promise(r => setTimeout(r, 30));
+    }
+    assert.equal(res2.status, 'success');
+    const unencHtml = execFileSync('git', ['--git-dir', bare, 'show', 'master:department-reward-penalty/index.html']).toString();
+    assert.doesNotMatch(unencHtml, /id="tpGatekeeperModal"/);
+
+    // 3. Normal push with no changes skips commit/push
+    const job3 = await service.startJob('default');
+    let res3;
+    for (let i = 0; i < 100; i++) {
+        res3 = await service.getJob(job3.id);
+        if (res3.status !== 'running') break;
+        await new Promise(r => setTimeout(r, 30));
+    }
+    assert.equal(res3.status, 'success');
+    assert.equal(res3.commit, res2.commit);
+
+    // 4. Force push with no changes creates empty commit and pushes
+    const job4 = await service.startJob('default', { force: true });
+    let res4;
+    for (let i = 0; i < 100; i++) {
+        res4 = await service.getJob(job4.id);
+        if (res4.status !== 'running') break;
+        await new Promise(r => setTimeout(r, 30));
+    }
+    assert.equal(res4.status, 'success');
+    assert.notEqual(res4.commit, res3.commit);
+});
+
+
