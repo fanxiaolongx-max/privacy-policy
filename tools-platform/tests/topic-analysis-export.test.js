@@ -157,3 +157,104 @@ test('topic-analysis supports scoped PNG export for Chinese, English, Combined, 
     assert.match(js, /'eosPngMenu'/, 'Must register eosPngMenu in elements');
 });
 
+test('topic-analysis provides CanvasRenderingContext2D guard against 0-dimension canvas createPattern crash', () => {
+    const js = fs.readFileSync(path.join(__dirname, '../frontend/js/topic-analysis.js'), 'utf-8');
+    assert.match(js, /function installCanvasGuard\(\)/, 'Must define installCanvasGuard');
+    assert.match(js, /_eosPatternGuarded/, 'Must mark prototype as guarded');
+
+    // Test the guard logic inside a sandbox
+    let dummyCreated = false;
+    let origCallArg = null;
+    class FakeCanvasContext {
+        createPattern(image, repetition) {
+            origCallArg = image;
+            return { image, repetition };
+        }
+    }
+    const fakeDocument = {
+        createElement(tag) {
+            if (tag === 'canvas') {
+                dummyCreated = true;
+                return { width: 0, height: 0 };
+            }
+            return {};
+        }
+    };
+
+    const sandbox = {
+        CanvasRenderingContext2D: FakeCanvasContext,
+        document: fakeDocument,
+        window: {}
+    };
+
+    // Extract installCanvasGuard code
+    const guardStart = js.indexOf('(function installCanvasGuard() {');
+    const guardEnd = js.indexOf('})();', guardStart) + 5;
+    assert.ok(guardStart >= 0 && guardEnd > guardStart);
+    const guardCode = js.slice(guardStart, guardEnd);
+
+    vm.runInNewContext(guardCode, sandbox);
+
+    const ctx = new sandbox.CanvasRenderingContext2D();
+
+    // 1. Test normal canvas with positive dimensions
+    const normalCanvas = { width: 100, height: 100 };
+    const p1 = ctx.createPattern(normalCanvas, 'repeat');
+    assert.equal(p1.image, normalCanvas, 'Normal canvas should pass through untouched');
+
+    // 2. Test 0-width canvas
+    dummyCreated = false;
+    const zeroWidthCanvas = { width: 0, height: 100 };
+    const p2 = ctx.createPattern(zeroWidthCanvas, 'repeat');
+    assert.ok(dummyCreated, 'Should have created a 1x1 dummy canvas');
+    assert.equal(p2.image.width, 1, 'Dummy canvas width should be 1');
+    assert.equal(p2.image.height, 1, 'Dummy canvas height should be 1');
+
+    // 3. Test 0-height canvas
+    dummyCreated = false;
+    const zeroHeightCanvas = { width: 100, height: 0 };
+    const p3 = ctx.createPattern(zeroHeightCanvas, 'repeat');
+    assert.ok(dummyCreated, 'Should have created a 1x1 dummy canvas');
+    assert.equal(p3.image.width, 1, 'Dummy canvas width should be 1');
+    assert.equal(p3.image.height, 1, 'Dummy canvas height should be 1');
+});
+
+test('html2canvas.min.js contains zero-dimension guards for background images, gradients and resizeImage', () => {
+    const code = fs.readFileSync(path.join(__dirname, '../frontend/js/shared/html2canvas.min.js'), 'utf-8');
+    assert.ok(
+        code.includes('0<c&&0<a&&t&&0<t.width&&0<t.height&&(s=d.ctx.createPattern(d.resizeImage(t,c,a)'),
+        'Must guard background image pattern creation against zero dimensions'
+    );
+    assert.ok(
+        code.includes('0<c&&0<a&&0<F.width&&0<F.height&&(s=d.ctx.createPattern(F,"repeat")'),
+        'Must guard linear gradient pattern creation against zero canvas width/height'
+    );
+    assert.ok(
+        code.includes('if(!A||A.width<=0||A.height<=0){var d=(null!==(d=this.canvas.ownerDocument)&&void 0!==d?d:document).createElement("canvas");return d.width=1,d.height=1,d;}'),
+        'Must guard resizeImage against zero-dimension inputs'
+    );
+});
+
+test('export filters ignore anchors and cell-level sync chips from html2canvas DOM capture', () => {
+    const html = fs.readFileSync(path.join(__dirname, '../frontend/pages/topic-analysis.html'), 'utf-8');
+    assert.ok(
+        html.includes('id="eos-section-cn" class="topic-section-anchor" data-html2canvas-ignore="true"'),
+        'Chinese section anchor must be ignored by html2canvas'
+    );
+    assert.ok(
+        html.includes('id="eos-section-en" class="topic-section-anchor" data-html2canvas-ignore="true"'),
+        'English section anchor must be ignored by html2canvas'
+    );
+
+    const js = fs.readFileSync(path.join(__dirname, '../frontend/js/topic-analysis.js'), 'utf-8');
+    assert.ok(
+        js.includes("el.classList.contains('topic-cell-sync-chip')"),
+        'Must ignore topic-cell-sync-chip during PNG/PDF capture'
+    );
+    assert.ok(
+        js.includes("el.classList.contains('topic-section-anchor')"),
+        'Must ignore topic-section-anchor during PNG/PDF capture'
+    );
+});
+
+

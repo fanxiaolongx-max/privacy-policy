@@ -1,6 +1,28 @@
 (function () {
     'use strict';
 
+    // Global CanvasRenderingContext2D guard against 0-dimension pattern crashes (html2canvas compatibility)
+    (function installCanvasGuard() {
+        if (typeof CanvasRenderingContext2D === 'undefined') return;
+        if (CanvasRenderingContext2D.prototype._eosPatternGuarded) return;
+        const origCreatePattern = CanvasRenderingContext2D.prototype.createPattern;
+        CanvasRenderingContext2D.prototype.createPattern = function (image, repetition) {
+            if (!image) {
+                return origCreatePattern.apply(this, arguments);
+            }
+            const w = image.width !== undefined ? image.width : (image.naturalWidth !== undefined ? image.naturalWidth : 0);
+            const h = image.height !== undefined ? image.height : (image.naturalHeight !== undefined ? image.naturalHeight : 0);
+            if (w <= 0 || h <= 0) {
+                const dummy = (this.canvas?.ownerDocument || document).createElement('canvas');
+                dummy.width = 1;
+                dummy.height = 1;
+                return origCreatePattern.call(this, dummy, repetition || 'repeat');
+            }
+            return origCreatePattern.apply(this, arguments);
+        };
+        CanvasRenderingContext2D.prototype._eosPatternGuarded = true;
+    })();
+
     const metric = (key, label, unit, description, decimals = 0) => ({ key, label, unit, description, decimals });
     const TOPICS = {
         'netcare-certificate': {
@@ -2209,8 +2231,10 @@
                     el.hasAttribute('data-html2canvas-ignore') ||
                     el.classList.contains('print-hide') ||
                     el.classList.contains('topic-sync-chip') ||
+                    el.classList.contains('topic-cell-sync-chip') ||
                     el.classList.contains('topic-report-gutter') ||
-                    el.classList.contains('topic-diff-popover')
+                    el.classList.contains('topic-diff-popover') ||
+                    el.classList.contains('topic-section-anchor')
                 )
             });
 
@@ -2302,9 +2326,10 @@
         }
         const sheet = elements.eosReportSheet || document.getElementById('eosReportSheet');
         if (!sheet) return;
+        closePngDropdown();
         hideTextToolbar();
         hideDiffPopover(true);
-        if (document.activeElement && document.activeElement.classList?.contains('topic-editable')) {
+        if (document.activeElement && (document.activeElement.classList?.contains('topic-editable') || sheet.contains(document.activeElement))) {
             document.activeElement.blur();
         }
         const button = elements.eosDownloadPdf;
@@ -2319,7 +2344,7 @@
             document.documentElement.setAttribute('data-theme', 'light');
         }
         try {
-            await new Promise(resolve => setTimeout(resolve, 50));
+            await new Promise(resolve => setTimeout(resolve, 60));
             const canvas = await html2canvas(sheet, {
                 backgroundColor: '#ffffff',
                 scale: 2,
@@ -2329,8 +2354,10 @@
                     el.hasAttribute('data-html2canvas-ignore') ||
                     el.classList.contains('print-hide') ||
                     el.classList.contains('topic-sync-chip') ||
+                    el.classList.contains('topic-cell-sync-chip') ||
                     el.classList.contains('topic-report-gutter') ||
-                    el.classList.contains('topic-diff-popover')
+                    el.classList.contains('topic-diff-popover') ||
+                    el.classList.contains('topic-section-anchor')
                 )
             });
 
