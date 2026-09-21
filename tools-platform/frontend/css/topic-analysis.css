@@ -136,6 +136,7 @@ td.topic-en-synced, th.topic-en-synced { border-left:3px solid #10b981!important
 
 /* Status Capsule in Controls */
 .topic-sync-capsule { display:inline-flex; align-items:center; gap:6px; padding:3px 10px; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:999px; font-size:11.5px; font-weight:600; color:#334155; margin-left:8px; cursor:pointer; user-select:none; transition:all .2s ease; }
+.topic-sync-capsule[hidden], [hidden].topic-sync-capsule, [hidden] { display:none !important; }
 .topic-sync-capsule:hover { background:#e2e8f0; }
 .topic-sync-capsule.has-pending { background:#fef3c7; border-color:#fcd34d; color:#b45309; }
 

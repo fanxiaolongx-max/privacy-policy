@@ -168,8 +168,7 @@
 
     const DEFAULT_MAPPINGS = {
         'Etisalat Misr': 'e&',
-        'Orange Egypt for Telecommunications': 'Orange Telecom',
-        'Egypt': 'TE',
+        'Orange Egypt for Telecommunications': 'Orange',
         'Vodafone Egypt': 'Vodafone',
         'Telecom Egypt': 'TE',
         'NILE ON LINE (NOL)': 'e&'
@@ -204,6 +203,24 @@
         try {
             localStorage.setItem(getMappingStorageKey(), JSON.stringify(config));
         } catch (_) {}
+        if (config && typeof config === 'object') {
+            API.put('/api/topic-snapshots/mapping-config', config).catch(err => {
+                console.warn('[topic-analysis] 同步映射配置到服务器失败:', err);
+            });
+        }
+    }
+
+    async function syncMappingConfigFromServer() {
+        try {
+            const res = await API.get('/api/topic-snapshots/mapping-config');
+            if (res && res.config && res.config.aliases && typeof res.config.aliases === 'object') {
+                localStorage.setItem(getMappingStorageKey(), JSON.stringify(res.config));
+                if (elements.eosMappingModal && !elements.eosMappingModal.hidden) {
+                    renderMappingTableRows(res.config.aliases);
+                    if (elements.eosMinThresholdInput) elements.eosMinThresholdInput.value = res.config.minThreshold;
+                }
+            }
+        } catch (_) {}
     }
 
     function mapCustomerName(rawName) {
@@ -214,8 +231,8 @@
         if (trimmed === 'Orange' && config.aliases['Orange Egypt for Telecommunications']) {
             return config.aliases['Orange Egypt for Telecommunications'];
         }
-        if (trimmed === 'TE' && (config.aliases['Telecom Egypt'] || config.aliases['Egypt'])) {
-            return config.aliases['Telecom Egypt'] || config.aliases['Egypt'];
+        if (trimmed === 'TE' && config.aliases['Telecom Egypt']) {
+            return config.aliases['Telecom Egypt'];
         }
         if (trimmed === 'Vodafone' && config.aliases['Vodafone Egypt']) {
             return config.aliases['Vodafone Egypt'];
@@ -2636,9 +2653,7 @@
 
             // 1. Restore customer mapping config if provided
             if (project.customerMappingConfig && typeof project.customerMappingConfig === 'object') {
-                try {
-                    localStorage.setItem(MAPPING_STORAGE_KEY, JSON.stringify(project.customerMappingConfig));
-                } catch (_) {}
+                saveMappingConfig(project.customerMappingConfig);
             }
 
             // 2. Restore copyPreferences into localStorage for the project month & fixed
@@ -2974,10 +2989,10 @@
     }
 
     function resetDefaultMappingsInModal() {
-        if (!window.confirm('确定恢复默认映射配置？（Etisalat Misr ➔ e&，Orange Egypt for Telecommunications ➔ Orange Telecom，Egypt ➔ TE，Vodafone Egypt ➔ Vodafone，默认阈值 10 套）')) return;
+        if (!window.confirm('确定恢复默认映射配置？（Etisalat Misr ➔ e&，Orange Egypt for Telecommunications ➔ Orange，Vodafone Egypt ➔ Vodafone，Telecom Egypt ➔ TE，默认阈值 10 套）')) return;
         if (elements.eosMinThresholdInput) elements.eosMinThresholdInput.value = DEFAULT_MIN_THRESHOLD;
         renderMappingTableRows(DEFAULT_MAPPINGS);
-        if (elements.eosMappingStatusMsg) elements.eosMappingStatusMsg.textContent = '已重置为内置默认4条映射规则与阈值';
+        if (elements.eosMappingStatusMsg) elements.eosMappingStatusMsg.textContent = '已重置为内置默认映射规则与阈值';
     }
 
     function saveAndApplyMappingConfig() {
@@ -3273,6 +3288,6 @@
         elements.topicFilter.addEventListener('change', event => { state.topicKey = event.target.value; state.metricKey = topic().metrics[0].key; renderTopicControls(); renderAnalysis(); });
         elements.metricFilter.addEventListener('change', event => { state.metricKey = event.target.value; renderAnalysis(); });
         elements.historyBody.addEventListener('click', handleTableAction); elements.downloadDetail.addEventListener('click', () => { if (state.detailSnapshot) downloadDetailTable(state.detailSnapshot.snapshot); }); elements.viewRaw.addEventListener('click', () => { if (!state.detailSnapshot) return; const showingRaw = !elements.detailJson.hidden; elements.detailJson.textContent = JSON.stringify(state.detailSnapshot.snapshot, null, 2); elements.detailJson.hidden = showingRaw; elements.detailTable.hidden = !showingRaw; elements.detailTools.hidden = !showingRaw; elements.viewRaw.textContent = showingRaw ? '原始 JSON' : '返回详表'; }); elements.detailSearch.addEventListener('input', event => { state.detailFilter = event.target.value.trim().toLowerCase(); state.detailPage = 1; renderDetailTable(); }); elements.detailPageSize.addEventListener('change', event => { state.detailPageSize = Number(event.target.value) || 50; state.detailPage = 1; renderDetailTable(); }); elements.detailSortColumn.addEventListener('change', event => { state.detailSortColumn = event.target.value; state.detailPage = 1; renderDetailTable(); }); elements.detailSortDirection.addEventListener('click', () => { state.detailSortAscending = !state.detailSortAscending; elements.detailSortDirection.textContent = state.detailSortAscending ? '升序' : '降序'; renderDetailTable(); }); elements.detailTable.addEventListener('click', event => { const button = event.target.closest('[data-detail-page]'); if (!button) return; state.detailPage += button.dataset.detailPage === 'next' ? 1 : -1; renderDetailTable(); }); elements.toggleDetailFullscreen.addEventListener('click', () => { elements.detailModal.classList.toggle('is-fullscreen'); elements.toggleDetailFullscreen.textContent = elements.detailModal.classList.contains('is-fullscreen') ? '退出全屏' : '全屏'; }); elements.closeDetail.addEventListener('click', () => { elements.detailModal.classList.remove('is-fullscreen'); elements.toggleDetailFullscreen.textContent = '全屏'; elements.detailModal.hidden = true; });
-        elements.detailModal.addEventListener('click', event => { if (event.target === elements.detailModal) elements.detailModal.hidden = true; }); loadData(); checkAiAssistantStatus();
+        elements.detailModal.addEventListener('click', event => { if (event.target === elements.detailModal) elements.detailModal.hidden = true; }); loadData(); checkAiAssistantStatus(); syncMappingConfigFromServer();
     });
 }());

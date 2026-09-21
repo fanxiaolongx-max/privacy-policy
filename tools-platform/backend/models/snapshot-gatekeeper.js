@@ -414,8 +414,11 @@ function injectGatekeeper(html, encryption, toolSlug = 'department-reward-penalt
         });
     }
 
-    if (res.includes('</body>')) {
-        res = res.replace('</body>', `${modalHtml}\n${script}\n</body>`);
+    const bodyMatches = [...res.matchAll(/<\/body\s*>/gi)];
+    if (bodyMatches.length > 0) {
+        const lastMatch = bodyMatches[bodyMatches.length - 1];
+        const idx = lastMatch.index;
+        res = res.slice(0, idx) + `${modalHtml}\n${script}\n` + res.slice(idx);
     } else {
         res = `${res}\n${modalHtml}\n${script}`;
     }

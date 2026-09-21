@@ -123,8 +123,7 @@ test('temporary License monthly report includes synchronous English report, depa
     const readMappingConfigFn = vm.runInNewContext(`(() => {
         const DEFAULT_MAPPINGS = {
             'Etisalat Misr': 'e&',
-            'Orange Egypt for Telecommunications': 'Orange Telecom',
-            'Egypt': 'TE',
+            'Orange Egypt for Telecommunications': 'Orange',
             'Vodafone Egypt': 'Vodafone',
             'Telecom Egypt': 'TE',
             'NILE ON LINE (NOL)': 'e&'
@@ -139,19 +138,189 @@ test('temporary License monthly report includes synchronous English report, depa
 
     // Default when no storage
     const initialConfig = readMappingConfigFn();
-    assert.equal(initialConfig.aliases['Egypt'], 'TE', 'Initial default has Egypt -> TE');
+    assert.equal(initialConfig.aliases['Egypt'], undefined, 'Default mappings must NOT include Egypt -> TE');
+    assert.equal(initialConfig.aliases['Orange Egypt for Telecommunications'], 'Orange', 'Default mapping for Orange is Orange');
+    assert.equal(initialConfig.aliases['Etisalat Misr'], 'e&');
+    assert.equal(initialConfig.aliases['Telecom Egypt'], 'TE');
+    assert.equal(initialConfig.aliases['Vodafone Egypt'], 'Vodafone');
 
-    // User deletes Egypt and saves
-    delete initialConfig.aliases['Egypt'];
+    // User modifies mapping and saves
+    initialConfig.aliases['Custom Client'] = 'CC';
     mockLocalStorage.setItem('topic-eos:mapping-config:v1:default', JSON.stringify({
-        minThreshold: 10,
+        minThreshold: 15,
         aliases: initialConfig.aliases
     }));
 
-    // Re-read configuration: Egypt must NOT be resurrected
+    // Re-read configuration: custom changes must persist
     const reloadedConfig = readMappingConfigFn();
-    assert.equal(reloadedConfig.aliases['Egypt'], undefined, 'Deleted Egypt mapping must remain deleted');
-    assert.equal(reloadedConfig.aliases['Etisalat Misr'], 'e&');
-    assert.equal(reloadedConfig.aliases['Vodafone Egypt'], 'Vodafone');
+    assert.equal(reloadedConfig.aliases['Custom Client'], 'CC', 'Custom mapping must persist');
+    assert.equal(reloadedConfig.minThreshold, 15);
 });
+
+test('temporary License monthly report includes complete multi-format export matrix (PNG scopes, PDF, standalone HTML)', async () => {
+    const source = fs.readFileSync(path.join(__dirname, '../backend/builtin-tools/esn-check/index.html'), 'utf8');
+
+    // 1. Script tags must use local shared scripts
+    assert.match(source, /<script src="\/js\/shared\/html2canvas\.min\.js"><\/script>/);
+    assert.match(source, /<script src="\/js\/shared\/jspdf\.umd\.min\.js"><\/script>/);
+
+    // 2. Dropdown UI and scope options
+    assert.match(source, /id="reportPngDropdown"/);
+    assert.match(source, /id="reportPngMenu"/);
+    assert.match(source, /data-png-scope="cn"/);
+    assert.match(source, /data-png-scope="en"/);
+    assert.match(source, /data-png-scope="both"/);
+    assert.match(source, /data-png-scope="all-three"/);
+
+    // 3. Export buttons
+    assert.match(source, /id="report-pdf"/);
+    assert.match(source, /id="report-html"/);
+
+    // 4. Single-language CSS export filters
+    assert.match(source, /\.export-mode-cn\s+\[data-report-lang="en"\]/);
+    assert.match(source, /\.export-mode-en\s+\[data-report-lang="cn"\]/);
+
+    // 5. Export functions
+    assert.match(source, /function togglePngDropdown\(/);
+    assert.match(source, /function closePngDropdown\(/);
+    assert.match(source, /async function captureAndDownloadMonthlyPng\(scope, button, label\)/);
+    assert.match(source, /async function exportMonthlyPng\(scope = 'both'\)/);
+    assert.match(source, /async function exportMonthlyPdf\(\)/);
+    assert.match(source, /async function exportMonthlyHtml\(\)/);
+
+    // 6. Filename conventions
+    assert.match(source, /临时License月报_\$\{label\}\$\{suffix\}\.png/);
+    assert.match(source, /临时License月报_\$\{label\}\.pdf/);
+    assert.match(source, /临时License月报_\$\{label\}\.html/);
+});
+
+test('temporary License monthly report includes bilingual anchors, navigation bar, sync capsule, and diff popover', async () => {
+    const source = fs.readFileSync(path.join(__dirname, '../backend/builtin-tools/esn-check/index.html'), 'utf8');
+
+    // 1. Bidirectional anchors and nav bars
+    assert.match(source, /id=['"]license-section-cn['"]|\.id\s*=\s*['"]license-section-cn['"]/);
+    assert.match(source, /id=['"]licenseReportNavCn['"]|\.id\s*=\s*['"]licenseReportNavCn['"]/);
+    assert.match(source, /id=['"]license-section-en['"]|\.id\s*=\s*['"]license-section-en['"]/);
+    assert.match(source, /id=['"]licenseReportNavEn['"]|\.id\s*=\s*['"]licenseReportNavEn['"]/);
+    assert.match(source, /跳转到英文版月报 ⬇️/);
+    assert.match(source, /⬆️ 返回中文版月报/);
+
+    // 2. Bilingual status capsule and popover DOM
+    assert.match(source, /id="report-sync-capsule"/);
+    assert.match(source, /id="reportDiffPopover"/);
+    assert.match(source, /id="reportDiffStatusTag"/);
+    assert.match(source, /id="reportDiffBefore"/);
+    assert.match(source, /id="reportDiffAfter"/);
+    assert.match(source, /id="reportDiffCopyBtn"/);
+    assert.match(source, /id="reportDiffRevertBtn"/);
+    assert.match(source, /id="reportDiffAiBtn"/);
+
+    // 3. Logic functions
+    assert.match(source, /function updateReportBilingualStatus\(\)/);
+    assert.match(source, /function attachDiffPopoverToEnEl\(/);
+    assert.match(source, /function showDiffPopover\(anchorEl, context\)/);
+    assert.match(source, /function hideDiffPopover\(/);
+    assert.match(source, /async function performAiTranslate\(cnEl, enEl, btn\)/);
+    assert.match(source, /function revertTranslation\(cnEl, enEl, revertBtn\)/);
+
+    // 4. AI route check
+    assert.match(source, /\/api\/ai\/translate/);
+});
+
+test('temporary License monthly report supports offline project archive (.license.json export & import)', async () => {
+    const source = fs.readFileSync(path.join(__dirname, '../backend/builtin-tools/esn-check/index.html'), 'utf8');
+
+    // 1. Project control buttons & file input
+    assert.match(source, /id="report-export-project"/);
+    assert.match(source, /id="report-import-project"/);
+    assert.match(source, /id="report-project-file"/);
+    assert.match(source, /id="report-project-badge"/);
+
+    // 2. Logic functions
+    assert.match(source, /function exportLicenseProject\(\)/);
+    assert.match(source, /async function importLicenseProject\(file\)/);
+
+    // 3. File extension and type convention
+    assert.match(source, /\.license\.json/);
+    assert.match(source, /fileType:\s*'esn-license-monthly-project'/);
+});
+
+test('installCanvasGuard protects against zero-dimension canvas crashes', () => {
+    const source = fs.readFileSync(path.join(__dirname, '../backend/builtin-tools/esn-check/index.html'), 'utf8');
+
+    assert.match(source, /function installCanvasGuard\(\)/);
+
+    // Run guard in mock CanvasRenderingContext2D environment
+    const mockContextProto = {
+        createPattern(image, repetition) {
+            return { image, repetition };
+        }
+    };
+    const mockContext = {
+        mockContextProto
+    };
+
+    const guardStart = source.indexOf('(function installCanvasGuard() {');
+    assert.ok(guardStart > 0, 'Must have installCanvasGuard IIFE');
+    const guardEnd = source.indexOf('})();', guardStart) + 5;
+    const guardCode = source.slice(guardStart, guardEnd);
+
+    const dummyCanvas = { width: 0, height: 0 };
+    const mockDoc = {
+        createElement(tag) {
+            return { tagName: tag.toUpperCase(), width: 0, height: 0 };
+        }
+    };
+
+    const runGuard = vm.runInNewContext(`(() => {
+        function CanvasRenderingContext2D() {}
+        CanvasRenderingContext2D.prototype = {
+            createPattern: function(image, rep) {
+                if (image.width === 0 || image.height === 0) {
+                    throw new Error('Zero-size canvas image pattern crash');
+                }
+                return { patternFor: image, rep };
+            }
+        };
+        const document = {
+            createElement: function(tag) { return { width: 0, height: 0 }; }
+        };
+        ${guardCode}
+        return CanvasRenderingContext2D;
+    })()`);
+
+    const ctx = new runGuard();
+    // Normal pattern with non-zero dimensions
+    const normalPattern = ctx.createPattern({ width: 100, height: 100 }, 'repeat');
+    assert.equal(normalPattern.patternFor.width, 100);
+
+    // Zero dimension image should NOT throw, and fallback to 1x1 dummy
+    const safePattern = ctx.createPattern({ width: 0, height: 0 }, 'repeat');
+    assert.equal(safePattern.patternFor.width, 1);
+    assert.equal(safePattern.patternFor.height, 1);
+});
+
+test('esn-check index.html has single root closing body tag and does not leak script code when served with runtime', () => {
+    const source = fs.readFileSync(path.join(__dirname, '../backend/builtin-tools/esn-check/index.html'), 'utf8');
+    const bodyMatches = [...source.matchAll(/<\/body\s*>/gi)];
+    assert.equal(bodyMatches.length, 1, 'File must only contain exactly 1 literal </body> tag at document root');
+
+    const i18nService = require('../backend/models/custom-tool-i18n-service');
+    const served = i18nService.injectLanguageRuntime(source, 'esn-check');
+
+    // In the served HTML, the original main script ends before the injected watermark
+    const originalScriptSnippetPos = served.indexOf('updateImportSummaryBar();');
+    const scriptEndAfterSnippet = served.indexOf('</script>', originalScriptSnippetPos);
+    const watermarkPos = served.indexOf('id="__tools_html_meta_watermark__"');
+    const finalBodyPos = served.lastIndexOf('</body>');
+
+    assert.ok(watermarkPos > 0, 'Watermark must be injected');
+    assert.ok(watermarkPos > scriptEndAfterSnippet, 'Watermark must be injected AFTER original script, not inside a script block');
+    assert.ok(watermarkPos < finalBodyPos, 'Watermark must be injected before </body>');
+
+    // Ensure exportMonthlyHtml blob code is not exposed outside script
+    assert.doesNotMatch(served, /<\/script>[\s\S]*?';\s*const blob = new Blob/, 'Script code must not leak after </script>');
+});
+
+
 

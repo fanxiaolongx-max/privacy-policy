@@ -6,7 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>临时 License 统计与月报</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="/js/shared/html2canvas.min.js"></script>
+    <script src="/js/shared/jspdf.umd.min.js"></script>
     <script src="./assets/exceljs.min.js"></script>
     <style>
         /* 现代化全局变量与基础样式 */
@@ -856,55 +857,327 @@
         .report-controls { display:flex; gap:10px; flex-wrap:wrap; align-items:end; margin-bottom:14px; }
         .report-controls label { display:grid; gap:4px; font-size:12px; color:var(--text-muted); }
         .report-controls select,.report-controls input { padding:8px; border:1px solid var(--border); border-radius:6px; background:#fff; color:var(--text-main); }
-        .report-controls input[type="checkbox"] { padding:0; vertical-align:middle; }
-        #monthly-view > .report-controls { display:block; margin-bottom:14px; }
-        .report-controls-main { display:flex; flex-wrap:wrap; align-items:flex-end; gap:10px; }
-        .report-controls-main label { display:grid; gap:4px; font-size:12px; color:var(--text-muted); }
-        .report-controls-main select,.report-controls-main input { box-sizing:border-box; height:36px; padding:7px 8px; border:1px solid var(--border); border-radius:7px; background:#fff; color:var(--text-main); }
-        .report-controls-main .view-tab { display:inline-flex; align-items:center; justify-content:center; height:36px; box-sizing:border-box; padding:7px 14px; white-space:nowrap; }
-        .report-controls-notes { display:flex; flex-wrap:wrap; gap:8px 16px; margin-top:8px; padding-left:1px; color:var(--text-muted); font-size:12px; line-height:1.45; }
-        .report-controls-notes .muted { display:block; }
-        .report-settings { display:grid; gap:14px; margin:0; }
-        .report-settings h3 { margin:0; font-size:14px; }
-        .report-filter-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:7px 0; }
-        .report-filter-row select,.report-filter-row input,.report-settings select,.report-settings input { padding:7px; border:1px solid var(--border); border-radius:6px; background:#fff; color:var(--text-main); }
-        .report-filter-row input { min-width:170px; flex:1; }
-        .report-filter-row button { border:1px solid var(--border); border-radius:6px; background:#fff; padding:7px 10px; cursor:pointer; }
-        .report-group-members { display:flex; gap:8px 16px; flex-wrap:wrap; max-height:130px; overflow:auto; margin:10px 0 0; padding:10px; background:#f8fafc; border:1px solid #e5edf5; border-radius:8px; }
-        .report-group-members label { white-space:nowrap; font-size:13px; color:#334155; }
-        .report-group-card { border:1px solid #dbe5ef; border-radius:10px; padding:12px; margin:10px 0 0; background:#fff; box-shadow:0 1px 2px rgba(15,23,42,.03); }
-        .report-group-card .report-controls { margin-bottom:4px; }
-        .report-group-note { min-width:260px; }
-        .report-group-note textarea { min-width:260px; min-height:56px; padding:7px; border:1px solid var(--border); border-radius:6px; resize:vertical; }
-        .report-split-name { display:flex; flex-direction:column; margin:-6px -8px; }
-        .report-split-name > span { box-sizing:border-box; display:flex; align-items:center; justify-content:center; padding:6px 8px; white-space:pre-line; }
-        .report-split-name > span + span { border-top:1px solid #94a3b8; font-weight:400; font-size:11px; }
-        .report-settings .hint { color:var(--text-muted); font-size:12px; line-height:1.65; margin:6px 0 0; }
-        .report-settings-modal .modal-panel { width:min(1180px, 96vw); max-height:92vh; background:#f8fafc; }
-        .report-settings-modal .modal-head { background:#fff; padding:16px 22px; }
-        .report-settings-modal .modal-body { padding:18px 22px 24px; }
-        .settings-intro { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:10px 14px; border:1px solid #d9e9fb; border-radius:10px; background:#eff6ff; color:#315a88; font-size:12px; line-height:1.5; }
-        .settings-intro strong { color:#1d4ed8; }
-        .settings-section { border:1px solid #dbe5ef; border-radius:12px; background:#fff; padding:16px; }
-        .settings-section-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; }
-        .settings-section-head h3 { color:#1e293b; }
-        .settings-section-head h3::before { content:""; display:inline-block; width:4px; height:16px; margin-right:8px; vertical-align:-3px; border-radius:4px; background:#2563eb; }
-        .settings-grid { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:12px; align-items:end; }
+        #monthly-view > .report-controls { display:flex; flex-direction:column; align-items:flex-start; gap:10px; margin-bottom:16px; width:100%; box-sizing:border-box; }
+        .report-params-card {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            gap: 12px 14px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px 16px;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+        }
+        .report-param-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .report-param-label {
+            font-size: 11.5px;
+            font-weight: 600;
+            color: #475569;
+            letter-spacing: 0.2px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin: 0;
+            user-select: none;
+        }
+        .report-param-control {
+            box-sizing: border-box;
+            height: 34px;
+            padding: 6px 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            background: #f8fafc;
+            color: #0f172a;
+            font-size: 12.5px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color .15s ease, background-color .15s ease, box-shadow .15s ease;
+        }
+        .report-param-control:focus {
+            border-color: #3b82f6;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+        }
+        .report-input-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .report-file-input {
+            box-sizing: border-box;
+            height: 34px;
+            font-size: 11.5px;
+            padding: 4px 6px;
+            cursor: pointer;
+            line-height: 24px;
+            max-width: 250px;
+        }
+        .report-file-input::file-selector-button {
+            height: 24px;
+            padding: 0 10px;
+            margin-right: 8px;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            color: #334155;
+            font-size: 11.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .15s ease;
+        }
+        .report-file-input::file-selector-button:hover {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+        }
+
+        /* 独立操作按钮工具栏（紧凑精致，真正具备现代按钮视觉质感） */
+        .report-actions-bar {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 8px;
+            flex-wrap: wrap;
+            padding: 2px 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .report-actions-group {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .report-actions-divider {
+            width: 1px;
+            height: 20px;
+            background: #cbd5e1;
+            margin: 0 4px;
+            flex-shrink: 0;
+        }
+
+        .report-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            height: 32px;
+            padding: 0 11px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+            cursor: pointer;
+            user-select: none;
+            transition: all .16s cubic-bezier(0.4, 0, 0.2, 1);
+            box-sizing: border-box;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            color: #334155;
+            font-family: inherit;
+        }
+        .report-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+        }
+        .report-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        }
+        .report-btn:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        .report-btn-icon {
+            font-size: 13px;
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        /* 按钮色彩风格体系 */
+        .report-btn-primary {
+            background: #eff6ff;
+            border-color: #93c5fd;
+            color: #1d4ed8;
+        }
+        .report-btn-primary:hover {
+            background: #2563eb;
+            border-color: #2563eb;
+            color: #ffffff;
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+        }
+        .report-btn-neutral {
+            background: #ffffff;
+            border-color: #cbd5e1;
+            color: #334155;
+        }
+        .report-btn-neutral:hover {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+            color: #0f172a;
+        }
+        .report-btn-secondary {
+            height: 34px;
+            padding: 0 10px;
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            color: #334155;
+            border-radius: 6px;
+        }
+        .report-btn-secondary:hover {
+            background: #e2e8f0;
+            border-color: #94a3b8;
+            color: #0f172a;
+        }
+        .report-btn-export {
+            background: #ffffff;
+            border-color: #cbd5e1;
+            color: #1e293b;
+        }
+        .report-btn-export:hover {
+            background: #f8fafc;
+            border-color: #94a3b8;
+            color: #0f172a;
+        }
+        .report-btn-amber {
+            background: #fefce8;
+            border-color: #fde047;
+            color: #854d0e;
+        }
+        .report-btn-amber:hover {
+            background: #fef9c3;
+            border-color: #eab308;
+            color: #713f12;
+            box-shadow: 0 2px 6px rgba(234, 179, 8, 0.18);
+        }
+
+        .report-controls-notes { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-start; gap:8px 16px; margin-top:4px; padding-left:1px; color:var(--text-muted); font-size:12px; line-height:1.45; width:100%; box-sizing:border-box; }
+        .report-controls-notes .muted { display:inline-block; }
+        .report-settings { display:flex; flex-direction:column; gap:16px; margin:0; }
+        .report-settings h3 { margin:0; font-size:15px; font-weight:700; color:#0f172a; }
+        .report-settings-modal .modal-panel { width:min(1120px, 96vw); max-height:90vh; background:#f8fafc; border-radius:16px; overflow:hidden; box-shadow:0 24px 60px rgba(15,23,42,0.2); }
+        .report-settings-modal .modal-head { background:#ffffff; padding:18px 24px; border-bottom:1px solid #e2e8f0; display:flex; align-items:center; justify-content:space-between; gap:16px; }
+        .report-settings-modal .modal-body { padding:20px 24px 28px; overflow-y:auto; }
+
+        /* 顶部说明与快捷导航 Tab */
+        .settings-intro { display:flex; align-items:center; gap:10px; padding:10px 16px; border:1px solid #dbeafe; border-radius:10px; background:#eff6ff; color:#1e40af; font-size:12.5px; line-height:1.5; }
+        .settings-intro strong { color:#1d4ed8; font-weight:700; }
+        .settings-nav-tabs { display:flex; gap:6px; padding:6px; background:#e2e8f0; border:1px solid #cbd5e1; border-radius:12px; margin-bottom:4px; overflow-x:auto; }
+        .settings-nav-tab { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border:1px solid transparent; border-radius:8px; background:transparent; color:#475569; font-size:13px; font-weight:600; cursor:pointer; transition:all .18s ease; white-space:nowrap; }
+        .settings-nav-tab:hover { background:rgba(255,255,255,0.7); color:#1e293b; }
+        .settings-nav-tab.active { background:#ffffff; color:#1d4ed8; border-color:#cbd5e1; box-shadow:0 2px 5px rgba(15,23,42,0.08); }
+        .settings-nav-tab .tab-icon { font-size:15px; line-height:1; }
+        .settings-nav-tab .tab-badge { font-size:11px; padding:2px 7px; border-radius:10px; background:#f1f5f9; color:#64748b; font-weight:500; }
+        .settings-nav-tab.active .tab-badge { background:#dbeafe; color:#1d4ed8; }
+        .settings-tab-panel { display:none; }
+        .settings-tab-panel.active { display:flex; flex-direction:column; gap:14px; }
+
+        /* 卡片与分区设计 */
+        .settings-section { border:1px solid #e2e8f0; border-radius:12px; background:#ffffff; padding:16px 18px; box-shadow:0 1px 3px rgba(15,23,42,0.03); transition:box-shadow .2s ease; }
+        .settings-section:hover { box-shadow:0 3px 10px rgba(15,23,42,0.05); }
+        .settings-section-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid #f1f5f9; }
+        .settings-section-head h3 { display:flex; align-items:center; gap:8px; margin:0; font-size:15px; font-weight:700; color:#0f172a; }
+        .settings-section-head h3::before { content:""; display:inline-block; width:4px; height:16px; border-radius:4px; background:#2563eb; }
+        .settings-section-head .view-tab { display:inline-flex; align-items:center; gap:4px; padding:6px 12px; border:1px solid #93c5fd; border-radius:7px; background:#eff6ff; color:#1d4ed8; font-weight:600; font-size:12px; cursor:pointer; transition:all .15s ease; }
+        .settings-section-head .view-tab:hover { background:#2563eb; color:#ffffff; border-color:#2563eb; box-shadow:0 2px 6px rgba(37,99,235,0.25); }
+        .settings-section .hint { color:#64748b; font-size:12px; line-height:1.6; margin:8px 0 0; }
+        .settings-section .hint strong { color:#334155; }
+
+        /* 网格与表单控件体系 */
+        .settings-grid { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:14px; align-items:start; }
         .settings-grid.three { grid-template-columns:repeat(3, minmax(0, 1fr)); }
-        .settings-grid .report-controls { margin:0; }
-        .settings-section .report-controls { margin:0; }
+        .settings-grid.two { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+        .settings-field { display:flex; flex-direction:column; gap:6px; }
+        .settings-field > .field-title { display:flex; align-items:center; justify-content:space-between; font-size:12.5px; font-weight:600; color:#334155; }
+        .settings-field > .field-desc { font-size:11px; color:#64748b; font-weight:normal; }
+        .settings-field select, .settings-field input, .settings-field textarea { width:100%; box-sizing:border-box; height:38px; padding:7px 11px; border:1px solid #cbd5e1; border-radius:8px; background:#ffffff; color:#1e293b; font-size:13px; transition:all .15s ease; }
+        .settings-field textarea { height:auto; min-height:72px; resize:vertical; line-height:1.5; }
+        .settings-field select:focus, .settings-field input:focus, .settings-field textarea:focus { outline:none; border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,0.15); }
+        .report-settings .report-controls { margin:0; }
         .report-settings .report-controls label { min-width:0; }
-        .report-settings .report-controls select,.report-settings .report-controls input,.report-settings .report-controls textarea { width:100%; box-sizing:border-box; min-height:36px; }
-        .report-settings .report-controls input[type="checkbox"] { width:auto; min-height:auto; }
-        .report-settings .view-tab { padding:7px 11px; border-radius:7px; font-size:12px; }
-        .settings-subsection { padding-top:14px; margin-top:14px; border-top:1px solid #e7edf3; }
+        .report-settings select, .report-settings input, .report-settings textarea { box-sizing:border-box; }
+
+        /* 全量表失效记录过滤规则 */
+        .settings-subsection { padding-top:14px; margin-top:14px; border-top:1px solid #f1f5f9; }
         .settings-subsection:first-of-type { padding-top:0; margin-top:0; border-top:0; }
-        .settings-subsection h4 { margin:0 0 6px; color:#334155; font-size:13px; }
-        .report-order-list { display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 0; }
-        .report-order-item { display:flex; gap:6px; align-items:center; border:1px solid var(--border); border-radius:7px; padding:5px 8px; background:#f8fafc; font-size:12px; }
-        .report-order-item button { border:1px solid var(--border); background:#fff; border-radius:5px; cursor:pointer; }
-        @media (max-width:900px) { .settings-grid,.settings-grid.three { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
-        @media (max-width:620px) { .report-settings-modal .modal-head { padding:14px; align-items:flex-start; flex-wrap:wrap; } .report-settings-modal .modal-body { padding:12px; } .settings-grid,.settings-grid.three { grid-template-columns:1fr; } .settings-section { padding:13px; } }
+        .settings-subsection h4 { margin:0 0 8px; color:#1e293b; font-size:13.5px; font-weight:700; }
+        .expiry-card-inner { background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px 16px; display:flex; flex-direction:column; gap:12px; }
+        .expiry-card-switch { display:flex; align-items:center; justify-content:space-between; padding-bottom:10px; border-bottom:1px dashed #cbd5e1; }
+        .checkbox-switch-label { display:inline-flex; align-items:center; gap:8px; font-size:13px; color:#1e293b; cursor:pointer; font-weight:500; }
+        .checkbox-switch-label input[type="checkbox"] { width:16px; height:16px; accent-color:#2563eb; cursor:pointer; }
+        .input-unit-wrap { position:relative; display:flex; align-items:center; }
+        .input-unit-wrap input { padding-right:32px; }
+        .input-unit-badge { position:absolute; right:10px; color:#64748b; font-size:12px; pointer-events:none; }
+
+        /* 统计筛选与条件行 */
+        .settings-subbar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; padding:10px 14px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; margin-bottom:12px; }
+        .settings-subbar .inline-field { display:inline-flex; align-items:center; gap:8px; font-size:12.5px; color:#334155; font-weight:600; }
+        .settings-subbar select { height:34px; padding:4px 10px; border:1px solid #cbd5e1; border-radius:6px; background:#fff; font-size:12.5px; color:#1e293b; }
+        .settings-subbar .subbar-tip { font-size:12px; color:#64748b; font-weight:normal; }
+        .filters-container { display:flex; flex-direction:column; gap:8px; min-height:20px; }
+        .report-filter-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; padding:8px 12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; transition:border-color .15s ease; }
+        .report-filter-row:hover { border-color:#cbd5e1; background:#f1f5f9; }
+        .report-filter-row select, .report-filter-row input { padding:7px 10px; border:1px solid #cbd5e1; border-radius:6px; background:#fff; color:#1e293b; font-size:12.5px; height:36px; box-sizing:border-box; }
+        .report-filter-row select.report-filter-field { min-width:160px; font-weight:500; }
+        .report-filter-row select.report-filter-operator { width:110px; }
+        .report-filter-row input.report-filter-value { min-width:180px; flex:1; }
+        .report-filter-row button { height:36px; padding:0 12px; border:1px solid #fecaca; border-radius:6px; background:#fff5f5; color:#dc2626; font-size:12px; font-weight:600; cursor:pointer; transition:all .15s; }
+        .report-filter-row button:hover { background:#fee2e2; border-color:#f87171; }
+
+        /* 高危网元二分排版 */
+        .risk-config-layout { display:grid; grid-template-columns:320px 1fr; gap:16px; align-items:stretch; margin-top:10px; }
+        .risk-col-left { display:flex; flex-direction:column; gap:12px; }
+        .risk-col-right { display:flex; flex-direction:column; }
+        .sub-rule-header { display:flex; align-items:center; justify-content:space-between; margin-top:14px; margin-bottom:8px; font-size:13px; font-weight:600; color:#334155; }
+
+        /* 系统部管理与卡片聚合 */
+        .report-group-members { display:flex; gap:8px 10px; flex-wrap:wrap; align-items:center; min-height:44px; max-height:140px; overflow-y:auto; margin:10px 0 0; padding:10px 12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; }
+        .report-group-members:empty::before { content:"导入数据并选择系统部列后可在此勾选配置。"; color:#94a3b8; font-size:12.5px; font-style:italic; display:block; width:100%; }
+        .report-group-members label { display:inline-flex; align-items:center; gap:6px; padding:5px 10px; background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; font-size:12.5px; color:#334155; cursor:pointer; transition:all .15s ease; user-select:none; }
+        .report-group-members label:hover { background:#f1f5f9; border-color:#94a3b8; }
+        .report-group-members label:has(input:checked) { background:#eff6ff; border-color:#3b82f6; color:#1d4ed8; font-weight:600; }
+        .report-group-members input[type="checkbox"] { width:14px; height:14px; accent-color:#2563eb; cursor:pointer; margin:0; }
+        .group-cards-container { display:flex; flex-direction:column; gap:12px; margin-top:10px; }
+        .report-group-card { border:1px solid #cbd5e1; border-radius:10px; padding:14px; background:#ffffff; box-shadow:0 1px 3px rgba(15,23,42,0.04); }
+        .report-group-card .report-controls { display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; margin-bottom:10px; }
+        .report-group-card label { display:grid; gap:4px; font-size:12px; font-weight:600; color:#334155; }
+        .report-group-card input.report-group-name, .report-group-card input.report-column-group-name, .report-group-card select.report-column-group-dimension { height:36px; padding:6px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:13px; min-width:180px; }
+        .report-group-note textarea { min-width:240px; min-height:36px; height:36px; padding:6px 10px; border:1px solid #cbd5e1; border-radius:6px; resize:vertical; font-size:12px; }
+        .report-group-card button.view-tab { height:36px; padding:0 12px; border:1px solid #fecaca; border-radius:6px; background:#fff5f5; color:#dc2626; font-size:12px; font-weight:600; cursor:pointer; }
+        .report-group-card button.view-tab:hover { background:#fee2e2; border-color:#f87171; }
+
+        /* 显示顺序卡片 */
+        .order-columns-grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:14px; margin-top:12px; }
+        .order-column-card { display:flex; flex-direction:column; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px; }
+        .order-card-title { font-size:13px; font-weight:700; color:#1e293b; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+        .report-order-list { display:flex; flex-wrap:wrap; gap:8px; align-items:center; min-height:48px; padding:8px 10px; background:#ffffff; border:1px dashed #cbd5e1; border-radius:8px; }
+        .report-order-list:empty::before { content:"当前无可排序项目。"; color:#94a3b8; font-size:12.5px; font-style:italic; display:flex; align-items:center; justify-content:center; width:100%; min-height:40px; }
+        .report-order-item { display:inline-flex; gap:6px; align-items:center; border:1px solid #cbd5e1; border-radius:7px; padding:5px 9px; background:#f8fafc; font-size:12.5px; color:#1e293b; transition:all .15s ease; }
+        .report-order-item:hover { border-color:#94a3b8; background:#fff; }
+        .report-order-item button { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; padding:0; border:1px solid #cbd5e1; background:#f1f5f9; color:#475569; border-radius:4px; cursor:pointer; font-size:11px; font-weight:bold; transition:all .15s; }
+        .report-order-item button:hover:not(:disabled) { background:#2563eb; color:#ffffff; border-color:#2563eb; }
+        .report-order-item button:disabled { opacity:.35; cursor:not-allowed; }
+
+        @media (max-width:960px) {
+            .settings-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+            .settings-grid.three { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+            .risk-config-layout { grid-template-columns:1fr; }
+            .order-columns-grid { grid-template-columns:1fr; }
+        }
+        @media (max-width:620px) {
+            .report-settings-modal .modal-head { padding:14px; flex-wrap:wrap; }
+            .report-settings-modal .modal-body { padding:12px; }
+            .settings-grid, .settings-grid.three, .settings-grid.two { grid-template-columns:1fr; }
+            .settings-section { padding:14px; }
+        }
         .report-sheet { background:#fff; border:1px solid #94a3b8; padding:0; max-width:1200px; margin:auto; overflow:auto; color:#1f2937; font-family:Arial,"Microsoft YaHei",sans-serif; }
         .report-copy { padding:5px 8px; line-height:1.5; font-size:13px; border-bottom:1px solid #cbd5e1; }
         .report-copy[contenteditable="true"] { cursor:text; }
@@ -941,6 +1214,225 @@
         .report-footer .report-footer-brand { margin:0; background:#dceef4; padding:12px; text-align:center; font-size:18px; font-weight:800; color:#0f172a; }
         .report-divider-en { position:relative; margin:28px 0 16px; border-top:2px dashed #94a3b8; text-align:center; }
         .report-divider-badge { display:inline-block; position:relative; top:-12px; background:#0f172a; color:#f8fafc; font-size:11px; font-weight:700; letter-spacing:.08em; padding:3px 16px; border-radius:9999px; box-shadow:0 2px 6px rgba(0,0,0,.15); }
+        /* 导出下拉按钮与多规格控制 */
+        .report-dropdown { position: relative; display: inline-flex; }
+        .report-dropdown-toggle { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+        .report-dropdown-arrow { font-size: 10px; transition: transform .2s ease; }
+        .report-dropdown-menu {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            z-index: 10020;
+            min-width: 195px;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.18), 0 8px 10px -6px rgba(15, 23, 42, 0.1);
+            padding: 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .report-dropdown-menu[hidden] { display: none !important; }
+        .report-dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            background: transparent;
+            color: #1e293b;
+            font-size: 12.5px;
+            font-weight: 500;
+            text-align: left;
+            cursor: pointer;
+            transition: all .15s ease;
+        }
+        .report-dropdown-item:hover { background: #eff6ff; color: #2563eb; }
+        .report-dropdown-divider { height: 1px; background: #e2e8f0; margin: 3px 0; }
+        /* 导出单语言过滤规则 */
+        .export-mode-cn #license-section-en,
+        .export-mode-cn .report-divider-en,
+        .export-mode-cn #licenseReportNavEn,
+        .export-mode-cn [data-report-lang="en"] {
+            display: none !important;
+        }
+        .export-mode-en #license-section-cn,
+        .export-mode-en #licenseReportNavCn,
+        .export-mode-en [data-report-lang="cn"],
+        .export-mode-en .report-divider-en {
+            display: none !important;
+        }
+        /* 中英文双向锚点与导航栏 */
+        .report-section-anchor {
+            display: block;
+            position: relative;
+            top: -12px;
+            height: 0;
+            line-height: 0;
+            font-size: 0;
+            overflow: hidden;
+        }
+        .report-nav-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 14px;
+            margin: 0 0 10px 0;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+        }
+        .report-nav-bar-en {
+            background: #f1f5f9;
+            margin-top: 14px;
+        }
+        .report-nav-tag {
+            font-weight: 700;
+            font-size: 12px;
+            color: #334155;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .report-nav-link {
+            font-size: 12px;
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color .2s ease;
+        }
+        .report-nav-link:hover {
+            color: #1d4ed8;
+            text-decoration: underline;
+        }
+        /* 顶部同步胶囊、芯片与项目徽标 */
+        .report-sync-capsule {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 10px;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 999px;
+            font-size: 11.5px;
+            font-weight: 600;
+            color: #334155;
+            cursor: pointer;
+            user-select: none;
+            transition: all .2s ease;
+            margin-left: 6px;
+        }
+        .report-sync-capsule[hidden], [hidden].report-sync-capsule { display: none !important; }
+        .report-sync-capsule:hover { background: #e2e8f0; }
+        .report-sync-capsule.has-pending { background: #fef3c7; border-color: #fcd34d; color: #b45309; }
+        .report-project-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 10px;
+            background: #eff6ff;
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+            border-radius: 999px;
+            font-size: 11.5px;
+            font-weight: 600;
+            margin-left: 6px;
+        }
+        .report-project-badge[hidden], [hidden].report-project-badge { display: none !important; }
+        [hidden] { display: none !important; }
+        .report-en-needs-sync {
+            border-left: 3px solid #f59e0b !important;
+            background: rgba(245, 158, 11, 0.08) !important;
+            padding-left: 6px;
+            transition: all .25s ease;
+        }
+        .report-en-synced {
+            border-left: 3px solid #10b981 !important;
+            background: rgba(16, 185, 129, 0.08) !important;
+            padding-left: 6px;
+            transition: all .25s ease;
+        }
+        .report-sync-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 1px 7px;
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 4px;
+            margin-right: 6px;
+            vertical-align: middle;
+            user-select: none;
+            cursor: pointer;
+        }
+        .report-sync-chip-warn { background: #fef3c7; color: #b45309; border: 1px solid #fcd34d; }
+        .report-sync-chip-synced { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+        /* 智能对比浮窗样式 */
+        .report-diff-popover {
+            position: fixed;
+            z-index: 10030;
+            width: min(520px, calc(100vw - 32px));
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            box-shadow: 0 14px 34px -4px rgba(15, 23, 42, 0.22);
+            font-size: 12px;
+            line-height: 1.55;
+            color: #0f172a;
+            pointer-events: auto;
+        }
+        .report-diff-popover[hidden] { display: none !important; }
+        .report-diff-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            border-radius: 9px 9px 0 0;
+        }
+        .report-diff-title-wrap { display: flex; align-items: center; gap: 6px; font-weight: 700; }
+        .report-diff-body { padding: 10px 12px; max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .report-diff-section { border-radius: 6px; padding: 8px 10px; }
+        .report-diff-section.is-before { background: #fef2f2; border: 1px solid #fecaca; }
+        .report-diff-section.is-after { background: #f0fdf4; border: 1px solid #bbf7d0; }
+        .report-diff-section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; font-weight: 700; font-size: 11px; }
+        .report-diff-section.is-before .report-diff-section-header { color: #991b1b; }
+        .report-diff-section.is-after .report-diff-section-header { color: #166534; }
+        .report-diff-content { white-space: pre-wrap; word-break: break-word; font-family: inherit; font-size: 12px; margin: 0; }
+        .report-diff-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 8px 12px; border-top: 1px solid #e2e8f0; background: #fafafa; border-radius: 0 0 9px 9px; }
+        .report-diff-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 5px 11px;
+            border: 1px solid #cbd5e1;
+            border-radius: 5px;
+            background: #ffffff;
+            color: #334155;
+            font-size: 11.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .15s ease;
+        }
+        .report-diff-btn:hover { background: #f1f5f9; border-color: #94a3b8; }
+        .report-diff-btn-primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+        .report-diff-btn-primary:hover { background: #1d4ed8; color: #fff; }
+        .report-diff-btn-revert { background: #fff1f2; color: #be123c; border-color: #fecdd3; }
+        .report-diff-btn-revert:hover { background: #ffe4e6; color: #9f1239; }
+        .report-ai-spinner {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.35);
+            border-top-color: #ffffff;
+            border-radius: 50%;
+            animation: reportAiSpin 0.7s linear infinite;
+        }
+        @keyframes reportAiSpin { to { transform: rotate(360deg); } }
         .report-sheet table,.source-detail-table { border-collapse:collapse; width:100%; font-size:12px; }
         .report-sheet th,.report-sheet td { border:1px solid #94a3b8; padding:5px 8px; text-align:center; color:#334155; }
         .report-sheet th { background:#f1f5f9; }
@@ -1299,21 +1791,115 @@
                 <div class="view-loading-text" id="monthly-loading-text">正在根据新口径计算月报数据...</div>
             </div>
             <div class="report-controls">
-              <div class="report-controls-main">
-                <label>统计时间范围<select id="report-period"><option value="month">月份</option><option value="year">年度</option><option value="all">全部时间</option></select></label>
-                <label id="report-month-wrap">报表月份<input id="report-month" type="month"></label>
-                <label id="report-year-wrap" style="display:none">报表年度<input id="report-year" type="number" min="1900" max="2100" step="1"></label>
-                <label>计算口径<select id="report-source"><option value="dedup">基础表：标准 ESN 去重＋ANY 不去重</option><option value="raw">基础表：标准 ESN 不去重＋ANY 不去重</option><option value="both-dedup">基础表：标准 ESN 去重＋ANY 去重</option><option value="full-dedup">全量参照集：标准 ESN 去重＋ANY 不去重</option><option value="full">全量参照集：标准 ESN 不去重＋ANY 不去重</option><option value="full-both-dedup">全量参照集：标准 ESN 去重＋ANY 去重</option></select></label>
-                <button class="view-tab" id="report-set-default" type="button">设为当前表默认</button>
-                <label>上月补充文件（可选）<input id="report-previous" type="file" accept=".xlsx,.xls,.csv" multiple></label>
-                <button class="view-tab" id="report-open-settings" type="button">⚙️ 报表配置</button>
-                <button class="view-tab" id="report-reset-copy" type="button">恢复自动文案</button>
-                <button class="view-tab" id="report-png">下载月报 PNG</button>
-                <button class="view-tab" id="report-excel" type="button">下载月报 Excel</button>
-                <button class="view-tab" id="report-msg" type="button">下载月报 MSG</button>
+              <!-- 第一行：数据参数配置卡片 -->
+              <div class="report-params-card">
+                <div class="report-param-item">
+                  <label class="report-param-label" for="report-period">统计时间范围</label>
+                  <select id="report-period" class="report-param-control">
+                    <option value="month">月份</option>
+                    <option value="year">年度</option>
+                    <option value="all">全部时间</option>
+                  </select>
+                </div>
+                <div class="report-param-item" id="report-month-wrap">
+                  <label class="report-param-label" for="report-month">报表月份</label>
+                  <input id="report-month" type="month" class="report-param-control">
+                </div>
+                <div class="report-param-item" id="report-year-wrap" style="display:none">
+                  <label class="report-param-label" for="report-year">报表年度</label>
+                  <input id="report-year" type="number" min="1900" max="2100" step="1" class="report-param-control">
+                </div>
+                <div class="report-param-item">
+                  <label class="report-param-label" for="report-source">计算口径</label>
+                  <div class="report-input-group">
+                    <select id="report-source" class="report-param-control">
+                      <option value="dedup">基础表：标准 ESN 去重＋ANY 不去重</option>
+                      <option value="raw">基础表：标准 ESN 不去重＋ANY 不去重</option>
+                      <option value="both-dedup">基础表：标准 ESN 去重＋ANY 去重</option>
+                      <option value="full-dedup">全量参照集：标准 ESN 去重＋ANY 不去重</option>
+                      <option value="full">全量参照集：标准 ESN 不去重＋ANY 不去重</option>
+                      <option value="full-both-dedup">全量参照集：标准 ESN 去重＋ANY 去重</option>
+                    </select>
+                    <button class="report-btn report-btn-secondary" id="report-set-default" type="button" title="将当前选中的口径设为该表的默认口径">📌 设为当前表默认</button>
+                  </div>
+                </div>
+                <div class="report-param-item">
+                  <label class="report-param-label" for="report-previous">上月补充文件（可选）</label>
+                  <input id="report-previous" type="file" accept=".xlsx,.xls,.csv" multiple class="report-param-control report-file-input">
+                </div>
               </div>
+
+              <!-- 第二行：独立操作按钮工具栏（紧凑精致、独立成行、具备明确按压与层级质感） -->
+              <div class="report-actions-bar">
+                <!-- 报表配置与文案管理 -->
+                <div class="report-actions-group">
+                  <button class="report-btn report-btn-primary" id="report-open-settings" type="button" title="打开月报字段、筛选规则、系统部聚合与显示排序配置">
+                    <span class="report-btn-icon">⚙️</span>
+                    <span>报表配置</span>
+                  </button>
+                  <button class="report-btn report-btn-neutral" id="report-reset-copy" type="button" title="将所有修改过的中英文文案恢复为系统基于数据自动生成的初始文案">
+                    <span class="report-btn-icon">🔄</span>
+                    <span>恢复自动文案</span>
+                  </button>
+                </div>
+
+                <div class="report-actions-divider"></div>
+
+                <!-- 导出多规格格式 -->
+                <div class="report-actions-group">
+                  <div class="report-dropdown" id="reportPngDropdown">
+                    <button class="report-btn report-btn-export report-dropdown-toggle" id="report-png" type="button" aria-haspopup="true" aria-expanded="false" title="点击选择下载中文版、英文版或合一版 PNG 图片">
+                      <span class="report-btn-icon">🖼️</span>
+                      <span>下载月报 PNG</span>
+                      <span class="report-dropdown-arrow">▾</span>
+                    </button>
+                    <div class="report-dropdown-menu" id="reportPngMenu" role="menu" hidden>
+                      <button class="report-dropdown-item" type="button" data-png-scope="cn">🇨🇳 仅下载中文版 PNG</button>
+                      <button class="report-dropdown-item" type="button" data-png-scope="en">🇬🇧 仅下载英文版 PNG</button>
+                      <button class="report-dropdown-item" type="button" data-png-scope="both">📑 下载中英文合一 PNG</button>
+                      <div class="report-dropdown-divider"></div>
+                      <button class="report-dropdown-item" type="button" data-png-scope="all-three">📦 一键下载全部 3 张图片</button>
+                    </div>
+                  </div>
+                  <button class="report-btn report-btn-export" id="report-pdf" type="button" title="导出为高清 A4 页面比例 PDF 文档">
+                    <span class="report-btn-icon">📄</span>
+                    <span>下载月报 PDF</span>
+                  </button>
+                  <button class="report-btn report-btn-export" id="report-html" type="button" title="导出为无需依赖的独立单文件 HTML，可离线在任意浏览器中完美查阅">
+                    <span class="report-btn-icon">🌐</span>
+                    <span>下载月报 HTML</span>
+                  </button>
+                  <button class="report-btn report-btn-export" id="report-excel" type="button" title="导出为包含完整格式与公式的 Excel 工作簿">
+                    <span class="report-btn-icon">📊</span>
+                    <span>下载月报 Excel</span>
+                  </button>
+                  <button class="report-btn report-btn-export" id="report-msg" type="button" title="导出为包含完整中英文图表的 Outlook 邮件草稿">
+                    <span class="report-btn-icon">✉️</span>
+                    <span>下载月报 MSG</span>
+                  </button>
+                </div>
+
+                <div class="report-actions-divider"></div>
+
+                <!-- 离线工程备份 -->
+                <div class="report-actions-group">
+                  <button class="report-btn report-btn-amber" id="report-export-project" type="button" title="将当前报表数据、中英文修改与基线打包导出为 .license.json 工程文件">
+                    <span class="report-btn-icon">💾</span>
+                    <span>导出月报工程</span>
+                  </button>
+                  <button class="report-btn report-btn-amber" id="report-import-project" type="button" title="导入之前导出的 .license.json 月报工程并恢复所有修改">
+                    <span class="report-btn-icon">📂</span>
+                    <span>导入月报工程</span>
+                  </button>
+                  <input id="report-project-file" type="file" accept=".license.json,.json" style="display:none">
+                </div>
+              </div>
+
+              <!-- 第三行：状态与说明栏 -->
               <div class="report-controls-notes">
-                <span class="muted">选中文字或右键可加粗、标色；修改自动保存当前口径与时间范围</span>
+                <span class="muted">💡 提示：双击表格单元格或文案可自由编辑，选中文字或右键可加粗、标色；修改自动保存当前口径与时间范围</span>
+                <span id="report-sync-capsule" class="report-sync-capsule" role="status" hidden title="点击快速定位待同步的英文内容"></span>
+                <span id="report-project-badge" class="report-project-badge" hidden title="当前月报由外部离线工程文件恢复加载">📁 已加载离线月报工程</span>
                 <span class="muted" id="report-default-status"></span>
                 <span class="muted" id="report-time-column-info"></span>
                 <span class="muted" id="report-expiry-info"></span>
@@ -1457,79 +2043,245 @@
     <div class="modal-mask report-settings-modal" id="report-settings-modal">
         <div class="modal-panel">
             <div class="modal-head">
-                <div><div class="modal-title">自动月报配置</div><div id="report-pref-status" class="modal-subtitle">偏好保存在当前浏览器；三种基础表口径共用一套，全量表单独保存</div></div>
-                <div class="report-text-tools"><button class="view-tab" id="report-export-preferences" type="button">导出全部偏好</button><button class="view-tab" id="report-import-preferences" type="button">导入偏好</button><input id="report-import-file" type="file" accept=".json,application/json" hidden></div>
+                <div>
+                    <div class="modal-title" style="display:flex; align-items:center; gap:8px;">
+                        <span>⚙️</span>
+                        <span>自动月报配置</span>
+                    </div>
+                    <div id="report-pref-status" class="modal-subtitle">偏好保存在当前浏览器；三种基础表口径共用一套，全量表单独保存</div>
+                </div>
+                <div class="report-text-tools">
+                    <button class="view-tab" id="report-export-preferences" type="button">📤 导出全部偏好</button>
+                    <button class="view-tab" id="report-import-preferences" type="button">📥 导入偏好</button>
+                    <input id="report-import-file" type="file" accept=".json,application/json" hidden>
+                </div>
                 <button class="modal-close" id="report-close-settings" type="button">完成</button>
             </div>
             <div class="modal-body">
                 <div class="report-settings">
-                    <div class="settings-intro"><strong>配置会自动保存</strong><span>基础表三种计算口径共用一套偏好；全量参照集单独保存。修改后月报会立即刷新。</span></div>
-                    <section class="settings-section">
-                    <div class="settings-section-head"><h3>字段与时间</h3></div>
-                    <div class="settings-grid">
-                        <label>系统部 / Account 列<select id="report-account"></select></label>
-                        <label>使用场景列<select id="report-scenario"></select></label>
-                        <label>产品线列<select id="report-line"></select></label>
-                        <label>统计时间列<select id="report-time-column"></select></label>
+                    <div class="settings-intro">
+                        <strong>⚡ 即时自动保存</strong>
+                        <span>基础表三种计算口径共用一套偏好；全量参照集单独保存。修改任意参数后月报将立即刷新计算。</span>
                     </div>
-                    <p class="hint">自动选择时，按表头顺序寻找“月份、统计月、month、生效日期、effect time、申请日期、date”。月份和年度筛选、最新月份、环比都使用这里选定的列。</p>
-                    <div class="settings-subsection" id="report-expiry-section">
-                    <div class="settings-section-head"><h4 id="report-expiry-heading">全量表失效记录</h4></div>
-                    <div class="settings-grid three" id="report-expiry-settings">
-                        <label><input id="report-expiry-enabled" type="checkbox" checked> 不关注失效超过指定天数的记录</label>
-                        <label>失效倒数天数列<select id="report-expiry-column"></select></label>
-                        <label>不关注：数值小于<input id="report-expiry-threshold" type="number" value="-90" step="1"></label>
+
+                    <!-- 快捷导航切换器 -->
+                    <div class="settings-nav-tabs" role="tablist">
+                        <button type="button" class="settings-nav-tab active" data-tab="tab-fields">
+                            <span class="tab-icon">📌</span>
+                            <span class="tab-title">基础字段与口径</span>
+                            <span class="tab-badge">列映射 &amp; 失效</span>
+                        </button>
+                        <button type="button" class="settings-nav-tab" data-tab="tab-filters">
+                            <span class="tab-icon">🎯</span>
+                            <span class="tab-title">筛选与高危规则</span>
+                            <span class="tab-badge">过滤 &amp; 识别</span>
+                        </button>
+                        <button type="button" class="settings-nav-tab" data-tab="tab-groups">
+                            <span class="tab-icon">🗂️</span>
+                            <span class="tab-title">系统部与聚合</span>
+                            <span class="tab-badge">组织合并</span>
+                        </button>
+                        <button type="button" class="settings-nav-tab" data-tab="tab-orders">
+                            <span class="tab-icon">↕️</span>
+                            <span class="tab-title">报表显示排序</span>
+                            <span class="tab-badge">微调顺序</span>
+                        </button>
+                        <button type="button" class="settings-nav-tab" data-tab="all" title="在同一个页面平铺显示所有配置项">
+                            <span class="tab-icon">📑</span>
+                            <span class="tab-title">平铺全部</span>
+                        </button>
                     </div>
-                    <p class="hint" id="report-expiry-note">默认忽略小于 -90 的记录；-90 本身仍计入。空值和非数字保留。此规则仅影响全量表月报及环比。</p>
-                    </div></section>
-                    <section class="settings-section">
-                    <div class="settings-section-head"><h3>统计筛选</h3><button class="view-tab" id="report-add-filter" type="button">＋ 添加条件</button></div>
-                    <div class="report-controls"><label>条件关系<select id="report-filter-logic"><option value="all">同时满足全部条件</option><option value="any">满足任一条件</option></select></label></div>
-                    <p class="hint">先按时间和条件筛选，再按当前口径统计；环比使用相同条件。</p>
-                    <div id="report-filters"></div>
-                    </section>
-                    <section class="settings-section">
-                    <div class="settings-section-head"><h3>系统部管理</h3></div>
-                    <div class="settings-subsection">
-                    <h4>忽略系统部</h4>
-                    <p class="hint">勾选后该系统部不参与月报和环比统计。</p>
-                    <div id="report-ignored-accounts" class="report-group-members"></div>
+
+                    <!-- Tab 1: 基础字段与口径 -->
+                    <div class="settings-tab-panel active" id="tab-fields">
+                        <section class="settings-section">
+                            <div class="settings-section-head">
+                                <h3>📊 核心数据列映射</h3>
+                            </div>
+                            <div class="settings-grid">
+                                <label class="settings-field">
+                                    <span class="field-title">系统部 / Account 列</span>
+                                    <span class="field-desc">匹配客户、运营商或系统部字段</span>
+                                    <select id="report-account"></select>
+                                </label>
+                                <label class="settings-field">
+                                    <span class="field-title">使用场景列</span>
+                                    <span class="field-desc">匹配商业、测试、销售、紧急恢复等</span>
+                                    <select id="report-scenario"></select>
+                                </label>
+                                <label class="settings-field">
+                                    <span class="field-title">产品线列</span>
+                                    <span class="field-desc">匹配核心网、数通、传输等产品维度</span>
+                                    <select id="report-line"></select>
+                                </label>
+                                <label class="settings-field">
+                                    <span class="field-title">统计时间列</span>
+                                    <span class="field-desc">用于月度范围、最新月与环比计算</span>
+                                    <select id="report-time-column"></select>
+                                </label>
+                            </div>
+                            <p class="hint">💡 <strong>自动匹配说明：</strong>按表头顺序优先匹配“月份、统计月、month、生效日期、effect time、申请日期、date”。统计周期筛选、最新月份计算与环比对比均基于此处指定的列。</p>
+
+                            <div class="settings-subsection" id="report-expiry-section">
+                                <div class="settings-section-head">
+                                    <h4 id="report-expiry-heading" style="margin:0; font-size:14px; color:#1e293b; display:flex; align-items:center; gap:6px;">
+                                        <span>⏳</span>
+                                        <span>全量表失效记录过滤规则</span>
+                                    </h4>
+                                </div>
+                                <div class="expiry-card-inner">
+                                    <div class="expiry-card-switch">
+                                        <label class="checkbox-switch-label">
+                                            <input id="report-expiry-enabled" type="checkbox" checked>
+                                            <span><strong>不关注失效超过指定天数的记录</strong>（过滤历史超期废弃数据）</span>
+                                        </label>
+                                    </div>
+                                    <div class="settings-grid two" id="report-expiry-settings">
+                                        <label class="settings-field">
+                                            <span class="field-title">失效倒数天数列</span>
+                                            <select id="report-expiry-column"></select>
+                                        </label>
+                                        <label class="settings-field">
+                                            <span class="field-title">过滤阈值（数值小于该天数将被忽略）</span>
+                                            <div class="input-unit-wrap">
+                                                <input id="report-expiry-threshold" type="number" value="-90" step="1">
+                                                <span class="input-unit-badge">天</span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                <p class="hint" id="report-expiry-note">📌 默认忽略小于 -90 的记录；-90 本身仍计入。空值和非数字记录保留。此规则仅影响全量参照集月报及环比。</p>
+                            </div>
+                        </section>
                     </div>
-                    <div class="settings-subsection">
-                    <div class="settings-section-head"><h4>系统部聚合</h4><button class="view-tab" id="report-add-group" type="button">＋ 新增聚合组</button></div>
-                    <p class="hint">每组填写一个名称并勾选客户；同一客户只能属于一组。报表仅显示聚合后的行，各列自动合计。</p>
-                    <div id="report-groups"></div>
-                    </div></section>
-                    <section class="settings-section">
-                    <div class="settings-section-head"><h3>列分类聚合</h3><button class="view-tab" id="report-add-column-group" type="button">＋ 新增列聚合组</button></div>
-                    <p class="hint">选择“使用场景”或“产品线”，填写新列名并勾选要合并的原分类。</p>
-                    <div id="report-column-groups"></div>
-                    </section>
-                    <section class="settings-section">
-                    <div class="settings-section-head"><h3>高危网元范围</h3><button class="view-tab" id="report-add-risk-filter" type="button">＋ 添加高危条件</button></div>
-                    <p class="hint">可填写网元名称，或添加多个列条件；两种方式命中的行合并计入高危网元。未配置时按产品线或产品名称中的“核心网 / core”识别。</p>
-                    <div class="settings-grid three">
-                        <label>网元名称所在列<select id="report-risk-name-column"></select></label>
-                        <label>高危网元名称（逗号或换行分隔）<textarea id="report-risk-names" rows="2" placeholder="例如：NE40E, 核心网元"></textarea></label>
-                        <label>多个条件关系<select id="report-risk-logic"><option value="any">满足任一条件</option><option value="all">同时满足全部条件</option></select></label>
+
+                    <!-- Tab 2: 筛选与高危规则 -->
+                    <div class="settings-tab-panel" id="tab-filters">
+                        <section class="settings-section">
+                            <div class="settings-section-head">
+                                <h3>🔍 统计数据筛选</h3>
+                                <button class="view-tab" id="report-add-filter" type="button">＋ 添加筛选条件</button>
+                            </div>
+                            <div class="settings-subbar">
+                                <label class="inline-field">
+                                    <span class="field-title">多条件组合逻辑：</span>
+                                    <select id="report-filter-logic">
+                                        <option value="all">同时满足全部条件 (AND)</option>
+                                        <option value="any">满足任一条件 (OR)</option>
+                                    </select>
+                                </label>
+                                <span class="subbar-tip">💡 数据先按时间和条件筛选，再按当前口径统计；环比分析将自动沿用相同条件。</span>
+                            </div>
+                            <div id="report-filters" class="filters-container"></div>
+                        </section>
+
+                        <section class="settings-section">
+                            <div class="settings-section-head">
+                                <h3>⚠️ 高危网元识别范围</h3>
+                                <button class="view-tab" id="report-add-risk-filter" type="button">＋ 添加高级网元条件</button>
+                            </div>
+                            <p class="hint">💡 可通过<strong>“网元名称精准匹配”</strong>或<strong>“高级列条件”</strong>进行判定，两种方式命中的行合并计入高危网元统计。若均未配置，则自动按产品线/产品名称中包含“核心网 / core”识别。</p>
+                            <div class="risk-config-layout">
+                                <div class="risk-col-left">
+                                    <label class="settings-field">
+                                        <span class="field-title">网元名称所在列</span>
+                                        <select id="report-risk-name-column"></select>
+                                    </label>
+                                    <label class="settings-field">
+                                        <span class="field-title">多个条件组合关系</span>
+                                        <select id="report-risk-logic">
+                                            <option value="any">满足任一条件 (OR)</option>
+                                            <option value="all">同时满足全部条件 (AND)</option>
+                                        </select>
+                                    </label>
+                                </div>
+                                <div class="risk-col-right">
+                                    <label class="settings-field">
+                                        <span class="field-title">指定高危网元名称清单</span>
+                                        <textarea id="report-risk-names" rows="4" placeholder="支持输入多个网元名称，以逗号、分号或换行分隔，如：&#10;NE40E, CX600, 核心网元1..."></textarea>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="sub-rule-header">
+                                <span>高级列匹配规则清单</span>
+                            </div>
+                            <div id="report-risk-filters" class="filters-container"></div>
+                        </section>
+
+                        <section class="settings-section">
+                            <div class="settings-section-head">
+                                <h3>🏷️ License 状态分类识别</h3>
+                            </div>
+                            <p class="hint">💡 系统优先识别“正常 / 未过期”和临期，再识别过期；其他非空状态归入正常。未选择状态列时显示“未识别”。多个关键词用逗号分隔。</p>
+                            <div class="settings-grid three">
+                                <label class="settings-field">
+                                    <span class="field-title">License 状态列</span>
+                                    <select id="report-status-column"></select>
+                                </label>
+                                <label class="settings-field">
+                                    <span class="field-title">过期识别关键词</span>
+                                    <input id="report-overdue-terms" value="过期,超期,expired,overdue">
+                                </label>
+                                <label class="settings-field">
+                                    <span class="field-title">临期识别关键词</span>
+                                    <input id="report-near-terms" value="临期,即将过期,near expiration,expiring">
+                                </label>
+                            </div>
+                        </section>
                     </div>
-                    <div id="report-risk-filters"></div>
-                    </section>
-                    <section class="settings-section">
-                    <div class="settings-section-head"><h3>License 状态分类</h3></div>
-                    <p class="hint">优先识别“正常 / 未过期”和临期，再识别过期；其他非空状态归入正常。未选择状态列时显示“未识别”。关键词用逗号分隔。</p>
-                    <div class="settings-grid three">
-                        <label>状态列<select id="report-status-column"></select></label>
-                        <label>过期关键词<input id="report-overdue-terms" value="过期,超期,expired,overdue"></label>
-                        <label>临期关键词<input id="report-near-terms" value="临期,即将过期,near expiration,expiring"></label>
+
+                    <!-- Tab 3: 系统部与聚合 -->
+                    <div class="settings-tab-panel" id="tab-groups">
+                        <section class="settings-section">
+                            <div class="settings-section-head">
+                                <h3>🚫 忽略系统部（黑名单）</h3>
+                            </div>
+                            <p class="hint">勾选后的系统部将直接排除，不参与月报统计及环比计算。</p>
+                            <div id="report-ignored-accounts" class="report-group-members"></div>
+                        </section>
+
+                        <section class="settings-section">
+                            <div class="settings-section-head">
+                                <h3>🏢 系统部合并聚合</h3>
+                                <button class="view-tab" id="report-add-group" type="button">＋ 新增系统部聚合组</button>
+                            </div>
+                            <p class="hint">每组填写一个合并后的显示名称并勾选成员客户；同一客户只能归属于一个组。报表仅显示聚合后的行，各列指标自动累加。</p>
+                            <div id="report-groups" class="group-cards-container"></div>
+                        </section>
+
+                        <section class="settings-section">
+                            <div class="settings-section-head">
+                                <h3>📑 列分类聚合（使用场景 / 产品线）</h3>
+                                <button class="view-tab" id="report-add-column-group" type="button">＋ 新增列聚合组</button>
+                            </div>
+                            <p class="hint">选择目标表格维度（“使用场景”或“产品线”），填写合并后的新列名并勾选要归并的原分类。</p>
+                            <div id="report-column-groups" class="group-cards-container"></div>
+                        </section>
                     </div>
-                    </section>
-                    <section class="settings-section">
-                    <div class="settings-section-head"><h3>显示顺序</h3></div>
-                    <div class="settings-subsection"><h4>系统部</h4><div id="report-row-order" class="report-order-list"></div></div>
-                    <div class="settings-subsection"><h4>使用场景列</h4><div id="report-scenario-order" class="report-order-list"></div></div>
-                    <div class="settings-subsection"><h4>产品线列</h4><div id="report-line-order" class="report-order-list"></div></div>
-                    </section>
+
+                    <!-- Tab 4: 报表显示排序 -->
+                    <div class="settings-tab-panel" id="tab-orders">
+                        <section class="settings-section">
+                            <div class="settings-section-head">
+                                <h3>↕️ 报表行列显示顺序微调</h3>
+                            </div>
+                            <p class="hint">点击上下箭头 (↑ / ↓) 可微调月报中的行与列呈现顺序。未调整时默认按字符拼音及内置权重排序展示。</p>
+                            <div class="order-columns-grid">
+                                <div class="order-column-card">
+                                    <div class="order-card-title">🏢 系统部行展示顺序</div>
+                                    <div id="report-row-order" class="report-order-list"></div>
+                                </div>
+                                <div class="order-column-card">
+                                    <div class="order-card-title">🎯 使用场景列顺序</div>
+                                    <div id="report-scenario-order" class="report-order-list"></div>
+                                </div>
+                                <div class="order-column-card">
+                                    <div class="order-card-title">📦 产品线列顺序</div>
+                                    <div id="report-line-order" class="report-order-list"></div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1550,8 +2302,59 @@
         <button class="text-color-swatch" type="button" data-report-color="#7c3aed" style="background:#7c3aed" title="紫色"></button>
     </div>
 
+    <!-- 智能对比浮窗 (Diff Popover) -->
+    <div class="report-diff-popover" id="reportDiffPopover" hidden role="dialog" aria-label="中文修改对比与参考">
+        <div class="report-diff-header">
+            <div class="report-diff-title-wrap">
+                <span>🔍</span>
+                <span>中文修改对比与参考</span>
+                <span class="report-sync-chip report-sync-chip-warn" id="reportDiffStatusTag">⚠️ 英文待同步</span>
+            </div>
+            <button type="button" class="notice-close" id="reportDiffCloseBtn" style="font-size:18px;" title="关闭">✕</button>
+        </div>
+        <div class="report-diff-body">
+            <div class="report-diff-section is-before">
+                <div class="report-diff-section-header">
+                    <span>【以前 / 修改前】</span>
+                </div>
+                <div class="report-diff-content" id="reportDiffBefore"></div>
+            </div>
+            <div class="report-diff-section is-after">
+                <div class="report-diff-section-header">
+                    <span>【现在 / 修改后】</span>
+                </div>
+                <div class="report-diff-content" id="reportDiffAfter"></div>
+            </div>
+        </div>
+        <div class="report-diff-actions">
+            <button type="button" class="report-diff-btn" id="reportDiffCopyBtn" title="复制当前修改后的中文文字">📋 复制修改后文字</button>
+            <button type="button" class="report-diff-btn report-diff-btn-revert" id="reportDiffRevertBtn" title="撤回当前英文段落并恢复初始翻译">↩️ 撤回该段翻译</button>
+            <button type="button" class="report-diff-btn report-diff-btn-primary" id="reportDiffAiBtn" title="由 AI 助手自动将中文翻译为地道英文并同步">🤖 AI 智能翻译并同步</button>
+        </div>
+    </div>
+
     <script src="/js/shared/report-msg-export.js?v=20260917-07"></script>
     <script>
+        // Global CanvasRenderingContext2D guard against 0-dimension pattern crashes (html2canvas compatibility)
+        (function installCanvasGuard() {
+            if (typeof CanvasRenderingContext2D === 'undefined') return;
+            if (CanvasRenderingContext2D.prototype._licensePatternGuarded) return;
+            const origCreatePattern = CanvasRenderingContext2D.prototype.createPattern;
+            CanvasRenderingContext2D.prototype.createPattern = function (image, repetition) {
+                if (!image) return origCreatePattern.apply(this, arguments);
+                const w = image.width !== undefined ? image.width : (image.naturalWidth !== undefined ? image.naturalWidth : 0);
+                const h = image.height !== undefined ? image.height : (image.naturalHeight !== undefined ? image.naturalHeight : 0);
+                if (w <= 0 || h <= 0) {
+                    const dummy = (this.canvas?.ownerDocument || document).createElement('canvas');
+                    dummy.width = 1;
+                    dummy.height = 1;
+                    return origCreatePattern.call(this, dummy, repetition || 'repeat');
+                }
+                return origCreatePattern.apply(this, arguments);
+            };
+            CanvasRenderingContext2D.prototype._licensePatternGuarded = true;
+        })();
+
         const noticeOverlay = document.getElementById('notice-overlay');
         let noticeResolve = null;
         let noticeRequiresAcknowledge = false;
@@ -2203,6 +3006,9 @@
         }
 
         document.getElementById('excel-file-base').addEventListener('change', async function (e) {
+            importedProjectRows = null;
+            const projBadge = document.getElementById('report-project-badge');
+            if (projBadge) projBadge.hidden = true;
             const files = Array.from(e.target.files);
             if (files.length === 0) return;
             if (isFullReportSource()) document.getElementById('report-source').value = getDefaultReportMode('base');
@@ -3419,7 +4225,9 @@
                 return dedupReportRows(applyReportFilters(period === 'all' || !hasMonth ? rows : rows.filter(matchesPeriod)));
             });
         }
+        let importedProjectRows = null;
         function reportRows() {
+            if (importedProjectRows && importedProjectRows.length) return importedProjectRows;
             const period = document.getElementById('report-period').value;
             return sourceRowsForPeriod(period, period === 'year' ? document.getElementById('report-year').value : document.getElementById('report-month').value);
         }
@@ -3569,8 +4377,8 @@
                 return str.split(/[、,]/).map(p => mapAccountEn(p.trim())).filter(Boolean).join(', ');
             }
             if (/etisalat|e&/i.test(str)) return 'e&';
-            if (/orange/i.test(str)) return 'Orange Telecom';
-            if (/telecom\s*egypt|^egypt$|te$|^we$/i.test(str)) return 'TE';
+            if (/orange/i.test(str)) return 'Orange';
+            if (/telecom\s*egypt|te$|^we$/i.test(str)) return 'TE';
             if (/vodafone/i.test(str)) return 'Vodafone';
             if (/nile\s*on\s*line|nol/i.test(str)) return 'e&';
             return str.replace(/系统部/g, '').trim();
@@ -3630,6 +4438,7 @@
                     || (index === dims.length + 1 && (title === '（表 1）' || title === '(Table 1)' || dimension === 'line'))) th.classList.add('report-metric-critical');
                 foot.appendChild(th);
             });
+            table.setAttribute('data-report-lang', isEn ? 'en' : 'cn');
             host.appendChild(table);
             const splitHeaders = Array.from(head.cells).map(cell => cell.querySelector('.report-split-name')).filter(Boolean);
             if (splitHeaders.length) {
@@ -3640,7 +4449,11 @@
                     item.lastElementChild.style.height = `${noteHeight}px`;
                 });
             }
-            const caption = document.createElement('div'); caption.className = 'report-table-caption'; caption.textContent = title; host.appendChild(caption);
+            const caption = document.createElement('div');
+            caption.className = 'report-table-caption';
+            caption.textContent = title;
+            caption.setAttribute('data-report-lang', isEn ? 'en' : 'cn');
+            host.appendChild(caption);
         }
         function reportCopyKey() {
             const source = document.getElementById('report-source').value;
@@ -3778,12 +4591,62 @@
             fillReportColumns(); loadReportPreferences(); renderMonthlyReport(); setupSourceDetail('base'); setupSourceDetail('full');
             document.getElementById('report-pref-status').textContent = `已导入 ${updates.length} 组偏好，应用到当前浏览器`;
         }
+        const reportBaselineCopies = {};
+        function reportSyncedCnKey() {
+            const source = document.getElementById('report-source').value;
+            const period = document.getElementById('report-period').value;
+            const value = period === 'all' ? 'all' : period === 'year' ? document.getElementById('report-year').value : document.getElementById('report-month').value;
+            let tenant = 'default';
+            try { tenant = localStorage.getItem('tools_tenant_id') || tenant; } catch (_) {}
+            return `esn-check:synced-cn:v1:${tenant}:${source}:${period}:${value}`;
+        }
+        function readReportSyncedCn() {
+            try { return JSON.parse(localStorage.getItem(reportSyncedCnKey()) || '{}'); } catch (_) { return {}; }
+        }
+        function saveReportSyncedCn(key, cnHtml) {
+            const map = readReportSyncedCn();
+            map[key] = cnHtml;
+            try { localStorage.setItem(reportSyncedCnKey(), JSON.stringify(map)); } catch (_) {}
+        }
+        function readReportPreTranslate(key) {
+            let tenant = 'default';
+            try { tenant = localStorage.getItem('tools_tenant_id') || tenant; } catch (_) {}
+            const storageKey = `esn-check:pre-translate:v1:${tenant}:${key}`;
+            try { return localStorage.getItem(storageKey) || ''; } catch (_) { return ''; }
+        }
+        function saveReportPreTranslate(key, html) {
+            let tenant = 'default';
+            try { tenant = localStorage.getItem('tools_tenant_id') || tenant; } catch (_) {}
+            const storageKey = `esn-check:pre-translate:v1:${tenant}:${key}`;
+            try { localStorage.setItem(storageKey, html); } catch (_) {}
+        }
         function appendReportCopy(host, key, generated, className, overrides, storageKey) {
+            const isEn = key.startsWith('en-');
+            const lang = isEn ? 'en' : 'cn';
             const block = document.createElement('div');
             block.className = `report-copy ${className}`;
             block.contentEditable = 'true'; block.spellcheck = false;
             block.dataset.copyKey = key;
+            block.dataset.copyLang = lang;
+            block.setAttribute('data-report-lang', lang);
             block.title = '点击修改；修改后自动保存到当前月份和计算口径';
+
+            let baselineHtml = '';
+            if (Array.isArray(generated)) {
+                const temp = document.createElement('div');
+                generated.forEach(part => {
+                    if (typeof part === 'string') { temp.appendChild(document.createTextNode(part)); return; }
+                    const span = document.createElement('span'); span.textContent = part.text;
+                    if (part.color) span.style.color = part.color;
+                    if (part.bold) span.style.fontWeight = '700';
+                    temp.appendChild(span);
+                });
+                baselineHtml = temp.innerHTML;
+            } else {
+                baselineHtml = String(generated ?? '');
+            }
+            reportBaselineCopies[key] = baselineHtml;
+
             const saved = overrides[key];
             if (saved && typeof saved === 'object' && typeof saved.html === 'string') block.innerHTML = sanitizeReportCopyHtml(saved.html);
             else if (typeof saved === 'string') block.textContent = saved;
@@ -3795,9 +4658,11 @@
                 block.appendChild(span);
             });
             else block.textContent = generated;
+
             block.addEventListener('input', () => {
                 overrides[key] = { html: sanitizeReportCopyHtml(block.innerHTML) };
                 try { localStorage.setItem(storageKey, JSON.stringify(overrides)); } catch (_) { /* manual edits remain visible until reload */ }
+                if (typeof updateReportBilingualStatus === 'function') updateReportBilingualStatus();
             });
             block.addEventListener('mouseup', rememberReportSelection);
             block.addEventListener('keyup', rememberReportSelection);
@@ -3914,6 +4779,7 @@
                 });
             };
             const appendNode = node => {
+                if (node.classList?.contains('report-section-anchor') || node.classList?.contains('report-nav-bar')) return;
                 if (node.classList?.contains('report-divider-en')) {
                     const row = worksheet.getRow(rowNumber++);
                     worksheet.mergeCells(row.number, 1, row.number, columns);
@@ -4043,10 +4909,29 @@
             const copy = (key, text, className = '') => appendReportCopy(host, key, text, className, overrides, storageKey);
             const blue = text => ({ text: String(text), color: '#1d4ed8', bold: true });
             const red = text => ({ text: String(text), color: '#a61b1b', bold: true });
+
+            const anchorCn = document.createElement('div');
+            anchorCn.id = 'license-section-cn';
+            anchorCn.className = 'report-section-anchor print-hide';
+            anchorCn.setAttribute('data-report-lang', 'cn');
+            host.appendChild(anchorCn);
+
+            const navCn = document.createElement('div');
+            navCn.className = 'report-nav-bar print-hide';
+            navCn.id = 'licenseReportNavCn';
+            navCn.setAttribute('data-report-lang', 'cn');
+            navCn.innerHTML = `
+                <div class="report-nav-tag"><span>🇨🇳 中文版月报</span></div>
+                <a href="#license-section-en" class="report-nav-link" id="reportJumpToEn">跳转到英文版月报 ⬇️</a>
+            `;
+            host.appendChild(navCn);
+
             const reportTitle = `埃及运营商临时 License 使用&转商用进展月报（${periodLabel}）`;
             copy('title', reportTitle, 'report-title');
             copy('objective', '总体目标：无 License 违规使用、无 License 超期导致的事故和重大问题，牵引临时 License 有序转商用，增加收入、降低成本。', 'report-objective');
-            const progress = document.createElement('div'); progress.className = 'report-progress-block'; host.appendChild(progress);
+            const progress = document.createElement('div'); progress.className = 'report-progress-block';
+            progress.setAttribute('data-report-lang', 'cn');
+            host.appendChild(progress);
             const progressCopy = (key, text, className = '') => appendReportCopy(progress, key, text, className, overrides, storageKey);
             progressCopy('progress-heading', '简要进展：', 'report-progress-heading');
             progressCopy('trend', ['【总体趋势】在网运行临时 License 总量为 ', blue(rows.length), ' 条，', blue(trendText),
@@ -4080,11 +4965,15 @@
             copy('table4-near', `现网累计 ${near} 个临期 License 运行${nearTop ? `，其中 ${nearTop[0]} 临期最多 ${nearTop[1]}` : ''}。`);
             copy('table4-reminder', '请注意及时申请并替换超期 License，提前申请并替换临期 License，避免造成严重网络影响。');
             addReportTable(host, '（表 4）', rows, 'report-status');
-            const emergency = document.createElement('section'); emergency.className = 'report-emergency'; host.appendChild(emergency);
+            const emergency = document.createElement('section'); emergency.className = 'report-emergency';
+            emergency.setAttribute('data-report-lang', 'cn');
+            host.appendChild(emergency);
             appendReportCopy(emergency, 'emergency-heading', '➤ 紧急恢复场景 License', 'report-section-heading', overrides, storageKey);
             appendReportCopy(emergency, 'emergency-note', '（今年暂无，后续有数据时在此补充。）', 'report-emergency-note', overrides, storageKey);
             appendReportCopy(emergency, 'emergency-placeholder', '预留统计表区域', 'report-emergency-placeholder', overrides, storageKey);
-            const guidance = document.createElement('section'); guidance.className = 'report-guidance'; host.appendChild(guidance);
+            const guidance = document.createElement('section'); guidance.className = 'report-guidance';
+            guidance.setAttribute('data-report-lang', 'cn');
+            host.appendChild(guidance);
             appendReportCopy(guidance, 'guidance-heading', '➤ License 管理规定&指导', 'report-section-heading', overrides, storageKey);
             appendReportCopy(guidance, 'guidance-policy', '《ICT BG运营商业务固定期限License业务管理规定V3.0》', '', overrides, storageKey);
             const addGuidanceLink = url => {
@@ -4095,16 +4984,35 @@
             addGuidanceLink('https://w3.huawei.com/info/cn/doc/viewDoc.do?did=19787023&cata=333961');
             appendReportCopy(guidance, 'guidance-service', '《运营商维护服务场景License风险管控指导书(试行)》', '', overrides, storageKey);
             addGuidanceLink('https://w3.huawei.com/pdmcplus/#/workflowAssets/detail/zh_CN/14/BP0002976353/3?treeId=a709931a-5415-4346-94f2-4756538100d3&flowAdapt=true&orgCode=1001');
-            const footer = document.createElement('footer'); footer.className = 'report-footer'; host.appendChild(footer);
+            const footer = document.createElement('footer'); footer.className = 'report-footer';
+            footer.setAttribute('data-report-lang', 'cn');
+            host.appendChild(footer);
             appendReportCopy(footer, 'footer-contact', '若您对此报告数据有疑问，请联系范晓龙wx154337，于祥00877023，谢谢！', 'report-footer-contact', overrides, storageKey);
             appendReportCopy(footer, 'footer-attachment', '原始数据见附件', 'report-footer-attachment', overrides, storageKey);
             appendReportCopy(footer, 'footer-brand', '埃及网络保障与运维服务部', 'report-title report-footer-brand', overrides, storageKey);
 
             // ================= 英文对照月报 (English Version) =================
+            const anchorEn = document.createElement('div');
+            anchorEn.id = 'license-section-en';
+            anchorEn.className = 'report-section-anchor print-hide';
+            anchorEn.setAttribute('data-report-lang', 'en');
+            host.appendChild(anchorEn);
+
             const divider = document.createElement('div');
             divider.className = 'report-divider-en';
+            divider.setAttribute('data-report-lang', 'en');
             divider.innerHTML = '<span class="report-divider-badge">ENGLISH VERSION · 英文对照简报</span>';
             host.appendChild(divider);
+
+            const navEn = document.createElement('div');
+            navEn.className = 'report-nav-bar report-nav-bar-en print-hide';
+            navEn.id = 'licenseReportNavEn';
+            navEn.setAttribute('data-report-lang', 'en');
+            navEn.innerHTML = `
+                <div class="report-nav-tag"><span>🇬🇧 English Version</span></div>
+                <a href="#license-section-cn" class="report-nav-link" id="reportJumpToCn">⬆️ 返回中文版月报</a>
+            `;
+            host.appendChild(navEn);
 
             const monthNamesEn = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
             const monthIdx = Number(month.slice(5, 7)) - 1;
@@ -4130,7 +5038,9 @@
             copy('en-title', reportTitleEn, 'report-title');
             copy('en-objective', 'Overall Objective: Zero License non-compliant usage, zero incidents and major issues caused by License expiration, driving orderly commercial conversion of temporary Licenses, increasing revenue, and reducing costs.', 'report-objective');
 
-            const progressEn = document.createElement('div'); progressEn.className = 'report-progress-block'; host.appendChild(progressEn);
+            const progressEn = document.createElement('div'); progressEn.className = 'report-progress-block';
+            progressEn.setAttribute('data-report-lang', 'en');
+            host.appendChild(progressEn);
             const progressCopyEn = (key, text, className = '') => appendReportCopy(progressEn, key, text, className, overrides, storageKey);
             progressCopyEn('en-progress-heading', 'Executive Summary:', 'report-progress-heading');
             progressCopyEn('en-trend', ['[Overall Trend] The total number of active temporary Licenses in the network is ', blue(rows.length), ', ', blue(trendTextEn),
@@ -4163,12 +5073,16 @@
             copy('en-table4-reminder', 'Please ensure timely application and replacement of expired Licenses, and advance application and replacement of expiring-soon Licenses, preventing severe network impact.');
             addReportTable(host, '(Table 4)', rows, 'report-status', true);
 
-            const enEmergency = document.createElement('section'); enEmergency.className = 'report-emergency'; host.appendChild(enEmergency);
+            const enEmergency = document.createElement('section'); enEmergency.className = 'report-emergency';
+            enEmergency.setAttribute('data-report-lang', 'en');
+            host.appendChild(enEmergency);
             appendReportCopy(enEmergency, 'en-emergency-heading', '➤ Emergency Recovery Scenario Licenses', 'report-section-heading', overrides, storageKey);
             appendReportCopy(enEmergency, 'en-emergency-note', '(None so far this year. Data will be supplemented here when available.)', 'report-emergency-note', overrides, storageKey);
             appendReportCopy(enEmergency, 'en-emergency-placeholder', 'Reserved Table Area', 'report-emergency-placeholder', overrides, storageKey);
 
-            const enGuidance = document.createElement('section'); enGuidance.className = 'report-guidance'; host.appendChild(enGuidance);
+            const enGuidance = document.createElement('section'); enGuidance.className = 'report-guidance';
+            enGuidance.setAttribute('data-report-lang', 'en');
+            host.appendChild(enGuidance);
             appendReportCopy(enGuidance, 'en-guidance-heading', '➤ License Management Regulations & Guidelines', 'report-section-heading', overrides, storageKey);
             appendReportCopy(enGuidance, 'en-guidance-policy', '《ICT BG Carrier Business Fixed-Term License Management Regulations V3.0》', '', overrides, storageKey);
             const addEnGuidanceLink = url => {
@@ -4180,10 +5094,23 @@
             appendReportCopy(enGuidance, 'en-guidance-service', '《Carrier Maintenance Service Scenario License Risk Control Guidelines (Trial)》', '', overrides, storageKey);
             addEnGuidanceLink('https://w3.huawei.com/pdmcplus/#/workflowAssets/detail/zh_CN/14/BP0002976353/3?treeId=a709931a-5415-4346-94f2-4756538100d3&flowAdapt=true&orgCode=1001');
 
-            const enFooter = document.createElement('footer'); enFooter.className = 'report-footer'; host.appendChild(enFooter);
+            const enFooter = document.createElement('footer'); enFooter.className = 'report-footer';
+            enFooter.setAttribute('data-report-lang', 'en');
+            host.appendChild(enFooter);
             appendReportCopy(enFooter, 'en-footer-contact', 'If you have any questions regarding this report data, please contact Fan Xiaolong wx154337, Yu Xiang 00877023. Thank you!', 'report-footer-contact', overrides, storageKey);
             appendReportCopy(enFooter, 'en-footer-attachment', 'Original raw data is attached.', 'report-footer-attachment', overrides, storageKey);
             appendReportCopy(enFooter, 'en-footer-brand', 'Egypt Network Assurance & Maintenance Service Dept', 'report-title report-footer-brand', overrides, storageKey);
+
+            navCn.querySelector('#reportJumpToEn')?.addEventListener('click', e => {
+                e.preventDefault();
+                anchorEn.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+            navEn.querySelector('#reportJumpToCn')?.addEventListener('click', e => {
+                e.preventDefault();
+                anchorCn.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+
+            if (typeof updateReportBilingualStatus === 'function') updateReportBilingualStatus();
         }
         function sourceDetailRows(type) {
             return type === 'base'
@@ -4391,6 +5318,22 @@
         document.getElementById('report-add-group').addEventListener('click', () => { addReportGroup(); saveReportPreferences(); scheduleMonthlyRender({ reason: '正在更新报表分组...' }); });
         document.getElementById('report-add-column-group').addEventListener('click', () => { addReportColumnGroup(); saveReportPreferences(); scheduleMonthlyRender({ reason: '正在更新列分组...' }); });
         const reportSettingsModal = document.getElementById('report-settings-modal');
+        function setupReportSettingsTabs() {
+            const tabs = reportSettingsModal.querySelectorAll('.settings-nav-tab');
+            const panels = reportSettingsModal.querySelectorAll('.settings-tab-panel');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const target = tab.dataset.tab;
+                    tabs.forEach(t => t.classList.toggle('active', t === tab));
+                    if (target === 'all') {
+                        panels.forEach(p => p.classList.add('active'));
+                    } else {
+                        panels.forEach(p => p.classList.toggle('active', p.id === target));
+                    }
+                });
+            });
+        }
+        setupReportSettingsTabs();
         document.getElementById('report-open-settings').addEventListener('click', () => { renderReportOrders(); reportSettingsModal.classList.add('show'); });
         document.getElementById('report-close-settings').addEventListener('click', () => reportSettingsModal.classList.remove('show'));
         reportSettingsModal.addEventListener('click', event => { if (event.target === reportSettingsModal) reportSettingsModal.classList.remove('show'); });
@@ -4426,14 +5369,798 @@
         });
         document.getElementById('report-excel').addEventListener('click', exportMonthlyExcel);
         document.getElementById('report-msg').addEventListener('click', exportMonthlyMsg);
-        document.getElementById('report-png').addEventListener('click', async () => {
+
+        function togglePngDropdown(force) {
+            const menu = document.getElementById('reportPngMenu');
+            const btn = document.getElementById('report-png');
+            if (!menu) return;
+            if (btn && btn.disabled) {
+                menu.hidden = true;
+                return;
+            }
+            const willOpen = typeof force === 'boolean' ? force : menu.hidden;
+            menu.hidden = !willOpen;
+            if (btn) btn.setAttribute('aria-expanded', String(!menu.hidden));
+        }
+
+        function closePngDropdown() {
+            const menu = document.getElementById('reportPngMenu');
+            const btn = document.getElementById('report-png');
+            if (menu) menu.hidden = true;
+            if (btn) btn.setAttribute('aria-expanded', 'false');
+        }
+
+        async function captureAndDownloadMonthlyPng(scope, button, label) {
+            const sheet = document.getElementById('report-sheet');
+            if (!sheet) return;
+
+            sheet.classList.remove('export-mode-cn', 'export-mode-en');
+            let suffix = '';
+            if (scope === 'cn') {
+                sheet.classList.add('export-mode-cn');
+                suffix = '_中文版';
+            } else if (scope === 'en') {
+                sheet.classList.add('export-mode-en');
+                suffix = '_英文版';
+            } else {
+                suffix = '_中英文合一';
+            }
+
+            try {
+                await new Promise(resolve => setTimeout(resolve, 60));
+                const canvas = await html2canvas(sheet, {
+                    backgroundColor: '#ffffff',
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    ignoreElements: el => el.hasAttribute && (
+                        el.hasAttribute('data-html2canvas-ignore') ||
+                        el.classList.contains('print-hide') ||
+                        el.classList.contains('report-sync-chip') ||
+                        el.classList.contains('report-section-anchor') ||
+                        el.classList.contains('report-diff-popover')
+                    )
+                });
+                const link = document.createElement('a');
+                link.download = `临时License月报_${label}${suffix}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            } finally {
+                sheet.classList.remove('export-mode-cn', 'export-mode-en');
+            }
+        }
+
+        async function exportMonthlyPng(scope = 'both') {
             if (!reportRows().length) return;
-            if (typeof html2canvas !== 'function') { showNotice('导出失败', '图片导出组件未加载，请检查网络后重试。'); return; }
-            const element = document.getElementById('report-sheet');
-            const canvas = await html2canvas(element, { backgroundColor: '#ffffff', scale: 2, useCORS: true });
+            if (typeof html2canvas !== 'function') {
+                showNotice('导出失败', '图片导出组件（html2canvas）未加载，请刷新页面后重试。');
+                return;
+            }
+            const sheet = document.getElementById('report-sheet');
+            if (!sheet) return;
+            closePngDropdown();
+            hideReportTextPopover();
+            hideDiffPopover(true);
+            if (document.activeElement && sheet.contains(document.activeElement)) {
+                document.activeElement.blur();
+            }
+            const button = document.getElementById('report-png');
+            const originalHtml = button ? button.innerHTML : '';
+            if (button) {
+                button.disabled = true;
+            }
             const period = document.getElementById('report-period').value;
             const label = period === 'all' ? '全部时间' : period === 'year' ? document.getElementById('report-year').value : document.getElementById('report-month').value;
-            const link = document.createElement('a'); link.download = `临时License报表_${label}.png`; link.href = canvas.toDataURL('image/png'); link.click();
+
+            try {
+                if (scope === 'all-three') {
+                    if (button) button.innerHTML = '<span>生成中文版...</span>';
+                    await captureAndDownloadMonthlyPng('cn', button, label);
+                    await new Promise(r => setTimeout(r, 400));
+
+                    if (button) button.innerHTML = '<span>生成英文版...</span>';
+                    await captureAndDownloadMonthlyPng('en', button, label);
+                    await new Promise(r => setTimeout(r, 400));
+
+                    if (button) button.innerHTML = '<span>生成合一版...</span>';
+                    await captureAndDownloadMonthlyPng('both', button, label);
+                } else {
+                    const scopeLabel = scope === 'cn' ? '中文版' : scope === 'en' ? '英文版' : '合一版';
+                    if (button) button.innerHTML = `<span>生成${scopeLabel}...</span>`;
+                    await captureAndDownloadMonthlyPng(scope, button, label);
+                }
+            } catch (error) {
+                console.error('月报 PNG 导出失败:', error);
+                showNotice('导出失败', `月报 PNG 导出失败：${error.message}`);
+            } finally {
+                if (button) {
+                    button.disabled = false;
+                    button.innerHTML = originalHtml || `<span>下载月报 PNG</span><span class="report-dropdown-arrow">▾</span>`;
+                }
+            }
+        }
+
+        async function exportMonthlyPdf() {
+            if (!reportRows().length) return;
+            if (typeof html2canvas !== 'function') {
+                showNotice('导出失败', '图片转换依赖（html2canvas）未加载，请刷新页面后重试。');
+                return;
+            }
+            const jsPdfConstructor = window.jspdf?.jsPDF || (typeof jsPDF === 'function' ? jsPDF : null);
+            if (!jsPdfConstructor) {
+                showNotice('导出失败', 'PDF 导出依赖（jsPDF）未加载，请刷新页面后重试。');
+                return;
+            }
+            const sheet = document.getElementById('report-sheet');
+            if (!sheet) return;
+            closePngDropdown();
+            hideReportTextPopover();
+            hideDiffPopover(true);
+            if (document.activeElement && sheet.contains(document.activeElement)) {
+                document.activeElement.blur();
+            }
+            const button = document.getElementById('report-pdf');
+            const originalText = button ? button.textContent : '';
+            if (button) {
+                button.disabled = true;
+                button.textContent = '正在生成 PDF...';
+            }
+            try {
+                await new Promise(resolve => setTimeout(resolve, 60));
+                const canvas = await html2canvas(sheet, {
+                    backgroundColor: '#ffffff',
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    ignoreElements: el => el.hasAttribute && (
+                        el.hasAttribute('data-html2canvas-ignore') ||
+                        el.classList.contains('print-hide') ||
+                        el.classList.contains('report-sync-chip') ||
+                        el.classList.contains('report-section-anchor') ||
+                        el.classList.contains('report-diff-popover')
+                    )
+                });
+                const imgData = canvas.toDataURL('image/jpeg', 0.96);
+                const pdfWidth = 595.28;
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                const pdf = new jsPdfConstructor({
+                    orientation: 'p',
+                    unit: 'pt',
+                    format: [pdfWidth, pdfHeight],
+                    compress: true
+                });
+                pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+                const period = document.getElementById('report-period').value;
+                const label = period === 'all' ? '全部时间' : period === 'year' ? document.getElementById('report-year').value : document.getElementById('report-month').value;
+                pdf.save(`临时License月报_${label}.pdf`);
+            } catch (err) {
+                console.error('PDF 导出失败:', err);
+                showNotice('导出失败', `PDF 导出失败：${err.message}`);
+            } finally {
+                if (button) {
+                    button.disabled = false;
+                    button.textContent = originalText;
+                }
+            }
+        }
+
+        async function exportMonthlyHtml() {
+            if (!reportRows().length) return;
+            const sheet = document.getElementById('report-sheet');
+            if (!sheet) return;
+            closePngDropdown();
+            hideReportTextPopover();
+            hideDiffPopover(true);
+            if (document.activeElement && sheet.contains(document.activeElement)) {
+                document.activeElement.blur();
+            }
+            const button = document.getElementById('report-html');
+            const originalText = button ? button.textContent : '';
+            if (button) {
+                button.disabled = true;
+                button.textContent = '正在生成 HTML...';
+            }
+            try {
+                let cleanDom;
+                if (window.ReportMsgExport?.copyForEmail) {
+                    cleanDom = window.ReportMsgExport.copyForEmail(sheet);
+                } else {
+                    cleanDom = sheet.cloneNode(true);
+                }
+                cleanDom.querySelectorAll('.print-hide, .report-sync-chip, .report-section-anchor, .report-diff-popover').forEach(el => el.remove());
+
+                const period = document.getElementById('report-period').value;
+                const label = period === 'all' ? '全部时间' : period === 'year' ? document.getElementById('report-year').value : document.getElementById('report-month').value;
+                const escapeHtml = str => String(str ?? '').replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+
+                const htmlDoc = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>埃及运营商临时 License 使用与转商用进展月报（${escapeHtml(label)}）</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 28px 16px;
+            background: #f1f5f9;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+            color: #0f172a;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+        .license-html-page {
+            max-width: 1060px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 36px 32px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e2e8f0;
+        }
+        table {
+            border-collapse: collapse !important;
+            width: 100% !important;
+            font-size: 12px !important;
+            margin-bottom: 12px !important;
+        }
+        th, td {
+            border: 1px solid #94a3b8 !important;
+            padding: 5px 8px !important;
+            text-align: center !important;
+            color: #334155 !important;
+        }
+        th {
+            background: #f1f5f9 !important;
+            font-weight: 700 !important;
+        }
+        .report-metric-group { background: #e0f2fe !important; }
+        .report-metric-critical { background: #fee2e2 !important; color: #a61b1b !important; font-weight: 700 !important; }
+        .report-split-name { display: flex; flex-direction: column; gap: 2px; }
+        .report-title {
+            font-size: 15px !important;
+            font-weight: 700 !important;
+            background: #dceef4 !important;
+            border: 1px solid #94a3b8 !important;
+            padding: 10px !important;
+            text-align: center !important;
+            margin-bottom: 8px !important;
+        }
+        .report-objective, .report-section-heading {
+            border-bottom: 1px solid #94a3b8 !important;
+            padding-bottom: 4px !important;
+            margin-top: 10px !important;
+            font-weight: 700 !important;
+        }
+        .report-table-caption {
+            text-align: center !important;
+            color: #475569 !important;
+            font-size: 12px !important;
+            margin: 4px 0 14px 0 !important;
+        }
+        .report-divider-en {
+            margin: 28px 0 18px 0 !important;
+            border-top: 2px dashed #94a3b8 !important;
+            text-align: center !important;
+        }
+        .report-divider-badge {
+            display: inline-block !important;
+            position: relative !important;
+            top: -12px !important;
+            background: #f1f5f9 !important;
+            padding: 2px 14px !important;
+            border-radius: 999px !important;
+            border: 1px solid #cbd5e1 !important;
+            font-size: 11px !important;
+            font-weight: 700 !important;
+            color: #475569 !important;
+        }
+        .report-footer {
+            margin-top: 20px !important;
+            border-top: 1px solid #e2e8f0 !important;
+            padding-top: 10px !important;
+        }
+        .report-footer-contact, .report-footer-attachment {
+            text-align: center !important;
+            color: #64748b !important;
+            font-size: 12px !important;
+        }
+        .report-footer-brand {
+            margin-top: 8px !important;
+        }
+        a {
+            color: #1d4ed8 !important;
+            text-decoration: none !important;
+        }
+        a:hover {
+            text-decoration: underline !important;
+        }
+        @media print {
+            body {
+                background: #ffffff !important;
+                padding: 0 !important;
+            }
+            .license-html-page {
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+        }
+    </style>
+</' + 'head>
+<' + 'body>
+    <div class="license-html-page">
+        ${cleanDom.outerHTML}
+    </div>
+</' + 'body>
+</' + 'html>`;
+                const blob = new Blob([htmlDoc], { type: 'text/html;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.download = `临时License月报_${label}.html`;
+                link.href = url;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 2000);
+            } catch (err) {
+                console.error('HTML 导出失败:', err);
+                showNotice('导出失败', `HTML 导出失败：${err.message}`);
+            } finally {
+                if (button) {
+                    button.disabled = false;
+                    button.textContent = originalText;
+                }
+            }
+        }
+
+        function exportLicenseProject() {
+            const rows = reportRows();
+            if (!rows.length) {
+                showNotice('导出失败', '当前没有可导出的月报数据。');
+                return;
+            }
+            const period = document.getElementById('report-period').value;
+            const month = document.getElementById('report-month').value;
+            const year = document.getElementById('report-year').value;
+            const source = document.getElementById('report-source').value;
+            const label = period === 'all' ? '全部时间' : period === 'year' ? year : month;
+            const project = {
+                fileType: 'esn-license-monthly-project',
+                schemaVersion: 1,
+                exportedAt: new Date().toISOString(),
+                period,
+                month,
+                year,
+                source,
+                overrides: reportCopyOverrides(),
+                syncedCn: readReportSyncedCn(),
+                baselineCopies: reportBaselineCopies,
+                preference: reportPreference,
+                reportRows: rows,
+                previousReportRows: previousReportRows
+            };
+            const jsonStr = JSON.stringify(project, null, 2);
+            const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            const now = new Date();
+            const pad = (n, len = 2) => String(n).padStart(len, '0');
+            const dateStr = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+            link.download = `临时License月报工程_${label}_${dateStr}.license.json`;
+            link.href = url;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 2000);
+        }
+
+        async function importLicenseProject(file) {
+            if (!file) return;
+            try {
+                const text = await file.text();
+                let project;
+                try { project = JSON.parse(text); } catch (_) { throw new Error('选中的文件不是合法的 JSON 格式。'); }
+                if (!project || typeof project !== 'object') throw new Error('工程文件内容为空或格式无效。');
+                if (project.fileType !== 'esn-license-monthly-project' && !project.overrides && !project.reportRows) {
+                    throw new Error('文件类型不匹配，请选择有效的 License 月报工程文件 (*.license.json 或 *.json)。');
+                }
+
+                if (project.period) document.getElementById('report-period').value = project.period;
+                if (project.month) document.getElementById('report-month').value = project.month;
+                if (project.year) document.getElementById('report-year').value = project.year;
+                if (project.source) document.getElementById('report-source').value = project.source;
+
+                if (project.preference && typeof project.preference === 'object') {
+                    reportPreference = { ...reportPreference, ...project.preference };
+                    saveReportPreferences();
+                }
+
+                if (project.overrides && typeof project.overrides === 'object') {
+                    const storageKey = reportCopyKey();
+                    try { localStorage.setItem(storageKey, JSON.stringify(project.overrides)); } catch (_) {}
+                }
+
+                if (project.syncedCn && typeof project.syncedCn === 'object') {
+                    try { localStorage.setItem(reportSyncedCnKey(), JSON.stringify(project.syncedCn)); } catch (_) {}
+                }
+
+                if (Array.isArray(project.reportRows) && project.reportRows.length) {
+                    importedProjectRows = project.reportRows;
+                }
+                if (Array.isArray(project.previousReportRows)) {
+                    previousReportRows = project.previousReportRows;
+                }
+
+                const badge = document.getElementById('report-project-badge');
+                if (badge) {
+                    badge.hidden = false;
+                    badge.title = `来自工程文件：${file.name}（导出于 ${project.exportedAt ? new Date(project.exportedAt).toLocaleString('zh-CN') : '近期'}）`;
+                }
+
+                renderMonthlyReport();
+                showNotice('导入成功', `已成功导入月报工程《${file.name}》，完整离线数据与定制文案已恢复！`);
+            } catch (err) {
+                console.error('导入月报工程失败:', err);
+                showNotice('导入失败', `导入月报工程失败：${err.message}`);
+            }
+        }
+
+        let activeDiffContext = null;
+        let diffPopoverHideTimer = null;
+
+        function updateReportBilingualStatus() {
+            const host = document.getElementById('report-sheet');
+            if (!host) return;
+
+            const overrides = reportCopyOverrides();
+            const syncedMap = readReportSyncedCn();
+
+            const cnBlocks = Array.from(host.querySelectorAll('[data-copy-key]:not([data-copy-lang="en"])'));
+            let totalModified = 0;
+            let needsSyncCount = 0;
+
+            cnBlocks.forEach(cnEl => {
+                const key = cnEl.dataset.copyKey;
+                if (!key || key.startsWith('en-')) return;
+                const enKey = 'en-' + key;
+                const enEl = host.querySelector(`[data-copy-key="${enKey}"]`);
+
+                const baselineCn = reportBaselineCopies[key] || '';
+                const savedCn = overrides[key];
+                const currentCnH = (savedCn && typeof savedCn === 'object' && typeof savedCn.html === 'string')
+                    ? savedCn.html
+                    : (typeof savedCn === 'string' ? savedCn : cnEl.innerHTML);
+
+                const normalize = s => String(s || '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+                const isModified = Boolean(savedCn && normalize(currentCnH) !== normalize(baselineCn));
+
+                const syncedCnH = syncedMap[key];
+                const isSynced = Boolean(syncedCnH && normalize(syncedCnH) === normalize(currentCnH));
+
+                if (isModified) {
+                    totalModified++;
+                    if (!isSynced) {
+                        needsSyncCount++;
+                        if (enEl) {
+                            enEl.classList.add('report-en-needs-sync');
+                            enEl.classList.remove('report-en-synced');
+                        }
+                    } else {
+                        if (enEl) {
+                            enEl.classList.add('report-en-synced');
+                            enEl.classList.remove('report-en-needs-sync');
+                        }
+                    }
+                } else {
+                    if (enEl) {
+                        enEl.classList.remove('report-en-needs-sync', 'report-en-synced');
+                    }
+                }
+
+                if (enEl) {
+                    attachDiffPopoverToEnEl(enEl, cnEl, key, enKey, isModified, isSynced, baselineCn, currentCnH);
+                }
+            });
+
+            const capsule = document.getElementById('report-sync-capsule');
+            if (capsule) {
+                if (totalModified === 0) {
+                    capsule.hidden = true;
+                } else if (needsSyncCount > 0) {
+                    capsule.hidden = false;
+                    capsule.className = 'report-sync-capsule has-pending';
+                    capsule.innerHTML = `<span>${totalModified} 处修改</span> · <span class="report-sync-chip report-sync-chip-warn">⚠️ 英文待同步 (${needsSyncCount})</span>`;
+                    capsule.onclick = () => {
+                        const firstUnsynced = host.querySelector('.report-en-needs-sync');
+                        if (firstUnsynced) {
+                            firstUnsynced.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            firstUnsynced.focus();
+                        }
+                    };
+                } else {
+                    capsule.hidden = false;
+                    capsule.className = 'report-sync-capsule';
+                    capsule.innerHTML = `<span>${totalModified} 处修改</span> · <span class="report-sync-chip report-sync-chip-synced">✓ 英文全部同步</span>`;
+                    capsule.onclick = null;
+                }
+            }
+        }
+
+        function attachDiffPopoverToEnEl(enEl, cnEl, key, enKey, isModified, isSynced, baselineCn, currentCnH) {
+            const hasPreTrans = Boolean(readReportPreTranslate(enKey) || enEl._preTranslateHtml);
+            const canRevert = Boolean(isSynced || hasPreTrans);
+
+            enEl._diffContext = {
+                key,
+                enKey,
+                cnEl,
+                enEl,
+                isModified,
+                isSynced,
+                canRevert,
+                beforeHtml: baselineCn,
+                afterHtml: currentCnH
+            };
+
+            if (!enEl._hasDiffListeners) {
+                enEl._hasDiffListeners = true;
+                enEl.addEventListener('mouseenter', () => {
+                    if (enEl._diffContext && enEl._diffContext.isModified) {
+                        showDiffPopover(enEl, enEl._diffContext);
+                    }
+                });
+                enEl.addEventListener('mouseleave', () => {
+                    hideDiffPopover(false);
+                });
+            }
+        }
+
+        function showDiffPopover(anchorEl, context) {
+            if (!anchorEl || !context || !context.isModified) return;
+            if (diffPopoverHideTimer) {
+                clearTimeout(diffPopoverHideTimer);
+                diffPopoverHideTimer = null;
+            }
+
+            const popover = document.getElementById('reportDiffPopover');
+            if (!popover) return;
+            activeDiffContext = context;
+
+            const statusTag = document.getElementById('reportDiffStatusTag');
+            const beforeContent = document.getElementById('reportDiffBefore');
+            const afterContent = document.getElementById('reportDiffAfter');
+            const aiBtn = document.getElementById('reportDiffAiBtn');
+            const revertBtn = document.getElementById('reportDiffRevertBtn');
+
+            if (context.isSynced) {
+                if (statusTag) {
+                    statusTag.className = 'report-sync-chip report-sync-chip-synced';
+                    statusTag.textContent = '✓ 英文已同步';
+                }
+                if (aiBtn) aiBtn.style.display = 'none';
+                if (revertBtn) {
+                    revertBtn.style.display = 'inline-flex';
+                    revertBtn.disabled = false;
+                }
+            } else {
+                if (statusTag) {
+                    statusTag.className = 'report-sync-chip report-sync-chip-warn';
+                    statusTag.textContent = '⚠️ 英文待同步';
+                }
+                if (aiBtn) {
+                    aiBtn.style.display = 'inline-flex';
+                    aiBtn.disabled = false;
+                }
+                if (revertBtn) {
+                    revertBtn.style.display = context.canRevert ? 'inline-flex' : 'none';
+                    revertBtn.disabled = false;
+                }
+            }
+
+            if (beforeContent) beforeContent.innerHTML = context.beforeHtml || '<span style="color:#94a3b8;">（无历史内容）</span>';
+            if (afterContent) afterContent.innerHTML = context.afterHtml || '<span style="color:#94a3b8;">（无修改内容）</span>';
+
+            popover.hidden = false;
+
+            const rect = anchorEl.getBoundingClientRect();
+            const popoverWidth = 480;
+            let left = rect.left + (rect.width / 2) - (popoverWidth / 2);
+            left = Math.max(16, Math.min(window.innerWidth - popoverWidth - 16, left));
+            popover.style.left = `${left}px`;
+
+            const popoverHeight = popover.offsetHeight || 300;
+            let top;
+            if (rect.top > popoverHeight + 16) {
+                top = rect.top - popoverHeight - 8;
+            } else {
+                top = rect.bottom + 8;
+            }
+            top = Math.max(10, Math.min(window.innerHeight - popoverHeight - 10, top));
+            popover.style.top = `${top}px`;
+        }
+
+        function hideDiffPopover(immediate = false) {
+            const popover = document.getElementById('reportDiffPopover');
+            if (!popover) return;
+            if (immediate) {
+                if (diffPopoverHideTimer) {
+                    clearTimeout(diffPopoverHideTimer);
+                    diffPopoverHideTimer = null;
+                }
+                popover.hidden = true;
+                activeDiffContext = null;
+            } else {
+                if (diffPopoverHideTimer) clearTimeout(diffPopoverHideTimer);
+                diffPopoverHideTimer = setTimeout(() => {
+                    if (popover) popover.hidden = true;
+                    activeDiffContext = null;
+                }, 250);
+            }
+        }
+
+        async function performAiTranslate(cnEl, enEl, btn) {
+            if (!cnEl || !enEl) return;
+            const originalHtml = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="report-ai-spinner"></span> 正在翻译…';
+            }
+            try {
+                const cnHtml = cnEl.innerHTML.trim();
+                const res = await fetch('/api/ai/translate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: cnHtml,
+                        context: 'Egypt Operators Temporary License Usage & Commercial Conversion Monthly Report'
+                    })
+                });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || `HTTP ${res.status}`);
+                }
+                const data = await res.json();
+                if (!data || !data.translatedText) {
+                    throw new Error('AI 服务未返回翻译结果');
+                }
+
+                saveReportPreTranslate(enEl.dataset.copyKey, enEl.innerHTML);
+                enEl._preTranslateHtml = enEl.innerHTML;
+                enEl.innerHTML = data.translatedText;
+
+                const overrides = reportCopyOverrides();
+                const storageKey = reportCopyKey();
+                overrides[enEl.dataset.copyKey] = { html: sanitizeReportCopyHtml(data.translatedText) };
+                try { localStorage.setItem(storageKey, JSON.stringify(overrides)); } catch (_) {}
+
+                saveReportSyncedCn(cnEl.dataset.copyKey, cnHtml);
+                updateReportBilingualStatus();
+
+                const statusTag = document.getElementById('reportDiffStatusTag');
+                if (statusTag) {
+                    statusTag.className = 'report-sync-chip report-sync-chip-synced';
+                    statusTag.textContent = '✓ 英文已同步';
+                }
+                if (btn) btn.style.display = 'none';
+                const revertBtn = document.getElementById('reportDiffRevertBtn');
+                if (revertBtn) revertBtn.style.display = 'inline-flex';
+            } catch (err) {
+                console.error('AI 翻译失败:', err);
+                showNotice('AI 翻译失败', err.message || '请检查 AI 助手配置或网络连接');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+            }
+        }
+
+        function revertTranslation(cnEl, enEl, revertBtn) {
+            if (!enEl) return;
+            const enKey = enEl.dataset.copyKey;
+            const key = cnEl?.dataset?.copyKey || enKey.replace(/^en-/, '');
+            const preTrans = readReportPreTranslate(enKey) || enEl._preTranslateHtml;
+            const baselineEn = reportBaselineCopies[enKey] || '';
+            const targetHtml = preTrans || baselineEn;
+            if (!targetHtml) return;
+
+            enEl.innerHTML = targetHtml;
+            const overrides = reportCopyOverrides();
+            const storageKey = reportCopyKey();
+            overrides[enKey] = { html: sanitizeReportCopyHtml(targetHtml) };
+            try { localStorage.setItem(storageKey, JSON.stringify(overrides)); } catch (_) {}
+
+            const syncedMap = readReportSyncedCn();
+            delete syncedMap[key];
+            try { localStorage.setItem(reportSyncedCnKey(), JSON.stringify(syncedMap)); } catch (_) {}
+
+            updateReportBilingualStatus();
+
+            const statusTag = document.getElementById('reportDiffStatusTag');
+            if (statusTag) {
+                statusTag.className = 'report-sync-chip report-sync-chip-warn';
+                statusTag.textContent = '⚠️ 英文待同步';
+            }
+            const aiBtn = document.getElementById('reportDiffAiBtn');
+            if (aiBtn) aiBtn.style.display = 'inline-flex';
+            if (revertBtn) revertBtn.style.display = 'none';
+        }
+
+        const reportPngToggle = document.getElementById('report-png');
+        const reportPngDropdown = document.getElementById('reportPngDropdown');
+        const reportPngMenu = document.getElementById('reportPngMenu');
+
+        reportPngToggle?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            togglePngDropdown();
+        });
+
+        reportPngMenu?.querySelectorAll('[data-png-scope]').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const scope = item.dataset.pngScope || 'both';
+                closePngDropdown();
+                exportMonthlyPng(scope);
+            });
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!reportPngDropdown?.contains(e.target)) {
+                closePngDropdown();
+            }
+        });
+
+        document.getElementById('report-pdf')?.addEventListener('click', exportMonthlyPdf);
+        document.getElementById('report-html')?.addEventListener('click', exportMonthlyHtml);
+        document.getElementById('report-export-project')?.addEventListener('click', exportLicenseProject);
+        document.getElementById('report-import-project')?.addEventListener('click', () => {
+            document.getElementById('report-project-file').click();
+        });
+        document.getElementById('report-project-file')?.addEventListener('change', (e) => {
+            const file = e.target.files?.[0];
+            if (file) {
+                importLicenseProject(file);
+                e.target.value = '';
+            }
+        });
+
+        const diffPopoverEl = document.getElementById('reportDiffPopover');
+        if (diffPopoverEl) {
+            diffPopoverEl.addEventListener('mouseenter', () => {
+                if (diffPopoverHideTimer) {
+                    clearTimeout(diffPopoverHideTimer);
+                    diffPopoverHideTimer = null;
+                }
+            });
+            diffPopoverEl.addEventListener('mouseleave', () => {
+                hideDiffPopover(false);
+            });
+        }
+        document.getElementById('reportDiffCloseBtn')?.addEventListener('click', () => hideDiffPopover(true));
+        document.getElementById('reportDiffCopyBtn')?.addEventListener('click', async () => {
+            if (!activeDiffContext) return;
+            const textToCopy = document.getElementById('reportDiffAfter')?.innerText || '';
+            try {
+                await navigator.clipboard.writeText(textToCopy);
+                const btn = document.getElementById('reportDiffCopyBtn');
+                const orig = btn.textContent;
+                btn.textContent = '✓ 已复制';
+                setTimeout(() => { btn.textContent = orig; }, 1200);
+            } catch (_) {
+                showNotice('复制失败', '剪贴板权限受限，请手动选中复制。');
+            }
+        });
+        document.getElementById('reportDiffRevertBtn')?.addEventListener('click', () => {
+            if (!activeDiffContext) return;
+            revertTranslation(activeDiffContext.cnEl, activeDiffContext.enEl, document.getElementById('reportDiffRevertBtn'));
+        });
+        document.getElementById('reportDiffAiBtn')?.addEventListener('click', () => {
+            if (!activeDiffContext) return;
+            performAiTranslate(activeDiffContext.cnEl, activeDiffContext.enEl, document.getElementById('reportDiffAiBtn'));
         });
         setupSourceDetail('base');
         setupSourceDetail('full');

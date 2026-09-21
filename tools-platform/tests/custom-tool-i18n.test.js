@@ -103,3 +103,30 @@ test('watermark with version and seconds-precision timestamp is injected into cu
     assert.match(reInjected, /tools-watermark-ver">v1\.0\.240</);
 });
 
+test('injectLanguageRuntime always targets the document root closing body tag when multiple body tags exist in source', () => {
+    const rawHtml = `<!doctype html>
+<html>
+<head><title>Tool with inline templates</title></head>
+<body>
+    <script>
+        const sampleHtml = '<div><span>Inline html</span></body></html>';
+        console.log(sampleHtml);
+    </script>
+    <div id="app">Main App</div>
+</body>
+</html>`;
+
+    const result = i18nService.injectLanguageRuntime(rawHtml, 'department-reward-penalty');
+    
+    // Injected watermark should be right before the final </body>, NOT inside the script
+    const scriptIndex = result.indexOf('console.log(sampleHtml);');
+    const watermarkIndex = result.indexOf('id="__tools_html_meta_watermark__"');
+    const lastBodyIndex = result.lastIndexOf('</body>');
+    const appIndex = result.indexOf('id="app"');
+
+    assert.ok(watermarkIndex > appIndex, 'Watermark must be injected after #app');
+    assert.ok(watermarkIndex > scriptIndex, 'Watermark must NOT be injected inside the script block');
+    assert.ok(watermarkIndex < lastBodyIndex, 'Watermark must be injected before the last closing body tag');
+});
+
+

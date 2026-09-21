@@ -95,3 +95,26 @@ test('topic snapshots reject malformed payloads', async () => {
     await assert.rejects(() => repo.saveSnapshot({ schema: 'wrong' }), /不支持的专题快照格式/);
     await assert.rejects(() => repo.getLatestSnapshot('unknown'), /netcare/);
 });
+
+test('topic settings persists customer mapping config and isolates tenants', async () => {
+    const config = {
+        minThreshold: 10,
+        aliases: {
+            'Etisalat Misr': 'e&',
+            'Orange Egypt for Telecommunications': 'Orange',
+            'Vodafone Egypt': 'Vodafone',
+            'Telecom Egypt': 'TE'
+        }
+    };
+    await repo.saveMappingConfig(config);
+    const loaded = await repo.getMappingConfig();
+    assert.deepEqual(loaded, config);
+    assert.equal(loaded.aliases['Orange Egypt for Telecommunications'], 'Orange');
+    assert.equal(loaded.aliases['Egypt'], undefined);
+
+    await runWithTenant('tenant-b', async () => {
+        const tenantBConfig = await repo.getMappingConfig();
+        assert.equal(tenantBConfig, null);
+    });
+});
+

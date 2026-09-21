@@ -156,6 +156,16 @@ function buildBootstrap(slug, options = {}) {
     return `${configScript}<script src="/js/shared/custom-tool-i18n-runtime.js?v=20260812-06"><\/script>`;
 }
 
+function injectBeforeLastBody(html, injection) {
+    const matches = [...html.matchAll(/<\/body\s*>/gi)];
+    if (matches.length > 0) {
+        const lastMatch = matches[matches.length - 1];
+        const idx = lastMatch.index;
+        return html.slice(0, idx) + `${injection}\n` + html.slice(idx);
+    }
+    return `${html}\n${injection}`;
+}
+
 function injectLanguageRuntime(html, slug, options = {}) {
     let source = String(html || '');
     if (source.includes('__tools_html_meta_watermark__')) {
@@ -166,14 +176,12 @@ function injectLanguageRuntime(html, slug, options = {}) {
     const watermark = buildWatermark(slug, options);
 
     if (source.includes('__TOOLS_CUSTOM_I18N__')) {
-        if (/<\/body\s*>/i.test(source)) return source.replace(/<\/body\s*>/i, `${watermark}\n</body>`);
-        return `${source}\n${watermark}`;
+        return injectBeforeLastBody(source, watermark);
     }
 
     const bootstrap = buildBootstrap(slug, options);
     const combined = `${bootstrap}\n${watermark}`;
-    if (/<\/body\s*>/i.test(source)) return source.replace(/<\/body\s*>/i, `${combined}\n</body>`);
-    return `${source}\n${combined}`;
+    return injectBeforeLastBody(source, combined);
 }
 
 module.exports = {

@@ -34,6 +34,13 @@ async function ensureReady() {
     `);
     await run('CREATE UNIQUE INDEX IF NOT EXISTS idx_topic_snapshots_platform_hash ON topic_snapshots(platform, content_hash)');
     await run('CREATE INDEX IF NOT EXISTS idx_topic_snapshots_captured ON topic_snapshots(platform, captured_at DESC)');
+    await run(`
+        CREATE TABLE IF NOT EXISTS topic_settings (
+            key TEXT PRIMARY KEY,
+            value_json TEXT NOT NULL,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    `);
     const legacyRows = await all(`SELECT id, payload_json FROM topic_snapshots WHERE summary_json NOT LIKE '%"summaryVersion":2%'`);
     for (const row of legacyRows) {
         try {
@@ -394,6 +401,24 @@ async function deleteSnapshot(id) {
     return result.changes > 0;
 }
 
+async function getMappingConfig() {
+    await ensureReady();
+    const row = await get('SELECT value_json FROM topic_settings WHERE key = ?', ['customer_mapping']);
+    if (row && row.value_json) {
+        try {
+            return JSON.parse(row.value_json);
+        } catch (_) {}
+    }
+    return null;
+}
+
+async function saveMappingConfig(config) {
+    await ensureReady();
+    const val = JSON.stringify(config || {});
+    await run(`INSERT OR REPLACE INTO topic_settings (key, value_json, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)`, ['customer_mapping', val]);
+    return config;
+}
+
 module.exports = {
     MAX_PAYLOAD_BYTES,
     SNAPSHOT_SCHEMA,
@@ -406,6 +431,8 @@ module.exports = {
     getSeries,
     getEosMonthlyReport,
     getSnapshot,
+    getMappingConfig,
+    saveMappingConfig,
     listSnapshots,
     normalizeSnapshot,
     saveSnapshot

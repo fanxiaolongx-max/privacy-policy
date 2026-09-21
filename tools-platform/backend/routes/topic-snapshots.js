@@ -50,6 +50,26 @@ router.get('/eos-monthly-report', async (req, res) => {
     }
 });
 
+router.get('/mapping-config', async (req, res) => {
+    try {
+        const config = await topicSnapshotsRepo.getMappingConfig();
+        res.setHeader('X-Data-Source', 'sqlite');
+        res.json({ config });
+    } catch (error) {
+        sendError(res, error, '读取客户映射配置失败');
+    }
+});
+
+router.put('/mapping-config', async (req, res) => {
+    try {
+        const config = await topicSnapshotsRepo.saveMappingConfig(req.body);
+        res.setHeader('X-Data-Source', 'sqlite');
+        res.json({ success: true, config });
+    } catch (error) {
+        sendError(res, error, '保存客户映射配置失败');
+    }
+});
+
 router.get('/:id', async (req, res) => {
     try {
         const item = await topicSnapshotsRepo.getSnapshot(req.params.id);
