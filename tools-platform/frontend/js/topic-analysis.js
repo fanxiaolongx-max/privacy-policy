@@ -2165,7 +2165,65 @@
         return worksheet;
     }
 
-    async function exportMonthlyPng() {
+    function togglePngDropdown(force) {
+        const menu = elements.eosPngMenu || document.getElementById('eosPngMenu');
+        const btn = elements.eosDownloadPng || document.getElementById('eosDownloadPng');
+        if (!menu) return;
+        if (btn && btn.disabled) {
+            menu.hidden = true;
+            return;
+        }
+        const willOpen = typeof force === 'boolean' ? force : menu.hidden;
+        menu.hidden = !willOpen;
+    }
+
+    function closePngDropdown() {
+        const menu = elements.eosPngMenu || document.getElementById('eosPngMenu');
+        if (menu) menu.hidden = true;
+    }
+
+    async function captureAndDownloadMonthlyPng(scope, button, month) {
+        const sheet = elements.eosReportSheet || document.getElementById('eosReportSheet');
+        if (!sheet) return;
+
+        sheet.classList.remove('export-mode-cn', 'export-mode-en');
+        let suffix = '';
+        if (scope === 'cn') {
+            sheet.classList.add('export-mode-cn');
+            suffix = '_中文版';
+        } else if (scope === 'en') {
+            sheet.classList.add('export-mode-en');
+            suffix = '_英文版';
+        } else {
+            suffix = '_中英文合一';
+        }
+
+        try {
+            await new Promise(resolve => setTimeout(resolve, 60));
+            const canvas = await html2canvas(sheet, {
+                backgroundColor: '#ffffff',
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                ignoreElements: el => el.hasAttribute && (
+                    el.hasAttribute('data-html2canvas-ignore') ||
+                    el.classList.contains('print-hide') ||
+                    el.classList.contains('topic-sync-chip') ||
+                    el.classList.contains('topic-report-gutter') ||
+                    el.classList.contains('topic-diff-popover')
+                )
+            });
+
+            const link = document.createElement('a');
+            link.download = `埃及代表处EOS退网收编简报_${month}${suffix}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        } finally {
+            sheet.classList.remove('export-mode-cn', 'export-mode-en');
+        }
+    }
+
+    async function exportMonthlyPng(scope = 'both') {
         if (!state.eosMonthlyReport) {
             alert('当前暂无月报数据可供导出。');
             return;
@@ -2176,33 +2234,44 @@
         }
         const sheet = elements.eosReportSheet || document.getElementById('eosReportSheet');
         if (!sheet) return;
+        closePngDropdown();
         hideTextToolbar();
+        hideDiffPopover(true);
         if (document.activeElement && document.activeElement.classList?.contains('topic-editable')) {
             document.activeElement.blur();
         }
         const button = elements.eosDownloadPng;
-        const originalText = button.textContent;
-        button.classList.add('is-loading');
-        button.textContent = '正在生成 PNG...';
+        const originalText = button ? button.textContent : '';
+        if (button) {
+            button.classList.add('is-loading');
+        }
 
         const currentTheme = document.documentElement.getAttribute('data-theme');
         if (currentTheme === 'dark') {
             document.documentElement.setAttribute('data-theme', 'light');
         }
+        const month = state.eosMonthlyReport.month || '当期';
+
         try {
-            await new Promise(resolve => setTimeout(resolve, 50));
-            const canvas = await html2canvas(sheet, {
-                backgroundColor: '#ffffff',
-                scale: 2,
-                useCORS: true,
-                logging: false,
-                ignoreElements: el => el.hasAttribute && (el.hasAttribute('data-html2canvas-ignore') || el.classList.contains('print-hide') || el.classList.contains('topic-sync-chip') || el.classList.contains('topic-report-gutter'))
-            });
-            const month = state.eosMonthlyReport.month || '当期';
-            const link = document.createElement('a');
-            link.download = `埃及代表处EOS退网收编简报_${month}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
+            if (scope === 'all-three') {
+                if (button) button.textContent = '正在生成中文版 PNG...';
+                await captureAndDownloadMonthlyPng('cn', button, month);
+                await new Promise(r => setTimeout(r, 400));
+
+                if (button) button.textContent = '正在生成英文版 PNG...';
+                await captureAndDownloadMonthlyPng('en', button, month);
+                await new Promise(r => setTimeout(r, 400));
+
+                if (button) button.textContent = '正在生成合一版 PNG...';
+                await captureAndDownloadMonthlyPng('both', button, month);
+
+                setCopyStatus('3 张月报 PNG 图片已全部下载完成！');
+            } else {
+                const label = scope === 'cn' ? '中文版' : scope === 'en' ? '英文版' : '合一版';
+                if (button) button.textContent = `正在生成${label} PNG...`;
+                await captureAndDownloadMonthlyPng(scope, button, month);
+                setCopyStatus(`月报 ${label} PNG 下载成功！`);
+            }
         } catch (error) {
             console.error('月报 PNG 导出失败:', error);
             alert(`月报 PNG 导出失败：${error.message}`);
@@ -2210,8 +2279,10 @@
             if (currentTheme === 'dark') {
                 document.documentElement.setAttribute('data-theme', 'dark');
             }
-            button.classList.remove('is-loading');
-            button.textContent = originalText;
+            if (button) {
+                button.classList.remove('is-loading');
+                button.textContent = originalText;
+            }
         }
     }
 
@@ -2985,7 +3056,7 @@
             'totalCount', 'netcareCount', 'datafabCount', 'latestTime', 'themeToggleButton', 'themeToggleIcon', 'themeToggleText', 'refreshButton',
             'topicFilter', 'metricFilter', 'analysisTitle', 'metricDefinition', 'topicKpis', 'trendChart', 'metricColumnTitle', 'loadStatus',
             'historyBody', 'emptyState', 'eosMonthlyMonth', 'eosMonthlySource', 'eosMonthlyReport', 'eosCopyResetMonth', 'eosCopyResetFixed',
-            'eosConfigBtn', 'eosDownloadPng', 'eosDownloadPdf', 'eosDownloadHtml', 'eosDownloadExcel', 'eosDownloadMsg', 'eosReportEndmark', 'eosReportSheet', 'eosCopyStatus', 'eosTextToolbar',
+            'eosConfigBtn', 'eosPngDropdown', 'eosDownloadPng', 'eosPngMenu', 'eosDownloadPdf', 'eosDownloadHtml', 'eosDownloadExcel', 'eosDownloadMsg', 'eosReportEndmark', 'eosReportSheet', 'eosCopyStatus', 'eosTextToolbar',
             'eosMonthlyReportEn', 'eosReportEndmarkEn',
             'eosToggleSourceTimeBtn', 'eosToggleSourceTimeIcon', 'eosToggleSourceTimeText', 'eosSyncCapsule', 'eosReportGutter',
             'eosExportProjectBtn', 'eosImportProjectBtn', 'eosProjectFileInput',
@@ -3032,7 +3103,32 @@
                 });
             }
         });
-        if (elements.eosDownloadPng) elements.eosDownloadPng.addEventListener('click', exportMonthlyPng);
+        if (elements.eosDownloadPng) {
+            elements.eosDownloadPng.addEventListener('click', event => {
+                event.stopPropagation();
+                togglePngDropdown();
+            });
+        }
+        if (elements.eosPngMenu) {
+            elements.eosPngMenu.addEventListener('click', event => {
+                const item = event.target.closest('[data-png-scope]');
+                if (!item) return;
+                event.stopPropagation();
+                const scope = item.getAttribute('data-png-scope') || 'both';
+                closePngDropdown();
+                exportMonthlyPng(scope);
+            });
+        }
+        if (elements.eosPngDropdown) {
+            let timer = null;
+            elements.eosPngDropdown.addEventListener('mouseenter', () => {
+                if (timer) clearTimeout(timer);
+                togglePngDropdown(true);
+            });
+            elements.eosPngDropdown.addEventListener('mouseleave', () => {
+                timer = setTimeout(() => closePngDropdown(), 250);
+            });
+        }
         if (elements.eosDownloadPdf) elements.eosDownloadPdf.addEventListener('click', exportMonthlyPdf);
         if (elements.eosDownloadHtml) elements.eosDownloadHtml.addEventListener('click', exportMonthlyHtml);
         if (elements.eosDownloadExcel) elements.eosDownloadExcel.addEventListener('click', exportMonthlyExcel);
@@ -3051,6 +3147,9 @@
             });
         }
         document.addEventListener('click', event => {
+            if (!event.target.closest('#eosPngDropdown')) {
+                closePngDropdown();
+            }
             const navLink = event.target.closest('.topic-report-nav-link');
             if (navLink) {
                 const href = navLink.getAttribute('href');

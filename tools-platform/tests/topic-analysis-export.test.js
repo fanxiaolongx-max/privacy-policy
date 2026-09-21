@@ -126,3 +126,34 @@ test('topic-analysis.js provides exportMonthlyPdf and exportMonthlyHtml with ful
     assert.match(js, /埃及代表处EOS退网收编简报_.*\.html/, 'Must name exported HTML appropriately');
     assert.match(js, /埃及代表处EOS退网收编简报_.*\.pdf/, 'Must name exported PDF appropriately');
 });
+
+test('topic-analysis supports scoped PNG export for Chinese, English, Combined, and All Three', () => {
+    const html = fs.readFileSync(path.join(__dirname, '../frontend/pages/topic-analysis.html'), 'utf-8');
+    assert.ok(html.includes('id="eosPngDropdown"'), 'Must have eosPngDropdown container');
+    assert.ok(html.includes('id="eosDownloadPng"'), 'Must have eosDownloadPng button');
+    assert.ok(html.includes('id="eosPngMenu"'), 'Must have eosPngMenu element');
+    assert.ok(html.includes('data-png-scope="cn"'), 'Must have Chinese scope option');
+    assert.ok(html.includes('data-png-scope="en"'), 'Must have English scope option');
+    assert.ok(html.includes('data-png-scope="both"'), 'Must have Combined scope option');
+    assert.ok(html.includes('data-png-scope="all-three"'), 'Must have All-Three scope option');
+    assert.ok(html.includes('topic-report-footer-cn'), 'Must tag Chinese footer');
+    assert.ok(html.includes('topic-report-footer-en'), 'Must tag English footer');
+
+    const css = fs.readFileSync(path.join(__dirname, '../frontend/css/topic-analysis.css'), 'utf-8');
+    assert.ok(css.includes('.topic-dropdown'), 'Must style dropdown');
+    assert.ok(css.includes('.topic-dropdown-menu'), 'Must style dropdown menu');
+    assert.ok(css.includes('.export-mode-cn'), 'Must define export-mode-cn rules');
+    assert.ok(css.includes('.export-mode-en'), 'Must define export-mode-en rules');
+
+    const js = fs.readFileSync(path.join(__dirname, '../frontend/js/topic-analysis.js'), 'utf-8');
+    assert.match(js, /function togglePngDropdown\(/, 'Must define togglePngDropdown');
+    assert.match(js, /function closePngDropdown\(/, 'Must define closePngDropdown');
+    assert.match(js, /async function captureAndDownloadMonthlyPng\(/, 'Must define captureAndDownloadMonthlyPng');
+    assert.match(js, /async function exportMonthlyPng\(scope = 'both'\)/, 'Must define exportMonthlyPng with scope');
+    assert.match(js, /'_中文版'/, 'Must suffix Chinese PNG filename');
+    assert.match(js, /'_英文版'/, 'Must suffix English PNG filename');
+    assert.match(js, /'_中英文合一'/, 'Must suffix Combined PNG filename');
+    assert.match(js, /'eosPngDropdown'/, 'Must register eosPngDropdown in elements');
+    assert.match(js, /'eosPngMenu'/, 'Must register eosPngMenu in elements');
+});
+

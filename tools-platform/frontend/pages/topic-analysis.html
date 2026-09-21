@@ -51,7 +51,40 @@
                     <button id="eosExportProjectBtn" class="topic-monthly-btn" type="button" title="导出包含离线完整数据与全部中英文编辑的工程文件">📦 导出工程</button>
                     <button id="eosImportProjectBtn" class="topic-monthly-btn" type="button" title="导入他人分享或历史备份的月报工程文件">📂 导入工程</button>
                     <input type="file" id="eosProjectFileInput" accept=".json,.eos.json" style="display:none">
-                    <button id="eosDownloadPng" class="topic-monthly-btn" type="button" title="下载当前月报长图 PNG">下载月报 PNG</button>
+                    <div class="topic-dropdown" id="eosPngDropdown">
+                        <button id="eosDownloadPng" class="topic-monthly-btn topic-dropdown-toggle" type="button" title="下载月报长图 PNG（点击展开选择：中文版 / 英文版 / 合一版）">下载月报 PNG ▾</button>
+                        <div class="topic-dropdown-menu" id="eosPngMenu" hidden>
+                            <button type="button" class="topic-dropdown-item" data-png-scope="cn" title="仅导出中文简报、图表与中文注脚">
+                                <span class="topic-dropdown-icon">🇨🇳</span>
+                                <div class="topic-dropdown-text">
+                                    <strong>中文版 PNG</strong>
+                                    <small>仅导出中文简报与图表</small>
+                                </div>
+                            </button>
+                            <button type="button" class="topic-dropdown-item" data-png-scope="en" title="仅导出英文简报、图表与英文注脚">
+                                <span class="topic-dropdown-icon">🇬🇧</span>
+                                <div class="topic-dropdown-text">
+                                    <strong>英文版 PNG</strong>
+                                    <small>仅导出英文简报与图表</small>
+                                </div>
+                            </button>
+                            <button type="button" class="topic-dropdown-item" data-png-scope="both" title="导出中英文完整对照长图">
+                                <span class="topic-dropdown-icon">🌐</span>
+                                <div class="topic-dropdown-text">
+                                    <strong>中英文合一 PNG</strong>
+                                    <small>导出中英文完整对照长图</small>
+                                </div>
+                            </button>
+                            <div class="topic-dropdown-divider"></div>
+                            <button type="button" class="topic-dropdown-item topic-dropdown-item-all" data-png-scope="all-three" title="依次自动下载全部 3 张图片">
+                                <span class="topic-dropdown-icon">📦</span>
+                                <div class="topic-dropdown-text">
+                                    <strong>一键下载全部（3张）</strong>
+                                    <small>依次下载中文、英文与合一图片</small>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
                     <button id="eosDownloadPdf" class="topic-monthly-btn" type="button" title="下载排版精美的高清 PDF 格式月报">下载月报 PDF</button>
                     <button id="eosDownloadHtml" class="topic-monthly-btn" type="button" title="下载排版完整且离线可交互浏览的 HTML 格式月报">下载月报 HTML</button>
                     <button id="eosDownloadExcel" class="topic-monthly-btn topic-monthly-btn-primary" type="button" title="下载包含月报、多维度分析及详表的多 Sheet Excel">下载月报 Excel</button>
@@ -278,7 +311,7 @@
                         </div>
                     </section>
                 </div>
-                <footer class="topic-report-footer">
+                <footer class="topic-report-footer topic-report-footer-cn">
                     <p class="topic-report-contact-copy">若您对此报告数据有疑问，请联系范晓龙wx154337，于祥00877023，谢谢！原始数据见附件！</p>
                     <div class="topic-report-signature">埃及网络保障与运维服务部</div>
                     <p id="eosReportEndmark" class="topic-report-endmark"></p>
@@ -408,7 +441,7 @@
                         </div>
                     </section>
                 </div>
-                <footer class="topic-report-footer">
+                <footer class="topic-report-footer topic-report-footer-en">
                     <p class="topic-report-contact-copy">If you have any questions regarding this report, please contact Fan Xiaolong (wx154337), Yu Xiang (00877023). Thank you! Raw data attached.</p>
                     <div class="topic-report-signature">Egypt Network Assurance &amp; Maintenance Service Dept</div>
                     <p id="eosReportEndmarkEn" class="topic-report-endmark"></p>

@@ -916,3 +916,165 @@ td.topic-en-synced, th.topic-en-synced { border-left:3px solid #10b981!important
     color: #64748b !important;
 }
 
+/* ==========================================================================
+   Topic Export Dropdown Menu & Scoped Image Rendering
+   ========================================================================== */
+.topic-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.topic-dropdown-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.topic-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    left: auto;
+    z-index: 1000;
+    min-width: 230px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.16), 0 8px 10px -6px rgba(15, 23, 42, 0.08);
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.topic-dropdown-menu[hidden] {
+    display: none !important;
+}
+
+.topic-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 8px 10px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: #1e293b;
+    text-align: left;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.topic-dropdown-item:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+.topic-dropdown-icon {
+    font-size: 16px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.topic-dropdown-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.topic-dropdown-text strong {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.2;
+    color: inherit;
+}
+
+.topic-dropdown-text small {
+    font-size: 11px;
+    color: #64748b;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.topic-dropdown-divider {
+    height: 1px;
+    margin: 4px 0;
+    background: #e2e8f0;
+}
+
+.topic-dropdown-item-all {
+    background: #f8fafc;
+}
+
+.topic-dropdown-item-all:hover {
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.topic-dropdown-item-all:hover .topic-dropdown-text small {
+    color: #3b82f6;
+}
+
+/* Dark Theme Support for Dropdown */
+:root[data-theme="dark"] .topic-dropdown-menu {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+}
+
+:root[data-theme="dark"] .topic-dropdown-item {
+    color: #f1f5f9;
+}
+
+:root[data-theme="dark"] .topic-dropdown-item:hover {
+    background: #334155;
+    color: #ffffff;
+}
+
+:root[data-theme="dark"] .topic-dropdown-text small {
+    color: #94a3b8;
+}
+
+:root[data-theme="dark"] .topic-dropdown-divider {
+    background: #334155;
+}
+
+:root[data-theme="dark"] .topic-dropdown-item-all {
+    background: #192231;
+}
+
+:root[data-theme="dark"] .topic-dropdown-item-all:hover {
+    background: #1e3a8a;
+    color: #93c5fd;
+}
+
+:root[data-theme="dark"] .topic-dropdown-item-all:hover .topic-dropdown-text small {
+    color: #bfdbfe;
+}
+
+/* ==========================================================================
+   Export Scope Isolation Classes (Pure CSS Seamless Rendering)
+   ========================================================================== */
+/* Chinese Only Export Mode */
+.topic-report-sheet.export-mode-cn #eosReportNavCn .topic-report-nav-link,
+.topic-report-sheet.export-mode-cn .topic-report-divider-en,
+.topic-report-sheet.export-mode-cn #eosReportNavEn,
+.topic-report-sheet.export-mode-cn #eosMonthlyReportEn,
+.topic-report-sheet.export-mode-cn .topic-fixed-progress-en,
+.topic-report-sheet.export-mode-cn .topic-report-footer-en {
+    display: none !important;
+}
+
+/* English Only Export Mode */
+.topic-report-sheet.export-mode-en #eosReportNavCn,
+.topic-report-sheet.export-mode-en #eosMonthlySource,
+.topic-report-sheet.export-mode-en #eosMonthlyReport,
+.topic-report-sheet.export-mode-en .topic-fixed-progress:not(.topic-fixed-progress-en),
+.topic-report-sheet.export-mode-en .topic-report-footer-cn,
+.topic-report-sheet.export-mode-en .topic-report-divider-en,
+.topic-report-sheet.export-mode-en #eosReportNavEn .topic-report-nav-link {
+    display: none !important;
+}
+
