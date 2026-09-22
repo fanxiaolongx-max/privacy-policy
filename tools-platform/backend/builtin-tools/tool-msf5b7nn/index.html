@@ -1523,6 +1523,252 @@
         width: 100%
       }
     }
+
+    .btn-snapshot {
+      background: #eff6ff;
+      border-color: #bfdbfe;
+      color: #1d4ed8;
+      font-weight: 600;
+    }
+
+    .btn-snapshot:hover {
+      background: #dbeafe;
+      border-color: #93c5fd;
+    }
+
+    .save-snapshot-modal-card {
+      width: min(580px, 96vw);
+    }
+
+    .save-snapshot-modal-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .save-snapshot-form {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .save-snapshot-stats {
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px 16px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      text-align: center;
+    }
+
+    .save-snapshot-stat-item strong {
+      display: block;
+      font-size: 16px;
+      color: #1e293b;
+    }
+
+    .save-snapshot-stat-item span {
+      font-size: 11px;
+      color: #64748b;
+    }
+
+    .save-snapshot-notice {
+      font-size: 12px;
+      color: #64748b;
+      line-height: 1.5;
+      background: #fffbeb;
+      border: 1px solid #fef3c7;
+      border-radius: 6px;
+      padding: 8px 12px;
+    }
+
+    .snapshot-modal-card {
+      width: min(1080px, 96vw);
+      height: min(840px, 90vh);
+      max-height: 90vh;
+    }
+
+    .snapshot-modal-toolbar {
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      background: #fdfdfd;
+      flex-wrap: wrap;
+    }
+
+    .snapshot-search-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 220px;
+      display: flex;
+      align-items: center;
+    }
+
+    .snapshot-search-wrap input {
+      width: 100%;
+      padding: 7px 12px 7px 32px;
+      border: 1px solid #d8dce4;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+
+    .snapshot-search-wrap .search-icon {
+      position: absolute;
+      left: 10px;
+      color: #94a3b8;
+      pointer-events: none;
+    }
+
+    .snapshot-toolbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .snapshot-modal-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .snapshot-card {
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+      transition: border-color .15s, box-shadow .15s;
+    }
+
+    .snapshot-card:hover {
+      border-color: var(--primary);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, .08);
+    }
+
+    .snapshot-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .snapshot-card-title-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .snapshot-card-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0;
+    }
+
+    .snapshot-date-badge {
+      background: #e0f2fe;
+      color: #0369a1;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .snapshot-time-badge {
+      font-size: 11px;
+      color: #94a3b8;
+    }
+
+    .snapshot-card-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .snapshot-card-stats {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .snap-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      padding: 3px 9px;
+      border-radius: 6px;
+      background: #f1f5f9;
+      color: #334155;
+      font-weight: 500;
+    }
+
+    .snap-chip.rate {
+      background: #dcfce7;
+      color: #15803d;
+      font-weight: 700;
+    }
+
+    .snap-chip.absent {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .snap-chip.delay {
+      background: #fef9c3;
+      color: #854d0e;
+    }
+
+    .snap-chip.fake {
+      background: #fce7f3;
+      color: #9d174d;
+    }
+
+    .snapshot-preview-panel {
+      margin-top: 6px;
+      padding: 12px;
+      background: #f8fafc;
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      display: none;
+    }
+
+    .snapshot-preview-panel.open {
+      display: block;
+    }
+
+    .snapshot-preview-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      text-align: center;
+    }
+
+    .snapshot-preview-table th,
+    .snapshot-preview-table td {
+      border: 1px solid #cbd5e1;
+      padding: 5px 8px;
+    }
+
+    .snapshot-preview-table th {
+      background: #e2e8f0;
+      font-weight: 700;
+    }
   </style>
 </head>
 
@@ -1533,7 +1779,7 @@
     </div>
     <div class="top-actions"><button class="btn developer-btn hidden" id="developerModeBtn">⚗ 开发者模式</button><button
         class="btn btn-search" id="globalSearchBtn"><span class="search-icon">⌕</span><span
-          id="globalSearchText">人员搜索</span></button><button class="btn btn-export" id="exportBtn">⇩
+          id="globalSearchText">人员搜索</span></button><button class="btn btn-snapshot" id="saveSnapshotBtn" title="一键保存当前全部导入数据与分析结果为服务器快照">📸 保存快照</button><button class="btn" id="manageSnapshotsBtn" title="查看、浏览和回溯保存在服务器上的历史会议考勤快照">📚 历史快照库</button><button class="btn btn-export" id="exportBtn">⇩
         一键导出分析结果</button><button class="btn" id="langBtn">English</button><button class="btn"
         id="clearAllBtn">清空全部</button><button class="btn btn-primary" id="chooseBtn">一键导入全部表格</button></div>
   </header>
@@ -1669,6 +1915,61 @@
     </div>
   </div>
 
+  <div class="modal hidden" id="saveSnapshotModal">
+    <div class="modal-card save-snapshot-modal-card">
+      <div class="modal-head">
+        <div>
+          <h3 id="saveSnapshotModalTitle">📸 保存会议考勤快照至服务器</h3>
+          <p id="saveSnapshotModalSub">将当前已导入全部表格明细与考勤分析结果完整保存，便于多端同步与历史回溯。</p>
+        </div><button class="modal-close" id="saveSnapshotModalClose">×</button>
+      </div>
+      <div class="save-snapshot-modal-body">
+        <div class="save-snapshot-form">
+          <label class="settings" style="display:grid;gap:6px;white-space:normal">
+            <span id="snapTitleLabel"><strong>快照名称：</strong></span>
+            <input id="snapTitleInput" style="border:1px solid #d8dce4;border-radius:8px;padding:9px 12px;font-size:13px;" placeholder="例如：2026-09-22 埃及网安例会考勤分析">
+          </label>
+          <label class="settings" style="display:grid;gap:6px;white-space:normal">
+            <span id="snapDateLabel"><strong>会议日期：</strong></span>
+            <input id="snapDateInput" type="date" style="border:1px solid #d8dce4;border-radius:8px;padding:8px 12px;font-size:13px;">
+          </label>
+        </div>
+        <div class="save-snapshot-stats" id="saveSnapshotStats"></div>
+        <div class="save-snapshot-notice" id="saveSnapshotNotice">
+          💡 快照将完整保存 5 类已导入表格的全部原始行列及列配置、合并去重人员名单、BU 考勤统计以及规则配置，方便日后随时一键恢复。
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn" id="saveSnapshotCancelBtn">取消</button>
+        <button class="btn btn-primary" id="saveSnapshotSubmitBtn">💾 确认保存到服务器</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="snapshotModal">
+    <div class="modal-card snapshot-modal-card">
+      <div class="modal-head">
+        <div>
+          <h3 id="snapshotModalTitle">📚 会议考勤历史快照库</h3>
+          <p id="snapshotModalSub">浏览、回溯与恢复保存在服务器上的历史会议考勤数据</p>
+        </div>
+        <button class="modal-close" id="snapshotModalClose">×</button>
+      </div>
+      <div class="snapshot-modal-toolbar">
+        <div class="snapshot-search-wrap">
+          <span class="search-icon">⌕</span>
+          <input id="smSearchInput" placeholder="按会议快照名称或日期过滤...">
+        </div>
+        <div class="snapshot-toolbar-actions">
+          <input type="file" id="smFileInput" accept=".json" class="hidden">
+          <button class="btn" id="smImportBtn" title="导入本地导出的快照 JSON 文件">📥 导入本地快照</button>
+          <button class="btn btn-primary" id="smNewSnapshotBtn" title="将当前工作区数据直接保存为新快照">📸 保存当前为新快照</button>
+        </div>
+      </div>
+      <div class="snapshot-modal-body" id="smListContainer"></div>
+    </div>
+  </div>
+
   <script>
     (() => {
       'use strict';
@@ -1714,13 +2015,13 @@
       const LANGUAGE_STORAGE_KEY = 'meetingAttendance.language.v1';
       const SIDEBAR_STORAGE_KEY = 'meetingAttendance.sidebarCollapsed.v1';
       const UI = {
-        zh: { brand: '会议出席统计工具', clear: '清空全部', import: '一键导入全部表格', dataInput: '数据输入', results: '处理结果', people: '人员提取结果', pageSize: '每页行数', imported: '已导入表格', rows: '行', peopleUnit: '人', emptyTitle: '当前类别还没有表格', emptyDesc: '导入后将按文件与工作表顺序依次显示', columns: '选择显示列', remove: '删除', peopleTitle: '人员提取结果', peopleDesc: '从 QR、RFC 和 WFM 原始表中提取人员并去重；角色、BU与客户群均依据最新订单取值。' },
-        en: { brand: 'Meeting Attendance Analyzer', clear: 'Clear All', import: 'Import All Tables', dataInput: 'Data Input', results: 'Results', people: 'People Results', pageSize: 'Rows per page', imported: 'Imported Tables', rows: 'rows', peopleUnit: 'people', emptyTitle: 'No table in this category', emptyDesc: 'Imported sheets will appear in file and sheet order.', columns: 'Choose Columns', remove: 'Delete', peopleTitle: 'People Results', peopleDesc: 'Extract and deduplicate people from QR, RFC and WFM; role, BU and Customer Group use the latest order.' }
+        zh: { brand: '会议出席统计工具', clear: '清空全部', import: '一键导入全部表格', saveSnapshot: '保存快照', manageSnapshots: '历史快照库', dataInput: '数据输入', results: '处理结果', people: '人员提取结果', pageSize: '每页行数', imported: '已导入表格', rows: '行', peopleUnit: '人', emptyTitle: '当前类别还没有表格', emptyDesc: '导入后将按文件与工作表顺序依次显示', columns: '选择显示列', remove: '删除', peopleTitle: '人员提取结果', peopleDesc: '从 QR、RFC 和 WFM 原始表中提取人员并去重；角色、BU与客户群均依据最新订单取值。' },
+        en: { brand: 'Meeting Attendance Analyzer', clear: 'Clear All', import: 'Import All Tables', saveSnapshot: 'Save Snapshot', manageSnapshots: 'Snapshot Library', dataInput: 'Data Input', results: 'Results', people: 'People Results', pageSize: 'Rows per page', imported: 'Imported Tables', rows: 'rows', peopleUnit: 'people', emptyTitle: 'No table in this category', emptyDesc: 'Imported sheets will appear in file and sheet order.', columns: 'Choose Columns', remove: 'Delete', peopleTitle: 'People Results', peopleDesc: 'Extract and deduplicate people from QR, RFC and WFM; role, BU and Customer Group use the latest order.' }
       };
       function loadLanguage() { try { return localStorage.getItem(LANGUAGE_STORAGE_KEY) === 'en' ? 'en' : 'zh'; } catch (e) { return 'zh'; } }
       function loadSidebarCollapsed() { try { return localStorage.getItem(SIDEBAR_STORAGE_KEY) === '1'; } catch (e) { return false; } }
       function loadDeveloperMode() { try { return sessionStorage.getItem(DEVELOPER_SESSION_KEY) === '1'; } catch (e) { return false; } }
-      const state = { active: 'qr', lang: loadLanguage(), sidebarCollapsed: loadSidebarCollapsed(), pageSize: 200, sheets: [], seq: 0, editingSheet: null, peoplePages: { all: 1, qr: 1, rfc: 1, wfm: 1 }, buFilter: '', personSearch: { query: '', result: null, pages: { qr: 1, rfc: 1, wfm: 1, offline: 1, online: 1 } }, dataVersion: 0, peopleCache: null, qualityCache: null, peopleBuildId: 0, customerMappings: loadCustomerMappings(), attendanceRules: loadAttendanceRules(), exemptions: loadExemptions(), developerMode: loadDeveloperMode(), developerClicks: [], openPeopleCards: new Set() };
+      const state = { active: 'qr', lang: loadLanguage(), sidebarCollapsed: loadSidebarCollapsed(), pageSize: 200, sheets: [], seq: 0, editingSheet: null, peoplePages: { all: 1, qr: 1, rfc: 1, wfm: 1 }, buFilter: '', personSearch: { query: '', result: null, pages: { qr: 1, rfc: 1, wfm: 1, offline: 1, online: 1 } }, dataVersion: 0, peopleCache: null, qualityCache: null, peopleBuildId: 0, customerMappings: loadCustomerMappings(), attendanceRules: loadAttendanceRules(), exemptions: loadExemptions(), developerMode: loadDeveloperMode(), developerClicks: [], openPeopleCards: new Set(), snapshotsList: [] };
       const $ = s => document.querySelector(s);
       const t = key => UI[state.lang][key] || UI.zh[key] || key;
       const bi = (zh, en) => state.lang === 'en' ? en : zh;
@@ -1737,6 +2038,8 @@
         $('#nav').addEventListener('click', e => { const b = e.target.closest('.nav-item'); if (b) { state.active = b.dataset.id; render(); } });
         $('#langBtn').onclick = () => { state.lang = state.lang === 'zh' ? 'en' : 'zh'; try { localStorage.setItem(LANGUAGE_STORAGE_KEY, state.lang); } catch (e) { } renderNav(); applyStaticLanguage(); applySidebarState(); render(); if (!$('#personSearchModal').classList.contains('hidden')) renderPersonSearchModal(); };
         $('#globalSearchBtn').onclick = openPersonSearchModal;
+        $('#saveSnapshotBtn').onclick = openSaveSnapshotModal;
+        $('#manageSnapshotsBtn').onclick = openSnapshotManagerModal;
         $('#exportBtn').onclick = exportAnalysis;
         $('#sidebarToggle').onclick = () => { state.sidebarCollapsed = !state.sidebarCollapsed; try { localStorage.setItem(SIDEBAR_STORAGE_KEY, state.sidebarCollapsed ? '1' : '0'); } catch (e) { } applySidebarState(); };
         $('#chooseBtn').onclick = () => $('#fileInput').click();
@@ -1759,7 +2062,17 @@
         $('#developerModalClose').onclick = $('#developerCancelBtn').onclick = closeDeveloperModal; $('#developerDisableBtn').onclick = disableDeveloperMode; $('#exemptionAddBtn').onclick = () => appendExemptionRow('', ''); $('#developerSaveBtn').onclick = saveExemptions; $('#exemptionList').addEventListener('click', e => { const b = e.target.closest('.mapping-delete'); if (b) b.closest('.exemption-row').remove(); });
         $('#developerModal').addEventListener('click', e => { if (e.target === $('#developerModal')) closeDeveloperModal(); });
         $('#personSearchModalClose').onclick = closePersonSearchModal; $('#personSearchModal').addEventListener('click', e => { if (e.target === $('#personSearchModal')) closePersonSearchModal(); else handleSheetAction(e); });
-        document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeColumnModal(); closeMappingModal(); closeAttendanceModal(); closeDeveloperModal(); closePersonSearchModal(); } });
+        $('#saveSnapshotModalClose').onclick = $('#saveSnapshotCancelBtn').onclick = closeSaveSnapshotModal;
+        $('#saveSnapshotSubmitBtn').onclick = submitSaveSnapshot;
+        $('#saveSnapshotModal').addEventListener('click', e => { if (e.target === $('#saveSnapshotModal')) closeSaveSnapshotModal(); });
+        $('#snapshotModalClose').onclick = closeSnapshotManagerModal;
+        $('#snapshotModal').addEventListener('click', e => { if (e.target === $('#snapshotModal')) closeSnapshotManagerModal(); });
+        $('#smSearchInput').oninput = e => filterSnapshotCards(e.target.value);
+        $('#smNewSnapshotBtn').onclick = () => { closeSnapshotManagerModal(); openSaveSnapshotModal(); };
+        $('#smImportBtn').onclick = () => $('#smFileInput').click();
+        $('#smFileInput').onchange = handleImportSnapshotFile;
+        $('#smListContainer').addEventListener('click', handleSnapshotCardAction);
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeColumnModal(); closeMappingModal(); closeAttendanceModal(); closeDeveloperModal(); closePersonSearchModal(); closeSaveSnapshotModal(); closeSnapshotManagerModal(); } });
         render();
       }
       function renderNav() {
@@ -1782,6 +2095,21 @@
       function applyStaticLanguage() {
         document.documentElement.lang = state.lang === 'en' ? 'en' : 'zh-CN'; document.title = t('brand'); $('#brandTitle').textContent = t('brand'); $('#langBtn').textContent = state.lang === 'en' ? '中文' : 'English'; $('#clearAllBtn').textContent = t('clear'); $('#chooseBtn').textContent = t('import'); $('#exportBtn').textContent = bi('⇩ 一键导出分析结果', '⇩ Export Analysis'); $('#dataInputTitle').textContent = t('dataInput'); $('#pageSizeText').textContent = t('pageSize'); updateGlobalSearchButton(); applyDeveloperMode(); renderToolIntro();
         const set = (sel, text) => { const el = $(sel); if (el) el.textContent = text; };
+        set('#saveSnapshotBtn', `📸 ${bi('保存快照', 'Save Snapshot')}`);
+        set('#manageSnapshotsBtn', `📚 ${bi('历史快照库', 'Snapshot Library')}`);
+        set('#saveSnapshotModalTitle', `📸 ${bi('保存会议考勤快照至服务器', 'Save Meeting Snapshot to Server')}`);
+        set('#saveSnapshotModalSub', bi('将当前已导入全部表格明细与考勤分析结果完整保存，便于多端同步与历史回溯。', 'Save all imported sheet details and attendance analysis for cross-device sync and history.'));
+        const snapTitleLabel = $('#snapTitleLabel'); if (snapTitleLabel) snapTitleLabel.innerHTML = `<strong>${bi('快照名称：', 'Snapshot Title: ')}</strong>`;
+        const snapDateLabel = $('#snapDateLabel'); if (snapDateLabel) snapDateLabel.innerHTML = `<strong>${bi('会议日期：', 'Meeting Date: ')}</strong>`;
+        if ($('#snapTitleInput')) $('#snapTitleInput').placeholder = bi('例如：2026-09-22 埃及网安例会考勤分析', 'e.g. 2026-09-22 Egypt Cyber Security Meeting Attendance');
+        set('#saveSnapshotNotice', `💡 ${bi('快照将完整保存 5 类已导入表格的全部原始行列及列配置、合并去重人员名单、BU 考勤统计以及规则配置，方便日后随时一键恢复。', 'The snapshot saves all 5 table raw rows and columns, deduplicated attendees, BU stats, and rule configs for instant one-click restoration.')}`);
+        set('#saveSnapshotCancelBtn', bi('取消', 'Cancel'));
+        set('#saveSnapshotSubmitBtn', `💾 ${bi('确认保存到服务器', 'Save to Server')}`);
+        set('#snapshotModalTitle', `📚 ${bi('会议考勤历史快照库', 'Meeting Attendance Snapshot Library')}`);
+        set('#snapshotModalSub', bi('浏览、回溯与恢复保存在服务器上的历史会议考勤数据', 'Browse, inspect and restore historical meeting attendance data saved on server.'));
+        if ($('#smSearchInput')) $('#smSearchInput').placeholder = bi('按会议快照名称或日期过滤...', 'Filter by snapshot title or date...');
+        set('#smImportBtn', `📥 ${bi('导入本地快照', 'Import Local Snapshot')}`);
+        set('#smNewSnapshotBtn', `📸 ${bi('保存当前为新快照', 'Save Current Snapshot')}`);
         set('#columnModal .modal-head h3', bi('选择显示列', 'Choose Display Columns')); set('#columnDefaultBtn', bi('恢复默认列', 'Restore Defaults')); set('#columnAllBtn', bi('全选', 'Select All')); set('#columnNoneBtn', bi('清空选择', 'Clear Selection')); set('#columnCancelBtn', bi('取消', 'Cancel')); set('#columnApplyBtn', bi('应用', 'Apply'));
         set('#mappingModal .modal-head h3', bi('Customer Group 映射设置', 'Customer Group Mapping')); set('#mappingModal .modal-head p', bi('仅应用于“三类合并人员备用名单”，匹配时忽略大小写和首尾空格。', 'Applies to the combined list; matching ignores case and surrounding spaces.')); set('#mappingAddBtn', bi('＋ 新增映射', '＋ Add Mapping')); set('#mappingDefaultBtn', bi('恢复默认', 'Restore Defaults')); set('#mappingCancelBtn', bi('取消', 'Cancel')); set('#mappingSaveBtn', bi('保存并应用', 'Save & Apply'));
         set('#mappingFromHead', bi('原始名称', 'Original Name')); set('#mappingToHead', bi('映射为', 'Map To'));
@@ -2443,6 +2771,478 @@
           ['xl/worksheets/sheet1.xml', worksheetXml(summary, [22, 14, 12, 19, 12, 19, 24], summary.length)], ['xl/worksheets/sheet2.xml', worksheetXml(people, [30, 22, 16, 24, 20, 28, 18, 17])]
         ]; return zipStore(files);
       }
+      async function buildSnapshotPayload(customTitle, customDate) {
+        const cache = await ensurePeopleCache();
+        const allPeople = cache ? (cache.all || []) : [];
+        let meetingDate = customDate;
+        if (!meetingDate) {
+          for (const s of state.sheets) {
+            const m = s.fileName && s.fileName.match(/\b(20\d\d)[-_/.](0?[1-9]|1[0-2])[-_/.](0?[1-9]|[12]\d|3[01])\b/);
+            if (m) {
+              meetingDate = `${m[1]}-${String(m[2]).padStart(2, '0')}-${String(m[3]).padStart(2, '0')}`;
+              break;
+            }
+          }
+        }
+        if (!meetingDate) {
+          meetingDate = new Date().toISOString().slice(0, 10);
+        }
+        const title = customTitle ? customTitle.trim() : `${meetingDate} ${bi('会议考勤分析', 'Meeting Attendance Analysis')}`;
+
+        const counts = { Absent: 0, 'Attend on Time': 0, Delay: 0, 'Fake Attendance': 0 };
+        const byBu = {};
+        allPeople.forEach(r => {
+          counts[r.attendance] = (counts[r.attendance] || 0) + 1;
+          const bu = normalizeName(r.bu) || 'Unidentified BU';
+          if (!byBu[bu]) byBu[bu] = { total: 0, Absent: 0, 'Attend on Time': 0, Delay: 0, 'Fake Attendance': 0 };
+          byBu[bu].total++;
+          byBu[bu][r.attendance] = (byBu[bu][r.attendance] || 0) + 1;
+        });
+        const totalAttendees = allPeople.length;
+        const onTimeCount = counts['Attend on Time'] || 0;
+        const onTimeRate = totalAttendees ? `${(onTimeCount / totalAttendees * 100).toFixed(1)}%` : '0.0%';
+        const totalRows = state.sheets.reduce((sum, s) => sum + (s.rows ? s.rows.length : 0), 0);
+
+        const attendees = allPeople.map(r => ({
+          account: r.account || '',
+          name: r.name || '',
+          bu: normalizeName(r.bu) || '',
+          customerGroup: r.customerGroup || '',
+          attendance: r.attendance || 'Attend on Time',
+          reason: r.reason || ''
+        }));
+        const anomalies = attendees.filter(r => r.attendance && r.attendance !== 'Attend on Time');
+
+        const summary = {
+          meetingDate,
+          sheetCount: state.sheets.length,
+          totalRows,
+          totalAttendees,
+          onTimeRate,
+          counts,
+          byBu,
+          attendees,
+          anomalies,
+          savedAt: new Date().toISOString()
+        };
+
+        const payload = {
+          version: 1,
+          sheets: state.sheets.map(s => ({
+            id: s.id,
+            category: s.category,
+            fileName: s.fileName,
+            sheetName: s.sheetName,
+            headers: s.headers,
+            rows: s.rows,
+            visibleColumns: s.visibleColumns,
+            page: s.page || 1,
+            order: s.order
+          })),
+          customerMappings: state.customerMappings,
+          attendanceRules: state.attendanceRules,
+          exemptions: state.exemptions,
+          qualityIssuesCount: invalidAttendanceRows().length
+        };
+
+        return { title, meetingDate, summary, payload };
+      }
+
+      function openSaveSnapshotModal() {
+        if (!state.sheets.length) {
+          toast(bi('当前工作区还没有导入任何表格，无法保存快照', 'No tables imported in current workspace to snapshot'), 'error');
+          return;
+        }
+        let meetingDate = '';
+        for (const s of state.sheets) {
+          const m = s.fileName && s.fileName.match(/\b(20\d\d)[-_/.](0?[1-9]|1[0-2])[-_/.](0?[1-9]|[12]\d|3[01])\b/);
+          if (m) {
+            meetingDate = `${m[1]}-${String(m[2]).padStart(2, '0')}-${String(m[3]).padStart(2, '0')}`;
+            break;
+          }
+        }
+        if (!meetingDate) meetingDate = new Date().toISOString().slice(0, 10);
+
+        $('#snapDateInput').value = meetingDate;
+        $('#snapTitleInput').value = `${meetingDate} ${bi('会议考勤分析', 'Meeting Attendance Analysis')}`;
+
+        const totalRows = state.sheets.reduce((sum, s) => sum + (s.rows ? s.rows.length : 0), 0);
+        const peopleCount = state.peopleCache ? (state.peopleCache.all ? state.peopleCache.all.length : 0) : '—';
+
+        $('#saveSnapshotStats').innerHTML = `
+          <div class="snap-stat-item"><span class="label">${bi('已导表格', 'Sheets')}</span><span class="val">${state.sheets.length} ${bi('张', '')}</span></div>
+          <div class="snap-stat-item"><span class="label">${bi('原始总行数', 'Total Rows')}</span><span class="val">${totalRows.toLocaleString()} ${bi('行', '')}</span></div>
+          <div class="snap-stat-item"><span class="label">${bi('去重参会人', 'Attendees')}</span><span class="val">${peopleCount} ${bi('人', '')}</span></div>
+          <div class="snap-stat-item"><span class="label">${bi('数据状态', 'Data Status')}</span><span class="val" style="color:#15803d">● ${bi('可保存完整明细', 'Ready to save')}</span></div>
+        `;
+        $('#saveSnapshotModal').classList.remove('hidden');
+        setTimeout(() => $('#snapTitleInput')?.focus(), 50);
+      }
+
+      function closeSaveSnapshotModal() {
+        $('#saveSnapshotModal').classList.add('hidden');
+      }
+
+      async function submitSaveSnapshot() {
+        const title = ($('#snapTitleInput').value || '').trim();
+        const meetingDate = $('#snapDateInput').value || new Date().toISOString().slice(0, 10);
+        if (!title) {
+          toast(bi('请输入快照名称', 'Please enter snapshot title'), 'error');
+          return;
+        }
+        try {
+          showLoading(true, bi('正在生成快照并保存至服务器…', 'Saving snapshot to server…'), 30);
+          await nextPaint();
+          const snapshotData = await buildSnapshotPayload(title, meetingDate);
+          showLoading(true, bi('正在传输快照数据…', 'Uploading snapshot data…'), 70);
+          await nextPaint();
+          const resp = await fetch('/api/meeting-snapshots', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(snapshotData)
+          });
+          const res = await resp.json();
+          if (!resp.ok || !res.success) {
+            throw new Error(res.error || '保存快照失败');
+          }
+          showLoading(true, bi('快照保存成功！', 'Snapshot saved successfully!'), 100);
+          await nextPaint();
+          closeSaveSnapshotModal();
+          toast(bi('✅ 会议考勤快照已成功保存到服务器！', 'Meeting snapshot saved to server!'));
+          if (!$('#snapshotModal').classList.contains('hidden')) {
+            loadAndRenderSnapshotList();
+          }
+        } catch (err) {
+          console.error(err);
+          toast(`${bi('保存失败', 'Save failed')}：${err.message}`, 'error', 6000);
+        } finally {
+          showLoading(false);
+        }
+      }
+
+      function openSnapshotManagerModal() {
+        $('#snapshotModal').classList.remove('hidden');
+        $('#smSearchInput').value = '';
+        loadAndRenderSnapshotList();
+      }
+
+      function closeSnapshotManagerModal() {
+        $('#snapshotModal').classList.add('hidden');
+      }
+
+      async function loadAndRenderSnapshotList() {
+        const container = $('#smListContainer');
+        container.innerHTML = `<div class="empty" style="padding:32px 0;text-align:center"><p style="color:#64748b">${bi('正在读取服务器快照列表…', 'Loading snapshots from server…')}</p></div>`;
+        try {
+          const resp = await fetch('/api/meeting-snapshots');
+          const res = await resp.json();
+          if (!resp.ok || !res.success) {
+            throw new Error(res.error || '获取快照列表失败');
+          }
+          state.snapshotsList = res.data || [];
+          renderSnapshotCardsList(state.snapshotsList);
+        } catch (err) {
+          console.error(err);
+          container.innerHTML = `<div class="empty" style="padding:32px 0;text-align:center;color:#ef4444"><p>${bi('读取快照失败', 'Failed to load snapshots')}：${esc(err.message)}</p><button class="btn btn-primary" onclick="window.__meetingAttendance.openSnapshotManagerModal()" style="margin-top:10px">${bi('重试', 'Retry')}</button></div>`;
+        }
+      }
+
+      function filterSnapshotCards(query) {
+        const q = (query || '').trim().toLowerCase();
+        if (!state.snapshotsList) return;
+        if (!q) {
+          renderSnapshotCardsList(state.snapshotsList);
+          return;
+        }
+        const filtered = state.snapshotsList.filter(s => {
+          const title = (s.title || '').toLowerCase();
+          const date = (s.meeting_date || '').toLowerCase();
+          return title.includes(q) || date.includes(q);
+        });
+        renderSnapshotCardsList(filtered);
+      }
+
+      function renderSnapshotCardsList(list) {
+        const container = $('#smListContainer');
+        if (!list || !list.length) {
+          container.innerHTML = `
+            <div class="empty" style="padding:48px 0;text-align:center">
+              <div style="font-size:36px;margin-bottom:12px">📭</div>
+              <h4 style="font-size:16px;color:#1e293b;margin:0 0 8px 0">${bi('暂无保存的会议快照', 'No Saved Meeting Snapshots')}</h4>
+              <p style="color:#64748b;font-size:13px;margin:0">${bi('导入考勤表格后点击顶部的“📸 保存快照”即可保存', 'Import attendance tables and click "📸 Save Snapshot" to save one.')}</p>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = list.map(s => {
+          const sum = s.summary || {};
+          const counts = sum.counts || {};
+          const byBu = sum.byBu || {};
+          const buEntries = Object.entries(byBu);
+          const timeStr = s.updated_at || s.created_at || '';
+          const displayTime = timeStr ? new Date(timeStr).toLocaleString() : '';
+
+          let buPreviewHtml = '';
+          if (buEntries.length) {
+            const buRowsHtml = buEntries.map(([buName, b]) => {
+              const buRate = b.total ? `${(b['Attend on Time'] / b.total * 100).toFixed(1)}%` : '0.0%';
+              return `<tr>
+                <td style="text-align:left;font-weight:600">${esc(buName)}</td>
+                <td>${b.total}</td>
+                <td style="color:#15803d;font-weight:600">${b['Attend on Time']}</td>
+                <td style="color:#b91c1c">${b.Absent}</td>
+                <td style="color:#854d0e">${b.Delay}</td>
+                <td style="color:#9d174d">${b['Fake Attendance']}</td>
+                <td style="font-weight:700;color:#15803d">${buRate}</td>
+              </tr>`;
+            }).join('');
+
+            buPreviewHtml = `
+              <div class="snapshot-preview-panel" id="preview-bu-${s.id}">
+                <div style="font-size:12px;font-weight:700;color:#334155;margin-bottom:8px">📊 BU 考勤概览预览（无需覆盖工作区即可查看）：</div>
+                <table class="snapshot-preview-table">
+                  <thead>
+                    <tr>
+                      <th style="text-align:left">BU</th>
+                      <th>${bi('总人数', 'Total')}</th>
+                      <th>${bi('准时', 'On Time')}</th>
+                      <th>${bi('缺席', 'Absent')}</th>
+                      <th>${bi('迟到', 'Delay')}</th>
+                      <th>${bi('虚假', 'Fake')}</th>
+                      <th>${bi('准时率', 'Rate')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>${buRowsHtml}</tbody>
+                </table>
+              </div>
+            `;
+          }
+
+          return `
+            <div class="snapshot-card" data-card-id="${s.id}">
+              <div class="snapshot-card-head">
+                <div class="snapshot-card-title-group">
+                  <span class="snapshot-date-badge">📅 ${esc(s.meeting_date || '—')}</span>
+                  <h4 class="snapshot-card-title">${esc(s.title || bi('未命名快照', 'Untitled Snapshot'))}</h4>
+                  <span class="snapshot-time-badge">${displayTime ? `⏱ ${displayTime}` : ''}</span>
+                </div>
+                <div class="snapshot-card-actions">
+                  ${buEntries.length ? `<button class="btn" data-action="toggle-bu" data-id="${s.id}">👁 ${bi('BU分布预览', 'Preview BU')}</button>` : ''}
+                  <button class="btn btn-primary" data-action="restore" data-id="${s.id}" title="将该快照的全部表格和数据完整载入到工作区">⚡ ${bi('载入工作区', 'Load to Workspace')}</button>
+                  <button class="btn" data-action="export-json" data-id="${s.id}" title="导出快照为本地 JSON 文件">⇩ ${bi('导出JSON', 'Export JSON')}</button>
+                  <button class="btn" data-action="rename" data-id="${s.id}">✏ ${bi('重命名', 'Rename')}</button>
+                  <button class="btn" data-action="delete" data-id="${s.id}" style="color:#ef4444">🗑 ${bi('删除', 'Delete')}</button>
+                </div>
+              </div>
+              <div class="snapshot-card-stats">
+                <span class="snap-chip">👥 <b>${sum.totalAttendees ?? 0}</b> ${bi('人参会', 'attendees')}</span>
+                <span class="snap-chip rate">🎯 <b>${sum.onTimeRate || '0.0%'}</b> ${bi('准时率', 'On-time')}</span>
+                <span class="snap-chip absent">❌ <b>${counts.Absent ?? 0}</b> ${bi('缺席', 'Absent')}</span>
+                <span class="snap-chip delay">⏱ <b>${counts.Delay ?? 0}</b> ${bi('迟到', 'Delay')}</span>
+                <span class="snap-chip fake">⚠️ <b>${counts['Fake Attendance'] ?? 0}</b> ${bi('虚假', 'Fake')}</span>
+                <span class="snap-chip">📄 <b>${sum.sheetCount ?? 0}</b> ${bi('张表格', 'sheets')}</span>
+                <span class="snap-chip">📊 <b>${(sum.totalRows ?? 0).toLocaleString()}</b> ${bi('总行数', 'rows')}</span>
+              </div>
+              ${buPreviewHtml}
+            </div>
+          `;
+        }).join('');
+      }
+
+      async function handleSnapshotCardAction(e) {
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        const action = btn.dataset.action;
+        const id = btn.dataset.id;
+        const item = (state.snapshotsList || []).find(x => String(x.id) === String(id));
+
+        if (action === 'toggle-bu') {
+          const panel = $(`#preview-bu-${id}`);
+          if (panel) {
+            panel.classList.toggle('open');
+            btn.textContent = panel.classList.contains('open') ? `🙈 ${bi('收起预览', 'Hide BU')}` : `👁 ${bi('BU分布预览', 'Preview BU')}`;
+          }
+          return;
+        }
+
+        if (action === 'restore') {
+          if (state.sheets.length > 0) {
+            const ok = confirm(bi('载入快照将替换当前工作区中的全部表格和分析数据，是否确定继续？', 'Loading a snapshot will replace all current tables and analysis data. Continue?'));
+            if (!ok) return;
+          }
+          try {
+            showLoading(true, bi('正在从服务器读取快照完整数据…', 'Loading full snapshot from server…'), 40);
+            await nextPaint();
+            const resp = await fetch(`/api/meeting-snapshots/${id}`);
+            const res = await resp.json();
+            if (!resp.ok || !res.success || !res.data) {
+              throw new Error(res.error || '获取快照详情失败');
+            }
+            restoreMeetingSnapshot(res.data);
+          } catch (err) {
+            console.error(err);
+            toast(`${bi('载入失败', 'Load failed')}：${err.message}`, 'error', 6000);
+          } finally {
+            showLoading(false);
+          }
+          return;
+        }
+
+        if (action === 'export-json') {
+          try {
+            showLoading(true, bi('正在准备导出文件…', 'Preparing snapshot export…'), 50);
+            await nextPaint();
+            const resp = await fetch(`/api/meeting-snapshots/${id}`);
+            const res = await resp.json();
+            if (!resp.ok || !res.success || !res.data) {
+              throw new Error(res.error || '获取快照失败');
+            }
+            const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const safeTitle = (res.data.title || 'snapshot').replace(/[\/\\?%*:|"<>]/g, '_');
+            a.download = `${safeTitle}_${res.data.meeting_date || ''}.json`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            toast(bi('快照 JSON 文件导出成功', 'Snapshot JSON exported'));
+          } catch (err) {
+            console.error(err);
+            toast(`${bi('导出失败', 'Export failed')}：${err.message}`, 'error', 6000);
+          } finally {
+            showLoading(false);
+          }
+          return;
+        }
+
+        if (action === 'rename') {
+          const curTitle = item ? item.title : '';
+          const newTitle = prompt(bi('请输入新的快照名称：', 'Enter new snapshot title:'), curTitle);
+          if (!newTitle || !newTitle.trim() || newTitle.trim() === curTitle) return;
+          try {
+            const resp = await fetch(`/api/meeting-snapshots/${id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ title: newTitle.trim() })
+            });
+            const res = await resp.json();
+            if (!resp.ok || !res.success) {
+              throw new Error(res.error || '重命名失败');
+            }
+            toast(bi('快照重命名成功', 'Snapshot renamed'));
+            loadAndRenderSnapshotList();
+          } catch (err) {
+            console.error(err);
+            toast(`${bi('重命名失败', 'Rename failed')}：${err.message}`, 'error', 6000);
+          }
+          return;
+        }
+
+        if (action === 'delete') {
+          const title = item ? item.title : id;
+          const ok = confirm(bi(`确定要删除快照 "${title}" 吗？此操作无法撤销。`, `Delete snapshot "${title}"? This cannot be undone.`));
+          if (!ok) return;
+          try {
+            const resp = await fetch(`/api/meeting-snapshots/${id}`, {
+              method: 'DELETE'
+            });
+            const res = await resp.json();
+            if (!resp.ok || !res.success) {
+              throw new Error(res.error || '删除失败');
+            }
+            toast(bi('快照已成功删除', 'Snapshot deleted'));
+            loadAndRenderSnapshotList();
+          } catch (err) {
+            console.error(err);
+            toast(`${bi('删除失败', 'Delete failed')}：${err.message}`, 'error', 6000);
+          }
+          return;
+        }
+      }
+
+      async function handleImportSnapshotFile(e) {
+        const file = e.target.files && e.target.files[0];
+        e.target.value = '';
+        if (!file) return;
+        try {
+          showLoading(true, bi('正在读取本地快照文件…', 'Reading local snapshot…'), 30);
+          await nextPaint();
+          const text = await file.text();
+          const json = JSON.parse(text);
+          if (!json || !json.payload || !Array.isArray(json.payload.sheets)) {
+            throw new Error('无效的会议快照 JSON 文件（缺少 payload.sheets 表格数据）');
+          }
+          showLoading(true, bi('正在上传快照至服务器…', 'Uploading to server…'), 70);
+          await nextPaint();
+          const resp = await fetch('/api/meeting-snapshots', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              title: json.title || file.name.replace(/\.json$/i, ''),
+              meetingDate: json.meeting_date || json.meetingDate || new Date().toISOString().slice(0, 10),
+              summary: json.summary || {},
+              payload: json.payload
+            })
+          });
+          const res = await resp.json();
+          if (!resp.ok || !res.success) {
+            throw new Error(res.error || '导入失败');
+          }
+          showLoading(true, bi('导入成功！', 'Imported successfully!'), 100);
+          await nextPaint();
+          toast(bi('✅ 本地快照已成功导入到服务器！', 'Local snapshot imported to server!'));
+          loadAndRenderSnapshotList();
+        } catch (err) {
+          console.error(err);
+          toast(`${bi('导入快照失败', 'Failed to import snapshot')}：${err.message}`, 'error', 6000);
+        } finally {
+          showLoading(false);
+        }
+      }
+
+      function restoreMeetingSnapshot(snapshot) {
+        if (!snapshot || !snapshot.payload || !Array.isArray(snapshot.payload.sheets)) {
+          throw new Error('快照数据损坏，无法恢复');
+        }
+        const p = snapshot.payload;
+        state.sheets = p.sheets.map(s => ({
+          id: s.id || uid(),
+          category: s.category,
+          fileName: s.fileName,
+          sheetName: s.sheetName,
+          headers: s.headers,
+          rows: s.rows,
+          visibleColumns: s.visibleColumns || defaultColumnIndices(s.category, s.headers),
+          page: 1,
+          order: s.order || 1
+        }));
+
+        if (Array.isArray(p.customerMappings) && p.customerMappings.length) {
+          state.customerMappings = p.customerMappings;
+          try { localStorage.setItem(MAPPING_STORAGE_KEY, JSON.stringify(state.customerMappings)); } catch (e) { }
+        }
+        if (p.attendanceRules) {
+          state.attendanceRules = p.attendanceRules;
+          try { localStorage.setItem(ATTENDANCE_STORAGE_KEY, JSON.stringify(state.attendanceRules)); } catch (e) { }
+        }
+        if (Array.isArray(p.exemptions) && p.exemptions.length) {
+          state.exemptions = p.exemptions;
+          try { localStorage.setItem(EXEMPTION_STORAGE_KEY, JSON.stringify(state.exemptions)); } catch (e) { }
+        }
+
+        invalidatePeopleCache();
+        state.active = 'people';
+        state.sidebarCollapsed = true;
+        try { localStorage.setItem(SIDEBAR_STORAGE_KEY, '1'); } catch (e) { }
+        applySidebarState();
+        closeSnapshotManagerModal();
+        render();
+        toast(bi(`✅ 已成功载入快照并恢复工作区：${snapshot.title}`, `Snapshot restored: ${snapshot.title}`));
+      }
+
       async function exportAnalysis() {
         if (!state.sheets.some(s => ['qr', 'rfc', 'wfm'].includes(s.category))) { toast(bi('请先导入 QR、RFC 或 WFM 表格', 'Import QR, RFC or WFM tables first'), 'error'); return; }
         try {
@@ -2451,8 +3251,8 @@
       }
       function showLoading(on, text, percent) { $('#loading').classList.toggle('hidden', !on); if (text) $('#loadingText').textContent = text; if (percent != null) { const p = Math.max(0, Math.min(100, Math.round(percent))); $('#loadingBar').style.width = p + '%'; $('#loadingPercent').textContent = p + '%'; } }
       function nextPaint() { return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); }
-      function toast(msg, type = '', duration = 2800) { const t = document.createElement('div'); t.className = 'toast ' + type; t.textContent = msg; $('#toasts').appendChild(t); setTimeout(() => t.remove(), duration); }
-      window.__meetingAttendance = { state, CATEGORIES, DEFAULT_COLUMNS, DEFAULT_CUSTOMER_MAPPINGS, DEFAULT_ATTENDANCE_RULES, PRESET_EXEMPTIONS, activeExemptions, handleDeveloperUnlock, disableDeveloperMode, parseDelimited, normalizeRows, classifySheet, defaultColumnIndices, getDisplayColumns, parsePeopleCell, parseQrPairedPeople, parseCreateTime, parseAttendanceMinute, beijingToCairoAttendance, buildAttendanceIndex, getAttendanceRecord, getExemption, determineAttendance, extractQrPeople, extractRfcPeople, extractWfmPeople, extractAllPeople, mapCustomerGroup, resolveSearchIdentities, searchRequiredRows, searchAttendanceRows, validBusinessTimes, formatDateRange, roleCounts, roleLabel, sheetFingerprint, removeDuplicateSheets, renderAttendanceDashboard, renderCombinedPeopleCard, renderPeopleCard, renderPersonSearchPanel, renderPersonSearchResults, buildAnalysisTables, buildAnalysisWorkbook };
+      function toast(msg, type = '', duration = 2800) { const host = $('#toasts'); if (!host || typeof host.appendChild !== 'function') return; const t = document.createElement('div'); t.className = 'toast ' + type; t.textContent = msg; host.appendChild(t); setTimeout(() => t.remove?.(), duration); }
+      window.__meetingAttendance = { state, CATEGORIES, DEFAULT_COLUMNS, DEFAULT_CUSTOMER_MAPPINGS, DEFAULT_ATTENDANCE_RULES, PRESET_EXEMPTIONS, activeExemptions, handleDeveloperUnlock, disableDeveloperMode, parseDelimited, normalizeRows, classifySheet, defaultColumnIndices, getDisplayColumns, parsePeopleCell, parseQrPairedPeople, parseCreateTime, parseAttendanceMinute, beijingToCairoAttendance, buildAttendanceIndex, getAttendanceRecord, getExemption, determineAttendance, extractQrPeople, extractRfcPeople, extractWfmPeople, extractAllPeople, mapCustomerGroup, resolveSearchIdentities, searchRequiredRows, searchAttendanceRows, validBusinessTimes, formatDateRange, roleCounts, roleLabel, sheetFingerprint, removeDuplicateSheets, renderAttendanceDashboard, renderCombinedPeopleCard, renderPeopleCard, renderPersonSearchPanel, renderPersonSearchResults, buildAnalysisTables, buildAnalysisWorkbook, buildSnapshotPayload, restoreMeetingSnapshot, openSaveSnapshotModal, closeSaveSnapshotModal, openSnapshotManagerModal, closeSnapshotManagerModal, filterSnapshotCards };
       init();
     })();
   </script>

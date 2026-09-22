@@ -417,6 +417,74 @@
         return target;
     }
 
+    function convertBlocksToEmailTables(node) {
+        if (!node || !node.childNodes) return node;
+        const children = Array.from(node.childNodes);
+        for (const child of children) {
+            if (child.nodeType !== Node.ELEMENT_NODE) continue;
+
+            if (child.tagName === 'TABLE') {
+                child.setAttribute('width', '100%');
+                child.style.width = '100%';
+                child.style.borderCollapse = 'collapse';
+                continue;
+            }
+
+            if (child.querySelector && child.querySelector('table')) {
+                convertBlocksToEmailTables(child);
+                continue;
+            }
+
+            const isBlock = ['DIV', 'SECTION', 'P', 'H1', 'H2', 'H3', 'H4'].includes(child.tagName);
+            if (isBlock) {
+                const subBlocks = Array.from(child.children).filter(c =>
+                    ['DIV', 'P', 'H1', 'H2', 'H3', 'H4', 'SECTION'].includes(c.tagName)
+                );
+
+                const tbl = document.createElement('table');
+                tbl.setAttribute('role', 'presentation');
+                tbl.setAttribute('width', '100%');
+                tbl.setAttribute('cellpadding', '0');
+                tbl.setAttribute('cellspacing', '0');
+                tbl.setAttribute('border', '0');
+                tbl.style.cssText = 'width:100%;border-collapse:collapse;margin:0 auto;';
+                if (child.id) tbl.id = child.id;
+
+                const tbody = document.createElement('tbody');
+                tbl.appendChild(tbody);
+
+                if (subBlocks.length > 0) {
+                    for (const sub of subBlocks) {
+                        const tr = document.createElement('tr');
+                        const td = document.createElement('td');
+                        td.setAttribute('width', '100%');
+                        let subStyle = sub.style ? sub.style.cssText : '';
+                        td.style.cssText = (subStyle ? subStyle + ';' : '') + 'width:100%;box-sizing:border-box;vertical-align:top;';
+                        while (sub.firstChild) {
+                            td.appendChild(sub.firstChild);
+                        }
+                        tr.appendChild(td);
+                        tbody.appendChild(tr);
+                    }
+                } else {
+                    const tr = document.createElement('tr');
+                    const td = document.createElement('td');
+                    td.setAttribute('width', '100%');
+                    let childStyle = child.style ? child.style.cssText : '';
+                    td.style.cssText = (childStyle ? childStyle + ';' : '') + 'width:100%;box-sizing:border-box;vertical-align:top;';
+                    while (child.firstChild) {
+                        td.appendChild(child.firstChild);
+                    }
+                    tr.appendChild(td);
+                    tbody.appendChild(tr);
+                }
+
+                node.replaceChild(tbl, child);
+            }
+        }
+        return node;
+    }
+
     function showError(error) {
         // Fallback or external error handler that re-uses or displays the modal
         const logger = new MsgExportLogger();
@@ -486,11 +554,49 @@
             } finally {
                 if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
             }
-            logger.info('已完成表格边框、背景、单元格对齐及文字样式的内联计算');
+            if (content) {
+                content.style.maxWidth = 'none';
+                content.style.width = '100%';
+                content.style.margin = '0 auto';
+                content.style.border = 'none';
+                convertBlocksToEmailTables(content);
+            }
+            logger.info('已完成表格边框、背景、单元格对齐及文字样式的内联计算与邮件表格结构规整');
 
             // [STEP 3/7] 封装 HTML & 纯文本 (宽屏适配，100% 充满容器，文案与表格对齐)
             logger.step(3, 7, '正在封装完整 HTML 正文与纯文本降级备份...');
-            const html = `<!doctype html><html><head><meta charset="utf-8"></head><body style="margin:0;background:#ffffff;color:#0f172a;font-family:Microsoft YaHei,Arial,sans-serif"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:#ffffff;width:100%"><tr><td style="padding:16px 12px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;max-width:1450px;margin:0 auto"><tr><td style="width:100%">${content.outerHTML}</td></tr></table></td></tr></table></body></html>`;
+            const html = `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!--[if mso]>
+  <style type="text/css">
+    body, table, td, p, div, span, h1, h2, h3, th { font-family: "Microsoft YaHei", Arial, sans-serif !important; }
+    table { border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+  </style>
+  <![endif]-->
+</head>
+<body style="margin:0;padding:16px 8px;background:#f8fafc;color:#0f172a;font-family:'Microsoft YaHei',Arial,sans-serif;-webkit-font-smoothing:antialiased;">
+  <!--[if (gte mso 9)|(IE)]>
+  <table role="presentation" width="1320" align="center" cellpadding="0" cellspacing="0" border="0" style="width:1320px;">
+    <tr>
+      <td style="padding:0;background:#ffffff;">
+  <![endif]-->
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%;max-width:1320px;margin:0 auto;background:#ffffff;box-sizing:border-box;">
+    <tr>
+      <td style="width:100%;padding:0;margin:0;vertical-align:top;">
+        ${content.outerHTML}
+      </td>
+    </tr>
+  </table>
+  <!--[if (gte mso 9)|(IE)]>
+      </td>
+    </tr>
+  </table>
+  <![endif]-->
+</body>
+</html>`;
             const text = (root.innerText || root.textContent || '').trim();
             logger.info(`HTML 正文大小: ${formatBytes(html.length)}，纯文本摘要: ${text.length} 字符`);
 

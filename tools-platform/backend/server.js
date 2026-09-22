@@ -64,6 +64,9 @@ const topicSnapshotsRoutes = require('./routes/topic-snapshots');
 const prauditRoutes = require('./routes/praudit');
 const chatHistoryRoutes = require('./routes/chat-history');
 const customToolsRoutes = require('./routes/custom-tools');
+const monthlySnapshotsRoutes = require('./routes/monthly-snapshots');
+const meetingSnapshotsRoutes = require('./routes/meeting-snapshots');
+const operationIncentiveSnapshotsRoutes = require('./routes/operation-incentive-snapshots');
 const f12LicensePublicRoutes = require('./routes/f12-license-public');
 const desktopLicenseLocal = require('./routes/desktop-license-local');
 const isDesktopRuntime = process.env.TOOLS_DESKTOP_RUNTIME === '1';
@@ -347,7 +350,10 @@ app.use('/api', (req, res, next) => {
     if (req.path.startsWith('/requirements')) return next(); // 需求管理内部自行控制权限
     if (req.path.startsWith('/surveys')) return next(); // 调查模板和提交由模块内部控制权限
     if (req.method === 'POST' && req.path === '/db/config/monthly_report_titles') return next(); // 登录用户可编辑月报中英文标题，路由内继续校验数据
-    if (/^\/custom-tools\/[^/]+\/(?:state(?:\/restore)?|history(?:\/[^/]+)?)$/.test(req.path)) return next(); // 登录用户可维护自定义工具业务数据
+    if (/^\/monthly-snapshots(?:\/[^/]+)?$/.test(req.path)) return next(); // 登录用户可维护各月份月报快照
+    if (/^\/meeting-snapshots(?:\/[^/]+)?$/.test(req.path)) return next(); // 登录用户可维护会议考勤历史快照
+    if (/^\/(?:operation-incentive-snapshots|incentive-snapshots)(?:\/[^/]+)?$/.test(req.path)) return next(); // 登录用户可维护操作激励历史快照
+    if (/^\/custom-tools\/[^/]+\/(?:state(?:\/restore)?|history(?:\/[^/]+)?|snapshots(?:\/[^/]+)?)$/.test(req.path)) return next(); // 登录用户可维护自定义工具业务数据及快照
     if ((req.method === 'POST' && /^\/department-reward-penalty\/(?:records|evidence)$/.test(req.path)) ||
         (req.method === 'DELETE' && /^\/department-reward-penalty\/records\/[^/]+$/.test(req.path))) return next(); // 普通用户可提交草稿、证据和删除草稿，路由内校验发布和归属权限
     if ((req.method === 'POST' && /^\/reward-program\/(?:applications(?:\/[^/]+\/(?:save|submit|publish))?|evidence)$/.test(req.path)) ||
@@ -375,6 +381,10 @@ app.use('/api/storage', storageRoutes); // 存储迁移状态 API
 app.use('/api/db-explorer', require('./routes/db-explorer')); // 数据库浏览 API
 app.use('/api/frt', frtRoutes); // FRT 历史快照 API
 app.use('/api/topic-snapshots', topicSnapshotsRoutes); // NetCare/DataFab 专题历史快照 API
+app.use('/api/monthly-snapshots', monthlySnapshotsRoutes); // 跨设备月报快照持久化 API
+app.use('/api/meeting-snapshots', meetingSnapshotsRoutes); // 会议考勤历史快照持久化 API
+app.use('/api/operation-incentive-snapshots', operationIncentiveSnapshotsRoutes); // 操作激励历史快照持久化 API
+app.use('/api/incentive-snapshots', operationIncentiveSnapshotsRoutes); // 别名路由
 app.use('/api/report-msg', require('./routes/report-msg')); // 月报 Outlook 邮件文件导出
 app.use('/api/praudit', prauditRoutes); // PR审计配置 API
 app.use('/api/chat-history', chatHistoryRoutes); // 租户隔离的聊天记录中心

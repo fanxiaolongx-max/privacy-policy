@@ -347,6 +347,24 @@ test('column aggregation splits headers into two rows with multi-line notes and 
     assert.match(msgJs, /target\.setAttribute\('width',\s*'100%'\)/);
 });
 
+test('exportMonthlyHtml does not leak ody> text and report-msg-export converts blocks into email tables', () => {
+    const source = fs.readFileSync(path.join(__dirname, '../backend/builtin-tools/esn-check/index.html'), 'utf8');
+    const msgJs = fs.readFileSync(path.join(__dirname, '../frontend/js/shared/report-msg-export.js'), 'utf8');
+
+    // 1. Must not contain unescaped broken literal `</' + 'head>` or `<' + 'body>`
+    assert.doesNotMatch(source, /^[ \t]*<\/' \+ 'head>/m);
+    assert.doesNotMatch(source, /^[ \t]*<' \+ 'body>/m);
+    assert.match(source, /\$\{'<\/' \+ 'head>'\}/);
+    assert.match(source, /\$\{'<' \+ 'body>'\}/);
+
+    // 2. exportMonthlyHtml overrides inner report-sheet max-width to fill license-html-page
+    assert.match(source, /\.license-html-page \.report-sheet\s*\{\s*[^}]*max-width:\s*none/);
+
+    // 3. Email export defines convertBlocksToEmailTables and uses MSO width 1320
+    assert.match(msgJs, /function convertBlocksToEmailTables\(/);
+    assert.match(msgJs, /<!--\[if \(gte mso 9\)\|\(IE\)\]>\s*<table role="presentation" width="1320"/);
+});
+
 
 
 

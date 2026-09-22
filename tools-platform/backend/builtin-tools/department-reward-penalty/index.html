@@ -595,6 +595,7 @@ dialog::backdrop{background:rgba(15,23,42,.48);backdrop-filter:blur(5px);-webkit
 .role-check-banner{padding:10px 14px;border-radius:8px;font-size:13px;display:flex;align-items:flex-start;gap:8px;line-height:1.5;transition:all .15s}
 .role-check-banner.good{background:#f0fdf4;border:1px solid #86efac;color:#166534}
 .role-check-banner.bad{background:#fff1f2;border:1px solid #fecdd3;color:#9f1239}
+.role-check-banner.warn{background:#fffbeb;border:1px solid #fde68a;color:#92400e}
 .role-check-banner.idle{background:#f8fafc;border:1px solid #e2e8f0;color:#64748b}
 @keyframes role-shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
 .role-check-banner.shake{animation:role-shake .35s ease-in-out;border-color:#f43f5e!important;box-shadow:0 0 0 3px rgba(244,63,94,.22)!important}
@@ -791,7 +792,7 @@ dialog::backdrop{background:rgba(15,23,42,.48);backdrop-filter:blur(5px);-webkit
 <div class="filter-dropdown" data-dropdown="rule-deduction-filter"><button type="button" class="filter-btn" id="rule-deduction-filter-btn" aria-haspopup="true" aria-expanded="false"><span id="rule-deduction-filter-text">扣罚</span><span class="filter-badge" id="rule-deduction-filter-badge" hidden>0</span><svg class="filter-chevron" viewBox="0 0 12 12"><path d="M2.5 4.5L6 8L9.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="filter-popover" id="rule-deduction-filter" hidden></div></div>
 <button type="button" class="filter-clear-all-btn" data-clear-filters="rules" title="重置全部筛选条件"><svg viewBox="0 0 12 12" width="10" height="10"><path d="M2 2L10 10M10 2L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>清空筛选</button></div>
 <div class="table-wrap"><table><thead><tr><th>大类 / 子类</th><th>违规行为</th><th>适用角色</th><th>扣罚基准</th><th>权重</th><th style="width:190px;min-width:180px;text-align:right;">操作</th></tr></thead><tbody id="rows-rules"></tbody></table></div><div class="pager" id="pager-rules"></div></div></section>
-<section id="view-personnel" hidden><div class="panel"><div class="panel-head"><h3>人员名册</h3><div class="panel-head-actions"><button type="button" class="secondary" id="btn-batch-personnel" disabled title="批量编辑勾选人员的客户群、BU、角色"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 2l3 3-9 9H2v-3l9-9z"/></svg><span>批量编辑 (<span id="batch-personnel-count">0</span>)</span></button> <button type="button" class="secondary" id="import-trigger"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/></svg><span>导入 CSV</span></button> <button type="button" class="secondary" id="export-personnel"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg><span>导出 CSV</span></button> <button type="button" class="primary" data-add="personnel"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg><span>新增人员</span></button></div></div><input id="import-file" type="file" accept=".csv,text/csv" hidden>
+<section id="view-personnel" hidden><div class="panel"><div class="panel-head"><h3>人员名册</h3><div class="panel-head-actions"><button type="button" class="secondary" id="btn-extract-roster" title="从历史会议考勤快照或操作激励快照中一键提取全量人员名单并导入名册"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 14v-2a4 4 0 0 0-4-4H4a4 4 0 0 0-4 4v2"/><circle cx="6" cy="4" r="3"/><path d="M13 8l2 2 3-3"/></svg><span>👥 从快照提取名单</span></button> <button type="button" class="secondary" id="btn-batch-personnel" disabled title="批量编辑勾选人员的客户群、BU、角色"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 2l3 3-9 9H2v-3l9-9z"/></svg><span>批量编辑 (<span id="batch-personnel-count">0</span>)</span></button> <button type="button" class="secondary" id="import-trigger"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/></svg><span>导入 CSV</span></button> <button type="button" class="secondary" id="export-personnel"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg><span>导出 CSV</span></button> <button type="button" class="primary" data-add="personnel"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg><span>新增人员</span></button></div></div><input id="import-file" type="file" accept=".csv,text/csv" hidden>
 <div class="overview-mini-stats" id="personnel-stats"></div>
 <div class="filter-bar"><div class="search-wrap"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg><input class="filter-search" id="person-search" placeholder="搜索工号、姓名、角色、客户群或 BU" aria-label="搜索人员"></div>
 <div class="filter-dropdown" data-dropdown="group-filter"><button type="button" class="filter-btn" id="group-filter-btn" aria-haspopup="true" aria-expanded="false"><span id="group-filter-text">客户群</span><span class="filter-badge" id="group-filter-badge" hidden>0</span><svg class="filter-chevron" viewBox="0 0 12 12"><path d="M2.5 4.5L6 8L9.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="filter-popover" id="group-filter" hidden></div></div>
@@ -1310,6 +1311,84 @@ dialog::backdrop{background:rgba(15,23,42,.48);backdrop-filter:blur(5px);-webkit
     </div>
   </form>
 </dialog>
+
+<dialog id="snapshot-roster-dialog" style="width:min(1100px,calc(100vw - 32px));border-radius:16px;box-shadow:0 30px 70px -15px rgba(15,23,42,.35),0 0 0 1px rgba(15,23,42,.06);background:#fff;border:1px solid #cbd5e1;padding:0;overflow:hidden;">
+  <div class="dialog-head" style="padding:16px 22px;background:#fff;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;">
+    <div>
+      <h3 style="margin:0;font-size:17px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:8px;">
+        <span>👥</span>
+        <span>从快照提取人员名单</span>
+      </h3>
+      <div class="muted" style="margin-top:2px;">从历史「会议考勤快照」与「操作激励快照」中聚合提取人员，支持按条件筛选、批量补齐客户群与BU角色后导入人员名册</div>
+    </div>
+    <button type="button" class="dialog-close-btn" id="close-snapshot-roster" aria-label="关闭" title="关闭 (Esc)">
+      <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg>
+    </button>
+  </div>
+  <div style="display:flex;flex-direction:column;max-height:calc(88vh - 70px);">
+    <div style="padding:16px 22px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;">
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;">
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+          <span style="font-size:12px;font-weight:700;color:#475569;">数据源：</span>
+          <button type="button" class="tab-btn active" data-extract-source="all" style="font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;">全部 (<span id="extract-count-all">0</span>)</button>
+          <button type="button" class="tab-btn" data-extract-source="meeting" style="font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;">仅会议考勤 (<span id="extract-count-meeting">0</span>)</button>
+          <button type="button" class="tab-btn" data-extract-source="incentive" style="font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;">仅操作激励 (<span id="extract-count-incentive">0</span>)</button>
+          <button type="button" class="tab-btn" data-extract-source="new" style="font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;">仅新人员 (<span id="extract-count-new">0</span>)</button>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="text" id="extract-search-input" placeholder="按工号或姓名过滤..." style="padding:5px 10px;font-size:12px;border:1px solid #cbd5e1;border-radius:6px;width:170px;">
+        </div>
+      </div>
+
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:10px 14px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;">
+        <span style="font-size:12.5px;font-weight:750;color:#1e40af;">⚡ 批量补齐已勾选项：</span>
+        <div style="display:inline-flex;gap:4px;align-items:center;">
+          <label style="font-size:12px;color:#1e3a8a;font-weight:600;">客户群:</label>
+          <select id="extract-batch-group" style="padding:4px 8px;font-size:12px;border-radius:4px;border:1px solid #93c5fd;background:#fff;"></select>
+          <button type="button" class="secondary mini" id="btn-apply-batch-group" style="font-size:11.5px;padding:4px 8px;cursor:pointer;">一键填充</button>
+        </div>
+        <div style="display:inline-flex;gap:4px;align-items:center;">
+          <label style="font-size:12px;color:#1e3a8a;font-weight:600;">BU:</label>
+          <select id="extract-batch-bu" style="padding:4px 8px;font-size:12px;border-radius:4px;border:1px solid #93c5fd;background:#fff;"></select>
+          <button type="button" class="secondary mini" id="btn-apply-batch-bu" style="font-size:11.5px;padding:4px 8px;cursor:pointer;">一键填充</button>
+        </div>
+        <div style="display:inline-flex;gap:4px;align-items:center;">
+          <label style="font-size:12px;color:#1e3a8a;font-weight:600;">角色:</label>
+          <select id="extract-batch-role" style="padding:4px 8px;font-size:12px;border-radius:4px;border:1px solid #93c5fd;background:#fff;"></select>
+          <button type="button" class="secondary mini" id="btn-apply-batch-role" style="font-size:11.5px;padding:4px 8px;cursor:pointer;">一键填充</button>
+        </div>
+      </div>
+
+      <div class="table-wrap" style="max-height:380px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;">
+        <table style="width:100%;font-size:12px;border-collapse:collapse;">
+          <thead style="position:sticky;top:0;background:#f8fafc;z-index:2;border-bottom:1px solid #cbd5e1;">
+            <tr>
+              <th style="width:40px;text-align:center;padding:8px;"><input type="checkbox" id="extract-select-all" checked style="cursor:pointer;accent-color:var(--red);"></th>
+              <th style="width:120px;padding:8px;">工号</th>
+              <th style="width:110px;padding:8px;">姓名</th>
+              <th style="width:145px;padding:8px;">客户群 <span class="req-mark">*</span></th>
+              <th style="width:145px;padding:8px;">BU</th>
+              <th style="width:145px;padding:8px;">角色 <span class="req-mark">*</span></th>
+              <th style="padding:8px;">快照来源</th>
+              <th style="width:85px;text-align:center;padding:8px;">在册状态</th>
+            </tr>
+          </thead>
+          <tbody id="extract-roster-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="dialog-foot" style="padding:12px 22px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;">
+      <div id="extract-selection-summary" style="font-size:12.5px;color:#475569;">
+        正在加载...
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button type="button" class="secondary" id="cancel-snapshot-roster">取消</button>
+        <button type="button" class="primary" id="confirm-import-snapshot-roster" style="font-weight:700;">✅ 确认导入人员名册</button>
+      </div>
+    </div>
+  </div>
+</dialog>
+
 <dialog id="attachment-preview-dialog" class="attachment-modal">
   <div class="attach-modal-header">
     <div class="attach-modal-title-wrap">
@@ -2550,6 +2629,370 @@ async function openBatchPersonnelDialog(){
   dialog.showModal();
 }
 
+let extractedRosterCandidates = [];
+let currentExtractFilter = 'all';
+
+function updateExtractCounts() {
+  const allCount = extractedRosterCandidates.length;
+  const meetingCount = extractedRosterCandidates.filter(c => c.sources.has('meeting')).length;
+  const incentiveCount = extractedRosterCandidates.filter(c => c.sources.has('incentive')).length;
+  const newCount = extractedRosterCandidates.filter(c => !c.isExisting).length;
+
+  const elAll = $('extract-count-all'); if (elAll) elAll.textContent = allCount;
+  const elM = $('extract-count-meeting'); if (elM) elM.textContent = meetingCount;
+  const elI = $('extract-count-incentive'); if (elI) elI.textContent = incentiveCount;
+  const elN = $('extract-count-new'); if (elN) elN.textContent = newCount;
+}
+
+function getFilteredExtractCandidates() {
+  const search = String($('extract-search-input')?.value || '').trim().toLowerCase();
+  return extractedRosterCandidates.filter(cand => {
+    if (currentExtractFilter === 'meeting' && !cand.sources.has('meeting')) return false;
+    if (currentExtractFilter === 'incentive' && !cand.sources.has('incentive')) return false;
+    if (currentExtractFilter === 'new' && cand.isExisting) return false;
+    if (search) {
+      const matchId = (cand.staffId || '').toLowerCase().includes(search);
+      const matchName = (cand.name || '').toLowerCase().includes(search);
+      if (!matchId && !matchName) return false;
+    }
+    return true;
+  });
+}
+
+function updateExtractSummary() {
+  const summaryEl = $('extract-selection-summary');
+  if (!summaryEl) return;
+  const selected = extractedRosterCandidates.filter(c => c.selected);
+  const totalSelected = selected.length;
+  const readyCount = selected.filter(c => c.staffId?.trim() && c.name?.trim() && c.customerGroupId && c.role).length;
+  const missingCount = totalSelected - readyCount;
+  const newCount = selected.filter(c => !c.isExisting).length;
+
+  if (totalSelected === 0) {
+    summaryEl.innerHTML = '<span style="color:#64748b;">未勾选任何人员</span>';
+    return;
+  }
+
+  summaryEl.innerHTML = `已选 <b>${totalSelected}</b> 人 (包含新人员 <b>${newCount}</b> 人) · ` +
+    `<span style="color:#16a34a;font-weight:600;">已补齐必填项 ${readyCount} 人</span>` +
+    (missingCount > 0 ? ` · <span style="color:#dc2626;font-weight:700;">⚠️ 仍有 ${missingCount} 人缺少必填项 (工号/姓名/客户群/角色)</span>` : '');
+}
+
+function renderExtractRosterTable() {
+  const tbody = $('extract-roster-tbody');
+  if (!tbody) return;
+
+  const filtered = getFilteredExtractCandidates();
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:36px;color:#94a3b8;">未找到符合条件的候选人员快照数据</td></tr>';
+    updateExtractSummary();
+    return;
+  }
+
+  const groups = active('customerGroups');
+  const bus = active('businessUnits');
+  const roles = active('roles');
+
+  const rowsHtml = filtered.map(cand => {
+    const rawIdx = extractedRosterCandidates.indexOf(cand);
+    const sourceBadges = [];
+    if (cand.sources.has('meeting')) {
+      const titleAttr = cand.snapshotTitles.filter(t => t.includes('会议') || !t.includes('激励')).join('、') || '会议考勤快照';
+      sourceBadges.push(`<span class="badge" style="background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;font-size:11px;" title="${escapeHtml(titleAttr)}">📅 会议考勤</span>`);
+    }
+    if (cand.sources.has('incentive')) {
+      const titleAttr = cand.snapshotTitles.filter(t => t.includes('激励')).join('、') || '操作激励快照';
+      sourceBadges.push(`<span class="badge" style="background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;font-size:11px;" title="${escapeHtml(titleAttr)}">💰 操作激励</span>`);
+    }
+
+    const groupMissing = !cand.customerGroupId;
+    const roleMissing = !cand.role;
+
+    return `
+      <tr style="border-bottom:1px solid #f1f5f9;background:${cand.selected ? (cand.isExisting ? '#f8fafc' : '#ffffff') : '#f8fafc'};">
+        <td style="text-align:center;padding:6px 8px;">
+          <input type="checkbox" class="extract-row-cb" data-cand-idx="${rawIdx}" ${cand.selected ? 'checked' : ''} style="cursor:pointer;accent-color:var(--red);">
+        </td>
+        <td style="padding:6px 8px;">
+          <input type="text" class="extract-inline-staffid" data-cand-idx="${rawIdx}" value="${escapeHtml(cand.staffId || '')}" placeholder="必填工号" style="width:100px;font-size:11.5px;padding:3px 6px;border:1px solid ${cand.staffId ? '#cbd5e1' : '#f87171'};border-radius:4px;background:#fff;box-sizing:border-box;">
+        </td>
+        <td style="padding:6px 8px;">
+          <input type="text" class="extract-inline-name" data-cand-idx="${rawIdx}" value="${escapeHtml(cand.name || '')}" placeholder="必填姓名" style="width:90px;font-size:11.5px;padding:3px 6px;border:1px solid ${cand.name ? '#cbd5e1' : '#f87171'};border-radius:4px;background:#fff;font-weight:600;box-sizing:border-box;">
+        </td>
+        <td style="padding:6px 8px;">
+          <select class="extract-row-group" data-cand-idx="${rawIdx}" style="width:130px;font-size:11.5px;padding:3px 4px;border:1px solid ${groupMissing ? '#f87171' : '#cbd5e1'};border-radius:4px;background:${groupMissing ? '#fef2f2' : '#fff'};">
+            <option value="">-- 请选择客户群 * --</option>
+            ${groups.map(g => `<option value="${escapeHtml(g.id)}" ${cand.customerGroupId === g.id ? 'selected' : ''}>${escapeHtml(g.value)}</option>`).join('')}
+          </select>
+        </td>
+        <td style="padding:6px 8px;">
+          <select class="extract-row-bu" data-cand-idx="${rawIdx}" style="width:130px;font-size:11.5px;padding:3px 4px;border:1px solid #cbd5e1;border-radius:4px;background:#fff;">
+            <option value="">-- 未指定 BU --</option>
+            ${bus.map(b => `<option value="${escapeHtml(b.id)}" ${cand.businessUnitId === b.id ? 'selected' : ''}>${escapeHtml(b.value)}</option>`).join('')}
+          </select>
+        </td>
+        <td style="padding:6px 8px;">
+          <select class="extract-row-role" data-cand-idx="${rawIdx}" style="width:130px;font-size:11.5px;padding:3px 4px;border:1px solid ${roleMissing ? '#f87171' : '#cbd5e1'};border-radius:4px;background:${roleMissing ? '#fef2f2' : '#fff'};">
+            <option value="">-- 请选择角色 * --</option>
+            ${roles.map(r => `<option value="${escapeHtml(r.value)}" ${cand.role === r.value ? 'selected' : ''}>${escapeHtml(r.value)}</option>`).join('')}
+          </select>
+        </td>
+        <td style="padding:6px 8px;">
+          <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
+            ${sourceBadges.join('')}
+          </div>
+        </td>
+        <td style="text-align:center;padding:6px 8px;">
+          ${cand.isExisting ? '<span class="badge secondary" style="font-size:11px;">在册已存在</span>' : '<span class="badge primary" style="font-size:11px;background:#eff6ff;color:#1e40af;font-weight:600;">✨ 新人员</span>'}
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  tbody.innerHTML = rowsHtml;
+
+  const selectAll = $('extract-select-all');
+  if (selectAll) {
+    const allChecked = filtered.length > 0 && filtered.every(c => c.selected);
+    const someChecked = filtered.some(c => c.selected);
+    selectAll.checked = allChecked;
+    selectAll.indeterminate = !allChecked && someChecked;
+  }
+
+  updateExtractSummary();
+}
+
+function applyBatchFill(field, value) {
+  if (!value) {
+    uiAlert('请先选择要填充的属性值');
+    return;
+  }
+  const filtered = getFilteredExtractCandidates();
+  const selectedFiltered = filtered.filter(c => c.selected);
+  if (!selectedFiltered.length) {
+    uiAlert('请先勾选需要批量填充的人员');
+    return;
+  }
+  for (const cand of selectedFiltered) {
+    if (field === 'group') cand.customerGroupId = value;
+    else if (field === 'bu') cand.businessUnitId = value;
+    else if (field === 'role') cand.role = value;
+  }
+  renderExtractRosterTable();
+  showToast(`已批量填充 ${selectedFiltered.length} 位人员的属性！`, 'success');
+}
+
+async function openSnapshotRosterDialog() {
+  if (!state.canEdit) {
+    await uiAlert('当前登录身份权限不足，仅管理员可从快照提取名单导入在册人员', '权限受限', 'warning', '🔒');
+    return;
+  }
+  const dialog = $('snapshot-roster-dialog');
+  if (!dialog) return;
+
+  extractedRosterCandidates = [];
+  currentExtractFilter = 'all';
+  const tbody = $('extract-roster-tbody');
+  if (tbody) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:#64748b;"><span style="font-size:18px;">⏳</span> 正在从会议考勤快照与操作激励快照聚合提取人员名单...</td></tr>';
+  }
+  const searchInput = $('extract-search-input');
+  if (searchInput) searchInput.value = '';
+
+  const gSelect = $('extract-batch-group');
+  if (gSelect) {
+    gSelect.innerHTML = '<option value="">选择客户群...</option>' + active('customerGroups').map(g => `<option value="${escapeHtml(g.id)}">${escapeHtml(g.value)}</option>`).join('');
+  }
+  const buSelect = $('extract-batch-bu');
+  if (buSelect) {
+    buSelect.innerHTML = '<option value="">选择 BU...</option>' + active('businessUnits').map(b => `<option value="${escapeHtml(b.id)}">${escapeHtml(b.value)}</option>`).join('');
+  }
+  const rSelect = $('extract-batch-role');
+  if (rSelect) {
+    rSelect.innerHTML = '<option value="">选择角色...</option>' + active('roles').map(r => `<option value="${escapeHtml(r.value)}">${escapeHtml(r.value)}</option>`).join('');
+  }
+
+  dialog.showModal();
+
+  try {
+    const [meetingRes, incentiveRes] = await Promise.all([
+      fetch('/api/meeting-snapshots/extract-roster').then(r => r.ok ? r.json() : { roster: [] }).catch(() => ({ roster: [] })),
+      fetch('/api/operation-incentive-snapshots/extract-roster').then(r => r.ok ? r.json() : { roster: [] }).catch(() => ({ roster: [] }))
+    ]);
+
+    const meetingRoster = Array.isArray(meetingRes?.roster) ? meetingRes.roster : [];
+    const incentiveRoster = Array.isArray(incentiveRes?.roster) ? incentiveRes.roster : [];
+
+    const candidateMap = new Map();
+    const activeGroups = active('customerGroups');
+    const activeBUs = active('businessUnits');
+    const activeRoles = active('roles');
+
+    const matchGroup = (str) => {
+      if (!str) return '';
+      const s = String(str).toLowerCase().trim();
+      const match = activeGroups.find(g => g.id.toLowerCase() === s || g.value.toLowerCase() === s || g.value.toLowerCase().includes(s) || s.includes(g.value.toLowerCase()));
+      return match ? match.id : '';
+    };
+
+    const matchBU = (str) => {
+      if (!str) return '';
+      const s = String(str).toLowerCase().trim();
+      const match = activeBUs.find(b => b.id.toLowerCase() === s || b.value.toLowerCase() === s || b.value.toLowerCase().includes(s) || s.includes(b.value.toLowerCase()));
+      return match ? match.id : '';
+    };
+
+    const matchRole = (str) => {
+      if (!str) return '';
+      const s = String(str).toLowerCase().trim();
+      const match = activeRoles.find(r => r.value.toLowerCase() === s || r.value.toLowerCase().includes(s) || s.includes(r.value.toLowerCase()));
+      return match ? match.value : '';
+    };
+
+    for (const item of meetingRoster) {
+      const staffId = String(item.staffId || '').trim();
+      const name = String(item.name || '').trim();
+      const key = staffId || name;
+      if (!key) continue;
+
+      if (!candidateMap.has(key)) {
+        candidateMap.set(key, {
+          staffId,
+          name,
+          customerGroupId: matchGroup(item.customerGroup),
+          businessUnitId: matchBU(item.businessUnit),
+          role: matchRole(item.role),
+          sources: new Set(['meeting']),
+          snapshotTitles: item.snapshotTitles ? [...item.snapshotTitles] : [],
+          meetingDates: item.meetingDates ? [...item.meetingDates] : [],
+          selected: true
+        });
+      } else {
+        const cand = candidateMap.get(key);
+        cand.sources.add('meeting');
+        if (!cand.customerGroupId) cand.customerGroupId = matchGroup(item.customerGroup);
+        if (!cand.businessUnitId) cand.businessUnitId = matchBU(item.businessUnit);
+        if (!cand.role) cand.role = matchRole(item.role);
+        if (item.snapshotTitles) cand.snapshotTitles.push(...item.snapshotTitles);
+        if (item.meetingDates) cand.meetingDates.push(...item.meetingDates);
+      }
+    }
+
+    for (const item of incentiveRoster) {
+      const staffId = String(item.staffId || '').trim();
+      const name = String(item.name || '').trim();
+      const key = staffId || name;
+      if (!key) continue;
+
+      if (!candidateMap.has(key)) {
+        candidateMap.set(key, {
+          staffId,
+          name,
+          customerGroupId: '',
+          businessUnitId: '',
+          role: matchRole(item.role),
+          sources: new Set(['incentive']),
+          snapshotTitles: item.snapshotTitles ? [...item.snapshotTitles] : [],
+          meetingDates: [],
+          selected: true
+        });
+      } else {
+        const cand = candidateMap.get(key);
+        cand.sources.add('incentive');
+        if (!cand.role) cand.role = matchRole(item.role);
+        if (item.snapshotTitles) cand.snapshotTitles.push(...item.snapshotTitles);
+      }
+    }
+
+    const existingPersonnel = state.personnel || [];
+    extractedRosterCandidates = Array.from(candidateMap.values()).map(cand => {
+      const existing = existingPersonnel.find(p => !p.archived && ((cand.staffId && p.id === cand.staffId) || (cand.name && p.name === cand.name)));
+      const isExisting = Boolean(existing);
+      if (existing) {
+        if (!cand.customerGroupId && personGroups(existing).length) cand.customerGroupId = personGroups(existing)[0];
+        if (!cand.businessUnitId && personBusinessUnits(existing).length) cand.businessUnitId = personBusinessUnits(existing)[0];
+        if (!cand.role && personRoles(existing).length) cand.role = personRoles(existing)[0];
+        if (!cand.staffId && existing.id) cand.staffId = existing.id;
+        if (!cand.name && existing.name) cand.name = existing.name;
+      }
+      return {
+        ...cand,
+        isExisting,
+        snapshotTitles: [...new Set(cand.snapshotTitles)],
+        meetingDates: [...new Set(cand.meetingDates)]
+      };
+    });
+
+    extractedRosterCandidates.sort((a, b) => {
+      if (a.isExisting !== b.isExisting) return a.isExisting ? 1 : -1;
+      return (a.name || '').localeCompare(b.name || '', 'zh-CN');
+    });
+
+    updateExtractCounts();
+    document.querySelectorAll('[data-extract-source]').forEach(t => t.classList.toggle('active', t.dataset.extractSource === 'all'));
+    renderExtractRosterTable();
+  } catch (err) {
+    console.error('Failed to extract roster:', err);
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:30px;color:#ef4444;">⚠️ 提取人员名单失败：${escapeHtml(err.message)}</td></tr>`;
+    }
+  }
+}
+
+async function confirmImportSnapshotRoster() {
+  const selected = extractedRosterCandidates.filter(c => c.selected);
+  if (!selected.length) {
+    await uiAlert('请至少勾选一位需要导入的人员');
+    return;
+  }
+
+  const invalid = selected.filter(c => !c.staffId?.trim() || !c.name?.trim() || !c.customerGroupId || !c.role);
+  if (invalid.length > 0) {
+    await uiAlert(`所选人员中有 ${invalid.length} 人尚未补齐必填项（工号、姓名、客户群及角色为必填项）。\n请先使用上方的批量填充或在列表中逐行补齐后再导入。`, '必填字段不完整', 'warning', '⚠️');
+    return;
+  }
+
+  const newCount = selected.filter(c => !c.isExisting).length;
+  const updateCount = selected.length - newCount;
+
+  const confirmMsg = `确定导入选中的 ${selected.length} 位人员名单到人员名册吗？\n\n- 新增人员：${newCount} 人\n- 更新已有人员：${updateCount} 人\n\n导入后将直接存入在册人员并同步记录操作审计。`;
+  const ok = await uiConfirm(confirmMsg, '确认从快照导入人员名册', 'info', '👥');
+  if (!ok) return;
+
+  const confirmBtn = $('confirm-import-snapshot-roster');
+  if (confirmBtn) {
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = '⏳ 正在导入人员名册...';
+  }
+
+  try {
+    let successCount = 0;
+    for (const cand of selected) {
+      const payload = {
+        id: cand.staffId.trim(),
+        name: cand.name.trim(),
+        customerGroupIds: [cand.customerGroupId],
+        businessUnitIds: cand.businessUnitId ? [cand.businessUnitId] : [],
+        roles: [cand.role]
+      };
+      await request('/personnel', { method: 'POST', body: JSON.stringify(payload) });
+      successCount++;
+    }
+
+    $('snapshot-roster-dialog')?.close();
+    await uiAlert(`成功导入与更新 ${successCount} 位人员到人员名册！`, '导入成功', 'success', '🎉');
+    await refresh();
+  } catch (err) {
+    await uiAlert('导入过程中发生错误：' + err.message, '导入未完全成功', 'danger', '❌');
+    await refresh();
+  } finally {
+    if (confirmBtn) {
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = '✅ 确认导入人员名册';
+    }
+  }
+}
+
 function render(){
 const names={records:'违规记录',rules:'规则字典',personnel:'人员名册',groups:'客户群与 BU 配置',config:'角色与扣罚配置',audit:'操作审计',security:'修改口令',backup:'数据备份与恢复'};$('page-title').textContent=names[view];
 document.querySelectorAll('main section[id^="view-"]').forEach(el=>el.hidden=el.id!=='view-'+view);document.querySelectorAll('#nav button').forEach(el=>el.classList.toggle('active',el.dataset.view===view));
@@ -2678,6 +3121,7 @@ content=`<div class="field"><label for="f-group">客户群 ${groupRequired?'<spa
 `<div class="field"><label for="f-sub">违规子类 <span class="req-mark">*</span></label><select id="f-sub" required></select></div>`+
 `<div class="field full"><label for="f-rule">具体规则 <span class="req-mark">*</span></label><select id="f-rule" required></select></div>`+
 `<div class="field full"><label>责任主体与规则匹配校验</label><div id="role-check" class="role-check-banner idle"><span style="font-size:15px;">ℹ️</span><span>请先选定责任主体与具体规则，系统将自动校验角色范畴匹配性</span></div></div>`+
+`<div class="field full"><label>责任主体会议考勤历史核验</label><div id="staff-attendance-banner" class="role-check-banner idle"><span style="font-size:15px;">ℹ️</span><span>请先选定责任主体，系统将自动核验其历史会议考勤（缺席/迟到）记录</span></div></div>`+
 `<div class="field"><label for="f-deduct-category">扣罚分类</label><input id="f-deduct-category" class="readonly-value" readonly placeholder="选择规则后自动带出"></div>`+
 `<div class="field"><label for="f-deduct">实际扣罚 <span class="req-mark">*</span></label><select id="f-deduct" required><option value="">先选择具体规则</option></select></div>`+
 `<div class="field"><label for="f-evidence">证据链接 / 编号</label><input id="f-evidence" maxlength="500" placeholder="工单截图链接、监控编号或录音索引"></div>`+
@@ -2822,6 +3266,7 @@ $('f-staff').innerHTML+=option(item.staffId,(item.personSnapshot?.name||item.sta
 if(previous&&Array.from($('f-staff').options).some(o=>o.value===previous))$('f-staff').value=previous;
 else $('f-staff').value='';
 checkRole();
+checkStaffAttendance();
 };
 $('f-group').addEventListener('change',()=>{ $('f-staff').value=''; updateStaff(); });
 updateStaff();
@@ -2833,6 +3278,7 @@ if(item?.status==='published'&&historicalRule){
 if(!Array.from($('f-svc').options).some(option=>option.value===historicalRule.svcModule))$('f-svc').innerHTML+=option(historicalRule.svcModule,historicalRule.svcModule);
 $('f-svc').value=historicalRule.svcModule;
 }else if(historicalRule){
+if(!Array.from($('f-svc').options).some(option=>option.value===historicalRule.svcModule))$('f-svc').innerHTML+=option(historicalRule.svcModule,historicalRule.svcModule);
 $('f-svc').value=historicalRule.svcModule;
 }
 
@@ -2847,8 +3293,9 @@ if(deduct)$('f-deduct').value=deduct;
 cascadeSub(item&&historicalRule&&historicalRule.subModule,item&&item.ruleId);
 if(item&&item.deduct)$('f-deduct').value=item.deduct;
 updateDeduct();
+checkStaffAttendance();
 
-$('f-staff').addEventListener('change',checkRole);
+$('f-staff').addEventListener('change',()=>{ checkRole(); checkStaffAttendance(); });
 $('f-svc').addEventListener('change',()=>{ cascadeSub(); updateDeduct(); });
 $('f-sub').addEventListener('change',()=>{ cascadeRule(); updateDeduct(); });
 $('f-rule').addEventListener('change',()=>{
@@ -3061,6 +3508,64 @@ function checkRole(){
   }
   return valid===true;
 }
+
+let currentStaffAttendanceAnomaly = null;
+
+async function checkStaffAttendance() {
+  const banner = $('staff-attendance-banner');
+  if (!banner) return;
+  const staffSelect = $('f-staff');
+  const staffId = staffSelect ? staffSelect.value : '';
+  const p = staffId ? state.personnel.find(x => x.id === staffId) : null;
+  const name = p ? p.name : '';
+
+  if (!staffId && !name) {
+    banner.className = 'role-check-banner idle';
+    banner.innerHTML = '<span style="font-size:15px;">ℹ️</span><span>请先选定责任主体，系统将自动核验历史会议考勤记录</span>';
+    currentStaffAttendanceAnomaly = null;
+    return;
+  }
+
+  banner.className = 'role-check-banner idle';
+  banner.innerHTML = '<span style="font-size:15px;">⏳</span><span>正在核验责任主体历史会议考勤数据...</span>';
+
+  try {
+    const params = new URLSearchParams();
+    if (staffId) params.set('staffId', staffId);
+    if (name) params.set('name', name);
+    const res = await fetch(`/api/meeting-snapshots/attendance-check?${params.toString()}`);
+    if (!res.ok) {
+      banner.className = 'role-check-banner idle';
+      banner.innerHTML = '<span style="font-size:15px;">ℹ️</span><span>未获取到历史会议考勤数据</span>';
+      currentStaffAttendanceAnomaly = null;
+      return;
+    }
+    const data = await res.json();
+    if (!data.found || !data.hasRecords) {
+      banner.className = 'role-check-banner idle';
+      banner.innerHTML = `<span style="font-size:15px;">ℹ️</span><span><b>考勤核验：</b>未在历史会议考勤快照中检索到 <code>${escapeHtml(name || staffId)}</code> 的相关记录</span>`;
+      currentStaffAttendanceAnomaly = null;
+    } else if (data.hasAnomaly) {
+      currentStaffAttendanceAnomaly = data;
+      const issues = (data.anomalies || []).map(a => {
+        const typeBadge = a.type === 'absent' ? '缺席' : '迟到';
+        return `<code>${escapeHtml(a.meetingDate || '未知日期')}</code> [${typeBadge}] ${escapeHtml(a.meetingTitle || a.snapshotTitle || '')}`;
+      }).slice(0, 3).join('；');
+      banner.className = 'role-check-banner warn';
+      banner.innerHTML = `<span style="font-size:16px;">⚠️</span><div><b style="color:#b45309;">责任主体存在历史会议考勤异常：</b>在 <b>${escapeHtml(String(data.totalMeetingsChecked || 1))}</b> 场会议快照中累计发现 <b>${escapeHtml(String(data.anomalyCount || 1))}</b> 次考勤异常（${issues}${data.anomalyCount > 3 ? '等' : ''}）。请结合纪律考评及合规表现综合审慎评定。</div>`;
+    } else {
+      currentStaffAttendanceAnomaly = null;
+      banner.className = 'role-check-banner good';
+      banner.innerHTML = `<span style="font-size:15px;">✅</span><div><b>责任主体会议考勤全勤：</b>在检索到的 <b>${escapeHtml(String(data.totalMeetingsChecked || 1))}</b> 场历史会议考勤快照中均准时出席，无缺席或迟到记录。</div>`;
+    }
+  } catch (err) {
+    console.warn('Meeting attendance check failed:', err);
+    banner.className = 'role-check-banner idle';
+    banner.innerHTML = '<span style="font-size:15px;">ℹ️</span><span>历史会议考勤核验服务暂时不可用</span>';
+    currentStaffAttendanceAnomaly = null;
+  }
+}
+
 $('editor-form').addEventListener('submit',async event=>{
 event.preventDefault();
 const kind=editing.kind,old=editing.id&&state[kind].find(x=>x.id===editing.id);
@@ -4200,6 +4705,41 @@ if(event.target.closest('#btn-batch-personnel')){
   openBatchPersonnelDialog();
   return;
 }
+if(event.target.closest('#btn-extract-roster')){
+  openSnapshotRosterDialog();
+  return;
+}
+if(event.target.closest('#close-snapshot-roster')||event.target.closest('#cancel-snapshot-roster')){
+  $('snapshot-roster-dialog')?.close();
+  return;
+}
+if(event.target.id==='snapshot-roster-dialog'){
+  $('snapshot-roster-dialog')?.close();
+  return;
+}
+if(event.target.closest('#btn-apply-batch-group')){
+  applyBatchFill('group',$('extract-batch-group')?.value);
+  return;
+}
+if(event.target.closest('#btn-apply-batch-bu')){
+  applyBatchFill('bu',$('extract-batch-bu')?.value);
+  return;
+}
+if(event.target.closest('#btn-apply-batch-role')){
+  applyBatchFill('role',$('extract-batch-role')?.value);
+  return;
+}
+if(event.target.closest('#confirm-import-snapshot-roster')){
+  confirmImportSnapshotRoster();
+  return;
+}
+const extractTab=event.target.closest('[data-extract-source]');
+if(extractTab){
+  currentExtractFilter=extractTab.dataset.extractSource;
+  document.querySelectorAll('[data-extract-source]').forEach(t=>t.classList.toggle('active',t===extractTab));
+  renderExtractRosterTable();
+  return;
+}
 if(event.target.closest('#close-batch-personnel')||event.target.closest('#cancel-batch-personnel')){
   $('batch-personnel-dialog')?.close();
   return;
@@ -4418,6 +4958,89 @@ document.addEventListener('change',async event=>{
 const kind=event.target.dataset.pageSize;
 if(kind){pageSizes[kind]=Number(event.target.value);pages[kind]=1;localStorage.setItem('hw_dept_page_sizes_v1',JSON.stringify(pageSizes));render()}
 if(event.target.id==='audit-quick-size'){auditPageSize=Number(event.target.value);auditPage=1;await loadAudit()}
+if(event.target.id==='extract-select-all'){
+  const checked=event.target.checked;
+  getFilteredExtractCandidates().forEach(c=>c.selected=checked);
+  renderExtractRosterTable();
+  return;
+}
+if(event.target.classList?.contains('extract-row-cb')){
+  const idx=Number(event.target.dataset.candIdx);
+  if(extractedRosterCandidates[idx]){
+    extractedRosterCandidates[idx].selected=event.target.checked;
+    updateExtractSummary();
+    const filtered=getFilteredExtractCandidates();
+    const selectAll=$('extract-select-all');
+    if(selectAll){
+      selectAll.checked=filtered.length>0&&filtered.every(c=>c.selected);
+      selectAll.indeterminate=!selectAll.checked&&filtered.some(c=>c.selected);
+    }
+  }
+  return;
+}
+if(event.target.classList?.contains('extract-row-group')){
+  const idx=Number(event.target.dataset.candIdx);
+  if(extractedRosterCandidates[idx]){
+    extractedRosterCandidates[idx].customerGroupId=event.target.value;
+    event.target.style.borderColor=event.target.value?'#cbd5e1':'#f87171';
+    event.target.style.backgroundColor=event.target.value?'#fff':'#fef2f2';
+    updateExtractSummary();
+  }
+  return;
+}
+if(event.target.classList?.contains('extract-row-bu')){
+  const idx=Number(event.target.dataset.candIdx);
+  if(extractedRosterCandidates[idx]){
+    extractedRosterCandidates[idx].businessUnitId=event.target.value;
+  }
+  return;
+}
+if(event.target.classList?.contains('extract-row-role')){
+  const idx=Number(event.target.dataset.candIdx);
+  if(extractedRosterCandidates[idx]){
+    extractedRosterCandidates[idx].role=event.target.value;
+    event.target.style.borderColor=event.target.value?'#cbd5e1':'#f87171';
+    event.target.style.backgroundColor=event.target.value?'#fff':'#fef2f2';
+    updateExtractSummary();
+  }
+  return;
+}
+if(event.target.classList?.contains('extract-inline-staffid')){
+  const idx=Number(event.target.dataset.candIdx);
+  if(extractedRosterCandidates[idx]){
+    extractedRosterCandidates[idx].staffId=event.target.value.trim();
+    event.target.style.borderColor=event.target.value.trim()?'#cbd5e1':'#f87171';
+    updateExtractSummary();
+  }
+  return;
+}
+if(event.target.classList?.contains('extract-inline-name')){
+  const idx=Number(event.target.dataset.candIdx);
+  if(extractedRosterCandidates[idx]){
+    extractedRosterCandidates[idx].name=event.target.value.trim();
+    event.target.style.borderColor=event.target.value.trim()?'#cbd5e1':'#f87171';
+    updateExtractSummary();
+  }
+  return;
+}
+});
+$('extract-search-input')?.addEventListener('input',()=>renderExtractRosterTable());
+document.addEventListener('input',event=>{
+  if(event.target.classList?.contains('extract-inline-staffid')){
+    const idx=Number(event.target.dataset.candIdx);
+    if(extractedRosterCandidates[idx]){
+      extractedRosterCandidates[idx].staffId=event.target.value.trim();
+      event.target.style.borderColor=event.target.value.trim()?'#cbd5e1':'#f87171';
+      updateExtractSummary();
+    }
+  }else if(event.target.classList?.contains('extract-inline-name')){
+    const idx=Number(event.target.dataset.candIdx);
+    if(extractedRosterCandidates[idx]){
+      extractedRosterCandidates[idx].name=event.target.value.trim();
+      event.target.style.borderColor=event.target.value.trim()?'#cbd5e1':'#f87171';
+      updateExtractSummary();
+    }
+  }
 });
 document.addEventListener('keydown',event=>{if(event.key==='Enter'&&event.target.dataset.jumpInput){event.preventDefault();const kind=event.target.dataset.jumpInput;pages[kind]=Math.max(1,Number(event.target.value)||1);render()}});
 ['new-group','new-bu','new-role','new-category','new-deduction'].forEach(id=>{const el=$(id);if(el)el.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();(el.closest('.org-add-card')?.querySelector('button[data-config]')||el.parentElement?.querySelector('button[data-config]'))?.click()}})});

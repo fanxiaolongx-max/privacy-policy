@@ -250,6 +250,48 @@ tbody tr:hover{background:rgba(19,107,81,.03)}
   color:var(--brand);
 }
 
+.att-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  line-height: 1.2;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-top: 3px;
+  cursor: default;
+  transition: all .15s;
+}
+.att-badge.anomaly {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  font-weight: 600;
+  cursor: pointer;
+}
+.att-badge.anomaly:hover {
+  background: #fee2e2;
+  box-shadow: 0 1px 3px rgba(239, 68, 68, 0.2);
+}
+.att-badge.good {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+.att-badge.neutral {
+  background: #f8fafc;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+.att-badge.checking {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px dashed #cbd5e1;
+}
+.att-check-indicator {
+  min-height: 18px;
+}
+
 .amt-cell-wrap{
   display:flex;
   align-items:center;
@@ -658,6 +700,50 @@ tbody tr:hover{background:rgba(19,107,81,.03)}
   const formatStatus = s => statusMap[s]?.label || s || '未知';
   const minor = value => Math.round(Number(value || 0)) * 100;
   const bp = value => Math.round(Number(value || 0) * 100);
+
+  const attCheckCache = new Map();
+
+  async function checkPersonAttendanceStatus(staffId, name) {
+    const s = String(staffId || '').trim();
+    const n = String(name || '').trim();
+    if (!s && !n) return null;
+    const key = `${s.toLowerCase()}|${n.toLowerCase()}`;
+    if (attCheckCache.has(key)) return attCheckCache.get(key);
+
+    try {
+      const res = await fetch(`/api/meeting-snapshots/attendance-check?staffId=${encodeURIComponent(s)}&name=${encodeURIComponent(n)}`);
+      if (!res.ok) throw new Error('核验请求失败');
+      const data = await res.json();
+      const result = data.data || data;
+      attCheckCache.set(key, result);
+      return result;
+    } catch (err) {
+      console.warn('Attendance check error:', err);
+      return null;
+    }
+  }
+
+  async function updateAttendanceIndicator(containerEl, staffId, name) {
+    if (!containerEl) return;
+    const s = String(staffId || '').trim();
+    const n = String(name || '').trim();
+    if (!s && !n) {
+      containerEl.innerHTML = '';
+      return;
+    }
+    containerEl.innerHTML = '<span class="att-badge checking">⏳ 核验考勤中...</span>';
+    const result = await checkPersonAttendanceStatus(s, n);
+    if (!result || !result.found) {
+      containerEl.innerHTML = '<span class="att-badge neutral" title="未在历史会议考勤快照中检索到该人员数据">ℹ️ 未查到考勤记录</span>';
+      return;
+    }
+    if (result.hasAnomaly) {
+      const details = (result.anomalies || []).map(a => `${a.meetingDate || a.title || '会议'}: ${a.attendance}`).join('\n');
+      containerEl.innerHTML = `<span class="att-badge anomaly" title="${esc(details)}" data-details="${esc(details)}">⚠️ 考勤异常 (${result.anomalyCount}次)</span>`;
+    } else {
+      containerEl.innerHTML = `<span class="att-badge good" title="在检索到的 ${result.cleanCount} 次会议考勤中均全勤按时出席">✅ 考勤良好 (${result.cleanCount}次按时)</span>`;
+    }
+  }
 
   function getCommonAmounts() {
     const counts = new Map();
@@ -1369,14 +1455,14 @@ tbody tr:hover{background:rgba(19,107,81,.03)}
                       <span class="cell-sub">${formatMoney(t.amountMinor, item.currency || 'EGP')}</span>
                     </div>
                     <div style="font-size:13px;color:var(--muted)">
-                      成员：${(t.members || []).map(m => `<b>${esc(m.name)}</b>${m.staffId ? `(${esc(m.staffId)})` : ''} · ${formatMoney(m.amountMinor, item.currency || 'EGP')}`).join('； ') || '全员统筹'}
+                      成员：${(t.members || []).map(m => `<b>${esc(m.name)}</b>${m.staffId ? `(${esc(m.staffId)})` : ''} · ${formatMoney(m.amountMinor, item.currency || 'EGP')} <span class="att-detail-chip" data-name="${esc(m.name)}" data-staff="${esc(m.staffId || '')}"></span>`).join('； ') || '全员统筹'}
                     </div>
                   </div>
                 `).join('')}
               ` : `
                 <div class="table-wrap">
                   <table>
-                    <thead><tr><th>姓名</th><th>部门/团队</th><th>工号</th><th>分配金额</th></tr></thead>
+                    <thead><tr><th>姓名</th><th>部门/团队</th><th>工号</th><th>分配金额</th><th>会议考勤状态</th></tr></thead>
                     <tbody>
                       ${(item.recipients || []).map(r => `
                         <tr>
@@ -1384,6 +1470,7 @@ tbody tr:hover{background:rgba(19,107,81,.03)}
                           <td>${esc(r.team || '-')}</td>
                           <td>${esc(r.staffId || '-')}</td>
                           <td><b style="color:var(--brand)">${formatMoney(r.amountMinor, item.currency || 'EGP')}</b></td>
+                          <td><span class="att-detail-chip" data-name="${esc(r.name)}" data-staff="${esc(r.staffId || '')}"></span></td>
                         </tr>
                       `).join('')}
                     </tbody>
@@ -1447,6 +1534,10 @@ tbody tr:hover{background:rgba(19,107,81,.03)}
         </div>
       </div>
     `;
+
+    document.querySelectorAll('#modalHost .att-detail-chip').forEach(chip => {
+      updateAttendanceIndicator(chip, chip.dataset.staff, chip.dataset.name);
+    });
 
     api(`/applications/${item.id}/events`).then(events => {
       const el = $('#eventsLog');
@@ -1850,6 +1941,7 @@ tbody tr:hover{background:rgba(19,107,81,.03)}
                       ` : ''}
                       <td>
                         <input type="text" class="tbl-input" data-team-idx="${i}" data-member-idx="${j}" data-key="member-name" value="${esc(m.name)}" placeholder="姓名" required>
+                        <div class="att-check-indicator" data-team-idx="${i}" data-member-idx="${j}"></div>
                       </td>
                       <td>
                         <input type="text" class="tbl-input" data-team-idx="${i}" data-member-idx="${j}" data-key="member-staffId" value="${esc(m.staffId || '')}" placeholder="工号">
@@ -1919,6 +2011,7 @@ tbody tr:hover{background:rgba(19,107,81,.03)}
                   <tr>
                     <td>
                       <input type="text" class="tbl-input" data-rec-idx="${i}" data-key="name" value="${esc(r.name)}" placeholder="姓名" required>
+                      <div class="att-check-indicator" data-rec-idx="${i}"></div>
                     </td>
                     <td>
                       <input type="text" class="tbl-input" data-rec-idx="${i}" data-key="team" value="${esc(r.team || '')}" placeholder="部门/团队">
@@ -1953,6 +2046,18 @@ tbody tr:hover{background:rgba(19,107,81,.03)}
           </div>
         `;
       }
+
+      setTimeout(() => {
+        container.querySelectorAll('.att-check-indicator').forEach(ind => {
+          const tr = ind.closest('tr');
+          if (!tr) return;
+          const nameInput = tr.querySelector('[data-key="member-name"], [data-key="name"]');
+          const staffInput = tr.querySelector('[data-key="member-staffId"], [data-key="staffId"]');
+          if (nameInput?.value?.trim() || staffInput?.value?.trim()) {
+            updateAttendanceIndicator(ind, staffInput?.value, nameInput?.value);
+          }
+        });
+      }, 0);
 
       updateSummary();
     }
@@ -2100,10 +2205,34 @@ tbody tr:hover{background:rgba(19,107,81,.03)}
         updateSummary();
       });
 
-      $('#allocationContainer')?.addEventListener('input', () => {
+      let attInputTimer = null;
+      function handleRowAttCheck(target) {
+        const tr = target.closest('tr');
+        if (!tr) return;
+        const nameInput = tr.querySelector('[data-key="member-name"], [data-key="name"]');
+        const staffInput = tr.querySelector('[data-key="member-staffId"], [data-key="staffId"]');
+        const indicator = tr.querySelector('.att-check-indicator');
+        if (indicator) {
+          updateAttendanceIndicator(indicator, staffInput?.value, nameInput?.value);
+        }
+      }
+
+      $('#allocationContainer')?.addEventListener('input', ev => {
         syncFormValues();
         updateSummary();
+        const target = ev.target;
+        if (target && (target.dataset.key === 'member-name' || target.dataset.key === 'member-staffId' || target.dataset.key === 'name' || target.dataset.key === 'staffId')) {
+          clearTimeout(attInputTimer);
+          attInputTimer = setTimeout(() => handleRowAttCheck(target), 350);
+        }
       });
+
+      $('#allocationContainer')?.addEventListener('blur', ev => {
+        const target = ev.target;
+        if (target && (target.dataset.key === 'member-name' || target.dataset.key === 'member-staffId' || target.dataset.key === 'name' || target.dataset.key === 'staffId')) {
+          handleRowAttCheck(target);
+        }
+      }, true);
 
       $('#allocationContainer')?.addEventListener('click', ev => {
         const target = ev.target;
@@ -2942,6 +3071,13 @@ tbody tr:hover{background:rgba(19,107,81,.03)}
         host.innerHTML = '';
         ev.stopPropagation();
       }
+    }
+  });
+
+  document.addEventListener('click', ev => {
+    const badge = ev.target.closest('.att-badge.anomaly');
+    if (badge && badge.dataset.details) {
+      alert(`【会议考勤异常记录明细】\n\n${badge.dataset.details}`);
     }
   });
 

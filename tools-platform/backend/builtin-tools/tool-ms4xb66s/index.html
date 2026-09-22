@@ -282,6 +282,238 @@
   .table-wrap{border-color:rgba(207,214,223,.78);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
   th{background:rgba(241,244,247,.94);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
 
+  /* 快照与历史库样式 */
+  .snapshot-modal-card {
+    width: min(1200px, 96vw);
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    box-shadow: 0 24px 70px rgba(16,24,40,.22);
+    overflow: hidden;
+  }
+  .snapshot-modal-toolbar {
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: #fdfdfd;
+    flex-wrap: wrap;
+  }
+  .snapshot-search-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 220px;
+    display: flex;
+    align-items: center;
+  }
+  .snapshot-search-wrap input {
+    width: 100%;
+    padding: 7px 12px 7px 32px;
+    border: 1px solid #d8dce4;
+    border-radius: 8px;
+    font-size: 13px;
+  }
+  .snapshot-search-wrap .search-icon {
+    position: absolute;
+    left: 10px;
+    color: #94a3b8;
+    pointer-events: none;
+  }
+  .snapshot-toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .snapshot-modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: #fafbfc;
+  }
+  .snapshot-card {
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .snapshot-card:hover {
+    border-color: var(--red);
+    box-shadow: 0 4px 14px rgba(200, 16, 46, .08);
+  }
+  .snapshot-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .snapshot-card-title-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .snapshot-card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+  }
+  .snapshot-date-badge {
+    background: #fee2e2;
+    color: var(--red);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .snapshot-time-badge {
+    font-size: 11px;
+    color: #94a3b8;
+  }
+  .snapshot-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .snapshot-card-stats {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .snap-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    padding: 3px 9px;
+    border-radius: 6px;
+    background: #f1f5f9;
+    color: #334155;
+    font-weight: 500;
+  }
+  .snap-chip.money {
+    background: #fff0f2;
+    color: var(--red);
+    font-weight: 800;
+  }
+  .snap-chip.orders {
+    background: #e0f2fe;
+    color: #0369a1;
+    font-weight: 700;
+  }
+  .snap-chip.people {
+    background: #ecfdf5;
+    color: #047857;
+  }
+  .snapshot-preview-panel {
+    margin-top: 10px;
+    padding: 14px 16px;
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 10px;
+    display: none;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: auto;
+  }
+  .snapshot-preview-panel.open {
+    display: block;
+  }
+  .snapshot-preview-table-wrap {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    box-sizing: border-box;
+    border-radius: 8px;
+    border: 1px solid #d8dce4;
+    background: #ffffff;
+    -webkit-overflow-scrolling: touch;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .03);
+  }
+  .snapshot-preview-table {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: 11.5px;
+    text-align: center;
+    margin: 0 !important;
+    box-sizing: border-box;
+  }
+  .snapshot-preview-table th,
+  .snapshot-preview-table td {
+    border: 1px solid #e2e8f0 !important;
+    padding: 7px 10px !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    position: static !important;
+    text-align: center !important;
+    vertical-align: middle;
+    box-sizing: border-box;
+  }
+  .snapshot-preview-table th {
+    background: #f1f5f9 !important;
+    color: #334155 !important;
+    font-weight: 700 !important;
+    font-size: 11px;
+  }
+  .snapshot-preview-table td.dim-label {
+    font-weight: 600;
+    background: #fafbfc;
+    text-align: left !important;
+    padding-left: 12px !important;
+    color: #1e293b;
+  }
+  .save-snapshot-modal-card {
+    width: min(580px, 92vw);
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    box-shadow: 0 24px 70px rgba(16,24,40,.22);
+    overflow: hidden;
+  }
+  .save-snapshot-form {
+    display: grid;
+    gap: 12px;
+  }
+  .save-snapshot-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin: 14px 0;
+    padding: 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+  }
+  .save-snapshot-notice {
+    font-size: 11px;
+    color: #475467;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    padding: 10px 12px;
+    line-height: 1.6;
+  }
+
 </style>
 </head>
 <body>
@@ -291,12 +523,18 @@
       <h1>埃及代表处夜间操作激励统计工具</h1>
       <div class="sub">用于埃及代表处夜间操作激励核算与管理分析。系统自动筛选已完成的有效夜间操作，同一操作人同一天多单仅按最高操作等级计发，并支持周期趋势、维度排行、人员汇总及异常明细核查。<span style="margin-left:8px;font-size:11px;color:#667085">金额单位：人民币元</span></div>
     </div>
-    <div class="badge">Local Excel Analyzer</div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <button class="btn" id="heroSaveSnapshotBtn" style="background:#fff0f2;color:var(--red);border:1px solid #fecdd3" title="一键保存当前已导入数据与激励计算结果为服务器快照">📸 保存快照</button>
+      <button class="btn secondary" id="heroManageSnapshotsBtn" title="查看、浏览和回溯保存在服务器上的历史操作激励快照">📚 历史快照库</button>
+      <div class="badge">Local Excel Analyzer</div>
+    </div>
   </section>
 
   <input id="fileInput" type="file" accept=".xlsx,.xls,.csv" hidden />
   <div class="top-actions" id="topActions">
     <div class="top-file" id="topFileName"></div>
+    <button class="btn top-action-btn" id="topSaveSnapshotBtn" style="color:var(--red);font-weight:700" title="一键保存当前已导入数据与激励计算结果为服务器快照">📸 保存快照</button>
+    <button class="btn top-action-btn" id="topManageSnapshotsBtn" title="查看、浏览和回溯保存在服务器上的历史操作激励快照">📚 历史快照库</button>
     <label class="btn top-action-btn" for="fileInput">重新导入</label>
     <button class="top-action-btn" id="topRuleBtn">规则配置</button>
     <button class="top-action-btn" id="topBlacklistBtn">激励黑名单配置</button>
@@ -311,6 +549,7 @@
         <div class="import-gate-desc">导入后将自动校验夜间操作、完成状态，并按同人同日最高操作等级计算津贴。</div>
         <div class="gate-actions">
           <label class="btn primary" for="fileInput">选择 Excel 文件</label>
+          <button class="secondary" id="gateManageSnapshotsBtn">📚 浏览历史快照</button>
           <button class="secondary" id="openRuleModal">设置规则</button>
         </div>
         <div class="file-name" id="gateFileName">尚未选择文件</div>
@@ -402,6 +641,11 @@
     <strong id="identityAlertTitle">姓名工号校验提示：</strong><span id="identityAlertText"></span>
     <button type="button" class="identity-detail-btn" id="identityDetailsBtn" hidden></button>
     <span>。仅作核查提示，不影响原有计算。</span>
+  </div>
+  <div class="identity-alert" id="attendanceAnomalyAlert" style="background:#fffbeb;border-color:#fde68a;color:#92400e;margin-top:8px" hidden>
+    <strong>⚠️ 会议考勤异常预警：</strong>
+    <span id="attendanceAnomalyText"></span>
+    <button type="button" class="identity-detail-btn" id="attendanceAnomalyBtn" style="background:#fef3c7;border-color:#f59e0b;color:#b45309">查看并处理</button>
   </div>
 
   <section class="card" style="margin-top:14px">
@@ -718,6 +962,107 @@ m00961966"></textarea>
       <div class="identity-detail-summary" id="identityDetailsSummary"></div>
       <div class="table-wrap identity-detail-table" id="identityDetailsTable"></div>
     </div>
+  </div>
+</div>
+
+<div class="rule-modal" id="attendanceAnomalyModal">
+  <div class="rule-modal-card" style="width:min(980px,94vw)">
+    <div class="rule-modal-head">
+      <div>
+        <div class="rule-modal-title">📋 激励人员会议考勤排查与黑名单处理</div>
+        <div class="section-note">系统检测到以下获得激励计发的员工在近期会议考勤快照中存在缺席或迟到异常。您可以灵活勾选，一键加入激励黑名单以扣除激励。</div>
+      </div>
+      <button class="icon-btn" id="closeAttendanceAnomalyModal" aria-label="关闭">×</button>
+    </div>
+    <div class="identity-detail-body" style="padding:16px 20px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding:10px 14px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0">
+        <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;font-weight:600">
+          <input type="checkbox" id="selectAllAnomalies" checked>
+          <span>全选 / 全不选</span>
+        </label>
+        <div id="anomalySelectionSummary" style="font-size:12.5px;color:#475569">
+          已选择 0 / 0 人，涉及激励金额 ¥0
+        </div>
+      </div>
+      <div class="table-wrap" id="attendanceAnomalyTableWrap" style="max-height:380px;overflow-y:auto">
+        <table class="data-table" style="width:100%;font-size:12px">
+          <thead>
+            <tr>
+              <th style="width:40px;text-align:center">选择</th>
+              <th style="width:110px">工号</th>
+              <th style="width:100px">姓名</th>
+              <th style="width:120px">BU1 / 部门</th>
+              <th style="width:110px">本期激励</th>
+              <th>会议考勤异常记录明细</th>
+            </tr>
+          </thead>
+          <tbody id="attendanceAnomalyTableBody"></tbody>
+        </table>
+      </div>
+      <div class="rule-actions" style="margin-top:16px;display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:12px;color:#64748b">加入黑名单后将自动重新核算并扣除相应激励。若后续需要恢复，可在“黑名单规则”中移除。</div>
+        <div style="display:flex;gap:10px">
+          <button type="button" class="reset-btn" id="cancelAttendanceAnomalyModal">取消</button>
+          <button type="button" class="danger" id="confirmAddToBlacklistBtn" style="background:var(--red);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:700;cursor:pointer">🚫 一键将所选人员加入激励黑名单</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="rule-modal" id="saveSnapshotModal">
+  <div class="save-snapshot-modal-card">
+    <div class="rule-modal-head">
+      <div>
+        <div class="rule-modal-title">📸 保存操作激励快照至服务器</div>
+        <div class="section-note">将当前已导入的 Excel 原始数据与操作激励核算结果完整持久化，便于多端同步与后续分析调取。</div>
+      </div>
+      <button class="icon-btn" id="saveSnapshotModalClose" aria-label="关闭">×</button>
+    </div>
+    <div class="rule-modal-body">
+      <div class="save-snapshot-form">
+        <div>
+          <label><strong>快照名称：</strong></label>
+          <input id="snapTitleInput" placeholder="例如：2026年09月 埃及夜间操作激励核算">
+        </div>
+        <div>
+          <label><strong>核算周期：</strong></label>
+          <input id="snapPeriodInput" placeholder="例如：2026-09">
+        </div>
+      </div>
+      <div class="save-snapshot-stats" id="saveSnapshotStats"></div>
+      <div class="save-snapshot-notice">
+        💡 快照将完整保存导入的原始 Excel 数据行、计费金额规则（特大/重大/较大/一般）与激励黑名单，日后不仅可一键载入恢复本工具工作区，其他统计工具与大屏亦可直接通过标准 API 调取本快照数据。
+      </div>
+      <div class="rule-actions">
+        <button class="btn secondary" id="saveSnapshotCancelBtn">取消</button>
+        <button class="btn primary" id="saveSnapshotSubmitBtn">💾 确认保存到服务器</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="rule-modal" id="snapshotModal">
+  <div class="snapshot-modal-card">
+    <div class="rule-modal-head">
+      <div>
+        <div class="rule-modal-title">📚 操作激励历史快照库</div>
+        <div class="section-note">浏览、核查与载入保存在服务器上的历史操作激励核算数据</div>
+      </div>
+      <button class="icon-btn" id="snapshotModalClose" aria-label="关闭">×</button>
+    </div>
+    <div class="snapshot-modal-toolbar">
+      <div class="snapshot-search-wrap">
+        <span class="search-icon">⌕</span>
+        <input id="smSearchInput" placeholder="按快照标题、周期（如 2026-09）或文件名过滤...">
+      </div>
+      <div class="snapshot-toolbar-actions">
+        <input type="file" id="smFileInput" accept=".json" style="display:none">
+        <button class="btn secondary" id="smImportBtn" title="导入本地导出的快照 JSON 文件">📥 导入本地快照</button>
+        <button class="btn primary" id="smNewSnapshotBtn" title="将当前工作区数据直接保存为新快照">📸 保存当前为新快照</button>
+      </div>
+    </div>
+    <div class="snapshot-modal-body" id="smListContainer"></div>
   </div>
 </div>
 
@@ -1075,6 +1420,11 @@ function recalculate(){
     };
   });
   syncOperatorGroupCounts();refreshFilters();render();
+  if (typeof fetch === 'function' && dedupRows.length > 0) {
+    checkIncentiveAttendanceAnomalies();
+  } else {
+    hideAttendanceAnomalyAlert();
+  }
 }
 function uniq(arr){return [...new Set(arr.filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'zh-CN'))}
 function fillSelect(id,vals){
@@ -1387,9 +1737,12 @@ function drawTrend(rows){
   ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
   ctx.strokeStyle=chartTheme.red;ctx.lineWidth=3;ctx.stroke();
   pts.forEach(p=>{ctx.fillStyle='#fff';ctx.strokeStyle=chartTheme.red;ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y,4,0,Math.PI*2);ctx.fill();ctx.stroke()});
-  const maxIndex=data.findIndex(x=>x[1]===max),labels=[0,maxIndex,data.length-1].filter((v,i,a)=>a.indexOf(v)===i);
+  const maxIndex=data.findIndex(x=>x[1]===max);
+  const labels=[0,maxIndex,data.length-1].filter((v,i,a)=>v>=0&&v<pts.length&&a.indexOf(v)===i);
   labels.forEach(i=>{
-    const p=pts[i],badgeY=p.y<44?p.y+10:p.y-28;
+    const p=pts[i];
+    if(!p)return;
+    const badgeY=p.y<44?p.y+10:p.y-28;
     drawValueBadge(ctx,fmtAxis(p.value,unit),p.x-28,badgeY,{color:chartTheme.text});
   });
   ctx.font='600 10px Microsoft YaHei';ctx.fillStyle=chartTheme.sub;ctx.textAlign='center';ctx.textBaseline='alphabetic';
@@ -1719,10 +2072,14 @@ function renderPerson(rows){
   rows.forEach(r=>{const p=periodKey(filterDateForRow(r),type),k=p+'|'+r.__person;if(!m.has(k))m.set(k,{p,person:r.__person,name:'',bu:new Set(),c:new Set(),a:new Set(),days:new Set(),money:0,levels:{}});
     const x=m.get(k);x.days.add(r.__date);x.money+=r.__fee;if(!x.name&&r.__name)x.name=r.__name;x.bu.add(r.__bu);x.c.add(r.__customer);x.a.add(r.__attr);x.levels[r.__level]=(x.levels[r.__level]||0)+1;
   });
-  const data=[...m.values()].sort((a,b)=>b.p.localeCompare(a.p)||b.money-a.money||a.person.localeCompare(b.person,'zh-CN')).map(x=>[
-    esc(x.p),esc(x.person),esc(x.name||'—'),esc([...x.bu].filter(Boolean).join(' / ')),esc([...x.c].filter(Boolean).join(' / ')),
-    esc([...x.a].filter(Boolean).join(' / ')),x.days.size,esc(Object.entries(x.levels).map(([k,v])=>`${k}:${v}`).join(' / ')),`<span class="money">${money(x.money)}</span>`
-  ]);
+  const data=[...m.values()].sort((a,b)=>b.p.localeCompare(a.p)||b.money-a.money||a.person.localeCompare(b.person,'zh-CN')).map(x=>{
+    const anom=getPersonAttendanceAnomaly(x.person,x.name);
+    const nameCell=esc(x.name||'—')+(anom?` <span class="tag bad" title="${esc(anom.anomalyDesc)}">⚠️ 考勤异常</span>`:'');
+    return [
+      esc(x.p),esc(x.person),nameCell,esc([...x.bu].filter(Boolean).join(' / ')),esc([...x.c].filter(Boolean).join(' / ')),
+      esc([...x.a].filter(Boolean).join(' / ')),x.days.size,esc(Object.entries(x.levels).map(([k,v])=>`${k}:${v}`).join(' / ')),`<span class="money">${money(x.money)}</span>`
+    ];
+  });
   table(['周期','操作人','姓名','BU1 / 部门','客户','人员属性','计费天数','等级分布','激励合计（元）'],data);
 }
 function renderDetail(rows){
@@ -1733,22 +2090,27 @@ function renderDetail(rows){
     b.__rank-a.__rank||
     b.__fee-a.__fee
   );
-  const data=sorted.map(r=>[
-    esc(r.__date),
-    esc(r.__person),
-    esc(displayPersonName(r)),
-    identityCheckCell(r),
-    r.__counted?`<span class="tag ok">${r.__noDedupView?'计发（不剔重）':'计发'}</span>`:'<span class="tag mid">忽略</span>',
-    esc(r.__level||'未识别'),
-    `<span class="money">${money(r.__calcFee)}</span>`,
-    esc(r.__ignoreReason),
-    !r.__counted?(esc(r.__selectedLevel)||'—'):'—',
-    !r.__counted?(esc(r.__selectedTask)||'—'):'—',
-    esc(r.__bu),esc(r.__customer),esc(r.__attr),esc(r.__task),esc(r.__summary),
-    r.__byField?'<span class="tag ok">字段夜间</span>':'<span class="tag bad">字段非夜间</span>',
-    r.__byTime?'<span class="tag ok">时间确认</span>':'<span class="tag mid">时间未确认</span>',
-    esc(r.__start?r.__start.toLocaleString('zh-CN'):'')
-  ]);
+  const data=sorted.map(r=>{
+    const baseStatus=r.__counted?`<span class="tag ok">${r.__noDedupView?'计发（不剔重）':'计发'}</span>`:'<span class="tag mid">忽略</span>';
+    const anomaly=getPersonAttendanceAnomaly(r.__person,r.__name);
+    const attTag=anomaly?` <span class="tag bad" title="${esc(anomaly.anomalyDesc)}">⚠️ 考勤异常</span>`:'';
+    return [
+      esc(r.__date),
+      esc(r.__person),
+      esc(displayPersonName(r)),
+      identityCheckCell(r),
+      `${baseStatus}${attTag}`,
+      esc(r.__level||'未识别'),
+      `<span class="money">${money(r.__calcFee)}</span>`,
+      esc(r.__ignoreReason),
+      !r.__counted?(esc(r.__selectedLevel)||'—'):'—',
+      !r.__counted?(esc(r.__selectedTask)||'—'):'—',
+      esc(r.__bu),esc(r.__customer),esc(r.__attr),esc(r.__task),esc(r.__summary),
+      r.__byField?'<span class="tag ok">字段夜间</span>':'<span class="tag bad">字段非夜间</span>',
+      r.__byTime?'<span class="tag ok">时间确认</span>':'<span class="tag mid">时间未确认</span>',
+      esc(r.__start?r.__start.toLocaleString('zh-CN'):'')
+    ];
+  });
   table(['操作日期','操作人','姓名','姓名工号校验','计算状态','操作等级','本行激励（元）','忽略原因','当日计发等级','当日计发任务号','BU1','客户','人员属性','任务号','操作摘要','操作时间校验','当地时间校验','当地开始时间'],data);
 }
 function renderExcluded(rows=filteredExcludedRows()){
@@ -2222,6 +2584,215 @@ identityDetailsModal.addEventListener('click',event=>{
   if(event.target===identityDetailsModal)identityDetailsModal.classList.remove('show');
 });
 
+let currentAttendanceAnomalies = [];
+let isCheckingAttendance = false;
+
+function getPersonAttendanceAnomaly(person, name) {
+  if (!currentAttendanceAnomalies || !currentAttendanceAnomalies.length) return null;
+  const p = clean(person).toLowerCase();
+  const n = clean(name).toLowerCase();
+  if (!p && !n) return null;
+  return currentAttendanceAnomalies.find(a => (p && a.staffId.toLowerCase() === p) || (n && a.name.toLowerCase() === n)) || null;
+}
+
+function hideAttendanceAnomalyAlert() {
+  if ($('attendanceAnomalyAlert')) $('attendanceAnomalyAlert').hidden = true;
+}
+
+async function checkIncentiveAttendanceAnomalies() {
+  if (typeof fetch !== 'function') return;
+  if (!dedupRows || !dedupRows.length) {
+    currentAttendanceAnomalies = [];
+    hideAttendanceAnomalyAlert();
+    return;
+  }
+  if (isCheckingAttendance) return;
+  isCheckingAttendance = true;
+
+  try {
+    const rewardedPersonsMap = new Map();
+    dedupRows.forEach(r => {
+      const p = clean(r.__person);
+      if (!p) return;
+      const key = p.toLowerCase();
+      if (!rewardedPersonsMap.has(key)) {
+        rewardedPersonsMap.set(key, {
+          staffId: p,
+          name: clean(r.__name || r.__fmeName || ''),
+          bu: clean(r.__bu || ''),
+          totalFee: r.__fee || 0,
+          orderCount: 1
+        });
+      } else {
+        const item = rewardedPersonsMap.get(key);
+        item.totalFee += (r.__fee || 0);
+        item.orderCount += 1;
+        if (!item.name && (r.__name || r.__fmeName)) item.name = clean(r.__name || r.__fmeName);
+        if (!item.bu && r.__bu) item.bu = clean(r.__bu);
+      }
+    });
+
+    const persons = [...rewardedPersonsMap.values()].map(p => ({ staffId: p.staffId, name: p.name }));
+    if (!persons.length) {
+      currentAttendanceAnomalies = [];
+      hideAttendanceAnomalyAlert();
+      return;
+    }
+
+    const resp = await fetch('/api/meeting-snapshots/batch-attendance-check', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ persons })
+    });
+    if (!resp.ok) throw new Error('核验请求失败');
+    const data = await resp.json();
+    const results = data.results || data.data || {};
+
+    currentAttendanceAnomalies = [];
+    rewardedPersonsMap.forEach((info) => {
+      const resKey = `${info.staffId}|${info.name}`;
+      const res = results[resKey];
+      if (res && res.hasAnomaly) {
+        const desc = (res.anomalies || []).map(a => `${a.meetingDate || a.title || '会议'}: ${a.attendance}`).join('； ');
+        currentAttendanceAnomalies.push({
+          ...info,
+          anomalies: res.anomalies || [],
+          anomalyDesc: desc,
+          anomalyCount: res.anomalyCount || res.anomalies?.length || 1
+        });
+      }
+    });
+
+    if (currentAttendanceAnomalies.length > 0) {
+      if ($('attendanceAnomalyAlert')) {
+        $('attendanceAnomalyAlert').hidden = false;
+        $('attendanceAnomalyText').textContent = `检测到 ${currentAttendanceAnomalies.length} 位获得激励员工在近期会议考勤快照中存在缺席或迟到异常！`;
+      }
+      render();
+    } else {
+      hideAttendanceAnomalyAlert();
+    }
+  } catch (err) {
+    console.warn('Incentive attendance batch check error:', err);
+    hideAttendanceAnomalyAlert();
+  } finally {
+    isCheckingAttendance = false;
+  }
+}
+
+const attendanceAnomalyModal = $('attendanceAnomalyModal');
+function openAttendanceAnomalyModal() {
+  if (!currentAttendanceAnomalies || !currentAttendanceAnomalies.length) {
+    showToast('当前未发现考勤异常的激励员工', 'info');
+    return;
+  }
+  if (!attendanceAnomalyModal) return;
+  attendanceAnomalyModal.classList.add('show');
+  renderAttendanceAnomalyModalTable();
+}
+
+function closeAttendanceAnomalyModal() {
+  if (attendanceAnomalyModal) attendanceAnomalyModal.classList.remove('show');
+}
+
+function renderAttendanceAnomalyModalTable() {
+  const tbody = $('attendanceAnomalyTableBody');
+  if (!tbody) return;
+
+  tbody.innerHTML = currentAttendanceAnomalies.map((item, idx) => `
+    <tr>
+      <td style="text-align:center">
+        <input type="checkbox" class="anomaly-row-cb" data-idx="${idx}" checked>
+      </td>
+      <td><strong>${esc(item.staffId)}</strong></td>
+      <td>${esc(item.name || '—')}</td>
+      <td>${esc(item.bu || '—')}</td>
+      <td><strong style="color:var(--red)">¥${money(item.totalFee)}</strong> (${item.orderCount}单)</td>
+      <td style="color:#b91c1c;font-size:11.5px">${esc(item.anomalyDesc)}</td>
+    </tr>
+  `).join('');
+
+  updateAnomalySelectionSummary();
+  if ($('selectAllAnomalies')) $('selectAllAnomalies').checked = true;
+}
+
+function updateAnomalySelectionSummary() {
+  const cbs = document.querySelectorAll('.anomaly-row-cb');
+  let selectedCount = 0;
+  let selectedMoney = 0;
+  cbs.forEach(cb => {
+    if (cb.checked) {
+      const idx = Number(cb.dataset.idx);
+      const item = currentAttendanceAnomalies[idx];
+      if (item) {
+        selectedCount++;
+        selectedMoney += item.totalFee;
+      }
+    }
+  });
+
+  if ($('anomalySelectionSummary')) {
+    $('anomalySelectionSummary').textContent = `已选择 ${selectedCount} / ${currentAttendanceAnomalies.length} 位员工，涉及激励金额 ¥${money(selectedMoney)}`;
+  }
+}
+
+function applyAnomaliesToBlacklist() {
+  const cbs = document.querySelectorAll('.anomaly-row-cb');
+  const selected = [];
+  cbs.forEach(cb => {
+    if (cb.checked) {
+      const idx = Number(cb.dataset.idx);
+      const item = currentAttendanceAnomalies[idx];
+      if (item) selected.push(item);
+    }
+  });
+
+  if (!selected.length) {
+    showToast('请至少勾选一位需要加入黑名单的人员', 'warning');
+    return;
+  }
+
+  selected.forEach(item => {
+    const key = item.staffId.toLowerCase();
+    const reason = `会议考勤异常：${item.anomalyDesc || '存在缺席/迟到'}`;
+    incentiveBlacklist.set(key, reason);
+  });
+
+  try {
+    localStorage.setItem(BLACKLIST_STORAGE_KEY, serializeBlacklist(incentiveBlacklist));
+  } catch (e) {}
+
+  if ($('blacklistInput')) {
+    $('blacklistInput').value = serializeBlacklist(incentiveBlacklist);
+    updateBlacklistCount();
+  }
+
+  closeAttendanceAnomalyModal();
+  recalculate();
+  showToast(`✅ 已成功将 ${selected.length} 位考勤异常人员加入激励黑名单，并自动重新计算！`, 'success');
+}
+
+if ($('attendanceAnomalyBtn')) $('attendanceAnomalyBtn').onclick = openAttendanceAnomalyModal;
+if ($('closeAttendanceAnomalyModal')) $('closeAttendanceAnomalyModal').onclick = closeAttendanceAnomalyModal;
+if ($('cancelAttendanceAnomalyModal')) $('cancelAttendanceAnomalyModal').onclick = closeAttendanceAnomalyModal;
+if (attendanceAnomalyModal) {
+  attendanceAnomalyModal.addEventListener('click', event => {
+    if (event.target === attendanceAnomalyModal) closeAttendanceAnomalyModal();
+  });
+}
+if ($('selectAllAnomalies')) {
+  $('selectAllAnomalies').onchange = ev => {
+    document.querySelectorAll('.anomaly-row-cb').forEach(cb => cb.checked = ev.target.checked);
+    updateAnomalySelectionSummary();
+  };
+}
+if ($('attendanceAnomalyTableWrap')) {
+  $('attendanceAnomalyTableWrap').addEventListener('change', ev => {
+    if (ev.target && ev.target.classList.contains('anomaly-row-cb')) updateAnomalySelectionSummary();
+  });
+}
+if ($('confirmAddToBlacklistBtn')) $('confirmAddToBlacklistBtn').onclick = applyAnomaliesToBlacklist;
+
 $('closeRuleModal').onclick=()=>ruleModal.classList.remove('show');
 ruleModal.addEventListener('click',e=>{if(e.target===ruleModal)ruleModal.classList.remove('show')});
 
@@ -2342,6 +2913,613 @@ $('compareCurrent').onchange=()=>updateComparePreviousOptions(true);
 $('comparePrevious').onchange=renderComparison;
 
 $('exportBtn').onclick=()=>rawRows.length?exportCurrent():alert('请先导入 Excel 文件');
+
+let snapshotsList = [];
+
+function showToast(msg, type = 'info') {
+  let toastBox = $('customToasts');
+  if (!toastBox) {
+    toastBox = document.createElement('div');
+    toastBox.id = 'customToasts';
+    toastBox.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;';
+    if (document.body && typeof document.body.appendChild === 'function') {
+      document.body.appendChild(toastBox);
+    }
+  }
+  const t = document.createElement('div');
+  const bg = type === 'error' ? '#ef4444' : type === 'success' ? '#10b981' : '#1f2937';
+  t.style.cssText = `background:${bg};color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;box-shadow:0 10px 25px rgba(0,0,0,0.18);transition:all .3s ease;pointer-events:auto;`;
+  t.textContent = msg;
+  if (toastBox && typeof toastBox.appendChild === 'function') {
+    toastBox.appendChild(t);
+  }
+  setTimeout(() => {
+    if (t.style) {
+      t.style.opacity = '0';
+      t.style.transform = 'translateY(10px)';
+    }
+    setTimeout(() => t.remove?.(), 300);
+  }, 3000);
+}
+
+function inferPeriodFromRows() {
+  if (sourceFileName) {
+    const m = sourceFileName.match(/(20\d\d)[-_年/.](0?[1-9]|1[0-2])(?=[-_月/.]|\b)/);
+    if (m) {
+      return `${m[1]}-${String(m[2]).padStart(2, '0')}`;
+    }
+  }
+  const counts = new Map();
+  for (const r of dedupRows.length ? dedupRows : rawRows) {
+    let ym = '';
+    if (r.__date && r.__date.length >= 7) ym = r.__date.slice(0, 7);
+    else if (r.__sourceYear && r.__sourceMonth) ym = `${r.__sourceYear}-${String(r.__sourceMonth).padStart(2, '0')}`;
+    if (ym && /^20\d\d-\d\d$/.test(ym)) {
+      counts.set(ym, (counts.get(ym) || 0) + 1);
+    }
+  }
+  if (counts.size > 0) {
+    let best = '', max = -1;
+    for (const [k, v] of counts.entries()) {
+      if (v > max) { max = v; best = k; }
+    }
+    if (best) return best;
+  }
+  return new Date().toISOString().slice(0, 7);
+}
+
+function buildIncentiveSnapshotPayload(customTitle, customPeriod) {
+  const period = customPeriod ? customPeriod.trim() : inferPeriodFromRows();
+  const title = customTitle ? customTitle.trim() : `${period} 埃及夜间操作激励核算`;
+
+  const nonWxRows = dedupRows.filter(r => r.__operatorGroup === 'nonwx');
+  const wxRows = dedupRows.filter(r => r.__operatorGroup === 'wx');
+
+  const byLevel = {
+    fatal: { count: 0, amount: 0 },
+    high: { count: 0, amount: 0 },
+    medium: { count: 0, amount: 0 },
+    low: { count: 0, amount: 0 }
+  };
+  const byBu = {};
+
+  dedupRows.forEach(r => {
+    const lvl = String(r.__level || '').toLowerCase();
+    if (lvl.includes('特大') || lvl.includes('fatal')) { byLevel.fatal.count++; byLevel.fatal.amount += (r.__fee || 0); }
+    else if (lvl.includes('重大') || lvl.includes('high')) { byLevel.high.count++; byLevel.high.amount += (r.__fee || 0); }
+    else if (lvl.includes('较大') || lvl.includes('medium')) { byLevel.medium.count++; byLevel.medium.amount += (r.__fee || 0); }
+    else { byLevel.low.count++; byLevel.low.amount += (r.__fee || 0); }
+
+    const bu = clean(r.__bu) || '未标识BU';
+    if (!byBu[bu]) byBu[bu] = { paidOrders: 0, amount: 0, peopleSet: new Set() };
+    byBu[bu].paidOrders++;
+    byBu[bu].amount += (r.__fee || 0);
+    if (r.__person) byBu[bu].peopleSet.add(r.__person);
+  });
+
+  const byBuSerializable = {};
+  Object.entries(byBu).forEach(([bu, v]) => {
+    byBuSerializable[bu] = { paidOrders: v.paidOrders, amount: v.amount, peopleCount: v.peopleSet.size };
+  });
+
+  const personMap = new Map();
+  dedupRows.forEach(r => {
+    const p = r.__person;
+    if (!personMap.has(p)) personMap.set(p, { person: p, name: r.__name || r.__fmeName || '', bu: r.__bu, count: 0, amount: 0 });
+    const x = personMap.get(p);
+    x.count++;
+    x.amount += (r.__fee || 0);
+  });
+  const topPeople = [...personMap.values()].sort((a, b) => b.amount - a.amount || b.count - a.count).slice(0, 10);
+
+  const totalAmount = dedupRows.reduce((s, r) => s + (r.__fee || 0), 0);
+
+  const summary = {
+    period,
+    sourceFile: sourceFileName || '',
+    totalRaw: rawRows.length,
+    totalValid: validRows.length,
+    totalPaid: dedupRows.length,
+    totalPeople: uniq(dedupRows.map(r => r.__person)).length,
+    totalAmount,
+    operatorGroups: {
+      nonwx: {
+        paidOrders: nonWxRows.length,
+        people: uniq(nonWxRows.map(r => r.__person)).length,
+        amount: nonWxRows.reduce((s, r) => s + (r.__fee || 0), 0)
+      },
+      wx: {
+        paidOrders: wxRows.length,
+        people: uniq(wxRows.map(r => r.__person)).length,
+        amount: wxRows.reduce((s, r) => s + (r.__fee || 0), 0)
+      }
+    },
+    byLevel,
+    byBu: byBuSerializable,
+    topPeople,
+    rules: getRuleValues(),
+    blacklistCount: incentiveBlacklist.size,
+    savedAt: new Date().toISOString()
+  };
+
+  const payload = {
+    version: 1,
+    sourceFileName: sourceFileName || '',
+    sourceSheetName: sourceSheetName || '',
+    rawRows: rawRows,
+    rules: getRuleValues(),
+    blacklistText: serializeBlacklist(incentiveBlacklist),
+    activeOperatorGroup: activeOperatorGroup || 'nonwx',
+    dedupMode: $('dedupMode')?.value || 'highest',
+    blacklistMode: $('blacklistMode')?.value || 'enabled',
+    periodSourceMode: $('periodSourceMode')?.value || 'imported'
+  };
+
+  return { title, period, sourceFile: sourceFileName || '', summary, payload };
+}
+
+function openSaveSnapshotModal() {
+  if (!rawRows.length) {
+    showToast('当前工作区还没有导入或载入任何 Excel 数据，无法保存快照', 'error');
+    return;
+  }
+  const period = inferPeriodFromRows();
+  $('snapPeriodInput').value = period;
+  $('snapTitleInput').value = `${period} 埃及夜间操作激励核算`;
+
+  const totalAmount = dedupRows.reduce((s, r) => s + (r.__fee || 0), 0);
+  const peopleCount = uniq(dedupRows.map(r => r.__person)).length;
+  const nonWxPaid = dedupRows.filter(r => r.__operatorGroup === 'nonwx').length;
+  const wxPaid = dedupRows.filter(r => r.__operatorGroup === 'wx').length;
+
+  $('saveSnapshotStats').innerHTML = `
+    <div class="snap-stat-item"><span class="k" style="font-size:11px;color:#64748b">原始数据量</span><div class="v" style="font-size:16px;font-weight:700">${rawRows.length.toLocaleString()} 行</div></div>
+    <div class="snap-stat-item"><span class="k" style="font-size:11px;color:#64748b">激励总金额</span><div class="v" style="font-size:16px;font-weight:800;color:var(--red)">¥${totalAmount.toLocaleString()}</div></div>
+    <div class="snap-stat-item"><span class="k" style="font-size:11px;color:#64748b">计发单数</span><div class="v" style="font-size:16px;font-weight:700">${dedupRows.length} 单</div></div>
+    <div class="snap-stat-item"><span class="k" style="font-size:11px;color:#64748b">涉及人员数</span><div class="v" style="font-size:16px;font-weight:700">${peopleCount} 人</div></div>
+    <div class="snap-stat-item" style="grid-column:span 2"><span class="k" style="font-size:11px;color:#64748b">操作人分组</span><div class="v" style="font-size:13px;font-weight:600;color:#334155">非 WX: ${nonWxPaid} 单 · WX: ${wxPaid} 单</div></div>
+  `;
+
+  $('saveSnapshotModal').classList.add('show');
+  setTimeout(() => $('snapTitleInput')?.focus(), 50);
+}
+
+function closeSaveSnapshotModal() {
+  $('saveSnapshotModal').classList.remove('show');
+}
+
+async function submitSaveSnapshot() {
+  const title = ($('snapTitleInput').value || '').trim();
+  const period = ($('snapPeriodInput').value || '').trim() || inferPeriodFromRows();
+  if (!title) {
+    showToast('请输入快照名称', 'error');
+    return;
+  }
+  try {
+    setProgress(30, '正在生成快照数据并上传...');
+    const snapshotData = buildIncentiveSnapshotPayload(title, period);
+    setProgress(65, '正在持久化至服务器...');
+    const resp = await fetch('/api/operation-incentive-snapshots', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(snapshotData)
+    });
+    const res = await resp.json();
+    if (!resp.ok || !res.success) {
+      throw new Error(res.error || '保存快照失败');
+    }
+    setProgress(100, '保存完成');
+    hideProgress();
+    closeSaveSnapshotModal();
+    showToast('✅ 操作激励快照已成功保存到服务器！', 'success');
+    if ($('snapshotModal').classList.contains('show')) {
+      loadAndRenderSnapshotList();
+    }
+  } catch (err) {
+    hideProgress();
+    console.error(err);
+    showToast(`保存失败：${err.message}`, 'error');
+  }
+}
+
+function openSnapshotManagerModal() {
+  $('snapshotModal').classList.add('show');
+  $('smSearchInput').value = '';
+  loadAndRenderSnapshotList();
+}
+
+function closeSnapshotManagerModal() {
+  $('snapshotModal').classList.remove('show');
+}
+
+async function loadAndRenderSnapshotList() {
+  const container = $('smListContainer');
+  container.innerHTML = `<div class="empty" style="padding:32px 0;text-align:center"><p style="color:#64748b">正在读取服务器操作激励快照列表…</p></div>`;
+  try {
+    const resp = await fetch('/api/operation-incentive-snapshots');
+    const res = await resp.json();
+    if (!resp.ok || !res.success) {
+      throw new Error(res.error || '获取快照列表失败');
+    }
+    snapshotsList = res.data || res.items || [];
+    renderSnapshotCardsList(snapshotsList);
+  } catch (err) {
+    console.error(err);
+    container.innerHTML = `<div class="empty" style="padding:32px 0;text-align:center;color:#ef4444"><p>读取快照失败：${esc(err.message)}</p><button class="btn primary" onclick="window.__operationIncentive.openSnapshotManagerModal()" style="margin-top:10px">重试</button></div>`;
+  }
+}
+
+function filterSnapshotCards(query) {
+  const q = (query || '').trim().toLowerCase();
+  if (!snapshotsList) return;
+  if (!q) {
+    renderSnapshotCardsList(snapshotsList);
+    return;
+  }
+  const filtered = snapshotsList.filter(s => {
+    const title = (s.title || '').toLowerCase();
+    const period = (s.period || '').toLowerCase();
+    const file = (s.source_file || s.sourceFile || '').toLowerCase();
+    return title.includes(q) || period.includes(q) || file.includes(q);
+  });
+  renderSnapshotCardsList(filtered);
+}
+
+function renderSnapshotCardsList(list) {
+  const container = $('smListContainer');
+  if (!list || !list.length) {
+    container.innerHTML = `
+      <div class="empty" style="padding:48px 0;text-align:center">
+        <div style="font-size:36px;margin-bottom:12px">📭</div>
+        <h4 style="font-size:16px;color:#1e293b;margin:0 0 8px 0">暂无保存的操作激励快照</h4>
+        <p style="color:#64748b;font-size:13px;margin:0">导入夜间操作 Excel 后点击顶部的“📸 保存快照”即可保存</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = list.map(s => {
+    const sum = s.summary || {};
+    const lvl = sum.byLevel || {};
+    const byBu = sum.byBu || {};
+    const buEntries = Object.entries(byBu);
+    const groups = sum.operatorGroups || {};
+    const timeStr = s.updated_at || s.created_at || '';
+    const displayTime = timeStr ? new Date(timeStr).toLocaleString() : '';
+
+    let buRowsHtml = '';
+    if (buEntries.length) {
+      buRowsHtml = buEntries.map(([buName, b]) => `<tr>
+        <td style="text-align:left;font-weight:600;padding-left:12px">${esc(buName)}</td>
+        <td>${b.paidOrders || 0} 单</td>
+        <td>${b.peopleCount || 0} 人</td>
+        <td style="font-weight:700;color:var(--red)">¥${(b.amount || 0).toLocaleString()}</td>
+      </tr>`).join('');
+    }
+
+    return `
+      <div class="snapshot-card" data-card-id="${s.id}">
+        <div class="snapshot-card-head">
+          <div class="snapshot-card-title-group">
+            <span class="snapshot-date-badge">📅 ${esc(s.period || '—')}</span>
+            <h4 class="snapshot-card-title">${esc(s.title || '未命名快照')}</h4>
+            <span class="snapshot-time-badge">${displayTime ? `⏱ ${displayTime}` : ''}</span>
+          </div>
+          <div class="snapshot-card-actions">
+            <button class="btn secondary mini" data-action="toggle-preview" data-id="${s.id}">👁 预览概览</button>
+            <button class="btn primary mini" data-action="restore" data-id="${s.id}" title="将该快照的全部原始数据和规则完整载入工作区">⚡ 载入工作区</button>
+            <button class="btn secondary mini" data-action="export-json" data-id="${s.id}" title="导出快照为本地 JSON 文件">⇩ 导出JSON</button>
+            <button class="btn secondary mini" data-action="rename" data-id="${s.id}">✏ 重命名</button>
+            <button class="btn danger mini" data-action="delete" data-id="${s.id}">🗑 删除</button>
+          </div>
+        </div>
+        <div class="snapshot-card-stats">
+          <span class="snap-chip money">💰 <b>¥${(sum.totalAmount || 0).toLocaleString()}</b></span>
+          <span class="snap-chip orders">📋 <b>${sum.totalPaid ?? 0}</b> 单计发</span>
+          <span class="snap-chip people">👥 <b>${sum.totalPeople ?? 0}</b> 人涉及</span>
+          <span class="snap-chip">📊 <b>${(sum.totalRaw ?? 0).toLocaleString()}</b> 行原始数据</span>
+          ${groups.nonwx ? `<span class="snap-chip" title="非WX与WX单数分布">非WX: ${groups.nonwx.paidOrders || 0} 单 / WX: ${groups.wx?.paidOrders || 0} 单</span>` : ''}
+          ${s.source_file || s.sourceFile ? `<span class="snap-chip" style="max-width:240px;overflow:hidden;text-overflow:ellipsis" title="${esc(s.source_file || s.sourceFile)}">📁 ${esc(s.source_file || s.sourceFile)}</span>` : ''}
+        </div>
+        <div class="snapshot-preview-panel" id="preview-snap-${s.id}">
+          <div style="font-size:12px;font-weight:700;color:#334155;margin-bottom:8px">📊 操作等级核算结构（无需覆盖工作区即可查看）：</div>
+          <div class="snapshot-preview-table-wrap" style="margin-bottom:12px">
+            <table class="snapshot-preview-table">
+              <colgroup>
+                <col style="width: 16%;">
+                <col style="width: 16.8%;">
+                <col style="width: 16.8%;">
+                <col style="width: 16.8%;">
+                <col style="width: 16.8%;">
+                <col style="width: 16.8%;">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th style="text-align:left;padding-left:12px">维度</th>
+                  <th>特大 (Fatal)</th>
+                  <th>重大 (High)</th>
+                  <th>较大 (Medium)</th>
+                  <th>一般 (Low)</th>
+                  <th style="font-weight:800">合计</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="dim-label">计发单数</td>
+                  <td>${lvl.fatal?.count || 0}</td>
+                  <td>${lvl.high?.count || 0}</td>
+                  <td>${lvl.medium?.count || 0}</td>
+                  <td>${lvl.low?.count || 0}</td>
+                  <td style="font-weight:700">${sum.totalPaid || 0}</td>
+                </tr>
+                <tr>
+                  <td class="dim-label">激励金额</td>
+                  <td style="color:var(--red);font-weight:600">¥${(lvl.fatal?.amount || 0).toLocaleString()}</td>
+                  <td style="color:var(--red);font-weight:600">¥${(lvl.high?.amount || 0).toLocaleString()}</td>
+                  <td style="color:var(--red);font-weight:600">¥${(lvl.medium?.amount || 0).toLocaleString()}</td>
+                  <td style="color:var(--red);font-weight:600">¥${(lvl.low?.amount || 0).toLocaleString()}</td>
+                  <td style="font-weight:800;color:var(--red)">¥${(sum.totalAmount || 0).toLocaleString()}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          ${buRowsHtml ? `
+            <div style="font-size:12px;font-weight:700;color:#334155;margin-bottom:8px">🏢 各 BU 激励分布：</div>
+            <div class="snapshot-preview-table-wrap">
+              <table class="snapshot-preview-table">
+                <colgroup>
+                  <col style="width: 34%;">
+                  <col style="width: 22%;">
+                  <col style="width: 22%;">
+                  <col style="width: 22%;">
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th style="text-align:left;padding-left:12px">BU 部门</th>
+                    <th>计发单数</th>
+                    <th>涉及人数</th>
+                    <th>激励总额</th>
+                  </tr>
+                </thead>
+                <tbody>${buRowsHtml}</tbody>
+              </table>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function handleSnapshotCardAction(e) {
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  const action = btn.dataset.action;
+  const id = btn.dataset.id;
+  const item = (snapshotsList || []).find(x => String(x.id) === String(id));
+
+  if (action === 'toggle-preview') {
+    const panel = $(`preview-snap-${id}`);
+    if (panel) {
+      panel.classList.toggle('open');
+      btn.textContent = panel.classList.contains('open') ? '🙈 收起预览' : '👁 预览概览';
+    }
+    return;
+  }
+
+  if (action === 'restore') {
+    if (rawRows.length > 0) {
+      const ok = confirm('载入快照将替换当前工作区中的全部数据和分析结果，是否确定继续？');
+      if (!ok) return;
+    }
+    try {
+      setProgress(40, '正在从服务器读取快照完整数据…');
+      const resp = await fetch(`/api/operation-incentive-snapshots/${id}`);
+      const res = await resp.json();
+      if (!resp.ok || !res.success || !res.item) {
+        throw new Error(res.error || '获取快照详情失败');
+      }
+      restoreIncentiveSnapshot(res.item);
+    } catch (err) {
+      console.error(err);
+      showToast(`载入失败：${err.message}`, 'error');
+    } finally {
+      hideProgress();
+    }
+    return;
+  }
+
+  if (action === 'export-json') {
+    try {
+      setProgress(50, '正在准备导出快照…');
+      const resp = await fetch(`/api/operation-incentive-snapshots/${id}`);
+      const res = await resp.json();
+      if (!resp.ok || !res.success || !res.item) {
+        throw new Error(res.error || '获取快照失败');
+      }
+      const blob = new Blob([JSON.stringify(res.item, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const safeTitle = (res.item.title || 'snapshot').replace(/[\/\\?%*:|"<>]/g, '_');
+      a.download = `${safeTitle}_${res.item.period || ''}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      showToast('快照 JSON 文件导出成功', 'success');
+    } catch (err) {
+      console.error(err);
+      showToast(`导出失败：${err.message}`, 'error');
+    } finally {
+      hideProgress();
+    }
+    return;
+  }
+
+  if (action === 'rename') {
+    const curTitle = item ? item.title : '';
+    const newTitle = prompt('请输入新的快照名称：', curTitle);
+    if (!newTitle || !newTitle.trim() || newTitle.trim() === curTitle) return;
+    try {
+      const resp = await fetch(`/api/operation-incentive-snapshots/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newTitle.trim() })
+      });
+      const res = await resp.json();
+      if (!resp.ok || !res.success) {
+        throw new Error(res.error || '重命名失败');
+      }
+      showToast('快照重命名成功', 'success');
+      loadAndRenderSnapshotList();
+    } catch (err) {
+      console.error(err);
+      showToast(`重命名失败：${err.message}`, 'error');
+    }
+    return;
+  }
+
+  if (action === 'delete') {
+    const title = item ? item.title : id;
+    const ok = confirm(`确定要删除快照 "${title}" 吗？此操作无法撤销。`);
+    if (!ok) return;
+    try {
+      const resp = await fetch(`/api/operation-incentive-snapshots/${id}`, {
+        method: 'DELETE'
+      });
+      const res = await resp.json();
+      if (!resp.ok || !res.success) {
+        throw new Error(res.error || '删除失败');
+      }
+      showToast('快照已成功删除', 'success');
+      loadAndRenderSnapshotList();
+    } catch (err) {
+      console.error(err);
+      showToast(`删除失败：${err.message}`, 'error');
+    }
+    return;
+  }
+}
+
+async function handleImportSnapshotFile(e) {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  try {
+    setProgress(30, '正在读取本地快照文件…');
+    const text = await file.text();
+    const json = JSON.parse(text);
+    if (!json || !json.payload || !Array.isArray(json.payload.rawRows)) {
+      throw new Error('无效的操作激励快照 JSON 文件（缺少 payload.rawRows 数据）');
+    }
+    setProgress(70, '正在上传快照至服务器…');
+    const resp = await fetch('/api/operation-incentive-snapshots', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: json.title || file.name.replace(/\.json$/i, ''),
+        period: json.period || '',
+        sourceFile: json.source_file || json.sourceFile || '',
+        summary: json.summary || {},
+        payload: json.payload
+      })
+    });
+    const res = await resp.json();
+    if (!resp.ok || !res.success) {
+      throw new Error(res.error || '导入失败');
+    }
+    setProgress(100, '导入成功');
+    hideProgress();
+    showToast('✅ 本地快照已成功导入到服务器！', 'success');
+    loadAndRenderSnapshotList();
+  } catch (err) {
+    hideProgress();
+    console.error(err);
+    showToast(`导入快照失败：${err.message}`, 'error');
+  }
+}
+
+function restoreIncentiveSnapshot(snapshot) {
+  if (!snapshot || !snapshot.payload || !Array.isArray(snapshot.payload.rawRows)) {
+    throw new Error('快照数据损坏，无法恢复工作区');
+  }
+  const p = snapshot.payload;
+  rawRows = p.rawRows;
+  sourceFileName = p.sourceFileName || snapshot.source_file || snapshot.sourceFile || '快照历史数据.xlsx';
+  sourceSheetName = p.sourceSheetName || 'Sheet1';
+
+  if (p.rules) {
+    applyRuleValues(p.rules);
+    saveRules();
+  }
+  if (p.blacklistText !== undefined) {
+    incentiveBlacklist = parseBlacklist(p.blacklistText);
+    try { localStorage.setItem(BLACKLIST_STORAGE_KEY, serializeBlacklist(incentiveBlacklist)); } catch (e) {}
+    if ($('blacklistInput')) $('blacklistInput').value = p.blacklistText;
+    updateBlacklistCount();
+  }
+  if (p.dedupMode && $('dedupMode')) $('dedupMode').value = p.dedupMode;
+  if (p.blacklistMode && $('blacklistMode')) $('blacklistMode').value = p.blacklistMode;
+  if (p.periodSourceMode && $('periodSourceMode')) $('periodSourceMode').value = p.periodSourceMode;
+  if (p.activeOperatorGroup) activeOperatorGroup = p.activeOperatorGroup;
+
+  resetAllFiltersForNewFile();
+  recalculate();
+
+  $('contentStage').classList.remove('locked');
+  $('importGate').classList.add('gate-hidden');
+  $('topFileName').textContent = `快照数据：${snapshot.title} · ${rawRows.length} 条记录`;
+  $('topActions').classList.add('show');
+
+  closeSnapshotManagerModal();
+  showToast(`✅ 已成功载入快照并恢复工作区：${snapshot.title}`, 'success');
+}
+
+// 事件绑定
+if ($('heroSaveSnapshotBtn')) $('heroSaveSnapshotBtn').onclick = openSaveSnapshotModal;
+if ($('topSaveSnapshotBtn')) $('topSaveSnapshotBtn').onclick = openSaveSnapshotModal;
+if ($('heroManageSnapshotsBtn')) $('heroManageSnapshotsBtn').onclick = openSnapshotManagerModal;
+if ($('topManageSnapshotsBtn')) $('topManageSnapshotsBtn').onclick = openSnapshotManagerModal;
+if ($('gateManageSnapshotsBtn')) $('gateManageSnapshotsBtn').onclick = openSnapshotManagerModal;
+if ($('saveSnapshotModalClose')) $('saveSnapshotModalClose').onclick = closeSaveSnapshotModal;
+if ($('saveSnapshotCancelBtn')) $('saveSnapshotCancelBtn').onclick = closeSaveSnapshotModal;
+if ($('saveSnapshotSubmitBtn')) $('saveSnapshotSubmitBtn').onclick = submitSaveSnapshot;
+const saveSnapModal = $('saveSnapshotModal');
+if (saveSnapModal) saveSnapModal.addEventListener('click', e => { if (e.target === saveSnapModal) closeSaveSnapshotModal(); });
+
+if ($('snapshotModalClose')) $('snapshotModalClose').onclick = closeSnapshotManagerModal;
+const snapModal = $('snapshotModal');
+if (snapModal) snapModal.addEventListener('click', e => { if (e.target === snapModal) closeSnapshotManagerModal(); });
+if ($('smSearchInput')) $('smSearchInput').oninput = e => filterSnapshotCards(e.target.value);
+if ($('smNewSnapshotBtn')) $('smNewSnapshotBtn').onclick = () => { closeSnapshotManagerModal(); openSaveSnapshotModal(); };
+if ($('smImportBtn')) $('smImportBtn').onclick = () => $('smFileInput')?.click();
+if ($('smFileInput')) $('smFileInput').onchange = handleImportSnapshotFile;
+if ($('smListContainer')) $('smListContainer').addEventListener('click', handleSnapshotCardAction);
+
+if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      closeSaveSnapshotModal();
+      closeSnapshotManagerModal();
+    }
+  });
+}
+
+window.__operationIncentive = {
+  get rawRows() { return rawRows; },
+  set rawRows(v) { rawRows = v; },
+  get validRows() { return validRows; },
+  get dedupRows() { return dedupRows; },
+  recalculate,
+  buildIncentiveSnapshotPayload,
+  restoreIncentiveSnapshot,
+  openSaveSnapshotModal,
+  closeSaveSnapshotModal,
+  openSnapshotManagerModal,
+  closeSnapshotManagerModal,
+  filterSnapshotCards
+};
 </script>
 </body>
 </html>

@@ -7,6 +7,7 @@
     <title>专题分析</title>
     <link rel="stylesheet" href="/css/shared.css?v=20260921-08">
     <link rel="stylesheet" href="/css/topic-analysis.css?v=20260922-01">
+    <link rel="stylesheet" href="/css/report-snapshot-diff.css?v=20260922-03">
 </head>
 
 <body>
@@ -52,6 +53,9 @@
                     <button id="eosExportProjectBtn" class="topic-monthly-btn" type="button" title="导出包含离线完整数据与全部中英文编辑的工程文件">📦 导出工程</button>
                     <button id="eosImportProjectBtn" class="topic-monthly-btn" type="button" title="导入他人分享或历史备份的月报工程文件">📂 导入工程</button>
                     <input type="file" id="eosProjectFileInput" accept=".json,.eos.json" style="display:none">
+                    <button id="eosSaveSnapshotBtn" class="topic-monthly-btn" type="button" title="将当前月报数据、定制文案与排版保存为历史快照（多设备云端同步）">📸 保存快照</button>
+                    <button id="eosManageSnapshotsBtn" class="topic-monthly-btn" type="button" title="查看、读取或管理已保存的历史月报快照">📚 月报快照库</button>
+                    <button id="eosDiffBtn" class="topic-monthly-btn topic-monthly-btn-accent" type="button" title="分屏比对两个月报版本（支持历史快照与当前月报比对，自动高亮文案、数据及格式颜色差异）">🔍 月报比对</button>
                     <div class="topic-dropdown" id="eosPngDropdown">
                         <button id="eosDownloadPng" class="topic-monthly-btn topic-dropdown-toggle" type="button" title="下载月报长图 PNG（点击展开选择：中文版 / 英文版 / 合一版）">下载月报 PNG ▾</button>
                         <div class="topic-dropdown-menu" id="eosPngMenu" hidden>
@@ -598,8 +602,9 @@
     <script src="/js/shared/html2canvas.min.js?v=20260911-03"></script>
     <script src="/js/shared/jspdf.umd.min.js?v=20260920-08"></script>
     <script src="/js/shared/exceljs.min.js?v=20260916-01"></script>
-    <script src="/js/shared/report-msg-export.js?v=20260922-02"></script>
+    <script src="/js/shared/report-msg-export.js?v=20260922-03"></script>
     <script src="/js/shared/topic-monthly-engine.js?v=20260922-01"></script>
+    <script src="/js/shared/report-snapshot-diff.js?v=20260922-03"></script>
     <script src="/js/topic-analysis.js?v=20260922-01"></script>
 </body>
 

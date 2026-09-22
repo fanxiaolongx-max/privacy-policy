@@ -9,6 +9,7 @@
     <script src="/js/shared/html2canvas.min.js"></script>
     <script src="/js/shared/jspdf.umd.min.js"></script>
     <script src="./assets/exceljs.min.js"></script>
+    <link rel="stylesheet" href="/css/report-snapshot-diff.css?v=20260922-03">
     <style>
         /* 现代化全局变量与基础样式 */
         :root {
@@ -1058,6 +1059,29 @@
             color: #713f12;
             box-shadow: 0 2px 6px rgba(234, 179, 8, 0.18);
         }
+        .report-btn-snapshot {
+            background: #f5f3ff;
+            border-color: #ddd6fe;
+            color: #5b21b6;
+        }
+        .report-btn-snapshot:hover {
+            background: #ede9fe;
+            border-color: #8b5cf6;
+            color: #4c1d95;
+            box-shadow: 0 2px 6px rgba(139, 92, 246, 0.18);
+        }
+        .report-btn-diff {
+            background: #eff6ff;
+            border-color: #bfdbfe;
+            color: #1e40af;
+            font-weight: 700;
+        }
+        .report-btn-diff:hover {
+            background: #dbeafe;
+            border-color: #3b82f6;
+            color: #1d4ed8;
+            box-shadow: 0 2px 6px rgba(59, 130, 246, 0.2);
+        }
 
         .report-controls-notes { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-start; gap:8px 16px; margin-top:4px; padding-left:1px; color:var(--text-muted); font-size:12px; line-height:1.45; width:100%; box-sizing:border-box; }
         .report-controls-notes .muted { display:inline-block; }
@@ -1895,6 +1919,24 @@
                   </button>
                   <input id="report-project-file" type="file" accept=".license.json,.json" style="display:none">
                 </div>
+
+                <div class="report-actions-divider"></div>
+
+                <!-- 云端快照与分屏比对 -->
+                <div class="report-actions-group">
+                  <button class="report-btn report-btn-snapshot" id="report-save-snapshot" type="button" title="将当前 License 月报数据、中英文编辑及排版保存为快照（多设备云端同步）">
+                    <span class="report-btn-icon">📸</span>
+                    <span>保存快照</span>
+                  </button>
+                  <button class="report-btn report-btn-snapshot" id="report-manage-snapshots" type="button" title="查看、管理或读取已保存的 License 月报快照">
+                    <span class="report-btn-icon">📚</span>
+                    <span>月报快照库</span>
+                  </button>
+                  <button class="report-btn report-btn-diff" id="report-diff-btn" type="button" title="左右分屏比对不同月份或快照（自动高亮文案增删、指标变动及格式颜色）">
+                    <span class="report-btn-icon">🔍</span>
+                    <span>月报比对</span>
+                  </button>
+                </div>
               </div>
 
               <!-- 第三行：状态与说明栏 -->
@@ -2335,7 +2377,8 @@
         </div>
     </div>
 
-    <script src="/js/shared/report-msg-export.js?v=20260922-02"></script>
+    <script src="/js/shared/report-msg-export.js?v=20260922-03"></script>
+    <script src="/js/shared/report-snapshot-diff.js?v=20260922-03"></script>
     <script>
         // Global CanvasRenderingContext2D guard against 0-dimension pattern crashes (html2canvas compatibility)
         (function installCanvasGuard() {
@@ -5633,13 +5676,15 @@
                 button.textContent = '正在生成 HTML...';
             }
             try {
-                let cleanDom;
-                if (window.ReportMsgExport?.copyForEmail) {
-                    cleanDom = window.ReportMsgExport.copyForEmail(sheet);
-                } else {
-                    cleanDom = sheet.cloneNode(true);
-                }
-                cleanDom.querySelectorAll('.print-hide, .report-sync-chip, .report-section-anchor, .report-diff-popover').forEach(el => el.remove());
+                const cleanDom = sheet.cloneNode(true);
+                cleanDom.querySelectorAll('.print-hide, .report-sync-chip, .report-section-anchor, .report-diff-popover, .report-text-popover, #licenseReportNavCn, #reportJumpToEn').forEach(el => el.remove());
+                cleanDom.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
+                cleanDom.style.maxWidth = 'none';
+                cleanDom.style.width = '100%';
+                cleanDom.style.border = 'none';
+                cleanDom.style.margin = '0';
+                cleanDom.style.padding = '0';
+                cleanDom.style.boxShadow = 'none';
 
                 const period = document.getElementById('report-period').value;
                 const label = period === 'all' ? '全部时间' : period === 'year' ? document.getElementById('report-year').value : document.getElementById('report-month').value;
@@ -5674,6 +5719,16 @@
             border: 1px solid #e2e8f0;
             box-sizing: border-box;
         }
+        .license-html-page .report-sheet {
+            max-width: none !important;
+            width: 100% !important;
+            border: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            overflow: visible !important;
+            background: transparent !important;
+        }
         table {
             border-collapse: collapse !important;
             width: 100% !important;
@@ -5701,15 +5756,17 @@
         th.report-col-subnote.report-metric-group {
             background: #f0f9ff !important;
         }
-        .report-metric-group { background: #e0f2fe !important; }
-        .report-metric-critical { background: #fee2e2 !important; color: #a61b1b !important; font-weight: 700 !important; }
+        .report-copy { padding: 5px 8px !important; line-height: 1.5 !important; font-size: 13px !important; border-bottom: 1px solid #cbd5e1 !important; }
+        .report-sheet p { margin: 7px 0 !important; line-height: 1.6 !important; }
+        .report-metric-group { color: #1d4ed8 !important; font-weight: 800 !important; }
+        .report-metric-critical { color: #a61b1b !important; font-weight: 800 !important; }
         .report-split-name { display: flex; flex-direction: column; gap: 2px; }
         .report-title {
-            font-size: 15px !important;
-            font-weight: 700 !important;
+            font-size: 16px !important;
+            font-weight: 800 !important;
             background: #dceef4 !important;
             border: 1px solid #94a3b8 !important;
-            padding: 10px !important;
+            padding: 12px !important;
             text-align: center !important;
             margin-bottom: 8px !important;
         }
@@ -5717,14 +5774,28 @@
             border-bottom: 1px solid #94a3b8 !important;
             padding-bottom: 4px !important;
             margin-top: 10px !important;
-            font-weight: 700 !important;
+            font-weight: 800 !important;
         }
+        .report-progress-heading { font-weight: 800 !important; }
+        .report-progress-block { border-bottom: 1px solid #94a3b8 !important; }
+        .report-table-intro { font-weight: 700 !important; margin-top: 0 !important; }
         .report-table-caption {
             text-align: center !important;
             color: #475569 !important;
-            font-size: 12px !important;
+            font-size: 11px !important;
             margin: 4px 0 14px 0 !important;
+            border-bottom: 1px solid #94a3b8 !important;
+            padding-bottom: 2px !important;
         }
+        .report-emergency { margin-top: 0 !important; border: 1px solid #94a3b8 !important; }
+        .report-emergency .report-section-heading { margin: 0 !important; border-bottom: 1px solid #94a3b8 !important; }
+        .report-emergency .report-copy:not(.report-section-heading) { min-height: 30px !important; text-align: center !important; border-bottom: 1px solid #cbd5e1 !important; }
+        .report-emergency .report-copy:last-child { border-bottom: 0 !important; color: #64748b !important; font-style: italic !important; }
+        .report-guidance { margin-top: 0 !important; border: 1px solid #94a3b8 !important; }
+        .report-guidance .report-section-heading { margin: 0 !important; border-bottom: 1px solid #94a3b8 !important; }
+        .report-guidance .report-copy:not(.report-section-heading) { padding: 4px 8px 0 !important; }
+        .report-guidance-link { overflow-wrap: anywhere !important; padding-bottom: 6px !important; }
+        .report-guidance-link a { color: #1d4ed8 !important; text-decoration: underline !important; }
         .report-divider-en {
             margin: 28px 0 18px 0 !important;
             border-top: 2px dashed #94a3b8 !important;
@@ -5734,26 +5805,40 @@
             display: inline-block !important;
             position: relative !important;
             top: -12px !important;
-            background: #f1f5f9 !important;
-            padding: 2px 14px !important;
-            border-radius: 999px !important;
-            border: 1px solid #cbd5e1 !important;
+            background: #0f172a !important;
+            color: #f8fafc !important;
+            padding: 3px 16px !important;
+            border-radius: 9999px !important;
             font-size: 11px !important;
             font-weight: 700 !important;
-            color: #475569 !important;
+            letter-spacing: .08em !important;
         }
         .report-footer {
-            margin-top: 20px !important;
-            border-top: 1px solid #e2e8f0 !important;
-            padding-top: 10px !important;
+            margin-top: 0 !important;
+            border: 1px solid #94a3b8 !important;
+            border-top: 0 !important;
         }
-        .report-footer-contact, .report-footer-attachment {
+        .report-footer-contact {
+            padding: 8px 12px !important;
             text-align: center !important;
+            font-size: 13px !important;
+            font-style: italic !important;
             color: #64748b !important;
+        }
+        .report-footer-attachment {
+            padding: 2px 12px 8px !important;
+            text-align: center !important;
             font-size: 12px !important;
+            color: #475569 !important;
         }
         .report-footer-brand {
-            margin-top: 8px !important;
+            margin: 0 !important;
+            background: #dceef4 !important;
+            padding: 12px !important;
+            text-align: center !important;
+            font-size: 18px !important;
+            font-weight: 800 !important;
+            color: #0f172a !important;
         }
         a {
             color: #1d4ed8 !important;
@@ -5776,13 +5861,13 @@
             }
         }
     </style>
-</' + 'head>
-<' + 'body>
+${'</' + 'head>'}
+${'<' + 'body>'}
     <div class="license-html-page">
         ${cleanDom.outerHTML}
     </div>
-</' + 'body>
-</' + 'html>`;
+${'</' + 'body>'}
+${'</' + 'html>'}`;
                 const blob = new Blob([htmlDoc], { type: 'text/html;charset=utf-8' });
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
@@ -5803,18 +5888,13 @@
             }
         }
 
-        function exportLicenseProject() {
+        function buildLicenseProjectObject() {
             const rows = reportRows();
-            if (!rows.length) {
-                showNotice('导出失败', '当前没有可导出的月报数据。');
-                return;
-            }
-            const period = document.getElementById('report-period').value;
-            const month = document.getElementById('report-month').value;
-            const year = document.getElementById('report-year').value;
-            const source = document.getElementById('report-source').value;
-            const label = period === 'all' ? '全部时间' : period === 'year' ? year : month;
-            const project = {
+            const period = document.getElementById('report-period')?.value || 'month';
+            const month = document.getElementById('report-month')?.value || '';
+            const year = document.getElementById('report-year')?.value || '';
+            const source = document.getElementById('report-source')?.value || 'all';
+            return {
                 fileType: 'esn-license-monthly-project',
                 schemaVersion: 1,
                 exportedAt: new Date().toISOString(),
@@ -5829,6 +5909,60 @@
                 reportRows: rows,
                 previousReportRows: previousReportRows
             };
+        }
+
+        function applyLicenseProjectData(project, sourceTitle = '工程快照') {
+            if (!project || typeof project !== 'object') throw new Error('工程或快照内容为空或格式无效。');
+            if (project.fileType !== 'esn-license-monthly-project' && !project.overrides && !project.reportRows) {
+                throw new Error('文件类型不匹配，请选择有效的 License 月报工程文件 (*.license.json 或 *.json)。');
+            }
+
+            if (project.period) document.getElementById('report-period').value = project.period;
+            if (project.month) document.getElementById('report-month').value = project.month;
+            if (project.year) document.getElementById('report-year').value = project.year;
+            if (project.source) document.getElementById('report-source').value = project.source;
+
+            if (project.preference && typeof project.preference === 'object') {
+                reportPreference = { ...reportPreference, ...project.preference };
+                saveReportPreferences();
+            }
+
+            if (project.overrides && typeof project.overrides === 'object') {
+                const storageKey = reportCopyKey();
+                try { localStorage.setItem(storageKey, JSON.stringify(project.overrides)); } catch (_) {}
+            }
+
+            if (project.syncedCn && typeof project.syncedCn === 'object') {
+                try { localStorage.setItem(reportSyncedCnKey(), JSON.stringify(project.syncedCn)); } catch (_) {}
+            }
+
+            if (Array.isArray(project.reportRows) && project.reportRows.length) {
+                importedProjectRows = project.reportRows;
+            }
+            if (Array.isArray(project.previousReportRows)) {
+                previousReportRows = project.previousReportRows;
+            }
+
+            const badge = document.getElementById('report-project-badge');
+            if (badge) {
+                badge.hidden = false;
+                badge.title = `来自${sourceTitle}（${project.exportedAt ? new Date(project.exportedAt).toLocaleString('zh-CN') : '近期'}）`;
+            }
+
+            renderMonthlyReport();
+        }
+
+        function exportLicenseProject() {
+            const rows = reportRows();
+            if (!rows.length) {
+                showNotice('导出失败', '当前没有可导出的月报数据。');
+                return;
+            }
+            const period = document.getElementById('report-period').value;
+            const month = document.getElementById('report-month').value;
+            const year = document.getElementById('report-year').value;
+            const label = period === 'all' ? '全部时间' : period === 'year' ? year : month;
+            const project = buildLicenseProjectObject();
             const jsonStr = JSON.stringify(project, null, 2);
             const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
             const url = URL.createObjectURL(blob);
@@ -5850,49 +5984,105 @@
                 const text = await file.text();
                 let project;
                 try { project = JSON.parse(text); } catch (_) { throw new Error('选中的文件不是合法的 JSON 格式。'); }
-                if (!project || typeof project !== 'object') throw new Error('工程文件内容为空或格式无效。');
-                if (project.fileType !== 'esn-license-monthly-project' && !project.overrides && !project.reportRows) {
-                    throw new Error('文件类型不匹配，请选择有效的 License 月报工程文件 (*.license.json 或 *.json)。');
-                }
-
-                if (project.period) document.getElementById('report-period').value = project.period;
-                if (project.month) document.getElementById('report-month').value = project.month;
-                if (project.year) document.getElementById('report-year').value = project.year;
-                if (project.source) document.getElementById('report-source').value = project.source;
-
-                if (project.preference && typeof project.preference === 'object') {
-                    reportPreference = { ...reportPreference, ...project.preference };
-                    saveReportPreferences();
-                }
-
-                if (project.overrides && typeof project.overrides === 'object') {
-                    const storageKey = reportCopyKey();
-                    try { localStorage.setItem(storageKey, JSON.stringify(project.overrides)); } catch (_) {}
-                }
-
-                if (project.syncedCn && typeof project.syncedCn === 'object') {
-                    try { localStorage.setItem(reportSyncedCnKey(), JSON.stringify(project.syncedCn)); } catch (_) {}
-                }
-
-                if (Array.isArray(project.reportRows) && project.reportRows.length) {
-                    importedProjectRows = project.reportRows;
-                }
-                if (Array.isArray(project.previousReportRows)) {
-                    previousReportRows = project.previousReportRows;
-                }
-
-                const badge = document.getElementById('report-project-badge');
-                if (badge) {
-                    badge.hidden = false;
-                    badge.title = `来自工程文件：${file.name}（导出于 ${project.exportedAt ? new Date(project.exportedAt).toLocaleString('zh-CN') : '近期'}）`;
-                }
-
-                renderMonthlyReport();
+                applyLicenseProjectData(project, `工程文件《${file.name}》`);
                 showNotice('导入成功', `已成功导入月报工程《${file.name}》，完整离线数据与定制文案已恢复！`);
             } catch (err) {
                 console.error('导入月报工程失败:', err);
                 showNotice('导入失败', `导入月报工程失败：${err.message}`);
             }
+        }
+
+        // 保存 License 月报快照到服务器 (多设备云端同步)
+        async function saveLicenseMonthlySnapshot() {
+            const rows = reportRows();
+            if (!rows.length) {
+                showNotice('保存失败', '当前没有可保存快照的月报数据。');
+                return;
+            }
+            const month = document.getElementById('report-month')?.value || '当月';
+            const defaultName = `${month} License月报快照 (${new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })})`;
+            const name = prompt('请输入快照名称（将保存至服务器数据库，支持多设备同步与比对）：', defaultName);
+            if (name === null) return;
+
+            const project = buildLicenseProjectObject();
+            const sheet = document.getElementById('report-sheet');
+            const htmlContent = sheet ? sheet.innerHTML : '';
+
+            try {
+                const snap = await window.ReportSnapshotDiff.Store.saveSnapshot({
+                    toolKey: 'esn-check',
+                    topicKey: 'license',
+                    month,
+                    name: name.trim() || defaultName,
+                    summary: {
+                        month,
+                        rowCount: rows.length,
+                        savedAt: new Date().toISOString()
+                    },
+                    payload: {
+                        projectData: project,
+                        htmlContent
+                    }
+                });
+                showNotice('快照保存成功', `已成功将快照「${snap.name}」持久化至服务器！可随时在「月报快照库」中读取或进行分屏比对。`);
+            } catch (err) {
+                console.error('保存快照失败:', err);
+                showNotice('保存失败', `保存快照失败：${err.message}`);
+            }
+        }
+
+        // 打开 License 月报快照库
+        function manageLicenseSnapshots() {
+            window.ReportSnapshotDiff.openSnapshotManager({
+                toolKey: 'esn-check',
+                topicKey: 'license',
+                onSaveNewSnapshot: saveLicenseMonthlySnapshot,
+                onCompareSnapshot: (snapId) => openLicenseMonthlyDiff(snapId),
+                onRestoreSnapshot: async (snap) => {
+                    const data = snap?.payload?.projectData || snap?.payload;
+                    if (data) {
+                        applyLicenseProjectData(data, `快照《${snap.name}》`);
+                        showNotice('读取成功', `已成功载入快照《${snap.name}》，完整数据与编辑文案已恢复！`);
+                    }
+                }
+            });
+        }
+
+        // 打开 License 月报左右分屏智能比对
+        async function openLicenseMonthlyDiff(baselineSnapshotId = null) {
+            const rows = reportRows();
+            if (!rows.length) {
+                showNotice('比对失败', '当前没有可比对的月报数据。');
+                return;
+            }
+            const sheet = document.getElementById('report-sheet');
+            const htmlContent = sheet ? sheet.innerHTML : '';
+            const project = buildLicenseProjectObject();
+
+            await window.ReportSnapshotDiff.Viewer.openDiffModal({
+                toolKey: 'esn-check',
+                topicKey: 'license',
+                baselineSnapshotId,
+                currentHtml: htmlContent,
+                currentProject: project,
+                onApplyToWorkspace: ({ rightSheet }) => {
+                    if (!rightSheet || !sheet) return;
+                    const overrides = reportCopyOverrides();
+                    const editedBlocks = rightSheet.querySelectorAll('[data-copy-key]');
+                    editedBlocks.forEach(el => {
+                        const key = el.dataset.copyKey;
+                        const targetEl = sheet.querySelector(`[data-copy-key="${key}"]`);
+                        if (targetEl) {
+                            targetEl.innerHTML = sanitizeReportCopyHtml(el.innerHTML);
+                            overrides[key] = { html: targetEl.innerHTML };
+                        }
+                    });
+                    const storageKey = reportCopyKey();
+                    try { localStorage.setItem(storageKey, JSON.stringify(overrides)); } catch (_) {}
+                    updateReportBilingualStatus();
+                    showNotice('应用成功', '已将分屏比对修改同步更新至当前月报工作区！');
+                }
+            });
         }
 
         let activeDiffContext = null;
@@ -6213,6 +6403,9 @@
                 e.target.value = '';
             }
         });
+        document.getElementById('report-save-snapshot')?.addEventListener('click', saveLicenseMonthlySnapshot);
+        document.getElementById('report-manage-snapshots')?.addEventListener('click', manageLicenseSnapshots);
+        document.getElementById('report-diff-btn')?.addEventListener('click', () => openLicenseMonthlyDiff());
 
         const diffPopoverEl = document.getElementById('reportDiffPopover');
         if (diffPopoverEl) {
