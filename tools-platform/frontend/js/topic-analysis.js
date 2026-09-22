@@ -2601,13 +2601,16 @@
             -webkit-font-smoothing: antialiased;
         }
         .topic-html-page {
-            max-width: 980px;
+            width: 96%;
+            max-width: 1560px;
+            min-width: 1050px;
             margin: 0 auto;
             background: #ffffff;
             padding: 36px 32px;
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
             border: 1px solid #e2e8f0;
+            box-sizing: border-box;
         }
         table {
             border-collapse: collapse !important;

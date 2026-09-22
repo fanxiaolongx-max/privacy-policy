@@ -322,5 +322,31 @@ test('esn-check index.html has single root closing body tag and does not leak sc
     assert.doesNotMatch(served, /<\/script>[\s\S]*?';\s*const blob = new Blob/, 'Script code must not leak after </script>');
 });
 
+test('column aggregation splits headers into two rows with multi-line notes and wide layout', () => {
+    const source = fs.readFileSync(path.join(__dirname, '../backend/builtin-tools/esn-check/index.html'), 'utf8');
+    const topicCss = fs.readFileSync(path.join(__dirname, '../frontend/css/topic-analysis.css'), 'utf8');
+    const topicJs = fs.readFileSync(path.join(__dirname, '../frontend/js/topic-analysis.js'), 'utf8');
+    const msgJs = fs.readFileSync(path.join(__dirname, '../frontend/js/shared/report-msg-export.js'), 'utf8');
+
+    // 1. Two-row header and subnote styles
+    assert.match(source, /headRowTop\s*=\s*thead\.insertRow\(\)/);
+    assert.match(source, /headRowSub\s*=\s*thead\.insertRow\(\)/);
+    assert.match(source, /th(?:First|Total)?\.rowSpan\s*=\s*2/);
+    assert.match(source, /thSub\.className\s*=\s*['"]report-col-subnote['"]/);
+    assert.match(source, /thSub\.appendChild\(document\.createElement\('br'\)\)/);
+    assert.match(source, /\.report-sheet th\.report-col-subnote/);
+
+    // 2. Widescreen container sizing
+    assert.match(source, /\.report-sheet\s*\{\s*[^}]*max-width:\s*1320px/);
+    assert.match(source, /\.license-html-page\s*\{\s*[^}]*max-width:\s*1560px/);
+    assert.match(topicCss, /\.topic-report-sheet\s*\{\s*[^}]*max-width:\s*1320px/);
+    assert.match(topicJs, /\.topic-html-page\s*\{\s*[^}]*max-width:\s*1560px/);
+
+    // 3. Outlook MSG wide layout
+    assert.match(msgJs, /max-width:(?:1320|1450)px/);
+    assert.match(msgJs, /target\.setAttribute\('width',\s*'100%'\)/);
+});
+
+
 
 

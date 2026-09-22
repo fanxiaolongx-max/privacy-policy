@@ -83,3 +83,36 @@ test('report MSG export rejects empty content', async () => {
     const response = await request(app).post('/api/report-msg/export').send({ subject: '月报', html: '' });
     assert.equal(response.status, 400);
 });
+
+test('report MSG export supports envelope base64 wrapped requests', async () => {
+    const html = '<html><body><table><tr><td style="color:#1d4ed8">信封封装月报</td></tr></table></body></html>';
+    const payload = {
+        subject: '临时 License 月报(Envelope)',
+        html,
+        text: '信封封装月报',
+        attachment: { filename: '数据.xlsx', data: Buffer.from('xlsx-envelope').toString('base64') }
+    };
+    const envelope = Buffer.from(encodeURIComponent(JSON.stringify(payload))).toString('base64');
+    const response = await request(app).post('/api/report-msg/export')
+        .send({ envelope })
+        .buffer(true).parse((res, callback) => {
+            const chunks = [];
+            res.on('data', chunk => chunks.push(chunk));
+            res.on('end', () => callback(null, Buffer.concat(chunks)));
+        });
+    assert.equal(response.status, 200);
+    assert.equal(response.headers['content-type'], 'application/vnd.ms-outlook');
+    const compound = CFB.read(response.body, { type: 'buffer' });
+    const htmlStream = CFB.find(compound, '/__substg1.0_10130102');
+    assert.ok(htmlStream);
+    assert.match(Buffer.from(htmlStream.content).toString('utf8'), /信封封装月报/);
+});
+
+test('report-msg-export.js defines buildLocalOutlookEml with X-Unsent draft support', () => {
+    const source = fs.readFileSync(path.join(__dirname, '../frontend/js/shared/report-msg-export.js'), 'utf8');
+    assert.match(source, /function buildLocalOutlookEml\(/);
+    assert.match(source, /X-Unsent:\s*1/);
+    assert.match(source, /multipart\/mixed/);
+    assert.match(source, /isProxyBlock/);
+});
+

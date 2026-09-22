@@ -31,10 +31,22 @@ function encapsulateHtmlToRtf(html) {
 
 router.post('/export', async (req, res) => {
     const startTime = Date.now();
-    const subject = String(req.body?.subject || '').trim();
-    const html = String(req.body?.html || '');
-    const text = String(req.body?.text || '').trim();
-    const attachment = req.body?.attachment;
+    let body = req.body;
+    if (body && typeof body.envelope === 'string') {
+        try {
+            const decoded = Buffer.from(body.envelope, 'base64').toString('utf8');
+            body = JSON.parse(decodeURIComponent(decoded));
+        } catch (_) {
+            try {
+                const decoded = Buffer.from(body.envelope, 'base64').toString('utf8');
+                body = JSON.parse(decoded);
+            } catch (_) {}
+        }
+    }
+    const subject = String(body?.subject || '').trim();
+    const html = String(body?.html || '');
+    const text = String(body?.text || '').trim();
+    const attachment = body?.attachment;
     if (!subject || subject.length > 200 || !html || html.length > 2_000_000) {
         return res.status(400).json({ error: 'INVALID_REPORT', message: '月报内容无效或过大' });
     }

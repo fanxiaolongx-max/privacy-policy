@@ -1178,7 +1178,7 @@
             .settings-grid, .settings-grid.three, .settings-grid.two { grid-template-columns:1fr; }
             .settings-section { padding:14px; }
         }
-        .report-sheet { background:#fff; border:1px solid #94a3b8; padding:0; max-width:1200px; margin:auto; overflow:auto; color:#1f2937; font-family:Arial,"Microsoft YaHei",sans-serif; }
+        .report-sheet { background:#fff; border:1px solid #94a3b8; padding:0; max-width:1320px; margin:auto; overflow:auto; color:#1f2937; font-family:Arial,"Microsoft YaHei",sans-serif; }
         .report-copy { padding:5px 8px; line-height:1.5; font-size:13px; border-bottom:1px solid #cbd5e1; }
         .report-copy[contenteditable="true"] { cursor:text; }
         .report-copy[contenteditable="true"]:hover { background:#f8fbff; }
@@ -1436,6 +1436,8 @@
         .report-sheet table,.source-detail-table { border-collapse:collapse; width:100%; font-size:12px; }
         .report-sheet th,.report-sheet td { border:1px solid #94a3b8; padding:5px 8px; text-align:center; color:#334155; }
         .report-sheet th { background:#f1f5f9; }
+        .report-sheet th.report-col-subnote { font-size:11px; font-weight:400; color:#475569; line-height:1.35; padding:4px 6px; background:#f8fafc; }
+        .report-sheet th.report-col-subnote.report-metric-group { background:#f0f9ff; }
         .report-sheet tfoot { font-weight:700; background:#f8fafc; }
         .source-detail-table th,.source-detail-table td { border:1px solid #94a3b8; padding:6px 8px; text-align:center; }
         .source-detail-table th { background:#e8f1f5; }
@@ -2333,7 +2335,7 @@
         </div>
     </div>
 
-    <script src="/js/shared/report-msg-export.js?v=20260917-07"></script>
+    <script src="/js/shared/report-msg-export.js?v=20260922-02"></script>
     <script>
         // Global CanvasRenderingContext2D guard against 0-dimension pattern crashes (html2canvas compatibility)
         (function installCanvasGuard() {
@@ -4390,11 +4392,18 @@
                 : orderedReportValues(new Set(rows.map(valueForRow)), reportPreference.columnOrder[dimension]);
             const accounts = orderedReportValues(new Set(rows.map(reportAccount)), reportPreference.rowOrder);
             const table = document.createElement('table');
-            const head = table.createTHead().insertRow();
+            const thead = table.createTHead();
             const splitName = (cell, name, note) => {
                 if (!note) { cell.textContent = name; return; }
                 const wrapper = document.createElement('div'); wrapper.className = 'report-split-name';
-                [name, note].forEach(value => { const part = document.createElement('span'); part.textContent = value; wrapper.appendChild(part); });
+                const nameSpan = document.createElement('span'); nameSpan.textContent = name; wrapper.appendChild(nameSpan);
+                const noteSpan = document.createElement('span');
+                const noteLines = String(note).split(/\r?\n/);
+                noteLines.forEach((line, i) => {
+                    if (i > 0) noteSpan.appendChild(document.createElement('br'));
+                    noteSpan.appendChild(document.createTextNode(line));
+                });
+                wrapper.appendChild(noteSpan);
                 cell.appendChild(wrapper);
             };
             const mapDimLabel = name => {
@@ -4406,13 +4415,67 @@
             };
             const headerFirst = isEn ? 'Account / System Dept' : '系统部 / Account';
             const headerTotal = isEn ? 'Total' : '总计';
-            [headerFirst, ...dims.map(mapDimLabel), headerTotal].forEach(label => {
-                const th = document.createElement('th');
-                if (/^(?:no\s*po|have\s*po|无\s*po|有\s*po)$/i.test(label)) th.classList.add('report-metric-group');
-                const group = !isEn && (reportPreference.columnGroups || []).find(item => item.dimension === dimension && item.name === label);
-                splitName(th, label, group?.note);
-                head.appendChild(th);
-            });
+
+            const splitMap = new Map();
+            if (!isEn && Array.isArray(reportPreference.columnGroups)) {
+                reportPreference.columnGroups.forEach(item => {
+                    if (item.dimension === dimension && item.name && item.note && item.note.trim()) {
+                        splitMap.set(item.name, item.note.trim());
+                    }
+                });
+            }
+            const hasSplit = splitMap.size > 0 && dims.some(d => splitMap.has(d));
+
+            if (hasSplit) {
+                const headRowTop = thead.insertRow();
+                const headRowSub = thead.insertRow();
+
+                const thFirst = document.createElement('th');
+                thFirst.rowSpan = 2;
+                thFirst.textContent = headerFirst;
+                headRowTop.appendChild(thFirst);
+
+                dims.forEach(d => {
+                    const label = mapDimLabel(d);
+                    const isGroupMetric = /^(?:no\s*po|have\s*po|无\s*po|有\s*po)$/i.test(label);
+                    if (splitMap.has(d)) {
+                        const thTop = document.createElement('th');
+                        thTop.textContent = label;
+                        if (isGroupMetric) thTop.classList.add('report-metric-group');
+                        headRowTop.appendChild(thTop);
+
+                        const thSub = document.createElement('th');
+                        thSub.className = 'report-col-subnote';
+                        if (isGroupMetric) thSub.classList.add('report-metric-group');
+                        const noteLines = splitMap.get(d).split(/\r?\n/);
+                        noteLines.forEach((line, idx) => {
+                            if (idx > 0) thSub.appendChild(document.createElement('br'));
+                            thSub.appendChild(document.createTextNode(line));
+                        });
+                        headRowSub.appendChild(thSub);
+                    } else {
+                        const th = document.createElement('th');
+                        th.rowSpan = 2;
+                        th.textContent = label;
+                        if (isGroupMetric) th.classList.add('report-metric-group');
+                        headRowTop.appendChild(th);
+                    }
+                });
+
+                const thTotal = document.createElement('th');
+                thTotal.rowSpan = 2;
+                thTotal.textContent = headerTotal;
+                headRowTop.appendChild(thTotal);
+            } else {
+                const headRow = thead.insertRow();
+                [headerFirst, ...dims.map(mapDimLabel), headerTotal].forEach(label => {
+                    const th = document.createElement('th');
+                    if (/^(?:no\s*po|have\s*po|无\s*po|有\s*po)$/i.test(label)) th.classList.add('report-metric-group');
+                    th.textContent = label;
+                    headRow.appendChild(th);
+                });
+            }
+
             const isCriticalValue = (label, value) => {
                 const count = Number(value);
                 if (!Number.isFinite(count) || count <= 0) return false;
@@ -4440,15 +4503,6 @@
             });
             table.setAttribute('data-report-lang', isEn ? 'en' : 'cn');
             host.appendChild(table);
-            const splitHeaders = Array.from(head.cells).map(cell => cell.querySelector('.report-split-name')).filter(Boolean);
-            if (splitHeaders.length) {
-                const titleHeight = Math.max(...splitHeaders.map(item => item.firstElementChild.scrollHeight));
-                const noteHeight = Math.max(...splitHeaders.map(item => item.lastElementChild.scrollHeight));
-                splitHeaders.forEach(item => {
-                    item.firstElementChild.style.height = `${titleHeight}px`;
-                    item.lastElementChild.style.height = `${noteHeight}px`;
-                });
-            }
             const caption = document.createElement('div');
             caption.className = 'report-table-caption';
             caption.textContent = title;
@@ -4755,27 +4809,45 @@
                 cell.font = { name: 'Microsoft YaHei', size: 9, color: { argb: 'FF334155' } }; row.height = 21;
             };
             const appendTable = table => {
+                const totalCols = table.querySelector?.('tbody')?.rows[0]?.cells.length || table.rows[0]?.cells.length || 1;
+                const gridOccupied = [];
                 Array.from(table.rows).forEach((sourceRow, rowIndex) => {
                     const row = worksheet.getRow(rowNumber++), cells = Array.from(sourceRow.cells);
                     const header = sourceRow.parentElement.tagName === 'THEAD', footer = sourceRow.parentElement.tagName === 'TFOOT';
                     let textHeight = 0;
-                    cells.forEach((sourceCell, index) => {
-                        const start = Math.floor(index * columns / cells.length) + 1;
-                        const end = Math.floor((index + 1) * columns / cells.length);
-                        if (end > start) worksheet.mergeCells(row.number, start, row.number, end);
-                        const cell = row.getCell(start), split = sourceCell.querySelector('.report-split-name');
-                        const value = split ? Array.from(split.children).map(part => part.textContent).join('\n') : sourceCell.textContent.trim();
+                    let colPointer = 0;
+                    cells.forEach(sourceCell => {
+                        while (gridOccupied[rowIndex] && gridOccupied[rowIndex][colPointer]) colPointer++;
+                        const cSpan = sourceCell.colSpan || 1;
+                        const rSpan = sourceCell.rowSpan || 1;
+                        for (let r = 0; r < rSpan; r++) {
+                            if (!gridOccupied[rowIndex + r]) gridOccupied[rowIndex + r] = [];
+                            for (let c = 0; c < cSpan; c++) {
+                                gridOccupied[rowIndex + r][colPointer + c] = true;
+                            }
+                        }
+                        const start = Math.floor(colPointer * columns / totalCols) + 1;
+                        const end = Math.floor((colPointer + cSpan) * columns / totalCols);
+                        const endRow = row.number + rSpan - 1;
+                        if (end > start || endRow > row.number) {
+                            worksheet.mergeCells(row.number, start, endRow, end);
+                        }
+                        const cell = row.getCell(start);
+                        const split = sourceCell.querySelector?.('.report-split-name');
+                        const isSubnote = sourceCell.classList?.contains?.('report-col-subnote');
+                        const value = split ? Array.from(split.children).map(part => part.textContent).join('\n') : (sourceCell.innerText || sourceCell.textContent).trim();
                         cell.value = !header && !split && /^\d+$/.test(value) ? Number(value) : value;
-                        const critical = sourceCell.classList?.contains('report-metric-critical');
-                        const group = sourceCell.classList?.contains('report-metric-group');
-                        cell.font = { name: 'Microsoft YaHei', size: header ? 10 : 9, bold: header || footer || critical || group,
-                            color: { argb: critical ? 'FFA61B1B' : group ? 'FF1D4ED8' : 'FF334155' } };
+                        const critical = sourceCell.classList?.contains?.('report-metric-critical');
+                        const group = sourceCell.classList?.contains?.('report-metric-group');
+                        cell.font = { name: 'Microsoft YaHei', size: header ? (isSubnote ? 8.5 : 10) : 9, bold: header ? !isSubnote : (footer || critical || group),
+                            color: { argb: critical ? 'FFA61B1B' : group ? 'FF1D4ED8' : (isSubnote ? 'FF475569' : 'FF334155') } };
                         cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
                         textHeight = Math.max(textHeight, reportExcelTextHeight(value, (end - start + 1) * 5.5, cell.font.size));
                         cell.border = border;
-                        if (header || footer) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: header ? 'FFF1F5F9' : 'FFF8FAFC' } };
+                        if (header || footer) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: header ? (isSubnote ? 'FFF8FAFC' : 'FFF1F5F9') : 'FFF8FAFC' } };
+                        colPointer += cSpan;
                     });
-                    row.height = Math.max(header ? 38 : 23, Math.ceil(sourceRow.getBoundingClientRect().height * 0.75) + 3, textHeight);
+                    row.height = Math.max(header ? (sourceRow.querySelector?.('.report-col-subnote') ? 28 : 36) : 23, Math.ceil(sourceRow.getBoundingClientRect().height * 0.75) + 3, textHeight);
                 });
             };
             const appendNode = node => {
@@ -5591,13 +5663,16 @@
             -webkit-font-smoothing: antialiased;
         }
         .license-html-page {
-            max-width: 1060px;
+            width: 96%;
+            max-width: 1560px;
+            min-width: 1050px;
             margin: 0 auto;
             background: #ffffff;
             padding: 36px 32px;
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
             border: 1px solid #e2e8f0;
+            box-sizing: border-box;
         }
         table {
             border-collapse: collapse !important;
@@ -5614,6 +5689,17 @@
         th {
             background: #f1f5f9 !important;
             font-weight: 700 !important;
+        }
+        th.report-col-subnote {
+            font-size: 11px !important;
+            font-weight: 400 !important;
+            color: #475569 !important;
+            line-height: 1.35 !important;
+            padding: 4px 6px !important;
+            background: #f8fafc !important;
+        }
+        th.report-col-subnote.report-metric-group {
+            background: #f0f9ff !important;
         }
         .report-metric-group { background: #e0f2fe !important; }
         .report-metric-critical { background: #fee2e2 !important; color: #a61b1b !important; font-weight: 700 !important; }

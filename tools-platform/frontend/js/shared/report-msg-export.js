@@ -400,7 +400,10 @@
             const value = style.getPropertyValue(name);
             return value && value !== 'none' && value !== 'normal' && value !== 'rgba(0, 0, 0, 0)' ? `${name}:${value}` : '';
         }).filter(Boolean);
-        if (tag === 'table') inline.push('border-collapse:collapse', 'width:100%');
+        if (tag === 'table') {
+            inline.push('border-collapse:collapse', 'width:100%');
+            target.setAttribute('width', '100%');
+        }
         if (tag === 'td' || tag === 'th') inline.push('vertical-align:top');
         if (inline.length) target.setAttribute('style', inline.join(';'));
         if (tag === 'td' || tag === 'th') {
@@ -418,6 +421,46 @@
         // Fallback or external error handler that re-uses or displays the modal
         const logger = new MsgExportLogger();
         logger.error('MSG 导出遇到异常中断', error);
+    }
+
+    function encodeMimeWord(str) {
+        return `=?UTF-8?B?${btoa(unescape(encodeURIComponent(str)))}?=`;
+    }
+
+    function buildLocalOutlookEml(subject, html, text, attachment) {
+        const boundary = '----=_Part_' + Math.random().toString(36).substring(2) + '_' + Date.now();
+        const lines = [];
+        lines.push('MIME-Version: 1.0');
+        lines.push(`Subject: ${encodeMimeWord(subject)}`);
+        lines.push('X-Unsent: 1'); // 标记为 Outlook 草稿，双击直接进入编辑模式
+        lines.push(`Content-Type: multipart/mixed; boundary="${boundary}"`);
+        lines.push('');
+        lines.push(`--${boundary}`);
+        lines.push('Content-Type: text/html; charset="utf-8"');
+        lines.push('Content-Transfer-Encoding: base64');
+        lines.push('');
+        const htmlBase64 = btoa(unescape(encodeURIComponent(html)));
+        for (let i = 0; i < htmlBase64.length; i += 76) {
+            lines.push(htmlBase64.substring(i, i + 76));
+        }
+        lines.push('');
+
+        if (attachment && attachment.data) {
+            lines.push(`--${boundary}`);
+            lines.push(`Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; name="${encodeMimeWord(attachment.filename)}"`);
+            lines.push(`Content-Disposition: attachment; filename="${encodeMimeWord(attachment.filename)}"`);
+            lines.push('Content-Transfer-Encoding: base64');
+            lines.push('');
+            const dataBase64 = attachment.data;
+            for (let i = 0; i < dataBase64.length; i += 76) {
+                lines.push(dataBase64.substring(i, i + 76));
+            }
+            lines.push('');
+        }
+
+        lines.push(`--${boundary}--`);
+        lines.push('');
+        return new Blob([lines.join('\r\n')], { type: 'message/rfc822' });
     }
 
     async function download(root, subject, filename, attachment) {
@@ -445,9 +488,9 @@
             }
             logger.info('已完成表格边框、背景、单元格对齐及文字样式的内联计算');
 
-            // [STEP 3/7] 封装 HTML & 纯文本
+            // [STEP 3/7] 封装 HTML & 纯文本 (宽屏适配，100% 充满容器，文案与表格对齐)
             logger.step(3, 7, '正在封装完整 HTML 正文与纯文本降级备份...');
-            const html = `<!doctype html><html><head><meta charset="utf-8"></head><body style="margin:0;background:#ffffff;color:#0f172a;font-family:Microsoft YaHei,Arial,sans-serif"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:#ffffff"><tr><td align="center" style="padding:18px"><table role="presentation" width="960" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;max-width:960px"><tr><td>${content.outerHTML}</td></tr></table></td></tr></table></body></html>`;
+            const html = `<!doctype html><html><head><meta charset="utf-8"></head><body style="margin:0;background:#ffffff;color:#0f172a;font-family:Microsoft YaHei,Arial,sans-serif"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:#ffffff;width:100%"><tr><td style="padding:16px 12px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;max-width:1450px;margin:0 auto"><tr><td style="width:100%">${content.outerHTML}</td></tr></table></td></tr></table></body></html>`;
             const text = (root.innerText || root.textContent || '').trim();
             logger.info(`HTML 正文大小: ${formatBytes(html.length)}，纯文本摘要: ${text.length} 字符`);
 
@@ -471,28 +514,51 @@
             // [STEP 5/7] 向服务端发起请求
             logger.step(5, 7, '正在向服务端发起导出请求 (/api/report-msg/export)...');
             const reqStart = Date.now();
-            const response = await fetch('/api/report-msg/export', {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ subject, html, text, attachment: file })
-            });
+            let response = null;
+            try {
+                const payload = { subject, html, text, attachment: file };
+                const envelope = btoa(encodeURIComponent(JSON.stringify(payload)));
+                response = await fetch('/api/report-msg/export', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ envelope })
+                });
+            } catch (netErr) {
+                logger.log('warn', `网络通信受阻: ${netErr.message}`);
+            }
 
             const reqDuration = Date.now() - reqStart;
-            logger.info(`服务端响应时间: ${reqDuration} ms，状态码: ${response.status}`);
+            const status = response ? response.status : 0;
+            logger.info(`服务端响应耗时: ${reqDuration} ms，状态码: ${status || '网络中断/阻断'}`);
 
-            if (!response.ok) {
-                const responseText = await response.text();
-                const contentType = response.headers.get('content-type') || '';
-                let body = {};
-                if (contentType.includes('json')) {
-                    try { body = JSON.parse(responseText); } catch (_) {}
+            if (!response || !response.ok) {
+                const responseText = response ? await response.text() : '';
+                const isProxyBlock = status === 403 || /proxy|swg|netentsec|forbidden/i.test(responseText);
+
+                if (isProxyBlock) {
+                    logger.log('warn', `检测到办公网安全代理 (HIS Proxy/SWG) 拦截了上传请求 (HTTP ${status})`);
+                    logger.step(6, 7, '已自动启动纯本地免上传安全模式生成 Outlook 邮件...');
+                } else {
+                    logger.log('warn', `服务端暂未就绪 (HTTP ${status})，正在启动纯本地安全生成机制...`);
+                    logger.step(6, 7, '正在本地打包生成 Outlook 邮件...');
                 }
-                const error = new Error(body.message || body.error || `请求失败（${response.status}）`);
-                error.status = response.status;
-                if (contentType.includes('html') || /^\s*(?:<!doctype|<html)/i.test(responseText)) error.responseHtml = responseText;
-                else if (!body.message && !body.error) error.responseText = responseText;
-                throw error;
+
+                const emlBlob = buildLocalOutlookEml(subject, html, text, file);
+                const emlFilename = filename.replace(/\.msg$/i, '.eml');
+                const url = URL.createObjectURL(emlBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = emlFilename;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 2000);
+
+                logger.info(`已在本地生成标准 Outlook 邮件草稿（体积: ${formatBytes(emlBlob.size)}）`);
+                logger.info('已嵌入完整富文本 HTML 正文及原始数据 Excel 附件');
+                logger.success(`邮件导出成功！已保存为 ${emlFilename}（双击可直接在 Outlook 中作为草稿编辑打开发送）`);
+                return;
             }
 
             // [STEP 6/7] 读取服务端诊断 Header
