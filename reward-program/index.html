@@ -251,6 +251,48 @@ tbody tr:hover{background:rgba(19,107,81,.03)}
   color:var(--brand);
 }
 
+.att-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  line-height: 1.2;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-top: 3px;
+  cursor: default;
+  transition: all .15s;
+}
+.att-badge.anomaly {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  font-weight: 600;
+  cursor: pointer;
+}
+.att-badge.anomaly:hover {
+  background: #fee2e2;
+  box-shadow: 0 1px 3px rgba(239, 68, 68, 0.2);
+}
+.att-badge.good {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+.att-badge.neutral {
+  background: #f8fafc;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+.att-badge.checking {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px dashed #cbd5e1;
+}
+.att-check-indicator {
+  min-height: 18px;
+}
+
 .amt-cell-wrap{
   display:flex;
   align-items:center;
@@ -626,11 +668,84 @@ tbody tr:hover{background:rgba(19,107,81,.03)}
 (() => {
   const API = '/api/reward-program';
 let PAGES_SNAPSHOT = null;
+let TP_RELATED_SNAPSHOT = null;
+
+const TP_STATIC_READONLY_MESSAGE = '无权限，仅供查看。请联系管理员。';
+function tpStaticJson(body, status = 200) {
+  return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json; charset=utf-8' } });
+}
+function tpStaticNormalizeId(value) {
+  const text = String(value || '').trim().toLowerCase();
+  const match = text.match(/^[ua](\d{5,})$/);
+  return match ? match[1] : text;
+}
+function tpStaticAttendance(person) {
+  const source = TP_RELATED_SNAPSHOT.meeting || {};
+  const attendance = source.attendance || {};
+  const staffId = String(person?.staffId || person?.account || person?.id || '').trim();
+  const name = String(person?.name || '').trim().toLowerCase();
+  const normalizedId = tpStaticNormalizeId(staffId);
+  let fallback = null;
+  for (const [key, result] of Object.entries(attendance)) {
+    const split = key.indexOf('|');
+    const candidateId = split >= 0 ? key.slice(0, split) : key;
+    const candidateName = split >= 0 ? key.slice(split + 1).trim().toLowerCase() : '';
+    if (normalizedId && tpStaticNormalizeId(candidateId) === normalizedId) return result;
+    if (name && candidateName && (candidateName === name || (name.length >= 2 && (candidateName.includes(name) || name.includes(candidateName))))) fallback = fallback || result;
+  }
+  return fallback || { found:false, hasAnomaly:false, cleanCount:0, anomalyCount:0, anomalies:[], records:[], totalMeetingsChecked:0 };
+}
+function tpStaticReadonlyResponse() {
+  if (typeof showToast === 'function') showToast(TP_STATIC_READONLY_MESSAGE, 'warning');
+  else if (typeof toast === 'function') toast(TP_STATIC_READONLY_MESSAGE, 'warning', 6000);
+  return tpStaticJson({ success:false, error:TP_STATIC_READONLY_MESSAGE, code:'READ_ONLY_SNAPSHOT' }, 403);
+}
+function tpStaticApiResponse(url, options = {}) {
+  const raw = String(url || '');
+  let parsed;
+  try { parsed = new URL(raw, 'https://tools-platform.invalid/'); } catch (_) { return null; }
+  const pathname = parsed.pathname;
+  const method = String(options.method || 'GET').toUpperCase();
+  if (pathname === '/api/meeting-snapshots/attendance-check' && method === 'GET') {
+    const result = tpStaticAttendance({ staffId: parsed.searchParams.get('staffId') || parsed.searchParams.get('account'), name: parsed.searchParams.get('name') });
+    return tpStaticJson({ success:true, ...result, data:result });
+  }
+  if (pathname === '/api/meeting-snapshots/batch-attendance-check' && method === 'POST') {
+    let body = {}; try { body = JSON.parse(options.body || '{}'); } catch (_) {}
+    const results = {};
+    for (const person of Array.isArray(body.persons) ? body.persons : []) results[String(person.staffId || '')+'|'+String(person.name || '')] = tpStaticAttendance(person);
+    return tpStaticJson({ success:true, results, data:results });
+  }
+  if (pathname === '/api/meeting-snapshots/extract-roster' && method === 'GET') {
+    const roster = TP_RELATED_SNAPSHOT.meeting?.roster || [];
+    return tpStaticJson({ success:true, roster, items:roster, data:roster, count:roster.length });
+  }
+  if (pathname === '/api/meeting-snapshots' && method === 'GET') {
+    const items = TP_RELATED_SNAPSHOT.meeting?.summaries || [];
+    return tpStaticJson({ success:true, items, data:items, count:items.length });
+  }
+  if (pathname.startsWith('/api/meeting-snapshots/') && method === 'GET') {
+    const id = decodeURIComponent(pathname.slice('/api/meeting-snapshots/'.length));
+    const item = (TP_RELATED_SNAPSHOT.meeting?.snapshots || []).find(entry => String(entry.id) === id);
+    return item ? tpStaticJson({ success:true, item, data:item }) : tpStaticJson({ success:false, error:'未找到指定会议快照' }, 404);
+  }
+  if (pathname === '/api/meeting-snapshots' || pathname.startsWith('/api/meeting-snapshots/')) return tpStaticReadonlyResponse();
+  
+  return null;
+}
 const pagesFetch = window.fetch.bind(window);
-window.fetch = (url, options) => {
+async function loadRelatedSnapshot() {
+  if (!TP_RELATED_SNAPSHOT) {
+    const response = await pagesFetch('./data/related.json', { cache: 'no-store' });
+    if (!response.ok) throw new Error('关联数据读取失败');
+    TP_RELATED_SNAPSHOT = await response.json();
+  }
+  return TP_RELATED_SNAPSHOT;
+}
+window.fetch = async (url, options = {}) => {
   if (String(url).startsWith('./data/') || String(url).startsWith('blob:') || String(url).startsWith('data:')) return pagesFetch(url, options);
-  console.warn('[只读页面] 网络请求已拦截:', url);
-  return Promise.reject(new Error('无权限，仅供查看。请联系管理员。'));
+  await loadRelatedSnapshot();
+  return tpStaticApiResponse(url, options) || tpStaticReadonlyResponse();
 };
   const cats = {
     bounty: ['01', '悬赏奖', '项目自申报 · 多团队分配'],
@@ -666,6 +781,50 @@ window.fetch = (url, options) => {
   const formatStatus = s => statusMap[s]?.label || s || '未知';
   const minor = value => Math.round(Number(value || 0)) * 100;
   const bp = value => Math.round(Number(value || 0) * 100);
+
+  const attCheckCache = new Map();
+
+  async function checkPersonAttendanceStatus(staffId, name) {
+    const s = String(staffId || '').trim();
+    const n = String(name || '').trim();
+    if (!s && !n) return null;
+    const key = `${s.toLowerCase()}|${n.toLowerCase()}`;
+    if (attCheckCache.has(key)) return attCheckCache.get(key);
+
+    try {
+      const res = await fetch(`/api/meeting-snapshots/attendance-check?staffId=${encodeURIComponent(s)}&name=${encodeURIComponent(n)}`);
+      if (!res.ok) throw new Error('核验请求失败');
+      const data = await res.json();
+      const result = data.data || data;
+      attCheckCache.set(key, result);
+      return result;
+    } catch (err) {
+      console.warn('Attendance check error:', err);
+      return null;
+    }
+  }
+
+  async function updateAttendanceIndicator(containerEl, staffId, name) {
+    if (!containerEl) return;
+    const s = String(staffId || '').trim();
+    const n = String(name || '').trim();
+    if (!s && !n) {
+      containerEl.innerHTML = '';
+      return;
+    }
+    containerEl.innerHTML = '<span class="att-badge checking">⏳ 核验考勤中...</span>';
+    const result = await checkPersonAttendanceStatus(s, n);
+    if (!result || !result.found) {
+      containerEl.innerHTML = '<span class="att-badge neutral" title="未在历史会议考勤快照中检索到该人员数据">ℹ️ 未查到考勤记录</span>';
+      return;
+    }
+    if (result.hasAnomaly) {
+      const details = (result.anomalies || []).map(a => `${a.meetingDate || a.title || '会议'}: ${a.attendance}`).join('\n');
+      containerEl.innerHTML = `<span class="att-badge anomaly" title="${esc(details)}" data-details="${esc(details)}">⚠️ 考勤异常 (${result.anomalyCount}次)</span>`;
+    } else {
+      containerEl.innerHTML = `<span class="att-badge good" title="在检索到的 ${result.cleanCount} 次会议考勤中均全勤按时出席">✅ 考勤良好 (${result.cleanCount}次按时)</span>`;
+    }
+  }
 
   function getCommonAmounts() {
     const counts = new Map();
@@ -1397,14 +1556,14 @@ window.fetch = (url, options) => {
                       <span class="cell-sub">${formatMoney(t.amountMinor, item.currency || 'EGP')}</span>
                     </div>
                     <div style="font-size:13px;color:var(--muted)">
-                      成员：${(t.members || []).map(m => `<b>${esc(m.name)}</b>${m.staffId ? `(${esc(m.staffId)})` : ''} · ${formatMoney(m.amountMinor, item.currency || 'EGP')}`).join('； ') || '全员统筹'}
+                      成员：${(t.members || []).map(m => `<b>${esc(m.name)}</b>${m.staffId ? `(${esc(m.staffId)})` : ''} · ${formatMoney(m.amountMinor, item.currency || 'EGP')} <span class="att-detail-chip" data-name="${esc(m.name)}" data-staff="${esc(m.staffId || '')}"></span>`).join('； ') || '全员统筹'}
                     </div>
                   </div>
                 `).join('')}
               ` : `
                 <div class="table-wrap">
                   <table>
-                    <thead><tr><th>姓名</th><th>部门/团队</th><th>工号</th><th>分配金额</th></tr></thead>
+                    <thead><tr><th>姓名</th><th>部门/团队</th><th>工号</th><th>分配金额</th><th>会议考勤状态</th></tr></thead>
                     <tbody>
                       ${(item.recipients || []).map(r => `
                         <tr>
@@ -1412,6 +1571,7 @@ window.fetch = (url, options) => {
                           <td>${esc(r.team || '-')}</td>
                           <td>${esc(r.staffId || '-')}</td>
                           <td><b style="color:var(--brand)">${formatMoney(r.amountMinor, item.currency || 'EGP')}</b></td>
+                          <td><span class="att-detail-chip" data-name="${esc(r.name)}" data-staff="${esc(r.staffId || '')}"></span></td>
                         </tr>
                       `).join('')}
                     </tbody>
@@ -1475,6 +1635,10 @@ window.fetch = (url, options) => {
         </div>
       </div>
     `;
+
+    document.querySelectorAll('#modalHost .att-detail-chip').forEach(chip => {
+      updateAttendanceIndicator(chip, chip.dataset.staff, chip.dataset.name);
+    });
 
     api(`/applications/${item.id}/events`).then(events => {
       const el = $('#eventsLog');
@@ -1878,6 +2042,7 @@ window.fetch = (url, options) => {
                       ` : ''}
                       <td>
                         <input type="text" class="tbl-input" data-team-idx="${i}" data-member-idx="${j}" data-key="member-name" value="${esc(m.name)}" placeholder="姓名" required>
+                        <div class="att-check-indicator" data-team-idx="${i}" data-member-idx="${j}"></div>
                       </td>
                       <td>
                         <input type="text" class="tbl-input" data-team-idx="${i}" data-member-idx="${j}" data-key="member-staffId" value="${esc(m.staffId || '')}" placeholder="工号">
@@ -1947,6 +2112,7 @@ window.fetch = (url, options) => {
                   <tr>
                     <td>
                       <input type="text" class="tbl-input" data-rec-idx="${i}" data-key="name" value="${esc(r.name)}" placeholder="姓名" required>
+                      <div class="att-check-indicator" data-rec-idx="${i}"></div>
                     </td>
                     <td>
                       <input type="text" class="tbl-input" data-rec-idx="${i}" data-key="team" value="${esc(r.team || '')}" placeholder="部门/团队">
@@ -1981,6 +2147,18 @@ window.fetch = (url, options) => {
           </div>
         `;
       }
+
+      setTimeout(() => {
+        container.querySelectorAll('.att-check-indicator').forEach(ind => {
+          const tr = ind.closest('tr');
+          if (!tr) return;
+          const nameInput = tr.querySelector('[data-key="member-name"], [data-key="name"]');
+          const staffInput = tr.querySelector('[data-key="member-staffId"], [data-key="staffId"]');
+          if (nameInput?.value?.trim() || staffInput?.value?.trim()) {
+            updateAttendanceIndicator(ind, staffInput?.value, nameInput?.value);
+          }
+        });
+      }, 0);
 
       updateSummary();
     }
@@ -2128,10 +2306,34 @@ window.fetch = (url, options) => {
         updateSummary();
       });
 
-      $('#allocationContainer')?.addEventListener('input', () => {
+      let attInputTimer = null;
+      function handleRowAttCheck(target) {
+        const tr = target.closest('tr');
+        if (!tr) return;
+        const nameInput = tr.querySelector('[data-key="member-name"], [data-key="name"]');
+        const staffInput = tr.querySelector('[data-key="member-staffId"], [data-key="staffId"]');
+        const indicator = tr.querySelector('.att-check-indicator');
+        if (indicator) {
+          updateAttendanceIndicator(indicator, staffInput?.value, nameInput?.value);
+        }
+      }
+
+      $('#allocationContainer')?.addEventListener('input', ev => {
         syncFormValues();
         updateSummary();
+        const target = ev.target;
+        if (target && (target.dataset.key === 'member-name' || target.dataset.key === 'member-staffId' || target.dataset.key === 'name' || target.dataset.key === 'staffId')) {
+          clearTimeout(attInputTimer);
+          attInputTimer = setTimeout(() => handleRowAttCheck(target), 350);
+        }
       });
+
+      $('#allocationContainer')?.addEventListener('blur', ev => {
+        const target = ev.target;
+        if (target && (target.dataset.key === 'member-name' || target.dataset.key === 'member-staffId' || target.dataset.key === 'name' || target.dataset.key === 'staffId')) {
+          handleRowAttCheck(target);
+        }
+      }, true);
 
       $('#allocationContainer')?.addEventListener('click', ev => {
         const target = ev.target;
@@ -2747,6 +2949,34 @@ window.fetch = (url, options) => {
 
   // ================= 确认弹窗与动作处理 (Confirm Dialog & Actions) =================
 
+  function alertDialog({ title, message = '', note = '', isHtmlNote = false, btnText = '知道了', icon = 'ℹ️' }) {
+    $('#modalHost').innerHTML = `
+      <div class="modal-backdrop">
+        <div class="modal" style="width:min(520px,100%)">
+          <div class="modal-head">
+            <h2 style="display:flex;align-items:center;gap:8px"><span>${icon}</span><span>${esc(title)}</span></h2>
+            <button type="button" class="modal-close-btn" id="closeModal">×</button>
+          </div>
+          <div class="modal-body">
+            ${message ? `<div style="font-size:14.5px;font-weight:600;color:var(--ink);line-height:1.6">${esc(message)}</div>` : ''}
+            ${note ? `<div style="font-size:13px;color:var(--ink);background:var(--bg);padding:12px 14px;border-radius:8px;border:1px solid var(--line);margin-top:8px;white-space:pre-wrap;line-height:1.6">${isHtmlNote ? note : esc(note)}</div>` : ''}
+          </div>
+          <div class="modal-foot" style="justify-content:flex-end">
+            <button type="button" class="btn primary" id="alertOkBtn">${esc(btnText)}</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    $('#closeModal')?.addEventListener('click', () => {
+      $('#modalHost').innerHTML = '';
+    });
+
+    $('#alertOkBtn')?.addEventListener('click', () => {
+      $('#modalHost').innerHTML = '';
+    });
+  }
+
   function confirmDialog({ title, message, note = '', isHtmlNote = false, confirmText = '确认', confirmClass = 'primary', onConfirm }) {
     $('#modalHost').innerHTML = `
       <div class="modal-backdrop">
@@ -2970,6 +3200,18 @@ window.fetch = (url, options) => {
         host.innerHTML = '';
         ev.stopPropagation();
       }
+    }
+  });
+
+  document.addEventListener('click', ev => {
+    const badge = ev.target.closest('.att-badge.anomaly');
+    if (badge && badge.dataset.details) {
+      alertDialog({
+        title: '会议考勤异常记录明细',
+        icon: '⚠️',
+        message: '该成员在历史会议考勤快照中检索到以下异常情况：',
+        note: badge.dataset.details
+      });
     }
   });
 

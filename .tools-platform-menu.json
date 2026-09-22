@@ -6,21 +6,36 @@
       "name": "负向事件管理",
       "description": "用于维护部门负向事件与违规记录、扣罚规则、人员名册与操作审计日志，支持草稿发布、规则分类筛选和人员 CSV 导入导出。",
       "href": "./department-reward-penalty/index.html",
-      "encrypted": true
+      "encrypted": true,
+      "fingerprint": "f8aff3b46241f0dc8107a22cb179fb7babf4101bdd70ad6c146992f2d2f17367",
+      "updatedAt": "2026-09-22T18:52:34.807Z"
     },
     {
       "slug": "reward-program",
       "name": "奖励申报与评优",
       "description": "独立的悬赏奖、岗位激励、操作激励与代表处评优申报、规则和审批公示工作台。",
       "href": "./reward-program/index.html",
-      "encrypted": false
+      "encrypted": false,
+      "fingerprint": "78d1980ad82f5e4b7e5f3b93550cb34f216790a007a40d309420a1b462cdddf4",
+      "updatedAt": "2026-09-22T18:52:34.816Z"
     },
     {
       "slug": "tool-msf5b7nn",
       "name": "会议考勤",
       "description": "批量导入QR、RFC、WFM名单及线上线下签到表，合并去重参会人员，按最早签到时间判定准时、迟到、虚假签到或缺席，并支持检索与导出。",
       "href": "./tool-msf5b7nn/index.html",
-      "encrypted": false
+      "encrypted": false,
+      "fingerprint": "4f286e80105f9cdf63aaa06acdcefe2afa6384872d95f9373311f4e0a1bb5173",
+      "updatedAt": "2026-09-22T18:52:34.822Z"
+    },
+    {
+      "slug": "tool-ms4xb66s",
+      "name": "操作激励统计",
+      "description": "导入夜间操作 Excel，按人员、周期和操作等级核算操作激励并生成分析与导出结果。",
+      "href": "./tool-ms4xb66s/index.html",
+      "encrypted": false,
+      "fingerprint": "55ccf0adc2ebb9336f618d68d8a77ee78ecfd0ad63ea5a59e458e894134e2dd2",
+      "updatedAt": "2026-09-22T18:52:34.828Z"
     }
   ]
 }
