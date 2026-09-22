@@ -3603,7 +3603,8 @@ window.saveSnapshotPublishSettings = async function (options = {}) {
 };
 
 window.startSnapshotPublish = async function (options = {}) {
-    if (document.getElementById('snapshotBranch') && document.getElementById('snapshotFile')) {
+    if (document.getElementById('navSettingsModal')?.style.display === 'flex'
+        && document.getElementById('snapshotBranch') && document.getElementById('snapshotFile')) {
         const saveRes = await window.saveSnapshotPublishSettings({ silent: true, skipPrereq: true });
         if (saveRes && !saveRes.ok) {
             alert(snapshotText('保存推送配置失败，无法启动推送：', 'Failed to save snapshot settings before publish: ') + saveRes.error);
@@ -3611,13 +3612,16 @@ window.startSnapshotPublish = async function (options = {}) {
         }
     }
     const isForce = Boolean(options.force);
+    const selectedTool = options.toolSlug ? (options.toolName || options.toolSlug) : '';
     const confirmed = await showNavbarConfirm({
         title: isForce
             ? snapshotText('确认强制重新发布快照', 'Force republish snapshot?')
             : snapshotText('确认发布只读快照', 'Publish read-only snapshot?'),
         message: isForce
-            ? snapshotText('即使文件未发生变化，本次也将强制创建 Git 提交并推送到远端仓库，以触发静态托管平台（Pages）的重新构建与部署。', 'Even if no files have changed, this will create a Git commit and push to remote to trigger a Pages redeploy. Continue?')
-            : snapshotText('本次将根据配置生成各已启用工具的只读快照，并推送到目标仓库。请确认目标仓库及 Pages 的访问权限。', 'This will generate read-only snapshots of all enabled tools and publish them to the target repository. Confirm repository and Pages access first.'),
+            ? snapshotText(`${selectedTool ? `仅针对「${selectedTool}」，` : ''}即使文件未发生变化，本次也将强制创建 Git 提交并推送到远端仓库，以触发静态托管平台（Pages）的重新构建与部署。`, `${selectedTool ? `For ${selectedTool}, ` : ''}this will create a Git commit and push to remote even when files have not changed, triggering a Pages redeploy.`)
+            : selectedTool
+                ? snapshotText(`本次将根据已保存配置生成「${selectedTool}」的只读快照，并推送到目标仓库。`, `This will publish a read-only snapshot of ${selectedTool} using the saved destination settings.`)
+                : snapshotText('本次将根据配置生成各已启用工具的只读快照，并推送到目标仓库。请确认目标仓库及 Pages 的访问权限。', 'This will generate read-only snapshots of all enabled tools and publish them to the target repository. Confirm repository and Pages access first.'),
         confirmText: isForce ? snapshotText('强制推送', 'Force publish') : snapshotText('生成并推送', 'Generate & publish'),
         cancelText: snapshotText('取消', 'Cancel')
     });

@@ -34,6 +34,19 @@ const bad = (message, status = 400) => Object.assign(new Error(message), { statu
 
 const providers = new Map();
 
+function fingerprintSnapshotBundle(output, mode) {
+    const hash = crypto.createHash('sha256');
+    const add = (name, contents) => {
+        const bytes = Buffer.isBuffer(contents) ? contents : Buffer.from(String(contents));
+        hash.update(name + '\0' + bytes.length + '\0');
+        hash.update(bytes);
+    };
+    add('mode', mode);
+    add('index.html', output.html);
+    for (const [name, contents] of [...output.files].sort(([a], [b]) => a.localeCompare(b))) add(name, contents);
+    return hash.digest('hex');
+}
+
 function registerProvider(slug, provider) {
     if (!slug || !provider) return;
     providers.set(slug, { slug, ...provider });
@@ -55,6 +68,24 @@ registerProvider('reward-program', {
     defaultFile: 'reward-program/index.html',
     buildSnapshot: (tenantId, opts) => require('./reward-program-snapshot').buildSnapshot(tenantId, opts),
     buildPagesSnapshot: (tenantId, opts) => require('./reward-program-snapshot').buildPagesSnapshot(tenantId, opts)
+});
+
+registerProvider('tool-msf5b7nn', {
+    slug: 'tool-msf5b7nn',
+    name: '会议考勤',
+    description: '查看会议考勤历史快照、明细和统计结果的只读页面。',
+    defaultFile: 'tool-msf5b7nn/index.html',
+    buildSnapshot: (tenantId, opts) => require('./meeting-attendance-snapshot').buildSnapshot(tenantId, opts),
+    buildPagesSnapshot: (tenantId, opts) => require('./meeting-attendance-snapshot').buildPagesSnapshot(tenantId, opts)
+});
+
+registerProvider('tool-ms4xb66s', {
+    slug: 'tool-ms4xb66s',
+    name: '操作激励统计',
+    description: '查看操作激励历史快照、核算明细及会议考勤联动结果的只读页面。',
+    defaultFile: 'tool-ms4xb66s/index.html',
+    buildSnapshot: (tenantId, opts) => require('./operation-incentive-snapshot').buildSnapshot(tenantId, opts),
+    buildPagesSnapshot: (tenantId, opts) => require('./operation-incentive-snapshot').buildPagesSnapshot(tenantId, opts)
 });
 
 function getPagesMarker(toolSlug) {
@@ -152,6 +183,7 @@ async function ready() {
     const jobColumns = await all('PRAGMA table_info(snapshot_publish_jobs)');
     if (!jobColumns.some(column => column.name === 'trigger_type')) await run("ALTER TABLE snapshot_publish_jobs ADD COLUMN trigger_type TEXT NOT NULL DEFAULT 'manual'");
     if (!jobColumns.some(column => column.name === 'command_logs_json')) await run("ALTER TABLE snapshot_publish_jobs ADD COLUMN command_logs_json TEXT NOT NULL DEFAULT '[]'");
+    if (!jobColumns.some(column => column.name === 'tool_slug')) await run("ALTER TABLE snapshot_publish_jobs ADD COLUMN tool_slug TEXT NOT NULL DEFAULT ''");
     })();
     schemaInflight.set(key, task);
     try { await task; } finally { if (schemaInflight.get(key) === task) schemaInflight.delete(key); }
@@ -531,6 +563,7 @@ async function getJob(id) {
     return {
         id: row.id, status: row.status, stage: row.stage, progress: row.progress,
         trigger: row.trigger_type || 'manual',
+        toolSlug: row.tool_slug || '',
         entries: JSON.parse(row.entries_json || '[]'),
         commandLogs: JSON.parse(row.command_logs_json || '[]'),
         commit: row.commit_sha, path: row.file_path,
@@ -544,6 +577,7 @@ async function listJobs() {
     return rows.map(row => ({
         id: row.id, status: row.status, stage: row.stage, progress: row.progress,
         trigger: row.trigger_type || 'manual',
+        toolSlug: row.tool_slug || '',
         entries: JSON.parse(row.entries_json || '[]'),
         commandLogs: JSON.parse(row.command_logs_json || '[]'),
         commit: row.commit_sha, path: row.file_path,
@@ -624,6 +658,39 @@ async function publish(job, tenantId, settings, options = {}) {
     let staging;
     try {
         const config = validate(settings);
+        let targetSlugs = [];
+        if (options.toolSlug) {
+            targetSlugs = [options.toolSlug];
+        } else {
+            for (const slug of providers.keys()) {
+                const toolSettings = await getToolSettings(slug);
+                if (toolSettings.enabled !== false) targetSlugs.push(slug);
+            }
+        }
+        if (!targetSlugs.length) throw bad('请至少启用一个静态发布工具');
+        if (options.toolSlug && options.toolSlug !== DEFAULT_TOOL_SLUG
+            && !config.file.includes('{toolSlug}')
+            && !resolvePublishPath(config.file, options.toolSlug).split('/').includes(options.toolSlug)) {
+            throw bad('当前仓库路径未包含工具标识；请在全局设置中改用 {toolSlug}/index.html 或 pages/{toolSlug}/index.html 后推送该工具');
+        }
+        const pageOwners = new Map();
+        const dataOwners = new Map();
+        for (const slug of targetSlugs) {
+            const resolved = resolvePublishPath(config.file, slug);
+            const pageOwner = pageOwners.get(resolved);
+            if (pageOwner) {
+                throw bad(`HTML 路径冲突：[${providers.get(pageOwner)?.name || pageOwner}] 与 [${providers.get(slug)?.name || slug}] 都会写入 ${resolved}；请使用 {toolSlug}/index.html`);
+            }
+            pageOwners.set(resolved, slug);
+            if (config.publishMode === 'pages') {
+                const dataPath = path.posix.join(path.posix.dirname(resolved), 'data');
+                const existing = dataOwners.get(dataPath);
+                if (existing) {
+                    throw bad(`Pages 分离版的路径模板会让 [${providers.get(existing)?.name || existing}] 与 [${providers.get(slug)?.name || slug}] 共用 ${dataPath}/；请改用 {toolSlug}/index.html 或 pages/{toolSlug}/index.html`);
+                }
+                dataOwners.set(dataPath, slug);
+            }
+        }
         await updateJob(job, 'running', '检查仓库', 12, '已读取当前租户的推送配置，正在检查 origin 和目标分支');
         let remote = config.remoteUrl;
         if (!remote) {
@@ -650,19 +717,6 @@ async function publish(job, tenantId, settings, options = {}) {
         const cloneSec = ((Date.now() - cloneStart) / 1000).toFixed(1);
         await updateJob(job, 'running', '获取分支', 38, `远端分支获取完成（耗时 ${cloneSec}s）`);
 
-        // Determine which tools to publish
-        let targetSlugs = [];
-        if (options.toolSlug) {
-            targetSlugs = [options.toolSlug];
-        } else {
-            const providerSlugs = Array.from(providers.keys());
-            for (const s of providerSlugs) {
-                const ts = await getToolSettings(s);
-                if (ts.enabled !== false) targetSlugs.push(s);
-            }
-        }
-        if (!targetSlugs.length) targetSlugs = [DEFAULT_TOOL_SLUG];
-
         const paths = ['index.html', MENU_FILE];
         let guideName = 'README.md';
 
@@ -688,6 +742,7 @@ async function publish(job, tenantId, settings, options = {}) {
             const output = config.publishMode === 'pages'
                 ? await provider.buildPagesSnapshot(tenantId, snapshotOptions)
                 : { html: await provider.buildSnapshot(tenantId, snapshotOptions), files: new Map() };
+            const fingerprint = fingerprintSnapshotBundle(output, config.publishMode);
 
             await recordCommandLog(job, {
                 at: new Date().toISOString(),
@@ -759,7 +814,8 @@ async function publish(job, tenantId, settings, options = {}) {
                 name: toolName,
                 description: tool?.description || provider.description,
                 href: './' + toolResolvedFile,
-                encrypted: Boolean(snapshotOptions.encryption.enabled)
+                encrypted: Boolean(snapshotOptions.encryption.enabled),
+                fingerprint
             });
             guideName = menuRes.guideName || guideName;
         }
@@ -827,14 +883,16 @@ async function publish(job, tenantId, settings, options = {}) {
 async function startJob(tenantId, options = {}) {
     await ready();
     const settings = validate(await getSettings(true));
+    const toolSlug = String(options.toolSlug || '').trim();
+    if (toolSlug && !providers.has(toolSlug)) throw bad('该工具尚未接入静态页面发布');
     const keyPrefix = getDbPath() + ':';
     if ([...active].some(key => key.startsWith(keyPrefix))) throw bad('当前租户已有推送任务正在执行', 409);
     const existing = (await listJobs()).find(item => item.status === 'running');
     if (existing) throw bad('当前租户已有推送任务正在执行', 409);
     const now = new Date().toISOString();
     const trigger = options.trigger === 'scheduled' ? 'scheduled' : 'manual';
-    const jobPath = options.toolSlug
-        ? resolvePublishPath(settings.file, options.toolSlug)
+    const jobPath = toolSlug
+        ? resolvePublishPath(settings.file, toolSlug)
         : settings.resolvedFile;
     const job = {
         id: crypto.randomUUID(),
@@ -842,6 +900,7 @@ async function startJob(tenantId, options = {}) {
         stage: '排队',
         progress: 3,
         trigger,
+        toolSlug,
         entries: [{ at: now, stage: '排队', message: trigger === 'scheduled' ? '定时任务已创建' : '已创建推送任务' }],
         commandLogs: [{ at: now, type: 'info', msg: trigger === 'scheduled' ? '启动定时推送流水线' : '启动手动推送流水线' }],
         commit: '',
@@ -851,8 +910,8 @@ async function startJob(tenantId, options = {}) {
     };
     active.add(keyPrefix + job.id);
     try {
-        await run('INSERT INTO snapshot_publish_jobs (id,status,stage,trigger_type,progress,entries_json,command_logs_json,commit_sha,file_path,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
-            [job.id, job.status, job.stage, trigger, job.progress, JSON.stringify(job.entries), JSON.stringify(job.commandLogs), '', job.path, now, now]);
+        await run('INSERT INTO snapshot_publish_jobs (id,status,stage,trigger_type,tool_slug,progress,entries_json,command_logs_json,commit_sha,file_path,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+            [job.id, job.status, job.stage, trigger, toolSlug, job.progress, JSON.stringify(job.entries), JSON.stringify(job.commandLogs), '', job.path, now, now]);
         setImmediate(() => { publish(job, tenantId, settings, options).catch(() => {}); });
         return job;
     } catch (error) { active.delete(keyPrefix + job.id); throw error; }

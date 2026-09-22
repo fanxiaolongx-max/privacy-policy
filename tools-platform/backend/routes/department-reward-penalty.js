@@ -8,6 +8,7 @@ const { getDbPath } = require('../models/app-db');
 const repo = require('../models/department-reward-penalty-repository');
 const { buildSnapshot } = require('../models/department-reward-penalty-snapshot');
 const snapshotPublish = require('../models/snapshot-publish-service');
+const JSZip = require('jszip');
 const router = express.Router();
 const evidenceUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024, files: 1 } });
 const clean = (value, limit = 500) => String(value ?? '').trim().slice(0, limit);
@@ -90,6 +91,36 @@ router.get('/snapshot/html', respond(async (req, res) => {
 }));
 
 const snapshotAdmin = req => { if (req.user?.role !== 'admin') fail('仅管理员可配置或发布静态页面', 403); };
+router.get('/snapshot/download/:slug', respond(async (req, res) => {
+    snapshotAdmin(req);
+    const slug = String(req.params.slug || '');
+    const provider = snapshotPublish.providers.get(slug);
+    if (!provider) fail('该工具尚未接入静态页面发布', 404);
+    const format = String(req.query.format || 'single');
+    if (format !== 'single' && format !== 'pages') fail('下载格式无效');
+    const toolSecurity = await snapshotPublish.getToolSettings(slug, true);
+    const options = { encryption: {
+        enabled: Boolean(toolSecurity.encryptionEnabled && toolSecurity.passwordHash),
+        passwordHash: toolSecurity.passwordHash,
+        passwordSalt: toolSecurity.passwordSalt
+    } };
+    const tenantId = req.user?.tenantId || 'default';
+    res.setHeader('Cache-Control', 'no-store');
+    if (format === 'single') {
+        const html = await provider.buildSnapshot(tenantId, options);
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="${slug}-readonly.html"`);
+        return res.send(html);
+    }
+    const output = await provider.buildPagesSnapshot(tenantId, options);
+    const zip = new JSZip();
+    zip.file('index.html', output.html);
+    for (const [filename, contents] of output.files) zip.file(filename, contents);
+    const archive = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="${slug}-readonly-pages.zip"`);
+    res.send(archive);
+}));
 router.get('/snapshot/settings', respond(async (req, res) => { snapshotAdmin(req); res.setHeader('Cache-Control', 'no-store'); res.json(await snapshotPublish.getSettings()); }));
 router.get('/snapshot/prerequisites', respond(async (req, res) => { snapshotAdmin(req); res.setHeader('Cache-Control', 'no-store'); res.json(await snapshotPublish.getPrerequisites()); }));
 router.put('/snapshot/settings', respond(async (req, res) => { snapshotAdmin(req); res.json(await snapshotPublish.saveSettings(req.body || {})); }));

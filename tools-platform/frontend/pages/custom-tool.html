@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>自定义工具 - Tools Platform</title>
-    <link rel="stylesheet" href="/css/shared.css?v=20260921-08">
+    <link rel="stylesheet" href="/css/shared.css?v=20260922-01">
     <style>
         body {
             margin: 0;
@@ -20,10 +20,10 @@
             grid-template-rows: auto 1fr;
         }
         .custom-tool-head {
-            height: 46px;
-            display: flex;
+            min-height: 46px;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
             align-items: center;
-            justify-content: space-between;
             gap: 14px;
             padding: 0 18px;
             background: #f8fafc;
@@ -48,7 +48,48 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            flex-shrink: 0;
+            justify-content: flex-end;
+        }
+        .custom-tool-snapshot-actions { display: flex; align-items: center; gap: 8px; }
+        .tool-action-wrap { position: relative; }
+        .tool-action-menu {
+            position: absolute;
+            top: calc(100% + 7px);
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            width: 232px;
+            padding: 6px;
+            border: 1px solid #d8e4f1;
+            border-radius: 11px;
+            background: #fff;
+            box-shadow: 0 14px 36px rgba(19, 43, 71, .2);
+        }
+        .tool-action-menu[hidden], .tool-action-wrap[hidden] { display: none; }
+        .tool-action-menu button {
+            width: 100%;
+            padding: 9px 10px;
+            border: 0;
+            border-radius: 7px;
+            background: transparent;
+            color: #263d56;
+            text-align: left;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .tool-action-menu button:hover, .tool-action-menu button:focus-visible { background: #eaf3ff; outline: none; }
+        .tool-action-menu small { display: block; margin-top: 2px; color: #71839a; font-size: 10px; }
+        .tool-action-menu .tool-action-divider { height: 1px; margin: 5px 3px; background: #e3ebf4; }
+        .tool-action-menu .tool-action-empty { padding: 9px 10px; color: #71839a; font-size: 12px; }
+        .tool-action:disabled { opacity: .55; cursor: wait; }
+        @media (max-width: 820px) {
+            .custom-tool-head { grid-template-columns: minmax(0, 1fr) auto; padding: 7px 12px; }
+            .custom-tool-snapshot-actions { grid-column: 1 / -1; grid-row: 2; justify-content: center; }
+            .custom-tool-actions { grid-column: 2; grid-row: 1; }
+        }
+        @media (max-width: 540px) {
+            .tool-action { padding: 0 7px; font-size: 11px; }
+            .custom-tool-actions, .custom-tool-snapshot-actions { gap: 4px; }
         }
         .tool-action {
             height: 30px;
@@ -103,6 +144,11 @@
             .custom-tool-head { background: #151f30; border-color: #29364a; }
             .custom-tool-title { color: #e7edf6; }
             .tool-action { border-color: #34445b; background: #1b2739; color: #b9c8da; }
+            .tool-action-menu { border-color: #34445b; background: #1b2739; }
+            .tool-action-menu button { color: #dce6f2; }
+            .tool-action-menu button:hover, .tool-action-menu button:focus-visible { background: #293d57; }
+            .tool-action-menu small, .tool-action-menu .tool-action-empty { color: #a6b8cb; }
+            .tool-action-menu .tool-action-divider { background: #34445b; }
             .custom-tool-loader-card { border-color: #2d3a4f; background: #182335; box-shadow: 0 18px 48px rgba(0, 0, 0, .25); }
             .custom-tool-loader-head { color: #e4ebf5; }
             .custom-tool-progress { background: #2b374a; }
@@ -116,10 +162,26 @@
                 <span id="toolIcon">🧩</span>
                 <span id="toolName">自定义工具</span>
             </div>
+            <div class="custom-tool-snapshot-actions">
+                <div class="tool-action-wrap" id="downloadReadonlyWrap" hidden>
+                    <button class="tool-action" id="downloadReadonlyTool" type="button" aria-expanded="false" aria-controls="downloadReadonlyMenu">下载只读页面 ▾</button>
+                    <div class="tool-action-menu" id="downloadReadonlyMenu" hidden>
+                        <button type="button" data-snapshot-download="single"><span>单文件 HTML</span><small>数据与附件内嵌</small></button>
+                        <button type="button" data-snapshot-download="pages"><span>Pages 分离版 ZIP</span><small>HTML + JSON + 附件</small></button>
+                    </div>
+                </div>
+                <div class="tool-action-wrap" id="publishReadonlyWrap" hidden>
+                    <button class="tool-action" id="publishReadonlyTool" type="button" aria-expanded="false" aria-controls="publishReadonlyMenu">推送只读页面 ▾</button>
+                    <div class="tool-action-menu" id="publishReadonlyMenu" hidden>
+                        <button type="button" data-snapshot-publish="default"><span>默认推送</span><small>使用全局设置的推送格式与目标仓库</small></button>
+                        <button type="button" data-snapshot-publish="force"><span>强制推送</span><small>即使无变化也触发 Pages 重新部署</small></button>
+                        <div class="tool-action-divider"></div>
+                        <button type="button" data-snapshot-publish="logs"><span>查看推送日志</span><small>查看本工具及全局推送历史</small></button>
+                    </div>
+                </div>
+            </div>
             <div class="custom-tool-actions">
                 <a class="tool-action" id="openRawTool" href="#" target="_blank" rel="noopener">新窗口打开</a>
-                <button class="tool-action" id="downloadReadonlyTool" type="button" hidden>下载只读独立 HTML</button>
-                <button class="tool-action" id="publishReadonlyTool" type="button" hidden>推送只读页面到仓库</button>
                 <button class="tool-action" id="refreshToolButton" onclick="location.reload()">刷新</button>
             </div>
         </div>
@@ -137,7 +199,7 @@
 
     <script src="/js/shared/api.js?v=20260824-01"></script>
     <script src="/js/shared/toast.js?v=20260530-03"></script>
-    <script src="/js/shared/navbar.js?v=20260920-08"></script>
+    <script src="/js/shared/navbar.js?v=20260922-01"></script>
     <script>
         let currentCustomTool = null;
         let toolLoadSequence = 0;
@@ -162,8 +224,20 @@
             document.title = `${displayName} - Tools Platform`;
             document.getElementById('toolName').textContent = displayName;
             document.getElementById('openRawTool').textContent = shellText('新窗口打开', 'Open in New Window');
-            document.getElementById('downloadReadonlyTool').textContent = shellText('下载只读独立 HTML', 'Download Read-only HTML');
-            document.getElementById('publishReadonlyTool').textContent = shellText('推送只读页面到仓库', 'Publish Read-only HTML');
+            document.getElementById('downloadReadonlyTool').textContent = shellText('下载只读页面 ▾', 'Download Snapshot ▾');
+            document.getElementById('publishReadonlyTool').textContent = shellText('推送只读页面 ▾', 'Publish Snapshot ▾');
+            const downloadItems = document.querySelectorAll('[data-snapshot-download]');
+            downloadItems[0].querySelector('span').textContent = shellText('单文件 HTML', 'Single HTML');
+            downloadItems[0].querySelector('small').textContent = shellText('数据与附件内嵌', 'Data and evidence embedded');
+            downloadItems[1].querySelector('span').textContent = shellText('Pages 分离版 ZIP', 'Split Pages ZIP');
+            downloadItems[1].querySelector('small').textContent = shellText('HTML + JSON + 附件', 'HTML + JSON + evidence');
+            const publishItems = document.querySelectorAll('[data-snapshot-publish]');
+            publishItems[0].querySelector('span').textContent = shellText('默认推送', 'Publish');
+            publishItems[0].querySelector('small').textContent = shellText('使用全局设置的推送格式与目标仓库', 'Use the saved format and destination');
+            publishItems[1].querySelector('span').textContent = shellText('强制推送', 'Force Publish');
+            publishItems[1].querySelector('small').textContent = shellText('即使无变化也触发 Pages 重新部署', 'Redeploy Pages even without changes');
+            publishItems[2].querySelector('span').textContent = shellText('查看推送日志', 'View Publishing Logs');
+            publishItems[2].querySelector('small').textContent = shellText('查看本工具及全局推送历史', 'Tool and global publishing history');
             document.getElementById('refreshToolButton').textContent = shellText('刷新', 'Refresh');
             document.getElementById('toolLoadRetry').textContent = shellText('重试加载', 'Retry');
             const frame = document.querySelector('.custom-tool-frame');
@@ -222,8 +296,7 @@
                     return;
                 }
                 currentCustomTool = tool;
-                document.getElementById('downloadReadonlyTool').hidden = tool.slug !== 'department-reward-penalty';
-                document.getElementById('publishReadonlyTool').hidden = tool.slug !== 'department-reward-penalty';
+                updateSnapshotActions(tool.slug);
                 const displayName = getCustomToolDisplayName(tool);
                 document.getElementById('toolIcon').textContent = tool.icon || '🧩';
                 document.getElementById('openRawTool').href = tool.filePath;
@@ -290,21 +363,102 @@
             const token = localStorage.getItem('tools_token');
             return token ? { Authorization: `Bearer ${token}` } : {};
         }
-        async function snapshotAction(kind) {
-            const button = document.getElementById(kind === 'download' ? 'downloadReadonlyTool' : 'publishReadonlyTool');
-            if (kind === 'publish') return window.startSnapshotPublish();
+        async function updateSnapshotActions(slug) {
+            document.getElementById('downloadReadonlyWrap').hidden = true;
+            document.getElementById('publishReadonlyWrap').hidden = true;
+            try {
+                const response = await fetch('/api/department-reward-penalty/snapshot/settings', { headers: snapshotHeaders() });
+                if (!response.ok) return;
+                const settings = await response.json();
+                if (currentCustomTool?.slug !== slug) return;
+                const supported = (settings.tools || []).some(tool => tool.toolSlug === slug);
+                document.getElementById('downloadReadonlyWrap').hidden = !supported;
+                document.getElementById('publishReadonlyWrap').hidden = !supported;
+            } catch (_) {}
+        }
+        function closeSnapshotMenus() {
+            for (const name of ['downloadReadonly', 'publishReadonly']) {
+                document.getElementById(name + 'Menu').hidden = true;
+                document.getElementById(name + 'Tool').setAttribute('aria-expanded', 'false');
+            }
+        }
+        function toggleSnapshotMenu(name) {
+            const menu = document.getElementById(name + 'Menu');
+            const opening = menu.hidden;
+            closeSnapshotMenus();
+            menu.hidden = !opening;
+            document.getElementById(name + 'Tool').setAttribute('aria-expanded', String(opening));
+        }
+        async function downloadSnapshot(format) {
+            const slug = currentCustomTool?.slug;
+            if (!slug) return;
+            const button = document.getElementById('downloadReadonlyTool');
+            closeSnapshotMenus();
             button.disabled = true;
             try {
-                const response = await fetch('/api/department-reward-penalty/snapshot/html', { headers: snapshotHeaders() });
+                const response = await fetch(`/api/department-reward-penalty/snapshot/download/${encodeURIComponent(slug)}?format=${format}`, { headers: snapshotHeaders() });
                 if (!response.ok) { const body = await response.json().catch(() => ({})); throw new Error(body.error || `HTTP ${response.status}`); }
                 const blobUrl = URL.createObjectURL(await response.blob());
-                const link = document.createElement('a'); link.href = blobUrl; link.download = 'department-reward-penalty-readonly.html'; link.click();
+                const link = document.createElement('a');
+                link.href = blobUrl;
+                link.download = format === 'pages' ? `${slug}-readonly-pages.zip` : `${slug}-readonly.html`;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
                 setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
-            } catch (error) { alert(error.message); }
+            } catch (error) { showToast(error.message, 'error'); }
             finally { button.disabled = false; }
         }
-        document.getElementById('downloadReadonlyTool').addEventListener('click', () => snapshotAction('download'));
-        document.getElementById('publishReadonlyTool').addEventListener('click', () => snapshotAction('publish'));
+        async function showSnapshotJobs() {
+            closeSnapshotMenus();
+            const slug = currentCustomTool?.slug;
+            if (!slug) return;
+            try {
+                const response = await fetch('/api/department-reward-penalty/snapshot/jobs', { headers: snapshotHeaders() });
+                const jobs = await response.json().catch(() => []);
+                if (!response.ok) throw new Error(jobs.error || `HTTP ${response.status}`);
+                const relevant = jobs.filter(job => !job.toolSlug || job.toolSlug === slug);
+                const menu = document.getElementById('publishReadonlyMenu');
+                menu.querySelectorAll('[data-snapshot-job], .tool-action-empty').forEach(node => node.remove());
+                if (!relevant.length) {
+                    const empty = document.createElement('div');
+                    empty.className = 'tool-action-empty';
+                    empty.textContent = shellText('暂无推送记录', 'No publishing runs yet');
+                    menu.appendChild(empty);
+                } else {
+                    for (const job of relevant.slice(0, 5)) {
+                        const item = document.createElement('button');
+                        item.type = 'button';
+                        item.dataset.snapshotJob = job.id;
+                        const title = document.createElement('span');
+                        title.textContent = `${job.status === 'success' ? '✓' : job.status === 'failed' ? '✕' : '…'} ${job.stage}`;
+                        const detail = document.createElement('small');
+                        detail.textContent = `${new Date(job.createdAt).toLocaleString()} · ${job.toolSlug || shellText('全部工具', 'All tools')}`;
+                        item.append(title, detail);
+                        menu.appendChild(item);
+                    }
+                }
+                toggleSnapshotMenu('publishReadonly');
+            } catch (error) { showToast(error.message, 'error'); }
+        }
+        document.getElementById('downloadReadonlyTool').addEventListener('click', () => toggleSnapshotMenu('downloadReadonly'));
+        document.getElementById('publishReadonlyTool').addEventListener('click', () => toggleSnapshotMenu('publishReadonly'));
+        document.getElementById('downloadReadonlyMenu').addEventListener('click', event => {
+            const format = event.target.closest('[data-snapshot-download]')?.dataset.snapshotDownload;
+            if (format) downloadSnapshot(format);
+        });
+        document.getElementById('publishReadonlyMenu').addEventListener('click', event => {
+            const jobId = event.target.closest('[data-snapshot-job]')?.dataset.snapshotJob;
+            if (jobId) { closeSnapshotMenus(); window.openSnapshotPublishProgress(jobId); return; }
+            const action = event.target.closest('[data-snapshot-publish]')?.dataset.snapshotPublish;
+            if (!action) return;
+            if (action === 'logs') { showSnapshotJobs(); return; }
+            closeSnapshotMenus();
+            window.startSnapshotPublish({ toolSlug: currentCustomTool.slug, toolName: getCustomToolDisplayName(currentCustomTool), force: action === 'force' });
+        });
+        document.addEventListener('click', event => {
+            if (!event.target.closest('.custom-tool-snapshot-actions')) closeSnapshotMenus();
+        });
         document.getElementById('refreshToolButton')?.addEventListener('click', (e) => {
             e.preventDefault();
             const frame = document.querySelector('.custom-tool-frame');

@@ -15,7 +15,9 @@ function validateItem(item) {
         || typeof item.name !== 'string' || !item.name.trim() || item.name.length > 80
         || (item.description !== undefined && (typeof item.description !== 'string' || item.description.length > 300))
         || typeof item.href !== 'string' || !/^\.\/[\w./-]+\.html$/.test(item.href)
-        || item.href.slice(2).split('/').some(part => !part || part === '.' || part === '..')) {
+        || item.href.slice(2).split('/').some(part => !part || part === '.' || part === '..')
+        || (item.fingerprint !== undefined && !/^[a-f0-9]{64}$/.test(item.fingerprint))
+        || (item.updatedAt !== undefined && (typeof item.updatedAt !== 'string' || !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(item.updatedAt) || !Number.isFinite(Date.parse(item.updatedAt))))) {
         throw bad('仓库工具菜单清单格式无效，请检查 ' + MENU_FILE);
     }
     return {
@@ -23,7 +25,9 @@ function validateItem(item) {
         name: item.name.trim(),
         description: String(item.description || '').replace(/\s+/g, ' ').trim(),
         href: item.href,
-        encrypted: Boolean(item.encrypted)
+        encrypted: Boolean(item.encrypted),
+        ...(item.fingerprint ? { fingerprint: item.fingerprint } : {}),
+        ...(item.updatedAt ? { updatedAt: item.updatedAt } : {})
     };
 }
 
@@ -74,20 +78,33 @@ function chooseGuideFile(checkout) {
 
 function renderMenu(items) {
     const links = items.map(item => {
-        const badge = item.encrypted ? `<span class="tp-menu-badge tp-menu-encrypted" title="访问此工具需输入密码">🔒 密码保护</span>` : '';
-        return `        <a class="tp-menu-card" href="${escapeHtml(item.href)}"><span class="tp-menu-icon" aria-hidden="true">${item.encrypted ? '🔒' : '↗'}</span><span class="tp-menu-card-text"><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.slug)} · 只读页面</small>${badge}</span><span class="tp-menu-arrow" aria-hidden="true">→</span></a>`;
+        const badge = item.encrypted ? '<span class="tp-menu-badge" title="访问此工具需输入密码">需密码</span>' : '';
+        const version = item.fingerprint && item.updatedAt
+            ? `<span class="tp-menu-version"><time datetime="${escapeHtml(item.updatedAt)}">更新于 ${escapeHtml(item.updatedAt.replace('T', ' ').slice(0, 16))} UTC</time><code title="完整 SHA-256：${escapeHtml(item.fingerprint)}">SHA-256 ${escapeHtml(item.fingerprint.slice(0, 12))}</code></span>`
+            : '<span class="tp-menu-version tp-menu-version-pending">版本信息待下次推送记录</span>';
+        return `        <a class="tp-menu-card" href="${escapeHtml(item.href)}" data-tool-slug="${escapeHtml(item.slug)}"><span class="tp-menu-card-top"><strong title="工具标识：${escapeHtml(item.slug)}">${escapeHtml(item.name)}</strong>${badge}<span class="tp-menu-arrow" aria-hidden="true">↗</span></span><span class="tp-menu-description">${escapeHtml(item.description || '查看最新发布的只读数据快照')}</span><span class="tp-menu-card-footer">${version}</span></a>`;
     }).join('\n');
     return `${START}
 <style>
-.tp-publish-menu{box-sizing:border-box;max-width:1180px;margin:20px auto;padding:25px 28px;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#1e293b;background:#f8fafc;border:1px solid #e2e8f0;border-radius:20px;box-shadow:0 12px 35px rgba(15,23,42,.06)}
-.tp-publish-menu *{box-sizing:border-box}.tp-menu-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:19px}.tp-menu-kicker{display:block;color:#396b9e;font-size:11px;font-weight:800;letter-spacing:.15em}.tp-menu-head h2{margin:5px 0 0;color:#15263c;font-size:22px;line-height:1.3}.tp-menu-head p{margin:0;color:#52657a;font-size:12px;line-height:1.6}
-.tp-menu-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px}.tp-menu-card{display:flex;align-items:center;gap:13px;min-height:76px;padding:15px;border:1px solid #dce5ef;border-radius:14px;background:#fff;color:#20334c;text-decoration:none;box-shadow:0 2px 7px rgba(15,23,42,.03);transition:transform .18s,border-color .18s,box-shadow .18s}.tp-menu-card:hover,.tp-menu-card:focus-visible{transform:translateY(-2px);border-color:#7aa9d8;box-shadow:0 10px 24px rgba(29,78,130,.12);outline:none}.tp-menu-icon{display:grid;place-items:center;flex:0 0 38px;height:38px;border-radius:11px;background:#eaf3ff;color:#1b61a8;font-size:21px}.tp-menu-card-text{display:grid;gap:4px;min-width:0}.tp-menu-card-text strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}.tp-menu-card-text small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#60758b;font-size:11px}.tp-menu-arrow{margin-left:auto;color:#6285aa;font-size:18px}
-.tp-menu-badge{display:inline-flex;align-items:center;gap:3px;margin-top:2px;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;width:fit-content}
-.tp-menu-encrypted{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
-@media(max-width:640px){.tp-publish-menu{margin:12px;padding:18px}.tp-menu-head{display:block}.tp-menu-head p{margin-top:7px}}
+body.tp-publish-home{margin:0;padding:0;background:#f6f8fb}
+.tp-publish-menu,.tp-publish-menu *{box-sizing:border-box}
+.tp-publish-menu{max-width:1120px;margin:0 auto;padding:clamp(36px,5vw,64px) 24px 72px;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#1b2b42}
+.tp-menu-head{display:flex;align-items:end;justify-content:space-between;gap:24px;padding-bottom:25px;margin-bottom:22px;border-bottom:1px solid #e2e8f0}
+.tp-menu-kicker{display:block;color:#56718f;font-size:10px;font-weight:750;letter-spacing:.18em}.tp-menu-head h2{margin:8px 0 6px;color:#17263a;font-size:clamp(25px,3vw,31px);font-weight:680;letter-spacing:-.035em;line-height:1.18}.tp-menu-head p{margin:0;color:#687b90;font-size:13px;line-height:1.6}.tp-menu-count{flex:none;padding-bottom:3px;color:#8292a4;font-size:12px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tp-menu-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.tp-menu-card{display:flex;flex-direction:column;min-width:0;min-height:166px;padding:23px 24px 19px;border:1px solid #e0e7ef;border-radius:17px;background:#fff;color:#22344b;text-decoration:none;box-shadow:0 3px 14px rgba(22,46,76,.025);transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+.tp-menu-card:hover{transform:translateY(-2px);border-color:#bdcfe2;box-shadow:0 15px 34px rgba(31,66,103,.09)}.tp-menu-card:focus-visible{outline:2px solid #3978be;outline-offset:3px}
+.tp-menu-card-top{display:flex;align-items:flex-start;gap:10px;min-width:0}.tp-menu-card-top strong{min-width:0;flex:1;color:#1a2a3f;font-size:17px;font-weight:650;line-height:1.4;overflow-wrap:anywhere}.tp-menu-arrow{flex:none;margin-left:auto;color:#6285a8;font-size:18px;line-height:1.2;opacity:.65;transition:transform .18s ease,opacity .18s ease}.tp-menu-card:hover .tp-menu-arrow,.tp-menu-card:focus-visible .tp-menu-arrow{transform:translate(2px,-2px);opacity:1}
+.tp-menu-badge{flex:none;margin-top:2px;padding:3px 7px;border:1px solid #dbe4ed;border-radius:6px;background:#f5f8fb;color:#61758a;font-size:10px;font-weight:650;line-height:1.3;white-space:nowrap}
+.tp-menu-description{display:-webkit-box;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:2;margin-top:8px;color:#66798d;font-size:12.5px;line-height:1.6}
+.tp-menu-card-footer{display:block;margin-top:auto;padding-top:15px;border-top:1px solid #edf1f5}.tp-menu-version{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;column-gap:10px;row-gap:4px;color:#77899d;font-size:11px;line-height:1.4;font-variant-numeric:tabular-nums}.tp-menu-version time{white-space:nowrap}.tp-menu-version code{color:#57718f;font:600 11px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:nowrap}.tp-menu-version-pending{color:#97a5b4}
+@media(max-width:760px){.tp-menu-grid{grid-template-columns:1fr}.tp-menu-card{min-height:154px}}
+@media(max-width:480px){.tp-publish-menu{padding:32px 18px 48px}.tp-menu-head{align-items:flex-start;gap:12px}.tp-menu-count{padding-top:4px}.tp-menu-card{padding:20px;min-height:156px}}
+@media(prefers-reduced-motion:reduce){.tp-menu-card,.tp-menu-arrow{transition:none}.tp-menu-card:hover{transform:none}.tp-menu-card:hover .tp-menu-arrow,.tp-menu-card:focus-visible .tp-menu-arrow{transform:none}}
+@media(prefers-color-scheme:dark){body.tp-publish-home{background:#111b2a}.tp-publish-menu{color:#e6eef7}.tp-menu-head{border-color:#2b3a4e}.tp-menu-head h2,.tp-menu-card-top strong{color:#edf4fb}.tp-menu-head p,.tp-menu-description{color:#9eafc0}.tp-menu-count,.tp-menu-version{color:#9dafc1}.tp-menu-card{background:#19283b;border-color:#34455b;color:#e6eef7;box-shadow:none}.tp-menu-card:hover{border-color:#6389b1;box-shadow:0 15px 34px rgba(0,0,0,.18)}.tp-menu-card-footer{border-color:#304157}.tp-menu-badge{background:#23374d;border-color:#3a536c;color:#b2c6d8}.tp-menu-version code{color:#adc9e6}.tp-menu-version-pending{color:#8fa1b4}}
 </style>
 <nav class="tp-publish-menu" aria-label="只读工具入口">
-  <div class="tp-menu-head"><div><span class="tp-menu-kicker">TOOLS / READ ONLY</span><h2>工具入口</h2></div><p>选择工具，查看最新发布的数据快照</p></div>
+  <div class="tp-menu-head"><div><span class="tp-menu-kicker">TOOLS / READ ONLY</span><h2>工具入口</h2><p>选择工具，查看最新发布的数据快照</p></div><span class="tp-menu-count">${String(items.length).padStart(2, '0')} 个只读工具</span></div>
   <div class="tp-menu-grid">
 ${links}
   </div>
@@ -130,13 +147,18 @@ function updatePublishMenu(checkout, entry) {
         throw bad('仓库首页已有工具菜单但缺少清单，请先恢复 ' + MENU_FILE);
     }
     const existing = items.findIndex(row => row.slug === item.slug);
+    if (item.fingerprint) {
+        item.updatedAt = existing >= 0 && items[existing].fingerprint === item.fingerprint && items[existing].updatedAt
+            ? items[existing].updatedAt
+            : new Date().toISOString();
+    }
     if (existing >= 0) items[existing] = item;
     else items.push(item);
     const menu = renderMenu(items);
     const current = fs.existsSync(indexFile) ? fs.readFileSync(indexFile, 'utf8') : '';
     const next = current
         ? updateIndex(current, menu)
-        : `<!doctype html>\n<html lang="zh-CN">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>工具入口</title>\n<style>body.tp-publish-home{margin:0;padding:24px;background:#f1f5f9}</style>\n</head>\n<body class="tp-publish-home">\n${menu}\n</body>\n</html>\n`;
+        : `<!doctype html>\n<html lang="zh-CN">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>工具入口</title>\n</head>\n<body class="tp-publish-home">\n${menu}\n</body>\n</html>\n`;
     const currentGuide = fs.existsSync(guideFile) ? fs.readFileSync(guideFile, 'utf8') : '';
     const guide = currentGuide
         ? updateGuide(currentGuide, renderGuide(items), guideName)

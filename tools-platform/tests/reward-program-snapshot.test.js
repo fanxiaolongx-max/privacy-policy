@@ -73,6 +73,8 @@ test('single HTML embeds reward-program rules and applications with evidence and
     assert.doesNotMatch(html, /<\/script><script>alert\("xss"\)<\/script>/);
     assert.match(html, /connect-src data: blob:/);
     assert.match(html, /无权限，仅供查看。请联系管理员。/);
+    assert.match(html, /TP_RELATED_SNAPSHOT/);
+    assert.match(html, /\/api\/meeting-snapshots\/attendance-check/);
 
     for (const script of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)) {
         new vm.Script(script[1]);
@@ -86,6 +88,7 @@ test('Pages snapshot stores reward-program data and evidence files separately', 
 
     assert.ok(output.files.has('data/rules.json'));
     assert.ok(output.files.has('data/applications.json'));
+    assert.ok(output.files.has('data/related.json'));
     assert.ok(output.files.has('data/evidence/11112222-3333-4444-5555-666677778888.txt'));
 
     const rules = JSON.parse(output.files.get('data/rules.json'));

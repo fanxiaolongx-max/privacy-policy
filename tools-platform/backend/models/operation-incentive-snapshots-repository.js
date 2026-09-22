@@ -1,10 +1,11 @@
-const { run, get, all } = require('./app-db');
+const { run, get, all, getDbPath } = require('./app-db');
 
-let initPromise = null;
+const initPromises = new Map();
 
 async function ensureReady() {
-    if (!initPromise) {
-        initPromise = (async () => {
+    const key = getDbPath();
+    if (!initPromises.has(key)) {
+        const task = (async () => {
             await run(`
                 CREATE TABLE IF NOT EXISTS operation_incentive_snapshots (
                     id TEXT PRIMARY KEY,
@@ -22,11 +23,12 @@ async function ensureReady() {
                 ON operation_incentive_snapshots(period DESC, updated_at DESC)
             `);
         })().catch(err => {
-            initPromise = null;
+            initPromises.delete(key);
             throw err;
         });
+        initPromises.set(key, task);
     }
-    return initPromise;
+    return initPromises.get(key);
 }
 
 function parseJson(str, fallback = {}) {

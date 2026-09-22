@@ -4,6 +4,7 @@ const repo = require('./reward-program-repository');
 const { getDataDir } = require('./tenant-context');
 const tools = require('./custom-tools-repository');
 const { injectGatekeeper } = require('./snapshot-gatekeeper');
+const { collectMeetingData, staticRuntimeSource } = require('./static-snapshot-data');
 
 const EVIDENCE = /^\/api\/reward-program\/evidence\/([a-f0-9-]{36}\.(?:pdf|png|jpg|jpeg|txt|zip|rar|7z|tar|gz|eml|msg))$/i;
 const MIME = {
@@ -81,9 +82,11 @@ async function collectSnapshot(tenantId, evidenceMode) {
 async function buildSnapshot(tenantId, options = {}) {
     let { html, apiMarker } = await loadSource();
     const { snapshot } = await collectSnapshot(tenantId, 'inline');
+    const meetingData = await collectMeetingData();
+    const related = { meeting: { attendance: meetingData.attendance } };
     const enc = options.encryption?.enabled && (options.encryption?.passwordHash || options.encryption?.hash) ? options.encryption : null;
 
-    html = html.replace(apiMarker, apiMarker + '\nconst OFFLINE_SNAPSHOT = ' + safeJson(snapshot) + `;\nconst originalOfflineFetch = window.fetch.bind(window); window.fetch = (url, options) => { if(String(url).startsWith("data:") || String(url).startsWith("blob:")) return originalOfflineFetch(url, options); console.warn("[只读快照] 网络请求已拦截:", url); return Promise.reject(new Error("无权限，仅供查看。请联系管理员。")); };`);
+    html = html.replace(apiMarker, apiMarker + '\nconst OFFLINE_SNAPSHOT = ' + safeJson(snapshot) + ';\nconst TP_RELATED_SNAPSHOT = ' + safeJson(related) + ';\n' + staticRuntimeSource('TP_RELATED_SNAPSHOT') + `\nconst originalOfflineFetch = window.fetch.bind(window); window.fetch = (url, options = {}) => { if(String(url).startsWith("data:") || String(url).startsWith("blob:")) return originalOfflineFetch(url, options); const response = tpStaticApiResponse(url, options); if(response) return Promise.resolve(response); console.warn("[只读快照] 网络请求已拦截:", url); return Promise.resolve(tpStaticReadonlyResponse()); };`);
 
     const offlineApiRegex = /async function api\(path,\s*method\s*=\s*'GET',\s*body\)\s*\{[\s\S]*?\n  \}/;
     const offlineApiFn = `async function api(path, method = 'GET', body) {
@@ -113,15 +116,27 @@ async function buildSnapshot(tenantId, options = {}) {
 async function buildPagesSnapshot(tenantId, options = {}) {
     let { html, apiMarker } = await loadSource();
     const { snapshot, evidenceFiles } = await collectSnapshot(tenantId, 'files');
+    const meetingData = await collectMeetingData();
+    const related = { meeting: { attendance: meetingData.attendance } };
     const enc = options.encryption?.enabled && (options.encryption?.passwordHash || options.encryption?.hash) ? options.encryption : null;
 
     html = html.replace(apiMarker, apiMarker + `
 let PAGES_SNAPSHOT = null;
+let TP_RELATED_SNAPSHOT = null;
+${staticRuntimeSource('TP_RELATED_SNAPSHOT')}
 const pagesFetch = window.fetch.bind(window);
-window.fetch = (url, options) => {
+async function loadRelatedSnapshot() {
+  if (!TP_RELATED_SNAPSHOT) {
+    const response = await pagesFetch('./data/related.json', { cache: 'no-store' });
+    if (!response.ok) throw new Error('关联数据读取失败');
+    TP_RELATED_SNAPSHOT = await response.json();
+  }
+  return TP_RELATED_SNAPSHOT;
+}
+window.fetch = async (url, options = {}) => {
   if (String(url).startsWith('./data/') || String(url).startsWith('blob:') || String(url).startsWith('data:')) return pagesFetch(url, options);
-  console.warn('[只读页面] 网络请求已拦截:', url);
-  return Promise.reject(new Error('无权限，仅供查看。请联系管理员。'));
+  await loadRelatedSnapshot();
+  return tpStaticApiResponse(url, options) || tpStaticReadonlyResponse();
 };`);
 
     const pagesApiRegex = /async function api\(path,\s*method\s*=\s*'GET',\s*body\)\s*\{[\s\S]*?\n  \}/;
@@ -166,7 +181,8 @@ window.fetch = (url, options) => {
 
     const files = new Map([
         ['data/rules.json', safeJson(snapshot.rules) + '\n'],
-        ['data/applications.json', safeJson(snapshot.applications) + '\n']
+        ['data/applications.json', safeJson(snapshot.applications) + '\n'],
+        ['data/related.json', safeJson(related) + '\n']
     ]);
     for (const [filename, bytes] of evidenceFiles) {
         files.set('data/evidence/' + filename, bytes);

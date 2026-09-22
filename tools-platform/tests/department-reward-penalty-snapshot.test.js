@@ -37,6 +37,9 @@ test('single HTML embeds tenant data safely and blocks network/write requests', 
     assert.match(html, /无权限，仅供查看。请联系管理员。/);
     assert.match(html, /const OFFLINE_SNAPSHOT = .*"canEdit":true/);
     assert.match(html, /originalOfflineFetch/);
+    assert.match(html, /TP_RELATED_SNAPSHOT/);
+    assert.match(html, /\/api\/meeting-snapshots\/attendance-check/);
+    assert.match(html, /\/api\/operation-incentive-snapshots\/extract-roster/);
     assert.equal(await buildSnapshot('default'), html, 'unchanged data must produce stable HTML for scheduled runs');
     for (const script of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)) new vm.Script(script[1]);
 });
@@ -49,9 +52,11 @@ test('Pages snapshot keeps HTML stable and stores data and evidence separately',
     const state = JSON.parse(output.files.get('data/state.json'));
     const records = JSON.parse(output.files.get('data/records.json'));
     const audit = JSON.parse(output.files.get('data/audit.json'));
+    const related = JSON.parse(output.files.get('data/related.json'));
     assert.equal(state.canEdit, true);
     assert.equal(records.find(row => row.id === 'snapshot-record').attachments[0], './data/evidence/12345678-1234-1234-1234-123456789abc.txt');
     assert.ok(audit.length);
+    assert.ok(related.meeting && related.incentive);
     assert.equal(output.files.get('data/evidence/12345678-1234-1234-1234-123456789abc.txt').toString(), 'offline evidence');
     for (const script of output.html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)) new vm.Script(script[1]);
     const requestStart = output.html.indexOf('async function request(path,options){');
@@ -79,6 +84,8 @@ test('root menu is created or inserted without overwriting existing content and 
     const generatedGuide = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
     assert.match(generated, /<title>工具入口<\/title>/);
     assert.match(generated, /href="\.\/department-reward-penalty\/index\.html"/);
+    assert.match(generated, /grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+    assert.match(generated, /01 个只读工具/);
     assert.match(generatedGuide, /# 静态工具仓库/);
     assert.match(generatedGuide, /\[打开页面\]\(\.\/department-reward-penalty\/index\.html\)/);
     updatePublishMenu(root, first);
@@ -89,6 +96,7 @@ test('root menu is created or inserted without overwriting existing content and 
     const combinedGuide = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
     assert.match(combined, /&lt;新工具&gt;/);
     assert.doesNotMatch(combined, /<新工具>/);
+    assert.match(combined, /02 个只读工具/);
     assert.match(combinedGuide, /说明 \\| 第二行 内容/);
     assert.match(combinedGuide, /\[打开页面\]\(\.\/another-tool\/index\.html\)/);
     assert.equal(JSON.parse(fs.readFileSync(path.join(root, '.tools-platform-menu.json'), 'utf8')).items.length, 2);
@@ -118,6 +126,39 @@ test('root menu is created or inserted without overwriting existing content and 
     fs.writeFileSync(path.join(existingRoot, 'index.html'), updated);
     fs.writeFileSync(path.join(existingRoot, 'repository-guide.md'), updatedGuide.replace('tools-platform:guide:end', 'broken-marker'));
     assert.throws(() => updatePublishMenu(existingRoot, first), /工具目录标记不完整/);
+});
+
+test('root menu shows each published bundle fingerprint and preserves its content update time', () => {
+    const root = path.join(temp, 'menu-version-fixture');
+    fs.mkdirSync(root);
+    const first = { slug: 'tool-a', name: '工具 A', href: './tool-a/index.html', fingerprint: 'a'.repeat(64) };
+    updatePublishMenu(root, first);
+    const manifestFile = path.join(root, '.tools-platform-menu.json');
+    const indexFile = path.join(root, 'index.html');
+    const initial = JSON.parse(fs.readFileSync(manifestFile, 'utf8')).items[0];
+    const initialHtml = fs.readFileSync(indexFile, 'utf8');
+    assert.equal(initial.fingerprint, first.fingerprint);
+    assert.ok(Number.isFinite(Date.parse(initial.updatedAt)));
+    assert.match(initialHtml, /SHA-256 a{12}/);
+    assert.match(initialHtml, /更新于 20\d\d-/);
+    assert.match(initialHtml, new RegExp(`完整 SHA-256：${first.fingerprint}`));
+
+    updatePublishMenu(root, first);
+    assert.equal(fs.readFileSync(indexFile, 'utf8'), initialHtml);
+    assert.equal(JSON.parse(fs.readFileSync(manifestFile, 'utf8')).items[0].updatedAt, initial.updatedAt);
+
+    const second = { slug: 'tool-b', name: '工具 B', href: './tool-b/index.html' };
+    updatePublishMenu(root, second);
+    assert.match(fs.readFileSync(indexFile, 'utf8'), /版本信息待下次推送记录/);
+    const items = JSON.parse(fs.readFileSync(manifestFile, 'utf8')).items;
+    items[0].updatedAt = '2020-01-01T00:00:00.000Z';
+    fs.writeFileSync(manifestFile, JSON.stringify({ version: 1, items }));
+    updatePublishMenu(root, { ...first, fingerprint: 'b'.repeat(64) });
+    const changed = JSON.parse(fs.readFileSync(manifestFile, 'utf8')).items;
+    assert.equal(changed[0].fingerprint, 'b'.repeat(64));
+    assert.notEqual(changed[0].updatedAt, '2020-01-01T00:00:00.000Z');
+    assert.equal(changed[1].fingerprint, undefined);
+    assert.throws(() => updatePublishMenu(root, { ...first, fingerprint: '<script>' }), /清单格式无效/);
 });
 
 test('snapshot export and publication require admin; unconfigured publish cannot mutate a remote', async () => {
@@ -223,6 +264,7 @@ test('push updates only the configured HTML on an isolated git branch', async ()
         assert.doesNotMatch(pagesHtml, /OFFLINE_SNAPSHOT/);
         const initialRecordJson = execFileSync('git', ['--git-dir', bare, 'show', 'github-import:pages/data/records.json']).toString();
         assert.ok(JSON.parse(initialRecordJson).some(row => row.id === 'snapshot-record'));
+        const pagesMenu = JSON.parse(execFileSync('git', ['--git-dir', bare, 'show', 'github-import:.tools-platform-menu.json']).toString());
         assert.equal(execFileSync('git', ['--git-dir', bare, 'show', 'github-import:pages/data/evidence/12345678-1234-1234-1234-123456789abc.txt']).toString(), 'offline evidence');
         await repo.put('records', 'snapshot-record', { id: 'snapshot-record', remark: 'new remark', attachments: ['/api/department-reward-penalty/evidence/12345678-1234-1234-1234-123456789abc.txt'] }, 'tester');
         const changedJob = await service.startJob('default');
@@ -234,7 +276,9 @@ test('push updates only the configured HTML on an isolated git branch', async ()
         }
         assert.equal(changedResult.status, 'success', JSON.stringify(changedResult.entries));
         const changedFiles = execFileSync('git', ['--git-dir', bare, 'diff-tree', '--no-commit-id', '--name-only', '-r', 'github-import']).toString().trim().split('\n').sort();
-        assert.deepEqual(changedFiles, ['pages/data/audit.json', 'pages/data/records.json']);
+        assert.deepEqual(changedFiles, ['.tools-platform-menu.json', 'index.html', 'pages/data/audit.json', 'pages/data/records.json']);
+        const changedMenu = JSON.parse(execFileSync('git', ['--git-dir', bare, 'show', 'github-import:.tools-platform-menu.json']).toString());
+        assert.notEqual(changedMenu.items[0].fingerprint, pagesMenu.items[0].fingerprint);
         await repo.put('records', 'snapshot-record', { id: 'snapshot-record', remark: 'evidence removed', attachments: [] }, 'tester');
         const removedJob = await service.startJob('default');
         let removedResult;
@@ -405,8 +449,9 @@ test('encrypted publishing settings and gatekeeper injection protect snapshots',
     });
     const menuHtml = fs.readFileSync(path.join(menuRoot, 'index.html'), 'utf8');
     const menuMd = fs.readFileSync(path.join(menuRoot, 'README.md'), 'utf8');
-    assert.match(menuHtml, /tp-menu-encrypted/);
-    assert.match(menuHtml, /密码保护/);
+    assert.match(menuHtml, /class="tp-menu-badge"/);
+    assert.match(menuHtml, /需密码/);
+    assert.doesNotMatch(menuHtml, /tp-menu-icon/);
     assert.match(menuMd, /负向事件管理 🔒/);
 });
 
@@ -542,5 +587,3 @@ test('disabling encryption removes password gatekeeper and force push redeploys 
     assert.equal(res4.status, 'success');
     assert.notEqual(res4.commit, res3.commit);
 });
-
-

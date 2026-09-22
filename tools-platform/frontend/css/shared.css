@@ -2335,7 +2335,8 @@ dialog#mediaFormDialog.is-importing {
 .snapshot-history-empty { border: 1px dashed #cad7e6; border-radius: 11px; color: #718197; padding: 20px; text-align: center; }
 .snapshot-progress-overlay { position: fixed; inset: 0; z-index: 100050; display: grid; place-items: center; padding: 20px; background: #101c32aa; backdrop-filter: blur(6px); }
 .snapshot-progress-overlay[hidden] { display: none; }
-.snapshot-progress-dialog { position: relative; width: min(580px, 100%); max-height: min(680px, 90vh); overflow: auto; border: 1px solid #d6e4f4; border-radius: 22px; padding: 30px; background: #fff; box-shadow: 0 30px 90px #0c20365c; color: #1d3048; }
+.snapshot-progress-dialog { position: relative; width: min(580px, 100%); max-height: min(680px, 90vh); overflow: auto; scrollbar-width: none; border: 1px solid #d6e4f4; border-radius: 22px; padding: 30px; background: #fff; box-shadow: 0 30px 90px #0c20365c; color: #1d3048; }
+.snapshot-progress-dialog::-webkit-scrollbar { display: none; }
 .snapshot-progress-close { position: absolute; top: 18px; right: 20px; border: 0; background: #eef3f9; border-radius: 8px; width: 32px; height: 32px; font-size: 22px; cursor: pointer; }
 .snapshot-progress-eyebrow { letter-spacing: .16em; color: #3476bc; font-size: 10px; font-weight: 800; }
 .snapshot-progress-dialog h2 { margin: 9px 0 5px; font-size: 24px; }

@@ -3,6 +3,7 @@ const path = require('path');
 const repo = require('./department-reward-penalty-repository');
 const { getDataDir } = require('./tenant-context');
 const tools = require('./custom-tools-repository');
+const { collectMeetingData, collectIncentiveData, staticRuntimeSource } = require('./static-snapshot-data');
 
 const EVIDENCE = /^\/api\/department-reward-penalty\/evidence\/([a-f0-9-]{36}\.(?:pdf|png|jpg|txt|zip|rar|7z|tar|gz|eml|msg))$/i;
 const MIME = { pdf: 'application/pdf', png: 'image/png', jpg: 'image/jpeg', txt: 'text/plain', zip: 'application/zip', eml: 'message/rfc822' };
@@ -62,8 +63,13 @@ const { injectGatekeeper } = require('./snapshot-gatekeeper');
 async function buildSnapshot(tenantId, options = {}) {
     let { html, apiMarker, requestMarker } = await loadSource();
     const { snapshot } = await collectSnapshot(tenantId, 'inline');
+    const [meetingData, incentiveData] = await Promise.all([collectMeetingData(), collectIncentiveData()]);
+    const related = {
+        meeting: { roster: meetingData.roster, attendance: meetingData.attendance },
+        incentive: { roster: incentiveData.roster }
+    };
     const enc = options.encryption?.enabled && (options.encryption?.passwordHash || options.encryption?.hash) ? options.encryption : null;
-    html = html.replace(apiMarker, apiMarker + '\nconst OFFLINE_SNAPSHOT = ' + safeJson(snapshot) + ';\nconst originalOfflineFetch = window.fetch.bind(window); window.fetch = (url, options) => { if(String(url).startsWith("data:")) return originalOfflineFetch(url, options); console.warn("[只读快照] 网络请求已拦截:", url); return Promise.reject(new Error("无权限，仅供查看。请联系管理员。")); };');
+    html = html.replace(apiMarker, apiMarker + '\nconst OFFLINE_SNAPSHOT = ' + safeJson(snapshot) + ';\nconst TP_RELATED_SNAPSHOT = ' + safeJson(related) + ';\n' + staticRuntimeSource('TP_RELATED_SNAPSHOT', { incentive: true }) + '\nconst originalOfflineFetch = window.fetch.bind(window); window.fetch = (url, options = {}) => { if(String(url).startsWith("data:") || String(url).startsWith("blob:")) return originalOfflineFetch(url, options); const response = tpStaticApiResponse(url, options); if(response) return Promise.resolve(response); console.warn("[只读快照] 网络请求已拦截:", url); return Promise.resolve(tpStaticReadonlyResponse()); };');
     const offlineRequest = `async function request(path,options){
   if(typeof window !== 'undefined' && typeof window.tpIsUnlocked === 'function' && !window.tpIsUnlocked()) { throw new Error('请先输入访问密码解锁页面'); }
   if(options?.method && options.method !== 'GET') { await uiAlert('无权限，仅供查看。请联系管理员。','只读快照','warning','🔒'); throw new Error('无权限，仅供查看。请联系管理员。'); }
@@ -81,11 +87,31 @@ async function buildSnapshot(tenantId, options = {}) {
 async function buildPagesSnapshot(tenantId, options = {}) {
     let { html, apiMarker, requestMarker } = await loadSource();
     const { snapshot, evidenceFiles } = await collectSnapshot(tenantId, 'files');
+    const [meetingData, incentiveData] = await Promise.all([collectMeetingData(), collectIncentiveData()]);
+    const related = {
+        meeting: { roster: meetingData.roster, attendance: meetingData.attendance },
+        incentive: { roster: incentiveData.roster }
+    };
     const enc = options.encryption?.enabled && (options.encryption?.passwordHash || options.encryption?.hash) ? options.encryption : null;
     html = html.replace(apiMarker, apiMarker + `
 let PAGES_SNAPSHOT = null;
+let TP_RELATED_SNAPSHOT = null;
+${staticRuntimeSource('TP_RELATED_SNAPSHOT', { incentive: true })}
 const pagesFetch = window.fetch.bind(window);
-window.fetch = (url, options) => { console.warn('[只读页面] 网络请求已拦截:', url); return Promise.reject(new Error('无权限，仅供查看。请联系管理员。')); };`);
+async function loadRelatedSnapshot(){
+  if(!TP_RELATED_SNAPSHOT){
+    const response = await pagesFetch('./data/related.json',{cache:'no-store'});
+    if(!response.ok) throw new Error('关联数据读取失败：HTTP '+response.status);
+    TP_RELATED_SNAPSHOT = await response.json();
+  }
+  return TP_RELATED_SNAPSHOT;
+}
+window.fetch = async (url, options = {}) => {
+  const raw = String(url || '');
+  if(raw.startsWith('./data/') || raw.startsWith('data:') || raw.startsWith('blob:')) return pagesFetch(url, options);
+  await loadRelatedSnapshot();
+  return tpStaticApiResponse(url, options) || tpStaticReadonlyResponse();
+};`);
     const pagesRequest = `async function request(path,options){
   if(typeof window !== 'undefined' && typeof window.tpIsUnlocked === 'function' && !window.tpIsUnlocked()) { throw new Error('请先输入访问密码解锁页面'); }
   if(options?.method && options.method !== 'GET') { await uiAlert('无权限，仅供查看。请联系管理员。','只读页面','warning','🔒'); throw new Error('无权限，仅供查看。请联系管理员。'); }
@@ -116,7 +142,8 @@ window.fetch = (url, options) => { console.warn('[只读页面] 网络请求已�
     const files = new Map([
         ['data/state.json', safeJson(state) + '\n'],
         ['data/records.json', safeJson(records) + '\n'],
-        ['data/audit.json', safeJson(audit) + '\n']
+        ['data/audit.json', safeJson(audit) + '\n'],
+        ['data/related.json', safeJson(related) + '\n']
     ]);
     for (const [name, bytes] of evidenceFiles) files.set('data/evidence/' + name, bytes);
     return { html, files };
