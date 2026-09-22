@@ -2848,6 +2848,34 @@ tbody tr:hover{background:rgba(19,107,81,.03)}
 
   // ================= 确认弹窗与动作处理 (Confirm Dialog & Actions) =================
 
+  function alertDialog({ title, message = '', note = '', isHtmlNote = false, btnText = '知道了', icon = 'ℹ️' }) {
+    $('#modalHost').innerHTML = `
+      <div class="modal-backdrop">
+        <div class="modal" style="width:min(520px,100%)">
+          <div class="modal-head">
+            <h2 style="display:flex;align-items:center;gap:8px"><span>${icon}</span><span>${esc(title)}</span></h2>
+            <button type="button" class="modal-close-btn" id="closeModal">×</button>
+          </div>
+          <div class="modal-body">
+            ${message ? `<div style="font-size:14.5px;font-weight:600;color:var(--ink);line-height:1.6">${esc(message)}</div>` : ''}
+            ${note ? `<div style="font-size:13px;color:var(--ink);background:var(--bg);padding:12px 14px;border-radius:8px;border:1px solid var(--line);margin-top:8px;white-space:pre-wrap;line-height:1.6">${isHtmlNote ? note : esc(note)}</div>` : ''}
+          </div>
+          <div class="modal-foot" style="justify-content:flex-end">
+            <button type="button" class="btn primary" id="alertOkBtn">${esc(btnText)}</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    $('#closeModal')?.addEventListener('click', () => {
+      $('#modalHost').innerHTML = '';
+    });
+
+    $('#alertOkBtn')?.addEventListener('click', () => {
+      $('#modalHost').innerHTML = '';
+    });
+  }
+
   function confirmDialog({ title, message, note = '', isHtmlNote = false, confirmText = '确认', confirmClass = 'primary', onConfirm }) {
     $('#modalHost').innerHTML = `
       <div class="modal-backdrop">
@@ -3077,7 +3105,12 @@ tbody tr:hover{background:rgba(19,107,81,.03)}
   document.addEventListener('click', ev => {
     const badge = ev.target.closest('.att-badge.anomaly');
     if (badge && badge.dataset.details) {
-      alert(`【会议考勤异常记录明细】\n\n${badge.dataset.details}`);
+      alertDialog({
+        title: '会议考勤异常记录明细',
+        icon: '⚠️',
+        message: '该成员在历史会议考勤快照中检索到以下异常情况：',
+        note: badge.dataset.details
+      });
     }
   });
 

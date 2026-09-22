@@ -1586,7 +1586,7 @@
     }
 
     .snapshot-modal-card {
-      width: min(1080px, 96vw);
+      width: min(1180px, 96vw);
       height: min(840px, 90vh);
       max-height: 90vh;
     }
@@ -1661,14 +1661,16 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
+      gap: 16px;
+      flex-wrap: nowrap;
     }
 
     .snapshot-card-title-group {
+      flex: 1 1 auto;
+      min-width: 0;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 8px 10px;
       flex-wrap: wrap;
     }
 
@@ -1677,26 +1679,55 @@
       font-weight: 700;
       color: #0f172a;
       margin: 0;
+      line-height: 1.45;
+      word-break: break-word;
+      overflow-wrap: break-word;
     }
 
     .snapshot-date-badge {
+      flex-shrink: 0;
       background: #e0f2fe;
       color: #0369a1;
       font-size: 11px;
       font-weight: 700;
       padding: 2px 8px;
       border-radius: 4px;
+      white-space: nowrap;
     }
 
     .snapshot-time-badge {
+      flex-shrink: 0;
       font-size: 11px;
       color: #94a3b8;
+      white-space: nowrap;
     }
 
     .snapshot-card-actions {
+      flex-shrink: 0;
+      margin-left: auto;
       display: flex;
       align-items: center;
+      justify-content: flex-end;
       gap: 6px;
+      flex-wrap: nowrap;
+    }
+
+    .snapshot-card-actions .btn {
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 768px) {
+      .snapshot-card-head {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+      }
+      .snapshot-card-actions {
+        margin-left: 0;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+      }
     }
 
     .snapshot-card-stats {
@@ -1769,6 +1800,30 @@
       background: #e2e8f0;
       font-weight: 700;
     }
+
+    .custom-ui-dialog {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, .48);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      animation: uiFadeIn .15s ease-out;
+    }
+
+    .custom-ui-dialog .modal-card {
+      width: min(480px, 94vw);
+      border-radius: 14px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.28);
+      animation: uiScaleUp .15s ease-out;
+    }
+
+    @keyframes uiFadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes uiScaleUp { from { transform: scale(0.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
   </style>
 </head>
 
@@ -2032,6 +2087,129 @@
       const activeCategory = () => CATEGORIES.find(c => c.id === state.active);
       const uid = () => `${Date.now()}_${++state.seq}`;
 
+      function uiAlert(message, { title = bi('提示', 'Notice'), okText = bi('知道了', 'OK'), icon = 'ℹ️' } = {}) {
+        return new Promise(resolve => {
+          const overlay = document.createElement('div');
+          overlay.className = 'custom-ui-dialog';
+          overlay.innerHTML = `
+            <div class="modal-card" style="width:min(460px,94vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden">
+              <div class="modal-head" style="align-items:center">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="font-size:18px">${icon}</span>
+                  <h3 style="font-size:16px;font-weight:700;margin:0">${esc(title)}</h3>
+                </div>
+                <button type="button" class="modal-close" style="cursor:pointer;font-size:16px;line-height:1">×</button>
+              </div>
+              <div class="modal-body" style="padding:18px 20px;font-size:14px;color:#334155;line-height:1.6;overflow-y:auto;white-space:pre-wrap;word-break:break-word">${esc(message)}</div>
+              <div class="modal-foot" style="justify-content:flex-end">
+                <button type="button" class="btn btn-red ui-dialog-ok" style="min-width:80px">${esc(okText)}</button>
+              </div>
+            </div>
+          `;
+          const close = () => {
+            overlay.remove();
+            document.removeEventListener('keydown', onKeyDown);
+            resolve();
+          };
+          const onKeyDown = e => {
+            if (e.key === 'Escape' || e.key === 'Enter') close();
+          };
+          document.addEventListener('keydown', onKeyDown);
+          overlay.querySelector('.modal-close').onclick = close;
+          overlay.querySelector('.ui-dialog-ok').onclick = close;
+          overlay.onclick = e => { if (e.target === overlay) close(); };
+          document.body.appendChild(overlay);
+          overlay.querySelector('.ui-dialog-ok').focus();
+        });
+      }
+
+      function uiConfirm(message, { title = bi('确认操作', 'Confirm Action'), okText = bi('确定', 'Confirm'), cancelText = bi('取消', 'Cancel'), danger = false, icon = '⚠️' } = {}) {
+        return new Promise(resolve => {
+          const overlay = document.createElement('div');
+          overlay.className = 'custom-ui-dialog';
+          overlay.innerHTML = `
+            <div class="modal-card" style="width:min(480px,94vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden">
+              <div class="modal-head" style="align-items:center">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="font-size:18px">${icon}</span>
+                  <h3 style="font-size:16px;font-weight:700;margin:0">${esc(title)}</h3>
+                </div>
+                <button type="button" class="modal-close" style="cursor:pointer;font-size:16px;line-height:1">×</button>
+              </div>
+              <div class="modal-body" style="padding:18px 20px;font-size:14px;color:#334155;line-height:1.6;overflow-y:auto;white-space:pre-wrap;word-break:break-word">${esc(message)}</div>
+              <div class="modal-foot" style="justify-content:flex-end;gap:10px">
+                <button type="button" class="btn ui-dialog-cancel" style="min-width:80px">${esc(cancelText)}</button>
+                <button type="button" class="btn ${danger ? 'btn-red' : 'btn-primary'} ui-dialog-ok" style="min-width:80px">${esc(okText)}</button>
+              </div>
+            </div>
+          `;
+          const finish = val => {
+            overlay.remove();
+            document.removeEventListener('keydown', onKeyDown);
+            resolve(val);
+          };
+          const onKeyDown = e => {
+            if (e.key === 'Escape') finish(false);
+          };
+          document.addEventListener('keydown', onKeyDown);
+          overlay.querySelector('.modal-close').onclick = () => finish(false);
+          overlay.querySelector('.ui-dialog-cancel').onclick = () => finish(false);
+          overlay.querySelector('.ui-dialog-ok').onclick = () => finish(true);
+          overlay.onclick = e => { if (e.target === overlay) finish(false); };
+          document.body.appendChild(overlay);
+          overlay.querySelector('.ui-dialog-ok').focus();
+        });
+      }
+
+      function uiPrompt(message, defaultValue = '', { title = bi('请输入', 'Please enter'), okText = bi('确定', 'OK'), cancelText = bi('取消', 'Cancel'), placeholder = '' } = {}) {
+        return new Promise(resolve => {
+          const overlay = document.createElement('div');
+          overlay.className = 'custom-ui-dialog';
+          overlay.innerHTML = `
+            <div class="modal-card" style="width:min(480px,94vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden">
+              <div class="modal-head" style="align-items:center">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="font-size:18px">✏️</span>
+                  <h3 style="font-size:16px;font-weight:700;margin:0">${esc(title)}</h3>
+                </div>
+                <button type="button" class="modal-close" style="cursor:pointer;font-size:16px;line-height:1">×</button>
+              </div>
+              <form class="ui-prompt-form" style="display:flex;flex-direction:column;margin:0">
+                <div class="modal-body" style="padding:18px 20px;font-size:14px;color:#334155;display:flex;flex-direction:column;gap:10px">
+                  <label style="line-height:1.5;color:#475569;white-space:pre-wrap;word-break:break-word">${esc(message)}</label>
+                  <input type="text" class="ui-prompt-input" style="width:100%;height:38px;padding:0 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;color:#0f172a;outline:none;box-sizing:border-box" placeholder="${esc(placeholder)}" value="${esc(defaultValue)}" />
+                </div>
+                <div class="modal-foot" style="justify-content:flex-end;gap:10px">
+                  <button type="button" class="btn ui-dialog-cancel" style="min-width:80px">${esc(cancelText)}</button>
+                  <button type="submit" class="btn btn-red ui-dialog-ok" style="min-width:80px">${esc(okText)}</button>
+                </div>
+              </form>
+            </div>
+          `;
+          const input = overlay.querySelector('.ui-prompt-input');
+          const form = overlay.querySelector('.ui-prompt-form');
+          const finish = val => {
+            overlay.remove();
+            document.removeEventListener('keydown', onKeyDown);
+            resolve(val);
+          };
+          const onKeyDown = e => {
+            if (e.key === 'Escape') finish(null);
+          };
+          document.addEventListener('keydown', onKeyDown);
+          form.onsubmit = e => {
+            e.preventDefault();
+            finish(input.value);
+          };
+          overlay.querySelector('.modal-close').onclick = () => finish(null);
+          overlay.querySelector('.ui-dialog-cancel').onclick = () => finish(null);
+          overlay.onclick = e => { if (e.target === overlay) finish(null); };
+          document.body.appendChild(overlay);
+          input.focus();
+          input.select();
+        });
+      }
+
       function init() {
         renderNav(); applyStaticLanguage(); applySidebarState();
         applyDeveloperMode(); $('#brandHeading').addEventListener('click', handleDeveloperUnlock); $('#developerModeBtn').onclick = openDeveloperModal;
@@ -2045,7 +2223,21 @@
         $('#chooseBtn').onclick = () => $('#fileInput').click();
         $('#fileInput').onchange = e => { handleFiles([...e.target.files]); e.target.value = ''; };
         $('#pageSize').onchange = e => { state.pageSize = +e.target.value; state.sheets.forEach(s => s.page = 1); state.peoplePages = { all: 1, qr: 1, rfc: 1, wfm: 1 }; state.personSearch.pages = { qr: 1, rfc: 1, wfm: 1, offline: 1, online: 1 }; state.active === 'people' ? renderPeopleResults() : renderSheets(); };
-        $('#clearAllBtn').onclick = () => { if (!state.sheets.length) return; if (confirm(bi('确定清空已导入的全部表格吗？', 'Clear all imported tables?'))) { state.sheets = []; invalidatePeopleCache(); render(); toast(bi('已清空全部表格', 'All tables cleared')); } };
+        $('#clearAllBtn').onclick = async () => {
+          if (!state.sheets.length) return;
+          const ok = await uiConfirm(bi('确定清空已导入的全部表格吗？此操作无法撤销。', 'Clear all imported tables? This cannot be undone.'), {
+            title: bi('清空工作区', 'Clear Workspace'),
+            okText: bi('确定清空', 'Clear All'),
+            danger: true,
+            icon: '🗑️'
+          });
+          if (ok) {
+            state.sheets = [];
+            invalidatePeopleCache();
+            render();
+            toast(bi('已清空全部表格', 'All tables cleared'));
+          }
+        };
         $('#sheetList').addEventListener('click', handleSheetAction);
         $('#columnModalClose').onclick = $('#columnCancelBtn').onclick = closeColumnModal;
         $('#columnDefaultBtn').onclick = () => setColumnChecks('default');
@@ -3068,7 +3260,12 @@
 
         if (action === 'restore') {
           if (state.sheets.length > 0) {
-            const ok = confirm(bi('载入快照将替换当前工作区中的全部表格和分析数据，是否确定继续？', 'Loading a snapshot will replace all current tables and analysis data. Continue?'));
+            const ok = await uiConfirm(bi('载入快照将替换当前工作区中的全部表格和分析数据，是否确定继续？', 'Loading a snapshot will replace all current tables and analysis data. Continue?'), {
+              title: bi('载入快照确认', 'Load Snapshot Confirmation'),
+              okText: bi('载入并替换', 'Load & Replace'),
+              danger: true,
+              icon: '⚡'
+            });
             if (!ok) return;
           }
           try {
@@ -3120,7 +3317,11 @@
 
         if (action === 'rename') {
           const curTitle = item ? item.title : '';
-          const newTitle = prompt(bi('请输入新的快照名称：', 'Enter new snapshot title:'), curTitle);
+          const newTitle = await uiPrompt(bi('请输入新的快照名称：', 'Enter new snapshot title:'), curTitle, {
+            title: bi('重命名快照', 'Rename Snapshot'),
+            okText: bi('保存', 'Save'),
+            cancelText: bi('取消', 'Cancel')
+          });
           if (!newTitle || !newTitle.trim() || newTitle.trim() === curTitle) return;
           try {
             const resp = await fetch(`/api/meeting-snapshots/${id}`, {
@@ -3143,7 +3344,12 @@
 
         if (action === 'delete') {
           const title = item ? item.title : id;
-          const ok = confirm(bi(`确定要删除快照 "${title}" 吗？此操作无法撤销。`, `Delete snapshot "${title}"? This cannot be undone.`));
+          const ok = await uiConfirm(bi(`确定要删除快照 "${title}" 吗？此操作无法撤销。`, `Delete snapshot "${title}"? This cannot be undone.`), {
+            title: bi('删除快照确认', 'Delete Snapshot Confirmation'),
+            okText: bi('确定删除', 'Delete'),
+            danger: true,
+            icon: '🗑️'
+          });
           if (!ok) return;
           try {
             const resp = await fetch(`/api/meeting-snapshots/${id}`, {

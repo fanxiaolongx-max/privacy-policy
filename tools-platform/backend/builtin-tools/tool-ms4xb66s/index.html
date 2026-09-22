@@ -357,13 +357,15 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
-    flex-wrap: wrap;
+    gap: 16px;
+    flex-wrap: nowrap;
   }
   .snapshot-card-title-group {
+    flex: 1 1 auto;
+    min-width: 0;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 8px 10px;
     flex-wrap: wrap;
   }
   .snapshot-card-title {
@@ -371,24 +373,50 @@
     font-weight: 700;
     color: #0f172a;
     margin: 0;
+    line-height: 1.45;
+    word-break: break-word;
+    overflow-wrap: break-word;
   }
   .snapshot-date-badge {
+    flex-shrink: 0;
     background: #fee2e2;
     color: var(--red);
     font-size: 11px;
     font-weight: 700;
     padding: 2px 8px;
     border-radius: 4px;
+    white-space: nowrap;
   }
   .snapshot-time-badge {
+    flex-shrink: 0;
     font-size: 11px;
     color: #94a3b8;
+    white-space: nowrap;
   }
   .snapshot-card-actions {
+    flex-shrink: 0;
+    margin-left: auto;
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 6px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+  }
+  .snapshot-card-actions .btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  @media (max-width: 768px) {
+    .snapshot-card-head {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 10px;
+    }
+    .snapshot-card-actions {
+      margin-left: 0;
+      justify-content: flex-start;
+      flex-wrap: wrap;
+    }
   }
   .snapshot-card-stats {
     display: flex;
@@ -514,6 +542,67 @@
     line-height: 1.6;
   }
 
+  .ui-dialog-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(17, 24, 39, .45);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    padding: 20px;
+    animation: uiFadeIn .15s ease-out;
+  }
+  .ui-dialog-card {
+    width: min(480px, 94vw);
+    max-height: 90vh;
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    box-shadow: 0 25px 60px rgba(16, 24, 40, .24);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: uiScaleUp .15s ease-out;
+  }
+  .ui-dialog-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--line);
+  }
+  .ui-dialog-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--navy);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+  }
+  .ui-dialog-body {
+    padding: 18px 20px;
+    font-size: 13.5px;
+    color: #344054;
+    line-height: 1.6;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .ui-dialog-foot {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--line);
+    background: #f8fafc;
+  }
+  @keyframes uiFadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes uiScaleUp { from { transform: scale(0.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 </style>
 </head>
 <body>
@@ -1076,6 +1165,127 @@ m00961966"></textarea>
 
 <script>
 const $=id=>document.getElementById(id);
+
+function escHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+}
+
+function uiAlert(message, { title = '系统提示', okText = '知道了', icon = 'ℹ️' } = {}) {
+  if (typeof document?.createElement !== 'function') return Promise.resolve();
+  return new Promise(resolve => {
+    const overlay = document.createElement('div');
+    overlay.className = 'ui-dialog-overlay';
+    overlay.innerHTML = `
+      <div class="ui-dialog-card">
+        <div class="ui-dialog-head">
+          <div class="ui-dialog-title"><span>${icon}</span><span>${escHtml(title)}</span></div>
+          <button type="button" class="icon-btn ui-dialog-close" style="font-size:18px;line-height:1">×</button>
+        </div>
+        <div class="ui-dialog-body">${escHtml(message)}</div>
+        <div class="ui-dialog-foot">
+          <button type="button" class="primary ui-dialog-ok" style="min-width:80px">${escHtml(okText)}</button>
+        </div>
+      </div>
+    `;
+    const close = () => {
+      overlay.remove();
+      document.removeEventListener('keydown', onKeyDown);
+      resolve();
+    };
+    const onKeyDown = e => {
+      if (e.key === 'Escape' || e.key === 'Enter') close();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    overlay.querySelector('.ui-dialog-close').onclick = close;
+    overlay.querySelector('.ui-dialog-ok').onclick = close;
+    overlay.onclick = e => { if (e.target === overlay) close(); };
+    document.body.appendChild(overlay);
+    overlay.querySelector('.ui-dialog-ok').focus();
+  });
+}
+
+function uiConfirm(message, { title = '请确认操作', okText = '确认', cancelText = '取消', danger = false, icon = '⚠️' } = {}) {
+  if (typeof document?.createElement !== 'function') return Promise.resolve(true);
+  return new Promise(resolve => {
+    const overlay = document.createElement('div');
+    overlay.className = 'ui-dialog-overlay';
+    overlay.innerHTML = `
+      <div class="ui-dialog-card">
+        <div class="ui-dialog-head">
+          <div class="ui-dialog-title"><span>${icon}</span><span>${escHtml(title)}</span></div>
+          <button type="button" class="icon-btn ui-dialog-close" style="font-size:18px;line-height:1">×</button>
+        </div>
+        <div class="ui-dialog-body">${escHtml(message)}</div>
+        <div class="ui-dialog-foot">
+          <button type="button" class="secondary ui-dialog-cancel" style="min-width:80px">${escHtml(cancelText)}</button>
+          <button type="button" class="${danger ? 'danger' : 'primary'} ui-dialog-ok" style="min-width:80px">${escHtml(okText)}</button>
+        </div>
+      </div>
+    `;
+    const finish = val => {
+      overlay.remove();
+      document.removeEventListener('keydown', onKeyDown);
+      resolve(val);
+    };
+    const onKeyDown = e => {
+      if (e.key === 'Escape') finish(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    overlay.querySelector('.ui-dialog-close').onclick = () => finish(false);
+    overlay.querySelector('.ui-dialog-cancel').onclick = () => finish(false);
+    overlay.querySelector('.ui-dialog-ok').onclick = () => finish(true);
+    overlay.onclick = e => { if (e.target === overlay) finish(false); };
+    document.body.appendChild(overlay);
+    overlay.querySelector('.ui-dialog-ok').focus();
+  });
+}
+
+function uiPrompt(message, defaultValue = '', { title = '请输入', okText = '确定', cancelText = '取消', placeholder = '' } = {}) {
+  if (typeof document?.createElement !== 'function') return Promise.resolve(defaultValue);
+  return new Promise(resolve => {
+    const overlay = document.createElement('div');
+    overlay.className = 'ui-dialog-overlay';
+    overlay.innerHTML = `
+      <div class="ui-dialog-card">
+        <div class="ui-dialog-head">
+          <div class="ui-dialog-title"><span>✏️</span><span>${escHtml(title)}</span></div>
+          <button type="button" class="icon-btn ui-dialog-close" style="font-size:18px;line-height:1">×</button>
+        </div>
+        <form class="ui-prompt-form" style="display:flex;flex-direction:column;margin:0">
+          <div class="ui-dialog-body" style="display:flex;flex-direction:column;gap:10px">
+            <label style="line-height:1.5;color:#475569;white-space:pre-wrap;margin:0">${escHtml(message)}</label>
+            <input type="text" class="ui-prompt-input" style="width:100%;height:38px;padding:0 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:13.5px;color:#0f172a;outline:none;box-sizing:border-box" placeholder="${escHtml(placeholder)}" value="${escHtml(defaultValue)}" />
+          </div>
+          <div class="ui-dialog-foot">
+            <button type="button" class="secondary ui-dialog-cancel" style="min-width:80px">${escHtml(cancelText)}</button>
+            <button type="submit" class="primary ui-dialog-ok" style="min-width:80px">${escHtml(okText)}</button>
+          </div>
+        </form>
+      </div>
+    `;
+    const input = overlay.querySelector('.ui-prompt-input');
+    const form = overlay.querySelector('.ui-prompt-form');
+    const finish = val => {
+      overlay.remove();
+      document.removeEventListener('keydown', onKeyDown);
+      resolve(val);
+    };
+    const onKeyDown = e => {
+      if (e.key === 'Escape') finish(null);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    form.onsubmit = e => {
+      e.preventDefault();
+      finish(input.value);
+    };
+    overlay.querySelector('.ui-dialog-close').onclick = () => finish(null);
+    overlay.querySelector('.ui-dialog-cancel').onclick = () => finish(null);
+    overlay.onclick = e => { if (e.target === overlay) finish(null); };
+    document.body.appendChild(overlay);
+    input.focus();
+    input.select();
+  });
+}
 let rawRows=[], validRows=[], dedupRows=[], calcDetailRows=[], excludedRows=[], currentView='dimension', activeDimension='person', activeCrossDimension='bu', activeOperatorGroup='nonwx', quickRange=null;
 let rankPersonShowIds=false,rankPersonHitRows=[];
 let analyticsMetric='money',trendHitPoints=[],heatmapHitCells=[];
@@ -1349,7 +1559,7 @@ function resetAllFiltersForNewFile(){
 }
 async function loadFile(file){
   if(!file)return;
-  if(!window.XLSX){alert('Excel 解析组件未加载，请刷新页面后重试。');return}
+  if(!window.XLSX){ uiAlert('Excel 解析组件未加载，请刷新页面后重试。', { icon: '⚠️' }); return; }
   resetAllFiltersForNewFile();
   $('gateFileName').textContent=`已选择：${file.name}`;
   setProgress(12,'读取 Excel 文件...');
@@ -2281,11 +2491,11 @@ function cloneCell(cell){
   return out;
 }
 function exportCurrent(){
-  if(!window.XLSX){alert('Excel 组件未加载');return}
-  if(!sourceWorksheet){alert('请先导入 Excel 文件');return}
+  if(!window.XLSX){ uiAlert('Excel 组件未加载，请刷新页面后重试。', { icon: '⚠️' }); return; }
+  if(!sourceWorksheet){ uiAlert('请先导入 Excel 文件', { icon: 'ℹ️' }); return; }
 
   const details=filteredCalcDetails().filter(r=>r.__counted&&Number(r.__fee||0)>0);
-  if(!details.length){alert('当前筛选条件下没有可本行激励（元）的记录');return}
+  if(!details.length){ uiAlert('当前筛选条件下没有可本行激励（元）的记录', { icon: 'ℹ️' }); return; }
 
   const detailByRow=new Map(details.map(r=>[r.__row,r]));
   const sourceRange=XLSX.utils.decode_range(sourceWorksheet['!ref']||'A1:A1');
@@ -2408,7 +2618,7 @@ $('periodSourceMode').onchange=()=>{
   const hasYear=rawRows.some(r=>normalizeSourceYear(val(r,aliases.source_year)));
   const hasMonth=rawRows.some(r=>normalizeSourceMonth(val(r,aliases.source_month)));
   if(usingImported&&rawRows.length&&(!hasYear||!hasMonth)){
-    alert(`导入表中${!hasYear&&!hasMonth?'未识别到“年份”和“月份”列':!hasYear?'未识别到“年份”列':'未识别到“月份”列'}，缺失行将继续按当地开始时间筛选。`);
+    uiAlert(`导入表中${!hasYear&&!hasMonth?'未识别到“年份”和“月份”列':!hasYear?'未识别到“年份”列':'未识别到“月份”列'}，缺失行将继续按当地开始时间筛选。`, { icon: '⚠️', title: '周期列识别提示' });
   }
   $('filterYear').value='';
   $('filterMonth').value='';
@@ -2901,7 +3111,7 @@ setTimeout(()=>{
 $('resetFiltersBtn').onclick=resetFilters;
 const compareModal=$('compareModal');
 $('openCompareBtn').onclick=()=>{
-  if(!rawRows.length){alert('请先导入 Excel 文件');return}
+  if(!rawRows.length){ uiAlert('请先导入 Excel 文件', { icon: 'ℹ️' }); return; }
   compareModal.classList.add('show');
   populateComparePeriods();
 };
@@ -2912,7 +3122,10 @@ $('compareMode').onchange=()=>updateComparePreviousOptions(true);
 $('compareCurrent').onchange=()=>updateComparePreviousOptions(true);
 $('comparePrevious').onchange=renderComparison;
 
-$('exportBtn').onclick=()=>rawRows.length?exportCurrent():alert('请先导入 Excel 文件');
+$('exportBtn').onclick=()=>{
+  if(!rawRows.length){ uiAlert('请先导入 Excel 文件', { icon: 'ℹ️' }); return; }
+  exportCurrent();
+};
 
 let snapshotsList = [];
 
@@ -3309,7 +3522,12 @@ async function handleSnapshotCardAction(e) {
 
   if (action === 'restore') {
     if (rawRows.length > 0) {
-      const ok = confirm('载入快照将替换当前工作区中的全部数据和分析结果，是否确定继续？');
+      const ok = await uiConfirm('载入快照将替换当前工作区中的全部数据和分析结果，是否确定继续？', {
+        title: '载入快照确认',
+        okText: '载入并替换',
+        danger: true,
+        icon: '⚡'
+      });
       if (!ok) return;
     }
     try {
@@ -3359,7 +3577,11 @@ async function handleSnapshotCardAction(e) {
 
   if (action === 'rename') {
     const curTitle = item ? item.title : '';
-    const newTitle = prompt('请输入新的快照名称：', curTitle);
+    const newTitle = await uiPrompt('请输入新的快照名称：', curTitle, {
+      title: '重命名快照',
+      okText: '保存',
+      cancelText: '取消'
+    });
     if (!newTitle || !newTitle.trim() || newTitle.trim() === curTitle) return;
     try {
       const resp = await fetch(`/api/operation-incentive-snapshots/${id}`, {
@@ -3382,7 +3604,12 @@ async function handleSnapshotCardAction(e) {
 
   if (action === 'delete') {
     const title = item ? item.title : id;
-    const ok = confirm(`确定要删除快照 "${title}" 吗？此操作无法撤销。`);
+    const ok = await uiConfirm(`确定要删除快照 "${title}" 吗？此操作无法撤销。`, {
+      title: '删除快照确认',
+      okText: '确定删除',
+      danger: true,
+      icon: '🗑️'
+    });
     if (!ok) return;
     try {
       const resp = await fetch(`/api/operation-incentive-snapshots/${id}`, {
