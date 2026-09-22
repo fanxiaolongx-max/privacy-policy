@@ -2648,11 +2648,21 @@
       function cellAt(row, index) { return index >= 0 ? normalizeName(row[index]) : ''; }
       function extractQrPeople() {
         const map = new Map(); let sequence = 0; state.sheets.filter(s => s.category === 'qr').forEach(s => {
-          const ix = { bu: headerIndex(s.headers, 'BU'), customer: headerIndex(s.headers, 'Customer Group'), time: headerIndex(s.headers, 'Create Time'), applyName: headerIndex(s.headers, 'Apply Fullname', 'Apply Full Name'), applyId: headerIndex(s.headers, 'Apply Accountid', 'Apply Account ID'), tdName: headerIndex(s.headers, 'TD Fullname', 'Td Fullname', 'TD Full Name'), tdId: headerIndex(s.headers, 'TD', 'Td') };
+          const ix = {
+            bu: headerIndex(s.headers, 'BU', 'BU/Service Type'),
+            customer: headerIndex(s.headers, 'Customer Group', '客户群/Customer Group', '客户群', 'Customer Name', '客户名称', 'Customer', '客户'),
+            time: headerIndex(s.headers, 'Create Time', '创建时间/Create Time', '创建时间'),
+            applyName: headerIndex(s.headers, 'Apply Fullname', 'Apply Full Name'),
+            applyId: headerIndex(s.headers, 'Apply Accountid', 'Apply Account ID'),
+            tdName: headerIndex(s.headers, 'TD Fullname', 'Td Fullname', 'TD Full Name'),
+            tdId: headerIndex(s.headers, 'TD', 'Td'),
+            role: headerIndex(s.headers, '匹配角色', '角色', 'Role')
+          };
           s.rows.forEach(row => {
             const bu = cellAt(row, ix.bu), customer = cellAt(row, ix.customer), orderTime = parseCreateTime(cellAt(row, ix.time), ++sequence);
-            parseQrPairedPeople(cellAt(row, ix.applyName), cellAt(row, ix.applyId)).forEach(p => addPerson(map, { role: '申请人', name: p.name, account: p.account, bu, customer, orderTime }));
-            parseQrPairedPeople(cellAt(row, ix.tdName), cellAt(row, ix.tdId)).forEach(p => addPerson(map, { role: 'TD', name: p.name, account: p.account, bu, customer, orderTime }));
+            const explicitRole = cellAt(row, ix.role);
+            parseQrPairedPeople(cellAt(row, ix.applyName), cellAt(row, ix.applyId)).forEach(p => addPerson(map, { role: explicitRole || '申请人', name: p.name, account: p.account, bu, customer, orderTime }));
+            parseQrPairedPeople(cellAt(row, ix.tdName), cellAt(row, ix.tdId)).forEach(p => addPerson(map, { role: explicitRole || 'TD', name: p.name, account: p.account, bu, customer, orderTime }));
           });
         }); return finalizePeople(map);
       }
@@ -2674,10 +2684,15 @@
           { role: 'L1 Solution Reviewer', aliases: ['L1评审人/L1 Solution Reviewer', 'L1评审人', 'L1 Solution Reviewer'] }
         ];
         const map = new Map(); let sequence = 0; state.sheets.filter(s => s.category === 'rfc').forEach(s => {
-          const buIndex = headerIndex(s.headers, 'BU'), customerIndex = headerIndex(s.headers, '客户群/Customer Group', '客户群', 'Customer Group'), timeIndex = headerIndex(s.headers, '创建时间/Create Time', '创建时间', 'Create Time'), roleIndexes = roles.map(cfg => ({ ...cfg, index: headerIndex(s.headers, ...cfg.aliases) }));
+          const buIndex = headerIndex(s.headers, 'BU', 'BU/Service Type'),
+                customerIndex = headerIndex(s.headers, '客户群/Customer Group', '客户群', 'Customer Group', 'Customer Name', '客户名称', 'Customer', '客户'),
+                timeIndex = headerIndex(s.headers, '创建时间/Create Time', '创建时间', 'Create Time'),
+                roleColIndex = headerIndex(s.headers, '匹配角色', '角色', 'Role'),
+                roleIndexes = roles.map(cfg => ({ ...cfg, index: headerIndex(s.headers, ...cfg.aliases) }));
           s.rows.forEach(row => {
             const bu = cellAt(row, buIndex), customer = cellAt(row, customerIndex), orderTime = parseCreateTime(cellAt(row, timeIndex), ++sequence);
-            roleIndexes.forEach(cfg => { parsePeopleCell(cellAt(row, cfg.index)).forEach(p => addPerson(map, { role: cfg.role, name: p.name, account: p.account, bu, customer, orderTime })); });
+            const explicitRole = cellAt(row, roleColIndex);
+            roleIndexes.forEach(cfg => { parsePeopleCell(cellAt(row, cfg.index)).forEach(p => addPerson(map, { role: explicitRole || cfg.role, name: p.name, account: p.account, bu, customer, orderTime })); });
           });
         }); return finalizePeople(map);
       }
@@ -2690,18 +2705,20 @@
         ];
         const map = new Map(); let sequence = 0; state.sheets.filter(s => s.category === 'wfm').forEach(s => {
           const buIndex = headerIndex(s.headers, 'BU', 'BU/Service Type'),
-                customerIndex = headerIndex(s.headers, 'Customer Group', '客户群/Customer Group', '客户群', '网络/Network', '网络', 'Network', '客户名称/Customer Name', '客户名称', 'Customer Name'),
+                customerIndex = headerIndex(s.headers, 'Customer Group', '客户群/Customer Group', '客户群', '网络/Network', '网络', 'Network', '客户名称/Customer Name', '客户名称', 'Customer Name', 'Customer', '客户'),
                 timeIndex = headerIndex(s.headers, 'Task Create Time', 'Create Time', '创建时间/Create Time', '创建时间'),
+                roleColIndex = headerIndex(s.headers, '匹配角色', '角色', 'Role'),
                 roleIndexes = roles.map(cfg => ({ ...cfg, index: headerIndex(s.headers, ...cfg.aliases) }));
           s.rows.forEach(row => {
             const bu = cellAt(row, buIndex), customer = cellAt(row, customerIndex), orderTime = parseCreateTime(cellAt(row, timeIndex), ++sequence);
+            const explicitRole = cellAt(row, roleColIndex);
             const seenInRow = new Set();
             roleIndexes.forEach(cfg => {
               parsePeopleCell(cellAt(row, cfg.index)).forEach(p => {
                 const pKey = p.account ? `id:${p.account.replace(/\s+/g, '').toLowerCase()}` : `name:${p.name.toLowerCase()}`;
                 if (seenInRow.has(pKey)) return;
                 seenInRow.add(pKey);
-                addPerson(map, { role: cfg.role, name: p.name, account: p.account, bu, customer, orderTime });
+                addPerson(map, { role: explicitRole || cfg.role, name: p.name, account: p.account, bu, customer, orderTime });
               });
             });
           });
@@ -2710,11 +2727,12 @@
       function extractAllPeople(qr = extractQrPeople(), rfc = extractRfcPeople(), wfm = extractWfmPeople(), attendanceIndex = buildAttendanceIndex()) {
         const map = new Map();[...qr, ...rfc, ...wfm].forEach(p => {
           const key = p.account ? `id:${p.account.replace(/\s+/g, '').toLowerCase()}` : `name:${p.name.toLowerCase()}`;
-          if (!map.has(key)) map.set(key, { names: new Set(), accounts: new Set(), bu: '', buTime: -Infinity, customer: '', customerTime: -Infinity, count: 0 });
+          if (!map.has(key)) map.set(key, { names: new Set(), accounts: new Set(), roles: new Set(), role: '', roleTime: -Infinity, bu: '', buTime: -Infinity, customer: '', customerTime: -Infinity, count: 0 });
           const x = map.get(key); if (p.name) x.names.add(p.name); if (p.account) x.accounts.add(p.account);
+          if (p.role) { x.roles.add(p.role); if ((p._roleTime || 0) >= x.roleTime) { x.role = p.role; x.roleTime = p._roleTime || 0; } }
           if (p.bu && p._buTime >= x.buTime) { x.bu = p.bu; x.buTime = p._buTime; } if (p.customer && p._customerTime >= x.customerTime) { x.customer = p.customer; x.customerTime = p._customerTime; } x.count += p.count || 0;
         });
-        return [...map.values()].map(x => ({ name: [...x.names].join(' / '), account: [...x.accounts].join(' / '), bu: x.bu, customer: mapCustomerGroup(x.customer), count: x.count, _buTime: x.buTime, _customerTime: x.customerTime })).map(p => { const exemption = getExemption(p), record = exemption ? null : getAttendanceRecord(p.account, attendanceIndex); return { ...p, attendance: exemption ? 'Attend on Time' : determineAttendance(p.account, attendanceIndex, p.name), attendanceTime: record?.displayTime || '', attendanceMethod: exemption ? '豁免名单' : record?.method || '无记录' }; }).sort((a, b) => (a.name || a.account).localeCompare(b.name || b.account, 'zh-CN'));
+        return [...map.values()].map(x => ({ name: [...x.names].join(' / '), account: [...x.accounts].join(' / '), role: x.role || [...x.roles].join(' / '), bu: x.bu, customer: mapCustomerGroup(x.customer), customerGroup: mapCustomerGroup(x.customer), count: x.count, _roleTime: x.roleTime, _buTime: x.buTime, _customerTime: x.customerTime })).map(p => { const exemption = getExemption(p), record = exemption ? null : getAttendanceRecord(p.account, attendanceIndex); return { ...p, attendance: exemption ? 'Attend on Time' : determineAttendance(p.account, attendanceIndex, p.name), attendanceTime: record?.displayTime || '', attendanceMethod: exemption ? '豁免名单' : record?.method || '无记录' }; }).sort((a, b) => (a.name || a.account).localeCompare(b.name || b.account, 'zh-CN'));
       }
       function normalizeAttendanceId(value) { return normalizeName(value).replace(/\s+/g, '').toUpperCase(); }
       function identityIds(value) { const out = new Set(); String(value || '').split(/[\n,;，；|/]+/).forEach(part => idVariants(part).forEach(id => out.add(id))); return out; }
@@ -2999,9 +3017,12 @@
           account: r.account || '',
           name: r.name || '',
           bu: normalizeName(r.bu) || '',
-          customerGroup: r.customerGroup || '',
+          customerGroup: r.customerGroup || r.customer || '',
+          role: r.role || '',
           attendance: r.attendance || 'Attend on Time',
-          reason: r.reason || ''
+          reason: r.reason || '',
+          date: r.date || (r.attendanceTime && r.attendanceTime.match(/\d{4}-\d{2}-\d{2}/)?.[0]) || meetingDate,
+          attendanceTime: r.attendanceTime || ''
         }));
         const anomalies = attendees.filter(r => r.attendance && r.attendance !== 'Attend on Time');
 
@@ -3051,6 +3072,26 @@
           if (m) {
             meetingDate = `${m[1]}-${String(m[2]).padStart(2, '0')}-${String(m[3]).padStart(2, '0')}`;
             break;
+          }
+        }
+        if (!meetingDate) {
+          for (const s of state.sheets) {
+            if (Array.isArray(s.rows)) {
+              for (const row of s.rows) {
+                if (Array.isArray(row)) {
+                  for (const cell of row) {
+                    const str = String(cell || '').trim();
+                    const m = str.match(/\b(20\d\d)[-_/.](0?[1-9]|1[0-2])[-_/.](0?[1-9]|[12]\d|3[01])\b/);
+                    if (m) {
+                      meetingDate = `${m[1]}-${String(m[2]).padStart(2, '0')}-${String(m[3]).padStart(2, '0')}`;
+                      break;
+                    }
+                  }
+                }
+                if (meetingDate) break;
+              }
+            }
+            if (meetingDate) break;
           }
         }
         if (!meetingDate) meetingDate = new Date().toISOString().slice(0, 10);

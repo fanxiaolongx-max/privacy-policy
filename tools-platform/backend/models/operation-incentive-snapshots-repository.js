@@ -229,7 +229,14 @@ async function extractRoster() {
                 }
 
                 const bu = String(r.__bu || r.bu || r.BU || r.BU1 || r['部门'] || r.department || '').trim();
-                const customerGroup = String(r.__customer || r.customer || r['客户群'] || r.customerGroup || '').trim();
+                const customerGroup = String(
+                    r.__customer || r.customer || r.customer_office || r['客户名称'] || 
+                    r['客户'] || r['客户群'] || r.customerGroup || r.customerName || ''
+                ).trim();
+                const role = String(
+                    r.__role || r.role || r['角色'] || r['实施人角色'] || 
+                    (r.__fmePerson ? 'FME' : '') || r['方案实施人属性'] || r['人员属性'] || 'FME'
+                ).trim();
 
                 const key = parsedId ? parsedId.toLowerCase() : (parsedName ? parsedName.toLowerCase() : '');
                 if (!key) continue;
@@ -242,7 +249,7 @@ async function extractRoster() {
                         bu,
                         businessUnit: bu,
                         customerGroup,
-                        role: 'STAFF',
+                        role,
                         source: 'incentive',
                         sourceType: 'incentive',
                         snapshotTitle: title,
@@ -255,6 +262,7 @@ async function extractRoster() {
                     if (!existing.staffId && parsedId) existing.staffId = parsedId;
                     if (!existing.bu && bu) { existing.bu = bu; existing.businessUnit = bu; }
                     if (!existing.customerGroup && customerGroup) existing.customerGroup = customerGroup;
+                    if ((!existing.role || existing.role === 'STAFF') && role) existing.role = role;
                     if (title && !existing.snapshotTitles.includes(title)) existing.snapshotTitles.push(title);
                 }
             }
@@ -272,6 +280,8 @@ async function extractRoster() {
                 }
 
                 const bu = String(p.bu || '').trim();
+                const customerGroup = String(p.customerGroup || p.customer || p.customer_office || p.group || '').trim();
+                const role = String(p.role || 'FME').trim();
                 const key = parsedId ? parsedId.toLowerCase() : (parsedName ? parsedName.toLowerCase() : '');
                 if (!key) continue;
 
@@ -282,14 +292,22 @@ async function extractRoster() {
                         name: parsedName || parsedId,
                         bu,
                         businessUnit: bu,
-                        customerGroup: '',
-                        role: 'STAFF',
+                        customerGroup,
+                        role,
                         source: 'incentive',
                         sourceType: 'incentive',
                         snapshotTitle: title,
                         snapshotTitles: title ? [title] : [],
                         snapshotPeriod: period
                     });
+                } else {
+                    const existing = rosterMap.get(key);
+                    if (!existing.name && parsedName) existing.name = parsedName;
+                    if (!existing.staffId && parsedId) existing.staffId = parsedId;
+                    if (!existing.bu && bu) { existing.bu = bu; existing.businessUnit = bu; }
+                    if (!existing.customerGroup && customerGroup) existing.customerGroup = customerGroup;
+                    if ((!existing.role || existing.role === 'STAFF') && role) existing.role = role;
+                    if (title && !existing.snapshotTitles.includes(title)) existing.snapshotTitles.push(title);
                 }
             }
         }

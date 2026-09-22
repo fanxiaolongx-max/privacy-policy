@@ -10,7 +10,32 @@ const DEFAULT_ROLES = ['MTD', 'TL', 'TE', 'SPM', 'MS', 'SEC', 'Software', 'CS', 
 const DEFAULT_DEDUCTIONS = ['1 Month/Time', '1 Month/Ticket', '1 Quarter/Time', '1 Quarter/Ticket', '0.5 Year/Time', '1 Month/Resource', '1 Month/FME', '1 Month/Account', 'Quarterly', '1 Monthly/Time', 'Custom'];
 const DEFAULT_DEDUCTION_CATEGORIES = [{ id: 'monthly', value: '按月' }, { id: 'quarterly', value: '按季度' }, { id: 'half-year', value: '按半年' }, { id: 'other', value: '其他' }];
 const deductionCategory = value => /quarter/i.test(value) ? 'quarterly' : /year/i.test(value) ? 'half-year' : /month/i.test(value) ? 'monthly' : 'other';
-const KINDS = new Set(['personnel', 'rules', 'records', 'roles', 'deductions', 'deductionCategories', 'customerGroups', 'businessUnits']);
+const CORE_BACKUP_KINDS = new Set(['personnel', 'rules', 'records', 'roles', 'deductions', 'deductionCategories', 'customerGroups', 'businessUnits']);
+const KINDS = new Set([...CORE_BACKUP_KINDS, 'snapshotMappings']);
+const DEFAULT_SNAPSHOT_MAPPINGS = {
+    roles: [
+        { scanned: 'Solution Developer', target: 'TD' },
+        { scanned: '方案制作人', target: 'TD' },
+        { scanned: 'Originator', target: 'PM' },
+        { scanned: '建单人', target: 'PM' },
+        { scanned: 'Creator', target: 'PM' },
+        { scanned: 'Owner', target: 'TL' },
+        { scanned: 'L1 Solution Reviewer', target: 'SPM' },
+        { scanned: 'L1评审人', target: 'SPM' },
+        { scanned: '实施人', target: 'FME' },
+        { scanned: 'Operator', target: 'FME' },
+        { scanned: 'STAFF', target: 'FME' },
+        { scanned: '申请人', target: 'TE' }
+    ],
+    customerGroups: [
+        { scanned: 'Vodafone', target: 'VDF' },
+        { scanned: 'VF', target: 'VDF' },
+        { scanned: 'Orange Egypt', target: 'Orange' },
+        { scanned: 'ET', target: 'Etisalat' },
+        { scanned: 'Telecom Egypt', target: 'WE' },
+        { scanned: 'TE', target: 'WE' }
+    ]
+};
 const writeQueues = new Map();
 const BACKUP_EVIDENCE_FILENAME = /^[a-f0-9-]{36}\.(?:pdf|png|jpg|txt|zip|rar|7z|tar|gz|eml|msg)$/i;
 const MAX_BACKUP_ENTRIES = 2000;
@@ -39,8 +64,17 @@ async function ensureReady() {
 async function list() {
     await ensureReady();
     const rows = await all('SELECT kind, id, payload_json FROM department_reward_penalty_items ORDER BY rowid');
-    const state = { personnel: [], rules: [], records: [], roles: [], deductions: [], deductionCategories: [], customerGroups: [], businessUnits: [] };
-    for (const row of rows) if (KINDS.has(row.kind)) state[row.kind].push(JSON.parse(row.payload_json));
+    const state = { personnel: [], rules: [], records: [], roles: [], deductions: [], deductionCategories: [], customerGroups: [], businessUnits: [], snapshotMappings: null };
+    for (const row of rows) {
+        if (row.kind === 'snapshotMappings' && row.id === 'config') {
+            try { state.snapshotMappings = JSON.parse(row.payload_json); } catch (_) {}
+        } else if (CORE_BACKUP_KINDS.has(row.kind)) {
+            state[row.kind].push(JSON.parse(row.payload_json));
+        }
+    }
+    if (!state.snapshotMappings) {
+        state.snapshotMappings = JSON.parse(JSON.stringify(DEFAULT_SNAPSHOT_MAPPINGS));
+    }
     const savedRules = new Map(state.rules.map(rule => [rule.id, rule]));
     state.rules = [...defaultRules.map(rule => savedRules.get(rule.id) || rule), ...state.rules.filter(rule => !defaultRules.some(seed => seed.id === rule.id))];
     for (const [kind, defaults] of [['roles', [...new Set([...DEFAULT_ROLES, ...defaultRules.flatMap(rule => rule.roles).filter(r => r.toUpperCase() !== 'ALL')])]], ['deductions', [...new Set([...DEFAULT_DEDUCTIONS, ...defaultRules.map(rule => rule.deduct)])]]]) {
@@ -249,7 +283,7 @@ async function exportBackupPackage({ includeEvidence = true, actor = 'system', t
     }
 
     const collections = {};
-    for (const kind of KINDS) {
+    for (const kind of CORE_BACKUP_KINDS) {
         const map = new Map();
         for (const item of (state[kind] || [])) {
             if (item && (item.id || item.value)) map.set(item.id || item.value, item);
@@ -401,11 +435,11 @@ function invalidBackup(message) {
 
 function validateIncomingData(data, { mode = 'merge', currentState } = {}) {
     if (!data || typeof data !== 'object' || Array.isArray(data)) invalidBackup('数据包内容不是有效的对象');
-    const presentKinds = [...KINDS].filter(kind => Object.hasOwn(data, kind));
+    const presentKinds = [...CORE_BACKUP_KINDS].filter(kind => Object.hasOwn(data, kind));
     if (!presentKinds.length) invalidBackup('数据包不包含奖惩业务数据');
-    if (mode === 'replace' && presentKinds.length !== KINDS.size) invalidBackup('覆盖恢复需要包含全部数据分类的完整备份包');
+    if (mode === 'replace' && presentKinds.length !== CORE_BACKUP_KINDS.size) invalidBackup('覆盖恢复需要包含全部数据分类的完整备份包');
     if (mode === 'replace' && !presentKinds.some(kind => Array.isArray(data[kind]) && data[kind].length)) invalidBackup('覆盖恢复不能使用全空数据包');
-    for (const kind of KINDS) {
+    for (const kind of CORE_BACKUP_KINDS) {
         if (Object.hasOwn(data, kind) && !Array.isArray(data[kind])) {
             invalidBackup(`数据包中的 "${kind}" 不是有效的数组`);
         }
@@ -462,7 +496,7 @@ async function inspectBackupPackage(bufferOrObject, { mode = 'merge' } = {}) {
     const diff = {};
     const stats = {};
 
-    for (const kind of KINDS) {
+    for (const kind of CORE_BACKUP_KINDS) {
         const items = incoming[kind] || [];
         stats[kind] = items.length;
         const currentItems = currentState[kind] || [];
@@ -524,10 +558,10 @@ async function restoreBackupPackage(bufferOrObject, { mode = 'merge', pin, actor
             await run('BEGIN IMMEDIATE');
             const counts = { personnel: 0, rules: 0, records: 0, roles: 0, deductions: 0, deductionCategories: 0, customerGroups: 0, businessUnits: 0, evidence: 0 };
             if (mode === 'replace') {
-                for (const kind of KINDS) {
+                for (const kind of CORE_BACKUP_KINDS) {
                     await run('DELETE FROM department_reward_penalty_items WHERE kind = ?', [kind]);
                 }
-                for (const kind of KINDS) {
+                for (const kind of CORE_BACKUP_KINDS) {
                     const items = incomingData[kind] || [];
                     for (const item of items) {
                         const itemId = String(item.id || item.value || crypto.randomUUID());
@@ -537,7 +571,7 @@ async function restoreBackupPackage(bufferOrObject, { mode = 'merge', pin, actor
                     }
                 }
             } else {
-                for (const kind of KINDS) {
+                for (const kind of CORE_BACKUP_KINDS) {
                     const items = incomingData[kind] || [];
                     for (const item of items) {
                         const itemId = String(item.id || item.value || crypto.randomUUID());
@@ -596,8 +630,46 @@ async function restoreBackupPackage(bufferOrObject, { mode = 'merge', pin, actor
     return current;
 }
 
+async function getSnapshotMappings() {
+    await ensureReady();
+    const row = await get('SELECT payload_json FROM department_reward_penalty_items WHERE kind = ? AND id = ?', ['snapshotMappings', 'config']);
+    if (!row || !row.payload_json) {
+        return JSON.parse(JSON.stringify(DEFAULT_SNAPSHOT_MAPPINGS));
+    }
+    try {
+        const saved = JSON.parse(row.payload_json);
+        return {
+            roles: Array.isArray(saved.roles) ? saved.roles : DEFAULT_SNAPSHOT_MAPPINGS.roles,
+            customerGroups: Array.isArray(saved.customerGroups) ? saved.customerGroups : DEFAULT_SNAPSHOT_MAPPINGS.customerGroups,
+            updatedAt: saved.updatedAt || ''
+        };
+    } catch {
+        return JSON.parse(JSON.stringify(DEFAULT_SNAPSHOT_MAPPINGS));
+    }
+}
+
+async function saveSnapshotMappings(mappings, actor = 'System') {
+    await ensureReady();
+    const existing = await getSnapshotMappings();
+    const payload = {
+        id: 'config',
+        roles: Array.isArray(mappings?.roles) ? mappings.roles.filter(m => m && String(m.scanned || '').trim() && String(m.target || '').trim()).map(m => ({
+            scanned: String(m.scanned).trim(),
+            target: String(m.target).trim()
+        })) : [],
+        customerGroups: Array.isArray(mappings?.customerGroups) ? mappings.customerGroups.filter(m => m && String(m.scanned || '').trim() && String(m.target || '').trim()).map(m => ({
+            scanned: String(m.scanned).trim(),
+            target: String(m.target).trim()
+        })) : [],
+        updatedAt: new Date().toISOString()
+    };
+    await put('snapshotMappings', 'config', payload, actor, '更新快照字段映射', '更新角色及客户群映射配置');
+    return payload;
+}
+
 module.exports = {
     DEFAULT_ROLES, DEFAULT_DEDUCTIONS, DEFAULT_DEDUCTION_CATEGORIES, deductionCategory,
+    DEFAULT_SNAPSHOT_MAPPINGS, getSnapshotMappings, saveSnapshotMappings,
     ensureReady, list, listAudit, item, put, putMany, putPublishedWithPin, correctHistoricalRoleWithPin, remove, audit,
     hasCustomForceEditPin, verifyForceEditPin, changeForceEditPin,
     exportBackupPackage, inspectBackupPackage, restoreBackupPackage, parseBackupContent

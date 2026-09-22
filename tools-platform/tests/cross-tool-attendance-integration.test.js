@@ -7,8 +7,10 @@ const express = require('express');
 
 const meetingRepo = require('../backend/models/meeting-snapshots-repository');
 const incentiveRepo = require('../backend/models/operation-incentive-snapshots-repository');
+const deptRepo = require('../backend/models/department-reward-penalty-repository');
 const meetingRoutes = require('../backend/routes/meeting-snapshots');
 const incentiveRoutes = require('../backend/routes/operation-incentive-snapshots');
+const deptRoutes = require('../backend/routes/department-reward-penalty');
 
 test('Cross-tool attendance check & roster extraction integration test', async (t) => {
     await meetingRepo.ensureReady();
@@ -225,5 +227,119 @@ test('Cross-tool attendance check & roster extraction integration test', async (
         assert.ok(deptHtml.includes('snapshot-roster-dialog'), 'department-reward-penalty must include snapshot-roster-dialog');
         assert.ok(deptHtml.includes('openSnapshotRosterDialog'), 'department-reward-penalty must include openSnapshotRosterDialog');
         assert.ok(deptHtml.includes('confirmImportSnapshotRoster'), 'department-reward-penalty must include confirmImportSnapshotRoster');
+        assert.ok(deptHtml.includes('snapshot-mappings-dialog'), 'department-reward-penalty must include snapshot-mappings-dialog');
+        assert.ok(deptHtml.includes('extract-mapping-hint-banner'), 'department-reward-penalty must include extract-mapping-hint-banner');
+        assert.ok(deptHtml.includes('btn-open-snapshot-mappings'), 'department-reward-penalty must include btn-open-snapshot-mappings');
+        assert.ok(deptHtml.includes('resolveMappedRole'), 'department-reward-penalty must include resolveMappedRole');
+        assert.ok(deptHtml.includes('resolveMappedCustomerGroup'), 'department-reward-penalty must include resolveMappedCustomerGroup');
+    });
+
+    // Subtest 7: Snapshot field mapping configuration & role/customer extraction
+    await t.test('department-reward-penalty snapshot mappings API supports GET and PUT persistence', async () => {
+        const app = express();
+        app.use(express.json());
+        app.use((req, res, next) => {
+            req.user = { username: 'test-admin', role: 'admin', tenantId: 'default' };
+            next();
+        });
+        app.use('/api/department-reward-penalty', deptRoutes);
+
+        const server = http.createServer(app);
+        await new Promise(resolve => server.listen(0, resolve));
+        const port = server.address().port;
+        const deptBase = `http://127.0.0.1:${port}/api/department-reward-penalty`;
+
+        try {
+            // GET /snapshot-mappings
+            const resGet = await fetch(`${deptBase}/snapshot-mappings`);
+            assert.equal(resGet.status, 200);
+            const mappings = await resGet.json();
+            assert.ok(Array.isArray(mappings.roles));
+            assert.ok(Array.isArray(mappings.customerGroups));
+            assert.ok(mappings.roles.some(m => m.scanned === 'Solution Developer' && m.target === 'TD'));
+
+            // PUT /snapshot-mappings
+            const newMappings = {
+                roles: [
+                    ...mappings.roles,
+                    { scanned: 'Core Engineer', target: 'FME' }
+                ],
+                customerGroups: [
+                    ...mappings.customerGroups,
+                    { scanned: 'Zain KSA', target: 'Zain' }
+                ]
+            };
+            const resPut = await fetch(`${deptBase}/snapshot-mappings`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newMappings)
+            });
+            assert.equal(resPut.status, 200);
+            const putResult = await resPut.json();
+            assert.equal(putResult.success, true);
+            assert.ok(putResult.mappings.roles.some(m => m.scanned === 'Core Engineer' && m.target === 'FME'));
+            assert.ok(putResult.mappings.customerGroups.some(m => m.scanned === 'Zain KSA' && m.target === 'Zain'));
+
+            // Verify persistence via GET
+            const resVerify = await fetch(`${deptBase}/snapshot-mappings`);
+            const verified = await resVerify.json();
+            assert.ok(verified.roles.some(m => m.scanned === 'Core Engineer'));
+            assert.ok(verified.customerGroups.some(m => m.scanned === 'Zain KSA'));
+        } finally {
+            server.close();
+        }
+    });
+
+    // Subtest 8: Meeting snapshot sheet parsing extracts paired roles and customer group columns
+    await t.test('meetingRepo parses complex sheets with paired roles and customer groups', async () => {
+        const sheetSnapId = `snap_sheet_test_${Date.now()}`;
+        const sheetSnap = {
+            id: sheetSnapId,
+            title: 'RFC与QR考勤快照测试',
+            meetingDate: '2026-09-23',
+            summary: {
+                totalAttendees: 0,
+                attendees: [],
+                anomalies: []
+            },
+            payload: {
+                sheets: [
+                    {
+                        sheetName: 'RFC记录',
+                        category: 'rfc',
+                        headers: ['RFC单号', '客户群/Customer Group', 'Solution Developer', 'Owner', 'BU'],
+                        rows: [
+                            ['RFC-1001', 'VF', '赵敏 (T8810)', '张无忌 (T8811)', 'Wireless']
+                        ]
+                    },
+                    {
+                        sheetName: 'QR记录',
+                        category: 'qr',
+                        headers: ['QR单号', 'Customer', 'Apply Fullname', 'Apply AccountID', 'TD Fullname', 'TD', 'Service Type'],
+                        rows: [
+                            ['QR-2001', 'Orange', '周芷若', 'T8812', '宋青书', 'T8813', 'Core']
+                        ]
+                    }
+                ]
+            }
+        };
+
+        await meetingRepo.saveSnapshot(sheetSnap);
+        try {
+            const roster = await meetingRepo.extractRoster();
+            const zhaoMin = roster.find(r => r.staffId === 'T8810' || r.name === '赵敏');
+            assert.ok(zhaoMin, 'Should extract 赵敏 from RFC sheet');
+            assert.equal(zhaoMin.role, 'Solution Developer');
+            assert.equal(zhaoMin.customerGroup, 'VF');
+            assert.equal(zhaoMin.businessUnit, 'Wireless');
+
+            const zhouZhiruo = roster.find(r => r.staffId === 'T8812' || r.name === '周芷若');
+            assert.ok(zhouZhiruo, 'Should extract 周芷若 from QR sheet');
+            assert.equal(zhouZhiruo.role, '申请人');
+            assert.equal(zhouZhiruo.customerGroup, 'Orange');
+            assert.equal(zhouZhiruo.businessUnit, 'Core');
+        } finally {
+            await meetingRepo.deleteSnapshot(sheetSnapId);
+        }
     });
 });

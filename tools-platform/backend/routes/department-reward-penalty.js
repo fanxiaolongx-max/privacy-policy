@@ -64,6 +64,15 @@ async function requireForceEditPin(req, pin) {
 }
 
 router.get('/', respond(async (req, res) => { res.setHeader('Cache-Control', 'no-store'); res.json({ ...await repo.list(), canEdit: req.user?.role === 'admin', username: req.user?.username || '' }); }));
+router.get('/snapshot-mappings', respond(async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    res.json(await repo.getSnapshotMappings());
+}));
+router.put('/snapshot-mappings', respond(async (req, res) => {
+    if (req.user?.role !== 'admin') fail('仅管理员可修改快照映射配置', 403);
+    const saved = await repo.saveSnapshotMappings(req.body, req.user?.username || 'admin');
+    res.json({ success: true, mappings: saved });
+}));
 router.get('/audit', respond(async (req, res) => {
     if (req.user?.role !== 'admin') fail('仅管理员可查看操作审计', 403);
     res.setHeader('Cache-Control', 'no-store');

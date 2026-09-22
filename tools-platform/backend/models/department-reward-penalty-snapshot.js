@@ -76,6 +76,7 @@ async function buildSnapshot(tenantId, options = {}) {
   if(path === '/') return OFFLINE_SNAPSHOT;
   if(path.startsWith('/audit')) { const params = new URLSearchParams(path.split('?')[1] || ''); const size = Math.min(200,Math.max(1,Number(params.get('pageSize')) || 20)); const total = OFFLINE_SNAPSHOT.audit.length; const totalPages = Math.max(1,Math.ceil(total/size)); const page = Math.min(totalPages,Math.max(1,Number(params.get('page')) || 1)); return {rows:OFFLINE_SNAPSHOT.audit.slice((page-1)*size,page*size),total,page,pageSize:size,totalPages}; }
   if(path === '/security') return {hasCustomPin:true};
+  if(path === '/snapshot-mappings') return OFFLINE_SNAPSHOT.snapshotMappings || { roles: [], customerGroups: [] };
   await uiAlert('无权限，仅供查看。请联系管理员。','只读快照','warning','🔒'); throw new Error('无权限，仅供查看。请联系管理员。');
 }`;
     html = html.replace(requestMarker, offlineRequest);
@@ -133,6 +134,7 @@ window.fetch = async (url, options = {}) => {
     return {rows:PAGES_SNAPSHOT.audit.slice((page-1)*size,page*size),total,page,pageSize:size,totalPages};
   }
   if(path === '/security') return {hasCustomPin:true};
+  if(path === '/snapshot-mappings') { if(!PAGES_SNAPSHOT) await request('/'); return PAGES_SNAPSHOT.snapshotMappings || { roles: [], customerGroups: [] }; }
   await uiAlert('无权限，仅供查看。请联系管理员。','只读页面','warning','🔒'); throw new Error('无权限，仅供查看。请联系管理员。');
 }`;
     html = html.replace(requestMarker, pagesRequest);

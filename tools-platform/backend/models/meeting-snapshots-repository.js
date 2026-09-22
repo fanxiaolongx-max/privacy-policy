@@ -217,8 +217,28 @@ function getSnapshotAttendees(snapshot) {
                 role: p.role || '',
                 attendance: p.attendance || p.status || 'Attend on Time',
                 status: p.status || p.attendance || 'Attend on Time',
-                reason: p.reason || ''
+                reason: p.reason || '',
+                date: p.date || p.meetingDate || p.attendanceDate || '',
+                attendanceTime: p.attendanceTime || ''
             });
+        } else {
+            const existing = attendees.find(a => (id && a.account === id) || (name && a.name === name));
+            if (existing) {
+                if (!existing.role && p.role) existing.role = p.role;
+                if (!existing.customerGroup && (p.customerGroup || p.group)) {
+                    existing.customerGroup = p.customerGroup || p.group;
+                }
+                if (!existing.bu && (p.bu || p.businessUnit)) {
+                    existing.bu = p.bu || p.businessUnit;
+                    existing.businessUnit = existing.bu;
+                }
+                if (!existing.date && (p.date || p.meetingDate || p.attendanceDate)) {
+                    existing.date = p.date || p.meetingDate || p.attendanceDate;
+                }
+                if (!existing.attendanceTime && p.attendanceTime) {
+                    existing.attendanceTime = p.attendanceTime;
+                }
+            }
         }
     };
 
@@ -228,32 +248,111 @@ function getSnapshotAttendees(snapshot) {
     if (Array.isArray(snapshot.summary?.anomalies) && snapshot.summary.anomalies.length) {
         snapshot.summary.anomalies.forEach(add);
     }
-    if (attendees.length) return attendees;
 
-    if (Array.isArray(snapshot.payload?.attendees) && snapshot.payload.attendees.length) {
-        snapshot.payload.attendees.forEach(add);
-    }
-    if (attendees.length) return attendees;
+    // Helper to parse role-paired cell or free-text names/accounts
+    const parsePeopleTokens = (value) => {
+        const text = String(value || '').trim();
+        if (!text) return [];
+        const people = [];
+        const re = /([A-Za-z]{0,4}\d{4,})/g;
+        let match, cursor = 0;
+        while ((match = re.exec(text))) {
+            const rawPart = text.slice(cursor, match.index).replace(/[\s,;，；|/()（）\-]+$/g, '').trim();
+            const account = match[1];
+            people.push({ name: rawPart || account, account });
+            cursor = re.lastIndex;
+        }
+        if (people.length) return people;
+        return text.split(/[\n;,，；|]+/)
+            .map(s => s.replace(/^[\s,;，；|/()（）\-]+|[\s,;，；|/()（）\-]+$/g, '').trim())
+            .filter(Boolean)
+            .map(name => ({ name, account: '' }));
+    };
 
-    // Fallback: parse sheets if available
+    // Parse or enrich from sheets if available
     if (snapshot.payload && Array.isArray(snapshot.payload.sheets)) {
+        const rfcRoles = [
+            { role: 'Originator', re: /建单人|originator/i },
+            { role: 'Owner', re: /\bowner\b/i },
+            { role: 'Solution Developer', re: /方案制作人|solution developer/i },
+            { role: 'TD', re: /\btd\b/i },
+            { role: 'PM', re: /\bpm\b/i },
+            { role: 'L1 Solution Reviewer', re: /l1评审人|l1 solution reviewer|l1 reviewer/i }
+        ];
+        const wfmRoles = [
+            { role: 'FME', re: /实施人|operator|oprator|fme/i },
+            { role: 'Creator', re: /建单人|creator|originator/i },
+            { role: 'TD', re: /\btd\b/i },
+            { role: 'PM', re: /\bpm\b/i }
+        ];
+
         snapshot.payload.sheets.forEach(sheet => {
             if (!sheet || !Array.isArray(sheet.headers) || !Array.isArray(sheet.rows)) return;
             const headers = sheet.headers.map(h => String(h || '').trim());
-            const nameIdx = headers.findIndex(h => /姓名|name|fullname|apply fullname/i.test(h));
-            const idIdx = headers.findIndex(h => /工号|account|staffid|apply accountid/i.test(h));
-            const buIdx = headers.findIndex(h => /bu|部门/i.test(h));
-            const grpIdx = headers.findIndex(h => /customer|客户群/i.test(h));
-            if (nameIdx === -1 && idIdx === -1) return;
+            const nameIdx = headers.findIndex(h => /姓名|fullname|apply fullname|\bname\b/i.test(h));
+            const idIdx = headers.findIndex(h => /工号|accountid|apply accountid|staffid|\baccount\b|\bid\b/i.test(h));
+            const buIdx = headers.findIndex(h => /bu|部门|service type/i.test(h));
+            const grpIdx = headers.findIndex(h => /客户群|customer group|customer name|customer|客户|网络|network/i.test(h));
+            const roleIdx = headers.findIndex(h => /匹配角色|用户角色|角色|role name|\brole\b|岗位|identity|身份/i.test(h));
+
+            const isRfc = sheet.category === 'rfc' || headers.some(h => /solution developer|方案制作人|rfc/i.test(h));
+            const isWfm = sheet.category === 'wfm' || headers.some(h => /wfm|fme/i.test(h));
+            const isQr = sheet.category === 'qr' || headers.some(h => /apply fullname|apply accountid/i.test(h));
 
             sheet.rows.forEach(row => {
-                const name = nameIdx >= 0 ? String(row[nameIdx] || '').trim() : '';
-                const account = idIdx >= 0 ? String(row[idIdx] || '').trim() : '';
                 const bu = buIdx >= 0 ? String(row[buIdx] || '').trim() : '';
                 const customerGroup = grpIdx >= 0 ? String(row[grpIdx] || '').trim() : '';
-                add({ account, name, bu, customerGroup, attendance: 'Attend on Time' });
+                const explicitRole = roleIdx >= 0 ? String(row[roleIdx] || '').trim() : '';
+
+                if (isQr) {
+                    const applyNameIdx = headers.findIndex(h => /apply fullname|apply name/i.test(h));
+                    const applyIdIdx = headers.findIndex(h => /apply accountid|apply account/i.test(h));
+                    const tdNameIdx = headers.findIndex(h => /td fullname|td name/i.test(h));
+                    const tdIdIdx = headers.findIndex(h => /^td$/i.test(h));
+                    if (applyNameIdx >= 0 || applyIdIdx >= 0) {
+                        const name = applyNameIdx >= 0 ? String(row[applyNameIdx] || '').trim() : '';
+                        const account = applyIdIdx >= 0 ? String(row[applyIdIdx] || '').trim() : '';
+                        if (name || account) add({ account, name, bu, customerGroup, role: explicitRole || '申请人', attendance: 'Attend on Time' });
+                    }
+                    if (tdNameIdx >= 0 || tdIdIdx >= 0) {
+                        const name = tdNameIdx >= 0 ? String(row[tdNameIdx] || '').trim() : '';
+                        const account = tdIdIdx >= 0 ? String(row[tdIdIdx] || '').trim() : '';
+                        if (name || account) add({ account, name, bu, customerGroup, role: explicitRole || 'TD', attendance: 'Attend on Time' });
+                    }
+                } else if (isRfc) {
+                    rfcRoles.forEach(cfg => {
+                        const colIdx = headers.findIndex(h => cfg.re.test(h));
+                        if (colIdx >= 0) {
+                            parsePeopleTokens(row[colIdx]).forEach(p => {
+                                add({ account: p.account, name: p.name, bu, customerGroup, role: explicitRole || cfg.role, attendance: 'Attend on Time' });
+                            });
+                        }
+                    });
+                } else if (isWfm) {
+                    wfmRoles.forEach(cfg => {
+                        const colIdx = headers.findIndex(h => cfg.re.test(h));
+                        if (colIdx >= 0) {
+                            parsePeopleTokens(row[colIdx]).forEach(p => {
+                                add({ account: p.account, name: p.name, bu, customerGroup, role: explicitRole || cfg.role, attendance: 'Attend on Time' });
+                            });
+                        }
+                    });
+                }
+
+                // Generic row fallback
+                if (nameIdx >= 0 || idIdx >= 0) {
+                    const name = nameIdx >= 0 ? String(row[nameIdx] || '').trim() : '';
+                    const account = idIdx >= 0 ? String(row[idIdx] || '').trim() : '';
+                    if (name || account) {
+                        add({ account, name, bu, customerGroup, role: explicitRole || '', attendance: 'Attend on Time' });
+                    }
+                }
             });
         });
+    }
+
+    if (Array.isArray(snapshot.payload?.attendees) && snapshot.payload.attendees.length) {
+        snapshot.payload.attendees.forEach(add);
     }
     return attendees;
 }
@@ -287,10 +386,14 @@ async function checkPersonAttendance({ staffId, name }) {
             const isAnomaly = isAttendanceAnomaly(rawAtt);
             const attLower = String(rawAtt).toLowerCase();
             const issueType = (attLower.includes('absent') || rawAtt.includes('缺席')) ? 'absent' : 'delay';
+            const actualDate = match.date || match.actualDate || (match.attendanceTime && match.attendanceTime.match(/\d{4}-\d{2}-\d{2}/)?.[0]) || (match.reason && match.reason.match(/\d{4}-\d{2}-\d{2}/)?.[0]) || (snap.title && snap.title.match(/\b(20\d\d[-_/.](?:0?[1-9]|1[0-2])[-_/.](?:0?[1-9]|[12]\d|3[01]))\b/)?.[1]?.replace(/[/_.]/g, '-')) || snap.meetingDate || snap.meeting_date || '';
             const item = {
                 snapshotId: snap.id,
                 title: snap.title,
-                meetingDate: snap.meetingDate || snap.meeting_date || '',
+                meetingDate: actualDate || snap.meetingDate || snap.meeting_date || '',
+                actualDate: actualDate || snap.meetingDate || snap.meeting_date || '',
+                attendanceDate: actualDate || snap.meetingDate || snap.meeting_date || '',
+                attendanceTime: match.attendanceTime || '',
                 attendance: rawAtt,
                 type: issueType,
                 name: match.name || queryName,
@@ -355,10 +458,14 @@ async function batchCheckAttendance(persons = []) {
                 const isAnomaly = isAttendanceAnomaly(rawAtt);
                 const attLower = String(rawAtt).toLowerCase();
                 const issueType = (attLower.includes('absent') || rawAtt.includes('缺席')) ? 'absent' : 'delay';
+                const actualDate = match.date || match.actualDate || (match.attendanceTime && match.attendanceTime.match(/\d{4}-\d{2}-\d{2}/)?.[0]) || (match.reason && match.reason.match(/\d{4}-\d{2}-\d{2}/)?.[0]) || (snap.title && snap.title.match(/\b(20\d\d[-_/.](?:0?[1-9]|1[0-2])[-_/.](?:0?[1-9]|[12]\d|3[01]))\b/)?.[1]?.replace(/[/_.]/g, '-')) || snap.meetingDate || snap.meeting_date || '';
                 const item = {
                     snapshotId: snap.snapshotId,
                     title: snap.title,
-                    meetingDate: snap.meetingDate,
+                    meetingDate: actualDate || snap.meetingDate || '',
+                    actualDate: actualDate || snap.meetingDate || '',
+                    attendanceDate: actualDate || snap.meetingDate || '',
+                    attendanceTime: match.attendanceTime || '',
                     attendance: rawAtt,
                     type: issueType,
                     name: match.name || queryName,

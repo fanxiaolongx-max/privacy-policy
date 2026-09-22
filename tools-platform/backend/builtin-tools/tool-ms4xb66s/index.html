@@ -56,9 +56,9 @@
   .toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap}
   .toolbar-left,.toolbar-right{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
   .empty{padding:42px;text-align:center;color:var(--muted);font-size:12px}
-  .progress-mask{position:fixed;inset:0;background:rgba(17,24,39,.35);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:99}
-  .progress-card{width:min(420px,88vw);background:#fff;border-radius:12px;padding:22px;box-shadow:var(--shadow)}
-  .bar{height:7px;border-radius:999px;background:#edf0f4;overflow:hidden;margin-top:13px}.bar>i{display:block;height:100%;width:0;background:var(--red);transition:.25s}
+  .progress-mask{position:fixed;inset:0;background:rgba(17,24,39,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:300}
+  .progress-card{width:min(450px,90vw);background:#fff;border-radius:16px;padding:24px 28px;box-shadow:0 30px 70px rgba(16,24,40,.25);border:1px solid #e2e8f0;text-align:center}
+  .bar{height:8px;border-radius:999px;background:#edf0f4;overflow:hidden;margin-top:14px}.bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--red),#ef4444);transition:.2s ease}
   .warnbox{background:#fffaf0;border-left:3px solid #d69b35;color:#76501b;border-radius:6px;padding:9px 11px;font-size:10.5px;line-height:1.55;margin-top:10px}
   .analytics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:14px}
   .chart-card{background:#fff;border:1px solid #e2e7ed;border-radius:15px;padding:17px 17px 14px;
@@ -1055,16 +1055,16 @@ m00961966"></textarea>
 </div>
 
 <div class="rule-modal" id="attendanceAnomalyModal">
-  <div class="rule-modal-card" style="width:min(980px,94vw)">
-    <div class="rule-modal-head">
+  <div class="rule-modal-card" style="width:min(1120px,96vw);max-height:min(88vh,820px);display:flex;flex-direction:column;overflow:hidden">
+    <div class="rule-modal-head" style="flex-shrink:0">
       <div>
         <div class="rule-modal-title">📋 激励人员会议考勤排查与黑名单处理</div>
         <div class="section-note">系统检测到以下获得激励计发的员工在近期会议考勤快照中存在缺席或迟到异常。您可以灵活勾选，一键加入激励黑名单以扣除激励。</div>
       </div>
       <button class="icon-btn" id="closeAttendanceAnomalyModal" aria-label="关闭">×</button>
     </div>
-    <div class="identity-detail-body" style="padding:16px 20px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding:10px 14px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0">
+    <div class="identity-detail-body" style="padding:16px 20px;display:flex;flex-direction:column;flex:1 1 auto;min-height:0;overflow:hidden">
+      <div style="flex-shrink:0;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding:10px 14px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0">
         <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;font-weight:600">
           <input type="checkbox" id="selectAllAnomalies" checked>
           <span>全选 / 全不选</span>
@@ -1073,7 +1073,7 @@ m00961966"></textarea>
           已选择 0 / 0 人，涉及激励金额 ¥0
         </div>
       </div>
-      <div class="table-wrap" id="attendanceAnomalyTableWrap" style="max-height:380px;overflow-y:auto">
+      <div class="table-wrap" id="attendanceAnomalyTableWrap" style="flex:1 1 auto;min-height:220px;max-height:none;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px">
         <table class="data-table" style="width:100%;font-size:12px">
           <thead>
             <tr>
@@ -1082,17 +1082,17 @@ m00961966"></textarea>
               <th style="width:100px">姓名</th>
               <th style="width:120px">BU1 / 部门</th>
               <th style="width:110px">本期激励</th>
-              <th>会议考勤异常记录明细</th>
+              <th>会议考勤异常记录明细 (鼠标悬停可查看快照来源)</th>
             </tr>
           </thead>
           <tbody id="attendanceAnomalyTableBody"></tbody>
         </table>
       </div>
-      <div class="rule-actions" style="margin-top:16px;display:flex;justify-content:space-between;align-items:center">
+      <div class="rule-actions" style="flex-shrink:0;margin-top:14px;padding-top:12px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center">
         <div style="font-size:12px;color:#64748b">加入黑名单后将自动重新核算并扣除相应激励。若后续需要恢复，可在“黑名单规则”中移除。</div>
         <div style="display:flex;gap:10px">
           <button type="button" class="reset-btn" id="cancelAttendanceAnomalyModal">取消</button>
-          <button type="button" class="danger" id="confirmAddToBlacklistBtn" style="background:var(--red);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:700;cursor:pointer">🚫 一键将所选人员加入激励黑名单</button>
+          <button type="button" class="danger" id="confirmAddToBlacklistBtn" style="background:var(--red);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(220,38,38,.25)">🚫 一键将所选人员加入激励黑名单</button>
         </div>
       </div>
     </div>
@@ -1157,9 +1157,11 @@ m00961966"></textarea>
 
 <div class="progress-mask" id="mask">
   <div class="progress-card">
-    <div style="font-weight:800;font-size:18px">正在分析数据</div>
-    <div id="progressText" style="margin-top:6px;color:var(--muted);font-size:13px">读取工作表...</div>
+    <div style="font-size:26px;margin-bottom:6px">⚡</div>
+    <div id="progressTitle" style="font-weight:800;font-size:16px;color:var(--navy)">正在处理数据</div>
+    <div id="progressText" style="margin-top:6px;color:var(--muted);font-size:13px;min-height:18px">读取工作表...</div>
     <div class="bar"><i id="progressBar"></i></div>
+    <div id="progressPercent" style="margin-top:8px;font-size:12px;font-weight:700;color:var(--red)">0%</div>
   </div>
 </div>
 
@@ -1527,8 +1529,18 @@ function periodKey(d,type){
   if(type==='half')return `${y} H${m<=6?1:2}`;
   return String(y);
 }
-function setProgress(p,t){$('mask').style.display='flex';$('progressBar').style.width=p+'%';$('progressText').textContent=t}
-function hideProgress(){setTimeout(()=>$('mask').style.display='none',180)}
+function setProgress(p, t, title) {
+  if (!$('mask')) return;
+  $('mask').style.display = 'flex';
+  const pct = Math.max(0, Math.min(100, Math.round(p)));
+  if ($('progressBar')) $('progressBar').style.width = pct + '%';
+  if ($('progressText') && t) $('progressText').textContent = t;
+  if ($('progressTitle') && title) $('progressTitle').textContent = title;
+  if ($('progressPercent')) $('progressPercent').textContent = pct + '%';
+}
+function hideProgress() {
+  setTimeout(() => { if ($('mask')) $('mask').style.display = 'none'; }, 200);
+}
 function resetAllFiltersForNewFile(){
   quickRange=null;
   rankPersonShowIds=false;
@@ -2863,7 +2875,7 @@ async function checkIncentiveAttendanceAnomalies() {
       const resKey = `${info.staffId}|${info.name}`;
       const res = results[resKey];
       if (res && res.hasAnomaly) {
-        const desc = (res.anomalies || []).map(a => `${a.meetingDate || a.title || '会议'}: ${a.attendance}`).join('； ');
+        const desc = (res.anomalies || []).map(a => `${a.actualDate || a.meetingDate || '考勤'}(${a.title || '快照'}): ${a.attendance}`).join('； ');
         currentAttendanceAnomalies.push({
           ...info,
           anomalies: res.anomalies || [],
@@ -2892,10 +2904,6 @@ async function checkIncentiveAttendanceAnomalies() {
 
 const attendanceAnomalyModal = $('attendanceAnomalyModal');
 function openAttendanceAnomalyModal() {
-  if (!currentAttendanceAnomalies || !currentAttendanceAnomalies.length) {
-    showToast('当前未发现考勤异常的激励员工', 'info');
-    return;
-  }
   if (!attendanceAnomalyModal) return;
   attendanceAnomalyModal.classList.add('show');
   renderAttendanceAnomalyModalTable();
@@ -2909,18 +2917,38 @@ function renderAttendanceAnomalyModalTable() {
   const tbody = $('attendanceAnomalyTableBody');
   if (!tbody) return;
 
-  tbody.innerHTML = currentAttendanceAnomalies.map((item, idx) => `
-    <tr>
-      <td style="text-align:center">
-        <input type="checkbox" class="anomaly-row-cb" data-idx="${idx}" checked>
-      </td>
-      <td><strong>${esc(item.staffId)}</strong></td>
-      <td>${esc(item.name || '—')}</td>
-      <td>${esc(item.bu || '—')}</td>
-      <td><strong style="color:var(--red)">¥${money(item.totalFee)}</strong> (${item.orderCount}单)</td>
-      <td style="color:#b91c1c;font-size:11.5px">${esc(item.anomalyDesc)}</td>
-    </tr>
-  `).join('');
+  tbody.innerHTML = currentAttendanceAnomalies.map((item, idx) => {
+    const anomalyBadges = (item.anomalies || []).map(a => {
+      const dateText = a.actualDate || a.meetingDate || a.attendanceDate || '日期未明';
+      const isAbsent = a.type === 'absent' || String(a.attendance || '').toLowerCase().includes('absent') || String(a.attendance || '').includes('缺席');
+      const attText = a.attendance || (isAbsent ? '缺席' : '迟到');
+      const snapTitle = a.title || a.snapshotTitle || '考勤快照';
+      return `
+        <div class="anomaly-chip" title="快照来源：${esc(snapTitle)}${a.attendanceTime ? ' · 签到时间: ' + esc(a.attendanceTime) : ''}" style="display:inline-flex;align-items:center;gap:6px;padding:3px 9px;background:${isAbsent ? '#fef2f2' : '#fffbeb'};border:1px solid ${isAbsent ? '#fecaca' : '#fde68a'};border-radius:6px;margin:2px 4px 2px 0;font-size:11.5px">
+          <span style="font-weight:700;color:${isAbsent ? '#991b1b' : '#92400e'}">📅 ${esc(dateText)}</span>
+          <span style="padding:1px 5px;border-radius:4px;font-size:11px;font-weight:800;background:${isAbsent ? '#fee2e2' : '#fef3c7'};color:${isAbsent ? '#b91c1c' : '#b45309'}">${esc(attText)}</span>
+          <span style="font-size:11px;color:#64748b;cursor:help;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(snapTitle)}">🏷️ ${esc(snapTitle)}</span>
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <tr>
+        <td style="text-align:center">
+          <input type="checkbox" class="anomaly-row-cb" data-idx="${idx}" checked>
+        </td>
+        <td><strong>${esc(item.staffId)}</strong></td>
+        <td>${esc(item.name || '—')}</td>
+        <td>${esc(item.bu || '—')}</td>
+        <td><strong style="color:var(--red)">¥${money(item.totalFee)}</strong> (${item.orderCount}单)</td>
+        <td>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center">
+            ${anomalyBadges || `<span style="color:#b91c1c">${esc(item.anomalyDesc)}</span>`}
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
 
   updateAnomalySelectionSummary();
   if ($('selectAllAnomalies')) $('selectAllAnomalies').checked = true;
@@ -3309,9 +3337,11 @@ async function submitSaveSnapshot() {
     return;
   }
   try {
-    setProgress(30, '正在生成快照数据并上传...');
+    setProgress(20, '正在生成快照数据与核算结构…', '📸 保存操作激励快照');
+    await new Promise(r => setTimeout(r, 60));
     const snapshotData = buildIncentiveSnapshotPayload(title, period);
-    setProgress(65, '正在持久化至服务器...');
+    setProgress(60, '正在上传并持久化至服务器数据库…', '📸 保存操作激励快照');
+    await new Promise(r => setTimeout(r, 60));
     const resp = await fetch('/api/operation-incentive-snapshots', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -3321,7 +3351,8 @@ async function submitSaveSnapshot() {
     if (!resp.ok || !res.success) {
       throw new Error(res.error || '保存快照失败');
     }
-    setProgress(100, '保存完成');
+    setProgress(100, '✅ 快照保存成功！', '📸 保存操作激励快照');
+    await new Promise(r => setTimeout(r, 180));
     hideProgress();
     closeSaveSnapshotModal();
     showToast('✅ 操作激励快照已成功保存到服务器！', 'success');
@@ -3531,13 +3562,18 @@ async function handleSnapshotCardAction(e) {
       if (!ok) return;
     }
     try {
-      setProgress(40, '正在从服务器读取快照完整数据…');
+      setProgress(25, '正在从服务器读取快照完整数据…', '⚡ 载入快照到工作区');
+      await new Promise(r => setTimeout(r, 60));
       const resp = await fetch(`/api/operation-incentive-snapshots/${id}`);
       const res = await resp.json();
       if (!resp.ok || !res.success || !res.item) {
         throw new Error(res.error || '获取快照详情失败');
       }
+      setProgress(65, '正在恢复历史数据行、规则配置与考勤状态…', '⚡ 载入快照到工作区');
+      await new Promise(r => setTimeout(r, 60));
       restoreIncentiveSnapshot(res.item);
+      setProgress(100, '✅ 工作区恢复完成！', '⚡ 载入快照到工作区');
+      await new Promise(r => setTimeout(r, 180));
     } catch (err) {
       console.error(err);
       showToast(`载入失败：${err.message}`, 'error');
