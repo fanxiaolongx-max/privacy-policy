@@ -883,6 +883,85 @@ test('Cross-tool attendance check & roster extraction integration test', async (
             await incentiveRepo.deleteSnapshot(testIncId);
         }
     });
+
+    // Subtest 15: Operation incentive strictly extracts from "人员周期汇总", assigns FME/TE dual roles, maps 4 key columns, and strips alphanumeric staff IDs from names
+    await t.test('Operation incentive snapshot strictly extracts from "人员周期汇总", assigns FME & TE dual roles, maps 4 key columns, and strips letter-prefixed IDs from foreign/Chinese names', async () => {
+        const testSnapId = 'inc_strict_period_summary_' + Date.now();
+        const incentiveSnap = {
+            id: testSnapId,
+            title: '2026-09 操作激励汇总测试快照',
+            period: '2026-09',
+            payload: {
+                sheets: [
+                    {
+                        sheetName: '人员周期汇总',
+                        headers: ['周期', '操作人', '姓名', 'BU1 / 部门', '客户', '人员属性', '计费天数', '激励合计（元）'],
+                        rows: [
+                            ['2026-09', '00909378', 'Mahmoud Elnaggar 00909378', '无线网络交付部', '埃及专网', '全职', 22, 3500],
+                            ['2026-09', 'a84237671', 'Atef Nagah Elsayed Ahmed Elewa a84237671', 'NIS交付部', 'Orange', '外协', 20, 2800],
+                            ['2026-09', 'yWX1232731', 'Mostafa Orabi yWX1232731', 'IT交付部', 'Vodafone', '全职', 21, 3100],
+                            ['2026-09', 'mWX1350434', '张三(mWX1350434)', '核心网部', 'Etisalat', '全职', 22, 4000]
+                        ]
+                    },
+                    {
+                        sheetName: '计算明细',
+                        headers: ['工号', '姓名', '工单号', '金额'],
+                        rows: [
+                            ['WX999999', 'IgnoredRawDetailPerson', 'WO-9999', 500]
+                        ]
+                    }
+                ]
+            }
+        };
+
+        await incentiveRepo.saveSnapshot(incentiveSnap);
+
+        try {
+            const roster = await incentiveRepo.extractRoster();
+
+            // 1. Raw sheet "计算明细" MUST be completely ignored
+            assert.ok(!roster.some(r => r.name === 'IgnoredRawDetailPerson' || r.staffId === 'WX999999'), 'Raw sheets like 计算明细 must be ignored');
+
+            // 2. All 4 people from "人员周期汇总" must be extracted with both FME and TE roles
+            const mahmoud = roster.find(r => r.staffId === '00909378');
+            assert.ok(mahmoud, 'Mahmoud Elnaggar should be extracted');
+            assert.equal(mahmoud.name, 'Mahmoud Elnaggar', 'Numeric staff ID 00909378 should be cleanly stripped from name without damage');
+            assert.equal(mahmoud.bu, '无线网络交付部');
+            assert.equal(mahmoud.customerGroup, '埃及专网');
+            assert.ok(mahmoud.roles.includes('FME') && mahmoud.roles.includes('TE'), 'Must have both FME and TE roles');
+
+            const atef = roster.find(r => r.staffId === 'a84237671');
+            assert.ok(atef, 'Atef Nagah Elsayed Ahmed Elewa should be extracted');
+            assert.equal(atef.name, 'Atef Nagah Elsayed Ahmed Elewa', 'Letter-prefixed ID a84237671 should be cleanly stripped from long foreign name');
+            assert.equal(atef.bu, 'NIS交付部');
+            assert.equal(atef.customerGroup, 'Orange');
+            assert.ok(atef.roles.includes('FME') && atef.roles.includes('TE'), 'Must have both FME and TE roles');
+
+            const mostafa = roster.find(r => r.staffId === 'yWX1232731');
+            assert.ok(mostafa, 'Mostafa Orabi should be extracted');
+            assert.equal(mostafa.name, 'Mostafa Orabi', 'Letter-prefixed ID yWX1232731 should be cleanly stripped');
+            assert.equal(mostafa.bu, 'IT交付部');
+            assert.equal(mostafa.customerGroup, 'Vodafone');
+            assert.ok(mostafa.roles.includes('FME') && mostafa.roles.includes('TE'), 'Must have both FME and TE roles');
+
+            const zhang = roster.find(r => r.staffId === 'mWX1350434');
+            assert.ok(zhang, '张三 should be extracted');
+            assert.equal(zhang.name, '张三', 'Parenthesized ID mWX1350434 should be cleanly stripped from Chinese name');
+            assert.equal(zhang.bu, '核心网部');
+            assert.equal(zhang.customerGroup, 'Etisalat');
+            assert.ok(zhang.roles.includes('FME') && zhang.roles.includes('TE'), 'Must have both FME and TE roles');
+
+            // 3. UI checks: tool-ms4xb66s produces personnelPeriodSummary and department-reward-penalty assigns dual roles
+            const ms4Html = fs.readFileSync(path.join(__dirname, '../backend/builtin-tools/tool-ms4xb66s/index.html'), 'utf-8');
+            assert.ok(ms4Html.includes('personnelPeriodSummary'), 'tool-ms4xb66s must build personnelPeriodSummary sheet');
+            assert.ok(ms4Html.includes('人员周期汇总'), 'tool-ms4xb66s must reference 人员周期汇总');
+
+            const deptHtml = fs.readFileSync(path.join(__dirname, '../backend/builtin-tools/department-reward-penalty/index.html'), 'utf-8');
+            assert.ok(deptHtml.includes("['FME', 'TE'].forEach"), 'department-reward-penalty must assign FME and TE roles to incentive source');
+        } finally {
+            await incentiveRepo.deleteSnapshot(testSnapId);
+        }
+    });
 });
 
 

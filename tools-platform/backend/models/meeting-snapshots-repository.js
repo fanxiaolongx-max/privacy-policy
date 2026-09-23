@@ -285,6 +285,84 @@ function matchPerson(person, targetStaffId, targetName) {
     return false;
 }
 
+function getDigits(s) {
+    const d = String(s || '').replace(/^[a-z]+/i, '').trim();
+    return d.length >= 5 ? d : '';
+}
+
+function isStaffIdToken(token) {
+    if (!token) return false;
+    const s = String(token).trim();
+    if (s.length < 4 || s.length > 10) return false;
+    if (isInvalidStaffId(s) || isOrderNumber(s)) return false;
+    const digits = s.replace(/\D/g, '');
+    if (digits.length < 3) return false;
+    return /^[A-Za-z]{0,4}\d{3,9}[A-Za-z]?$/i.test(s);
+}
+
+function cleanNameAndStaffId(rawName, existingStaffId = '') {
+    let name = String(rawName || '').trim();
+    let staffId = String(existingStaffId || '').trim();
+
+    if (isInvalidStaffId(staffId)) staffId = '';
+    if (!name) {
+        if (staffId && !isStaffIdToken(staffId)) {
+            return cleanNameAndStaffId(staffId, '');
+        }
+        return { name: '', staffId };
+    }
+
+    if (isStaffIdToken(name) && !staffId) {
+        return { name: '', staffId: name };
+    }
+
+    // 1. Bracketed pattern
+    const mParen = name.match(/^(.*?)\s*[(（]([A-Za-z0-9_-]{4,10})[)）]$/);
+    if (mParen && isStaffIdToken(mParen[2])) {
+        name = mParen[1].trim();
+        staffId = preferCanonicalStaffId(staffId, mParen[2].trim());
+    } else {
+        const mParenStart = name.match(/^[(（]([A-Za-z0-9_-]{4,10})[)）]\s*(.*?)$/);
+        if (mParenStart && isStaffIdToken(mParenStart[1])) {
+            name = mParenStart[2].trim();
+            staffId = preferCanonicalStaffId(staffId, mParenStart[1].trim());
+        }
+    }
+
+    // 2. Suffix pattern
+    const mSuffix = name.match(/^(.*?)\s+([A-Za-z0-9_-]{4,10})$/);
+    if (mSuffix && isStaffIdToken(mSuffix[2])) {
+        name = mSuffix[1].trim();
+        staffId = preferCanonicalStaffId(staffId, mSuffix[2].trim());
+    }
+
+    // 3. Prefix pattern
+    const mPrefix = name.match(/^([A-Za-z0-9_-]{4,10})\s+(.*?)$/);
+    if (mPrefix && isStaffIdToken(mPrefix[1])) {
+        staffId = preferCanonicalStaffId(staffId, mPrefix[1].trim());
+        name = mPrefix[2].trim();
+    }
+
+    // 4. Strip known staffId from name
+    if (staffId) {
+        const idEscaped = staffId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const idRegex = new RegExp(`(^|\\s+|[(（])${idEscaped}($|\\s+|[)）])`, 'gi');
+        if (idRegex.test(name)) {
+            name = name.replace(idRegex, ' ').replace(/\s+/g, ' ').trim();
+        }
+        const digits = getDigits(staffId);
+        if (digits && digits.length >= 5) {
+            const digitsRegex = new RegExp(`(^|\\s+|[(（])${digits}($|\\s+|[)）])`, 'gi');
+            if (digitsRegex.test(name)) {
+                name = name.replace(digitsRegex, ' ').replace(/\s+/g, ' ').trim();
+            }
+        }
+    }
+
+    name = name.replace(/^[\s,;，；|/()（）\-]+|[\s,;，；|/()（）\-]+$/g, '').trim();
+    return { name, staffId };
+}
+
 function splitAndParsePeople(rawStr, defaultStaffId = '', defaultName = '') {
     if (!rawStr) return [];
     const text = String(rawStr).trim();
@@ -294,42 +372,13 @@ function splitAndParsePeople(rawStr, defaultStaffId = '', defaultName = '') {
     const results = [];
 
     for (const token of tokens) {
-        let name = '';
-        let staffId = '';
-
-        let m = token.match(/^(.*?)\s*[(（]([A-Za-z0-9_-]+)[)）]$/);
-        if (m) {
-            name = m[1].trim();
-            staffId = m[2].trim();
-        } else {
-            m = token.match(/^([A-Za-z0-9_-]+)\s*[(（](.*?)[)）]$/);
-            if (m) {
-                staffId = m[1].trim();
-                name = m[2].trim();
-            }
-        }
-
-        if (!staffId) {
-            const mEnd = token.match(/^(.*?)\s+([A-Za-z0-9_-]{4,10})$/);
-            if (mEnd && !isOrderNumber(mEnd[2]) && !isInvalidStaffId(mEnd[2]) && mEnd[1].trim()) {
-                name = mEnd[1].trim();
-                staffId = mEnd[2].trim();
-            }
-        }
-
-        if (!staffId) {
-            const mStart = token.match(/^([A-Za-z0-9_-]{4,10})\s+(.*?)$/);
-            if (mStart && !isOrderNumber(mStart[1]) && !isInvalidStaffId(mStart[1]) && mStart[2].trim()) {
-                staffId = mStart[1].trim();
-                name = mStart[2].trim();
-            }
-        }
+        let { name, staffId } = cleanNameAndStaffId(token, defaultStaffId);
 
         if (!staffId && !name) {
             if (/[\u4e00-\u9fa5]/.test(token) || /\s+/.test(token)) {
                 name = token;
                 staffId = defaultStaffId || '';
-            } else if (!isInvalidStaffId(token) && /^[A-Za-z0-9_-]{4,10}$/.test(token)) {
+            } else if (isStaffIdToken(token)) {
                 staffId = token;
                 name = defaultName || '';
             } else {
@@ -362,9 +411,11 @@ function getSnapshotAttendees(snapshot) {
     };
 
     const add = (p, traceInfo = null) => {
-        if (!p) return;
         let id = String(p.account || p.staffId || p.id || '').trim();
         let name = String(p.name || '').trim();
+        const cleaned = cleanNameAndStaffId(name, id);
+        id = cleaned.staffId;
+        name = cleaned.name;
         if (isInvalidStaffId(id)) {
             id = '';
         }

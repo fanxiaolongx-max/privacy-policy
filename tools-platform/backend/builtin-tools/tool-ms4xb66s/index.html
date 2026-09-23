@@ -3217,6 +3217,7 @@ function buildIncentiveSnapshotPayload(customTitle, customPeriod) {
 
   const nonWxRows = dedupRows.filter(r => r.__operatorGroup === 'nonwx');
   const wxRows = dedupRows.filter(r => r.__operatorGroup === 'wx');
+  const totalAmount = dedupRows.reduce((s, r) => s + (r.__fee || 0), 0);
 
   const byLevel = {
     fatal: { count: 0, amount: 0 },
@@ -3273,7 +3274,52 @@ function buildIncentiveSnapshotPayload(customTitle, customPeriod) {
   });
   const topPeople = [...personMap.values()].sort((a, b) => b.amount - a.amount || b.count - a.count).slice(0, 10);
 
-  const totalAmount = dedupRows.reduce((s, r) => s + (r.__fee || 0), 0);
+  const personSummaryMap = new Map();
+  const type = $('periodType')?.value || 'month';
+  const sourceRowsForPerson = dedupRows.length ? dedupRows : (validRows.length ? validRows : rawRows);
+  sourceRowsForPerson.forEach(r => {
+    const p = r.__person || r['操作人'] || '';
+    if (!p) return;
+    const pKey = typeof periodKey === 'function' ? periodKey(filterDateForRow(r), type) : period;
+    const k = pKey + '|' + p;
+    if (!personSummaryMap.has(k)) {
+      personSummaryMap.set(k, {
+        '周期': pKey,
+        '操作人': p,
+        '姓名': r.__name || r.__fmeName || r['姓名'] || '',
+        'BU1 / 部门': r.__bu || r['BU1 / 部门'] || r['BU1'] || r['部门'] || '',
+        '客户': r.__customer || r['客户'] || r['客户群'] || '',
+        '人员属性': r.__attr || r['人员属性'] || '',
+        '计费天数': 0,
+        '激励合计（元）': 0,
+        _buSet: new Set(),
+        _custSet: new Set(),
+        _daysSet: new Set()
+      });
+    }
+    const item = personSummaryMap.get(k);
+    if (!item['姓名'] && (r.__name || r.__fmeName || r['姓名'])) {
+      item['姓名'] = r.__name || r.__fmeName || r['姓名'];
+    }
+    if (r.__bu) item._buSet.add(r.__bu);
+    if (r.__customer) item._custSet.add(r.__customer);
+    if (r.__date) item._daysSet.add(r.__date);
+    item['激励合计（元）'] += (r.__fee || 0);
+  });
+  const personnelPeriodSummary = [...personSummaryMap.values()].map(x => {
+    const bu = [...x._buSet].filter(Boolean).join(' / ') || x['BU1 / 部门'];
+    const cust = [...x._custSet].filter(Boolean).join(' / ') || x['客户'];
+    return {
+      '周期': x['周期'],
+      '操作人': x['操作人'],
+      '姓名': x['姓名'],
+      'BU1 / 部门': bu,
+      '客户': cust,
+      '人员属性': x['人员属性'],
+      '计费天数': x._daysSet.size || 1,
+      '激励合计（元）': x['激励合计（元）']
+    };
+  });
 
   const summary = {
     period,
@@ -3298,6 +3344,7 @@ function buildIncentiveSnapshotPayload(customTitle, customPeriod) {
     byLevel,
     byBu: byBuSerializable,
     topPeople,
+    personnelSummary: personnelPeriodSummary,
     rules: getRuleValues(),
     blacklistCount: incentiveBlacklist.size,
     savedAt: new Date().toISOString()
@@ -3307,6 +3354,14 @@ function buildIncentiveSnapshotPayload(customTitle, customPeriod) {
     version: 1,
     sourceFileName: sourceFileName || '',
     sourceSheetName: sourceSheetName || '',
+    personnelSummary: personnelPeriodSummary,
+    sheets: [
+      {
+        sheetName: '人员周期汇总',
+        headers: ['周期', '操作人', '姓名', 'BU1 / 部门', '客户', '人员属性', '计费天数', '激励合计（元）'],
+        rows: personnelPeriodSummary.map(x => [x['周期'], x['操作人'], x['姓名'], x['BU1 / 部门'], x['客户'], x['人员属性'], x['计费天数'], x['激励合计（元）']])
+      }
+    ],
     rawRows: rawRows,
     rules: getRuleValues(),
     blacklistText: serializeBlacklist(incentiveBlacklist),

@@ -298,6 +298,98 @@ function preferCanonicalName(n1, n2) {
     return s1.length <= s2.length ? s1 : s2;
 }
 
+function splitDelimited(val) {
+    if (!val) return [];
+    if (Array.isArray(val)) {
+        return [...new Set(val.flatMap(x => String(x || '').split(/[,，;/]+/).map(s => s.trim()).filter(Boolean)))];
+    }
+    return [...new Set(String(val).split(/[,，;/]+/).map(s => s.trim()).filter(Boolean))];
+}
+
+function getDigits(s) {
+    const d = String(s || '').replace(/^[a-z]+/i, '').trim();
+    return d.length >= 5 ? d : '';
+}
+
+function isStaffIdToken(token) {
+    if (!token) return false;
+    const s = String(token).trim();
+    if (s.length < 4 || s.length > 10) return false;
+    if (isInvalidStaffId(s) || isOrderNumber(s)) return false;
+    // Must contain at least 3 digits
+    const digits = s.replace(/\D/g, '');
+    if (digits.length < 3) return false;
+    // Common staff ID patterns:
+    // e.g. 00909378, 84347085, a84237671, yWX1232731, mWX1350434, WX1350434, T8801, etc.
+    return /^[A-Za-z]{0,4}\d{3,9}[A-Za-z]?$/i.test(s);
+}
+
+function cleanNameAndStaffId(rawName, existingStaffId = '') {
+    let name = String(rawName || '').trim();
+    let staffId = String(existingStaffId || '').trim();
+
+    if (isInvalidStaffId(staffId)) staffId = '';
+
+    if (!name) {
+        if (staffId && !isStaffIdToken(staffId)) {
+            return cleanNameAndStaffId(staffId, '');
+        }
+        return { name: '', staffId };
+    }
+
+    if (isStaffIdToken(name) && !staffId) {
+        return { name: '', staffId: name };
+    }
+
+    // 1. Bracketed pattern: e.g. "Mahmoud Elnaggar (00909378)", "Mahmoud Elnaggar(a84237671)", "张三(yWX1232731)"
+    const mParen = name.match(/^(.*?)\s*[(（]([A-Za-z0-9_-]{4,10})[)）]$/);
+    if (mParen && isStaffIdToken(mParen[2])) {
+        name = mParen[1].trim();
+        staffId = preferCanonicalStaffId(staffId, mParen[2].trim());
+    } else {
+        const mParenStart = name.match(/^[(（]([A-Za-z0-9_-]{4,10})[)）]\s*(.*?)$/);
+        if (mParenStart && isStaffIdToken(mParenStart[1])) {
+            name = mParenStart[2].trim();
+            staffId = preferCanonicalStaffId(staffId, mParenStart[1].trim());
+        }
+    }
+
+    // 2. Suffix pattern: e.g. "Mahmoud Elnaggar 00909378", "Ahmed Ali a84237671", "Hassan yWX1232731"
+    const mSuffix = name.match(/^(.*?)\s+([A-Za-z0-9_-]{4,10})$/);
+    if (mSuffix && isStaffIdToken(mSuffix[2])) {
+        name = mSuffix[1].trim();
+        staffId = preferCanonicalStaffId(staffId, mSuffix[2].trim());
+    }
+
+    // 3. Prefix pattern: e.g. "00909378 Mahmoud Elnaggar", "a84237671 Ahmed Ali"
+    const mPrefix = name.match(/^([A-Za-z0-9_-]{4,10})\s+(.*?)$/);
+    if (mPrefix && isStaffIdToken(mPrefix[1])) {
+        staffId = preferCanonicalStaffId(staffId, mPrefix[1].trim());
+        name = mPrefix[2].trim();
+    }
+
+    // 4. If staffId is known and exists inside name, strip it without breaking the rest of the name
+    if (staffId) {
+        const idEscaped = staffId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const idRegex = new RegExp(`(^|\\s+|[(（])${idEscaped}($|\\s+|[)）])`, 'gi');
+        if (idRegex.test(name)) {
+            name = name.replace(idRegex, ' ').replace(/\s+/g, ' ').trim();
+        }
+        const digits = getDigits(staffId);
+        if (digits && digits.length >= 5) {
+            const digitsRegex = new RegExp(`(^|\\s+|[(（])${digits}($|\\s+|[)）])`, 'gi');
+            if (digitsRegex.test(name)) {
+                name = name.replace(digitsRegex, ' ').replace(/\s+/g, ' ').trim();
+            }
+        }
+    }
+
+    // Clean edge punctuation
+    name = name.replace(/^[\s,;，；|/()（）\-]+|[\s,;，；|/()（）\-]+$/g, '').trim();
+
+    return { name, staffId };
+}
+
 function splitAndParsePeople(rawStr, defaultStaffId = '', defaultName = '') {
     if (!rawStr) return [];
     const text = String(rawStr).trim();
@@ -307,42 +399,13 @@ function splitAndParsePeople(rawStr, defaultStaffId = '', defaultName = '') {
     const results = [];
 
     for (const token of tokens) {
-        let name = '';
-        let staffId = '';
-
-        let m = token.match(/^(.*?)\s*[(（]([A-Za-z0-9_-]+)[)）]$/);
-        if (m) {
-            name = m[1].trim();
-            staffId = m[2].trim();
-        } else {
-            m = token.match(/^([A-Za-z0-9_-]+)\s*[(（](.*?)[)）]$/);
-            if (m) {
-                staffId = m[1].trim();
-                name = m[2].trim();
-            }
-        }
-
-        if (!staffId) {
-            const mEnd = token.match(/^(.*?)\s+([A-Za-z0-9_-]{4,10})$/);
-            if (mEnd && !isOrderNumber(mEnd[2]) && !isInvalidStaffId(mEnd[2]) && mEnd[1].trim()) {
-                name = mEnd[1].trim();
-                staffId = mEnd[2].trim();
-            }
-        }
-
-        if (!staffId) {
-            const mStart = token.match(/^([A-Za-z0-9_-]{4,10})\s+(.*?)$/);
-            if (mStart && !isOrderNumber(mStart[1]) && !isInvalidStaffId(mStart[1]) && mStart[2].trim()) {
-                staffId = mStart[1].trim();
-                name = mStart[2].trim();
-            }
-        }
+        let { name, staffId } = cleanNameAndStaffId(token, defaultStaffId);
 
         if (!staffId && !name) {
             if (/[\u4e00-\u9fa5]/.test(token) || /\s+/.test(token)) {
                 name = token;
                 staffId = defaultStaffId || '';
-            } else if (!isInvalidStaffId(token) && /^[A-Za-z0-9_-]{4,10}$/.test(token)) {
+            } else if (isStaffIdToken(token)) {
                 staffId = token;
                 name = defaultName || '';
             } else {
@@ -471,6 +534,117 @@ function extractPeopleFromRow(r, rowIdx, snapTitle, sheetName = '计算明细') 
     return people;
 }
 
+function getPersonnelPeriodSummaryRows(snap) {
+    if (!snap) return [];
+
+    // 1. Check summary.personnelSummary or payload.personnelSummary
+    const summaryList = Array.isArray(snap.summary?.personnelSummary) && snap.summary.personnelSummary.length
+        ? snap.summary.personnelSummary
+        : (Array.isArray(snap.summary?.['人员周期汇总']) && snap.summary['人员周期汇总'].length
+            ? snap.summary['人员周期汇总']
+            : (Array.isArray(snap.payload?.personnelSummary) && snap.payload.personnelSummary.length
+                ? snap.payload.personnelSummary
+                : (Array.isArray(snap.payload?.['人员周期汇总']) && snap.payload['人员周期汇总'].length
+                    ? snap.payload['人员周期汇总']
+                    : null)));
+
+    if (summaryList && summaryList.length > 0) {
+        return summaryList;
+    }
+
+    // 2. Check payload.sheets for explicit sheet named "人员周期汇总"
+    const sheets = Array.isArray(snap.payload?.sheets) ? snap.payload.sheets : [];
+    const summarySheet = sheets.find(s => String(s.sheetName || s.name || '').trim() === '人员周期汇总');
+    if (summarySheet) {
+        const rows = summarySheet.rows || summarySheet.data || [];
+        const headers = Array.isArray(summarySheet.headers) ? summarySheet.headers.map(h => String(h || '').trim()) : [];
+        if (rows.length > 0 && Array.isArray(rows[0]) && headers.length > 0) {
+            return rows.map(r => {
+                const obj = {};
+                headers.forEach((h, idx) => {
+                    obj[h] = r[idx];
+                });
+                return obj;
+            });
+        }
+        return rows;
+    }
+
+    // 3. Check payload.rawRows for rows belonging to "人员周期汇总"
+    const rawRows = Array.isArray(snap.payload?.rawRows) ? snap.payload.rawRows : [];
+    const directRows = rawRows.filter(r => String(r.__sheet || r.sheetName || '').trim() === '人员周期汇总');
+    if (directRows.length > 0) {
+        return directRows;
+    }
+
+    // 4. Fallback: synthesize "人员周期汇总" from rawRows (for legacy snapshots without pre-computed summary sheet)
+    if (rawRows.length > 0) {
+        const opMap = new Map();
+        for (const r of rawRows) {
+            let op = String(r['操作人'] || r.__person || r.operator || r.account || r.staffId || r.complete_operator || '').trim();
+            let nm = String(r['姓名'] || r.name || r.__name || r.__fmeName || '').trim();
+            const bu = String(r['BU1 / 部门'] || r['BU1/部门'] || r['BU1'] || r['部门'] || r.__bu || r.bu || r.department || '').trim();
+            const cust = String(r['客户'] || r['客户群'] || r['客户名称'] || r.__customer || r.customer || r.customerGroup || '').trim();
+
+            if (!nm && op) {
+                if (!/[;\n；|]+/.test(op)) {
+                    const cleaned = cleanNameAndStaffId(op, '');
+                    if (cleaned.name && cleaned.staffId) {
+                        nm = cleaned.name;
+                        op = cleaned.staffId;
+                    }
+                }
+            } else if (nm && !op) {
+                if (!/[;\n；|]+/.test(nm)) {
+                    const cleaned = cleanNameAndStaffId(nm, '');
+                    if (cleaned.name && cleaned.staffId) {
+                        nm = cleaned.name;
+                        op = cleaned.staffId;
+                    }
+                }
+            }
+
+            const key = op || nm;
+            if (!key) continue;
+
+            if (!opMap.has(key)) {
+                opMap.set(key, {
+                    '操作人': op,
+                    '姓名': nm,
+                    'BU1 / 部门': bu,
+                    '客户': cust,
+                    _buSet: new Set(bu ? [bu] : []),
+                    _custSet: new Set(cust ? [cust] : [])
+                });
+            } else {
+                const entry = opMap.get(key);
+                if (!entry['操作人'] && op) entry['操作人'] = op;
+                if (!entry['姓名'] && nm) entry['姓名'] = nm;
+                if (bu) entry._buSet.add(bu);
+                if (cust) entry._custSet.add(cust);
+            }
+        }
+        return [...opMap.values()].map(x => ({
+            '操作人': x['操作人'],
+            '姓名': x['姓名'],
+            'BU1 / 部门': [...x._buSet].join(' / ') || x['BU1 / 部门'],
+            '客户': [...x._custSet].join(' / ') || x['客户']
+        }));
+    }
+
+    // 5. Fallback from topPeople
+    if (Array.isArray(snap.summary?.topPeople) && snap.summary.topPeople.length) {
+        return snap.summary.topPeople.map(p => ({
+            '操作人': String(p.person || p.account || p.staffId || '').trim(),
+            '姓名': String(p.name || '').trim(),
+            'BU1 / 部门': String(p.bu || '').trim(),
+            '客户': String(p.customerGroup || p['客户名称'] || p['客户'] || p['客户群'] || '').trim()
+        }));
+    }
+
+    return [];
+}
+
 async function extractRoster() {
     await ensureReady();
     const snapshots = await listSnapshots({ includePayload: true });
@@ -545,215 +719,145 @@ async function extractRoster() {
         try {
             const period = snap.period || '';
             const title = snap.title || '';
-            const rawRows = Array.isArray(snap.payload?.rawRows) ? snap.payload.rawRows : [];
+            // 核心原则：严格仅提取“人员周期汇总”，跳过其他所有明细表
+            const summaryRows = getPersonnelPeriodSummaryRows(snap);
 
-            if (rawRows.length > 0) {
-                for (let rIdx = 0; rIdx < rawRows.length; rIdx++) {
-                    const r = rawRows[rIdx];
-                    const sheetName = r.__sheet || '计算明细';
-                    const bu = String(r.__bu || r.bu || r.BU || r.BU1 || r['部门'] || r.department || '').trim();
-                    const customerGroup = String(
-                        r.__customer || r['客户名称'] || r['客户'] || r['客户群'] || 
-                        r.customer || r.customer_office || r.customerGroup || r.customerName ||
-                        r['周期交叉表客户名称'] || r['计算明细客户'] || ''
-                    ).trim();
+            for (let rIdx = 0; rIdx < summaryRows.length; rIdx++) {
+                const r = summaryRows[rIdx];
+                const rawStaffId = String(r['操作人'] || r['工号'] || r['账号'] || r.staffId || r.account || r.operator || r.person || r.__person || r.complete_operator || '').trim();
+                const rawName = String(r['姓名'] || r['纯姓名'] || r.name || r.__name || r.__fmeName || '').trim();
+                const bu = String(r['BU1 / 部门'] || r['BU1/部门'] || r['BU1'] || r['部门'] || r.bu || r.businessUnit || r.department || r.__bu || '').trim();
+                const customerGroup = String(r['客户'] || r['客户群'] || r['客户名称'] || r.customer || r.customerGroup || r.__customer || '').trim();
 
-                    // Detect accurate role: reject employee category (自有/租赁/合作), fallback to FME
-                    let explicitRole = String(
-                        r.__role || r.role || r['角色'] || r['实施人角色'] || r['操作人角色'] || 
-                        r['岗位'] || r['岗位名称'] || r['工作岗位'] || r['Role'] || ''
-                    ).trim();
-                    if (isEmploymentCategory(explicitRole)) {
-                        explicitRole = '';
-                    }
-                    const role = explicitRole || 'FME';
+                let parsedPeople = [];
+                const hasMultiId = /[;\n；|]+/.test(rawStaffId);
+                const hasMultiName = /[;\n；|]+/.test(rawName);
 
-                    const rowPeople = extractPeopleFromRow(r, rIdx, title, sheetName);
-                    for (const p of rowPeople) {
-                        const parsedId = p.staffId;
-                        const parsedName = p.name;
-                        const existing = findExistingCandidate(parsedId, parsedName);
-                        if (!existing) {
-                            const key = parsedId ? parsedId.toLowerCase() : (parsedName ? parsedName.toLowerCase() : '');
-                            if (!key) continue;
-                            const cGroups = customerGroup ? [customerGroup] : [];
-                            const rRoles = role ? [role] : [];
-                            const newEntry = {
-                                id: parsedId || parsedName,
-                                staffId: parsedId || '',
-                                name: parsedName || parsedId,
-                                bu,
-                                businessUnit: bu,
-                                customerGroup,
-                                customerGroups: cGroups,
-                                role,
-                                roles: rRoles,
-                                source: 'incentive',
-                                sourceType: 'incentive',
-                                snapshotTitle: title,
-                                snapshotTitles: title ? [title] : [],
-                                snapshotPeriod: period,
-                                sourceTraces: Array.isArray(p.traces) ? [...p.traces] : []
-                            };
-                            rosterMap.set(key, newEntry);
-                            registerCandidate(newEntry);
-                        } else {
-                            const canonicalId = preferCanonicalStaffId(existing.staffId, parsedId);
-                            if (canonicalId && canonicalId !== existing.staffId) {
-                                existing.staffId = canonicalId;
-                                existing.id = canonicalId;
-                                rosterMap.set(canonicalId.toLowerCase(), existing);
-                                registerCandidate(existing);
-                            }
-                            if (!existing.name && parsedName) {
-                                existing.name = parsedName;
-                                registerCandidate(existing);
-                            } else if (parsedName) {
-                                const prevName = existing.name;
-                                existing.name = preferCanonicalName(existing.name, parsedName);
-                                if (existing.name !== prevName) {
-                                    registerCandidate(existing);
-                                }
-                            }
-                            if (!existing.bu && bu) { existing.bu = bu; existing.businessUnit = bu; }
-                            
-                            // Accumulate multiple customer groups
-                            if (!Array.isArray(existing.customerGroups)) {
-                                existing.customerGroups = existing.customerGroup ? [existing.customerGroup] : [];
-                            }
-                            if (customerGroup && !existing.customerGroups.includes(customerGroup)) {
-                                existing.customerGroups.push(customerGroup);
-                                existing.customerGroup = existing.customerGroups.join(', ');
-                            }
-
-                            // Accumulate multiple roles
-                            if (!Array.isArray(existing.roles)) {
-                                existing.roles = existing.role ? [existing.role] : [];
-                            }
-                            if (role && !existing.roles.includes(role)) {
-                                existing.roles.push(role);
-                                existing.role = existing.roles.join(', ');
-                            }
-
-                            if (title && !existing.snapshotTitles.includes(title)) existing.snapshotTitles.push(title);
-
-                            if (Array.isArray(p.traces)) {
-                                if (!Array.isArray(existing.sourceTraces)) existing.sourceTraces = [];
-                                for (const tr of p.traces) {
-                                    if (!existing.sourceTraces.some(et => et.snapshotTitle === tr.snapshotTitle && et.rowNumber === tr.rowNumber && et.field === tr.field && et.sheetName === tr.sheetName)) {
-                                        existing.sourceTraces.push(tr);
-                                    }
-                                }
-                            }
+                if (hasMultiId || hasMultiName) {
+                    if (hasMultiId && hasMultiName) {
+                        const parsedIds = splitAndParsePeople(rawStaffId);
+                        const parsedNames = splitAndParsePeople(rawName);
+                        const maxLen = Math.max(parsedIds.length, parsedNames.length);
+                        for (let i = 0; i < maxLen; i++) {
+                            const idItem = parsedIds[i] || {};
+                            const nameItem = parsedNames[i] || {};
+                            const pId = idItem.staffId || idItem.name || '';
+                            const pNm = nameItem.name || idItem.name || '';
+                            parsedPeople.push(cleanNameAndStaffId(pNm, pId));
                         }
+                    } else if (hasMultiId) {
+                        parsedPeople = splitAndParsePeople(rawStaffId);
+                    } else {
+                        parsedPeople = splitAndParsePeople(rawName);
+                    }
+                } else {
+                    if (rawName && rawStaffId) {
+                        parsedPeople = [cleanNameAndStaffId(rawName, rawStaffId)];
+                    } else if (rawName) {
+                        parsedPeople = [cleanNameAndStaffId(rawName, '')];
+                    } else if (rawStaffId) {
+                        parsedPeople = [cleanNameAndStaffId(rawStaffId, '')];
                     }
                 }
-            } else if (Array.isArray(snap.summary?.topPeople)) {
-                for (let pIdx = 0; pIdx < snap.summary.topPeople.length; pIdx++) {
-                    const p = snap.summary.topPeople[pIdx];
-                    const rawPerson = String(p.person || p.account || p.name || '').trim();
-                    if (!rawPerson) continue;
 
-                    const bu = String(p.bu || '').trim();
-                    const customerGroup = String(
-                        p.customerGroup || p['客户名称'] || p['客户'] || p['客户群'] || 
-                        p.customer || p.customer_office || p.group || ''
-                    ).trim();
+                for (const p of parsedPeople) {
+                    const cleaned = cleanNameAndStaffId(p.name, p.staffId);
+                    let parsedId = cleaned.staffId;
+                    let parsedName = cleaned.name;
 
-                    let topRole = String(p.role || '').trim();
-                    if (isEmploymentCategory(topRole)) {
-                        topRole = '';
+                    if (isInvalidStaffId(parsedId)) {
+                        if (parsedName === parsedId || isOrderNumber(parsedName)) continue;
+                        parsedId = '';
                     }
-                    const role = topRole || 'FME';
-
-                    const parsedPeople = splitAndParsePeople(rawPerson, String(p.account || p.staffId || '').trim(), String(p.name || '').trim());
-                    if (!parsedPeople.length && (p.name || p.account || p.staffId)) {
-                        parsedPeople.push({ name: String(p.name || p.account || p.staffId).trim(), staffId: String(p.account || p.staffId || '').trim() });
+                    if (isOrderNumber(parsedName)) {
+                        if (!parsedId) continue;
+                        parsedName = '';
                     }
+                    if (!parsedId && !parsedName) continue;
+                    if (isTotalRow(parsedId, parsedName)) continue;
 
-                    for (const personItem of parsedPeople) {
-                        const parsedId = personItem.staffId;
-                        const parsedName = personItem.name;
-                        if (!parsedId && !parsedName) continue;
-                        if (isTotalRow(parsedId, parsedName) || /总计|合计|小计/i.test(parsedName) || /总计|合计|小计/i.test(parsedId)) continue;
+                    const trace = {
+                        source: 'incentive',
+                        sourceName: '操作激励快照',
+                        snapshotTitle: title || '操作激励快照',
+                        sheetName: '人员周期汇总',
+                        rowNumber: rIdx + 1,
+                        field: r['操作人'] ? '操作人' : (r['姓名'] ? '姓名' : '操作人'),
+                        raw: `${rawStaffId} ${rawName}`.trim()
+                    };
 
-                        const trace = {
+                    const existing = findExistingCandidate(parsedId, parsedName);
+                    const cGroups = splitDelimited(customerGroup);
+                    // 业务规则：人员周期汇总表中人员均为 FME 和 TE 双重角色
+                    const rRoles = ['FME', 'TE'];
+
+                    if (!existing) {
+                        const key = parsedId ? parsedId.toLowerCase() : (parsedName ? parsedName.toLowerCase() : '');
+                        if (!key) continue;
+                        const newEntry = {
+                            id: parsedId || parsedName,
+                            staffId: parsedId || '',
+                            name: parsedName || parsedId,
+                            bu,
+                            businessUnit: bu,
+                            customerGroup: cGroups.join(', ') || customerGroup,
+                            customerGroups: cGroups,
+                            role: 'FME, TE',
+                            roles: rRoles,
                             source: 'incentive',
-                            sourceName: '操作激励快照',
-                            snapshotTitle: title || '操作激励快照',
-                            sheetName: '激励汇总',
-                            rowNumber: pIdx + 1,
-                            field: 'Top激励人员',
-                            raw: rawPerson
+                            sourceType: 'incentive',
+                            snapshotTitle: title,
+                            snapshotTitles: title ? [title] : [],
+                            snapshotPeriod: period,
+                            sourceTraces: [trace]
                         };
-
-                        const existing = findExistingCandidate(parsedId, parsedName);
-                        if (!existing) {
-                            const key = parsedId ? parsedId.toLowerCase() : (parsedName ? parsedName.toLowerCase() : '');
-                            if (!key) continue;
-                            const cGroups = customerGroup ? [customerGroup] : [];
-                            const rRoles = role ? [role] : [];
-                            const newEntry = {
-                                id: parsedId || parsedName,
-                                staffId: parsedId || '',
-                                name: parsedName || parsedId,
-                                bu,
-                                businessUnit: bu,
-                                customerGroup,
-                                customerGroups: cGroups,
-                                role,
-                                roles: rRoles,
-                                source: 'incentive',
-                                sourceType: 'incentive',
-                                snapshotTitle: title,
-                                snapshotTitles: title ? [title] : [],
-                                snapshotPeriod: period,
-                                sourceTraces: [trace]
-                            };
-                            rosterMap.set(key, newEntry);
-                            registerCandidate(newEntry);
-                        } else {
-                            const canonicalId = preferCanonicalStaffId(existing.staffId, parsedId);
-                            if (canonicalId && canonicalId !== existing.staffId) {
-                                existing.staffId = canonicalId;
-                                existing.id = canonicalId;
-                                rosterMap.set(canonicalId.toLowerCase(), existing);
+                        rosterMap.set(key, newEntry);
+                        registerCandidate(newEntry);
+                    } else {
+                        const canonicalId = preferCanonicalStaffId(existing.staffId, parsedId);
+                        if (canonicalId && canonicalId !== existing.staffId) {
+                            existing.staffId = canonicalId;
+                            existing.id = canonicalId;
+                            rosterMap.set(canonicalId.toLowerCase(), existing);
+                            registerCandidate(existing);
+                        }
+                        if (!existing.name && parsedName) {
+                            existing.name = parsedName;
+                            registerCandidate(existing);
+                        } else if (parsedName) {
+                            const prevName = existing.name;
+                            existing.name = preferCanonicalName(existing.name, parsedName);
+                            if (existing.name !== prevName) {
                                 registerCandidate(existing);
                             }
-                            if (!existing.name && parsedName) {
-                                existing.name = parsedName;
-                                registerCandidate(existing);
-                            } else if (parsedName) {
-                                const prevName = existing.name;
-                                existing.name = preferCanonicalName(existing.name, parsedName);
-                                if (existing.name !== prevName) {
-                                    registerCandidate(existing);
-                                }
-                            }
-                            if (!existing.bu && bu) { existing.bu = bu; existing.businessUnit = bu; }
+                        }
+                        if (!existing.bu && bu) { existing.bu = bu; existing.businessUnit = bu; }
 
-                            if (!Array.isArray(existing.customerGroups)) {
-                                existing.customerGroups = existing.customerGroup ? [existing.customerGroup] : [];
+                        // Accumulate customer groups
+                        if (!Array.isArray(existing.customerGroups)) {
+                            existing.customerGroups = splitDelimited(existing.customerGroup);
+                        }
+                        for (const g of cGroups) {
+                            if (g && !existing.customerGroups.includes(g)) {
+                                existing.customerGroups.push(g);
                             }
-                            if (customerGroup && !existing.customerGroups.includes(customerGroup)) {
-                                existing.customerGroups.push(customerGroup);
-                                existing.customerGroup = existing.customerGroups.join(', ');
-                            }
+                        }
+                        existing.customerGroup = existing.customerGroups.join(', ');
 
-                            if (!Array.isArray(existing.roles)) {
-                                existing.roles = existing.role ? [existing.role] : [];
-                            }
-                            if (role && !existing.roles.includes(role)) {
-                                existing.roles.push(role);
-                                existing.role = existing.roles.join(', ');
-                            }
+                        // Ensure FME and TE roles
+                        if (!Array.isArray(existing.roles)) {
+                            existing.roles = splitDelimited(existing.role);
+                        }
+                        for (const r of ['FME', 'TE']) {
+                            if (!existing.roles.includes(r)) existing.roles.push(r);
+                        }
+                        existing.role = existing.roles.join(', ');
 
-                            if (title && !existing.snapshotTitles.includes(title)) existing.snapshotTitles.push(title);
+                        if (title && !existing.snapshotTitles.includes(title)) existing.snapshotTitles.push(title);
 
-                            if (!Array.isArray(existing.sourceTraces)) existing.sourceTraces = [];
-                            if (!existing.sourceTraces.some(et => et.snapshotTitle === trace.snapshotTitle && et.rowNumber === trace.rowNumber && et.field === trace.field && et.sheetName === trace.sheetName)) {
-                                existing.sourceTraces.push(trace);
-                            }
+                        if (!Array.isArray(existing.sourceTraces)) existing.sourceTraces = [];
+                        if (!existing.sourceTraces.some(et => et.snapshotTitle === trace.snapshotTitle && et.rowNumber === trace.rowNumber && et.field === trace.field && et.sheetName === trace.sheetName)) {
+                            existing.sourceTraces.push(trace);
                         }
                     }
                 }
@@ -808,19 +912,21 @@ async function extractRoster() {
             if (targetNorm) convByName.set(targetNorm, target);
 
             // Merge customer groups
-            if (!Array.isArray(target.customerGroups)) target.customerGroups = target.customerGroup ? [target.customerGroup] : [];
-            const newGroups = Array.isArray(cand.customerGroups) && cand.customerGroups.length ? cand.customerGroups : (cand.customerGroup ? [cand.customerGroup] : []);
+            if (!Array.isArray(target.customerGroups)) target.customerGroups = splitDelimited(target.customerGroup);
+            const newGroups = splitDelimited(Array.isArray(cand.customerGroups) && cand.customerGroups.length ? cand.customerGroups : (cand.customerGroup || ''));
             for (const g of newGroups) {
                 if (g && !target.customerGroups.includes(g)) target.customerGroups.push(g);
             }
             target.customerGroup = target.customerGroups.join(', ');
 
-            // Merge roles
-            if (!Array.isArray(target.roles)) target.roles = target.role ? [target.role] : [];
-            const newRoles = Array.isArray(cand.roles) && cand.roles.length ? cand.roles : (cand.role ? [cand.role] : []);
+            // Merge roles: guarantee FME and TE
+            if (!Array.isArray(target.roles)) target.roles = splitDelimited(target.role);
+            const newRoles = splitDelimited(Array.isArray(cand.roles) && cand.roles.length ? cand.roles : (cand.role || ''));
             for (const r of newRoles) {
                 if (r && !target.roles.includes(r)) target.roles.push(r);
             }
+            if (!target.roles.includes('FME')) target.roles.push('FME');
+            if (!target.roles.includes('TE')) target.roles.push('TE');
             target.role = target.roles.join(', ');
 
             if (!target.bu && cand.bu) {
