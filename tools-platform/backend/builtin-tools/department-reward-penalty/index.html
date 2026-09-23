@@ -3997,9 +3997,32 @@ async function openSnapshotRosterDialog() {
     const existingRosterIds = new Set((state.personnel || []).map(p => p.id));
     const isTotalRow = (id, name) => /总计|合计|小计|^total$/i.test(String(id || '')) || /总计|合计|小计|^total$/i.test(String(name || ''));
 
+    function isOrderNumber(str) {
+      if (!str) return false;
+      const s = String(str).trim();
+      if (!s) return false;
+      if (/^qr\d+/i.test(s) || /^(task|wo|req|inc|chg|cr)\d+/i.test(s)) return true;
+      if (/^[A-Za-z0-9_-]{11,}$/.test(s) && /\d{6,}/.test(s)) return true;
+      return false;
+    }
+
+    function isInvalidStaffId(id) {
+      if (!id) return false;
+      const s = String(id).trim();
+      if (!s) return false;
+      // 自动过滤超过10位字符的非工号（如 QR20260610000307 共16位）
+      if (s.length > 10) return true;
+      // 单号/工单号特征过滤（如 QR...、TASK...、WO...）
+      if (isOrderNumber(s)) return true;
+      return false;
+    }
+
     function preferCanonicalStaffId(id1, id2) {
       const s1 = String(id1 || '').trim();
       const s2 = String(id2 || '').trim();
+      if (isInvalidStaffId(s1) && !isInvalidStaffId(s2)) return s2;
+      if (isInvalidStaffId(s2) && !isInvalidStaffId(s1)) return s1;
+      if (isInvalidStaffId(s1) && isInvalidStaffId(s2)) return '';
       if (!s1) return s2;
       if (!s2) return s1;
       if (s1.toLowerCase() === s2.toLowerCase()) return s1;
@@ -4088,8 +4111,20 @@ async function openSnapshotRosterDialog() {
     }
 
     for (const item of meetingRoster) {
-      const staffId = String(item.staffId || '').trim();
-      const name = String(item.name || '').trim();
+      let staffId = String(item.staffId || '').trim();
+      let name = String(item.name || '').trim();
+      if (isInvalidStaffId(staffId)) {
+        if (!name || name === staffId || isOrderNumber(name)) {
+          appendExtractLog(`ℹ️ [${staffId}] 识别为超长非工号字符(超过10位/单号)，已自动过滤`, 'info');
+          continue;
+        }
+        appendExtractLog(`ℹ️ [${name}] 原工号「${staffId}」超过10位字符，已自动过滤工号仅保留姓名`, 'info');
+        staffId = '';
+      }
+      if (isOrderNumber(name)) {
+        if (!staffId) continue;
+        name = '';
+      }
       if (!staffId && !name) continue;
       if (isTotalRow(staffId, name)) continue;
 
@@ -4174,8 +4209,20 @@ async function openSnapshotRosterDialog() {
     }
 
     for (const item of incentiveRoster) {
-      const staffId = String(item.staffId || '').trim();
-      const name = String(item.name || '').trim();
+      let staffId = String(item.staffId || '').trim();
+      let name = String(item.name || '').trim();
+      if (isInvalidStaffId(staffId)) {
+        if (!name || name === staffId || isOrderNumber(name)) {
+          appendExtractLog(`ℹ️ [${staffId}] 识别为超长非工号字符(超过10位/单号)，已自动过滤`, 'info');
+          continue;
+        }
+        appendExtractLog(`ℹ️ [${name}] 原工号「${staffId}」超过10位字符，已自动过滤工号仅保留姓名`, 'info');
+        staffId = '';
+      }
+      if (isOrderNumber(name)) {
+        if (!staffId) continue;
+        name = '';
+      }
       if (!staffId && !name) continue;
       if (isTotalRow(staffId, name)) continue;
 

@@ -2523,8 +2523,24 @@
         const input = $('#personSearchInput'); if (!input) return; input.value = state.personSearch.query; $('#personSearchClearBtn').classList.toggle('hidden', !state.personSearch.result); $('#personSearchModalResult').innerHTML = state.personSearch.result ? `<div class="search-identity" style="margin:0 0 12px">${bi('本次搜索', 'Query')}：${esc(state.personSearch.result.query)}；${bi('已关联工号', 'Linked IDs')}：${state.personSearch.result.ids.length ? state.personSearch.result.ids.map(esc).join('、') : bi('未从名单中解析到工号，将按姓名匹配', 'No linked ID found; matching by name')}</div>${renderPersonSearchResults(state.personSearch.result)}` : `<div class="search-empty" style="margin-top:4px">${bi('输入姓名或工号后点击搜索，结果将在此处显示。', 'Enter a name or employee ID, then click Search. Results will appear here.')}</div>`;
         input.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); runPersonSearch(); } };
       }
+      function isOrderNumber(str) {
+        if (!str) return false;
+        const s = String(str).trim();
+        if (!s) return false;
+        if (/^qr\d+/i.test(s) || /^(task|wo|req|inc|chg|cr)\d+/i.test(s)) return true;
+        if (/^[A-Za-z0-9_-]{11,}$/.test(s) && /\d{6,}/.test(s)) return true;
+        return false;
+      }
+      function isInvalidStaffId(id) {
+        if (!id) return false;
+        const s = String(id).trim();
+        if (!s) return false;
+        if (s.length > 10) return true;
+        if (isOrderNumber(s)) return true;
+        return false;
+      }
       function idVariants(value) {
-        const id = normalizeAttendanceId(value), out = new Set(); if (!id) return out; out.add(id);
+        const id = normalizeAttendanceId(value), out = new Set(); if (!id || isInvalidStaffId(id)) return out; out.add(id);
         const prefixed = id.match(/^[UA](\d{5,})$/); if (prefixed) out.add(prefixed[1]);
         return out;
       }
@@ -2533,7 +2549,7 @@
       function personMatches(person, queryLower, ids) { return idsOverlap(person.account, ids) || (person.name && person.name.toLowerCase().includes(queryLower)); }
       function resolveSearchIdentities(query) {
         const q = normalizeName(query), lower = q.toLowerCase(), ids = new Set(), names = new Set();
-        if (/^(?:[a-z]{0,4}\d{5,})$/i.test(q)) addIdVariants(ids, q);
+        if (/^(?:[a-z]{0,4}\d{5,})$/i.test(q) && !isInvalidStaffId(q)) addIdVariants(ids, q);
         const people = state.peopleCache ? [...state.peopleCache.qr, ...state.peopleCache.rfc, ...state.peopleCache.wfm, ...state.peopleCache.all] : [];
         people.forEach(p => { if ((p.name || '').toLowerCase().includes(lower) || idsOverlap(p.account, ids) || normalizeAttendanceId(p.account) === normalizeAttendanceId(q)) { addIdVariants(ids, p.account); if (p.name) names.add(p.name); } });
         state.sheets.filter(s => s.category === 'offline').forEach(s => { const ni = headerIndex(s.headers, '姓名'), ii = headerIndex(s.headers, '工号'); s.rows.forEach(row => { const name = cellAt(row, ni), id = cellAt(row, ii); if (name.toLowerCase().includes(lower) || idsOverlap(id, ids) || normalizeAttendanceId(id) === normalizeAttendanceId(q)) { addIdVariants(ids, id); if (name) names.add(name); } }); });
@@ -2686,7 +2702,11 @@
         const split = v => normalizeName(v).split(/[;；\n|]+/).map(cleanPersonName).filter(Boolean), names = split(nameValue), accounts = split(accountValue), result = [];
         const count = Math.max(names.length, accounts.length);
         for (let i = 0; i < count; i++) {
-          const name = names[i] || '', embedded = name.match(/([A-Za-z]{0,4}\d{5,})\s*$/i), account = embedded ? embedded[1] : (accounts[i] || '');
+          let name = names[i] || '';
+          const embedded = name.match(/([A-Za-z]{0,4}\d{5,})\s*$/i);
+          let account = embedded ? embedded[1] : (accounts[i] || '');
+          if (isInvalidStaffId(account)) account = '';
+          if (isOrderNumber(name)) name = '';
           if (name || account) result.push({ name, account });
         }
         return result;
@@ -2789,9 +2809,18 @@
       }
       function parsePeopleCell(value) {
         const text = normalizeName(value); if (!text) return []; const people = [], re = /([A-Za-z]{0,4}\d{5,})/g; let match, cursor = 0;
-        while ((match = re.exec(text))) { const baseName = cleanPersonName(text.slice(cursor, match.index)), name = cleanPersonName(`${baseName} ${match[1]}`); people.push({ name, account: match[1] }); cursor = re.lastIndex; }
+        while ((match = re.exec(text))) {
+          const rawAccount = match[1];
+          if (isInvalidStaffId(rawAccount)) {
+            cursor = re.lastIndex;
+            continue;
+          }
+          const baseName = cleanPersonName(text.slice(cursor, match.index)), name = cleanPersonName(`${baseName} ${rawAccount}`);
+          people.push({ name, account: rawAccount });
+          cursor = re.lastIndex;
+        }
         if (people.length) return people;
-        return text.split(/[\n;,，；|]+/).map(cleanPersonName).filter(Boolean).map(name => ({ name, account: '' }));
+        return text.split(/[\n;,，；|]+/).map(cleanPersonName).filter(s => Boolean(s) && !isOrderNumber(s)).map(name => ({ name, account: '' }));
       }
       function cleanPersonName(v) { return normalizeName(v).replace(/^[\s,;，；|/()（）\-]+|[\s,;，；|/()（）\-]+$/g, '').trim(); }
       function parseCreateTime(value, fallbackOrder = 0) {
@@ -2804,7 +2833,15 @@
         const parsed = Date.parse(text); return Number.isFinite(parsed) ? parsed : Number.MIN_SAFE_INTEGER + fallbackOrder;
       }
       function addPerson(map, p) {
-        p.name = cleanPersonName(p.name); p.account = normalizeName(p.account); if (!p.name && !p.account) return;
+        p.name = cleanPersonName(p.name);
+        p.account = normalizeName(p.account);
+        if (isInvalidStaffId(p.account)) {
+          p.account = '';
+        }
+        if (isOrderNumber(p.name)) {
+          p.name = '';
+        }
+        if (!p.name && !p.account) return;
         if (/总计|合计|小计|^total$/i.test(p.name) || /总计|合计|小计|^total$/i.test(p.account)) return;
         if (/^\s*pm\s*$/i.test(p.role || '')) {
           p.bu = 'PMO';
@@ -3541,7 +3578,7 @@
       function showLoading(on, text, percent) { $('#loading').classList.toggle('hidden', !on); if (text) $('#loadingText').textContent = text; if (percent != null) { const p = Math.max(0, Math.min(100, Math.round(percent))); $('#loadingBar').style.width = p + '%'; $('#loadingPercent').textContent = p + '%'; } }
       function nextPaint() { return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); }
       function toast(msg, type = '', duration = 2800) { const host = $('#toasts'); if (!host || typeof host.appendChild !== 'function') return; const t = document.createElement('div'); t.className = 'toast ' + type; t.textContent = msg; host.appendChild(t); setTimeout(() => t.remove?.(), duration); }
-      window.__meetingAttendance = { state, CATEGORIES, DEFAULT_COLUMNS, DEFAULT_CUSTOMER_MAPPINGS, DEFAULT_ATTENDANCE_RULES, PRESET_EXEMPTIONS, activeExemptions, handleDeveloperUnlock, disableDeveloperMode, parseDelimited, normalizeRows, classifySheet, defaultColumnIndices, getDisplayColumns, parsePeopleCell, parseQrPairedPeople, parseCreateTime, parseAttendanceMinute, beijingToCairoAttendance, buildAttendanceIndex, getAttendanceRecord, getExemption, determineAttendance, extractQrPeople, extractRfcPeople, extractWfmPeople, extractAllPeople, mapCustomerGroup, resolveSearchIdentities, searchRequiredRows, searchAttendanceRows, validBusinessTimes, formatDateRange, roleCounts, roleLabel, sheetFingerprint, removeDuplicateSheets, renderAttendanceDashboard, renderCombinedPeopleCard, renderPeopleCard, renderPersonSearchPanel, renderPersonSearchResults, buildAnalysisTables, buildAnalysisWorkbook, buildSnapshotPayload, restoreMeetingSnapshot, openSaveSnapshotModal, closeSaveSnapshotModal, openSnapshotManagerModal, closeSnapshotManagerModal, filterSnapshotCards };
+      window.__meetingAttendance = { state, CATEGORIES, DEFAULT_COLUMNS, DEFAULT_CUSTOMER_MAPPINGS, DEFAULT_ATTENDANCE_RULES, PRESET_EXEMPTIONS, isInvalidStaffId, activeExemptions, handleDeveloperUnlock, disableDeveloperMode, parseDelimited, normalizeRows, classifySheet, defaultColumnIndices, getDisplayColumns, parsePeopleCell, parseQrPairedPeople, parseCreateTime, parseAttendanceMinute, beijingToCairoAttendance, buildAttendanceIndex, getAttendanceRecord, getExemption, determineAttendance, extractQrPeople, extractRfcPeople, extractWfmPeople, extractAllPeople, mapCustomerGroup, resolveSearchIdentities, searchRequiredRows, searchAttendanceRows, validBusinessTimes, formatDateRange, roleCounts, roleLabel, sheetFingerprint, removeDuplicateSheets, renderAttendanceDashboard, renderCombinedPeopleCard, renderPeopleCard, renderPersonSearchPanel, renderPersonSearchResults, buildAnalysisTables, buildAnalysisWorkbook, buildSnapshotPayload, restoreMeetingSnapshot, openSaveSnapshotModal, closeSaveSnapshotModal, openSnapshotManagerModal, closeSnapshotManagerModal, filterSnapshotCards };
       init();
     })();
   </script>

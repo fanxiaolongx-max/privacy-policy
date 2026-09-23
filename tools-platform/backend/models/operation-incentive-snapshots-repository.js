@@ -196,9 +196,34 @@ function areStaffIdsEquivalent(id1, id2) {
     return false;
 }
 
+function isOrderNumber(str) {
+    if (!str) return false;
+    const s = String(str).trim();
+    if (!s) return false;
+    // 单号特征：以 qr/task/wo/req/inc/chg/cr 开头且后面跟纯数字或大部分数字
+    if (/^qr\d+/i.test(s) || /^(task|wo|req|inc|chg|cr)\d+/i.test(s)) return true;
+    // 纯无空格连续单号/工单编码（如 QR20260610000307，长于10位且含6位以上连续数字）
+    if (/^[A-Za-z0-9_-]{11,}$/.test(s) && /\d{6,}/.test(s)) return true;
+    return false;
+}
+
+function isInvalidStaffId(id) {
+    if (!id) return false;
+    const s = String(id).trim();
+    if (!s) return false;
+    // 自动过滤超过10位字符的非工号（如 QR20260610000307 共16位）
+    if (s.length > 10) return true;
+    // 单号/工单号特征过滤（如 QR...、TASK...、WO...）
+    if (isOrderNumber(s)) return true;
+    return false;
+}
+
 function preferCanonicalStaffId(id1, id2, preferredIds = new Set()) {
     const s1 = String(id1 || '').trim();
     const s2 = String(id2 || '').trim();
+    if (isInvalidStaffId(s1) && !isInvalidStaffId(s2)) return s2;
+    if (isInvalidStaffId(s2) && !isInvalidStaffId(s1)) return s1;
+    if (isInvalidStaffId(s1) && isInvalidStaffId(s2)) return '';
     if (!s1) return s2;
     if (!s2) return s1;
     if (s1.toLowerCase() === s2.toLowerCase()) return s1;
@@ -378,6 +403,13 @@ async function extractRoster() {
                         parsedName = extractNameFromFullname(full, parsedId);
                     }
 
+                    if (isInvalidStaffId(parsedId)) {
+                        parsedId = '';
+                    }
+                    if (isOrderNumber(parsedName)) {
+                        parsedName = '';
+                    }
+                    if (!parsedId && !parsedName) continue;
                     if (isTotalRow(parsedId, parsedName) || /总计|合计|小计/i.test(rawId)) continue;
 
                     const bu = String(r.__bu || r.bu || r.BU || r.BU1 || r['部门'] || r.department || '').trim();
@@ -475,6 +507,13 @@ async function extractRoster() {
                         parsedId = m1[2].trim();
                     }
 
+                    if (isInvalidStaffId(parsedId)) {
+                        parsedId = '';
+                    }
+                    if (isOrderNumber(parsedName)) {
+                        parsedName = '';
+                    }
+                    if (!parsedId && !parsedName) continue;
                     if (isTotalRow(parsedId, parsedName) || /总计|合计|小计/i.test(rawPerson)) continue;
 
                     const bu = String(p.bu || '').trim();

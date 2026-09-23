@@ -197,9 +197,34 @@ function areStaffIdsEquivalent(id1, id2) {
     return false;
 }
 
+function isOrderNumber(str) {
+    if (!str) return false;
+    const s = String(str).trim();
+    if (!s) return false;
+    // 单号特征：以 qr/task/wo/req/inc/chg/cr 开头且后面跟纯数字或大部分数字
+    if (/^qr\d+/i.test(s) || /^(task|wo|req|inc|chg|cr)\d+/i.test(s)) return true;
+    // 纯无空格连续单号/工单编码（如 QR20260610000307，长于10位且含6位以上连续数字）
+    if (/^[A-Za-z0-9_-]{11,}$/.test(s) && /\d{6,}/.test(s)) return true;
+    return false;
+}
+
+function isInvalidStaffId(id) {
+    if (!id) return false;
+    const s = String(id).trim();
+    if (!s) return false;
+    // 自动过滤超过10位字符的非工号（如 QR20260610000307 共16位）
+    if (s.length > 10) return true;
+    // 单号/工单号特征过滤（如 QR...、TASK...、WO...）
+    if (isOrderNumber(s)) return true;
+    return false;
+}
+
 function preferCanonicalStaffId(id1, id2, preferredIds = new Set()) {
     const s1 = String(id1 || '').trim();
     const s2 = String(id2 || '').trim();
+    if (isInvalidStaffId(s1) && !isInvalidStaffId(s2)) return s2;
+    if (isInvalidStaffId(s2) && !isInvalidStaffId(s1)) return s1;
+    if (isInvalidStaffId(s1) && isInvalidStaffId(s2)) return '';
     if (!s1) return s2;
     if (!s2) return s1;
     if (s1.toLowerCase() === s2.toLowerCase()) return s1;
@@ -269,8 +294,14 @@ function getSnapshotAttendees(snapshot) {
 
     const add = (p) => {
         if (!p) return;
-        const id = String(p.account || p.staffId || p.id || '').trim();
-        const name = String(p.name || '').trim();
+        let id = String(p.account || p.staffId || p.id || '').trim();
+        let name = String(p.name || '').trim();
+        if (isInvalidStaffId(id)) {
+            id = '';
+        }
+        if (isOrderNumber(name)) {
+            name = '';
+        }
         if (!id && !name) return;
         if (isTotalRow(id, name)) return;
 
@@ -367,13 +398,17 @@ function getSnapshotAttendees(snapshot) {
         while ((match = re.exec(text))) {
             const rawPart = text.slice(cursor, match.index).replace(/[\s,;，；|/()（）\-]+$/g, '').trim();
             const account = match[1];
-            people.push({ name: rawPart || account, account });
+            if (!isInvalidStaffId(account)) {
+                people.push({ name: rawPart || account, account });
+            } else if (rawPart && !isOrderNumber(rawPart)) {
+                people.push({ name: rawPart, account: '' });
+            }
             cursor = re.lastIndex;
         }
         if (people.length) return people;
         return text.split(/[\n;,，；|]+/)
             .map(s => s.replace(/^[\s,;，；|/()（）\-]+|[\s,;，；|/()（）\-]+$/g, '').trim())
-            .filter(Boolean)
+            .filter(name => Boolean(name) && !isOrderNumber(name))
             .map(name => ({ name, account: '' }));
     };
 
@@ -789,8 +824,14 @@ async function extractRoster() {
     for (const snap of snapshots) {
         const attendees = getSnapshotAttendees(snap);
         for (const a of attendees) {
-            const id = String(a.account || a.staffId || a.id || '').trim();
-            const name = String(a.name || '').trim();
+            let id = String(a.account || a.staffId || a.id || '').trim();
+            let name = String(a.name || '').trim();
+            if (isInvalidStaffId(id)) {
+                id = '';
+            }
+            if (isOrderNumber(name)) {
+                name = '';
+            }
             if (!id && !name) continue;
             if (isTotalRow(id, name)) continue;
 

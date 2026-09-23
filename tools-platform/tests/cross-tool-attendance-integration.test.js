@@ -736,5 +736,47 @@ test('Cross-tool attendance check & roster extraction integration test', async (
             await meetingRepo.deleteSnapshot(snapId2);
         }
     });
+
+    await t.test('Automatic filtering of order/ticket numbers and staff IDs exceeding 10 characters (e.g. QR20260610000307)', async () => {
+        const snapIdOrder = `snap_test_order_filtering_${Date.now()}`;
+        const orderSnap = {
+            id: snapIdOrder,
+            title: '单号过滤测试快照',
+            meetingDate: '2026-09-24',
+            summary: {
+                totalAttendees: 3,
+                attendees: [
+                    // 1. Pure order number mistakenly treated as ID and name
+                    { account: 'QR20260610000307', staffId: 'QR20260610000307', name: 'QR20260610000307', role: 'TD', bu: 'NIS', customerGroup: 'ET' },
+                    // 2. Real name but mistakenly attached order number as staffId
+                    { account: 'QR20260610000307', staffId: 'QR20260610000307', name: '诸葛亮', role: 'TD', bu: 'NIS', customerGroup: 'ET' },
+                    // 3. Normal 10-char legitimate staff ID (e.g. mWX1350434)
+                    { account: 'mWX1350434', staffId: 'mWX1350434', name: '周瑜', role: 'FME', bu: 'Wireless', customerGroup: 'Orange' }
+                ],
+                anomalies: []
+            },
+            payload: { sheets: [] }
+        };
+
+        await meetingRepo.saveSnapshot(orderSnap);
+        try {
+            const roster = await meetingRepo.extractRoster();
+            // 1. Pure QR20260610000307 row must be filtered out completely
+            const qrEntry = roster.find(r => r.staffId === 'QR20260610000307' || r.name === 'QR20260610000307');
+            assert.equal(qrEntry, undefined, 'Pure ticket numbers like QR20260610000307 must be completely filtered out');
+
+            // 2. 诸葛亮 should be kept, but invalid QR... staffId stripped
+            const zhuge = roster.find(r => r.name === '诸葛亮');
+            assert.ok(zhuge, 'Person with valid name must be retained');
+            assert.equal(zhuge.staffId, '', 'Invalid ticket staffId exceeding 10 characters must be stripped');
+
+            // 3. 周瑜 with mWX1350434 (exactly 10 chars) must NOT be filtered
+            const zhou = roster.find(r => r.name === '周瑜');
+            assert.ok(zhou, 'Person with valid 10-char staff ID must be retained');
+            assert.equal(zhou.staffId, 'mWX1350434', 'Legitimate 10-char staff ID must be preserved');
+        } finally {
+            await meetingRepo.deleteSnapshot(snapIdOrder);
+        }
+    });
 });
 
