@@ -232,9 +232,9 @@ function preferCanonicalStaffId(id1, id2, preferredIds = new Set()) {
     if (preferredIds.has(s1) && !preferredIds.has(s2)) return s1;
     if (preferredIds.has(s2) && !preferredIds.has(s1)) return s2;
 
-    // 2. Prefer non-m prefix (e.g. WX1350434 over mWX1350434)
-    const isM1 = /^m[a-z]/i.test(s1);
-    const isM2 = /^m[a-z]/i.test(s2);
+    // 2. Prefer non-m prefix (e.g. WX1350434 over mWX1350434, 00665597 over m00665597)
+    const isM1 = /^m/i.test(s1) && (s2.toLowerCase() === s1.slice(1).toLowerCase() || areStaffIdsEquivalent(s1, s2));
+    const isM2 = /^m/i.test(s2) && (s1.toLowerCase() === s2.slice(1).toLowerCase() || areStaffIdsEquivalent(s1, s2));
     if (isM1 && !isM2) return s2;
     if (isM2 && !isM1) return s1;
 
@@ -349,16 +349,19 @@ function cleanNameAndStaffId(rawName, existingStaffId = '') {
     let name = String(rawName || '').trim();
     let staffId = String(existingStaffId || '').trim();
 
-    if (isInvalidStaffId(staffId)) staffId = '';
-
     if (!name) {
         if (staffId && !isStaffIdToken(staffId)) {
             return cleanNameAndStaffId(staffId, '');
         }
+        if (isInvalidStaffId(staffId)) staffId = '';
         return { name: '', staffId };
     }
+    if (isInvalidStaffId(staffId)) staffId = '';
 
     if (isStaffIdToken(name)) {
+        if (staffId && !isStaffIdToken(staffId)) {
+            return cleanNameAndStaffId(staffId, name);
+        }
         staffId = preferCanonicalStaffId ? preferCanonicalStaffId(staffId, name) : (staffId || name);
         return { name: '', staffId };
     }
@@ -987,5 +990,8 @@ module.exports = {
     saveSnapshot,
     renameSnapshot,
     deleteSnapshot,
-    extractRoster
+    extractRoster,
+    preferCanonicalStaffId,
+    cleanNameAndStaffId,
+    areStaffIdsEquivalent
 };

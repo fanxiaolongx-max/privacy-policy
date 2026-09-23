@@ -1112,6 +1112,108 @@ test('Cross-tool attendance check & roster extraction integration test', async (
             await meetingRepo.deleteSnapshot(testSnapId);
         }
     });
+
+    await t.test('QR table multi-person semicolon cells extract real names by stripping m prefix (e.g. m00665597 -> Mostafa Orabi, mWX1459632 -> Ahmed Hassan)', async () => {
+        const testSnapId = `snap_qr_nameless_m_strip_${Date.now()}`;
+        const meetingSnap = {
+            id: testSnapId,
+            title: '2026-09 会议考勤快照-QR多人员分号去m姓名提取测试',
+            meetingDate: '2026-09-23',
+            summary: {
+                totalAttendees: 2,
+                attendees: [
+                    {
+                        account: 'm00665597',
+                        staffId: 'm00665597',
+                        name: '', // 没有真实姓名
+                        bu: 'NIS',
+                        customerGroup: 'Orange',
+                        role: '',
+                        attendance: 'Absent'
+                    },
+                    {
+                        account: 'mWX1459632',
+                        staffId: 'mWX1459632',
+                        name: 'mWX1459632', // 姓名为工号自身占位
+                        bu: 'NIS',
+                        customerGroup: 'ORG',
+                        role: '',
+                        attendance: 'Attend on Time'
+                    }
+                ],
+                anomalies: [
+                    {
+                        account: 'm00665597',
+                        staffId: 'm00665597',
+                        name: '',
+                        type: 'absent',
+                        attendance: 'Absent'
+                    }
+                ]
+            },
+            payload: {
+                sheets: [
+                    {
+                        sheetName: 'QR 相关记录',
+                        category: 'qr',
+                        headers: ['#', '来源文件', 'Sheet', '匹配角色', 'Task ID', 'Apply Accountid', 'Apply Fullname', 'Td', 'Td Fullname', 'Customer Group', 'BU'],
+                        rows: [
+                            // 行1: Td Fullname 包含分号隔开的多人员："Mahmoud Elnaggar 00909378;Mostafa Orabi 00665597"
+                            ['1', 'QR_20260923.xlsx', 'QR', 'TD', 'TASK-201', 'a00112233', 'Applicant', '00909378;00665597', 'Mahmoud Elnaggar 00909378;Mostafa Orabi 00665597', 'Orange', 'NIS'],
+                            // 行2: Td Fullname 包含 "Amr Khaled 00888888;Ahmed Hassan WX1459632"
+                            ['2', 'QR_20260923.xlsx', 'QR', 'TD', 'TASK-202', 'a00112233', 'Applicant', '00888888;WX1459632', 'Amr Khaled 00888888;Ahmed Hassan WX1459632', 'ORG', 'NIS']
+                        ]
+                    }
+                ]
+            }
+        };
+
+        await meetingRepo.saveSnapshot(meetingSnap);
+
+        try {
+            const roster = await meetingRepo.extractRoster();
+
+            // 1. 验证 m00665597 成功提取出真实姓名 Mostafa Orabi，且工号规范化为 00665597
+            const orabi = roster.find(r => r.staffId === '00665597' || r.account === '00665597' || r.staffId === 'm00665597');
+            assert.ok(orabi, '00665597 must be found in roster');
+            assert.equal(orabi.name, 'Mostafa Orabi', 'Must extract real name Mostafa Orabi from multi-person semicolon Td Fullname cell');
+            assert.equal(orabi.staffId, '00665597', 'Staff ID must prefer non-m prefix 00665597');
+            assert.ok(orabi.roles.includes('TD'), 'Role must be enriched as TD');
+            assert.ok(orabi.sourceTraces.some(t => t.sheetName === 'QR 相关记录' && t.field.includes('TD')), 'Source traces must record QR TD trace');
+
+            // 2. 验证 mWX1459632 成功提取出真实姓名 Ahmed Hassan，且工号规范化为 WX1459632
+            const hassan = roster.find(r => r.staffId === 'WX1459632' || r.account === 'WX1459632' || r.staffId === 'mWX1459632');
+            assert.ok(hassan, 'WX1459632 must be found in roster');
+            assert.equal(hassan.name, 'Ahmed Hassan', 'Must extract real name Ahmed Hassan for mWX1459632');
+            assert.equal(hassan.staffId, 'WX1459632', 'Staff ID must prefer non-m prefix WX1459632');
+            assert.ok(hassan.roles.includes('TD'), 'Role must be enriched as TD');
+
+            // 3. 验证 checkPersonAttendance 通过姓名或工号均可精准核验
+            const checkByName = await meetingRepo.checkPersonAttendance({ name: 'Mostafa Orabi' });
+            assert.equal(checkByName.found, true);
+            assert.equal(checkByName.hasAnomaly, true);
+            assert.equal(checkByName.records[0].name, 'Mostafa Orabi');
+
+            const checkByMId = await meetingRepo.checkPersonAttendance({ staffId: 'm00665597' });
+            assert.equal(checkByMId.found, true);
+            assert.equal(checkByMId.records[0].name, 'Mostafa Orabi');
+
+            const checkByNonMId = await meetingRepo.checkPersonAttendance({ staffId: '00665597' });
+            assert.equal(checkByNonMId.found, true);
+            assert.equal(checkByNonMId.records[0].name, 'Mostafa Orabi');
+
+            // 4. 验证 preferCanonicalStaffId 算法在各种带 m 前缀场景下的一致性
+            assert.equal(meetingRepo.preferCanonicalStaffId('m00665597', '00665597'), '00665597');
+            assert.equal(meetingRepo.preferCanonicalStaffId('00665597', 'm00665597'), '00665597');
+            assert.equal(meetingRepo.preferCanonicalStaffId('mWX1459632', 'WX1459632'), 'WX1459632');
+            assert.equal(meetingRepo.preferCanonicalStaffId('WX1459632', 'mWX1459632'), 'WX1459632');
+            assert.equal(incentiveRepo.preferCanonicalStaffId('m00665597', '00665597'), '00665597');
+            assert.equal(incentiveRepo.preferCanonicalStaffId('mWX1459632', 'WX1459632'), 'WX1459632');
+        } finally {
+            await meetingRepo.deleteSnapshot(testSnapId);
+        }
+    });
 });
+
 
 

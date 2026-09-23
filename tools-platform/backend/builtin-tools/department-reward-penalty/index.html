@@ -4156,8 +4156,8 @@ async function openSnapshotRosterDialog() {
       if (existingRosterIds.has(s1) && !existingRosterIds.has(s2)) return s1;
       if (existingRosterIds.has(s2) && !existingRosterIds.has(s1)) return s2;
 
-      const isM1 = /^m[a-z]/i.test(s1);
-      const isM2 = /^m[a-z]/i.test(s2);
+      const isM1 = /^m/i.test(s1) && (s2.toLowerCase() === s1.slice(1).toLowerCase() || areStaffIdsEquivalent(s1, s2));
+      const isM2 = /^m/i.test(s2) && (s1.toLowerCase() === s2.slice(1).toLowerCase() || areStaffIdsEquivalent(s1, s2));
       if (isM1 && !isM2) return s2;
       if (isM2 && !isM1) return s1;
 
@@ -4182,15 +4182,19 @@ async function openSnapshotRosterDialog() {
       let name = String(rawName || '').trim();
       let staffId = String(existingStaffId || '').trim();
 
-      if (isInvalidStaffId(staffId)) staffId = '';
       if (!name) {
         if (staffId && !isStaffIdToken(staffId)) {
           return cleanNameAndStaffId(staffId, '');
         }
+        if (isInvalidStaffId(staffId)) staffId = '';
         return { name: '', staffId };
       }
+      if (isInvalidStaffId(staffId)) staffId = '';
 
       if (isStaffIdToken(name)) {
+        if (staffId && !isStaffIdToken(staffId)) {
+          return cleanNameAndStaffId(staffId, name);
+        }
         staffId = preferCanonicalStaffId(staffId, name);
         return { name: '', staffId };
       }

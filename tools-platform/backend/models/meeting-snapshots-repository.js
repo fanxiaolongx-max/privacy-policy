@@ -233,9 +233,9 @@ function preferCanonicalStaffId(id1, id2, preferredIds = new Set()) {
     if (preferredIds.has(s1) && !preferredIds.has(s2)) return s1;
     if (preferredIds.has(s2) && !preferredIds.has(s1)) return s2;
 
-    // 2. Prefer non-m prefix (e.g. WX1350434 over mWX1350434)
-    const isM1 = /^m[a-z]/i.test(s1);
-    const isM2 = /^m[a-z]/i.test(s2);
+    // 2. Prefer non-m prefix (e.g. WX1350434 over mWX1350434, 00665597 over m00665597)
+    const isM1 = /^m/i.test(s1) && (s2.toLowerCase() === s1.slice(1).toLowerCase() || areStaffIdsEquivalent(s1, s2));
+    const isM2 = /^m/i.test(s2) && (s1.toLowerCase() === s2.slice(1).toLowerCase() || areStaffIdsEquivalent(s1, s2));
     if (isM1 && !isM2) return s2;
     if (isM2 && !isM1) return s1;
 
@@ -304,15 +304,19 @@ function cleanNameAndStaffId(rawName, existingStaffId = '') {
     let name = String(rawName || '').trim();
     let staffId = String(existingStaffId || '').trim();
 
-    if (isInvalidStaffId(staffId)) staffId = '';
     if (!name) {
         if (staffId && !isStaffIdToken(staffId)) {
             return cleanNameAndStaffId(staffId, '');
         }
+        if (isInvalidStaffId(staffId)) staffId = '';
         return { name: '', staffId };
     }
+    if (isInvalidStaffId(staffId)) staffId = '';
 
     if (isStaffIdToken(name)) {
+        if (staffId && !isStaffIdToken(staffId)) {
+            return cleanNameAndStaffId(staffId, name);
+        }
         staffId = preferCanonicalStaffId(staffId, name);
         return { name: '', staffId };
     }
@@ -648,17 +652,135 @@ function getSnapshotAttendees(snapshot) {
     const parseQrPairedPeople = (nameValue, accountValue) => {
         const splitNames = String(nameValue || '').split(/[;；\n|]+/).map(s => s.trim()).filter(Boolean);
         const splitAccounts = String(accountValue || '').split(/[;；\n|]+/).map(s => s.trim()).filter(Boolean);
-        const count = Math.max(splitNames.length, splitAccounts.length);
+
+        if (splitNames.length === splitAccounts.length) {
+            const result = [];
+            for (let i = 0; i < splitNames.length; i++) {
+                const cleaned = cleanNameAndStaffId(splitNames[i], splitAccounts[i]);
+                if (cleaned.name || cleaned.staffId) {
+                    result.push({ name: cleaned.name || cleaned.staffId, account: cleaned.staffId || '' });
+                }
+            }
+            return result;
+        }
+
         const result = [];
-        for (let i = 0; i < count; i++) {
-            let name = splitNames[i] || '';
-            let account = splitAccounts[i] || '';
-            const cleaned = cleanNameAndStaffId(name, account);
+        const usedAccounts = new Set();
+        for (const rawN of splitNames) {
+            let matchedAcc = '';
+            for (const rawA of splitAccounts) {
+                if (!rawA) continue;
+                const strippedA = rawA.replace(/^m/i, '');
+                const esc = strippedA.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                if (new RegExp(`(^|[^a-zA-Z0-9])${esc}($|[^a-zA-Z0-9])`, 'i').test(rawN)) {
+                    matchedAcc = rawA;
+                    usedAccounts.add(rawA);
+                    break;
+                }
+            }
+            const cleaned = cleanNameAndStaffId(rawN, matchedAcc);
             if (cleaned.name || cleaned.staffId) {
                 result.push({ name: cleaned.name || cleaned.staffId, account: cleaned.staffId || '' });
             }
         }
+
+        for (const rawA of splitAccounts) {
+            if (usedAccounts.has(rawA)) continue;
+            const cleaned = cleanNameAndStaffId('', rawA);
+            if (cleaned.name || cleaned.staffId) {
+                if (!result.some(r => r.account && areStaffIdsEquivalent(r.account, cleaned.staffId))) {
+                    result.push({ name: cleaned.name || cleaned.staffId, account: cleaned.staffId || '' });
+                }
+            }
+        }
         return result;
+    };
+
+    // Helper to extract a person's name and canonical ID from QR cells given candidate search keys (e.g. without 'm')
+    const extractNameForStaffIdFromCells = (nameCell, idCell, searchKeys) => {
+        const sName = String(nameCell || '').trim();
+        const sId = String(idCell || '').trim();
+        if (!sName && !sId) return null;
+
+        const matchesTarget = (text) => {
+            for (const key of searchKeys) {
+                if (!key) continue;
+                const esc = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const re = new RegExp(`(^|[^a-zA-Z0-9])${esc}($|[^a-zA-Z0-9])`, 'i');
+                if (re.test(text)) return key;
+            }
+            return null;
+        };
+
+        const nameSegments = sName ? sName.split(/[;；\n|]+/).map(s => s.trim()).filter(Boolean) : [];
+        const idSegments = sId ? sId.split(/[;；\n|]+/).map(s => s.trim()).filter(Boolean) : [];
+
+        // Check nameSegments first (e.g. "Mahmoud Elnaggar 00909378;Mostafa Orabi 00665597")
+        for (let i = 0; i < nameSegments.length; i++) {
+            const seg = nameSegments[i];
+            const matchedKey = matchesTarget(seg);
+            if (matchedKey) {
+                const cleaned = cleanNameAndStaffId(seg, matchedKey);
+                if (cleaned.name && !isStaffIdToken(cleaned.name)) {
+                    return {
+                        name: cleaned.name,
+                        canonicalId: preferCanonicalStaffId(cleaned.staffId || matchedKey, matchedKey)
+                    };
+                }
+            }
+        }
+
+        // Check idSegments and parallel nameSegments
+        for (let i = 0; i < idSegments.length; i++) {
+            const seg = idSegments[i];
+            const matchedKey = matchesTarget(seg);
+            if (matchedKey) {
+                const cleanedSelf = cleanNameAndStaffId(seg, matchedKey);
+                if (cleanedSelf.name && !isStaffIdToken(cleanedSelf.name)) {
+                    return {
+                        name: cleanedSelf.name,
+                        canonicalId: preferCanonicalStaffId(cleanedSelf.staffId || matchedKey, matchedKey)
+                    };
+                }
+                if (i < nameSegments.length) {
+                    const cleanedParallel = cleanNameAndStaffId(nameSegments[i], matchedKey);
+                    if (cleanedParallel.name && !isStaffIdToken(cleanedParallel.name)) {
+                        return {
+                            name: cleanedParallel.name,
+                            canonicalId: preferCanonicalStaffId(cleanedParallel.staffId || matchedKey, matchedKey)
+                        };
+                    }
+                }
+            }
+        }
+
+        // If nameSegments has 1 item and idCell matches
+        if (nameSegments.length === 1 && matchesTarget(sId)) {
+            const cleaned = cleanNameAndStaffId(nameSegments[0], sId);
+            if (cleaned.name && !isStaffIdToken(cleaned.name)) {
+                return {
+                    name: cleaned.name,
+                    canonicalId: preferCanonicalStaffId(cleaned.staffId, searchKeys[0])
+                };
+            }
+        }
+
+        // Fallback: check all segments
+        const allSegments = [...nameSegments, ...idSegments];
+        for (const seg of allSegments) {
+            const matchedKey = matchesTarget(seg);
+            if (matchedKey) {
+                const cleaned = cleanNameAndStaffId(seg, matchedKey);
+                if (cleaned.name && !isStaffIdToken(cleaned.name)) {
+                    return {
+                        name: cleaned.name,
+                        canonicalId: preferCanonicalStaffId(cleaned.staffId || matchedKey, matchedKey)
+                    };
+                }
+            }
+        }
+
+        return null;
     };
 
     // Helper to parse role-paired cell or free-text names/accounts
@@ -746,10 +868,10 @@ function getSnapshotAttendees(snapshot) {
                 const explicitRole = roleIdx >= 0 ? String(row[roleIdx] || '').trim() : '';
 
                 if (isQr) {
-                    const applyNameIdx = headers.findIndex(h => /apply fullname|apply name/i.test(h));
-                    const applyIdIdx = headers.findIndex(h => /apply accountid|apply account/i.test(h));
-                    const tdNameIdx = headers.findIndex(h => /td fullname|td name/i.test(h));
-                    const tdIdIdx = headers.findIndex(h => /^td$/i.test(h));
+                    const applyNameIdx = headers.findIndex(h => /apply\s*(full)?\s*name/i.test(h));
+                    const applyIdIdx = headers.findIndex(h => /apply\s*(account|id|accountid|工号)/i.test(h));
+                    const tdNameIdx = headers.findIndex(h => /td\s*(full)?\s*name/i.test(h));
+                    const tdIdIdx = headers.findIndex(h => /^(td|td\s*(account|id|accountid|工号)|td\s*[(（].*?[)）])$/i.test(h));
 
                     if (tdNameIdx >= 0 || tdIdIdx >= 0) {
                         const rawName = tdNameIdx >= 0 ? row[tdNameIdx] : '';
@@ -877,6 +999,100 @@ function getSnapshotAttendees(snapshot) {
     if (Array.isArray(snapshot.payload?.attendees) && snapshot.payload.attendees.length) {
         snapshot.payload.attendees.forEach(p => addOrEnrich(p));
     }
+
+    // 专门针对“有工号、没真实姓名”的人员，主动扫描 QR 表（尤其是 Td、Td Fullname 以及 Apply 相关列）
+    // 规则：工号去掉首字母 m（如 mWX1459632 -> WX1459632，m00665597 -> 00665597）在单元格中精准反查真实姓名
+    const namelessAttendees = attendees.filter(a => {
+        const id = a.account || a.staffId || a.id;
+        if (!id) return false;
+        const name = a.name;
+        return !name || isStaffIdToken(name) || name === id || name === '—' || name === '-';
+    });
+
+    if (namelessAttendees.length > 0 && snapshot.payload && Array.isArray(snapshot.payload.sheets)) {
+        const sortedSheets = [...snapshot.payload.sheets].sort((s1, s2) => {
+            const isQr1 = s1.category === 'qr' || /qr.*记录|qr.*明细|\bqr\b/i.test(s1.sheetName || s1.name || s1.title || '');
+            const isQr2 = s2.category === 'qr' || /qr.*记录|qr.*明细|\bqr\b/i.test(s2.sheetName || s2.name || s2.title || '');
+            if (isQr1 && !isQr2) return -1;
+            if (!isQr1 && isQr2) return 1;
+            return 0;
+        });
+
+        for (const a of namelessAttendees) {
+            const rawId = String(a.account || a.staffId || a.id || '').trim();
+            if (!rawId) continue;
+            const strippedM = rawId.replace(/^m/i, '');
+            const withM = /^m/i.test(rawId) ? rawId : ('m' + rawId);
+            const digits = getDigits(rawId);
+            const searchKeys = [...new Set([strippedM, rawId, withM, digits].filter(k => k && k.length >= 4))];
+
+            let resolved = false;
+            for (const sheet of sortedSheets) {
+                if (!sheet || !Array.isArray(sheet.headers) || !Array.isArray(sheet.rows)) continue;
+                const sheetName = String(sheet.sheetName || sheet.name || sheet.title || '');
+                if (/三类合并人员备用名单|Combined.*People List/i.test(sheetName)) continue;
+
+                const headers = sheet.headers.map(h => String(h || '').trim());
+                const tdNameIdx = headers.findIndex(h => /td\s*(full)?\s*name/i.test(h));
+                const tdIdIdx = headers.findIndex(h => /^(td|td\s*(account|id|accountid|工号)|td\s*[(（].*?[)）])$/i.test(h));
+                const applyNameIdx = headers.findIndex(h => /apply\s*(full)?\s*name/i.test(h));
+                const applyIdIdx = headers.findIndex(h => /apply\s*(account|id|accountid|工号)/i.test(h));
+
+                for (let rIdx = 0; rIdx < sheet.rows.length; rIdx++) {
+                    const row = sheet.rows[rIdx];
+                    if (!row) continue;
+
+                    // 1. Check TD columns
+                    const tdNameCell = tdNameIdx >= 0 ? row[tdNameIdx] : '';
+                    const tdIdCell = tdIdIdx >= 0 ? row[tdIdIdx] : '';
+                    let found = extractNameForStaffIdFromCells(tdNameCell, tdIdCell, searchKeys);
+                    let field = 'TD (Td/Td Fullname 姓名反查)';
+
+                    // 2. Check Apply columns
+                    if (!found) {
+                        const applyNameCell = applyNameIdx >= 0 ? row[applyNameIdx] : '';
+                        const applyIdCell = applyIdIdx >= 0 ? row[applyIdIdx] : '';
+                        found = extractNameForStaffIdFromCells(applyNameCell, applyIdCell, searchKeys);
+                        field = '申请人 (Apply 姓名反查)';
+                    }
+
+                    if (found && found.name) {
+                        a.name = preferCanonicalName(a.name, found.name);
+                        if (found.canonicalId) {
+                            const bestId = preferCanonicalStaffId(a.staffId, found.canonicalId);
+                            a.staffId = bestId;
+                            a.account = bestId;
+                            a.id = bestId;
+                        }
+                        const norm = normName(a.name);
+                        if (norm) attByName.set(norm, a);
+                        attByName.set(a.name.toLowerCase(), a);
+                        const sid = a.staffId.toLowerCase();
+                        attById.set(sid, a);
+                        if (sid.startsWith('m')) attById.set(sid.slice(1), a);
+                        else attById.set('m' + sid, a);
+                        const num = getDigits(sid);
+                        if (num) attById.set('digits:' + num, a);
+
+                        if (!Array.isArray(a.sourceTraces)) a.sourceTraces = [];
+                        a.sourceTraces.push({
+                            source: 'meeting',
+                            sourceName: '会议考勤快照',
+                            snapshotTitle: snapshot.title || '会议考勤快照',
+                            sheetName: sheet.sheetName || 'QR 相关记录',
+                            rowNumber: rIdx + 1,
+                            field,
+                            raw: `${found.name} ${found.canonicalId || searchKeys[0]}`.trim()
+                        });
+                        resolved = true;
+                        break;
+                    }
+                }
+                if (resolved) break;
+            }
+        }
+    }
+
     return attendees;
 }
 
@@ -1413,5 +1629,8 @@ module.exports = {
     deleteSnapshot,
     checkPersonAttendance,
     batchCheckAttendance,
-    extractRoster
+    extractRoster,
+    preferCanonicalStaffId,
+    cleanNameAndStaffId,
+    areStaffIdsEquivalent
 };
