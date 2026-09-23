@@ -301,13 +301,24 @@ async function listSessions({ pagePath, limit = 20 } = {}) {
     }));
 }
 
-async function listArchivedSessions({ query = '', limit = 60, offset = 0 } = {}) {
+async function listArchivedSessions({ query = '', limit = 60, offset = 0, archivedOnly = false, status = 'all' } = {}) {
     await ensureReady();
     await autoArchiveSessions();
     const safeLimit = Math.max(1, Math.min(Number(limit) || 60, 200));
     const safeOffset = Math.max(0, Number(offset) || 0);
     const cleanQuery = String(query || '').trim().slice(0, 120);
     const pattern = `%${cleanQuery}%`;
+
+    const isArchivedOnly = archivedOnly === true || archivedOnly === 'true' || archivedOnly === '1' || status === 'archived';
+    const isActiveOnly = status === 'active';
+
+    let statusSql = '';
+    if (isArchivedOnly) {
+        statusSql = 'AND s.is_archived = 1';
+    } else if (isActiveOnly) {
+        statusSql = 'AND s.is_archived = 0';
+    }
+
     const filterSql = cleanQuery
         ? `AND (s.page_title LIKE ? OR s.page_path LIKE ? OR EXISTS (
               SELECT 1 FROM ai_chat_messages sm
@@ -316,11 +327,15 @@ async function listArchivedSessions({ query = '', limit = 60, offset = 0 } = {})
         : '';
     const params = cleanQuery ? [pattern, pattern, pattern] : [];
     const totalRow = await get(
-        `SELECT COUNT(1) AS count FROM ai_chat_sessions s WHERE s.is_archived = 1 ${filterSql}`,
+        `SELECT COUNT(1) AS count
+         FROM ai_chat_sessions s
+         WHERE EXISTS (SELECT 1 FROM ai_chat_messages m WHERE m.session_id = s.id)
+           ${statusSql}
+           ${filterSql}`,
         params
     );
     const rows = await all(
-        `SELECT s.id, s.page_path, s.page_title, s.created_at, s.updated_at, s.archived_at,
+        `SELECT s.id, s.page_path, s.page_title, s.is_archived, s.created_at, s.updated_at, s.archived_at,
                 COUNT(m.id) AS message_count,
                 (
                     SELECT content FROM ai_chat_messages um
@@ -328,16 +343,20 @@ async function listArchivedSessions({ query = '', limit = 60, offset = 0 } = {})
                     ORDER BY um.created_at DESC, um.rowid DESC LIMIT 1
                 ) AS last_question
          FROM ai_chat_sessions s
-         LEFT JOIN ai_chat_messages m ON m.session_id = s.id
-         WHERE s.is_archived = 1 ${filterSql}
+         JOIN ai_chat_messages m ON m.session_id = s.id
+         WHERE 1=1 ${statusSql} ${filterSql}
          GROUP BY s.id
-         ORDER BY s.archived_at DESC, s.updated_at DESC, s.rowid DESC
+         ORDER BY s.updated_at DESC, s.rowid DESC
          LIMIT ? OFFSET ?`,
         [...params, safeLimit, safeOffset]
     );
     return {
         total: Number(totalRow?.count) || 0,
-        items: rows.map(row => ({ ...row, last_question: String(row.last_question || '').slice(0, 160) }))
+        items: rows.map(row => ({
+            ...row,
+            is_archived: Number(row.is_archived) || 0,
+            last_question: String(row.last_question || '').slice(0, 160)
+        }))
     };
 }
 

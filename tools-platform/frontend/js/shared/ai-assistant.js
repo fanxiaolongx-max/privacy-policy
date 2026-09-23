@@ -744,8 +744,12 @@
         .ai-archive-list { overflow:auto; padding:12px; border-right:1px solid #e3e8f1; background:#f2f5fa; }
         .ai-archive-item { width:100%; margin-bottom:9px; padding:12px; border:1px solid #dce2ed; border-radius:12px; background:#fff; color:#334155; text-align:left; cursor:pointer; }
         .ai-archive-item:hover,.ai-archive-item.active { border-color:#9caaee; background:#f4f6ff; }
-        .ai-archive-item-title { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; font-weight:700; }
-        .ai-archive-item-question { margin-top:6px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#64748b; font-size:11px; }
+        .ai-archive-item-header { display:flex; align-items:center; justify-content:space-between; gap:6px; margin-bottom:4px; }
+        .ai-archive-item-title { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; font-weight:700; }
+        .ai-archive-badge { display:inline-block; padding:1px 6px; border-radius:4px; font-size:10px; font-weight:600; line-height:1.4; white-space:nowrap; }
+        .ai-archive-badge.active { background:#e0f2fe; color:#0284c7; }
+        .ai-archive-badge.archived { background:#f1f5f9; color:#64748b; }
+        .ai-archive-item-question { margin-top:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#64748b; font-size:11px; }
         .ai-archive-item-meta { margin-top:7px; color:#94a3b8; font-size:9px; }
         .ai-archive-preview { min-width:0; overflow:auto; padding:22px; background:#f8fafd; }
         .ai-archive-preview-head { display:flex; align-items:flex-start; gap:12px; margin-bottom:18px; }
@@ -770,6 +774,8 @@
         .ai-archive-overlay[data-theme="graph"] .ai-archive-list { background:#0a101b; border-color:rgba(132,147,194,.17); }
         .ai-archive-overlay[data-theme="graph"] .ai-archive-item { background:#151e31; color:#dfe5f2; border-color:rgba(132,147,194,.18); }
         .ai-archive-overlay[data-theme="graph"] .ai-archive-item:hover,.ai-archive-overlay[data-theme="graph"] .ai-archive-item.active { background:#1b2740; border-color:rgba(130,148,232,.5); }
+        .ai-archive-overlay[data-theme="graph"] .ai-archive-badge.active { background:#0c4a6e; color:#38bdf8; }
+        .ai-archive-overlay[data-theme="graph"] .ai-archive-badge.archived { background:#1e293b; color:#94a3b8; }
         .ai-archive-overlay[data-theme="graph"] .ai-archive-item-question { color:#94a3b8; }
         .ai-archive-overlay[data-theme="graph"] .ai-archive-preview { background:#0d1422; }
         .ai-archive-overlay[data-theme="graph"] .ai-archive-preview-title { color:#edf1fb; }
@@ -860,17 +866,18 @@
 
     const AI_TEXT = {
         zh: {
-            open: '打开智能客服助手', title: '智能客服助手', titleCompact: '智能客服', subtitle: '项目知识 · 数据分析 · 运营建议', subtitleCompact: '知识 · 数据 · 运营',
+            open: '打开Dragon Claw智能体', title: 'Dragon Claw智能体', titleCompact: 'Dragon Claw', subtitle: '项目知识 · 数据分析 · 运营建议', subtitleCompact: '知识 · 数据 · 运营',
             alertKicker: '主动 KPI 提醒', alertTaskKicker: '近 7 天临期任务', alertHint: '点击打开助手继续追问', alertClose: '关闭提醒', alertAi: 'AI 深度分析', alertAiCaption: '深度分析结果', alertSnoozeToday: '今天不再提醒', alertCopy: '复制', alertCopied: '已复制',
             graph: '知识与指标图谱', history: '历史问答', archive: '查看归档会话', graphTheme: '切换图谱深色主题', lightTheme: '切换明亮主题', expand: '放大窗口', restore: '恢复默认大小',
             fullscreen: '全屏聊天', exitFullscreen: '退出全屏', close: '关闭', send: '发送消息', stop: '停止生成',
-            welcome: '👋 你好！我是您的专属智能助手，正在为您加载页面上下文...', thinking: 'AI 正在思考...',
-            placeholder: '向 AI 提问有关本页面的内容...', graphLoadFailed: '知识图谱组件加载失败',
+            welcome: '👋 你好！我是您的专属智能体 Dragon Claw，正在为您加载页面上下文...', thinking: 'Dragon Claw 正在思考...',
+            placeholder: '向 Dragon Claw 提问有关本页面的内容...', graphLoadFailed: '知识图谱组件加载失败',
             historyLoading: '正在加载历史问答...', historyEmpty: '暂无历史问答', unnamed: '未命名对话',
             messages: '条', historyFailed: '历史问答加载失败：', historyRestoreFailed: '历史问答恢复失败：',
             archiveTitle: '归档会话', archiveSubtitle: '跨页面查看、搜索和恢复历史对话', archiveSearch: '搜索页面、路径或对话内容…',
             archiveSelect: '选择左侧会话查看完整记录', archiveLoading: '正在加载归档会话…', archiveEmpty: '暂无归档会话',
-            archiveCount: n => `共 ${n} 个归档`, archiveFailed: '归档会话加载失败：', restoreArchive: '恢复并继续对话', restoringArchive: '正在恢复…',
+            archiveCount: n => `共 ${n} 个历史会话`, archiveFailed: '归档会话加载失败：', restoreArchive: '恢复并继续对话', restoringArchive: '正在恢复…',
+            statusActive: '活跃', statusArchived: '已归档', enterChat: '进入此对话',
             initPrompt: '你好，请用简短的话总结一下这个页面的核心功能以及如何使用它。',
             connectFailed: '连接 AI 服务失败：', error: '错误：', answerBasis: '本次回答依据',
             openGraph: '打开知识关系图谱', cache: '项目知识', hitChunks: n => `引用 ${n} 个相关片段`, cacheMiss: '未找到足够相关的项目片段', knowledgeNotNeeded: '本题未使用项目文档', knowledgeLibrary: '知识库', candidates: '候选',
@@ -879,17 +886,18 @@
             current: '本次', total: '累计', approxCost: n => `(约${n}毛)`, totalCost: n => `(总计${n}毛)`
         },
         en: {
-            open: 'Open AI Support Assistant', title: 'AI Support Assistant', titleCompact: 'AI Support', subtitle: 'Project knowledge · Data analysis · Operations', subtitleCompact: 'Knowledge · Data · Ops',
+            open: 'Open Dragon Claw Agent', title: 'Dragon Claw Agent', titleCompact: 'Dragon Claw', subtitle: 'Project knowledge · Data analysis · Operations', subtitleCompact: 'Knowledge · Data · Ops',
             alertKicker: 'Proactive KPI alert', alertTaskKicker: 'Tasks due in 7 days', alertHint: 'Click to open the assistant and follow up', alertClose: 'Dismiss alert', alertAi: 'AI Deep Analysis', alertAiCaption: 'Deep Analysis', alertSnoozeToday: 'Mute today', alertCopy: 'Copy', alertCopied: 'Copied',
             graph: 'Knowledge & Metrics Graph', history: 'Chat history', archive: 'View archived chats', graphTheme: 'Switch to graph dark theme', lightTheme: 'Switch to light theme', expand: 'Expand window', restore: 'Restore default size',
             fullscreen: 'Full-screen chat', exitFullscreen: 'Exit full screen', close: 'Close', send: 'Send message', stop: 'Stop generating',
-            welcome: '👋 Hi! I’m your AI assistant. Loading the current page context…', thinking: 'AI is thinking…',
-            placeholder: 'Ask AI about this page or the project…', graphLoadFailed: 'Failed to load the knowledge graph',
+            welcome: '👋 Hi! I’m Dragon Claw, your dedicated intelligent agent. Loading current page context...', thinking: 'Dragon Claw is thinking...',
+            placeholder: 'Ask Dragon Claw about this page or the project...', graphLoadFailed: 'Failed to load the knowledge graph',
             historyLoading: 'Loading chat history…', historyEmpty: 'No chat history yet', unnamed: 'Untitled conversation',
             messages: 'messages', historyFailed: 'Failed to load chat history: ', historyRestoreFailed: 'Failed to restore chat history: ',
             archiveTitle: 'Archived chats', archiveSubtitle: 'Browse, search, and restore conversations across pages', archiveSearch: 'Search pages, paths, or messages…',
             archiveSelect: 'Select a conversation to view its full history', archiveLoading: 'Loading archived chats…', archiveEmpty: 'No archived chats yet',
-            archiveCount: n => `${n} archived`, archiveFailed: 'Failed to load archived chats: ', restoreArchive: 'Restore and continue', restoringArchive: 'Restoring…',
+            archiveCount: n => `${n} conversations`, archiveFailed: 'Failed to load archived chats: ', restoreArchive: 'Restore and continue', restoringArchive: 'Restoring…',
+            statusActive: 'Active', statusArchived: 'Archived', enterChat: 'Open conversation',
             initPrompt: 'Please briefly summarize the core purpose of this page and how to use it.',
             connectFailed: 'Could not connect to the AI service: ', error: 'Error: ', answerBasis: 'Sources for this answer',
             openGraph: 'Open knowledge graph', cache: 'Project knowledge', hitChunks: n => `${n} relevant chunks cited`, cacheMiss: 'No sufficiently relevant project chunks found', knowledgeNotNeeded: 'Project documents were not used for this question', knowledgeLibrary: 'library', candidates: 'candidates',
@@ -912,9 +920,9 @@
     fab.className = 'ai-fab';
     fab.setAttribute('role', 'button');
     fab.setAttribute('tabindex', '0');
-    fab.setAttribute('aria-label', '打开智能客服助手');
+    fab.setAttribute('aria-label', '打开Dragon Claw智能体');
     fab.setAttribute('aria-expanded', 'false');
-    fab.setAttribute('title', '智能客服助手');
+    fab.setAttribute('title', 'Dragon Claw智能体');
     fab.innerHTML = '<canvas class="ai-fab-particles" aria-hidden="true"></canvas>';
     document.body.appendChild(fab);
 
@@ -934,9 +942,9 @@
     panel.innerHTML = `
         <div class="ai-header">
             <div class="ai-brand">
-                <div class="ai-brand-mark" aria-hidden="true"><img src="/assets/ai-assistant-spark-50.gif?v=20260809-01" alt=""></div>
+                <div class="ai-brand-mark" aria-hidden="true"><img src="/assets/dragon-claw-avatar.jpg?v=20260924-01" alt="Dragon Claw"></div>
                 <div class="ai-brand-copy">
-                    <div class="ai-brand-title"><span class="ai-brand-title-full">智能客服助手</span><span class="ai-brand-title-compact">智能客服</span></div>
+                    <div class="ai-brand-title"><span class="ai-brand-title-full">Dragon Claw智能体</span><span class="ai-brand-title-compact">Dragon Claw</span></div>
                     <div class="ai-brand-subtitle"><span class="ai-brand-subtitle-full">项目知识 · 数据分析 · 运营建议</span><span class="ai-brand-subtitle-compact">知识 · 数据 · 运营</span></div>
                 </div>
             </div>
@@ -966,12 +974,12 @@
         </div>
         <div class="ai-history-panel" id="aiHistoryPanel"></div>
         <div class="ai-chat-body" id="aiChatBody">
-            <div class="ai-msg ai" id="aiInitialMessage">👋 你好！我是您的专属智能助手，正在为您加载页面上下文...</div>
-            <div class="ai-typing" id="aiTyping">AI 正在思考...</div>
+            <div class="ai-msg ai" id="aiInitialMessage">👋 你好！我是您的专属智能体 Dragon Claw，正在为您加载页面上下文...</div>
+            <div class="ai-typing" id="aiTyping">Dragon Claw 正在思考...</div>
         </div>
         <div class="ai-suggestions" id="aiSuggestions"></div>
         <div class="ai-input-area">
-            <input type="text" class="ai-input" id="aiInput" placeholder="向 AI 提问有关本页面的内容...">
+            <input type="text" class="ai-input" id="aiInput" placeholder="向 Dragon Claw 提问有关本页面的内容...">
             <button class="ai-send-btn" id="aiSendBtn">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
             </button>
@@ -2332,9 +2340,12 @@
             }
             archiveList.innerHTML = items.map(item => `
                 <button type="button" class="ai-archive-item" data-session-id="${escapeHtml(item.id)}">
-                    <div class="ai-archive-item-title">${escapeHtml(item.page_title || item.page_path || aiT('unnamed'))}</div>
+                    <div class="ai-archive-item-header">
+                        <div class="ai-archive-item-title">${escapeHtml(item.page_title || item.page_path || aiT('unnamed'))}</div>
+                        <span class="ai-archive-badge ${item.is_archived ? 'archived' : 'active'}">${escapeHtml(item.is_archived ? aiT('statusArchived') : aiT('statusActive'))}</span>
+                    </div>
                     <div class="ai-archive-item-question">${escapeHtml(item.last_question || aiT('unnamed'))}</div>
-                    <div class="ai-archive-item-meta">${escapeHtml(`${item.archived_at || item.updated_at || ''} · ${item.message_count || 0} ${aiT('messages')}`)}</div>
+                    <div class="ai-archive-item-meta">${escapeHtml(`${item.updated_at || item.archived_at || ''} · ${item.message_count || 0} ${aiT('messages')}`)}</div>
                 </button>`).join('');
             archiveList.querySelectorAll('.ai-archive-item').forEach((element, index) => {
                 element.onclick = () => previewArchivedSession(items[index], element);
@@ -2356,37 +2367,43 @@
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || `${res.status}`);
             const items = Array.isArray(data.items) ? data.items : [];
+            const actionText = session.is_archived ? aiT('restoreArchive') : aiT('enterChat');
             archivePreview.innerHTML = `
                 <div class="ai-archive-preview-head">
                     <div class="ai-archive-preview-heading">
-                        <div class="ai-archive-preview-title">${escapeHtml(session.page_title || aiT('unnamed'))}</div>
+                        <div class="ai-archive-preview-title">
+                            ${escapeHtml(session.page_title || aiT('unnamed'))}
+                            <span class="ai-archive-badge ${session.is_archived ? 'archived' : 'active'}" style="margin-left:8px;vertical-align:middle;">${escapeHtml(session.is_archived ? aiT('statusArchived') : aiT('statusActive'))}</span>
+                        </div>
                         <div class="ai-archive-preview-path">${escapeHtml(session.page_path || '')}</div>
                     </div>
-                    <button type="button" class="ai-archive-restore">${escapeHtml(aiT('restoreArchive'))}</button>
+                    <button type="button" class="ai-archive-restore">${escapeHtml(actionText)}</button>
                 </div>
                 <div class="ai-archive-messages">${items.map(item => `<div class="ai-archive-message ${item.role === 'model' ? 'ai' : 'user'}">${renderMarkdownLike(item.content || '')}</div>`).join('')}</div>`;
-            archivePreview.querySelector('.ai-archive-restore').onclick = event => restoreArchivedSession(session.id, event.currentTarget);
+            archivePreview.querySelector('.ai-archive-restore').onclick = event => restoreArchivedSession(session.id, event.currentTarget, Boolean(session.is_archived));
         } catch (error) {
             archivePreview.innerHTML = `<div class="ai-archive-empty">⚠️ ${escapeHtml(aiT('archiveFailed') + error.message)}</div>`;
         }
     }
 
-    async function restoreArchivedSession(sessionId, button) {
+    async function restoreArchivedSession(sessionId, button, wasArchived = true) {
         button.disabled = true;
-        button.textContent = aiT('restoringArchive');
+        button.textContent = wasArchived ? aiT('restoringArchive') : aiT('enterChat');
         try {
-            const res = await fetch(`/api/ai/sessions/${encodeURIComponent(sessionId)}/unarchive`, {
-                method: 'POST', headers: getAuthHeaders(), body: '{}'
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || `${res.status}`);
+            if (wasArchived) {
+                const res = await fetch(`/api/ai/sessions/${encodeURIComponent(sessionId)}/unarchive`, {
+                    method: 'POST', headers: getAuthHeaders(), body: '{}'
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || `${res.status}`);
+            }
             closeArchiveBrowser();
             if (!panel.classList.contains('open')) openOrClosePanel();
             await restoreHistorySession(sessionId);
             await loadHistorySessions();
         } catch (error) {
             button.disabled = false;
-            button.textContent = aiT('restoreArchive');
+            button.textContent = wasArchived ? aiT('restoreArchive') : aiT('enterChat');
             archivePreview.insertAdjacentHTML('beforeend', `<div class="ai-archive-empty">⚠️ ${escapeHtml(aiT('historyRestoreFailed') + error.message)}</div>`);
         }
     }

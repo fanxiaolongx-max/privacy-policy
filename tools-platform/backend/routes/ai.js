@@ -969,7 +969,9 @@ router.get('/sessions-archive', checkAuth, async (req, res) => {
         res.json(await aiChatRepo.listArchivedSessions({
             query: req.query.query,
             limit: req.query.limit,
-            offset: req.query.offset
+            offset: req.query.offset,
+            archivedOnly: req.query.archivedOnly,
+            status: req.query.status
         }));
     } catch (err) {
         console.error('[AI] archived sessions failed:', err);

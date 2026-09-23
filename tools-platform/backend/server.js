@@ -394,7 +394,7 @@ app.use('/api/reward-program', require('./routes/reward-program'));
 app.use('/api/slide-design', slideDesignRoutes); // 胶片设计项目与 PPT 素材库
 app.use('/api/surveys', surveysRoutes); // 可配置调查模板与提交记录 API
 app.use('/api/nav-settings', navSettingsRoutes); // 顶部导航全局设置 API
-app.use('/api/ai-settings', aiSettingsRoutes); // 智能客服助手模型配置 API
+app.use('/api/ai-settings', aiSettingsRoutes); // Dragon Claw 智能体模型配置 API
 app.use('/api/global-backup', globalBackupRoutes); // 当前租户核心数据备份与恢复 API（保留历史路由名）
 app.use('/api/external/metrics', externalMetricsRoutes); // 外部/移动端只读指标 API
 app.use('/api/alert-center', alertCenterRoutes); // 系统告警台 API

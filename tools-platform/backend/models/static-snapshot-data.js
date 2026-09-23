@@ -22,6 +22,25 @@ async function collectMeetingData() {
         name: person.name || ''
     }));
     const attendance = await meetingRepo.batchCheckAttendance(persons);
+    Object.keys(attendance).forEach(key => {
+        const splitIdx = key.indexOf('|');
+        const id = splitIdx >= 0 ? key.slice(0, splitIdx) : key;
+        const name = splitIdx >= 0 ? key.slice(splitIdx + 1) : '';
+        if (/^\d{5,}$/.test(id)) {
+            ['u', 'a', 'm'].forEach(prefix => {
+                const aliasKey = `${prefix}${id}|${name}`;
+                if (!attendance[aliasKey]) {
+                    attendance[aliasKey] = attendance[key];
+                }
+            });
+        } else if (/^[uam]\d{5,}$/i.test(id)) {
+            const rawDigits = id.slice(1);
+            const aliasKey = `${rawDigits}|${name}`;
+            if (!attendance[aliasKey]) {
+                attendance[aliasKey] = attendance[key];
+            }
+        }
+    });
     return {
         snapshots,
         summaries: snapshots.map(publicSnapshot),
