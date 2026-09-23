@@ -1,4 +1,5 @@
 const { run, get, all, getDbPath } = require('./app-db');
+const { normalizeStaffId } = require('./staff-id-normalization');
 
 const initPromises = new Map();
 
@@ -1423,6 +1424,8 @@ async function extractRoster() {
         for (const a of attendees) {
             let id = String(a.account || a.staffId || a.id || '').trim();
             let name = String(a.name || '').trim();
+            if (name && isStaffIdToken(name) && areStaffIdsEquivalent(name, id)) name = '';
+            id = normalizeStaffId(id);
             if (isInvalidStaffId(id)) {
                 id = '';
             }
@@ -1446,7 +1449,7 @@ async function extractRoster() {
                 const newEntry = {
                     id: id || name,
                     staffId: id || '',
-                    name: name || id,
+                    name,
                     bu: resolvedBu,
                     businessUnit: resolvedBu,
                     customerGroup: cGroups.join(', ') || a.customerGroup || '',

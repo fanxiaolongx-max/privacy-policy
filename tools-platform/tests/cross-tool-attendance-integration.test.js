@@ -11,6 +11,16 @@ const deptRepo = require('../backend/models/department-reward-penalty-repository
 const meetingRoutes = require('../backend/routes/meeting-snapshots');
 const incentiveRoutes = require('../backend/routes/operation-incentive-snapshots');
 const deptRoutes = require('../backend/routes/department-reward-penalty');
+const { normalizeStaffId } = require('../backend/models/staff-id-normalization');
+
+test('snapshot roster IDs remove one import prefix and preserve the WX family', () => {
+    assert.equal(normalizeStaffId('a00824176'), '00824176');
+    assert.equal(normalizeStaffId('m00665597'), '00665597');
+    assert.equal(normalizeStaffId('mWX1459632'), 'WX1459632');
+    assert.equal(normalizeStaffId('yWX1232731'), 'WX1232731');
+    assert.equal(normalizeStaffId('WX1459632'), 'WX1459632');
+    assert.equal(normalizeStaffId('T8801'), 'T8801');
+});
 
 test('Cross-tool attendance check & roster extraction integration test', async (t) => {
     await meetingRepo.ensureReady();
@@ -784,7 +794,7 @@ test('Cross-tool attendance check & roster extraction integration test', async (
             // 3. 周瑜 with mWX1350434 (exactly 10 chars) must NOT be filtered
             const zhou = roster.find(r => r.name === '周瑜');
             assert.ok(zhou, 'Person with valid 10-char staff ID must be retained');
-            assert.equal(zhou.staffId, 'mWX1350434', 'Legitimate 10-char staff ID must be preserved');
+            assert.equal(zhou.staffId, 'WX1350434', 'Legitimate 10-char staff ID must be retained without its import prefix');
         } finally {
             await meetingRepo.deleteSnapshot(snapIdOrder);
         }
@@ -930,21 +940,21 @@ test('Cross-tool attendance check & roster extraction integration test', async (
             assert.equal(mahmoud.customerGroup, '埃及专网');
             assert.ok(mahmoud.roles.includes('FME') && mahmoud.roles.includes('TE'), 'Must have both FME and TE roles');
 
-            const atef = roster.find(r => r.staffId === 'a84237671');
+            const atef = roster.find(r => r.staffId === '84237671');
             assert.ok(atef, 'Atef Nagah Elsayed Ahmed Elewa should be extracted');
             assert.equal(atef.name, 'Atef Nagah Elsayed Ahmed Elewa', 'Letter-prefixed ID a84237671 should be cleanly stripped from long foreign name');
             assert.equal(atef.bu, 'NIS交付部');
             assert.equal(atef.customerGroup, 'Orange');
             assert.ok(atef.roles.includes('FME') && atef.roles.includes('TE'), 'Must have both FME and TE roles');
 
-            const mostafa = roster.find(r => r.staffId === 'yWX1232731');
+            const mostafa = roster.find(r => r.staffId === 'WX1232731');
             assert.ok(mostafa, 'Mostafa Orabi should be extracted');
             assert.equal(mostafa.name, 'Mostafa Orabi', 'Letter-prefixed ID yWX1232731 should be cleanly stripped');
             assert.equal(mostafa.bu, 'IT交付部');
             assert.equal(mostafa.customerGroup, 'Vodafone');
             assert.ok(mostafa.roles.includes('FME') && mostafa.roles.includes('TE'), 'Must have both FME and TE roles');
 
-            const zhang = roster.find(r => r.staffId === 'mWX1350434');
+            const zhang = roster.find(r => r.staffId === 'WX1350434');
             assert.ok(zhang, '张三 should be extracted');
             assert.equal(zhang.name, '张三', 'Parenthesized ID mWX1350434 should be cleanly stripped from Chinese name');
             assert.equal(zhang.bu, '核心网部');
@@ -1015,8 +1025,8 @@ test('Cross-tool attendance check & roster extraction integration test', async (
 
         try {
             const roster = await incentiveRepo.extractRoster();
-            const helmy = roster.find(r => r.staffId === 'a00824176');
-            assert.ok(helmy, 'a00824176 must be extracted');
+            const helmy = roster.find(r => r.staffId === '00824176');
+            assert.ok(helmy, 'a00824176 must be extracted as 00824176');
             assert.equal(helmy.name, 'Ahmed Helmy', 'Real name Ahmed Helmy must be directly used and not overwritten by staffId a00824176');
             assert.equal(helmy.bu, 'NIS');
             assert.equal(helmy.customerGroup, 'Telecom Egypt');
@@ -1085,8 +1095,9 @@ test('Cross-tool attendance check & roster extraction integration test', async (
 
         try {
             const roster = await meetingRepo.extractRoster();
-            const person = roster.find(r => r.staffId === 'mWX1459632' || r.account === 'mWX1459632');
+            const person = roster.find(r => r.staffId === 'WX1459632');
             assert.ok(person, 'mWX1459632 must be in meeting roster');
+            assert.equal(person.name, '', 'An ID placeholder must not become a real name');
             assert.equal(person.customerGroup, 'ORG', 'Customer group must be preserved as ORG');
             assert.ok(person.customerGroups.includes('ORG'), 'customerGroups array must contain ORG');
             assert.ok(person.roles.includes('TD'), 'Role must be enriched from QR table as TD');
@@ -1214,6 +1225,3 @@ test('Cross-tool attendance check & roster extraction integration test', async (
         }
     });
 });
-
-
-

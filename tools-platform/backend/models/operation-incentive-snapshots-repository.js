@@ -1,4 +1,5 @@
 const { run, get, all, getDbPath } = require('./app-db');
+const { normalizeStaffId } = require('./staff-id-normalization');
 
 const initPromises = new Map();
 
@@ -791,7 +792,7 @@ async function extractRoster() {
 
                 for (const p of parsedPeople) {
                     const cleaned = cleanNameAndStaffId(p.name, p.staffId);
-                    let parsedId = cleaned.staffId;
+                    let parsedId = normalizeStaffId(cleaned.staffId);
                     let parsedName = cleaned.name;
 
                     if (isInvalidStaffId(parsedId)) {
@@ -826,7 +827,7 @@ async function extractRoster() {
                         const newEntry = {
                             id: parsedId || parsedName,
                             staffId: parsedId || '',
-                            name: parsedName || parsedId,
+                            name: parsedName,
                             bu,
                             businessUnit: bu,
                             customerGroup: cGroups.join(', ') || customerGroup,

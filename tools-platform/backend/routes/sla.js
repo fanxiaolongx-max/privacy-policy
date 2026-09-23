@@ -338,6 +338,21 @@ router.put('/targets', async (req, res) => {
             prefsRepo.getPrefsObject({ mode: 'auto' }),
             groupsRepo.listGroups({ mode: 'auto' })
         ]);
+        const beforeCount = Object.keys(beforeTargets || {}).length;
+        const afterCount = Object.keys(targets).length;
+        const beforeHash = hashObject(beforeTargets);
+        const isLargeDrop = beforeCount >= 10
+            && beforeCount - afterCount >= 5
+            && afterCount < beforeCount / 2;
+        if (isLargeDrop && req.get('x-sla-targets-replace-confirm') !== beforeHash) {
+            return res.status(409).json({
+                code: 'SLA_TARGETS_BULK_REPLACE_CONFIRM_REQUIRED',
+                error: '本次操作将大量删除指标目标，请确认当前配置后重试',
+                beforeCount,
+                afterCount,
+                beforeHash
+            });
+        }
         await targetsRepo.replaceTargets(targets);
         const changedKeys = Object.keys(targets || {})
             .filter(key => stableStringify(targets[key]) !== stableStringify(beforeTargets[key]))
