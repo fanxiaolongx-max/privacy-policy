@@ -261,12 +261,17 @@ function matchPerson(person, targetStaffId, targetName) {
 }
 
 function getSnapshotAttendees(snapshot) {
+    if (!snapshot) return [];
     const attendees = [];
-    const seen = new Set();
+    const attByKey = new Map();
+    const attById = new Map();
+    const attByName = new Map();
+
     const add = (p) => {
         if (!p) return;
-        const id = p.account || p.staffId || p.id || '';
-        const name = p.name || '';
+        const id = String(p.account || p.staffId || p.id || '').trim();
+        const name = String(p.name || '').trim();
+        if (!id && !name) return;
         if (isTotalRow(id, name)) return;
 
         const role = p.role || '';
@@ -274,10 +279,17 @@ function getSnapshotAttendees(snapshot) {
         const bu = isPm ? 'PMO' : (p.bu || p.businessUnit || '');
         const customerGroup = p.customerGroup || p.group || '';
 
-        const key = `${id}|${name}`;
-        if (!seen.has(key)) {
-            seen.add(key);
-            attendees.push({
+        const key = `${id.toLowerCase()}|${name.toLowerCase()}`;
+        let existing = attByKey.get(key);
+        if (!existing && id) {
+            existing = attById.get(id.toLowerCase());
+        }
+        if (!existing && name) {
+            existing = attByName.get(name.toLowerCase());
+        }
+
+        if (!existing) {
+            const newEntry = {
                 account: id,
                 staffId: id,
                 id,
@@ -293,42 +305,47 @@ function getSnapshotAttendees(snapshot) {
                 reason: p.reason || '',
                 date: p.date || p.meetingDate || p.attendanceDate || '',
                 attendanceTime: p.attendanceTime || ''
-            });
+            };
+            attendees.push(newEntry);
+            attByKey.set(key, newEntry);
+            if (id) attById.set(id.toLowerCase(), newEntry);
+            if (name) attByName.set(name.toLowerCase(), newEntry);
         } else {
-            const existing = attendees.find(a => (id && a.account === id) || (name && a.name === name));
-            if (existing) {
-                if (!Array.isArray(existing.roles)) {
-                    existing.roles = existing.role ? [existing.role] : [];
-                }
-                if (role && !existing.roles.includes(role)) {
-                    existing.roles.push(role);
-                }
-                if (role && !existing.role) existing.role = role;
-                else if (existing.roles.length > 0) existing.role = existing.roles.join(', ');
+            if (p.attendance && (!existing.attendance || isAttendanceAnomaly(p.attendance))) {
+                existing.attendance = p.attendance;
+                existing.status = p.attendance;
+            }
+            if (!Array.isArray(existing.roles)) {
+                existing.roles = existing.role ? [existing.role] : [];
+            }
+            if (role && !existing.roles.includes(role)) {
+                existing.roles.push(role);
+            }
+            if (role && !existing.role) existing.role = role;
+            else if (existing.roles.length > 0) existing.role = existing.roles.join(', ');
 
-                if (!Array.isArray(existing.customerGroups)) {
-                    existing.customerGroups = existing.customerGroup ? [existing.customerGroup] : [];
-                }
-                if (customerGroup && !existing.customerGroups.includes(customerGroup)) {
-                    existing.customerGroups.push(customerGroup);
-                }
-                if (customerGroup && !existing.customerGroup) existing.customerGroup = customerGroup;
-                else if (existing.customerGroups.length > 0) existing.customerGroup = existing.customerGroups.join(', ');
+            if (!Array.isArray(existing.customerGroups)) {
+                existing.customerGroups = existing.customerGroup ? [existing.customerGroup] : [];
+            }
+            if (customerGroup && !existing.customerGroups.includes(customerGroup)) {
+                existing.customerGroups.push(customerGroup);
+            }
+            if (customerGroup && !existing.customerGroup) existing.customerGroup = customerGroup;
+            else if (existing.customerGroups.length > 0) existing.customerGroup = existing.customerGroups.join(', ');
 
-                const anyPm = isPm || /^\s*pm\s*$/i.test(role) || existing.roles.some(r => /^\s*pm\s*$/i.test(r));
-                if (anyPm) {
-                    existing.bu = 'PMO';
-                    existing.businessUnit = 'PMO';
-                } else if (!existing.bu && bu) {
-                    existing.bu = bu;
-                    existing.businessUnit = bu;
-                }
-                if (!existing.date && (p.date || p.meetingDate || p.attendanceDate)) {
-                    existing.date = p.date || p.meetingDate || p.attendanceDate;
-                }
-                if (!existing.attendanceTime && p.attendanceTime) {
-                    existing.attendanceTime = p.attendanceTime;
-                }
+            const anyPm = isPm || /^\s*pm\s*$/i.test(role) || existing.roles.some(r => /^\s*pm\s*$/i.test(r));
+            if (anyPm) {
+                existing.bu = 'PMO';
+                existing.businessUnit = 'PMO';
+            } else if (!existing.bu && bu) {
+                existing.bu = bu;
+                existing.businessUnit = bu;
+            }
+            if (!existing.date && (p.date || p.meetingDate || p.attendanceDate)) {
+                existing.date = p.date || p.meetingDate || p.attendanceDate;
+            }
+            if (!existing.attendanceTime && p.attendanceTime) {
+                existing.attendanceTime = p.attendanceTime;
             }
         }
     };
@@ -539,7 +556,12 @@ async function batchCheckAttendance(persons = []) {
     await ensureReady();
     if (!Array.isArray(persons) || !persons.length) return {};
     const snapshots = await listSnapshots({ includePayload: false });
-    
+
+    const getDigits = s => {
+        const d = String(s || '').replace(/^[a-z]+/i, '').trim();
+        return d.length >= 5 ? d : '';
+    };
+
     const snapshotAttendeesList = [];
     for (const s of snapshots) {
         let snapToUse = s;
@@ -549,11 +571,30 @@ async function batchCheckAttendance(persons = []) {
                 if (full) snapToUse = full;
             } catch (_) {}
         }
+        const attendees = getSnapshotAttendees(snapToUse);
+        const attById = new Map();
+        const attByName = new Map();
+        for (const a of attendees) {
+            const aid = String(a.account || a.staffId || a.id || '').trim().toLowerCase();
+            const aname = String(a.name || '').trim().toLowerCase();
+            if (aid) {
+                attById.set(aid, a);
+                if (aid.startsWith('m')) attById.set(aid.slice(1), a);
+                const digits = getDigits(aid);
+                if (digits) attById.set(digits, a);
+            }
+            if (aname) {
+                if (!attByName.has(aname)) attByName.set(aname, []);
+                attByName.get(aname).push(a);
+            }
+        }
         snapshotAttendeesList.push({
             snapshotId: snapToUse.id,
             title: snapToUse.title,
             meetingDate: snapToUse.meetingDate || snapToUse.meeting_date || '',
-            attendees: getSnapshotAttendees(snapToUse)
+            attendees,
+            attById,
+            attByName
         });
     }
 
@@ -573,7 +614,34 @@ async function batchCheckAttendance(persons = []) {
         let anomalyCount = 0;
 
         for (const snap of snapshotAttendeesList) {
-            const match = snap.attendees.find(a => matchPerson(a, queryId, queryName));
+            let match = null;
+            if (queryId) {
+                const qId = queryId.toLowerCase();
+                match = snap.attById.get(qId);
+                if (!match && qId.startsWith('m')) match = snap.attById.get(qId.slice(1));
+                if (!match) match = snap.attById.get('m' + qId);
+                if (!match) {
+                    const digits = getDigits(qId);
+                    if (digits) match = snap.attById.get(digits);
+                }
+            }
+            if (!match && queryName) {
+                const qName = queryName.toLowerCase();
+                const list = snap.attByName.get(qName);
+                if (list && list.length) {
+                    for (const a of list) {
+                        const aid = String(a.account || a.staffId || a.id || '').trim();
+                        if (!queryId || !aid || areStaffIdsEquivalent(queryId, aid)) {
+                            match = a;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (!match) {
+                match = snap.attendees.find(a => matchPerson(a, queryId, queryName));
+            }
+
             if (match) {
                 const rawAtt = match.attendance || match.status || 'Attend on Time';
                 const isAnomaly = isAttendanceAnomaly(rawAtt);
@@ -647,6 +715,76 @@ async function extractRoster() {
     await ensureReady();
     const snapshots = await listSnapshots({ includePayload: true });
     const rosterMap = new Map();
+    const candById = new Map();
+    const candByDigits = new Map();
+    const candByName = new Map();
+
+    const getDigits = s => {
+        const d = String(s || '').replace(/^[a-z]+/i, '').trim();
+        return d.length >= 5 ? d : '';
+    };
+
+    const registerCandidate = (c) => {
+        if (c.staffId) {
+            const sid = c.staffId.toLowerCase();
+            candById.set(sid, c);
+            if (sid.startsWith('m')) candById.set(sid.slice(1), c);
+            const digits = getDigits(sid);
+            if (digits) candByDigits.set(digits, c);
+        }
+        if (c.id && c.id !== c.staffId) {
+            const cid = c.id.toLowerCase();
+            candById.set(cid, c);
+            if (cid.startsWith('m')) candById.set(cid.slice(1), c);
+            const digits = getDigits(cid);
+            if (digits) candByDigits.set(digits, c);
+        }
+        if (c.name) {
+            const norm = normName(c.name);
+            if (norm) {
+                if (!candByName.has(norm)) candByName.set(norm, []);
+                const list = candByName.get(norm);
+                if (!list.includes(c)) list.push(c);
+            }
+            const lowerName = c.name.trim().toLowerCase();
+            if (lowerName) {
+                if (!candByName.has(lowerName)) candByName.set(lowerName, []);
+                const list = candByName.get(lowerName);
+                if (!list.includes(c)) list.push(c);
+            }
+        }
+    };
+
+    const findExisting = (id, name) => {
+        if (id) {
+            const sid = id.toLowerCase();
+            let c = candById.get(sid);
+            if (!c && sid.startsWith('m')) {
+                c = candById.get(sid.slice(1));
+            }
+            if (!c) {
+                c = candById.get('m' + sid);
+            }
+            if (!c) {
+                const digits = getDigits(sid);
+                if (digits) c = candByDigits.get(digits);
+            }
+            if (c) return c;
+        }
+
+        if (name) {
+            const norm = normName(name);
+            const candidates = (norm && candByName.get(norm)) || candByName.get(name.trim().toLowerCase());
+            if (candidates && candidates.length) {
+                for (const c of candidates) {
+                    if (!id || !c.staffId || areStaffIdsEquivalent(id, c.staffId)) {
+                        return c;
+                    }
+                }
+            }
+        }
+        return null;
+    };
 
     for (const snap of snapshots) {
         const attendees = getSnapshotAttendees(snap);
@@ -656,40 +794,7 @@ async function extractRoster() {
             if (!id && !name) continue;
             if (isTotalRow(id, name)) continue;
 
-            // Search for existing entry by ID or fuzzy equivalent ID with same name
-            let existingEntry = null;
-            let existingKey = null;
-
-            if (id) {
-                const key = id.toLowerCase();
-                if (rosterMap.has(key)) {
-                    existingEntry = rosterMap.get(key);
-                    existingKey = key;
-                } else {
-                    for (const [k, v] of rosterMap.entries()) {
-                        if (v.staffId && areStaffIdsEquivalent(id, v.staffId)) {
-                            existingEntry = v;
-                            existingKey = k;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            if (!existingEntry && name) {
-                const nName = normName(name);
-                for (const [k, v] of rosterMap.entries()) {
-                    const vnName = normName(v.name);
-                    if ((v.name && v.name.toLowerCase() === name.toLowerCase()) || (nName && vnName && nName === vnName)) {
-                        if (!id || !v.staffId || areStaffIdsEquivalent(id, v.staffId)) {
-                            existingEntry = v;
-                            existingKey = k;
-                            break;
-                        }
-                    }
-                }
-            }
-
+            const existingEntry = findExisting(id, name);
             const snapTitle = snap.title || '';
             const snapDate = snap.meetingDate || snap.meeting_date || '';
             const isPm = /^\s*pm\s*$/i.test(a.role || '');
@@ -699,7 +804,7 @@ async function extractRoster() {
                 const key = id ? id.toLowerCase() : name.toLowerCase();
                 const cGroups = Array.isArray(a.customerGroups) && a.customerGroups.length ? [...a.customerGroups] : (a.customerGroup ? [a.customerGroup] : []);
                 const rRoles = Array.isArray(a.roles) && a.roles.length ? [...a.roles] : (a.role ? [a.role] : []);
-                rosterMap.set(key, {
+                const newEntry = {
                     id: id || name,
                     staffId: id || '',
                     name: name || id,
@@ -715,18 +820,26 @@ async function extractRoster() {
                     snapshotTitles: snapTitle ? [snapTitle] : [],
                     snapshotDate: snapDate,
                     meetingDates: snapDate ? [snapDate] : []
-                });
+                };
+                rosterMap.set(key, newEntry);
+                registerCandidate(newEntry);
             } else {
                 const canonicalId = preferCanonicalStaffId(existingEntry.staffId, id);
                 if (canonicalId && canonicalId !== existingEntry.staffId) {
                     existingEntry.staffId = canonicalId;
                     existingEntry.id = canonicalId;
                     rosterMap.set(canonicalId.toLowerCase(), existingEntry);
+                    registerCandidate(existingEntry);
                 }
                 if (!existingEntry.name && name) {
                     existingEntry.name = name;
+                    registerCandidate(existingEntry);
                 } else if (name) {
+                    const prevName = existingEntry.name;
                     existingEntry.name = preferCanonicalName(existingEntry.name, name);
+                    if (existingEntry.name !== prevName) {
+                        registerCandidate(existingEntry);
+                    }
                 }
 
                 // Accumulate customer groups

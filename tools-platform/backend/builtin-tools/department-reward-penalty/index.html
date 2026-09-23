@@ -3908,7 +3908,7 @@ async function openSnapshotRosterDialog() {
     }
 
     // 步骤 2 & 3: 并行拉取会议考勤快照与操作激励快照人员
-    const fetchEndpoint = async (url, label, timeoutMs = 25000) => {
+    const fetchEndpoint = async (url, label, timeoutMs = 90000) => {
       const t0 = performance.now();
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -3929,7 +3929,7 @@ async function openSnapshotRosterDialog() {
         clearTimeout(timeoutId);
         const elapsed = Math.round(performance.now() - t0);
         const isTimeout = err.name === 'AbortError';
-        const msg = isTimeout ? `请求超时 (${timeoutMs / 1000}s)` : err.message;
+        const msg = isTimeout ? `请求超时 (${timeoutMs / 1000}s) [可能原因: 后端快照历史数据量大或后台正在执行同步，建议稍后重试]` : err.message;
         appendExtractLog(`❌ ${label} 拉取失败: ${msg} (${elapsed}ms)`, 'error');
         return { roster: [], error: msg, elapsed };
       }

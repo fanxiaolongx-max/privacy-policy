@@ -277,24 +277,65 @@ async function extractRoster() {
     await ensureReady();
     const snapshots = await listSnapshots({ includePayload: true });
     const rosterMap = new Map();
+    const candById = new Map();
+    const candByDigits = new Map();
+    const candByName = new Map();
+
+    const getDigits = s => {
+        const d = String(s || '').replace(/^[a-z]+/i, '').trim();
+        return d.length >= 5 ? d : '';
+    };
+
+    const registerCandidate = (c) => {
+        if (c.staffId) {
+            const sid = c.staffId.toLowerCase();
+            candById.set(sid, c);
+            if (sid.startsWith('m')) candById.set(sid.slice(1), c);
+            const digits = getDigits(sid);
+            if (digits) candByDigits.set(digits, c);
+        }
+        if (c.id && c.id !== c.staffId) {
+            const cid = c.id.toLowerCase();
+            candById.set(cid, c);
+            if (cid.startsWith('m')) candById.set(cid.slice(1), c);
+            const digits = getDigits(cid);
+            if (digits) candByDigits.set(digits, c);
+        }
+        if (c.name) {
+            const norm = normName(c.name);
+            if (norm) {
+                if (!candByName.has(norm)) candByName.set(norm, []);
+                const list = candByName.get(norm);
+                if (!list.includes(c)) list.push(c);
+            }
+            const lowerName = c.name.trim().toLowerCase();
+            if (lowerName) {
+                if (!candByName.has(lowerName)) candByName.set(lowerName, []);
+                const list = candByName.get(lowerName);
+                if (!list.includes(c)) list.push(c);
+            }
+        }
+    };
 
     const findExistingCandidate = (parsedId, parsedName) => {
         if (parsedId) {
-            const exact = rosterMap.get(parsedId.toLowerCase());
-            if (exact) return exact;
-            for (const v of rosterMap.values()) {
-                if (v.staffId && areStaffIdsEquivalent(parsedId, v.staffId)) {
-                    return v;
-                }
+            const sid = parsedId.toLowerCase();
+            let c = candById.get(sid);
+            if (!c && sid.startsWith('m')) c = candById.get(sid.slice(1));
+            if (!c) c = candById.get('m' + sid);
+            if (!c) {
+                const digits = getDigits(sid);
+                if (digits) c = candByDigits.get(digits);
             }
+            if (c) return c;
         }
         if (parsedName) {
-            const nName = normName(parsedName);
-            for (const v of rosterMap.values()) {
-                const vnName = normName(v.name);
-                if ((v.name && v.name.toLowerCase() === parsedName.toLowerCase()) || (nName && vnName && nName === vnName)) {
-                    if (!parsedId || !v.staffId || areStaffIdsEquivalent(parsedId, v.staffId)) {
-                        return v;
+            const norm = normName(parsedName);
+            const candidates = (norm && candByName.get(norm)) || candByName.get(parsedName.trim().toLowerCase());
+            if (candidates && candidates.length) {
+                for (const c of candidates) {
+                    if (!parsedId || !c.staffId || areStaffIdsEquivalent(parsedId, c.staffId)) {
+                        return c;
                     }
                 }
             }
@@ -362,7 +403,7 @@ async function extractRoster() {
                         if (!key) continue;
                         const cGroups = customerGroup ? [customerGroup] : [];
                         const rRoles = role ? [role] : [];
-                        rosterMap.set(key, {
+                        const newEntry = {
                             id: parsedId || parsedName,
                             staffId: parsedId || '',
                             name: parsedName || parsedId,
@@ -377,18 +418,26 @@ async function extractRoster() {
                             snapshotTitle: title,
                             snapshotTitles: title ? [title] : [],
                             snapshotPeriod: period
-                        });
+                        };
+                        rosterMap.set(key, newEntry);
+                        registerCandidate(newEntry);
                     } else {
                         const canonicalId = preferCanonicalStaffId(existing.staffId, parsedId);
                         if (canonicalId && canonicalId !== existing.staffId) {
                             existing.staffId = canonicalId;
                             existing.id = canonicalId;
                             rosterMap.set(canonicalId.toLowerCase(), existing);
+                            registerCandidate(existing);
                         }
                         if (!existing.name && parsedName) {
                             existing.name = parsedName;
+                            registerCandidate(existing);
                         } else if (parsedName) {
+                            const prevName = existing.name;
                             existing.name = preferCanonicalName(existing.name, parsedName);
+                            if (existing.name !== prevName) {
+                                registerCandidate(existing);
+                            }
                         }
                         if (!existing.bu && bu) { existing.bu = bu; existing.businessUnit = bu; }
                         
@@ -446,7 +495,7 @@ async function extractRoster() {
                         if (!key) continue;
                         const cGroups = customerGroup ? [customerGroup] : [];
                         const rRoles = role ? [role] : [];
-                        rosterMap.set(key, {
+                        const newEntry = {
                             id: parsedId || parsedName,
                             staffId: parsedId || '',
                             name: parsedName || parsedId,
@@ -461,18 +510,26 @@ async function extractRoster() {
                             snapshotTitle: title,
                             snapshotTitles: title ? [title] : [],
                             snapshotPeriod: period
-                        });
+                        };
+                        rosterMap.set(key, newEntry);
+                        registerCandidate(newEntry);
                     } else {
                         const canonicalId = preferCanonicalStaffId(existing.staffId, parsedId);
                         if (canonicalId && canonicalId !== existing.staffId) {
                             existing.staffId = canonicalId;
                             existing.id = canonicalId;
                             rosterMap.set(canonicalId.toLowerCase(), existing);
+                            registerCandidate(existing);
                         }
                         if (!existing.name && parsedName) {
                             existing.name = parsedName;
+                            registerCandidate(existing);
                         } else if (parsedName) {
+                            const prevName = existing.name;
                             existing.name = preferCanonicalName(existing.name, parsedName);
+                            if (existing.name !== prevName) {
+                                registerCandidate(existing);
+                            }
                         }
                         if (!existing.bu && bu) { existing.bu = bu; existing.businessUnit = bu; }
 
