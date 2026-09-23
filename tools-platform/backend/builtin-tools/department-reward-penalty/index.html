@@ -2915,6 +2915,25 @@ function updateExtractSummary() {
     logBtnHtml;
 }
 
+function formatSourceTraceTooltip(cand) {
+  const traces = Array.isArray(cand.sourceTraces) ? cand.sourceTraces : [];
+  if (!traces.length) {
+    const titles = (cand.snapshotTitles || []).join('、');
+    return titles ? `数据来源快照: ${titles}` : '数据来源: 快照记录';
+  }
+  const lines = [`📍 数据溯源 (共 ${traces.length} 处原始记录):`];
+  traces.forEach((t, i) => {
+    const tag = t.sourceName || (t.source === 'meeting' ? '会议考勤' : '操作激励');
+    const title = t.snapshotTitle ? `《${t.snapshotTitle}》` : '';
+    const sheet = t.sheetName ? ` · ${t.sheetName}` : '';
+    const row = t.rowNumber ? ` · 第 ${t.rowNumber} 行` : '';
+    const field = t.field ? ` [${t.field}]` : '';
+    const raw = t.raw ? `: ${t.raw}` : '';
+    lines.push(`${i + 1}. [${tag}] ${title}${sheet}${row}${field}${raw}`);
+  });
+  return lines.join('\n');
+}
+
 function renderExtractRosterTable() {
   const tbody = $('extract-roster-tbody');
   if (!tbody) return;
@@ -2946,6 +2965,7 @@ function renderExtractRosterTable() {
 
   const rowsHtml = pageItems.map(cand => {
     const rawIdx = cand._idx !== undefined ? cand._idx : extractedRosterCandidates.indexOf(cand);
+    const traceTooltip = formatSourceTraceTooltip(cand);
     const sourceBadges = [];
     if (cand.sources && cand.sources.has('meeting')) {
       const titleAttr = (cand.snapshotTitles || []).filter(t => t.includes('会议') || !t.includes('激励')).join('、') || '会议考勤快照';
@@ -2990,8 +3010,11 @@ function renderExtractRosterTable() {
         <td style="padding:8px 10px;">
           <input type="text" class="extract-inline-staffid" data-cand-idx="${rawIdx}" value="${escapeHtml(cand.staffId || '')}" placeholder="必填工号" style="width:115px;font-size:12px;padding:4px 8px;border:1px solid ${cand.staffId ? '#cbd5e1' : '#f87171'};border-radius:5px;background:#fff;box-sizing:border-box;">
         </td>
-        <td style="padding:8px 10px;">
-          <input type="text" class="extract-inline-name" data-cand-idx="${rawIdx}" value="${escapeHtml(cand.name || '')}" placeholder="必填姓名" style="width:105px;font-size:12px;padding:4px 8px;border:1px solid ${cand.name ? '#cbd5e1' : '#f87171'};border-radius:5px;background:#fff;font-weight:600;box-sizing:border-box;">
+        <td style="padding:8px 10px;" title="${escapeHtml(traceTooltip)}">
+          <div style="display:flex;align-items:center;gap:4px;">
+            <input type="text" class="extract-inline-name" data-cand-idx="${rawIdx}" value="${escapeHtml(cand.name || '')}" placeholder="必填姓名" title="${escapeHtml(traceTooltip)}" style="width:105px;font-size:12px;padding:4px 8px;border:1px solid ${cand.name ? '#cbd5e1' : '#f87171'};border-radius:5px;background:#fff;font-weight:600;box-sizing:border-box;">
+            <span class="source-trace-badge" title="${escapeHtml(traceTooltip)}" style="cursor:help;font-size:13px;line-height:1;display:inline-flex;align-items:center;user-select:none;" aria-label="数据溯源">📍</span>
+          </div>
         </td>
         <td style="padding:8px 10px;">
           <div style="display:flex;flex-direction:column;gap:5px;">
@@ -4042,6 +4065,70 @@ async function openSnapshotRosterDialog() {
       return s1;
     }
 
+    function splitAndParsePeople(rawStr, defaultStaffId = '', defaultName = '') {
+      if (!rawStr) return [];
+      const text = String(rawStr).trim();
+      if (!text) return [];
+
+      const tokens = text.split(/[;\n；|]+/).map(t => t.trim()).filter(Boolean);
+      const results = [];
+
+      for (const token of tokens) {
+        let name = '';
+        let staffId = '';
+
+        let m = token.match(/^(.*?)\s*[(（]([A-Za-z0-9_-]+)[)）]$/);
+        if (m) {
+          name = m[1].trim();
+          staffId = m[2].trim();
+        } else {
+          m = token.match(/^([A-Za-z0-9_-]+)\s*[(（](.*?)[)）]$/);
+          if (m) {
+            staffId = m[1].trim();
+            name = m[2].trim();
+          }
+        }
+
+        if (!staffId) {
+          const mEnd = token.match(/^(.*?)\s+([A-Za-z0-9_-]{4,10})$/);
+          if (mEnd && !isOrderNumber(mEnd[2]) && !isInvalidStaffId(mEnd[2]) && mEnd[1].trim()) {
+            name = mEnd[1].trim();
+            staffId = mEnd[2].trim();
+          }
+        }
+
+        if (!staffId) {
+          const mStart = token.match(/^([A-Za-z0-9_-]{4,10})\s+(.*?)$/);
+          if (mStart && !isOrderNumber(mStart[1]) && !isInvalidStaffId(mStart[1]) && mStart[2].trim()) {
+            staffId = mStart[1].trim();
+            name = mStart[2].trim();
+          }
+        }
+
+        if (!staffId && !name) {
+          if (/[\u4e00-\u9fa5]/.test(token) || /\s+/.test(token)) {
+            name = token;
+            staffId = defaultStaffId || '';
+          } else if (!isInvalidStaffId(token) && /^[A-Za-z0-9_-]{4,10}$/.test(token)) {
+            staffId = token;
+            name = defaultName || '';
+          } else {
+            name = token;
+            staffId = '';
+          }
+        }
+
+        if (isInvalidStaffId(staffId)) staffId = '';
+        if (isOrderNumber(name)) name = '';
+        if (name) name = name.replace(/^[\s,;，；|/()（）\-]+|[\s,;，；|/()（）\-]+$/g, '').trim();
+
+        if ((name || staffId) && !isTotalRow(staffId, name)) {
+          results.push({ name: name || staffId, staffId: staffId || '' });
+        }
+      }
+      return results;
+    }
+
     const candidateList = [];
     const candById = new Map();
     const candByDigits = new Map();
@@ -4111,23 +4198,16 @@ async function openSnapshotRosterDialog() {
     }
 
     for (const item of meetingRoster) {
-      let staffId = String(item.staffId || '').trim();
-      let name = String(item.name || '').trim();
-      if (isInvalidStaffId(staffId)) {
-        if (!name || name === staffId || isOrderNumber(name)) {
-          appendExtractLog(`ℹ️ [${staffId}] 识别为超长非工号字符(超过10位/单号)，已自动过滤`, 'info');
-          continue;
-        }
-        appendExtractLog(`ℹ️ [${name}] 原工号「${staffId}」超过10位字符，已自动过滤工号仅保留姓名`, 'info');
-        staffId = '';
+      const rawText = `${item.name || ''};${item.staffId || ''}`;
+      let parsedPeople = [];
+      if (rawText.includes(';') || rawText.includes('；') || rawText.includes('\n')) {
+        parsedPeople = splitAndParsePeople(item.name || item.staffId, item.staffId, item.name);
       }
-      if (isOrderNumber(name)) {
-        if (!staffId) continue;
-        name = '';
+      if (!parsedPeople.length) {
+        parsedPeople = [{ staffId: item.staffId || '', name: item.name || '' }];
       }
-      if (!staffId && !name) continue;
-      if (isTotalRow(staffId, name)) continue;
 
+      const itemTraces = Array.isArray(item.sourceTraces) ? [...item.sourceTraces] : [];
       const rawBU = String(item.businessUnit || item.bu || '').trim();
       const rawGroups = [];
       if (Array.isArray(item.customerGroups) && item.customerGroups.length) {
@@ -4143,89 +4223,110 @@ async function openSnapshotRosterDialog() {
         String(item.role).split(/[,，;/]+/).forEach(r => rawRoles.push(r.trim()));
       }
 
-      let existing = findExistingCandidate(staffId, name);
-      if (!existing) {
-        existing = {
-          staffId,
-          name,
-          rawBU: rawBU || '',
-          rawRoles: new Set(),
-          rawCustomerGroups: new Set(),
-          customerGroupIds: new Set(),
-          roles: new Set(),
-          businessUnitId: '',
-          sources: new Set(['meeting']),
-          snapshotTitles: item.snapshotTitles ? [...item.snapshotTitles] : [],
-          meetingDates: item.meetingDates ? [...item.meetingDates] : [],
-          selected: true
-        };
-        candidateList.push(existing);
-        indexCandidate(existing);
-      } else {
-        existing.sources.add('meeting');
-        const oldId = existing.staffId;
-        existing.staffId = preferCanonicalStaffId(existing.staffId, staffId);
-        if (!existing.name && name) existing.name = name;
-        else if (name) existing.name = preferCanonicalName(existing.name, name);
-        if (!existing.rawBU && rawBU) existing.rawBU = rawBU;
-        if (item.snapshotTitles) existing.snapshotTitles.push(...item.snapshotTitles);
-        if (item.meetingDates) existing.meetingDates.push(...item.meetingDates);
-        if (existing.staffId !== oldId || (!existing.name && name)) {
+      for (const p of parsedPeople) {
+        let staffId = String(p.staffId || '').trim();
+        let name = String(p.name || '').trim();
+        if (isInvalidStaffId(staffId)) {
+          if (!name || name === staffId || isOrderNumber(name)) {
+            appendExtractLog(`ℹ️ [${staffId}] 识别为超长非工号字符(超过10位/单号)，已自动过滤`, 'info');
+            continue;
+          }
+          appendExtractLog(`ℹ️ [${name}] 原工号「${staffId}」超过10位字符，已自动过滤工号仅保留姓名`, 'info');
+          staffId = '';
+        }
+        if (isOrderNumber(name)) {
+          if (!staffId) continue;
+          name = '';
+        }
+        if (!staffId && !name) continue;
+        if (isTotalRow(staffId, name)) continue;
+
+        let existing = findExistingCandidate(staffId, name);
+        if (!existing) {
+          existing = {
+            staffId,
+            name,
+            rawBU: rawBU || '',
+            rawRoles: new Set(),
+            rawCustomerGroups: new Set(),
+            customerGroupIds: new Set(),
+            roles: new Set(),
+            businessUnitId: '',
+            sources: new Set(['meeting']),
+            snapshotTitles: item.snapshotTitles ? [...item.snapshotTitles] : [],
+            meetingDates: item.meetingDates ? [...item.meetingDates] : [],
+            sourceTraces: [...itemTraces],
+            selected: true
+          };
+          candidateList.push(existing);
           indexCandidate(existing);
+        } else {
+          existing.sources.add('meeting');
+          const oldId = existing.staffId;
+          existing.staffId = preferCanonicalStaffId(existing.staffId, staffId);
+          if (!existing.name && name) existing.name = name;
+          else if (name) existing.name = preferCanonicalName(existing.name, name);
+          if (!existing.rawBU && rawBU) existing.rawBU = rawBU;
+          if (item.snapshotTitles) existing.snapshotTitles.push(...item.snapshotTitles);
+          if (item.meetingDates) existing.meetingDates.push(...item.meetingDates);
+          if (itemTraces.length) {
+            if (!Array.isArray(existing.sourceTraces)) existing.sourceTraces = [];
+            for (const t of itemTraces) {
+              if (!existing.sourceTraces.some(et => et.snapshotTitle === t.snapshotTitle && et.rowNumber === t.rowNumber && et.field === t.field && et.sheetName === t.sheetName)) {
+                existing.sourceTraces.push(t);
+              }
+            }
+          }
+          if (existing.staffId !== oldId || (!existing.name && name)) {
+            indexCandidate(existing);
+          }
         }
-      }
 
-      // Add customer groups
-      rawGroups.forEach(g => {
-        const str = String(g || '').trim();
-        if (!str) return;
-        existing.rawCustomerGroups.add(str);
-        const mapped = resolveMappedCustomerGroup(str);
-        if (mapped) {
-          existing.customerGroupIds.add(mapped);
-          groupMappedCount++;
+        // Add customer groups
+        rawGroups.forEach(g => {
+          const str = String(g || '').trim();
+          if (!str) return;
+          existing.rawCustomerGroups.add(str);
+          const mapped = resolveMappedCustomerGroup(str);
+          if (mapped) {
+            existing.customerGroupIds.add(mapped);
+            groupMappedCount++;
+          }
+        });
+
+        // Add roles
+        rawRoles.forEach(r => {
+          const str = String(r || '').trim();
+          if (!str || isEmploymentCategory(str)) return;
+          existing.rawRoles.add(str);
+          const mapped = resolveMappedRole(str);
+          if (mapped) {
+            existing.roles.add(mapped);
+            roleMappedCount++;
+          }
+        });
+
+        // BU remains singular: if PM exists, BU = PMO; else assign first valid BU
+        const isPm = existing.roles.has('PM') || [...existing.rawRoles].some(r => /^\s*pm\s*$/i.test(r));
+        if (isPm) {
+          existing.businessUnitId = matchBU('PMO') || 'PMO';
+        } else if (!existing.businessUnitId && rawBU) {
+          existing.businessUnitId = matchBU(rawBU);
         }
-      });
-
-      // Add roles
-      rawRoles.forEach(r => {
-        const str = String(r || '').trim();
-        if (!str || isEmploymentCategory(str)) return;
-        existing.rawRoles.add(str);
-        const mapped = resolveMappedRole(str);
-        if (mapped) {
-          existing.roles.add(mapped);
-          roleMappedCount++;
-        }
-      });
-
-      // BU remains singular: if PM exists, BU = PMO; else assign first valid BU
-      const isPm = existing.roles.has('PM') || [...existing.rawRoles].some(r => /^\s*pm\s*$/i.test(r));
-      if (isPm) {
-        existing.businessUnitId = matchBU('PMO') || 'PMO';
-      } else if (!existing.businessUnitId && rawBU) {
-        existing.businessUnitId = matchBU(rawBU);
       }
     }
 
     for (const item of incentiveRoster) {
-      let staffId = String(item.staffId || '').trim();
-      let name = String(item.name || '').trim();
-      if (isInvalidStaffId(staffId)) {
-        if (!name || name === staffId || isOrderNumber(name)) {
-          appendExtractLog(`ℹ️ [${staffId}] 识别为超长非工号字符(超过10位/单号)，已自动过滤`, 'info');
-          continue;
-        }
-        appendExtractLog(`ℹ️ [${name}] 原工号「${staffId}」超过10位字符，已自动过滤工号仅保留姓名`, 'info');
-        staffId = '';
+      const rawText = `${item.name || ''};${item.staffId || ''}`;
+      let parsedPeople = [];
+      if (rawText.includes(';') || rawText.includes('；') || rawText.includes('\n')) {
+        parsedPeople = splitAndParsePeople(item.name || item.staffId, item.staffId, item.name);
       }
-      if (isOrderNumber(name)) {
-        if (!staffId) continue;
-        name = '';
+      if (!parsedPeople.length) {
+        parsedPeople = [{ staffId: item.staffId || '', name: item.name || '' }];
       }
-      if (!staffId && !name) continue;
-      if (isTotalRow(staffId, name)) continue;
 
+      const itemTraces = Array.isArray(item.sourceTraces) ? [...item.sourceTraces] : [];
       const rawBU = String(item.businessUnit || item.bu || '').trim();
       const rawGroups = [];
       if (Array.isArray(item.customerGroups) && item.customerGroups.length) {
@@ -4241,80 +4342,108 @@ async function openSnapshotRosterDialog() {
         String(item.role).split(/[,，;/]+/).forEach(r => rawRoles.push(r.trim()));
       }
 
-      let existing = findExistingCandidate(staffId, name);
-      if (!existing) {
-        existing = {
-          staffId,
-          name,
-          rawBU: rawBU || '',
-          rawRoles: new Set(),
-          rawCustomerGroups: new Set(),
-          customerGroupIds: new Set(),
-          roles: new Set(),
-          businessUnitId: '',
-          sources: new Set(['incentive']),
-          snapshotTitles: item.snapshotTitles ? [...item.snapshotTitles] : [],
-          meetingDates: [],
-          selected: true
-        };
-        candidateList.push(existing);
-        indexCandidate(existing);
-      } else {
-        existing.sources.add('incentive');
-        const oldId = existing.staffId;
-        existing.staffId = preferCanonicalStaffId(existing.staffId, staffId);
-        if (!existing.name && name) existing.name = name;
-        else if (name) existing.name = preferCanonicalName(existing.name, name);
-        if (!existing.rawBU && rawBU) existing.rawBU = rawBU;
-        if (item.snapshotTitles) existing.snapshotTitles.push(...item.snapshotTitles);
-        if (existing.staffId !== oldId || (!existing.name && name)) {
+      for (const p of parsedPeople) {
+        let staffId = String(p.staffId || '').trim();
+        let name = String(p.name || '').trim();
+        if (isInvalidStaffId(staffId)) {
+          if (!name || name === staffId || isOrderNumber(name)) {
+            appendExtractLog(`ℹ️ [${staffId}] 识别为超长非工号字符(超过10位/单号)，已自动过滤`, 'info');
+            continue;
+          }
+          appendExtractLog(`ℹ️ [${name}] 原工号「${staffId}」超过10位字符，已自动过滤工号仅保留姓名`, 'info');
+          staffId = '';
+        }
+        if (isOrderNumber(name)) {
+          if (!staffId) continue;
+          name = '';
+        }
+        if (!staffId && !name) continue;
+        if (isTotalRow(staffId, name)) continue;
+
+        let existing = findExistingCandidate(staffId, name);
+        if (!existing) {
+          existing = {
+            staffId,
+            name,
+            rawBU: rawBU || '',
+            rawRoles: new Set(),
+            rawCustomerGroups: new Set(),
+            customerGroupIds: new Set(),
+            roles: new Set(),
+            businessUnitId: '',
+            sources: new Set(['incentive']),
+            snapshotTitles: item.snapshotTitles ? [...item.snapshotTitles] : [],
+            meetingDates: [],
+            sourceTraces: [...itemTraces],
+            selected: true
+          };
+          candidateList.push(existing);
           indexCandidate(existing);
+        } else {
+          existing.sources.add('incentive');
+          const oldId = existing.staffId;
+          existing.staffId = preferCanonicalStaffId(existing.staffId, staffId);
+          if (!existing.name && name) existing.name = name;
+          else if (name) existing.name = preferCanonicalName(existing.name, name);
+          if (!existing.rawBU && rawBU) existing.rawBU = rawBU;
+          if (item.snapshotTitles) existing.snapshotTitles.push(...item.snapshotTitles);
+          if (itemTraces.length) {
+            if (!Array.isArray(existing.sourceTraces)) existing.sourceTraces = [];
+            for (const t of itemTraces) {
+              if (!existing.sourceTraces.some(et => et.snapshotTitle === t.snapshotTitle && et.rowNumber === t.rowNumber && et.field === t.field && et.sheetName === t.sheetName)) {
+                existing.sourceTraces.push(t);
+              }
+            }
+          }
+          if (existing.staffId !== oldId || (!existing.name && name)) {
+            indexCandidate(existing);
+          }
         }
-      }
 
-      // Add customer groups
-      rawGroups.forEach(g => {
-        const str = String(g || '').trim();
-        if (!str) return;
-        existing.rawCustomerGroups.add(str);
-        const mapped = resolveMappedCustomerGroup(str);
-        if (mapped) {
-          existing.customerGroupIds.add(mapped);
-          groupMappedCount++;
-        }
-      });
+        // Add customer groups
+        rawGroups.forEach(g => {
+          const str = String(g || '').trim();
+          if (!str) return;
+          existing.rawCustomerGroups.add(str);
+          const mapped = resolveMappedCustomerGroup(str);
+          if (mapped) {
+            existing.customerGroupIds.add(mapped);
+            groupMappedCount++;
+          }
+        });
 
-      // Filter employment categories and add accurate roles
-      let validRolesFound = 0;
-      rawRoles.forEach(r => {
-        const str = String(r || '').trim();
-        if (!str) return;
-        if (isEmploymentCategory(str)) {
-          appendExtractLog(`ℹ️ [${staffId || name}] 发现员工分类字段「${str}」，已自动排除`, 'info');
-          return;
-        }
-        validRolesFound++;
-        existing.rawRoles.add(str);
-        const mapped = resolveMappedRole(str);
-        if (mapped) {
+        // Filter employment categories and add accurate roles
+        let validRolesFound = 0;
+        rawRoles.forEach(r => {
+          const str = String(r || '').trim();
+          if (!str) return;
+          if (isEmploymentCategory(str)) {
+            appendExtractLog(`ℹ️ [${staffId || name}] 发现员工分类字段「${str}」，已自动排除`, 'info');
+            return;
+          }
+          validRolesFound++;
+          existing.rawRoles.add(str);
+          const mapped = resolveMappedRole(str);
+          if (mapped) {
+            existing.roles.add(mapped);
+            roleMappedCount++;
+          }
+        });
+
+        // If no valid role from incentive (e.g. only employment category was present), default to FME
+        if (existing.roles.size === 0 && existing.rawRoles.size === 0) {
+          existing.rawRoles.add('FME');
+          const mapped = resolveMappedRole('FME') || 'FME';
           existing.roles.add(mapped);
-          roleMappedCount++;
         }
-      });
 
-      // If no valid role from incentive (e.g. only employment category was present), default to FME
-      if (existing.roles.size === 0 && existing.rawRoles.size === 0) {
-        existing.rawRoles.add('FME');
-        const mapped = resolveMappedRole('FME') || 'FME';
-        existing.roles.add(mapped);
-      }
-
-      // BU remains singular
-      const isPm = existing.roles.has('PM') || [...existing.rawRoles].some(r => /^\s*pm\s*$/i.test(r));
-      if (isPm) {
-        existing.businessUnitId = matchBU('PMO') || 'PMO';
-      } else if (!existing.businessUnitId && rawBU) {
-        existing.businessUnitId = matchBU(rawBU);
+        // BU remains singular
+        const isPm = existing.roles.has('PM') || [...existing.rawRoles].some(r => /^\s*pm\s*$/i.test(r));
+        if (isPm) {
+          existing.businessUnitId = matchBU('PMO') || 'PMO';
+        } else if (!existing.businessUnitId && rawBU) {
+          existing.businessUnitId = matchBU(rawBU);
+        }
       }
     }
 
@@ -4394,37 +4523,81 @@ async function openSnapshotRosterDialog() {
         _idx: idx,
         isExisting,
         snapshotTitles: [...new Set(cand.snapshotTitles)],
-        meetingDates: [...new Set(cand.meetingDates)]
+        meetingDates: [...new Set(cand.meetingDates)],
+        sourceTraces: Array.isArray(cand.sourceTraces) ? [...cand.sourceTraces] : []
       };
     });
 
-    // 最终唯一性兜底收敛：确保不存在任何重复工号或姓名
+    // 最终唯一性兜底收敛：确保不存在任何重复工号或姓名（同姓名记录完全收敛，只保留信息最全的一条）
     const convergedMap = new Map();
+    const convergedList = [];
+    const convById = new Map();
+    const convByName = new Map();
+
     for (const cand of rawCandidates) {
       const keyId = cand.staffId ? String(cand.staffId).trim().toLowerCase() : '';
       const keyName = cand.name ? normName(cand.name) : '';
-      const primaryKey = keyId || (keyName ? `name:${keyName}` : null);
-      if (!primaryKey) continue;
+      if (!keyId && !keyName) continue;
 
-      if (!convergedMap.has(primaryKey)) {
-        convergedMap.set(primaryKey, cand);
+      let target = null;
+      if (keyId) {
+        target = convById.get(keyId);
+        if (!target) {
+          const digits = normDigits(keyId);
+          if (digits) target = convById.get('digits:' + digits);
+        }
+      }
+      if (!target && keyName) {
+        target = convByName.get(keyName);
+      }
+
+      if (!target) {
+        target = { ...cand };
+        convergedList.push(target);
+        if (keyId) {
+          convById.set(keyId, target);
+          const digits = normDigits(keyId);
+          if (digits) convById.set('digits:' + digits, target);
+        }
+        if (keyName) {
+          convByName.set(keyName, target);
+        }
       } else {
-        const target = convergedMap.get(primaryKey);
+        // Merge cand into target, keeping the most complete information!
+        const canonicalId = preferCanonicalStaffId(target.staffId, cand.staffId);
+        if (canonicalId) {
+          target.staffId = canonicalId;
+          const cLower = canonicalId.toLowerCase();
+          convById.set(cLower, target);
+          const digits = normDigits(cLower);
+          if (digits) convById.set('digits:' + digits, target);
+        }
+        target.name = preferCanonicalName(target.name, cand.name);
+        const tNorm = normName(target.name);
+        if (tNorm) convByName.set(tNorm, target);
+
         cand.sources?.forEach(s => target.sources.add(s));
         cand.customerGroupIds?.forEach(g => target.customerGroupIds.add(g));
         cand.rawCustomerGroups?.forEach(g => target.rawCustomerGroups.add(g));
         cand.roles?.forEach(r => target.roles.add(r));
         cand.rawRoles?.forEach(r => target.rawRoles.add(r));
         if (!target.businessUnitId && cand.businessUnitId) target.businessUnitId = cand.businessUnitId;
-        if (!target.name && cand.name) target.name = cand.name;
-        else target.name = preferCanonicalName(target.name, cand.name);
         target.isExisting = target.isExisting || cand.isExisting;
         cand.snapshotTitles?.forEach(t => { if (!target.snapshotTitles.includes(t)) target.snapshotTitles.push(t); });
         cand.meetingDates?.forEach(d => { if (!target.meetingDates.includes(d)) target.meetingDates.push(d); });
+
+        if (Array.isArray(cand.sourceTraces)) {
+          if (!Array.isArray(target.sourceTraces)) target.sourceTraces = [];
+          for (const tr of cand.sourceTraces) {
+            if (!target.sourceTraces.some(et => et.snapshotTitle === tr.snapshotTitle && et.rowNumber === tr.rowNumber && et.field === tr.field && et.sheetName === tr.sheetName)) {
+              target.sourceTraces.push(tr);
+            }
+          }
+        }
       }
     }
 
-    extractedRosterCandidates = [...convergedMap.values()];
+    extractedRosterCandidates = convergedList;
     existingCount = extractedRosterCandidates.filter(c => c.isExisting).length;
     newCount = extractedRosterCandidates.length - existingCount;
 

@@ -285,6 +285,70 @@ function matchPerson(person, targetStaffId, targetName) {
     return false;
 }
 
+function splitAndParsePeople(rawStr, defaultStaffId = '', defaultName = '') {
+    if (!rawStr) return [];
+    const text = String(rawStr).trim();
+    if (!text) return [];
+
+    const tokens = text.split(/[;\n；|]+/).map(t => t.trim()).filter(Boolean);
+    const results = [];
+
+    for (const token of tokens) {
+        let name = '';
+        let staffId = '';
+
+        let m = token.match(/^(.*?)\s*[(（]([A-Za-z0-9_-]+)[)）]$/);
+        if (m) {
+            name = m[1].trim();
+            staffId = m[2].trim();
+        } else {
+            m = token.match(/^([A-Za-z0-9_-]+)\s*[(（](.*?)[)）]$/);
+            if (m) {
+                staffId = m[1].trim();
+                name = m[2].trim();
+            }
+        }
+
+        if (!staffId) {
+            const mEnd = token.match(/^(.*?)\s+([A-Za-z0-9_-]{4,10})$/);
+            if (mEnd && !isOrderNumber(mEnd[2]) && !isInvalidStaffId(mEnd[2]) && mEnd[1].trim()) {
+                name = mEnd[1].trim();
+                staffId = mEnd[2].trim();
+            }
+        }
+
+        if (!staffId) {
+            const mStart = token.match(/^([A-Za-z0-9_-]{4,10})\s+(.*?)$/);
+            if (mStart && !isOrderNumber(mStart[1]) && !isInvalidStaffId(mStart[1]) && mStart[2].trim()) {
+                staffId = mStart[1].trim();
+                name = mStart[2].trim();
+            }
+        }
+
+        if (!staffId && !name) {
+            if (/[\u4e00-\u9fa5]/.test(token) || /\s+/.test(token)) {
+                name = token;
+                staffId = defaultStaffId || '';
+            } else if (!isInvalidStaffId(token) && /^[A-Za-z0-9_-]{4,10}$/.test(token)) {
+                staffId = token;
+                name = defaultName || '';
+            } else {
+                name = token;
+                staffId = '';
+            }
+        }
+
+        if (isInvalidStaffId(staffId)) staffId = '';
+        if (isOrderNumber(name)) name = '';
+        if (name) name = name.replace(/^[\s,;，；|/()（）\-]+|[\s,;，；|/()（）\-]+$/g, '').trim();
+
+        if ((name || staffId) && !isTotalRow(staffId, name)) {
+            results.push({ name: name || staffId, staffId: staffId || '' });
+        }
+    }
+    return results;
+}
+
 function getSnapshotAttendees(snapshot) {
     if (!snapshot) return [];
     const attendees = [];
@@ -292,7 +356,12 @@ function getSnapshotAttendees(snapshot) {
     const attById = new Map();
     const attByName = new Map();
 
-    const add = (p) => {
+    const getDigits = s => {
+        const d = String(s || '').replace(/^[a-z]+/i, '').trim();
+        return d.length >= 5 ? d : '';
+    };
+
+    const add = (p, traceInfo = null) => {
         if (!p) return;
         let id = String(p.account || p.staffId || p.id || '').trim();
         let name = String(p.name || '').trim();
@@ -310,14 +379,32 @@ function getSnapshotAttendees(snapshot) {
         const bu = isPm ? 'PMO' : (p.bu || p.businessUnit || '');
         const customerGroup = p.customerGroup || p.group || '';
 
-        const key = `${id.toLowerCase()}|${name.toLowerCase()}`;
+        const normN = normName(name);
+        const key = id ? id.toLowerCase() : (normN ? `name:${normN}` : '');
+        if (!key) return;
+
         let existing = attByKey.get(key);
         if (!existing && id) {
             existing = attById.get(id.toLowerCase());
+            if (!existing) {
+                const digits = getDigits(id);
+                if (digits) existing = attById.get('digits:' + digits);
+            }
         }
-        if (!existing && name) {
-            existing = attByName.get(name.toLowerCase());
+        if (!existing && normN) {
+            existing = attByName.get(normN);
         }
+
+        const splitDelimited = val => {
+            if (!val) return [];
+            if (Array.isArray(val)) {
+                return [...new Set(val.flatMap(x => String(x || '').split(/[,，;/]+/).map(s => s.trim()).filter(Boolean)))];
+            }
+            return [...new Set(String(val).split(/[,，;/]+/).map(s => s.trim()).filter(Boolean))];
+        };
+
+        const initGroups = splitDelimited(p.customerGroups && p.customerGroups.length ? p.customerGroups : customerGroup);
+        const initRoles = splitDelimited(p.roles && p.roles.length ? p.roles : role);
 
         if (!existing) {
             const newEntry = {
@@ -327,42 +414,56 @@ function getSnapshotAttendees(snapshot) {
                 name,
                 bu,
                 businessUnit: bu,
-                customerGroup,
-                customerGroups: customerGroup ? [customerGroup] : [],
-                role,
-                roles: role ? [role] : [],
+                customerGroup: initGroups.join(', '),
+                customerGroups: initGroups,
+                role: initRoles.join(', '),
+                roles: initRoles,
                 attendance: p.attendance || p.status || 'Attend on Time',
                 status: p.status || p.attendance || 'Attend on Time',
                 reason: p.reason || '',
                 date: p.date || p.meetingDate || p.attendanceDate || '',
-                attendanceTime: p.attendanceTime || ''
+                attendanceTime: p.attendanceTime || '',
+                sourceTraces: traceInfo ? [traceInfo] : []
             };
             attendees.push(newEntry);
             attByKey.set(key, newEntry);
-            if (id) attById.set(id.toLowerCase(), newEntry);
-            if (name) attByName.set(name.toLowerCase(), newEntry);
+            if (id) {
+                attById.set(id.toLowerCase(), newEntry);
+                const digits = getDigits(id);
+                if (digits) attById.set('digits:' + digits, newEntry);
+            }
+            if (normN) attByName.set(normN, newEntry);
         } else {
+            existing.account = preferCanonicalStaffId(existing.account, id);
+            existing.staffId = preferCanonicalStaffId(existing.staffId, id);
+            existing.id = existing.staffId || existing.account;
+            existing.name = preferCanonicalName(existing.name, name);
+            if (id) {
+                attById.set(id.toLowerCase(), existing);
+                const digits = getDigits(id);
+                if (digits) attById.set('digits:' + digits, existing);
+            }
+            if (normN) attByName.set(normN, existing);
+
             if (p.attendance && (!existing.attendance || isAttendanceAnomaly(p.attendance))) {
                 existing.attendance = p.attendance;
                 existing.status = p.attendance;
             }
             if (!Array.isArray(existing.roles)) {
-                existing.roles = existing.role ? [existing.role] : [];
+                existing.roles = splitDelimited(existing.role);
             }
-            if (role && !existing.roles.includes(role)) {
-                existing.roles.push(role);
+            for (const r of initRoles) {
+                if (r && !existing.roles.includes(r)) existing.roles.push(r);
             }
-            if (role && !existing.role) existing.role = role;
-            else if (existing.roles.length > 0) existing.role = existing.roles.join(', ');
+            existing.role = existing.roles.join(', ');
 
             if (!Array.isArray(existing.customerGroups)) {
-                existing.customerGroups = existing.customerGroup ? [existing.customerGroup] : [];
+                existing.customerGroups = splitDelimited(existing.customerGroup);
             }
-            if (customerGroup && !existing.customerGroups.includes(customerGroup)) {
-                existing.customerGroups.push(customerGroup);
+            for (const g of initGroups) {
+                if (g && !existing.customerGroups.includes(g)) existing.customerGroups.push(g);
             }
-            if (customerGroup && !existing.customerGroup) existing.customerGroup = customerGroup;
-            else if (existing.customerGroups.length > 0) existing.customerGroup = existing.customerGroups.join(', ');
+            existing.customerGroup = existing.customerGroups.join(', ');
 
             const anyPm = isPm || /^\s*pm\s*$/i.test(role) || existing.roles.some(r => /^\s*pm\s*$/i.test(r));
             if (anyPm) {
@@ -378,15 +479,66 @@ function getSnapshotAttendees(snapshot) {
             if (!existing.attendanceTime && p.attendanceTime) {
                 existing.attendanceTime = p.attendanceTime;
             }
+            if (traceInfo) {
+                if (!Array.isArray(existing.sourceTraces)) existing.sourceTraces = [];
+                if (!existing.sourceTraces.some(t => t.snapshotTitle === traceInfo.snapshotTitle && t.rowNumber === traceInfo.rowNumber && t.field === traceInfo.field)) {
+                    existing.sourceTraces.push(traceInfo);
+                }
+            }
         }
     };
 
+    // 核心业务原则：获取员工数据时，只获取“三类合并人员备用名单”（快照输出精华），其他原始表跳过
     if (Array.isArray(snapshot.summary?.attendees) && snapshot.summary.attendees.length) {
-        snapshot.summary.attendees.forEach(add);
+        snapshot.summary.attendees.forEach((a, idx) => {
+            const trace = {
+                source: 'meeting',
+                sourceName: '会议考勤快照',
+                snapshotTitle: snapshot.title || '会议考勤快照',
+                sheetName: '三类合并人员备用名单',
+                rowNumber: idx + 1,
+                field: '参会人员',
+                raw: [a.name, a.account || a.staffId].filter(Boolean).join(' ')
+            };
+            add(a, trace);
+        });
+        return attendees;
     }
-    if (Array.isArray(snapshot.summary?.anomalies) && snapshot.summary.anomalies.length) {
-        snapshot.summary.anomalies.forEach(add);
+
+    // 若无 summary.attendees，检查 payload.sheets 中是否存在显式的“三类合并人员备用名单”表
+    if (snapshot.payload && Array.isArray(snapshot.payload.sheets)) {
+        const combinedSheet = snapshot.payload.sheets.find(s => 
+            /三类合并人员备用名单|Combined.*People List/i.test(s.sheetName || s.name || s.title || '')
+        );
+        if (combinedSheet && Array.isArray(combinedSheet.rows) && combinedSheet.rows.length) {
+            const headers = (combinedSheet.headers || []).map(h => String(h || '').trim());
+            const nameIdx = headers.findIndex(h => /姓名|fullname|\bname\b/i.test(h));
+            const idIdx = headers.findIndex(h => /工号|account|staffid|\bid\b/i.test(h));
+            const buIdx = headers.findIndex(h => /bu|部门/i.test(h));
+            const grpIdx = headers.findIndex(h => /客户群|customer group|customer/i.test(h));
+
+            combinedSheet.rows.forEach((row, rIdx) => {
+                const name = nameIdx >= 0 ? String(row[nameIdx] || '').trim() : '';
+                const account = idIdx >= 0 ? String(row[idIdx] || '').trim() : '';
+                const bu = buIdx >= 0 ? String(row[buIdx] || '').trim() : '';
+                const customerGroup = grpIdx >= 0 ? String(row[grpIdx] || '').trim() : '';
+                if (name || account) {
+                    add({ account, name, bu, customerGroup, attendance: 'Attend on Time' }, {
+                        source: 'meeting',
+                        sourceName: '会议考勤快照',
+                        snapshotTitle: snapshot.title || '会议考勤快照',
+                        sheetName: combinedSheet.sheetName || '三类合并人员备用名单',
+                        rowNumber: rIdx + 1,
+                        field: '参会人员',
+                        raw: `${name} ${account}`.trim()
+                    });
+                }
+            });
+            return attendees;
+        }
     }
+
+    // 兜底方案：仅在无合并备用名单时（如纯原始表的测试数据）降级扫描原始 Sheet
 
     // Helper to parse role-paired cell or free-text names/accounts
     const parsePeopleTokens = (value) => {
@@ -841,6 +993,7 @@ async function extractRoster() {
             const isPm = /^\s*pm\s*$/i.test(a.role || '');
             const resolvedBu = isPm ? 'PMO' : (a.bu || a.businessUnit || '');
 
+            const traces = Array.isArray(a.sourceTraces) ? [...a.sourceTraces] : [];
             if (!existingEntry) {
                 const key = id ? id.toLowerCase() : name.toLowerCase();
                 const cGroups = Array.isArray(a.customerGroups) && a.customerGroups.length ? [...a.customerGroups] : (a.customerGroup ? [a.customerGroup] : []);
@@ -860,7 +1013,8 @@ async function extractRoster() {
                     snapshotTitle: snapTitle,
                     snapshotTitles: snapTitle ? [snapTitle] : [],
                     snapshotDate: snapDate,
-                    meetingDates: snapDate ? [snapDate] : []
+                    meetingDates: snapDate ? [snapDate] : [],
+                    sourceTraces: traces
                 };
                 rosterMap.set(key, newEntry);
                 registerCandidate(newEntry);
@@ -919,11 +1073,102 @@ async function extractRoster() {
 
                 if (snapTitle && !existingEntry.snapshotTitles.includes(snapTitle)) existingEntry.snapshotTitles.push(snapTitle);
                 if (snapDate && !existingEntry.meetingDates.includes(snapDate)) existingEntry.meetingDates.push(snapDate);
+
+                if (traces.length) {
+                    if (!Array.isArray(existingEntry.sourceTraces)) existingEntry.sourceTraces = [];
+                    for (const t of traces) {
+                        if (!existingEntry.sourceTraces.some(et => et.snapshotTitle === t.snapshotTitle && et.rowNumber === t.rowNumber && et.field === t.field)) {
+                            existingEntry.sourceTraces.push(t);
+                        }
+                    }
+                }
             }
         }
     }
 
-    return [...rosterMap.values()].sort((a, b) => (a.staffId || a.id || '').localeCompare(b.staffId || b.id || ''));
+    // 最终唯一性收敛：同姓名记录强制聚合，优先保留非空工号
+    const converged = [];
+    const convById = new Map();
+    const convByName = new Map();
+
+    for (const cand of rosterMap.values()) {
+        const sid = String(cand.staffId || '').trim();
+        const nm = String(cand.name || '').trim();
+        const norm = normName(nm);
+
+        let target = null;
+        if (sid) {
+            target = convById.get(sid.toLowerCase());
+            if (!target) {
+                const digits = getDigits(sid);
+                if (digits) target = convById.get('digits:' + digits);
+            }
+        }
+        if (!target && norm) {
+            target = convByName.get(norm);
+        }
+
+        if (!target) {
+            target = { ...cand };
+            converged.push(target);
+            if (sid) {
+                convById.set(sid.toLowerCase(), target);
+                const digits = getDigits(sid);
+                if (digits) convById.set('digits:' + digits, target);
+            }
+            if (norm) convByName.set(norm, target);
+        } else {
+            const canonicalId = preferCanonicalStaffId(target.staffId, sid);
+            if (canonicalId) {
+                target.staffId = canonicalId;
+                target.id = canonicalId;
+                convById.set(canonicalId.toLowerCase(), target);
+                const digits = getDigits(canonicalId);
+                if (digits) convById.set('digits:' + digits, target);
+            }
+            target.name = preferCanonicalName(target.name, nm);
+            const targetNorm = normName(target.name);
+            if (targetNorm) convByName.set(targetNorm, target);
+
+            // Merge customer groups
+            if (!Array.isArray(target.customerGroups)) target.customerGroups = target.customerGroup ? [target.customerGroup] : [];
+            const newGroups = Array.isArray(cand.customerGroups) && cand.customerGroups.length ? cand.customerGroups : (cand.customerGroup ? [cand.customerGroup] : []);
+            for (const g of newGroups) {
+                if (g && !target.customerGroups.includes(g)) target.customerGroups.push(g);
+            }
+            target.customerGroup = target.customerGroups.join(', ');
+
+            // Merge roles
+            if (!Array.isArray(target.roles)) target.roles = target.role ? [target.role] : [];
+            const newRoles = Array.isArray(cand.roles) && cand.roles.length ? cand.roles : (cand.role ? [cand.role] : []);
+            for (const r of newRoles) {
+                if (r && !target.roles.includes(r)) target.roles.push(r);
+            }
+            target.role = target.roles.join(', ');
+
+            if (target.roles.some(r => /^\s*pm\s*$/i.test(r))) {
+                target.bu = 'PMO';
+                target.businessUnit = 'PMO';
+            } else if (!target.bu && cand.bu) {
+                target.bu = cand.bu;
+                target.businessUnit = cand.bu;
+            }
+
+            cand.snapshotTitles?.forEach(t => { if (!target.snapshotTitles.includes(t)) target.snapshotTitles.push(t); });
+            cand.meetingDates?.forEach(d => { if (!target.meetingDates.includes(d)) target.meetingDates.push(d); });
+
+            if (Array.isArray(cand.sourceTraces)) {
+                if (!Array.isArray(target.sourceTraces)) target.sourceTraces = [];
+                for (const t of cand.sourceTraces) {
+                    if (!target.sourceTraces.some(et => et.snapshotTitle === t.snapshotTitle && et.rowNumber === t.rowNumber && et.field === t.field)) {
+                        target.sourceTraces.push(t);
+                    }
+                }
+            }
+        }
+    }
+
+    return converged.sort((a, b) => (a.staffId || a.id || '').localeCompare(b.staffId || b.id || ''));
 }
 
 module.exports = {

@@ -353,11 +353,12 @@ test('Cross-tool attendance check & roster extraction integration test', async (
 
     await t.test('meetingRepo and incentiveRepo handle fuzzy ID merging (mWX vs WX), PM BU to PMO, total-row filtering, and multi-column customer groups', async () => {
         const testMeetingSnapId = 'meet_test_fuzzy_' + Date.now();
+        const testSheetSnapId = 'meet_test_sheet_' + Date.now();
         const testIncentiveSnapId = 'inc_test_fuzzy_' + Date.now();
 
         const meetingSnap = {
             id: testMeetingSnapId,
-            title: '测试模糊工号与多列快照',
+            title: '测试模糊工号快照',
             meetingDate: '2026-09-23',
             summary: {
                 totalAttendees: 3,
@@ -368,6 +369,14 @@ test('Cross-tool attendance check & roster extraction integration test', async (
                 ],
                 anomalies: []
             },
+            payload: { sheets: [] }
+        };
+
+        const sheetSnap = {
+            id: testSheetSnapId,
+            title: '测试多列客户群Sheet快照',
+            meetingDate: '2026-09-23',
+            summary: {},
             payload: {
                 sheets: [
                     {
@@ -418,6 +427,7 @@ test('Cross-tool attendance check & roster extraction integration test', async (
         };
 
         await meetingRepo.saveSnapshot(meetingSnap);
+        await meetingRepo.saveSnapshot(sheetSnap);
         await incentiveRepo.saveSnapshot(incentiveSnap);
 
         try {
@@ -465,6 +475,7 @@ test('Cross-tool attendance check & roster extraction integration test', async (
             assert.ok(deptHtml.includes('btn-cancel-edit-group-mapping'), 'UI must contain btn-cancel-edit-group-mapping');
         } finally {
             await meetingRepo.deleteSnapshot(testMeetingSnapId);
+            await meetingRepo.deleteSnapshot(testSheetSnapId);
             await incentiveRepo.deleteSnapshot(testIncentiveSnapId);
         }
     });
@@ -481,7 +492,7 @@ test('Cross-tool attendance check & roster extraction integration test', async (
             summary: {
                 totalAttendees: 2,
                 attendees: [
-                    { account: 'WX2001', name: '李多群', role: 'TD', bu: 'Wireless', customerGroup: 'Orange' },
+                    { account: 'WX2001', name: '李多群', role: 'TD, Solution Developer', bu: 'Wireless', customerGroup: 'Orange, VDF' },
                     { account: 'WX2002', name: '张项目', role: 'PM', bu: '', customerGroup: 'Vodafone' }
                 ],
                 anomalies: []
@@ -778,5 +789,100 @@ test('Cross-tool attendance check & roster extraction integration test', async (
             await meetingRepo.deleteSnapshot(snapIdOrder);
         }
     });
+
+    await t.test('Roster extraction strictly uses "三类合并人员备用名单", splits multi-person cells, deduplicates same names, and provides source traces', async () => {
+        const testMeetId = 'meet_strict_' + Date.now();
+        const testIncId = 'inc_strict_' + Date.now();
+
+        // 1. Meeting snapshot: has summary.attendees (三类合并人员备用名单) AND raw RFC sheet with extra dirty data
+        // Under the new rule, ONLY summary.attendees should be extracted; raw RFC sheet MUST be ignored.
+        const meetingSnap = {
+            id: testMeetId,
+            title: '2026-06 会议考勤快照',
+            meetingDate: '2026-06-15',
+            summary: {
+                totalAttendees: 2,
+                attendees: [
+                    { account: '00909378', name: 'Mahmoud Elnaggar', role: 'TD', bu: 'Wireless', customerGroup: 'Orange' },
+                    { account: '', name: 'SameName NoId', role: 'FME', bu: 'IT', customerGroup: 'VDF' }
+                ],
+                anomalies: []
+            },
+            payload: {
+                sheets: [
+                    {
+                        sheetName: 'RFC原始明细',
+                        category: 'rfc',
+                        headers: ['RFC单号', 'Solution Developer'],
+                        rows: [
+                            ['RFC-9999', 'DirtyRawPerson (WX99999)']
+                        ]
+                    }
+                ]
+            }
+        };
+
+        // 2. Incentive snapshot: has semicolon-concatenated multi-person cell and same-name person with staffId
+        const incentiveSnap = {
+            id: testIncId,
+            title: '2026-06 操作激励快照',
+            period: '2026-06',
+            payload: {
+                rawRows: [
+                    {
+                        '操作人': 'Mahmoud Elnaggar 00909378;Ibrahim Youssef 00823621;Mohamed Abuelazm 00593179',
+                        __bu: 'Core',
+                        '客户名称': 'ET'
+                    },
+                    {
+                        '操作人': 'SameName NoId 00112233',
+                        __bu: 'IT',
+                        '客户名称': 'VDF'
+                    }
+                ]
+            }
+        };
+
+        await meetingRepo.saveSnapshot(meetingSnap);
+        await incentiveRepo.saveSnapshot(incentiveSnap);
+
+        try {
+            // Test 1: Meeting repo strictly ignores raw RFC sheet when combined list is present
+            const meetRoster = await meetingRepo.extractRoster();
+            assert.ok(!meetRoster.some(r => r.name === 'DirtyRawPerson' || r.staffId === 'WX99999'), 'Meeting repo must NOT scan raw RFC sheets when combined list is present');
+            const mahmoudMeet = meetRoster.find(r => r.staffId === '00909378');
+            assert.ok(mahmoudMeet, 'Mahmoud Elnaggar should be in meeting roster');
+            assert.ok(mahmoudMeet.sourceTraces && mahmoudMeet.sourceTraces.length > 0, 'Should have sourceTraces');
+            assert.equal(mahmoudMeet.sourceTraces[0].sheetName, '三类合并人员备用名单');
+
+            // Test 2: Incentive repo splits semicolon-separated multi-person cells
+            const incRoster = await incentiveRepo.extractRoster();
+            const ibrahim = incRoster.find(r => r.staffId === '00823621');
+            assert.ok(ibrahim, 'Ibrahim Youssef should be split out with staffId 00823621');
+            assert.equal(ibrahim.name, 'Ibrahim Youssef');
+            assert.ok(ibrahim.sourceTraces && ibrahim.sourceTraces.length > 0);
+            assert.equal(ibrahim.sourceTraces[0].rowNumber, 1);
+            assert.equal(ibrahim.sourceTraces[0].field, '操作人');
+
+            const mohamed = incRoster.find(r => r.staffId === '00593179');
+            assert.ok(mohamed, 'Mohamed Abuelazm should be split out with staffId 00593179');
+            assert.equal(mohamed.name, 'Mohamed Abuelazm');
+
+            // Test 3: Same-name deduplication & staffId retention
+            const sameNamePerson = incRoster.find(r => r.name === 'SameName NoId');
+            assert.ok(sameNamePerson, 'SameName NoId should exist');
+            assert.equal(sameNamePerson.staffId, '00112233', 'Should retain non-empty staffId');
+
+            // Test 4: Frontend UI has source-trace-badge, formatSourceTraceTooltip, and splitAndParsePeople
+            const deptHtml = fs.readFileSync(path.join(__dirname, '../backend/builtin-tools/department-reward-penalty/index.html'), 'utf-8');
+            assert.ok(deptHtml.includes('formatSourceTraceTooltip'), 'UI must define formatSourceTraceTooltip');
+            assert.ok(deptHtml.includes('source-trace-badge'), 'UI must render source-trace-badge');
+            assert.ok(deptHtml.includes('splitAndParsePeople'), 'UI must define splitAndParsePeople');
+        } finally {
+            await meetingRepo.deleteSnapshot(testMeetId);
+            await incentiveRepo.deleteSnapshot(testIncId);
+        }
+    });
 });
+
 
