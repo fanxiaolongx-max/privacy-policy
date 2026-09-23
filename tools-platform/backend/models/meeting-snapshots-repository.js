@@ -427,14 +427,24 @@ async function checkPersonAttendance({ staffId, name }) {
 async function batchCheckAttendance(persons = []) {
     await ensureReady();
     if (!Array.isArray(persons) || !persons.length) return {};
-    const snapshots = await listSnapshots({ includePayload: true });
+    const snapshots = await listSnapshots({ includePayload: false });
     
-    const snapshotAttendeesList = snapshots.map(s => ({
-        snapshotId: s.id,
-        title: s.title,
-        meetingDate: s.meetingDate || s.meeting_date || '',
-        attendees: getSnapshotAttendees(s)
-    }));
+    const snapshotAttendeesList = [];
+    for (const s of snapshots) {
+        let snapToUse = s;
+        if (!Array.isArray(s.summary?.attendees) || !s.summary.attendees.length) {
+            try {
+                const full = await getSnapshot(s.id);
+                if (full) snapToUse = full;
+            } catch (_) {}
+        }
+        snapshotAttendeesList.push({
+            snapshotId: snapToUse.id,
+            title: snapToUse.title,
+            meetingDate: snapToUse.meetingDate || snapToUse.meeting_date || '',
+            attendees: getSnapshotAttendees(snapToUse)
+        });
+    }
 
     const result = {};
     for (const p of persons) {
@@ -500,18 +510,26 @@ async function batchCheckAttendance(persons = []) {
 
 async function extractRoster() {
     await ensureReady();
-    const snapshots = await listSnapshots({ includePayload: true });
+    const snapshots = await listSnapshots({ includePayload: false });
     const rosterMap = new Map();
 
     for (const snap of snapshots) {
-        const attendees = getSnapshotAttendees(snap);
+        let snapToUse = snap;
+        // If snapshot has no attendees in summary, load full snapshot payload on demand
+        if (!Array.isArray(snap.summary?.attendees) || !snap.summary.attendees.length) {
+            try {
+                const full = await getSnapshot(snap.id);
+                if (full) snapToUse = full;
+            } catch (_) {}
+        }
+        const attendees = getSnapshotAttendees(snapToUse);
         for (const a of attendees) {
             const id = String(a.account || a.staffId || a.id || '').trim();
             const name = String(a.name || '').trim();
             if (!id && !name) continue;
             const key = id ? id.toLowerCase() : name.toLowerCase();
-            const snapTitle = snap.title || '';
-            const snapDate = snap.meetingDate || snap.meeting_date || '';
+            const snapTitle = snapToUse.title || '';
+            const snapDate = snapToUse.meetingDate || snapToUse.meeting_date || '';
 
             if (!rosterMap.has(key)) {
                 rosterMap.set(key, {

@@ -668,6 +668,9 @@ dialog::backdrop{background:rgba(15,23,42,.48);backdrop-filter:blur(5px);-webkit
 .backup-diff-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
 .backup-diff-table th{background:#f1f5f9;color:#475569;padding:6px 10px;text-align:left;font-weight:600}
 .backup-diff-table td{padding:6px 10px;border-bottom:1px solid #f1f5f9;color:#1e293b}
+@keyframes spin { 100% { transform: rotate(360deg); } }
+.extract-log-line{padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.04);word-break:break-all;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono',monospace;}
+.extract-log-time{color:#64748b;margin-right:6px;user-select:none;}
 </style>
 </head>
 <body>
@@ -1390,6 +1393,74 @@ dialog::backdrop{background:rgba(15,23,42,.48);backdrop-filter:blur(5px);-webkit
           </thead>
           <tbody id="extract-roster-tbody"></tbody>
         </table>
+      </div>
+
+      <!-- 提取进度与详细诊断日志容器 -->
+      <div id="extract-loading-container" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span id="extract-loading-spinner" style="font-size:16px;display:inline-block;animation:spin 1s linear infinite;">⏳</span>
+            <span id="extract-step-desc" style="font-size:12.5px;font-weight:700;color:#1e293b;">正在从会议考勤快照与操作激励快照聚合提取人员名单...</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span id="extract-progress-percent" style="font-size:13px;font-weight:800;color:#2563eb;font-family:monospace;">0%</span>
+            <button type="button" id="btn-retry-extract" class="primary mini" style="display:none;font-size:11px;padding:3px 10px;cursor:pointer;border-radius:5px;font-weight:700;">🔄 重新提取</button>
+          </div>
+        </div>
+
+        <!-- 进度条轨道 -->
+        <div style="width:100%;height:7px;background:#e2e8f0;border-radius:999px;overflow:hidden;position:relative;">
+          <div id="extract-progress-bar" style="width:0%;height:100%;background:linear-gradient(90deg, #3b82f6, #06b6d4);transition:width 0.25s ease;border-radius:999px;"></div>
+        </div>
+
+        <!-- 分步状态卡片 -->
+        <div id="extract-step-badges" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));gap:6px;">
+          <div id="extract-step-badge-1" style="background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:5px 8px;font-size:11px;display:flex;align-items:center;gap:6px;">
+            <span class="step-icon" style="font-size:12px;">⚪</span>
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:600;color:#334155;">1. 映射规则</div>
+              <div class="step-detail" style="font-size:10px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">等待中</div>
+            </div>
+          </div>
+          <div id="extract-step-badge-2" style="background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:5px 8px;font-size:11px;display:flex;align-items:center;gap:6px;">
+            <span class="step-icon" style="font-size:12px;">⚪</span>
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:600;color:#334155;">2. 会议考勤快照</div>
+              <div class="step-detail" style="font-size:10px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">等待中</div>
+            </div>
+          </div>
+          <div id="extract-step-badge-3" style="background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:5px 8px;font-size:11px;display:flex;align-items:center;gap:6px;">
+            <span class="step-icon" style="font-size:12px;">⚪</span>
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:600;color:#334155;">3. 操作激励快照</div>
+              <div class="step-detail" style="font-size:10px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">等待中</div>
+            </div>
+          </div>
+          <div id="extract-step-badge-4" style="background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:5px 8px;font-size:11px;display:flex;align-items:center;gap:6px;">
+            <span class="step-icon" style="font-size:12px;">⚪</span>
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:600;color:#334155;">4. 跨源名册聚合</div>
+              <div class="step-detail" style="font-size:10px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">等待中</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 详细日志控制台 -->
+        <div id="extract-log-wrapper" style="border:1px solid #cbd5e1;border-radius:8px;background:#0f172a;overflow:hidden;box-shadow:inset 0 2px 4px rgba(0,0,0,0.2);">
+          <div style="padding:5px 10px;background:#1e293b;border-bottom:1px solid #334155;display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-size:11px;">📟</span>
+              <span style="font-size:11.5px;font-weight:700;color:#e2e8f0;">详细诊断日志</span>
+              <span id="extract-log-count-badge" style="background:#334155;color:#94a3b8;font-size:10px;padding:1px 6px;border-radius:999px;">0 条</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <button type="button" id="btn-copy-extract-logs" style="font-size:10.5px;padding:2px 8px;background:#334155;color:#f1f5f9;border:1px solid #475569;cursor:pointer;border-radius:4px;">📋 复制日志</button>
+              <button type="button" id="btn-toggle-extract-log-body" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:11px;padding:2px 4px;" title="收起/展开日志">▲ 收起日志</button>
+            </div>
+          </div>
+          <div id="extract-log-terminal" style="max-height:130px;overflow-y:auto;padding:8px 10px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono',monospace;font-size:11px;line-height:1.55;color:#94a3b8;">
+          </div>
+        </div>
       </div>
     </div>
     <div class="dialog-foot" style="padding:12px 22px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;">
@@ -2773,14 +2844,17 @@ function updateExtractSummary() {
   const missingCount = totalSelected - readyCount;
   const newCount = selected.filter(c => !c.isExisting).length;
 
+  const logBtnHtml = `<button type="button" id="btn-toggle-extract-log-summary" style="margin-left:8px;background:none;border:none;color:#2563eb;font-size:12px;cursor:pointer;text-decoration:underline;padding:0;">📋 诊断日志 (<span id="extract-log-summary-count">${extractLogs.length}</span>条)</button>`;
+
   if (totalSelected === 0) {
-    summaryEl.innerHTML = '<span style="color:#64748b;">未勾选任何人员</span>';
+    summaryEl.innerHTML = '<span style="color:#64748b;">未勾选任何人员</span>' + (extractLogs.length ? logBtnHtml : '');
     return;
   }
 
   summaryEl.innerHTML = `已选 <b>${totalSelected}</b> 人 (包含新人员 <b>${newCount}</b> 人) · ` +
     `<span style="color:#16a34a;font-weight:600;">已补齐必填项 ${readyCount} 人</span>` +
-    (missingCount > 0 ? ` · <span style="color:#dc2626;font-weight:700;">⚠️ 仍有 ${missingCount} 人缺少必填项 (工号/姓名/客户群/角色)</span>` : '');
+    (missingCount > 0 ? ` · <span style="color:#dc2626;font-weight:700;">⚠️ 仍有 ${missingCount} 人缺少必填项 (工号/姓名/客户群/角色)</span>` : '') +
+    logBtnHtml;
 }
 
 function renderExtractRosterTable() {
@@ -3232,6 +3306,60 @@ async function saveSnapshotMappingsHandler() {
   }
 }
 
+let extractLogs = [];
+
+function clearExtractLogs() {
+  extractLogs = [];
+  const term = $('extract-log-terminal');
+  if (term) term.innerHTML = '';
+  const countBadge = $('extract-log-count-badge');
+  if (countBadge) countBadge.textContent = '0 条';
+  const summaryCount = $('extract-log-summary-count');
+  if (summaryCount) summaryCount.textContent = '0';
+}
+
+function appendExtractLog(msg, type = 'info') {
+  const now = new Date();
+  const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}.${String(now.getMilliseconds()).padStart(3, '0')}`;
+  extractLogs.push({ time: timeStr, msg, type });
+  const term = $('extract-log-terminal');
+  if (term) {
+    const line = document.createElement('div');
+    line.className = 'extract-log-line';
+    let colorStyle = 'color:#94a3b8;';
+    if (type === 'success') colorStyle = 'color:#4ade80;font-weight:600;';
+    else if (type === 'warning') colorStyle = 'color:#facc15;font-weight:600;';
+    else if (type === 'error') colorStyle = 'color:#f87171;font-weight:700;';
+    line.innerHTML = `<span class="extract-log-time">[${timeStr}]</span><span style="${colorStyle}">${escapeHtml(msg)}</span>`;
+    term.appendChild(line);
+    term.scrollTop = term.scrollHeight;
+  }
+  const countBadge = $('extract-log-count-badge');
+  if (countBadge) countBadge.textContent = `${extractLogs.length} 条`;
+  const summaryCount = $('extract-log-summary-count');
+  if (summaryCount) summaryCount.textContent = String(extractLogs.length);
+}
+
+function setExtractProgress(percent, desc, badgeUpdates = {}) {
+  const pBar = $('extract-progress-bar');
+  if (pBar) pBar.style.width = `${Math.min(100, Math.max(0, percent))}%`;
+  const pText = $('extract-progress-percent');
+  if (pText) pText.textContent = `${Math.min(100, Math.max(0, percent))}%`;
+  const pDesc = $('extract-step-desc');
+  if (pDesc && desc) pDesc.textContent = desc;
+
+  for (const [badgeId, info] of Object.entries(badgeUpdates)) {
+    const card = $(badgeId);
+    if (!card) continue;
+    const icon = card.querySelector('.step-icon');
+    const detail = card.querySelector('.step-detail');
+    if (icon && info.icon) icon.textContent = info.icon;
+    if (detail && info.detail) detail.textContent = info.detail;
+    if (info.bg) card.style.background = info.bg;
+    if (info.border) card.style.borderColor = info.border;
+  }
+}
+
 async function openSnapshotRosterDialog() {
   if (!state.canEdit) {
     await uiAlert('当前登录身份权限不足，仅管理员可从快照提取名单导入在册人员', '权限受限', 'warning', '🔒');
@@ -3244,9 +3372,31 @@ async function openSnapshotRosterDialog() {
   scannedUnmappedRoles.clear();
   scannedUnmappedGroups.clear();
   currentExtractFilter = 'all';
+
+  const container = $('extract-loading-container');
+  if (container) container.style.display = 'flex';
+  const retryBtn = $('btn-retry-extract');
+  if (retryBtn) retryBtn.style.display = 'none';
+  const spinner = $('extract-loading-spinner');
+  if (spinner) {
+    spinner.textContent = '⏳';
+    spinner.style.animation = 'spin 1s linear infinite';
+  }
+
+  clearExtractLogs();
+  setExtractProgress(5, '正在初始化扫描环境与快照映射…', {
+    'extract-step-badge-1': { icon: '⏳', detail: '读取映射中...', bg: '#fff', border: '#cbd5e1' },
+    'extract-step-badge-2': { icon: '⚪', detail: '等待中', bg: '#fff', border: '#e2e8f0' },
+    'extract-step-badge-3': { icon: '⚪', detail: '等待中', bg: '#fff', border: '#e2e8f0' },
+    'extract-step-badge-4': { icon: '⚪', detail: '等待中', bg: '#fff', border: '#e2e8f0' }
+  });
+
+  appendExtractLog('🚀 开始跨快照聚合提取人员名单任务...', 'info');
+  appendExtractLog(`ℹ️ 本地名册当前在册人员数: ${(state.personnel || []).length} 人`, 'info');
+
   const tbody = $('extract-roster-tbody');
   if (tbody) {
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:#64748b;"><span style="font-size:18px;">⏳</span> 正在从会议考勤快照与操作激励快照聚合提取人员名单...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:#64748b;"><span style="font-size:18px;">⏳</span> 正在从会议考勤快照与操作激励快照聚合提取人员名单...（详细进度与日志见下方）</td></tr>';
   }
   const searchInput = $('extract-search-input');
   if (searchInput) searchInput.value = '';
@@ -3267,20 +3417,98 @@ async function openSnapshotRosterDialog() {
   dialog.showModal();
 
   try {
-    if (!state.snapshotMappings) {
-      try {
-        const mappingsRes = await request('/snapshot-mappings');
-        if (mappingsRes) state.snapshotMappings = mappingsRes;
-      } catch (_) {}
+    // 步骤 1: 读取映射规则
+    try {
+      appendExtractLog('🔀 正在向服务器请求字段映射规则 (/snapshot-mappings)...', 'info');
+      if (!state.snapshotMappings) {
+        const mappingRes = await Promise.race([
+          request('/snapshot-mappings'),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('映射配置请求超时')), 8000))
+        ]);
+        if (mappingRes) state.snapshotMappings = mappingRes;
+      }
+      const roleCount = (state.snapshotMappings?.roles || []).length;
+      const groupCount = (state.snapshotMappings?.customerGroups || []).length;
+      appendExtractLog(`✅ 字段映射规则就绪：已载入 ${roleCount} 条角色映射规则，${groupCount} 条客户群映射规则`, 'success');
+      setExtractProgress(20, '字段映射规则就绪，开始并行拉取快照数据...', {
+        'extract-step-badge-1': { icon: '✅', detail: `角色:${roleCount}, 客户群:${groupCount}`, bg: '#f0fdf4', border: '#bbf7d0' },
+        'extract-step-badge-2': { icon: '⏳', detail: '正在拉取...', bg: '#eff6ff', border: '#bfdbfe' },
+        'extract-step-badge-3': { icon: '⏳', detail: '正在拉取...', bg: '#eff6ff', border: '#bfdbfe' }
+      });
+    } catch (mErr) {
+      appendExtractLog(`⚠️ 映射规则获取异常 (${mErr.message})，将使用内置基线规则`, 'warning');
+      setExtractProgress(20, '映射配置就绪，开始拉取快照数据...', {
+        'extract-step-badge-1': { icon: '⚠️', detail: '使用基线规则', bg: '#fefce8', border: '#fef08a' },
+        'extract-step-badge-2': { icon: '⏳', detail: '正在拉取...', bg: '#eff6ff', border: '#bfdbfe' },
+        'extract-step-badge-3': { icon: '⏳', detail: '正在拉取...', bg: '#eff6ff', border: '#bfdbfe' }
+      });
     }
 
-    const [meetingRes, incentiveRes] = await Promise.all([
-      fetch('/api/meeting-snapshots/extract-roster').then(r => r.ok ? r.json() : { roster: [] }).catch(() => ({ roster: [] })),
-      fetch('/api/operation-incentive-snapshots/extract-roster').then(r => r.ok ? r.json() : { roster: [] }).catch(() => ({ roster: [] }))
-    ]);
+    // 步骤 2 & 3: 并行拉取会议考勤快照与操作激励快照人员
+    const fetchEndpoint = async (url, label, timeoutMs = 25000) => {
+      const t0 = performance.now();
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      appendExtractLog(`📡 正在拉取 ${label} 数据: GET ${url} ...`, 'info');
+      try {
+        const res = await fetch(url, { credentials: 'same-origin', signal: controller.signal });
+        clearTimeout(timeoutId);
+        const elapsed = Math.round(performance.now() - t0);
+        if (!res.ok) {
+          appendExtractLog(`❌ ${label} 接口返回异常: HTTP ${res.status} (${elapsed}ms)`, 'error');
+          return { roster: [], error: `HTTP ${res.status}`, elapsed };
+        }
+        const data = await res.json().catch(() => ({ roster: [] }));
+        const count = Array.isArray(data.roster) ? data.roster.length : 0;
+        appendExtractLog(`✅ ${label} 响应成功: 获取 ${count} 条人员记录 (耗时 ${elapsed}ms)`, 'success');
+        return { roster: data.roster || [], count, elapsed };
+      } catch (err) {
+        clearTimeout(timeoutId);
+        const elapsed = Math.round(performance.now() - t0);
+        const isTimeout = err.name === 'AbortError';
+        const msg = isTimeout ? `请求超时 (${timeoutMs / 1000}s)` : err.message;
+        appendExtractLog(`❌ ${label} 拉取失败: ${msg} (${elapsed}ms)`, 'error');
+        return { roster: [], error: msg, elapsed };
+      }
+    };
 
-    const meetingRoster = Array.isArray(meetingRes?.roster) ? meetingRes.roster : [];
-    const incentiveRoster = Array.isArray(incentiveRes?.roster) ? incentiveRes.roster : [];
+    let pCurrent = 20;
+    const meetingTask = fetchEndpoint('/api/meeting-snapshots/extract-roster', '会议考勤快照').then(res => {
+      pCurrent = Math.max(pCurrent + 35, 55);
+      setExtractProgress(pCurrent, '会议考勤快照拉取完毕，等待操作激励数据...', {
+        'extract-step-badge-2': {
+          icon: res.error ? '❌' : '✅',
+          detail: res.error ? res.error : `提取 ${res.count} 人 (${res.elapsed}ms)`,
+          bg: res.error ? '#fef2f2' : '#f0fdf4',
+          border: res.error ? '#fca5a5' : '#bbf7d0'
+        }
+      });
+      return res;
+    });
+
+    const incentiveTask = fetchEndpoint('/api/operation-incentive-snapshots/extract-roster', '操作激励快照').then(res => {
+      pCurrent = Math.max(pCurrent + 30, 80);
+      setExtractProgress(pCurrent, '操作激励快照拉取完毕，正在准备数据聚合...', {
+        'extract-step-badge-3': {
+          icon: res.error ? '❌' : '✅',
+          detail: res.error ? res.error : `提取 ${res.count} 人 (${res.elapsed}ms)`,
+          bg: res.error ? '#fef2f2' : '#f0fdf4',
+          border: res.error ? '#fca5a5' : '#bbf7d0'
+        }
+      });
+      return res;
+    });
+
+    const [meetingRes, incentiveRes] = await Promise.all([meetingTask, incentiveTask]);
+
+    const meetingRoster = meetingRes.roster;
+    const incentiveRoster = incentiveRes.roster;
+
+    // 步骤 4: 跨源聚合与去重比对
+    setExtractProgress(88, '正在进行跨数据源去重、角色与客户群映射匹配...', {
+      'extract-step-badge-4': { icon: '⏳', detail: '聚合去重中...', bg: '#eff6ff', border: '#bfdbfe' }
+    });
+    appendExtractLog('🔄 开始跨快照交叉聚合人员名单并执行自动映射...', 'info');
 
     const candidateMap = new Map();
     const activeBUs = active('businessUnits');
@@ -3292,6 +3520,9 @@ async function openSnapshotRosterDialog() {
       return match ? match.id : '';
     };
 
+    let roleMappedCount = 0;
+    let groupMappedCount = 0;
+
     for (const item of meetingRoster) {
       const staffId = String(item.staffId || '').trim();
       const name = String(item.name || '').trim();
@@ -3301,6 +3532,10 @@ async function openSnapshotRosterDialog() {
       const rawRole = String(item.role || '').trim();
       const rawCustomerGroup = String(item.customerGroup || item.customer || '').trim();
       const rawBU = String(item.businessUnit || item.bu || '').trim();
+      const mappedGroup = resolveMappedCustomerGroup(rawCustomerGroup);
+      const mappedRole = resolveMappedRole(rawRole);
+      if (mappedRole) roleMappedCount++;
+      if (mappedGroup) groupMappedCount++;
 
       if (!candidateMap.has(key)) {
         candidateMap.set(key, {
@@ -3308,9 +3543,9 @@ async function openSnapshotRosterDialog() {
           name,
           rawRole,
           rawCustomerGroup,
-          customerGroupId: resolveMappedCustomerGroup(rawCustomerGroup),
+          customerGroupId: mappedGroup,
           businessUnitId: matchBU(rawBU),
-          role: resolveMappedRole(rawRole),
+          role: mappedRole,
           sources: new Set(['meeting']),
           snapshotTitles: item.snapshotTitles ? [...item.snapshotTitles] : [],
           meetingDates: item.meetingDates ? [...item.meetingDates] : [],
@@ -3321,9 +3556,9 @@ async function openSnapshotRosterDialog() {
         cand.sources.add('meeting');
         if (!cand.rawRole && rawRole) cand.rawRole = rawRole;
         if (!cand.rawCustomerGroup && rawCustomerGroup) cand.rawCustomerGroup = rawCustomerGroup;
-        if (!cand.customerGroupId) cand.customerGroupId = resolveMappedCustomerGroup(rawCustomerGroup);
+        if (!cand.customerGroupId && mappedGroup) cand.customerGroupId = mappedGroup;
         if (!cand.businessUnitId) cand.businessUnitId = matchBU(rawBU);
-        if (!cand.role) cand.role = resolveMappedRole(rawRole);
+        if (!cand.role && mappedRole) cand.role = mappedRole;
         if (item.snapshotTitles) cand.snapshotTitles.push(...item.snapshotTitles);
         if (item.meetingDates) cand.meetingDates.push(...item.meetingDates);
       }
@@ -3338,6 +3573,10 @@ async function openSnapshotRosterDialog() {
       const rawRole = String(item.role || '').trim();
       const rawCustomerGroup = String(item.customerGroup || item.customer || '').trim();
       const rawBU = String(item.businessUnit || item.bu || '').trim();
+      const mappedGroup = resolveMappedCustomerGroup(rawCustomerGroup);
+      const mappedRole = resolveMappedRole(rawRole);
+      if (mappedRole) roleMappedCount++;
+      if (mappedGroup) groupMappedCount++;
 
       if (!candidateMap.has(key)) {
         candidateMap.set(key, {
@@ -3345,9 +3584,9 @@ async function openSnapshotRosterDialog() {
           name,
           rawRole,
           rawCustomerGroup,
-          customerGroupId: resolveMappedCustomerGroup(rawCustomerGroup),
+          customerGroupId: mappedGroup,
           businessUnitId: matchBU(rawBU),
-          role: resolveMappedRole(rawRole),
+          role: mappedRole,
           sources: new Set(['incentive']),
           snapshotTitles: item.snapshotTitles ? [...item.snapshotTitles] : [],
           meetingDates: [],
@@ -3358,23 +3597,29 @@ async function openSnapshotRosterDialog() {
         cand.sources.add('incentive');
         if (!cand.rawRole && rawRole) cand.rawRole = rawRole;
         if (!cand.rawCustomerGroup && rawCustomerGroup) cand.rawCustomerGroup = rawCustomerGroup;
-        if (!cand.customerGroupId) cand.customerGroupId = resolveMappedCustomerGroup(rawCustomerGroup);
+        if (!cand.customerGroupId && mappedGroup) cand.customerGroupId = mappedGroup;
         if (!cand.businessUnitId) cand.businessUnitId = matchBU(rawBU);
-        if (!cand.role) cand.role = resolveMappedRole(rawRole);
+        if (!cand.role && mappedRole) cand.role = mappedRole;
         if (item.snapshotTitles) cand.snapshotTitles.push(...item.snapshotTitles);
       }
     }
 
     const existingPersonnel = state.personnel || [];
+    let existingCount = 0;
+    let newCount = 0;
+
     extractedRosterCandidates = Array.from(candidateMap.values()).map(cand => {
       const existing = existingPersonnel.find(p => !p.archived && ((cand.staffId && p.id === cand.staffId) || (cand.name && p.name === cand.name)));
       const isExisting = Boolean(existing);
-      if (existing) {
+      if (isExisting) {
+        existingCount++;
         if (!cand.customerGroupId && personGroups(existing).length) cand.customerGroupId = personGroups(existing)[0];
         if (!cand.businessUnitId && personBusinessUnits(existing).length) cand.businessUnitId = personBusinessUnits(existing)[0];
         if (!cand.role && personRoles(existing).length) cand.role = personRoles(existing)[0];
         if (!cand.staffId && existing.id) cand.staffId = existing.id;
         if (!cand.name && existing.name) cand.name = existing.name;
+      } else {
+        newCount++;
       }
       return {
         ...cand,
@@ -3389,14 +3634,54 @@ async function openSnapshotRosterDialog() {
       return (a.name || '').localeCompare(b.name || '', 'zh-CN');
     });
 
+    appendExtractLog(`📊 聚合统计：共生成 ${extractedRosterCandidates.length} 位候选人员 (现有在册: ${existingCount} 人, 新候选人: ${newCount} 人)`, 'info');
+    appendExtractLog(`🏷️ 字段映射：角色规则匹配 ${roleMappedCount} 次，客户群规则匹配 ${groupMappedCount} 次`, 'info');
+
     updateScannedUnmappedBanner();
+    if (scannedUnmappedRoles.size > 0) {
+      appendExtractLog(`⚠️ 发现待配置映射的原始角色 (${scannedUnmappedRoles.size}个): [${[...scannedUnmappedRoles].join(', ')}]`, 'warning');
+    }
+    if (scannedUnmappedGroups.size > 0) {
+      appendExtractLog(`⚠️ 发现待配置映射的原始客户群 (${scannedUnmappedGroups.size}个): [${[...scannedUnmappedGroups].join(', ')}]`, 'warning');
+    }
+
+    setExtractProgress(100, `✅ 提取完成！共聚合 ${extractedRosterCandidates.length} 位候选人员`, {
+      'extract-step-badge-4': {
+        icon: '✅',
+        detail: `聚合 ${extractedRosterCandidates.length} 人 (新:${newCount})`,
+        bg: '#f0fdf4',
+        border: '#bbf7d0'
+      }
+    });
+
+    if (spinner) {
+      spinner.textContent = '✅';
+      spinner.style.animation = 'none';
+    }
+
+    appendExtractLog('🎉 快照人员名单提取与渲染就绪', 'success');
+
+    if (extractedRosterCandidates.length === 0) {
+      appendExtractLog('⚠️ 未能从历史快照中解析到任何候选人员，请检查快照库中是否有已保存的会议考勤或操作激励快照', 'warning');
+      if (retryBtn) retryBtn.style.display = 'inline-block';
+    }
+
     updateExtractCounts();
     document.querySelectorAll('[data-extract-source]').forEach(t => t.classList.toggle('active', t.dataset.extractSource === 'all'));
     renderExtractRosterTable();
   } catch (err) {
     console.error('Failed to extract roster:', err);
+    appendExtractLog(`❌ 提取流程发生未捕获异常: ${err.message}`, 'error');
+    setExtractProgress(100, `❌ 提取发生错误：${err.message}`, {
+      'extract-step-badge-4': { icon: '❌', detail: '流程异常', bg: '#fef2f2', border: '#fca5a5' }
+    });
+    if (spinner) {
+      spinner.textContent = '❌';
+      spinner.style.animation = 'none';
+    }
+    if (retryBtn) retryBtn.style.display = 'inline-block';
     if (tbody) {
-      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:30px;color:#ef4444;">⚠️ 提取人员名单失败：${escapeHtml(err.message)}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:30px;color:#ef4444;">⚠️ 提取人员名单失败：${escapeHtml(err.message)}（详见下方诊断日志）</td></tr>`;
     }
   }
 }
@@ -5169,6 +5454,46 @@ if(event.target.closest('#btn-batch-personnel')){
 }
 if(event.target.closest('#btn-extract-roster')){
   openSnapshotRosterDialog();
+  return;
+}
+if(event.target.closest('#btn-copy-extract-logs')){
+  const text = extractLogs.map(l => `[${l.time}] [${l.type.toUpperCase()}] ${l.msg}`).join('\n');
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>{
+      const btn = $('btn-copy-extract-logs');
+      if(btn){
+        const old = btn.textContent;
+        btn.textContent = '✅ 已复制';
+        setTimeout(() => { btn.textContent = old; }, 2000);
+      }
+    }).catch(()=>{});
+  }
+  return;
+}
+if(event.target.closest('#btn-retry-extract')){
+  openSnapshotRosterDialog();
+  return;
+}
+if(event.target.closest('#btn-toggle-extract-log-body')){
+  const term = $('extract-log-terminal');
+  const btn = $('btn-toggle-extract-log-body');
+  if(term){
+    const isHidden = term.style.display === 'none';
+    term.style.display = isHidden ? 'block' : 'none';
+    if(btn) btn.textContent = isHidden ? '▲ 收起日志' : '▼ 展开日志';
+  }
+  return;
+}
+if(event.target.closest('#btn-toggle-extract-log-summary')){
+  const c = $('extract-loading-container');
+  const term = $('extract-log-terminal');
+  const btn = $('btn-toggle-extract-log-body');
+  if(c){
+    c.style.display = 'flex';
+    if(term) term.style.display = 'block';
+    if(btn) btn.textContent = '▲ 收起日志';
+    c.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
   return;
 }
 if(event.target.closest('#close-snapshot-roster')||event.target.closest('#cancel-snapshot-roster')){
