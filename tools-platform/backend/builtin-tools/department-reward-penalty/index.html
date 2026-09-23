@@ -1394,6 +1394,7 @@ dialog::backdrop{background:rgba(15,23,42,.48);backdrop-filter:blur(5px);-webkit
           <tbody id="extract-roster-tbody"></tbody>
         </table>
       </div>
+      <div class="pager" id="pager-extract-roster" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;padding:4px 2px;margin-top:2px;"></div>
 
       <!-- 提取进度与详细诊断日志容器 -->
       <div id="extract-loading-container" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;">
@@ -2841,12 +2842,19 @@ async function openBatchPersonnelDialog(){
 
 let extractedRosterCandidates = [];
 let currentExtractFilter = 'all';
+let extractPage = 1;
+let extractPageSize = 50;
 
 function updateExtractCounts() {
   const allCount = extractedRosterCandidates.length;
-  const meetingCount = extractedRosterCandidates.filter(c => c.sources.has('meeting')).length;
-  const incentiveCount = extractedRosterCandidates.filter(c => c.sources.has('incentive')).length;
-  const newCount = extractedRosterCandidates.filter(c => !c.isExisting).length;
+  let meetingCount = 0;
+  let incentiveCount = 0;
+  let newCount = 0;
+  for (const c of extractedRosterCandidates) {
+    if (c.sources && c.sources.has('meeting')) meetingCount++;
+    if (c.sources && c.sources.has('incentive')) incentiveCount++;
+    if (!c.isExisting) newCount++;
+  }
 
   const elAll = $('extract-count-all'); if (elAll) elAll.textContent = allCount;
   const elM = $('extract-count-meeting'); if (elM) elM.textContent = meetingCount;
@@ -2857,8 +2865,8 @@ function updateExtractCounts() {
 function getFilteredExtractCandidates() {
   const search = String($('extract-search-input')?.value || '').trim().toLowerCase();
   return extractedRosterCandidates.filter(cand => {
-    if (currentExtractFilter === 'meeting' && !cand.sources.has('meeting')) return false;
-    if (currentExtractFilter === 'incentive' && !cand.sources.has('incentive')) return false;
+    if (currentExtractFilter === 'meeting' && (!cand.sources || !cand.sources.has('meeting'))) return false;
+    if (currentExtractFilter === 'incentive' && (!cand.sources || !cand.sources.has('incentive'))) return false;
     if (currentExtractFilter === 'new' && cand.isExisting) return false;
     if (search) {
       const matchId = (cand.staffId || '').toLowerCase().includes(search);
@@ -2872,11 +2880,18 @@ function getFilteredExtractCandidates() {
 function updateExtractSummary() {
   const summaryEl = $('extract-selection-summary');
   if (!summaryEl) return;
-  const selected = extractedRosterCandidates.filter(c => c.selected);
-  const totalSelected = selected.length;
-  const readyCount = selected.filter(c => c.staffId?.trim() && c.name?.trim() && (c.customerGroupIds?.size > 0 || c.customerGroupId) && (c.roles?.size > 0 || c.role)).length;
+  let totalSelected = 0;
+  let readyCount = 0;
+  let newCount = 0;
+  for (const c of extractedRosterCandidates) {
+    if (!c.selected) continue;
+    totalSelected++;
+    if (c.staffId?.trim() && c.name?.trim() && (c.customerGroupIds?.size > 0 || c.customerGroupId) && (c.roles?.size > 0 || c.role)) {
+      readyCount++;
+    }
+    if (!c.isExisting) newCount++;
+  }
   const missingCount = totalSelected - readyCount;
-  const newCount = selected.filter(c => !c.isExisting).length;
 
   const logBtnHtml = `<button type="button" id="btn-toggle-extract-log-summary" style="margin-left:8px;background:none;border:none;color:#2563eb;font-size:12px;cursor:pointer;text-decoration:underline;padding:0;">📋 诊断日志 (<span id="extract-log-summary-count">${extractLogs.length}</span>条)</button>`;
 
@@ -2896,25 +2911,39 @@ function renderExtractRosterTable() {
   if (!tbody) return;
 
   const filtered = getFilteredExtractCandidates();
+  const pagerEl = $('pager-extract-roster');
+
   if (!filtered.length) {
     tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:36px;color:#94a3b8;">未找到符合条件的候选人员快照数据</td></tr>';
+    if (pagerEl) pagerEl.innerHTML = '';
+    const selectAll = $('extract-select-all');
+    if (selectAll) { selectAll.checked = false; selectAll.indeterminate = false; }
     updateExtractSummary();
     return;
   }
+
+  const isAll = extractPageSize === 'all';
+  const sizeNum = isAll ? filtered.length : Number(extractPageSize);
+  const totalPages = isAll ? 1 : Math.max(1, Math.ceil(filtered.length / sizeNum));
+  extractPage = Math.max(1, Math.min(extractPage, totalPages));
+
+  const startIdx = isAll ? 0 : (extractPage - 1) * sizeNum;
+  const endIdx = isAll ? filtered.length : Math.min(startIdx + sizeNum, filtered.length);
+  const pageItems = isAll ? filtered : filtered.slice(startIdx, endIdx);
 
   const groups = active('customerGroups');
   const bus = active('businessUnits');
   const roles = active('roles');
 
-  const rowsHtml = filtered.map(cand => {
-    const rawIdx = extractedRosterCandidates.indexOf(cand);
+  const rowsHtml = pageItems.map(cand => {
+    const rawIdx = cand._idx !== undefined ? cand._idx : extractedRosterCandidates.indexOf(cand);
     const sourceBadges = [];
-    if (cand.sources.has('meeting')) {
-      const titleAttr = cand.snapshotTitles.filter(t => t.includes('会议') || !t.includes('激励')).join('、') || '会议考勤快照';
+    if (cand.sources && cand.sources.has('meeting')) {
+      const titleAttr = (cand.snapshotTitles || []).filter(t => t.includes('会议') || !t.includes('激励')).join('、') || '会议考勤快照';
       sourceBadges.push(`<span class="badge" style="background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;font-size:11px;" title="${escapeHtml(titleAttr)}">📅 会议考勤</span>`);
     }
-    if (cand.sources.has('incentive')) {
-      const titleAttr = cand.snapshotTitles.filter(t => t.includes('激励')).join('、') || '操作激励快照';
+    if (cand.sources && cand.sources.has('incentive')) {
+      const titleAttr = (cand.snapshotTitles || []).filter(t => t.includes('激励')).join('、') || '操作激励快照';
       sourceBadges.push(`<span class="badge" style="background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;font-size:11px;" title="${escapeHtml(titleAttr)}">💰 操作激励</span>`);
     }
 
@@ -3003,6 +3032,27 @@ function renderExtractRosterTable() {
 
   tbody.innerHTML = rowsHtml;
 
+  if (pagerEl) {
+    pagerEl.innerHTML = `
+      <div style="font-size:12px;color:#475569;display:flex;align-items:center;gap:6px;">
+        <span>共 <b>${filtered.length}</b> 位候选人（当前显示第 <b>${startIdx + 1}</b> ~ <b>${endIdx}</b> 位）· 第 <b>${extractPage}</b> / <b>${totalPages}</b> 页</span>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+        <button type="button" class="secondary mini btn-extract-page" data-extract-page-delta="-1" ${extractPage <= 1 ? 'disabled' : ''} style="font-size:11.5px;padding:3px 8px;cursor:pointer;">上一页</button>
+        <input type="number" id="extract-jump-page-input" min="1" max="${totalPages}" value="${extractPage}" style="width:48px;font-size:11.5px;padding:2px 4px;text-align:center;border:1px solid #cbd5e1;border-radius:4px;" aria-label="跳转页码">
+        <button type="button" class="secondary mini" id="btn-extract-jump-go" style="font-size:11.5px;padding:3px 8px;cursor:pointer;">跳转</button>
+        <button type="button" class="secondary mini btn-extract-page" data-extract-page-delta="1" ${extractPage >= totalPages ? 'disabled' : ''} style="font-size:11.5px;padding:3px 8px;cursor:pointer;">下一页</button>
+        <label style="font-size:12px;color:#475569;margin-left:6px;display:inline-flex;align-items:center;gap:4px;">
+          每页
+          <select id="extract-page-size-select" style="font-size:11.5px;padding:2px 4px;border:1px solid #cbd5e1;border-radius:4px;background:#fff;cursor:pointer;">
+            ${[20, 50, 100, 200, 500].map(n => `<option value="${n}" ${extractPageSize === n ? 'selected' : ''}>${n} 条</option>`).join('')}
+            <option value="all" ${extractPageSize === 'all' ? 'selected' : ''}>全部 (${filtered.length} 条)</option>
+          </select>
+        </label>
+      </div>
+    `;
+  }
+
   const selectAll = $('extract-select-all');
   if (selectAll) {
     const allChecked = filtered.length > 0 && filtered.every(c => c.selected);
@@ -3036,7 +3086,7 @@ function applyBatchFill(field, value) {
       cand.roles.add(value);
       if (value === 'PM') {
         const activeBUs = active('businessUnits');
-        const match = activeBUs.find(b => b.id.toLowerCase() === 'pmo' || b.value.toLowerCase() === 'pmo' || b.value.toLowerCase().includes('pmo'));
+        const match = activeBUs.find(b => (b.id || '').toLowerCase() === 'pmo' || (b.value || '').toLowerCase() === 'pmo' || (b.value || '').toLowerCase().includes('pmo'));
         cand.businessUnitId = match ? match.id : 'PMO';
       }
     }
@@ -3096,24 +3146,49 @@ function getActiveSnapshotMappings() {
   return state.snapshotMappings;
 }
 
+function normDigits(str) {
+  if (!str) return '';
+  const d = String(str).toLowerCase().replace(/^[a-z]+/i, '');
+  return d.length >= 5 ? d : '';
+}
+
+function areStaffIdsEquivalent(id1, id2) {
+  if (!id1 || !id2) return false;
+  const s1 = String(id1).trim().toLowerCase();
+  const s2 = String(id2).trim().toLowerCase();
+  if (!s1 || !s2) return false;
+  if (s1 === s2) return true;
+  if (s1 === 'm' + s2 || s2 === 'm' + s1) return true;
+  if (s1.length === s2.length + 1 && s1.slice(1) === s2 && s2.length >= 4) return true;
+  if (s2.length === s1.length + 1 && s2.slice(1) === s1 && s1.length >= 4) return true;
+  const num1 = s1.replace(/^[a-z]+/i, '');
+  const num2 = s2.replace(/^[a-z]+/i, '');
+  if (num1 && num1 === num2 && num1.length >= 5) return true;
+  return false;
+}
+
 function resolveMappedRole(rawRole) {
   if (!rawRole) return '';
-  const s = String(rawRole).trim();
+  const s = String(rawRole).trim().toLowerCase();
   if (!s) return '';
   const mappings = getActiveSnapshotMappings().roles || [];
   const activeRoles = active('roles');
 
-  const mapped = mappings.find(m => m.scanned && m.scanned.toLowerCase() === s.toLowerCase());
+  const mapped = mappings.find(m => m.scanned && String(m.scanned).trim().toLowerCase() === s);
   if (mapped && mapped.target) {
-    const matchedActive = activeRoles.find(r => r.value.toLowerCase() === mapped.target.toLowerCase());
+    const targetLower = String(mapped.target).trim().toLowerCase();
+    const matchedActive = activeRoles.find(r => (r.value || '').toLowerCase() === targetLower);
     if (matchedActive) return matchedActive.value;
     return mapped.target;
   }
 
-  const direct = activeRoles.find(r => r.value.toLowerCase() === s.toLowerCase());
+  const direct = activeRoles.find(r => (r.value || '').toLowerCase() === s);
   if (direct) return direct.value;
 
-  const token = activeRoles.find(r => r.value.toLowerCase().includes(s.toLowerCase()) || s.toLowerCase().includes(r.value.toLowerCase()));
+  const token = activeRoles.find(r => {
+    const rVal = (r.value || '').toLowerCase();
+    return rVal && (rVal.includes(s) || s.includes(rVal));
+  });
   if (token) return token.value;
 
   return '';
@@ -3121,21 +3196,25 @@ function resolveMappedRole(rawRole) {
 
 function resolveMappedCustomerGroup(rawGroup) {
   if (!rawGroup) return '';
-  const s = String(rawGroup).trim();
+  const s = String(rawGroup).trim().toLowerCase();
   if (!s) return '';
   const mappings = getActiveSnapshotMappings().customerGroups || [];
   const activeGroups = active('customerGroups');
 
-  const mapped = mappings.find(m => m.scanned && m.scanned.toLowerCase() === s.toLowerCase());
+  const mapped = mappings.find(m => m.scanned && String(m.scanned).trim().toLowerCase() === s);
   if (mapped && mapped.target) {
-    const matchedActive = activeGroups.find(g => g.id.toLowerCase() === mapped.target.toLowerCase() || g.value.toLowerCase() === mapped.target.toLowerCase());
+    const targetLower = String(mapped.target).trim().toLowerCase();
+    const matchedActive = activeGroups.find(g => (g.id || '').toLowerCase() === targetLower || (g.value || '').toLowerCase() === targetLower);
     if (matchedActive) return matchedActive.id;
   }
 
-  const direct = activeGroups.find(g => g.id.toLowerCase() === s.toLowerCase() || g.value.toLowerCase() === s.toLowerCase());
+  const direct = activeGroups.find(g => (g.id || '').toLowerCase() === s || (g.value || '').toLowerCase() === s);
   if (direct) return direct.id;
 
-  const partial = activeGroups.find(g => g.value.toLowerCase().includes(s.toLowerCase()) || s.toLowerCase().includes(g.value.toLowerCase()));
+  const partial = activeGroups.find(g => {
+    const gVal = (g.value || '').toLowerCase();
+    return gVal && (gVal.includes(s) || s.includes(gVal));
+  });
   if (partial) return partial.id;
 
   return '';
@@ -3143,21 +3222,25 @@ function resolveMappedCustomerGroup(rawGroup) {
 
 function resolveMappedBusinessUnit(rawBU) {
   if (!rawBU) return '';
-  const s = String(rawBU).trim();
+  const s = String(rawBU).trim().toLowerCase();
   if (!s) return '';
   const mappings = getActiveSnapshotMappings().businessUnits || [];
   const activeBUs = active('businessUnits');
 
-  const mapped = mappings.find(m => m.scanned && m.scanned.toLowerCase() === s.toLowerCase());
+  const mapped = mappings.find(m => m.scanned && String(m.scanned).trim().toLowerCase() === s);
   if (mapped && mapped.target) {
-    const matchedActive = activeBUs.find(b => b.id.toLowerCase() === mapped.target.toLowerCase() || b.value.toLowerCase() === mapped.target.toLowerCase());
+    const targetLower = String(mapped.target).trim().toLowerCase();
+    const matchedActive = activeBUs.find(b => (b.id || '').toLowerCase() === targetLower || (b.value || '').toLowerCase() === targetLower);
     if (matchedActive) return matchedActive.id;
   }
 
-  const direct = activeBUs.find(b => b.id.toLowerCase() === s.toLowerCase() || b.value.toLowerCase() === s.toLowerCase());
+  const direct = activeBUs.find(b => (b.id || '').toLowerCase() === s || (b.value || '').toLowerCase() === s);
   if (direct) return direct.id;
 
-  const partial = activeBUs.find(b => b.value.toLowerCase().includes(s.toLowerCase()) || s.toLowerCase().includes(b.value.toLowerCase()));
+  const partial = activeBUs.find(b => {
+    const bVal = (b.value || '').toLowerCase();
+    return bVal && (bVal.includes(s) || s.includes(bVal));
+  });
   if (partial) return partial.id;
 
   return '';
@@ -3212,6 +3295,23 @@ function updateScannedUnmappedBanner() {
 
 function reevaluateCandidateMappings() {
   const existingPersonnel = state.personnel || [];
+  const pById = new Map();
+  const pByDigits = new Map();
+  const pByName = new Map();
+
+  for (const p of existingPersonnel) {
+    if (p.archived) continue;
+    if (p.id) {
+      const pid = String(p.id).trim().toLowerCase();
+      pById.set(pid, p);
+      if (pid.startsWith('m') && pid.length >= 4) pById.set(pid.slice(1), p);
+      else pById.set('m' + pid, p);
+      const digits = normDigits(pid);
+      if (digits) pByDigits.set(digits, p);
+    }
+    if (p.name) pByName.set(String(p.name).trim().toLowerCase(), p);
+  }
+
   for (const cand of extractedRosterCandidates) {
     if (cand.rawRoles) {
       for (const r of cand.rawRoles) {
@@ -3227,13 +3327,33 @@ function reevaluateCandidateMappings() {
     }
     if (cand.roles && cand.roles.has('PM')) {
       const activeBUs = active('businessUnits');
-      const match = activeBUs.find(b => b.id.toLowerCase() === 'pmo' || b.value.toLowerCase() === 'pmo' || b.value.toLowerCase().includes('pmo'));
+      const match = activeBUs.find(b => (b.id || '').toLowerCase() === 'pmo' || (b.value || '').toLowerCase() === 'pmo' || (b.value || '').toLowerCase().includes('pmo'));
       cand.businessUnitId = match ? match.id : 'PMO';
     } else if (cand.rawBU) {
       const mappedBU = resolveMappedBusinessUnit(cand.rawBU);
       if (mappedBU) cand.businessUnitId = mappedBU;
     }
-    const existing = existingPersonnel.find(p => !p.archived && ((cand.staffId && (p.id === cand.staffId || areStaffIdsEquivalent(p.id, cand.staffId))) || (cand.name && p.name === cand.name)));
+
+    const candId = String(cand.staffId || '').trim().toLowerCase();
+    const candName = String(cand.name || '').trim().toLowerCase();
+    let existing = null;
+    if (candId) {
+      existing = pById.get(candId);
+      if (!existing) {
+        const digits = normDigits(candId);
+        if (digits) existing = pByDigits.get(digits);
+      }
+      if (existing && candName && existing.name && String(existing.name).trim().toLowerCase() !== candName) {
+        existing = null;
+      }
+    }
+    if (!existing && candName) {
+      const byName = pByName.get(candName);
+      if (byName && (!candId || !byName.id || areStaffIdsEquivalent(candId, byName.id))) {
+        existing = byName;
+      }
+    }
+
     if (existing) {
       personGroups(existing).forEach(gid => cand.customerGroupIds.add(gid));
       if (!cand.businessUnitId && personBusinessUnits(existing).length) cand.businessUnitId = personBusinessUnits(existing)[0];
@@ -3397,7 +3517,8 @@ function renderSnapshotMappingsTables() {
       groupTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:#94a3b8;">暂无客户群映射规则</td></tr>';
     } else {
       groupTbody.innerHTML = tempEditingMappings.customerGroups.map((m, idx) => {
-        const grp = activeGroups.find(g => g.id.toLowerCase() === m.target.toLowerCase() || g.value.toLowerCase() === m.target.toLowerCase());
+        const targetLower = String(m.target || '').trim().toLowerCase();
+        const grp = activeGroups.find(g => (g.id || '').toLowerCase() === targetLower || (g.value || '').toLowerCase() === targetLower);
         const displayTarget = grp ? grp.value : m.target;
         const isEditing = editingGroupIdx === idx;
         const rowBg = isEditing ? 'background:#eff6ff;' : '';
@@ -3426,7 +3547,8 @@ function renderSnapshotMappingsTables() {
       buTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:#94a3b8;">暂无 BU 映射规则</td></tr>';
     } else {
       buTbody.innerHTML = busList.map((m, idx) => {
-        const bu = activeBUs.find(b => b.id.toLowerCase() === m.target.toLowerCase() || b.value.toLowerCase() === m.target.toLowerCase());
+        const targetLower = String(m.target || '').trim().toLowerCase();
+        const bu = activeBUs.find(b => (b.id || '').toLowerCase() === targetLower || (b.value || '').toLowerCase() === targetLower);
         const displayTarget = bu ? (bu.value + (bu.id && bu.id !== bu.value ? ` (${bu.id})` : '')) : m.target;
         const isEditing = editingBuIdx === idx;
         const rowBg = isEditing ? 'background:#eff6ff;' : '';
@@ -3818,9 +3940,10 @@ async function openSnapshotRosterDialog() {
     });
     appendExtractLog('🔄 开始跨快照交叉聚合人员名单并执行自动映射...', 'info');
 
-    const candidateMap = new Map();
-    const activeBUs = active('businessUnits');
+    // 让出执行权以确保浏览器在执行密集哈希聚合前立即渲染第7条日志与进度条
+    await new Promise(r => setTimeout(r, 20));
 
+    const activeBUs = active('businessUnits');
     let buMappedCount = 0;
     const matchBU = (str) => {
       if (!str) return '';
@@ -3830,27 +3953,16 @@ async function openSnapshotRosterDialog() {
         return mapped;
       }
       const s = String(str).toLowerCase().trim();
-      const match = activeBUs.find(b => b.id.toLowerCase() === s || b.value.toLowerCase() === s || b.value.toLowerCase().includes(s) || s.includes(b.value.toLowerCase()));
+      const match = activeBUs.find(b => {
+        const bId = (b.id || '').toLowerCase();
+        const bVal = (b.value || '').toLowerCase();
+        return bId === s || bVal === s || (bVal && bVal.includes(s)) || (bVal && s.includes(bVal));
+      });
       return match ? match.id : '';
     };
 
     const existingRosterIds = new Set((state.personnel || []).map(p => p.id));
     const isTotalRow = (id, name) => /总计|合计|小计|^total$/i.test(String(id || '')) || /总计|合计|小计|^total$/i.test(String(name || ''));
-
-    function areStaffIdsEquivalent(id1, id2) {
-      if (!id1 || !id2) return false;
-      const s1 = String(id1).trim().toLowerCase();
-      const s2 = String(id2).trim().toLowerCase();
-      if (!s1 || !s2) return false;
-      if (s1 === s2) return true;
-      if (s1 === 'm' + s2 || s2 === 'm' + s1) return true;
-      if (s1.length === s2.length + 1 && s1.slice(1) === s2 && s2.length >= 4) return true;
-      if (s2.length === s1.length + 1 && s2.slice(1) === s1 && s1.length >= 4) return true;
-      const num1 = s1.replace(/^[a-z]+/i, '');
-      const num2 = s2.replace(/^[a-z]+/i, '');
-      if (num1 && num1 === num2 && num1.length >= 5) return true;
-      return false;
-    }
 
     function preferCanonicalStaffId(id1, id2) {
       const s1 = String(id1 || '').trim();
@@ -3875,27 +3987,52 @@ async function openSnapshotRosterDialog() {
     }
 
     const candidateList = [];
+    const candById = new Map();
+    const candByDigits = new Map();
+    const candByName = new Map();
+
+    function indexCandidate(c) {
+      if (c.staffId) {
+        const sId = String(c.staffId).trim().toLowerCase();
+        candById.set(sId, c);
+        if (sId.startsWith('m') && sId.length >= 4) {
+          candById.set(sId.slice(1), c);
+        } else {
+          candById.set('m' + sId, c);
+        }
+        const digits = normDigits(sId);
+        if (digits) candByDigits.set(digits, c);
+      }
+      if (c.name) {
+        candByName.set(String(c.name).trim().toLowerCase(), c);
+      }
+    }
+
     const findExistingCandidate = (staffId, name) => {
-      const sId = String(staffId || '').trim();
-      const sName = String(name || '').trim();
+      const sId = String(staffId || '').trim().toLowerCase();
+      const sName = String(name || '').trim().toLowerCase();
       if (!sId && !sName) return null;
 
       if (sId) {
-        const foundById = candidateList.find(c => c.staffId && (c.staffId.toLowerCase() === sId.toLowerCase() || areStaffIdsEquivalent(c.staffId, sId)));
-        if (foundById) {
-          if (!sName || !foundById.name || foundById.name.toLowerCase() === sName.toLowerCase()) {
-            return foundById;
+        let found = candById.get(sId);
+        if (!found) {
+          const digits = normDigits(sId);
+          if (digits) found = candByDigits.get(digits);
+        }
+        if (found) {
+          if (!sName || !found.name || String(found.name).trim().toLowerCase() === sName) {
+            return found;
           }
         }
       }
 
       if (sName) {
-        const foundByName = candidateList.find(c => {
-          if (!c.name || c.name.toLowerCase() !== sName.toLowerCase()) return false;
-          if (!sId || !c.staffId) return true;
-          return areStaffIdsEquivalent(sId, c.staffId);
-        });
-        if (foundByName) return foundByName;
+        const found = candByName.get(sName);
+        if (found) {
+          if (!sId || !found.staffId || areStaffIdsEquivalent(sId, found.staffId)) {
+            return found;
+          }
+        }
       }
       return null;
     };
@@ -3948,13 +4085,18 @@ async function openSnapshotRosterDialog() {
           selected: true
         };
         candidateList.push(existing);
+        indexCandidate(existing);
       } else {
         existing.sources.add('meeting');
+        const oldId = existing.staffId;
         existing.staffId = preferCanonicalStaffId(existing.staffId, staffId);
         if (!existing.name && name) existing.name = name;
         if (!existing.rawBU && rawBU) existing.rawBU = rawBU;
         if (item.snapshotTitles) existing.snapshotTitles.push(...item.snapshotTitles);
         if (item.meetingDates) existing.meetingDates.push(...item.meetingDates);
+        if (existing.staffId !== oldId || (!existing.name && name)) {
+          indexCandidate(existing);
+        }
       }
 
       // Add customer groups
@@ -4028,12 +4170,17 @@ async function openSnapshotRosterDialog() {
           selected: true
         };
         candidateList.push(existing);
+        indexCandidate(existing);
       } else {
         existing.sources.add('incentive');
+        const oldId = existing.staffId;
         existing.staffId = preferCanonicalStaffId(existing.staffId, staffId);
         if (!existing.name && name) existing.name = name;
         if (!existing.rawBU && rawBU) existing.rawBU = rawBU;
         if (item.snapshotTitles) existing.snapshotTitles.push(...item.snapshotTitles);
+        if (existing.staffId !== oldId || (!existing.name && name)) {
+          indexCandidate(existing);
+        }
       }
 
       // Add customer groups
@@ -4083,20 +4230,49 @@ async function openSnapshotRosterDialog() {
     }
 
     const existingPersonnel = state.personnel || [];
+    const pById = new Map();
+    const pByDigits = new Map();
+    const pByName = new Map();
+
+    for (const p of existingPersonnel) {
+      if (p.archived) continue;
+      if (p.id) {
+        const pid = String(p.id).trim().toLowerCase();
+        pById.set(pid, p);
+        if (pid.startsWith('m') && pid.length >= 4) pById.set(pid.slice(1), p);
+        else pById.set('m' + pid, p);
+        const digits = normDigits(pid);
+        if (digits) pByDigits.set(digits, p);
+      }
+      if (p.name) {
+        pByName.set(String(p.name).trim().toLowerCase(), p);
+      }
+    }
+
     let existingCount = 0;
     let newCount = 0;
 
-    extractedRosterCandidates = candidateList.map(cand => {
-      const existing = existingPersonnel.find(p => {
-        if (p.archived) return false;
-        if (cand.staffId && (p.id.toLowerCase() === cand.staffId.toLowerCase() || areStaffIdsEquivalent(p.id, cand.staffId))) {
-          if (!cand.name || !p.name || cand.name.toLowerCase() === p.name.toLowerCase()) return true;
+    extractedRosterCandidates = candidateList.map((cand, idx) => {
+      const candId = String(cand.staffId || '').trim().toLowerCase();
+      const candName = String(cand.name || '').trim().toLowerCase();
+
+      let existing = null;
+      if (candId) {
+        existing = pById.get(candId);
+        if (!existing) {
+          const digits = normDigits(candId);
+          if (digits) existing = pByDigits.get(digits);
         }
-        if (cand.name && p.name && p.name.toLowerCase() === cand.name.toLowerCase()) {
-          if (!cand.staffId || !p.id || areStaffIdsEquivalent(p.id, cand.staffId)) return true;
+        if (existing && candName && existing.name && String(existing.name).trim().toLowerCase() !== candName) {
+          existing = null;
         }
-        return false;
-      });
+      }
+      if (!existing && candName) {
+        const byName = pByName.get(candName);
+        if (byName && (!candId || !byName.id || areStaffIdsEquivalent(candId, byName.id))) {
+          existing = byName;
+        }
+      }
 
       const isExisting = Boolean(existing);
       if (isExisting) {
@@ -4119,6 +4295,7 @@ async function openSnapshotRosterDialog() {
       }
       return {
         ...cand,
+        _idx: idx,
         isExisting,
         snapshotTitles: [...new Set(cand.snapshotTitles)],
         meetingDates: [...new Set(cand.meetingDates)]
@@ -4129,6 +4306,8 @@ async function openSnapshotRosterDialog() {
       if (a.isExisting !== b.isExisting) return a.isExisting ? 1 : -1;
       return (a.name || '').localeCompare(b.name || '', 'zh-CN');
     });
+    extractedRosterCandidates.forEach((c, i) => c._idx = i);
+    extractPage = 1;
 
     appendExtractLog(`📊 聚合统计：共生成 ${extractedRosterCandidates.length} 位候选人员 (现有在册: ${existingCount} 人, 新候选人: ${newCount} 人)`, 'info');
     appendExtractLog(`🏷️ 字段映射：角色规则匹配 ${roleMappedCount} 次，客户群规则匹配 ${groupMappedCount} 次，BU规则匹配 ${buMappedCount} 次`, 'info');
@@ -6107,7 +6286,8 @@ if(editRoleBtn){
     if($('input-map-role-scanned')) $('input-map-role-scanned').value=m.scanned;
     if($('select-map-role-target')) {
       const activeRoles = active('roles');
-      const rMatch = activeRoles.find(r => r.value.toLowerCase() === m.target.toLowerCase() || r.id?.toLowerCase() === m.target.toLowerCase());
+      const targetLower = String(m.target || '').trim().toLowerCase();
+      const rMatch = activeRoles.find(r => (r.value || '').toLowerCase() === targetLower || (r.id || '').toLowerCase() === targetLower);
       $('select-map-role-target').value = rMatch ? rMatch.value : m.target;
     }
     if($('btn-add-role-mapping')) $('btn-add-role-mapping').textContent='💾 更新角色映射';
@@ -6126,7 +6306,8 @@ if(editGroupBtn){
     if($('input-map-group-scanned')) $('input-map-group-scanned').value=m.scanned;
     if($('select-map-group-target')) {
       const activeGroups = active('customerGroups');
-      const gMatch = activeGroups.find(g => g.id.toLowerCase() === m.target.toLowerCase() || g.value.toLowerCase() === m.target.toLowerCase());
+      const targetLower = String(m.target || '').trim().toLowerCase();
+      const gMatch = activeGroups.find(g => (g.id || '').toLowerCase() === targetLower || (g.value || '').toLowerCase() === targetLower);
       $('select-map-group-target').value = gMatch ? gMatch.value : m.target;
     }
     if($('btn-add-group-mapping')) $('btn-add-group-mapping').textContent='💾 更新客户群映射';
@@ -6145,7 +6326,8 @@ if(editBuBtn){
     if($('input-map-bu-scanned')) $('input-map-bu-scanned').value=m.scanned;
     if($('select-map-bu-target')) {
       const activeBUs = active('businessUnits');
-      const bMatch = activeBUs.find(b => b.id.toLowerCase() === m.target.toLowerCase() || b.value.toLowerCase() === m.target.toLowerCase());
+      const targetLower = String(m.target || '').trim().toLowerCase();
+      const bMatch = activeBUs.find(b => (b.id || '').toLowerCase() === targetLower || (b.value || '').toLowerCase() === targetLower);
       $('select-map-bu-target').value = bMatch ? (bMatch.id || bMatch.value) : m.target;
     }
     if($('btn-add-bu-mapping')) $('btn-add-bu-mapping').textContent='💾 更新 BU 映射';
@@ -6248,8 +6430,23 @@ if(event.target.closest('#confirm-import-snapshot-roster')){
 const extractTab=event.target.closest('[data-extract-source]');
 if(extractTab){
   currentExtractFilter=extractTab.dataset.extractSource;
+  extractPage=1;
   document.querySelectorAll('[data-extract-source]').forEach(t=>t.classList.toggle('active',t===extractTab));
   renderExtractRosterTable();
+  return;
+}
+const extractPageBtn=event.target.closest('.btn-extract-page');
+if(extractPageBtn && extractPageBtn.dataset.extractPageDelta){
+  extractPage += Number(extractPageBtn.dataset.extractPageDelta);
+  renderExtractRosterTable();
+  return;
+}
+if(event.target.closest('#btn-extract-jump-go')){
+  const jInput = $('extract-jump-page-input');
+  if(jInput){
+    extractPage = Math.max(1, Number(jInput.value) || 1);
+    renderExtractRosterTable();
+  }
   return;
 }
 if(event.target.closest('#close-batch-personnel')||event.target.closest('#cancel-batch-personnel')){
@@ -6470,6 +6667,12 @@ document.addEventListener('change',async event=>{
 const kind=event.target.dataset.pageSize;
 if(kind){pageSizes[kind]=Number(event.target.value);pages[kind]=1;localStorage.setItem('hw_dept_page_sizes_v1',JSON.stringify(pageSizes));render()}
 if(event.target.id==='audit-quick-size'){auditPageSize=Number(event.target.value);auditPage=1;await loadAudit()}
+if(event.target.id==='extract-page-size-select'){
+  extractPageSize = event.target.value === 'all' ? 'all' : Number(event.target.value);
+  extractPage = 1;
+  renderExtractRosterTable();
+  return;
+}
 if(event.target.id==='extract-select-all'){
   const checked=event.target.checked;
   getFilteredExtractCandidates().forEach(c=>c.selected=checked);
@@ -6514,7 +6717,7 @@ if(event.target.classList?.contains('extract-add-role-select')){
     if(!extractedRosterCandidates[idx].roles) extractedRosterCandidates[idx].roles = new Set();
     extractedRosterCandidates[idx].roles.add(val);
     if(val === 'PM'){
-      const pmoBU = active('businessUnits').find(b => b.value.toUpperCase() === 'PMO' || b.id.toUpperCase() === 'PMO');
+      const pmoBU = active('businessUnits').find(b => (b.value || '').toUpperCase() === 'PMO' || (b.id || '').toUpperCase() === 'PMO');
       if(pmoBU) extractedRosterCandidates[idx].businessUnitId = pmoBU.id;
     }
     renderExtractRosterTable();
@@ -6540,7 +6743,7 @@ if(event.target.classList?.contains('extract-inline-name')){
   return;
 }
 });
-$('extract-search-input')?.addEventListener('input',()=>renderExtractRosterTable());
+$('extract-search-input')?.addEventListener('input',()=>{ extractPage = 1; renderExtractRosterTable(); });
 document.addEventListener('input',event=>{
   if(event.target.classList?.contains('extract-inline-staffid')){
     const idx=Number(event.target.dataset.candIdx);
@@ -6558,7 +6761,19 @@ document.addEventListener('input',event=>{
     }
   }
 });
-document.addEventListener('keydown',event=>{if(event.key==='Enter'&&event.target.dataset.jumpInput){event.preventDefault();const kind=event.target.dataset.jumpInput;pages[kind]=Math.max(1,Number(event.target.value)||1);render()}});
+document.addEventListener('keydown',event=>{
+  if(event.key==='Enter'&&event.target.dataset.jumpInput){
+    event.preventDefault();
+    const kind=event.target.dataset.jumpInput;
+    pages[kind]=Math.max(1,Number(event.target.value)||1);
+    render();
+  }
+  if(event.key==='Enter'&&event.target.id==='extract-jump-page-input'){
+    event.preventDefault();
+    extractPage=Math.max(1,Number(event.target.value)||1);
+    renderExtractRosterTable();
+  }
+});
 ['new-group','new-bu','new-role','new-category','new-deduction'].forEach(id=>{const el=$(id);if(el)el.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();(el.closest('.org-add-card')?.querySelector('button[data-config]')||el.parentElement?.querySelector('button[data-config]'))?.click()}})});
 $('input-map-role-scanned')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addRoleMappingFromInput();}});
 $('input-map-group-scanned')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addGroupMappingFromInput();}});
