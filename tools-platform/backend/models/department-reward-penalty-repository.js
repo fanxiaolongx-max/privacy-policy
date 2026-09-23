@@ -28,12 +28,22 @@ const DEFAULT_SNAPSHOT_MAPPINGS = {
         { scanned: '申请人', target: 'TE' }
     ],
     customerGroups: [
+        { scanned: 'ORG', target: 'Orange' },
+        { scanned: 'EG-Egypt Orange', target: 'Orange' },
+        { scanned: 'Orange Egypt', target: 'Orange' },
+        { scanned: 'Orange', target: 'Orange' },
         { scanned: 'Vodafone', target: 'VDF' },
         { scanned: 'VF', target: 'VDF' },
-        { scanned: 'Orange Egypt', target: 'Orange' },
+        { scanned: 'VDF', target: 'Vodafone' },
+        { scanned: 'EG-Egypt Vodafone', target: 'Vodafone' },
         { scanned: 'ET', target: 'Etisalat' },
+        { scanned: 'EG-Egypt ET', target: 'Etisalat' },
+        { scanned: 'ET (Etisalat)', target: 'Etisalat' },
+        { scanned: 'Etisalat', target: 'Etisalat' },
         { scanned: 'Telecom Egypt', target: 'WE' },
-        { scanned: 'TE', target: 'WE' }
+        { scanned: 'TE', target: 'WE' },
+        { scanned: 'WE', target: 'Telecom Egypt' },
+        { scanned: 'EG-Egypt Telecom', target: 'Telecom Egypt' }
     ],
     businessUnits: [
         { scanned: '软件', target: 'Software' },
@@ -654,9 +664,23 @@ async function getSnapshotMappings() {
             businessUnits = buList;
         }
 
+        const savedRoles = Array.isArray(saved.roles) ? [...saved.roles] : [];
+        for (const def of DEFAULT_SNAPSHOT_MAPPINGS.roles) {
+            if (!savedRoles.some(m => String(m.scanned || '').trim().toLowerCase() === String(def.scanned).trim().toLowerCase())) {
+                savedRoles.push(def);
+            }
+        }
+
+        const savedGroups = Array.isArray(saved.customerGroups) ? [...saved.customerGroups] : [];
+        for (const def of DEFAULT_SNAPSHOT_MAPPINGS.customerGroups) {
+            if (!savedGroups.some(m => String(m.scanned || '').trim().toLowerCase() === String(def.scanned).trim().toLowerCase())) {
+                savedGroups.push(def);
+            }
+        }
+
         return {
-            roles: Array.isArray(saved.roles) ? saved.roles : DEFAULT_SNAPSHOT_MAPPINGS.roles,
-            customerGroups: Array.isArray(saved.customerGroups) ? saved.customerGroups : DEFAULT_SNAPSHOT_MAPPINGS.customerGroups,
+            roles: savedRoles,
+            customerGroups: savedGroups,
             businessUnits,
             updatedAt: saved.updatedAt || ''
         };

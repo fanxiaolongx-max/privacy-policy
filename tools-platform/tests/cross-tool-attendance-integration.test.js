@@ -1034,6 +1034,84 @@ test('Cross-tool attendance check & roster extraction integration test', async (
             await incentiveRepo.deleteSnapshot(testSnapId);
         }
     });
+
+    await t.test('Meeting roster extraction enriches roles (TD/PM/etc.) and customer groups from QR/RFC/WFM sheets (e.g. mWX1459632 with TD role and ORG customer group)', async () => {
+        const testSnapId = `snap_qr_enrich_test_${Date.now()}`;
+        const meetingSnap = {
+            id: testSnapId,
+            title: '2026-09 会议考勤快照-角色与客户群富化测试',
+            meetingDate: '2026-09-23',
+            summary: {
+                totalAttendees: 2,
+                attendees: [
+                    {
+                        account: 'mWX1459632',
+                        staffId: 'mWX1459632',
+                        name: 'mWX1459632',
+                        bu: 'NIS',
+                        customerGroup: 'ORG',
+                        role: '',
+                        attendance: 'Absent'
+                    },
+                    {
+                        account: '00909378',
+                        staffId: '00909378',
+                        name: 'Mahmoud Elnaggar',
+                        bu: 'Wireless',
+                        customerGroup: 'EG-Egypt Orange',
+                        role: '',
+                        attendance: 'Attend on Time'
+                    }
+                ],
+                anomalies: []
+            },
+            payload: {
+                sheets: [
+                    {
+                        sheetName: 'QR 相关记录',
+                        category: 'qr',
+                        headers: ['#', '来源文件', 'Sheet', '匹配角色', 'Task ID', 'Apply Accountid', 'Apply Fullname', 'Td', 'Td Fullname', 'Customer Group', 'BU'],
+                        rows: [
+                            ['1', 'QR_20260923.xlsx', 'QR', 'TD', 'TASK-101', 'a00112233', 'Applicant Name', 'm00909378;mWX1459632', 'Mahmoud Elnaggar 00909378;mWX1459632', 'ORG', 'NIS'],
+                            ['2', 'QR_20260923.xlsx', 'QR', 'TD', 'TASK-102', 'a00112233', 'Applicant Name', '00909378', 'Mahmoud Elnaggar', 'EG-Egypt Orange', 'Wireless'],
+                            ['3', 'QR_20260923.xlsx', 'QR', 'TD', 'TASK-103', 'a00999999', 'Ghost Not In Combined', 'a00999999', 'Ghost', 'ORG', 'NIS']
+                        ]
+                    }
+                ]
+            }
+        };
+
+        await meetingRepo.saveSnapshot(meetingSnap);
+
+        try {
+            const roster = await meetingRepo.extractRoster();
+            const person = roster.find(r => r.staffId === 'mWX1459632' || r.account === 'mWX1459632');
+            assert.ok(person, 'mWX1459632 must be in meeting roster');
+            assert.equal(person.customerGroup, 'ORG', 'Customer group must be preserved as ORG');
+            assert.ok(person.customerGroups.includes('ORG'), 'customerGroups array must contain ORG');
+            assert.ok(person.roles.includes('TD'), 'Role must be enriched from QR table as TD');
+            assert.equal(person.bu, 'NIS', 'BU must be NIS');
+
+            // Source traces must show both combined list and QR sheet
+            assert.ok(person.sourceTraces && person.sourceTraces.length >= 2, 'Should have traces from both combined list and QR sheet');
+            assert.ok(person.sourceTraces.some(t => t.sheetName === '三类合并人员备用名单'));
+            assert.ok(person.sourceTraces.some(t => t.sheetName === 'QR 相关记录' && t.field.includes('TD')));
+
+            // Ghost person from raw sheet not in combined list must NOT be added
+            const ghost = roster.find(r => r.staffId === 'a00999999' || r.name === 'Ghost Not In Combined');
+            assert.equal(ghost, undefined, 'Persons only in raw QR sheet but not in combined list must not be added to roster');
+
+            // Verify department-reward-penalty mappings and heuristic resolution
+            const deptHtml = fs.readFileSync(path.join(__dirname, '../backend/builtin-tools/department-reward-penalty/index.html'), 'utf-8');
+            assert.ok(deptHtml.includes("scanned: 'ORG', target: 'Orange'"), 'DEFAULT_SNAPSHOT_MAPPINGS must include ORG -> Orange mapping');
+            assert.ok(deptHtml.includes("isOrange = s === 'org'"), 'resolveMappedCustomerGroup must include isOrange heuristic');
+
+            const mappings = await deptRepo.getSnapshotMappings();
+            assert.ok(mappings.customerGroups.some(m => m.scanned.toLowerCase() === 'org'), 'Saved snapshot mappings must include ORG');
+        } finally {
+            await meetingRepo.deleteSnapshot(testSnapId);
+        }
+    });
 });
 
 

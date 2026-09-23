@@ -429,7 +429,7 @@ function getSnapshotAttendees(snapshot) {
         const role = p.role || '';
         const isPm = /^\s*pm\s*$/i.test(role);
         const bu = isPm ? 'PMO' : (p.bu || p.businessUnit || '');
-        const customerGroup = p.customerGroup || p.group || '';
+        const customerGroup = p.customerGroup || p.customer || p['Customer Group'] || p.CustomerGroup || p['客户群'] || p.group || '';
 
         const normN = normName(name);
         const key = id ? id.toLowerCase() : (normN ? `name:${normN}` : '');
@@ -437,9 +437,12 @@ function getSnapshotAttendees(snapshot) {
 
         let existing = attByKey.get(key);
         if (!existing && id) {
-            existing = attById.get(id.toLowerCase());
+            const sId = id.toLowerCase();
+            existing = attById.get(sId);
+            if (!existing && sId.startsWith('m')) existing = attById.get(sId.slice(1));
+            if (!existing) existing = attById.get('m' + sId);
             if (!existing) {
-                const digits = getDigits(id);
+                const digits = getDigits(sId);
                 if (digits) existing = attById.get('digits:' + digits);
             }
         }
@@ -480,8 +483,11 @@ function getSnapshotAttendees(snapshot) {
             attendees.push(newEntry);
             attByKey.set(key, newEntry);
             if (id) {
-                attById.set(id.toLowerCase(), newEntry);
-                const digits = getDigits(id);
+                const sId = id.toLowerCase();
+                attById.set(sId, newEntry);
+                if (sId.startsWith('m')) attById.set(sId.slice(1), newEntry);
+                else attById.set('m' + sId, newEntry);
+                const digits = getDigits(sId);
                 if (digits) attById.set('digits:' + digits, newEntry);
             }
             if (normN) attByName.set(normN, newEntry);
@@ -495,8 +501,11 @@ function getSnapshotAttendees(snapshot) {
                 existing.name = preferCanonicalName(existing.name, name);
             }
             if (id) {
-                attById.set(id.toLowerCase(), existing);
-                const digits = getDigits(id);
+                const sId = id.toLowerCase();
+                attById.set(sId, existing);
+                if (sId.startsWith('m')) attById.set(sId.slice(1), existing);
+                else attById.set('m' + sId, existing);
+                const digits = getDigits(sId);
                 if (digits) attById.set('digits:' + digits, existing);
             }
             if (normN) attByName.set(normN, existing);
@@ -537,15 +546,19 @@ function getSnapshotAttendees(snapshot) {
             }
             if (traceInfo) {
                 if (!Array.isArray(existing.sourceTraces)) existing.sourceTraces = [];
-                if (!existing.sourceTraces.some(t => t.snapshotTitle === traceInfo.snapshotTitle && t.rowNumber === traceInfo.rowNumber && t.field === traceInfo.field)) {
+                if (!existing.sourceTraces.some(t => t.snapshotTitle === traceInfo.snapshotTitle && t.rowNumber === traceInfo.rowNumber && t.field === traceInfo.field && t.sheetName === traceInfo.sheetName)) {
                     existing.sourceTraces.push(traceInfo);
                 }
             }
         }
     };
 
-    // 核心业务原则：获取员工数据时，只获取“三类合并人员备用名单”（快照输出精华），其他原始表跳过
+    // 核心业务原则：
+    // 1. 若存在“三类合并人员备用名单”（或 summary.attendees），在册人员范围严格以此为准；
+    // 2. 随后扫描 QR、RFC、WFM 原始明细表，查找每位在册人员的“匹配角色”（如 TD/PM/FME）与 Customer Group 进行属性富化与补全。
+    let hasCombinedRoster = false;
     if (Array.isArray(snapshot.summary?.attendees) && snapshot.summary.attendees.length) {
+        hasCombinedRoster = true;
         snapshot.summary.attendees.forEach((a, idx) => {
             const trace = {
                 source: 'meeting',
@@ -558,15 +571,12 @@ function getSnapshotAttendees(snapshot) {
             };
             add(a, trace);
         });
-        return attendees;
-    }
-
-    // 若无 summary.attendees，检查 payload.sheets 中是否存在显式的“三类合并人员备用名单”表
-    if (snapshot.payload && Array.isArray(snapshot.payload.sheets)) {
+    } else if (snapshot.payload && Array.isArray(snapshot.payload.sheets)) {
         const combinedSheet = snapshot.payload.sheets.find(s => 
             /三类合并人员备用名单|Combined.*People List/i.test(s.sheetName || s.name || s.title || '')
         );
         if (combinedSheet && Array.isArray(combinedSheet.rows) && combinedSheet.rows.length) {
+            hasCombinedRoster = true;
             const headers = (combinedSheet.headers || []).map(h => String(h || '').trim());
             const nameIdx = headers.findIndex(h => /姓名|fullname|\bname\b/i.test(h));
             const idIdx = headers.findIndex(h => /工号|account|staffid|\bid\b/i.test(h));
@@ -590,11 +600,66 @@ function getSnapshotAttendees(snapshot) {
                     });
                 }
             });
-            return attendees;
         }
     }
 
-    // 兜底方案：仅在无合并备用名单时（如纯原始表的测试数据）降级扫描原始 Sheet
+    const findExistingAttendee = (rawId, rawName) => {
+        let id = String(rawId || '').trim();
+        let name = String(rawName || '').trim();
+        const cleaned = cleanNameAndStaffId(name, id);
+        id = cleaned.staffId;
+        name = cleaned.name;
+        if (id) {
+            const sId = id.toLowerCase();
+            let c = attById.get(sId);
+            if (!c && sId.startsWith('m')) c = attById.get(sId.slice(1));
+            if (!c) c = attById.get('m' + sId);
+            if (!c) {
+                const digits = getDigits(sId);
+                if (digits) c = attById.get('digits:' + digits);
+            }
+            if (c) return c;
+        }
+        if (name) {
+            const normN = normName(name);
+            let c = (normN && attByName.get(normN)) || attByName.get(name.toLowerCase());
+            if (c && (!id || !c.account || areStaffIdsEquivalent(id, c.account))) {
+                return c;
+            }
+        }
+        if (id || name) {
+            return attendees.find(a => matchPerson(a, id, name));
+        }
+        return null;
+    };
+
+    const addOrEnrich = (p, traceInfo = null) => {
+        if (hasCombinedRoster) {
+            const existing = findExistingAttendee(p.account || p.staffId || p.id, p.name);
+            if (existing) {
+                add(p, traceInfo);
+            }
+            return;
+        }
+        add(p, traceInfo);
+    };
+
+    // Helper to parse paired names and accounts in QR cells (supports multi-person semicolon split)
+    const parseQrPairedPeople = (nameValue, accountValue) => {
+        const splitNames = String(nameValue || '').split(/[;；\n|]+/).map(s => s.trim()).filter(Boolean);
+        const splitAccounts = String(accountValue || '').split(/[;；\n|]+/).map(s => s.trim()).filter(Boolean);
+        const count = Math.max(splitNames.length, splitAccounts.length);
+        const result = [];
+        for (let i = 0; i < count; i++) {
+            let name = splitNames[i] || '';
+            let account = splitAccounts[i] || '';
+            const cleaned = cleanNameAndStaffId(name, account);
+            if (cleaned.name || cleaned.staffId) {
+                result.push({ name: cleaned.name || cleaned.staffId, account: cleaned.staffId || '' });
+            }
+        }
+        return result;
+    };
 
     // Helper to parse role-paired cell or free-text names/accounts
     const parsePeopleTokens = (value) => {
@@ -620,7 +685,7 @@ function getSnapshotAttendees(snapshot) {
             .map(name => ({ name, account: '' }));
     };
 
-    // Parse or enrich from sheets if available
+    // Parse or enrich from sheets if available (QR, RFC, WFM)
     if (snapshot.payload && Array.isArray(snapshot.payload.sheets)) {
         const rfcRoles = [
             { role: 'Originator', re: /建单人|originator/i },
@@ -639,31 +704,36 @@ function getSnapshotAttendees(snapshot) {
 
         snapshot.payload.sheets.forEach(sheet => {
             if (!sheet || !Array.isArray(sheet.headers) || !Array.isArray(sheet.rows)) return;
+            const sheetName = String(sheet.sheetName || sheet.name || sheet.title || '');
+            if (/三类合并人员备用名单|Combined.*People List/i.test(sheetName)) return;
+
             const headers = sheet.headers.map(h => String(h || '').trim());
             const nameIdx = headers.findIndex(h => /姓名|fullname|apply fullname|\bname\b/i.test(h));
             const idIdx = headers.findIndex(h => /工号|accountid|apply accountid|staffid|\baccount\b|\bid\b/i.test(h));
-            const buIdx = headers.findIndex(h => /bu|部门|service type/i.test(h));
-            const roleIdx = headers.findIndex(h => /匹配角色|用户角色|角色|role name|\brole\b|岗位|identity|身份/i.test(h));
+            const buIdx = headers.findIndex(h => /^(bu|部门|service type|bu\/service type)$/i.test(h));
+            const roleIdx = headers.findIndex(h => /^(匹配角色|用户角色|角色|role name|\brole\b|岗位|identity|身份)$/i.test(h));
 
-            // Support:
-            // 1. 客户网络/Network Name
-            // 2. 客户群/Customer Group
+            // Priority:
+            // 1. 客户群/Customer Group
+            // 2. 客户网络/Network Name
             // 3. 客户组织/Customer Org
-            // 4. Fallback 客户/Customer Name
+            // 4. 网络/Network
+            // 5. 组织/Org
+            // 6. 客户/Customer
             const grpCandidates = [
-                headers.findIndex(h => /客户网络|network name/i.test(h)),
                 headers.findIndex(h => /客户群|customer group/i.test(h)),
+                headers.findIndex(h => /客户网络|network name/i.test(h)),
                 headers.findIndex(h => /客户组织|customer org/i.test(h)),
                 headers.findIndex(h => /网络|network/i.test(h)),
                 headers.findIndex(h => /组织|org/i.test(h)),
                 headers.findIndex(h => /customer name|customer|客户/i.test(h))
             ].filter(idx => idx >= 0);
 
-            const isRfc = sheet.category === 'rfc' || headers.some(h => /solution developer|方案制作人|rfc/i.test(h));
-            const isWfm = sheet.category === 'wfm' || headers.some(h => /wfm|fme/i.test(h));
-            const isQr = sheet.category === 'qr' || headers.some(h => /apply fullname|apply accountid/i.test(h));
+            const isRfc = sheet.category === 'rfc' || /rfc.*记录|rfc.*明细|\brfc\b/i.test(sheetName) || headers.some(h => /solution developer|方案制作人/i.test(h));
+            const isWfm = sheet.category === 'wfm' || /wfm.*记录|wfm.*明细|\bwfm\b/i.test(sheetName) || headers.some(h => /\bfme\b|实施人/i.test(h));
+            const isQr = sheet.category === 'qr' || /qr.*记录|qr.*明细|\bqr\b/i.test(sheetName) || headers.some(h => /apply fullname|apply accountid/i.test(h));
 
-            sheet.rows.forEach(row => {
+            sheet.rows.forEach((row, rIdx) => {
                 const bu = buIdx >= 0 ? String(row[buIdx] || '').trim() : '';
                 let customerGroup = '';
                 for (const cIdx of grpCandidates) {
@@ -680,22 +750,74 @@ function getSnapshotAttendees(snapshot) {
                     const applyIdIdx = headers.findIndex(h => /apply accountid|apply account/i.test(h));
                     const tdNameIdx = headers.findIndex(h => /td fullname|td name/i.test(h));
                     const tdIdIdx = headers.findIndex(h => /^td$/i.test(h));
-                    if (applyNameIdx >= 0 || applyIdIdx >= 0) {
-                        const name = applyNameIdx >= 0 ? String(row[applyNameIdx] || '').trim() : '';
-                        const account = applyIdIdx >= 0 ? String(row[applyIdIdx] || '').trim() : '';
-                        if (name || account) add({ account, name, bu, customerGroup, role: explicitRole || '申请人', attendance: 'Attend on Time' });
-                    }
+
                     if (tdNameIdx >= 0 || tdIdIdx >= 0) {
-                        const name = tdNameIdx >= 0 ? String(row[tdNameIdx] || '').trim() : '';
-                        const account = tdIdIdx >= 0 ? String(row[tdIdIdx] || '').trim() : '';
-                        if (name || account) add({ account, name, bu, customerGroup, role: explicitRole || 'TD', attendance: 'Attend on Time' });
+                        const rawName = tdNameIdx >= 0 ? row[tdNameIdx] : '';
+                        const rawId = tdIdIdx >= 0 ? row[tdIdIdx] : '';
+                        parseQrPairedPeople(rawName, rawId).forEach(p => {
+                            addOrEnrich({
+                                account: p.account,
+                                name: p.name,
+                                bu,
+                                customerGroup,
+                                role: explicitRole || 'TD',
+                                attendance: 'Attend on Time'
+                            }, {
+                                source: 'meeting',
+                                sourceName: '会议考勤快照',
+                                snapshotTitle: snapshot.title || '会议考勤快照',
+                                sheetName: sheet.sheetName || 'QR 相关记录',
+                                rowNumber: rIdx + 1,
+                                field: `TD${explicitRole ? ` (匹配角色: ${explicitRole})` : ''}`,
+                                raw: `${p.name} ${p.account}`.trim()
+                            });
+                        });
+                    }
+
+                    if (applyNameIdx >= 0 || applyIdIdx >= 0) {
+                        const rawName = applyNameIdx >= 0 ? row[applyNameIdx] : '';
+                        const rawId = applyIdIdx >= 0 ? row[applyIdIdx] : '';
+                        const applyRole = (explicitRole && !/^\s*td\s*$/i.test(explicitRole)) ? explicitRole : '申请人';
+                        parseQrPairedPeople(rawName, rawId).forEach(p => {
+                            addOrEnrich({
+                                account: p.account,
+                                name: p.name,
+                                bu,
+                                customerGroup,
+                                role: applyRole,
+                                attendance: 'Attend on Time'
+                            }, {
+                                source: 'meeting',
+                                sourceName: '会议考勤快照',
+                                snapshotTitle: snapshot.title || '会议考勤快照',
+                                sheetName: sheet.sheetName || 'QR 相关记录',
+                                rowNumber: rIdx + 1,
+                                field: `申请人${explicitRole ? ` (匹配角色: ${explicitRole})` : ''}`,
+                                raw: `${p.name} ${p.account}`.trim()
+                            });
+                        });
                     }
                 } else if (isRfc) {
                     rfcRoles.forEach(cfg => {
                         const colIdx = headers.findIndex(h => cfg.re.test(h));
                         if (colIdx >= 0) {
                             parsePeopleTokens(row[colIdx]).forEach(p => {
-                                add({ account: p.account, name: p.name, bu, customerGroup, role: explicitRole || cfg.role, attendance: 'Attend on Time' });
+                                addOrEnrich({
+                                    account: p.account,
+                                    name: p.name,
+                                    bu,
+                                    customerGroup,
+                                    role: explicitRole || cfg.role,
+                                    attendance: 'Attend on Time'
+                                }, {
+                                    source: 'meeting',
+                                    sourceName: '会议考勤快照',
+                                    snapshotTitle: snapshot.title || '会议考勤快照',
+                                    sheetName: sheet.sheetName || 'RFC 相关记录',
+                                    rowNumber: rIdx + 1,
+                                    field: `${cfg.role}${explicitRole ? ` (匹配角色: ${explicitRole})` : ''}`,
+                                    raw: `${p.name} ${p.account}`.trim()
+                                });
                             });
                         }
                     });
@@ -704,18 +826,48 @@ function getSnapshotAttendees(snapshot) {
                         const colIdx = headers.findIndex(h => cfg.re.test(h));
                         if (colIdx >= 0) {
                             parsePeopleTokens(row[colIdx]).forEach(p => {
-                                add({ account: p.account, name: p.name, bu, customerGroup, role: explicitRole || cfg.role, attendance: 'Attend on Time' });
+                                addOrEnrich({
+                                    account: p.account,
+                                    name: p.name,
+                                    bu,
+                                    customerGroup,
+                                    role: explicitRole || cfg.role,
+                                    attendance: 'Attend on Time'
+                                }, {
+                                    source: 'meeting',
+                                    sourceName: '会议考勤快照',
+                                    snapshotTitle: snapshot.title || '会议考勤快照',
+                                    sheetName: sheet.sheetName || 'WFM 相关记录',
+                                    rowNumber: rIdx + 1,
+                                    field: `${cfg.role}${explicitRole ? ` (匹配角色: ${explicitRole})` : ''}`,
+                                    raw: `${p.name} ${p.account}`.trim()
+                                });
                             });
                         }
                     });
-                }
-
-                // Generic row fallback
-                if (nameIdx >= 0 || idIdx >= 0) {
-                    const name = nameIdx >= 0 ? String(row[nameIdx] || '').trim() : '';
-                    const account = idIdx >= 0 ? String(row[idIdx] || '').trim() : '';
-                    if (name || account) {
-                        add({ account, name, bu, customerGroup, role: explicitRole || '', attendance: 'Attend on Time' });
+                } else {
+                    // Generic row fallback
+                    if (nameIdx >= 0 || idIdx >= 0) {
+                        const name = nameIdx >= 0 ? String(row[nameIdx] || '').trim() : '';
+                        const account = idIdx >= 0 ? String(row[idIdx] || '').trim() : '';
+                        if (name || account) {
+                            addOrEnrich({
+                                account,
+                                name,
+                                bu,
+                                customerGroup,
+                                role: explicitRole || '',
+                                attendance: 'Attend on Time'
+                            }, {
+                                source: 'meeting',
+                                sourceName: '会议考勤快照',
+                                snapshotTitle: snapshot.title || '会议考勤快照',
+                                sheetName: sheet.sheetName || '明细表',
+                                rowNumber: rIdx + 1,
+                                field: explicitRole || '人员明细',
+                                raw: `${name} ${account}`.trim()
+                            });
+                        }
                     }
                 }
             });
@@ -723,7 +875,7 @@ function getSnapshotAttendees(snapshot) {
     }
 
     if (Array.isArray(snapshot.payload?.attendees) && snapshot.payload.attendees.length) {
-        snapshot.payload.attendees.forEach(add);
+        snapshot.payload.attendees.forEach(p => addOrEnrich(p));
     }
     return attendees;
 }

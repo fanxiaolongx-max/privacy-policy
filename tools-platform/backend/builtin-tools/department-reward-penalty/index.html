@@ -3143,12 +3143,22 @@ const DEFAULT_SNAPSHOT_MAPPINGS = {
     { scanned: '申请人', target: 'TE' }
   ],
   customerGroups: [
+    { scanned: 'ORG', target: 'Orange' },
+    { scanned: 'EG-Egypt Orange', target: 'Orange' },
+    { scanned: 'Orange Egypt', target: 'Orange' },
+    { scanned: 'Orange', target: 'Orange' },
     { scanned: 'Vodafone', target: 'VDF' },
     { scanned: 'VF', target: 'VDF' },
-    { scanned: 'Orange Egypt', target: 'Orange' },
+    { scanned: 'VDF', target: 'Vodafone' },
+    { scanned: 'EG-Egypt Vodafone', target: 'Vodafone' },
     { scanned: 'ET', target: 'Etisalat' },
+    { scanned: 'EG-Egypt ET', target: 'Etisalat' },
+    { scanned: 'ET (Etisalat)', target: 'Etisalat' },
+    { scanned: 'Etisalat', target: 'Etisalat' },
     { scanned: 'Telecom Egypt', target: 'WE' },
-    { scanned: 'TE', target: 'WE' }
+    { scanned: 'TE', target: 'WE' },
+    { scanned: 'WE', target: 'Telecom Egypt' },
+    { scanned: 'EG-Egypt Telecom', target: 'Telecom Egypt' }
   ],
   businessUnits: [
     { scanned: '软件', target: 'Software' },
@@ -3173,7 +3183,21 @@ function getActiveSnapshotMappings() {
     state.snapshotMappings = JSON.parse(JSON.stringify(DEFAULT_SNAPSHOT_MAPPINGS));
   }
   if (!Array.isArray(state.snapshotMappings.roles)) state.snapshotMappings.roles = [...DEFAULT_SNAPSHOT_MAPPINGS.roles];
+  else {
+    for (const def of DEFAULT_SNAPSHOT_MAPPINGS.roles) {
+      if (!state.snapshotMappings.roles.some(m => String(m.scanned || '').trim().toLowerCase() === String(def.scanned).trim().toLowerCase())) {
+        state.snapshotMappings.roles.push(def);
+      }
+    }
+  }
   if (!Array.isArray(state.snapshotMappings.customerGroups)) state.snapshotMappings.customerGroups = [...DEFAULT_SNAPSHOT_MAPPINGS.customerGroups];
+  else {
+    for (const def of DEFAULT_SNAPSHOT_MAPPINGS.customerGroups) {
+      if (!state.snapshotMappings.customerGroups.some(m => String(m.scanned || '').trim().toLowerCase() === String(def.scanned).trim().toLowerCase())) {
+        state.snapshotMappings.customerGroups.push(def);
+      }
+    }
+  }
   if (!Array.isArray(state.snapshotMappings.businessUnits)) state.snapshotMappings.businessUnits = [...DEFAULT_SNAPSHOT_MAPPINGS.businessUnits];
   return state.snapshotMappings;
 }
@@ -3306,16 +3330,46 @@ function resolveMappedCustomerGroup(rawGroup) {
   const mappings = getActiveSnapshotMappings().customerGroups || [];
   const activeGroups = active('customerGroups');
 
+  // 1. Direct configured mapping rule
   const mapped = mappings.find(m => m.scanned && String(m.scanned).trim().toLowerCase() === s);
   if (mapped && mapped.target) {
     const targetLower = String(mapped.target).trim().toLowerCase();
     const matchedActive = activeGroups.find(g => (g.id || '').toLowerCase() === targetLower || (g.value || '').toLowerCase() === targetLower);
     if (matchedActive) return matchedActive.id;
+
+    // Check alias of target in active groups
+    const aliasMatched = activeGroups.find(g => {
+      const gVal = (g.value || '').toLowerCase();
+      if ((targetLower === 'orange' || targetLower === 'org') && (gVal === 'orange' || gVal === 'org')) return true;
+      if ((targetLower === 'vodafone' || targetLower === 'vdf' || targetLower === 'vf') && (gVal === 'vodafone' || gVal === 'vdf' || gVal === 'vf')) return true;
+      if ((targetLower === 'etisalat' || targetLower === 'et') && (gVal === 'etisalat' || gVal === 'et')) return true;
+      if ((targetLower === 'telecom egypt' || targetLower === 'we' || targetLower === 'te') && (gVal === 'telecom egypt' || gVal === 'we' || gVal === 'te')) return true;
+      return false;
+    });
+    if (aliasMatched) return aliasMatched.id;
   }
 
+  // 2. Direct exact value match against active customer groups
   const direct = activeGroups.find(g => (g.id || '').toLowerCase() === s || (g.value || '').toLowerCase() === s);
   if (direct) return direct.id;
 
+  // 3. Known telecom operator abbreviation / alias heuristic
+  const isOrange = s === 'org' || s === 'orange' || s === 'ora' || s.includes('orange');
+  const isVodafone = s === 'vdf' || s === 'vf' || s === 'vodafone' || s.includes('vodafone');
+  const isEtisalat = s === 'et' || s === 'etisalat' || s.includes('etisalat');
+  const isTe = s === 'te' || s === 'we' || s === 'telecom egypt' || s.includes('telecom');
+
+  const heuristicMatch = activeGroups.find(g => {
+    const gVal = (g.value || '').toLowerCase();
+    if (isOrange && (gVal === 'org' || gVal === 'orange' || gVal.includes('orange'))) return true;
+    if (isVodafone && (gVal === 'vdf' || gVal === 'vf' || gVal === 'vodafone' || gVal.includes('vodafone'))) return true;
+    if (isEtisalat && (gVal === 'et' || gVal === 'etisalat' || gVal.includes('etisalat'))) return true;
+    if (isTe && (gVal === 'te' || gVal === 'we' || gVal === 'telecom egypt' || gVal.includes('telecom'))) return true;
+    return false;
+  });
+  if (heuristicMatch) return heuristicMatch.id;
+
+  // 4. Substring / partial match fallback
   const partial = activeGroups.find(g => {
     const gVal = (g.value || '').toLowerCase();
     return gVal && (gVal.includes(s) || s.includes(gVal));
