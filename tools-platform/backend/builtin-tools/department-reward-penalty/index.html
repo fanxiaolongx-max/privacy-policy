@@ -1315,39 +1315,39 @@ dialog::backdrop{background:rgba(15,23,42,.48);backdrop-filter:blur(5px);-webkit
   </form>
 </dialog>
 
-<dialog id="snapshot-roster-dialog" style="width:min(1100px,calc(100vw - 32px));border-radius:16px;box-shadow:0 30px 70px -15px rgba(15,23,42,.35),0 0 0 1px rgba(15,23,42,.06);background:#fff;border:1px solid #cbd5e1;padding:0;overflow:hidden;">
-  <div class="dialog-head" style="padding:16px 22px;background:#fff;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;">
+<dialog id="snapshot-roster-dialog" style="width:min(1420px,calc(100vw - 40px));border-radius:16px;box-shadow:0 30px 70px -15px rgba(15,23,42,.35),0 0 0 1px rgba(15,23,42,.06);background:#fff;border:1px solid #cbd5e1;padding:0;overflow:hidden;">
+  <div class="dialog-head" style="padding:16px 24px;background:#fff;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;">
     <div>
-      <h3 style="margin:0;font-size:17px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:8px;">
+      <h3 style="margin:0;font-size:18px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:8px;">
         <span>👥</span>
         <span>从快照提取人员名单</span>
       </h3>
-      <div class="muted" style="margin-top:2px;">从历史「会议考勤快照」与「操作激励快照」中聚合提取人员，支持按条件筛选、批量补齐客户群与BU角色后导入人员名册</div>
+      <div class="muted" style="margin-top:3px;font-size:12.5px;">从历史「会议考勤快照」与「操作激励快照」中聚合提取人员，支持按条件筛选、批量补齐客户群与BU角色后导入人员名册</div>
     </div>
     <button type="button" class="dialog-close-btn" id="close-snapshot-roster" aria-label="关闭" title="关闭 (Esc)">
       <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg>
     </button>
   </div>
-  <div style="display:flex;flex-direction:column;max-height:calc(88vh - 70px);">
-    <div style="padding:16px 22px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;">
-      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;">
-        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-          <span style="font-size:12px;font-weight:700;color:#475569;">数据源：</span>
-          <button type="button" class="tab-btn active" data-extract-source="all" style="font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;">全部 (<span id="extract-count-all">0</span>)</button>
-          <button type="button" class="tab-btn" data-extract-source="meeting" style="font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;">仅会议考勤 (<span id="extract-count-meeting">0</span>)</button>
-          <button type="button" class="tab-btn" data-extract-source="incentive" style="font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;">仅操作激励 (<span id="extract-count-incentive">0</span>)</button>
-          <button type="button" class="tab-btn" data-extract-source="new" style="font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;">仅新人员 (<span id="extract-count-new">0</span>)</button>
+  <div style="display:flex;flex-direction:column;max-height:calc(94vh - 50px);">
+    <div style="padding:16px 24px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;">
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 16px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <span style="font-size:12.5px;font-weight:700;color:#475569;">数据源：</span>
+          <button type="button" class="tab-btn active" data-extract-source="all" style="font-size:12px;padding:5px 12px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;">全部 (<span id="extract-count-all">0</span>)</button>
+          <button type="button" class="tab-btn" data-extract-source="meeting" style="font-size:12px;padding:5px 12px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;">仅会议考勤 (<span id="extract-count-meeting">0</span>)</button>
+          <button type="button" class="tab-btn" data-extract-source="incentive" style="font-size:12px;padding:5px 12px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;">仅操作激励 (<span id="extract-count-incentive">0</span>)</button>
+          <button type="button" class="tab-btn" data-extract-source="new" style="font-size:12px;padding:5px 12px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;">仅新人员 (<span id="extract-count-new">0</span>)</button>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <input type="text" id="extract-search-input" placeholder="按工号或姓名过滤..." style="padding:5px 10px;font-size:12px;border:1px solid #cbd5e1;border-radius:6px;width:170px;">
-          <button type="button" class="secondary" id="btn-open-snapshot-mappings" style="font-size:12px;padding:5px 12px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;font-weight:600;border:1px solid #cbd5e1;background:#fff;">
+        <div style="display:flex;gap:10px;align-items:center;">
+          <input type="text" id="extract-search-input" placeholder="按工号或姓名过滤..." style="padding:6px 12px;font-size:12.5px;border:1px solid #cbd5e1;border-radius:6px;width:190px;">
+          <button type="button" class="secondary" id="btn-open-snapshot-mappings" style="font-size:12.5px;padding:5px 14px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;font-weight:600;border:1px solid #cbd5e1;background:#fff;">
             <span>🔀</span>
             <span>字段映射配置</span>
           </button>
         </div>
       </div>
 
-      <div id="extract-mapping-hint-banner" style="display:none;background:#fefce8;border:1px solid #fef08a;border-radius:10px;padding:10px 14px;font-size:12px;color:#854d0e;">
+      <div id="extract-mapping-hint-banner" style="display:none;background:#fefce8;border:1px solid #fef08a;border-radius:10px;padding:10px 16px;font-size:12px;color:#854d0e;">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
             <span style="font-size:15px;">⚠️</span>
@@ -1358,43 +1358,43 @@ dialog::backdrop{background:rgba(15,23,42,.48);backdrop-filter:blur(5px);-webkit
         <div id="extract-mapping-hint-chips" style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;"></div>
       </div>
 
-      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:10px 14px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;">
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:10px 16px;display:flex;flex-wrap:wrap;gap:14px;align-items:center;">
         <span style="font-size:12.5px;font-weight:750;color:#1e40af;">⚡ 批量补齐已勾选项：</span>
-        <div style="display:inline-flex;gap:4px;align-items:center;">
+        <div style="display:inline-flex;gap:5px;align-items:center;">
           <label style="font-size:12px;color:#1e3a8a;font-weight:600;">客户群:</label>
           <select id="extract-batch-group" style="padding:4px 8px;font-size:12px;border-radius:4px;border:1px solid #93c5fd;background:#fff;"></select>
-          <button type="button" class="secondary mini" id="btn-apply-batch-group" style="font-size:11.5px;padding:4px 8px;cursor:pointer;">一键填充</button>
+          <button type="button" class="secondary mini" id="btn-apply-batch-group" style="font-size:11.5px;padding:4px 10px;cursor:pointer;">一键填充</button>
         </div>
-        <div style="display:inline-flex;gap:4px;align-items:center;">
+        <div style="display:inline-flex;gap:5px;align-items:center;">
           <label style="font-size:12px;color:#1e3a8a;font-weight:600;">BU:</label>
           <select id="extract-batch-bu" style="padding:4px 8px;font-size:12px;border-radius:4px;border:1px solid #93c5fd;background:#fff;"></select>
-          <button type="button" class="secondary mini" id="btn-apply-batch-bu" style="font-size:11.5px;padding:4px 8px;cursor:pointer;">一键填充</button>
+          <button type="button" class="secondary mini" id="btn-apply-batch-bu" style="font-size:11.5px;padding:4px 10px;cursor:pointer;">一键填充</button>
         </div>
-        <div style="display:inline-flex;gap:4px;align-items:center;">
+        <div style="display:inline-flex;gap:5px;align-items:center;">
           <label style="font-size:12px;color:#1e3a8a;font-weight:600;">角色:</label>
           <select id="extract-batch-role" style="padding:4px 8px;font-size:12px;border-radius:4px;border:1px solid #93c5fd;background:#fff;"></select>
-          <button type="button" class="secondary mini" id="btn-apply-batch-role" style="font-size:11.5px;padding:4px 8px;cursor:pointer;">一键填充</button>
+          <button type="button" class="secondary mini" id="btn-apply-batch-role" style="font-size:11.5px;padding:4px 10px;cursor:pointer;">一键填充</button>
         </div>
       </div>
 
-      <div class="table-wrap" style="max-height:380px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;">
+      <div class="table-wrap" style="min-height:380px;max-height:calc(94vh - 350px);overflow-y:auto;border:1px solid #e2e8f0;border-radius:10px;">
         <table style="width:100%;font-size:12px;border-collapse:collapse;">
           <thead style="position:sticky;top:0;background:#f8fafc;z-index:2;border-bottom:1px solid #cbd5e1;">
             <tr>
-              <th style="width:40px;text-align:center;padding:8px;"><input type="checkbox" id="extract-select-all" checked style="cursor:pointer;accent-color:var(--red);"></th>
-              <th style="width:110px;padding:8px;">工号</th>
-              <th style="width:100px;padding:8px;">姓名</th>
-              <th style="width:190px;padding:8px;">客户群 (可多选) <span class="req-mark">*</span></th>
-              <th style="width:130px;padding:8px;">BU (单选)</th>
-              <th style="width:180px;padding:8px;">角色 (可多选) <span class="req-mark">*</span></th>
-              <th style="padding:8px;">快照来源</th>
-              <th style="width:85px;text-align:center;padding:8px;">在册状态</th>
+              <th style="width:42px;text-align:center;padding:10px 8px;"><input type="checkbox" id="extract-select-all" checked style="cursor:pointer;accent-color:var(--red);width:15px;height:15px;"></th>
+              <th style="width:125px;padding:10px 10px;">工号</th>
+              <th style="width:115px;padding:10px 10px;">姓名</th>
+              <th style="width:280px;min-width:250px;padding:10px 10px;">客户群 (可多选) <span class="req-mark">*</span></th>
+              <th style="width:160px;min-width:145px;padding:10px 10px;">BU (单选)</th>
+              <th style="width:260px;min-width:235px;padding:10px 10px;">角色 (可多选) <span class="req-mark">*</span></th>
+              <th style="min-width:180px;padding:10px 10px;">快照来源</th>
+              <th style="width:95px;text-align:center;padding:10px 10px;">在册状态</th>
             </tr>
           </thead>
           <tbody id="extract-roster-tbody"></tbody>
         </table>
       </div>
-      <div class="pager" id="pager-extract-roster" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;padding:4px 2px;margin-top:2px;"></div>
+      <div class="pager" id="pager-extract-roster" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;padding:6px 4px;margin-top:2px;"></div>
 
       <!-- 提取进度与详细诊断日志容器 -->
       <div id="extract-loading-container" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;">
@@ -2954,77 +2954,77 @@ function renderExtractRosterTable() {
       ? [...cand.customerGroupIds].map(gid => {
           const g = groups.find(x => x.id === gid);
           const gName = g ? g.value : groupName(gid);
-          return `<span class="person-group-chip" style="display:inline-flex;align-items:center;gap:3px;font-size:11px;padding:2px 5px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:4px;color:#1e40af;">
+          return `<span class="person-group-chip" style="display:inline-flex;align-items:center;gap:4px;font-size:11.5px;padding:2px 7px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:5px;color:#1e40af;">
             <span>${escapeHtml(gName)}</span>
             <button type="button" class="btn-remove-cand-group" data-cand-idx="${rawIdx}" data-group-id="${escapeHtml(gid)}" style="background:none;border:none;padding:0 2px;color:#94a3b8;cursor:pointer;font-size:11px;line-height:1;" title="移除客户群">✕</button>
           </span>`;
         }).join('')
-      : `<span style="font-size:11px;color:#ef4444;font-weight:600;">未选择客户群 *</span>`;
+      : `<span style="font-size:11.5px;color:#ef4444;font-weight:600;">未选择客户群 *</span>`;
 
     const roleChipsHtml = !roleMissing
       ? [...cand.roles].map(r => {
-          return `<span class="badge" style="display:inline-flex;align-items:center;gap:3px;font-size:11px;padding:2px 5px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:4px;color:#334155;font-weight:600;">
+          return `<span class="badge" style="display:inline-flex;align-items:center;gap:4px;font-size:11.5px;padding:2px 7px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:5px;color:#334155;font-weight:600;">
             <span>${escapeHtml(r)}</span>
             <button type="button" class="btn-remove-cand-role" data-cand-idx="${rawIdx}" data-role-name="${escapeHtml(r)}" style="background:none;border:none;padding:0 2px;color:#94a3b8;cursor:pointer;font-size:11px;line-height:1;" title="移除角色">✕</button>
           </span>`;
         }).join('')
-      : `<span style="font-size:11px;color:#ef4444;font-weight:600;">未选择角色 *</span>`;
+      : `<span style="font-size:11.5px;color:#ef4444;font-weight:600;">未选择角色 *</span>`;
 
     const rawGroupText = cand.rawCustomerGroups ? [...cand.rawCustomerGroups].join(' / ') : '';
     const rawRoleText = cand.rawRoles ? [...cand.rawRoles].join(' / ') : '';
 
     return `
       <tr style="border-bottom:1px solid #f1f5f9;background:${cand.selected ? (cand.isExisting ? '#f8fafc' : '#ffffff') : '#f8fafc'};">
-        <td style="text-align:center;padding:6px 8px;">
-          <input type="checkbox" class="extract-row-cb" data-cand-idx="${rawIdx}" ${cand.selected ? 'checked' : ''} style="cursor:pointer;accent-color:var(--red);">
+        <td style="text-align:center;padding:8px 8px;">
+          <input type="checkbox" class="extract-row-cb" data-cand-idx="${rawIdx}" ${cand.selected ? 'checked' : ''} style="cursor:pointer;accent-color:var(--red);width:15px;height:15px;">
         </td>
-        <td style="padding:6px 8px;">
-          <input type="text" class="extract-inline-staffid" data-cand-idx="${rawIdx}" value="${escapeHtml(cand.staffId || '')}" placeholder="必填工号" style="width:100px;font-size:11.5px;padding:3px 6px;border:1px solid ${cand.staffId ? '#cbd5e1' : '#f87171'};border-radius:4px;background:#fff;box-sizing:border-box;">
+        <td style="padding:8px 10px;">
+          <input type="text" class="extract-inline-staffid" data-cand-idx="${rawIdx}" value="${escapeHtml(cand.staffId || '')}" placeholder="必填工号" style="width:115px;font-size:12px;padding:4px 8px;border:1px solid ${cand.staffId ? '#cbd5e1' : '#f87171'};border-radius:5px;background:#fff;box-sizing:border-box;">
         </td>
-        <td style="padding:6px 8px;">
-          <input type="text" class="extract-inline-name" data-cand-idx="${rawIdx}" value="${escapeHtml(cand.name || '')}" placeholder="必填姓名" style="width:90px;font-size:11.5px;padding:3px 6px;border:1px solid ${cand.name ? '#cbd5e1' : '#f87171'};border-radius:4px;background:#fff;font-weight:600;box-sizing:border-box;">
+        <td style="padding:8px 10px;">
+          <input type="text" class="extract-inline-name" data-cand-idx="${rawIdx}" value="${escapeHtml(cand.name || '')}" placeholder="必填姓名" style="width:105px;font-size:12px;padding:4px 8px;border:1px solid ${cand.name ? '#cbd5e1' : '#f87171'};border-radius:5px;background:#fff;font-weight:600;box-sizing:border-box;">
         </td>
-        <td style="padding:6px 8px;">
-          <div style="display:flex;flex-direction:column;gap:4px;">
-            <div style="display:flex;flex-wrap:wrap;gap:4px;min-height:22px;align-items:center;">
+        <td style="padding:8px 10px;">
+          <div style="display:flex;flex-direction:column;gap:5px;">
+            <div style="display:flex;flex-wrap:wrap;gap:5px;min-height:24px;align-items:center;">
               ${groupChipsHtml}
             </div>
-            <div style="display:flex;align-items:center;gap:4px;">
-              <select class="extract-add-group-select" data-cand-idx="${rawIdx}" style="font-size:11px;padding:2px 4px;border:1px solid ${groupMissing ? '#f87171' : '#cbd5e1'};border-radius:4px;background:#fff;max-width:130px;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <select class="extract-add-group-select" data-cand-idx="${rawIdx}" style="font-size:11.5px;padding:3px 6px;border:1px solid ${groupMissing ? '#f87171' : '#cbd5e1'};border-radius:5px;background:#fff;max-width:160px;">
                 <option value="">+ 添加客户群</option>
                 ${groups.map(g => `<option value="${escapeHtml(g.id)}" ${cand.customerGroupIds?.has(g.id) ? 'disabled style="color:#94a3b8;"' : ''}>${escapeHtml(g.value)}</option>`).join('')}
               </select>
             </div>
-            ${groupMissing && rawGroupText ? `<div style="font-size:10px;color:#d97706;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px;" title="原始快照客户群: ${escapeHtml(rawGroupText)}">扫描: ${escapeHtml(rawGroupText)}</div>` : ''}
+            ${groupMissing && rawGroupText ? `<div style="font-size:10.5px;color:#d97706;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px;" title="原始快照客户群: ${escapeHtml(rawGroupText)}">扫描: ${escapeHtml(rawGroupText)}</div>` : ''}
           </div>
         </td>
-        <td style="padding:6px 8px;">
-          <select class="extract-row-bu" data-cand-idx="${rawIdx}" style="width:125px;font-size:11.5px;padding:3px 4px;border:1px solid #cbd5e1;border-radius:4px;background:#fff;">
+        <td style="padding:8px 10px;">
+          <select class="extract-row-bu" data-cand-idx="${rawIdx}" style="width:145px;font-size:12px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:5px;background:#fff;">
             <option value="">-- 未指定 BU --</option>
             ${bus.map(b => `<option value="${escapeHtml(b.id)}" ${cand.businessUnitId === b.id ? 'selected' : ''}>${escapeHtml(b.value)}</option>`).join('')}
           </select>
         </td>
-        <td style="padding:6px 8px;">
-          <div style="display:flex;flex-direction:column;gap:4px;">
-            <div style="display:flex;flex-wrap:wrap;gap:4px;min-height:22px;align-items:center;">
+        <td style="padding:8px 10px;">
+          <div style="display:flex;flex-direction:column;gap:5px;">
+            <div style="display:flex;flex-wrap:wrap;gap:5px;min-height:24px;align-items:center;">
               ${roleChipsHtml}
             </div>
-            <div style="display:flex;align-items:center;gap:4px;">
-              <select class="extract-add-role-select" data-cand-idx="${rawIdx}" style="font-size:11px;padding:2px 4px;border:1px solid ${roleMissing ? '#f87171' : '#cbd5e1'};border-radius:4px;background:#fff;max-width:130px;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <select class="extract-add-role-select" data-cand-idx="${rawIdx}" style="font-size:11.5px;padding:3px 6px;border:1px solid ${roleMissing ? '#f87171' : '#cbd5e1'};border-radius:5px;background:#fff;max-width:160px;">
                 <option value="">+ 添加角色</option>
                 ${roles.map(r => `<option value="${escapeHtml(r.value)}" ${cand.roles?.has(r.value) ? 'disabled style="color:#94a3b8;"' : ''}>${escapeHtml(r.value)}</option>`).join('')}
               </select>
             </div>
-            ${roleMissing && rawRoleText ? `<div style="font-size:10px;color:#d97706;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;" title="原始快照角色: ${escapeHtml(rawRoleText)}">扫描: ${escapeHtml(rawRoleText)}</div>` : ''}
+            ${roleMissing && rawRoleText ? `<div style="font-size:10.5px;color:#d97706;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px;" title="原始快照角色: ${escapeHtml(rawRoleText)}">扫描: ${escapeHtml(rawRoleText)}</div>` : ''}
           </div>
         </td>
-        <td style="padding:6px 8px;">
-          <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
+        <td style="padding:8px 10px;">
+          <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
             ${sourceBadges.join('')}
           </div>
         </td>
-        <td style="text-align:center;padding:6px 8px;">
-          ${cand.isExisting ? '<span class="badge secondary" style="font-size:11px;">在册已存在</span>' : '<span class="badge primary" style="font-size:11px;background:#eff6ff;color:#1e40af;font-weight:600;">✨ 新人员</span>'}
+        <td style="text-align:center;padding:8px 10px;">
+          ${cand.isExisting ? '<span class="badge secondary" style="font-size:11.5px;padding:2px 7px;">在册已存在</span>' : '<span class="badge primary" style="font-size:11.5px;padding:2px 7px;background:#eff6ff;color:#1e40af;font-weight:600;">✨ 新人员</span>'}
         </td>
       </tr>
     `;
