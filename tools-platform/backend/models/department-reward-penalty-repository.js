@@ -34,6 +34,13 @@ const DEFAULT_SNAPSHOT_MAPPINGS = {
         { scanned: 'ET', target: 'Etisalat' },
         { scanned: 'Telecom Egypt', target: 'WE' },
         { scanned: 'TE', target: 'WE' }
+    ],
+    businessUnits: [
+        { scanned: '软件', target: 'Software' },
+        { scanned: '无线', target: 'Wireless' },
+        { scanned: '核心网', target: 'Core' },
+        { scanned: '数通', target: 'Datacom' },
+        { scanned: '传输', target: 'Transmission' }
     ]
 };
 const writeQueues = new Map();
@@ -638,9 +645,19 @@ async function getSnapshotMappings() {
     }
     try {
         const saved = JSON.parse(row.payload_json);
+        const hasCustomBUs = Boolean(saved.hasCustomBusinessUnits);
+        const buList = Array.isArray(saved.businessUnits) ? saved.businessUnits : null;
+        let businessUnits = DEFAULT_SNAPSHOT_MAPPINGS.businessUnits;
+        if (hasCustomBUs && buList) {
+            businessUnits = buList;
+        } else if (buList && buList.length > 0) {
+            businessUnits = buList;
+        }
+
         return {
             roles: Array.isArray(saved.roles) ? saved.roles : DEFAULT_SNAPSHOT_MAPPINGS.roles,
             customerGroups: Array.isArray(saved.customerGroups) ? saved.customerGroups : DEFAULT_SNAPSHOT_MAPPINGS.customerGroups,
+            businessUnits,
             updatedAt: saved.updatedAt || ''
         };
     } catch {
@@ -651,19 +668,25 @@ async function getSnapshotMappings() {
 async function saveSnapshotMappings(mappings, actor = 'System') {
     await ensureReady();
     const existing = await getSnapshotMappings();
+    const hasCustomBUs = Array.isArray(mappings?.businessUnits) || Boolean(existing?.hasCustomBusinessUnits);
     const payload = {
         id: 'config',
         roles: Array.isArray(mappings?.roles) ? mappings.roles.filter(m => m && String(m.scanned || '').trim() && String(m.target || '').trim()).map(m => ({
             scanned: String(m.scanned).trim(),
             target: String(m.target).trim()
-        })) : [],
+        })) : (Array.isArray(existing?.roles) ? existing.roles : []),
         customerGroups: Array.isArray(mappings?.customerGroups) ? mappings.customerGroups.filter(m => m && String(m.scanned || '').trim() && String(m.target || '').trim()).map(m => ({
             scanned: String(m.scanned).trim(),
             target: String(m.target).trim()
-        })) : [],
+        })) : (Array.isArray(existing?.customerGroups) ? existing.customerGroups : []),
+        businessUnits: Array.isArray(mappings?.businessUnits) ? mappings.businessUnits.filter(m => m && String(m.scanned || '').trim() && String(m.target || '').trim()).map(m => ({
+            scanned: String(m.scanned).trim(),
+            target: String(m.target).trim()
+        })) : (Array.isArray(existing?.businessUnits) ? existing.businessUnits : []),
+        hasCustomBusinessUnits: hasCustomBUs,
         updatedAt: new Date().toISOString()
     };
-    await put('snapshotMappings', 'config', payload, actor, '更新快照字段映射', '更新角色及客户群映射配置');
+    await put('snapshotMappings', 'config', payload, actor, '更新快照字段映射', '更新角色、客户群及BU映射配置');
     return payload;
 }
 

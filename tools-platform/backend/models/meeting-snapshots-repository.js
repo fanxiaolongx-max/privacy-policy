@@ -175,23 +175,87 @@ function normalizeId(id) {
     return m ? m[1] : s;
 }
 
+function areStaffIdsEquivalent(id1, id2) {
+    if (!id1 || !id2) return false;
+    const s1 = String(id1).trim().toLowerCase();
+    const s2 = String(id2).trim().toLowerCase();
+    if (!s1 || !s2) return false;
+    if (s1 === s2) return true;
+
+    // Check leading 'm' prefix (e.g. mWX1350434 vs WX1350434)
+    if (s1 === 'm' + s2 || s2 === 'm' + s1) return true;
+
+    // Check single leading letter difference
+    if (s1.length === s2.length + 1 && s1.slice(1) === s2 && s2.length >= 4) return true;
+    if (s2.length === s1.length + 1 && s2.slice(1) === s1 && s1.length >= 4) return true;
+
+    // Check normalized digits if >= 5 digits (e.g. u1350434 vs 1350434 or mwx1350434 vs wx1350434)
+    const num1 = s1.replace(/^[a-z]+/i, '');
+    const num2 = s2.replace(/^[a-z]+/i, '');
+    if (num1 && num1 === num2 && num1.length >= 5) return true;
+
+    return false;
+}
+
+function preferCanonicalStaffId(id1, id2, preferredIds = new Set()) {
+    const s1 = String(id1 || '').trim();
+    const s2 = String(id2 || '').trim();
+    if (!s1) return s2;
+    if (!s2) return s1;
+    if (s1.toLowerCase() === s2.toLowerCase()) return s1;
+
+    // 1. If one matches an already existing employee ID in the personnel roster, prefer it
+    if (preferredIds.has(s1) && !preferredIds.has(s2)) return s1;
+    if (preferredIds.has(s2) && !preferredIds.has(s1)) return s2;
+
+    // 2. Prefer non-m prefix (e.g. WX1350434 over mWX1350434)
+    const isM1 = /^m[a-z]/i.test(s1);
+    const isM2 = /^m[a-z]/i.test(s2);
+    if (isM1 && !isM2) return s2;
+    if (isM2 && !isM1) return s1;
+
+    // 3. Prefer standard enterprise prefix (e.g. WX...)
+    if (/^wx\d+/i.test(s1) && !/^wx\d+/i.test(s2)) return s1;
+    if (/^wx\d+/i.test(s2) && !/^wx\d+/i.test(s1)) return s2;
+
+    // 4. Shorter ID preferred
+    if (s1.length !== s2.length) return s1.length < s2.length ? s1 : s2;
+    return s1;
+}
+
+function isTotalRow(id, name) {
+    const sId = String(id || '').trim();
+    const sName = String(name || '').trim();
+    return /总计|合计|小计|^total$/i.test(sId) || /总计|合计|小计|^total$/i.test(sName);
+}
+
 function matchPerson(person, targetStaffId, targetName) {
     const tId = normalizeId(targetStaffId);
     const tName = String(targetName || '').trim().toLowerCase();
     const pAccount = normalizeId(person.account || person.staffId || person.id);
     const pName = String(person.name || '').trim().toLowerCase();
 
-    // 1. Exact or normalized ID match
-    if (tId && pAccount && (tId === pAccount || tId === (person.account || '').toLowerCase() || tId === (person.staffId || '').toLowerCase() || tId === (person.id || '').toLowerCase())) {
+    // 1. Exact or normalized ID match, or fuzzy equivalent ID match (e.g. WX1350434 vs mWX1350434)
+    if (tId && pAccount && (
+        tId === pAccount ||
+        tId === (person.account || '').toLowerCase() ||
+        tId === (person.staffId || '').toLowerCase() ||
+        tId === (person.id || '').toLowerCase() ||
+        areStaffIdsEquivalent(tId, pAccount)
+    )) {
         return true;
     }
     // 2. Exact name match
     if (tName && pName && tName === pName) {
-        return true;
+        if (!tId || !pAccount || areStaffIdsEquivalent(tId, pAccount)) {
+            return true;
+        }
     }
     // 3. Name substring match if length >= 2
     if (tName && pName && tName.length >= 2 && (pName.includes(tName) || tName.includes(pName))) {
-        return true;
+        if (!tId || !pAccount || areStaffIdsEquivalent(tId, pAccount)) {
+            return true;
+        }
     }
     return false;
 }
@@ -203,6 +267,13 @@ function getSnapshotAttendees(snapshot) {
         if (!p) return;
         const id = p.account || p.staffId || p.id || '';
         const name = p.name || '';
+        if (isTotalRow(id, name)) return;
+
+        const role = p.role || '';
+        const isPm = /^\s*pm\s*$/i.test(role);
+        const bu = isPm ? 'PMO' : (p.bu || p.businessUnit || '');
+        const customerGroup = p.customerGroup || p.group || '';
+
         const key = `${id}|${name}`;
         if (!seen.has(key)) {
             seen.add(key);
@@ -211,10 +282,12 @@ function getSnapshotAttendees(snapshot) {
                 staffId: id,
                 id,
                 name,
-                bu: p.bu || p.businessUnit || '',
-                businessUnit: p.bu || p.businessUnit || '',
-                customerGroup: p.customerGroup || p.group || '',
-                role: p.role || '',
+                bu,
+                businessUnit: bu,
+                customerGroup,
+                customerGroups: customerGroup ? [customerGroup] : [],
+                role,
+                roles: role ? [role] : [],
                 attendance: p.attendance || p.status || 'Attend on Time',
                 status: p.status || p.attendance || 'Attend on Time',
                 reason: p.reason || '',
@@ -224,13 +297,31 @@ function getSnapshotAttendees(snapshot) {
         } else {
             const existing = attendees.find(a => (id && a.account === id) || (name && a.name === name));
             if (existing) {
-                if (!existing.role && p.role) existing.role = p.role;
-                if (!existing.customerGroup && (p.customerGroup || p.group)) {
-                    existing.customerGroup = p.customerGroup || p.group;
+                if (!Array.isArray(existing.roles)) {
+                    existing.roles = existing.role ? [existing.role] : [];
                 }
-                if (!existing.bu && (p.bu || p.businessUnit)) {
-                    existing.bu = p.bu || p.businessUnit;
-                    existing.businessUnit = existing.bu;
+                if (role && !existing.roles.includes(role)) {
+                    existing.roles.push(role);
+                }
+                if (role && !existing.role) existing.role = role;
+                else if (existing.roles.length > 0) existing.role = existing.roles.join(', ');
+
+                if (!Array.isArray(existing.customerGroups)) {
+                    existing.customerGroups = existing.customerGroup ? [existing.customerGroup] : [];
+                }
+                if (customerGroup && !existing.customerGroups.includes(customerGroup)) {
+                    existing.customerGroups.push(customerGroup);
+                }
+                if (customerGroup && !existing.customerGroup) existing.customerGroup = customerGroup;
+                else if (existing.customerGroups.length > 0) existing.customerGroup = existing.customerGroups.join(', ');
+
+                const anyPm = isPm || /^\s*pm\s*$/i.test(role) || existing.roles.some(r => /^\s*pm\s*$/i.test(r));
+                if (anyPm) {
+                    existing.bu = 'PMO';
+                    existing.businessUnit = 'PMO';
+                } else if (!existing.bu && bu) {
+                    existing.bu = bu;
+                    existing.businessUnit = bu;
                 }
                 if (!existing.date && (p.date || p.meetingDate || p.attendanceDate)) {
                     existing.date = p.date || p.meetingDate || p.attendanceDate;
@@ -292,8 +383,21 @@ function getSnapshotAttendees(snapshot) {
             const nameIdx = headers.findIndex(h => /姓名|fullname|apply fullname|\bname\b/i.test(h));
             const idIdx = headers.findIndex(h => /工号|accountid|apply accountid|staffid|\baccount\b|\bid\b/i.test(h));
             const buIdx = headers.findIndex(h => /bu|部门|service type/i.test(h));
-            const grpIdx = headers.findIndex(h => /客户群|customer group|customer name|customer|客户|网络|network/i.test(h));
             const roleIdx = headers.findIndex(h => /匹配角色|用户角色|角色|role name|\brole\b|岗位|identity|身份/i.test(h));
+
+            // Support:
+            // 1. 客户网络/Network Name
+            // 2. 客户群/Customer Group
+            // 3. 客户组织/Customer Org
+            // 4. Fallback 客户/Customer Name
+            const grpCandidates = [
+                headers.findIndex(h => /客户网络|network name/i.test(h)),
+                headers.findIndex(h => /客户群|customer group/i.test(h)),
+                headers.findIndex(h => /客户组织|customer org/i.test(h)),
+                headers.findIndex(h => /网络|network/i.test(h)),
+                headers.findIndex(h => /组织|org/i.test(h)),
+                headers.findIndex(h => /customer name|customer|客户/i.test(h))
+            ].filter(idx => idx >= 0);
 
             const isRfc = sheet.category === 'rfc' || headers.some(h => /solution developer|方案制作人|rfc/i.test(h));
             const isWfm = sheet.category === 'wfm' || headers.some(h => /wfm|fme/i.test(h));
@@ -301,7 +405,14 @@ function getSnapshotAttendees(snapshot) {
 
             sheet.rows.forEach(row => {
                 const bu = buIdx >= 0 ? String(row[buIdx] || '').trim() : '';
-                const customerGroup = grpIdx >= 0 ? String(row[grpIdx] || '').trim() : '';
+                let customerGroup = '';
+                for (const cIdx of grpCandidates) {
+                    const val = String(row[cIdx] || '').trim();
+                    if (val) {
+                        customerGroup = val;
+                        break;
+                    }
+                }
                 const explicitRole = roleIdx >= 0 ? String(row[roleIdx] || '').trim() : '';
 
                 if (isQr) {
@@ -510,36 +621,60 @@ async function batchCheckAttendance(persons = []) {
 
 async function extractRoster() {
     await ensureReady();
-    const snapshots = await listSnapshots({ includePayload: false });
+    const snapshots = await listSnapshots({ includePayload: true });
     const rosterMap = new Map();
 
     for (const snap of snapshots) {
-        let snapToUse = snap;
-        // If snapshot has no attendees in summary, load full snapshot payload on demand
-        if (!Array.isArray(snap.summary?.attendees) || !snap.summary.attendees.length) {
-            try {
-                const full = await getSnapshot(snap.id);
-                if (full) snapToUse = full;
-            } catch (_) {}
-        }
-        const attendees = getSnapshotAttendees(snapToUse);
+        const attendees = getSnapshotAttendees(snap);
         for (const a of attendees) {
             const id = String(a.account || a.staffId || a.id || '').trim();
             const name = String(a.name || '').trim();
             if (!id && !name) continue;
-            const key = id ? id.toLowerCase() : name.toLowerCase();
-            const snapTitle = snapToUse.title || '';
-            const snapDate = snapToUse.meetingDate || snapToUse.meeting_date || '';
+            if (isTotalRow(id, name)) continue;
 
-            if (!rosterMap.has(key)) {
+            // Search for existing entry by ID or fuzzy equivalent ID with same name
+            let existingEntry = null;
+            let existingKey = null;
+
+            if (id) {
+                const key = id.toLowerCase();
+                if (rosterMap.has(key)) {
+                    existingEntry = rosterMap.get(key);
+                    existingKey = key;
+                }
+            }
+
+            if (!existingEntry && name) {
+                for (const [k, v] of rosterMap.entries()) {
+                    if (v.name && v.name.toLowerCase() === name.toLowerCase()) {
+                        if (!id || !v.staffId || areStaffIdsEquivalent(id, v.staffId)) {
+                            existingEntry = v;
+                            existingKey = k;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            const snapTitle = snap.title || '';
+            const snapDate = snap.meetingDate || snap.meeting_date || '';
+            const isPm = /^\s*pm\s*$/i.test(a.role || '');
+            const resolvedBu = isPm ? 'PMO' : (a.bu || a.businessUnit || '');
+
+            if (!existingEntry) {
+                const key = id ? id.toLowerCase() : name.toLowerCase();
+                const cGroups = Array.isArray(a.customerGroups) && a.customerGroups.length ? [...a.customerGroups] : (a.customerGroup ? [a.customerGroup] : []);
+                const rRoles = Array.isArray(a.roles) && a.roles.length ? [...a.roles] : (a.role ? [a.role] : []);
                 rosterMap.set(key, {
                     id: id || name,
                     staffId: id || '',
                     name: name || id,
-                    bu: a.bu || a.businessUnit || '',
-                    businessUnit: a.bu || a.businessUnit || '',
-                    customerGroup: a.customerGroup || '',
-                    role: a.role || '',
+                    bu: resolvedBu,
+                    businessUnit: resolvedBu,
+                    customerGroup: cGroups.join(', ') || a.customerGroup || '',
+                    customerGroups: cGroups,
+                    role: rRoles.join(', ') || a.role || '',
+                    roles: rRoles,
                     source: 'meeting',
                     sourceType: 'meeting',
                     snapshotTitle: snapTitle,
@@ -548,17 +683,49 @@ async function extractRoster() {
                     meetingDates: snapDate ? [snapDate] : []
                 });
             } else {
-                const existing = rosterMap.get(key);
-                if (!existing.bu && (a.bu || a.businessUnit)) {
-                    existing.bu = a.bu || a.businessUnit;
-                    existing.businessUnit = existing.bu;
+                const canonicalId = preferCanonicalStaffId(existingEntry.staffId, id);
+                if (canonicalId && canonicalId !== existingEntry.staffId) {
+                    existingEntry.staffId = canonicalId;
+                    existingEntry.id = canonicalId;
                 }
-                if (!existing.customerGroup && a.customerGroup) existing.customerGroup = a.customerGroup;
-                if (!existing.role && a.role) existing.role = a.role;
-                if (!existing.name && name) existing.name = name;
-                if (!existing.staffId && id) existing.staffId = id;
-                if (snapTitle && !existing.snapshotTitles.includes(snapTitle)) existing.snapshotTitles.push(snapTitle);
-                if (snapDate && !existing.meetingDates.includes(snapDate)) existing.meetingDates.push(snapDate);
+                if (!existingEntry.name && name) existingEntry.name = name;
+
+                // Accumulate customer groups
+                if (!Array.isArray(existingEntry.customerGroups)) {
+                    existingEntry.customerGroups = existingEntry.customerGroup ? [existingEntry.customerGroup] : [];
+                }
+                const newGroups = Array.isArray(a.customerGroups) && a.customerGroups.length ? a.customerGroups : (a.customerGroup ? [a.customerGroup] : []);
+                for (const g of newGroups) {
+                    if (g && !existingEntry.customerGroups.includes(g)) {
+                        existingEntry.customerGroups.push(g);
+                    }
+                }
+                existingEntry.customerGroup = existingEntry.customerGroups.join(', ');
+
+                // Accumulate roles
+                if (!Array.isArray(existingEntry.roles)) {
+                    existingEntry.roles = existingEntry.role ? [existingEntry.role] : [];
+                }
+                const newRoles = Array.isArray(a.roles) && a.roles.length ? a.roles : (a.role ? [a.role] : []);
+                for (const r of newRoles) {
+                    if (r && !existingEntry.roles.includes(r)) {
+                        existingEntry.roles.push(r);
+                    }
+                }
+                existingEntry.role = existingEntry.roles.join(', ');
+
+                // BU remains singular: if any role is PM, BU is PMO
+                const anyPm = isPm || existingEntry.roles.some(r => /^\s*pm\s*$/i.test(r));
+                if (anyPm) {
+                    existingEntry.bu = 'PMO';
+                    existingEntry.businessUnit = 'PMO';
+                } else if (!existingEntry.bu && resolvedBu) {
+                    existingEntry.bu = resolvedBu;
+                    existingEntry.businessUnit = resolvedBu;
+                }
+
+                if (snapTitle && !existingEntry.snapshotTitles.includes(snapTitle)) existingEntry.snapshotTitles.push(snapTitle);
+                if (snapDate && !existingEntry.meetingDates.includes(snapDate)) existingEntry.meetingDates.push(snapDate);
             }
         }
     }

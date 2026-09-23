@@ -1304,7 +1304,7 @@ const aliases={
   source_month:['月份','月度','month','Month','MONTH'],
   person:['complete_operator'],
   bu:['BU1','部门'],
-  customer:['customer_office','客户名称'],
+  customer:['customer_office','客户名称','客户','客户群','customer','customer_name'],
   attr:['方案实施人属性','人员属性'],
   task:['task_id','icare_task_number'],
   summary:['problem_summary','title'],
@@ -1407,7 +1407,9 @@ function operatorGroup(person){return clean(person).toLowerCase().includes('wx')
 function operatorMatchesGroup(r){return (r&&r.__operatorGroup)===activeOperatorGroup}
 function personFromRow(r,personField){
   const pf=personField||defaultRules.personField;
-  return clean(val(r,[pf,'complete_operator','方案实施人工号','solution_develop_name']));
+  const p=clean(val(r,[pf,'complete_operator','方案实施人工号','solution_develop_name']));
+  if(/总计|合计|小计|^total$/i.test(p))return '';
+  return p;
 }
 function personFromRawRow(r){
   const pf=$('personField')?.value||defaultRules.personField;
@@ -3246,8 +3248,26 @@ function buildIncentiveSnapshotPayload(customTitle, customPeriod) {
   const personMap = new Map();
   dedupRows.forEach(r => {
     const p = r.__person;
-    if (!personMap.has(p)) personMap.set(p, { person: p, name: r.__name || r.__fmeName || '', bu: r.__bu, count: 0, amount: 0 });
+    const cust = r.__customer || '';
+    if (!personMap.has(p)) {
+      personMap.set(p, {
+        person: p,
+        name: r.__name || r.__fmeName || '',
+        bu: r.__bu,
+        customerGroup: cust,
+        customerGroups: cust ? [cust] : [],
+        role: 'FME',
+        roles: ['FME'],
+        count: 0,
+        amount: 0
+      });
+    }
     const x = personMap.get(p);
+    if (!Array.isArray(x.customerGroups)) x.customerGroups = x.customerGroup ? [x.customerGroup] : [];
+    if (cust && !x.customerGroups.includes(cust)) {
+      x.customerGroups.push(cust);
+      x.customerGroup = x.customerGroups.join(', ');
+    }
     x.count++;
     x.amount += (r.__fee || 0);
   });

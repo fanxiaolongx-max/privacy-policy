@@ -256,7 +256,9 @@ test('Cross-tool attendance check & roster extraction integration test', async (
             const mappings = await resGet.json();
             assert.ok(Array.isArray(mappings.roles));
             assert.ok(Array.isArray(mappings.customerGroups));
+            assert.ok(Array.isArray(mappings.businessUnits));
             assert.ok(mappings.roles.some(m => m.scanned === 'Solution Developer' && m.target === 'TD'));
+            assert.ok(mappings.businessUnits.some(m => m.scanned === '软件' && m.target === 'Software'));
 
             // PUT /snapshot-mappings
             const newMappings = {
@@ -267,6 +269,10 @@ test('Cross-tool attendance check & roster extraction integration test', async (
                 customerGroups: [
                     ...mappings.customerGroups,
                     { scanned: 'Zain KSA', target: 'Zain' }
+                ],
+                businessUnits: [
+                    ...mappings.businessUnits,
+                    { scanned: '安全', target: 'SEC' }
                 ]
             };
             const resPut = await fetch(`${deptBase}/snapshot-mappings`, {
@@ -279,12 +285,14 @@ test('Cross-tool attendance check & roster extraction integration test', async (
             assert.equal(putResult.success, true);
             assert.ok(putResult.mappings.roles.some(m => m.scanned === 'Core Engineer' && m.target === 'FME'));
             assert.ok(putResult.mappings.customerGroups.some(m => m.scanned === 'Zain KSA' && m.target === 'Zain'));
+            assert.ok(putResult.mappings.businessUnits.some(m => m.scanned === '安全' && m.target === 'SEC'));
 
             // Verify persistence via GET
             const resVerify = await fetch(`${deptBase}/snapshot-mappings`);
             const verified = await resVerify.json();
             assert.ok(verified.roles.some(m => m.scanned === 'Core Engineer'));
             assert.ok(verified.customerGroups.some(m => m.scanned === 'Zain KSA'));
+            assert.ok(verified.businessUnits.some(m => m.scanned === '安全' && m.target === 'SEC'));
         } finally {
             server.close();
         }
@@ -340,6 +348,334 @@ test('Cross-tool attendance check & roster extraction integration test', async (
             assert.equal(zhouZhiruo.businessUnit, 'Core');
         } finally {
             await meetingRepo.deleteSnapshot(sheetSnapId);
+        }
+    });
+
+    await t.test('meetingRepo and incentiveRepo handle fuzzy ID merging (mWX vs WX), PM BU to PMO, total-row filtering, and multi-column customer groups', async () => {
+        const testMeetingSnapId = 'meet_test_fuzzy_' + Date.now();
+        const testIncentiveSnapId = 'inc_test_fuzzy_' + Date.now();
+
+        const meetingSnap = {
+            id: testMeetingSnapId,
+            title: '测试模糊工号与多列快照',
+            meetingDate: '2026-09-23',
+            summary: {
+                totalAttendees: 3,
+                attendees: [
+                    { account: 'mWX1350434', name: '王五', role: 'Originator', bu: 'IT', customerGroup: 'VDF' },
+                    { account: 'WX9999', name: '李六PM', role: 'PM', bu: '', customerGroup: 'Etisalat' },
+                    { account: '总计', name: '总计', role: '', bu: '', customerGroup: '' }
+                ],
+                anomalies: []
+            },
+            payload: {
+                sheets: [
+                    {
+                        sheetName: '多列客户群测试',
+                        category: 'rfc',
+                        headers: ['RFC单号', '客户网络/Network Name', '客户组织/Customer Org', 'Solution Developer', 'PM'],
+                        rows: [
+                            ['RFC-2001', 'Network-Vodafone', 'Org-Wireless', '陈友谅 (WX1122)', '韩林儿 (WX3344)']
+                        ]
+                    }
+                ]
+            }
+        };
+
+        const incentiveSnap = {
+            id: testIncentiveSnapId,
+            title: '测试操作激励客户群来源快照',
+            period: '2026-09',
+            summary: {
+                topPeople: [
+                    { person: 'WX1350434', name: '王五', bu: 'IT', customerGroup: 'VDF', role: 'FME' },
+                    { person: '合计', name: '合计', bu: '', customerGroup: '' }
+                ]
+            },
+            payload: {
+                rawRows: [
+                    {
+                        complete_operator: 'WX1350434',
+                        name: '王五',
+                        __bu: 'IT',
+                        __customer: 'VDF',
+                        '客户名称': '周期交叉客户A',
+                        '客户': '计算明细客户B'
+                    },
+                    {
+                        complete_operator: 'WX5566',
+                        name: '明细员工',
+                        __bu: 'Core',
+                        '客户': '埃及专网'
+                    },
+                    {
+                        complete_operator: '总计',
+                        name: '总计',
+                        __bu: 'All'
+                    }
+                ]
+            }
+        };
+
+        await meetingRepo.saveSnapshot(meetingSnap);
+        await incentiveRepo.saveSnapshot(incentiveSnap);
+
+        try {
+            // 1. Meeting roster tests
+            const meetingRoster = await meetingRepo.extractRoster();
+            
+            // Total row must be excluded
+            assert.ok(!meetingRoster.some(r => r.staffId === '总计' || r.name === '总计'), 'Total row should be ignored');
+
+            // PM role should automatically have BU = PMO
+            const pmPerson = meetingRoster.find(r => r.name === '李六PM' || r.staffId === 'WX9999');
+            assert.ok(pmPerson, 'PM person should be extracted');
+            assert.equal(pmPerson.bu, 'PMO', 'PM role must have BU auto-assigned to PMO');
+
+            // Multi-column customer group fallback: 客户网络/Network Name should be extracted
+            const devPerson = meetingRoster.find(r => r.staffId === 'WX1122' || r.name === '陈友谅');
+            assert.ok(devPerson, 'Should extract 陈友谅 from RFC sheet');
+            assert.equal(devPerson.customerGroup, 'Network-Vodafone', 'Should extract customer group from 客户网络/Network Name column');
+
+            // Sheet PM should also have BU = PMO
+            const sheetPm = meetingRoster.find(r => r.staffId === 'WX3344' || r.name === '韩林儿');
+            assert.ok(sheetPm, 'Should extract 韩林儿 from RFC sheet');
+            assert.equal(sheetPm.bu, 'PMO', 'Sheet PM role must have BU auto-assigned to PMO');
+
+            // 2. Incentive roster tests
+            const incRoster = await incentiveRepo.extractRoster();
+
+            // Total row must be excluded
+            assert.ok(!incRoster.some(r => r.staffId === '总计' || r.name === '总计' || r.staffId === '合计'), 'Incentive total row should be ignored');
+
+            // Customer extracted from 计算明细 '客户' column
+            const detailPerson = incRoster.find(r => r.staffId === 'WX5566' || r.name === '明细员工');
+            assert.ok(detailPerson, 'Should extract 明细员工');
+            assert.equal(detailPerson.customerGroup, '埃及专网', 'Should extract customer from 计算明细 客户 column');
+
+            // 3. Verify fuzzy matching between mWX1350434 and WX1350434
+            const attResult = await meetingRepo.checkPersonAttendance({ staffId: 'WX1350434', name: '王五' });
+            assert.ok(attResult.found, 'checkPersonAttendance should find 王五 even when snapshot has mWX1350434');
+
+            // 4. Verify department-reward-penalty UI contains editing controls
+            const deptHtml = fs.readFileSync(path.join(__dirname, '../backend/builtin-tools/department-reward-penalty/index.html'), 'utf-8');
+            assert.ok(deptHtml.includes('data-edit-role-idx'), 'UI must contain data-edit-role-idx for editing role mappings');
+            assert.ok(deptHtml.includes('data-edit-group-idx'), 'UI must contain data-edit-group-idx for editing customer group mappings');
+            assert.ok(deptHtml.includes('btn-cancel-edit-role-mapping'), 'UI must contain btn-cancel-edit-role-mapping');
+            assert.ok(deptHtml.includes('btn-cancel-edit-group-mapping'), 'UI must contain btn-cancel-edit-group-mapping');
+        } finally {
+            await meetingRepo.deleteSnapshot(testMeetingSnapId);
+            await incentiveRepo.deleteSnapshot(testIncentiveSnapId);
+        }
+    });
+
+    // Subtest 10: Multi-customer groups, multi-roles, singular BU (PM->PMO), and employment category filtering
+    await t.test('Multi-customerGroup association, multi-role association, singular BU (PM->PMO), and employment category filtering (自有/租赁/合作)', async () => {
+        const testMeetingSnapId = 'meet_test_multi_' + Date.now();
+        const testIncentiveSnapId = 'inc_test_multi_' + Date.now();
+
+        const meetingSnap = {
+            id: testMeetingSnapId,
+            title: '测试多客户群多角色快照',
+            meetingDate: '2026-09-23',
+            summary: {
+                totalAttendees: 2,
+                attendees: [
+                    { account: 'WX2001', name: '李多群', role: 'TD', bu: 'Wireless', customerGroup: 'Orange' },
+                    { account: 'WX2002', name: '张项目', role: 'PM', bu: '', customerGroup: 'Vodafone' }
+                ],
+                anomalies: []
+            },
+            payload: {
+                sheets: [
+                    {
+                        sheetName: 'RFC记录',
+                        category: 'rfc',
+                        headers: ['RFC单号', '客户群/Customer Group', 'Solution Developer', 'PM', 'Owner'],
+                        rows: [
+                            ['RFC-9001', 'VDF', '李多群 (WX2001)', '张项目 (WX2002)', '无线负责人']
+                        ]
+                    }
+                ]
+            }
+        };
+
+        const incentiveSnap = {
+            id: testIncentiveSnapId,
+            title: '测试用工性质过滤与多客户群快照',
+            period: '2026-09',
+            summary: {
+                topPeople: [
+                    { person: 'WX2001', name: '李多群', bu: 'Wireless', customerGroup: 'STC', role: '自有' },
+                    { person: 'WX2003', name: '孙外包', bu: 'Core', customerGroup: 'Etisalat', role: '租赁' }
+                ]
+            },
+            payload: {
+                rawRows: [
+                    {
+                        complete_operator: 'WX2001',
+                        name: '李多群',
+                        __bu: 'Wireless',
+                        __customer: 'STC',
+                        '员工分类': '自有',
+                        '客户名称': 'STC'
+                    },
+                    {
+                        complete_operator: 'WX2003',
+                        name: '孙外包',
+                        __bu: 'Core',
+                        '客户': 'Etisalat',
+                        '用工性质': '租赁'
+                    }
+                ]
+            }
+        };
+
+        await meetingRepo.saveSnapshot(meetingSnap);
+        await incentiveRepo.saveSnapshot(incentiveSnap);
+
+        try {
+            // 1. Meeting roster: verify multi-groups and multi-roles
+            const meetingRoster = await meetingRepo.extractRoster();
+            const liPerson = meetingRoster.find(r => r.staffId === 'WX2001' || r.name === '李多群');
+            assert.ok(liPerson, 'Should find 李多群 in meeting roster');
+            assert.ok(Array.isArray(liPerson.customerGroups), 'customerGroups should be an array');
+            assert.ok(liPerson.customerGroups.includes('Orange'), 'customerGroups should include Orange');
+            assert.ok(liPerson.customerGroups.includes('VDF'), 'customerGroups should include VDF');
+            assert.ok(Array.isArray(liPerson.roles), 'roles should be an array');
+            assert.ok(liPerson.roles.includes('TD'), 'roles should include TD');
+            assert.ok(liPerson.roles.includes('Solution Developer'), 'roles should include Solution Developer');
+
+            // PM role should auto assign BU to PMO
+            const zhangPerson = meetingRoster.find(r => r.staffId === 'WX2002' || r.name === '张项目');
+            assert.ok(zhangPerson, 'Should find 张项目 in meeting roster');
+            assert.equal(zhangPerson.bu, 'PMO', 'PM role must have BU = PMO');
+            assert.equal(zhangPerson.businessUnit, 'PMO');
+
+            // 2. Incentive roster: verify employment categories filtered out and fallback to FME
+            const incRoster = await incentiveRepo.extractRoster();
+            const sunPerson = incRoster.find(r => r.staffId === 'WX2003' || r.name === '孙外包');
+            assert.ok(sunPerson, 'Should find 孙外包 in incentive roster');
+            // '租赁' must NOT be in roles
+            assert.ok(!sunPerson.roles.includes('租赁'), 'Employment category 租赁 must not be in roles');
+            assert.ok(sunPerson.roles.includes('FME'), 'Fallback role should be FME');
+
+            const liIncPerson = incRoster.find(r => r.staffId === 'WX2001' || r.name === '李多群');
+            assert.ok(liIncPerson, 'Should find 李多群 in incentive roster');
+            assert.ok(!liIncPerson.roles.includes('自有'), 'Employment category 自有 must not be in roles');
+
+            // 3. Department reward & penalty HTML assertions
+            const deptHtml = fs.readFileSync(path.join(__dirname, '../backend/builtin-tools/department-reward-penalty/index.html'), 'utf-8');
+            assert.ok(deptHtml.includes('width:min(980px,calc(100vw - 32px))'), 'Snapshot mappings dialog must be widened');
+            assert.ok(deptHtml.includes('table-layout:fixed'), 'Mapping tables must have table-layout: fixed');
+            assert.ok(deptHtml.includes('extract-add-group-select'), 'Roster dialog must have extract-add-group-select');
+            assert.ok(deptHtml.includes('extract-add-role-select'), 'Roster dialog must have extract-add-role-select');
+            assert.ok(deptHtml.includes('btn-remove-cand-group'), 'Roster dialog must have btn-remove-cand-group');
+            assert.ok(deptHtml.includes('btn-remove-cand-role'), 'Roster dialog must have btn-remove-cand-role');
+            assert.ok(deptHtml.includes('function clean('), 'clean helper must be defined for mapping inputs');
+            assert.ok(deptHtml.includes('addRoleMappingFromInput'), 'addRoleMappingFromInput must be defined');
+            assert.ok(deptHtml.includes('addGroupMappingFromInput'), 'addGroupMappingFromInput must be defined');
+        } finally {
+            await meetingRepo.deleteSnapshot(testMeetingSnapId);
+            await incentiveRepo.deleteSnapshot(testIncentiveSnapId);
+        }
+    });
+
+    // Subtest 11: BU field mapping configuration (增删改), editable/deletable built-in BU rules, and extraction integration
+    await t.test('BU field mapping configuration: CRUD support, built-in rules editable/deletable, and extraction matching (软件 -> Software)', async () => {
+        // 1. Verify default snapshot mappings contain businessUnits
+        const defaultMappings = await deptRepo.getSnapshotMappings();
+        assert.ok(Array.isArray(defaultMappings.businessUnits), 'defaultMappings.businessUnits must be an array');
+        assert.ok(defaultMappings.businessUnits.length >= 5, 'defaultMappings.businessUnits must have at least 5 built-in rules');
+        const swRule = defaultMappings.businessUnits.find(b => b.scanned === '软件');
+        assert.ok(swRule, 'Must contain built-in BU rule for 软件');
+        assert.equal(swRule.target, 'Software', '软件 rule target should be Software');
+
+        // 2. Edit built-in BU rule (edit '软件' -> 'Software-DEV')
+        // Add new custom rule ({ scanned: '测试部', target: 'QA' })
+        // Delete a built-in rule (delete '传输' rule)
+        const updatedBUs = defaultMappings.businessUnits
+            .filter(b => b.scanned !== '传输')
+            .map(b => b.scanned === '软件' ? { scanned: '软件', target: 'Software-DEV' } : b);
+        updatedBUs.push({ scanned: '测试部', target: 'QA' });
+
+        const saveRes = await deptRepo.saveSnapshotMappings({
+            roles: defaultMappings.roles,
+            customerGroups: defaultMappings.customerGroups,
+            businessUnits: updatedBUs
+        });
+
+        assert.ok(Array.isArray(saveRes.businessUnits));
+        const savedSw = saveRes.businessUnits.find(b => b.scanned === '软件');
+        assert.ok(savedSw);
+        assert.equal(savedSw.target, 'Software-DEV', 'Software BU mapping must be editable');
+        const savedQa = saveRes.businessUnits.find(b => b.scanned === '测试部');
+        assert.ok(savedQa, 'New BU mapping must be addable');
+        assert.equal(savedQa.target, 'QA');
+        const savedTrans = saveRes.businessUnits.find(b => b.scanned === '传输');
+        assert.equal(savedTrans, undefined, 'Built-in 传输 BU mapping must be deletable');
+
+        // Verify re-reading from database
+        const reRead = await deptRepo.getSnapshotMappings();
+        assert.equal(reRead.businessUnits.find(b => b.scanned === '软件')?.target, 'Software-DEV');
+        assert.equal(reRead.businessUnits.find(b => b.scanned === '传输'), undefined);
+
+        // Reset back to original defaults
+        await deptRepo.saveSnapshotMappings({
+            roles: defaultMappings.roles,
+            customerGroups: defaultMappings.customerGroups,
+            businessUnits: defaultMappings.businessUnits
+        });
+
+        // 3. UI elements verification in index.html
+        const deptHtml = fs.readFileSync(path.join(__dirname, '../backend/builtin-tools/department-reward-penalty/index.html'), 'utf-8');
+        assert.ok(deptHtml.includes('id="tab-btn-map-bus"'), 'UI must contain tab-btn-map-bus');
+        assert.ok(deptHtml.includes('id="mapping-panel-bus"'), 'UI must contain mapping-panel-bus');
+        assert.ok(deptHtml.includes('id="table-bu-mappings-tbody"'), 'UI must contain table-bu-mappings-tbody');
+        assert.ok(deptHtml.includes('id="count-bu-mappings"'), 'UI must contain count-bu-mappings');
+        assert.ok(deptHtml.includes('id="input-map-bu-scanned"'), 'UI must contain input-map-bu-scanned');
+        assert.ok(deptHtml.includes('id="select-map-bu-target"'), 'UI must contain select-map-bu-target');
+        assert.ok(deptHtml.includes('id="btn-add-bu-mapping"'), 'UI must contain btn-add-bu-mapping');
+        assert.ok(deptHtml.includes('id="btn-cancel-edit-bu-mapping"'), 'UI must contain btn-cancel-edit-bu-mapping');
+        assert.ok(deptHtml.includes('id="unmapped-bus-quick-chips"'), 'UI must contain unmapped-bus-quick-chips');
+        assert.ok(deptHtml.includes('resolveMappedBusinessUnit'), 'UI must define resolveMappedBusinessUnit');
+        assert.ok(deptHtml.includes('addBuMappingFromInput'), 'UI must define addBuMappingFromInput');
+        assert.ok(deptHtml.includes('cancelEditBuMapping'), 'UI must define cancelEditBuMapping');
+        assert.ok(deptHtml.includes('data-edit-bu-idx'), 'UI must contain data-edit-bu-idx click listener');
+        assert.ok(deptHtml.includes('data-del-bu-idx'), 'UI must contain data-del-bu-idx click listener');
+        assert.ok(deptHtml.includes('data-fill-scanned-bu'), 'UI must contain data-fill-scanned-bu click listener');
+        assert.ok(deptHtml.includes('data-open-mapping-bu'), 'UI must contain data-open-mapping-bu click listener');
+
+        // 4. Meeting and Incentive snapshot extraction with BU mapping
+        const testSnapId = 'meet_test_bu_map_' + Date.now();
+        const meetingSnap = {
+            id: testSnapId,
+            title: '测试BU映射快照',
+            meetingDate: '2026-09-23',
+            summary: {
+                totalAttendees: 2,
+                attendees: [
+                    { account: 'WX3001', name: '陈软件', role: 'TD', bu: '软件', customerGroup: 'Orange' },
+                    { account: 'WX3002', name: '周无线', role: 'TE', businessUnit: '无线', customerGroup: 'VDF' }
+                ],
+                anomalies: []
+            },
+            payload: { sheets: [] }
+        };
+        await meetingRepo.saveSnapshot(meetingSnap);
+        try {
+            const roster = await meetingRepo.extractRoster();
+            const chen = roster.find(r => r.staffId === 'WX3001' || r.name === '陈软件');
+            assert.ok(chen, 'Should find 陈软件');
+            assert.equal(chen.bu, '软件');
+            assert.equal(chen.businessUnit, '软件');
+
+            const zhou = roster.find(r => r.staffId === 'WX3002' || r.name === '周无线');
+            assert.ok(zhou, 'Should find 周无线');
+            assert.equal(zhou.bu, '无线');
+            assert.equal(zhou.businessUnit, '无线');
+        } finally {
+            await meetingRepo.deleteSnapshot(testSnapId);
         }
     });
 });

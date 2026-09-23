@@ -174,6 +174,67 @@ async function deleteSnapshot(id) {
     return (result?.changes || 0) > 0;
 }
 
+function areStaffIdsEquivalent(id1, id2) {
+    if (!id1 || !id2) return false;
+    const s1 = String(id1).trim().toLowerCase();
+    const s2 = String(id2).trim().toLowerCase();
+    if (!s1 || !s2) return false;
+    if (s1 === s2) return true;
+
+    // Check leading 'm' prefix (e.g. mWX1350434 vs WX1350434)
+    if (s1 === 'm' + s2 || s2 === 'm' + s1) return true;
+
+    // Check single leading letter difference
+    if (s1.length === s2.length + 1 && s1.slice(1) === s2 && s2.length >= 4) return true;
+    if (s2.length === s1.length + 1 && s2.slice(1) === s1 && s1.length >= 4) return true;
+
+    // Check normalized digits if >= 5 digits
+    const num1 = s1.replace(/^[a-z]+/i, '');
+    const num2 = s2.replace(/^[a-z]+/i, '');
+    if (num1 && num1 === num2 && num1.length >= 5) return true;
+
+    return false;
+}
+
+function preferCanonicalStaffId(id1, id2, preferredIds = new Set()) {
+    const s1 = String(id1 || '').trim();
+    const s2 = String(id2 || '').trim();
+    if (!s1) return s2;
+    if (!s2) return s1;
+    if (s1.toLowerCase() === s2.toLowerCase()) return s1;
+
+    // 1. If one matches an already existing employee ID in the personnel roster, prefer it
+    if (preferredIds.has(s1) && !preferredIds.has(s2)) return s1;
+    if (preferredIds.has(s2) && !preferredIds.has(s1)) return s2;
+
+    // 2. Prefer non-m prefix (e.g. WX1350434 over mWX1350434)
+    const isM1 = /^m[a-z]/i.test(s1);
+    const isM2 = /^m[a-z]/i.test(s2);
+    if (isM1 && !isM2) return s2;
+    if (isM2 && !isM1) return s1;
+
+    // 3. Prefer standard enterprise prefix (e.g. WX...)
+    if (/^wx\d+/i.test(s1) && !/^wx\d+/i.test(s2)) return s1;
+    if (/^wx\d+/i.test(s2) && !/^wx\d+/i.test(s1)) return s2;
+
+    // 4. Shorter ID preferred
+    if (s1.length !== s2.length) return s1.length < s2.length ? s1 : s2;
+    return s1;
+}
+
+function isTotalRow(id, name) {
+    const sId = String(id || '').trim();
+    const sName = String(name || '').trim();
+    return /总计|合计|小计|^total$/i.test(sId) || /总计|合计|小计|^total$/i.test(sName);
+}
+
+function isEmploymentCategory(str) {
+    if (!str) return false;
+    const s = String(str).trim();
+    return /^(自有|租赁|合作|外包|派遣|自有人|租赁人|合作方|全职|兼职|自有员工|租赁员工|合作人员)$/i.test(s)
+        || /属性|用工性质|用工类型|员工分类|雇佣/i.test(s);
+}
+
 function extractNameFromFullname(raw, id) {
     if (!raw) return '';
     const str = String(raw).trim();
@@ -193,11 +254,27 @@ async function extractRoster() {
     const snapshots = await listSnapshots({ includePayload: true });
     const rosterMap = new Map();
 
+    const findExistingCandidate = (parsedId, parsedName) => {
+        if (parsedId) {
+            const exact = rosterMap.get(parsedId.toLowerCase());
+            if (exact) return exact;
+        }
+        if (parsedName) {
+            for (const v of rosterMap.values()) {
+                if (v.name && v.name.toLowerCase() === parsedName.toLowerCase()) {
+                    if (!parsedId || !v.staffId || areStaffIdsEquivalent(parsedId, v.staffId)) {
+                        return v;
+                    }
+                }
+            }
+        }
+        return null;
+    };
+
     for (const snap of snapshots) {
         try {
             const period = snap.period || '';
             const title = snap.title || '';
-            const sourceLabel = `操作激励快照: ${period || title}`;
             const rawRows = Array.isArray(snap.payload?.rawRows) ? snap.payload.rawRows : [];
 
             if (rawRows.length > 0) {
@@ -229,20 +306,31 @@ async function extractRoster() {
                         parsedName = extractNameFromFullname(full, parsedId);
                     }
 
+                    if (isTotalRow(parsedId, parsedName) || /总计|合计|小计/i.test(rawId)) continue;
+
                     const bu = String(r.__bu || r.bu || r.BU || r.BU1 || r['部门'] || r.department || '').trim();
                     const customerGroup = String(
-                        r.__customer || r.customer || r.customer_office || r['客户名称'] || 
-                        r['客户'] || r['客户群'] || r.customerGroup || r.customerName || ''
-                    ).trim();
-                    const role = String(
-                        r.__role || r.role || r['角色'] || r['实施人角色'] || 
-                        (r.__fmePerson ? 'FME' : '') || r['方案实施人属性'] || r['人员属性'] || 'FME'
+                        r.__customer || r['客户名称'] || r['客户'] || r['客户群'] || 
+                        r.customer || r.customer_office || r.customerGroup || r.customerName ||
+                        r['周期交叉表客户名称'] || r['计算明细客户'] || ''
                     ).trim();
 
-                    const key = parsedId ? parsedId.toLowerCase() : (parsedName ? parsedName.toLowerCase() : '');
-                    if (!key) continue;
+                    // Detect accurate role: reject employee category (自有/租赁/合作), fallback to FME
+                    let explicitRole = String(
+                        r.__role || r.role || r['角色'] || r['实施人角色'] || r['操作人角色'] || 
+                        r['岗位'] || r['岗位名称'] || r['工作岗位'] || r['Role'] || ''
+                    ).trim();
+                    if (isEmploymentCategory(explicitRole)) {
+                        explicitRole = '';
+                    }
+                    const role = explicitRole || 'FME';
 
-                    if (!rosterMap.has(key)) {
+                    const existing = findExistingCandidate(parsedId, parsedName);
+                    if (!existing) {
+                        const key = parsedId ? parsedId.toLowerCase() : (parsedName ? parsedName.toLowerCase() : '');
+                        if (!key) continue;
+                        const cGroups = customerGroup ? [customerGroup] : [];
+                        const rRoles = role ? [role] : [];
                         rosterMap.set(key, {
                             id: parsedId || parsedName,
                             staffId: parsedId || '',
@@ -250,7 +338,9 @@ async function extractRoster() {
                             bu,
                             businessUnit: bu,
                             customerGroup,
+                            customerGroups: cGroups,
                             role,
+                            roles: rRoles,
                             source: 'incentive',
                             sourceType: 'incentive',
                             snapshotTitle: title,
@@ -258,12 +348,32 @@ async function extractRoster() {
                             snapshotPeriod: period
                         });
                     } else {
-                        const existing = rosterMap.get(key);
+                        const canonicalId = preferCanonicalStaffId(existing.staffId, parsedId);
+                        if (canonicalId && canonicalId !== existing.staffId) {
+                            existing.staffId = canonicalId;
+                            existing.id = canonicalId;
+                        }
                         if (!existing.name && parsedName) existing.name = parsedName;
-                        if (!existing.staffId && parsedId) existing.staffId = parsedId;
                         if (!existing.bu && bu) { existing.bu = bu; existing.businessUnit = bu; }
-                        if (!existing.customerGroup && customerGroup) existing.customerGroup = customerGroup;
-                        if ((!existing.role || existing.role === 'STAFF') && role) existing.role = role;
+                        
+                        // Accumulate multiple customer groups
+                        if (!Array.isArray(existing.customerGroups)) {
+                            existing.customerGroups = existing.customerGroup ? [existing.customerGroup] : [];
+                        }
+                        if (customerGroup && !existing.customerGroups.includes(customerGroup)) {
+                            existing.customerGroups.push(customerGroup);
+                            existing.customerGroup = existing.customerGroups.join(', ');
+                        }
+
+                        // Accumulate multiple roles
+                        if (!Array.isArray(existing.roles)) {
+                            existing.roles = existing.role ? [existing.role] : [];
+                        }
+                        if (role && !existing.roles.includes(role)) {
+                            existing.roles.push(role);
+                            existing.role = existing.roles.join(', ');
+                        }
+
                         if (title && !existing.snapshotTitles.includes(title)) existing.snapshotTitles.push(title);
                     }
                 }
@@ -280,13 +390,26 @@ async function extractRoster() {
                         parsedId = m1[2].trim();
                     }
 
-                    const bu = String(p.bu || '').trim();
-                    const customerGroup = String(p.customerGroup || p.customer || p.customer_office || p.group || '').trim();
-                    const role = String(p.role || 'FME').trim();
-                    const key = parsedId ? parsedId.toLowerCase() : (parsedName ? parsedName.toLowerCase() : '');
-                    if (!key) continue;
+                    if (isTotalRow(parsedId, parsedName) || /总计|合计|小计/i.test(rawPerson)) continue;
 
-                    if (!rosterMap.has(key)) {
+                    const bu = String(p.bu || '').trim();
+                    const customerGroup = String(
+                        p.customerGroup || p['客户名称'] || p['客户'] || p['客户群'] || 
+                        p.customer || p.customer_office || p.group || ''
+                    ).trim();
+
+                    let topRole = String(p.role || '').trim();
+                    if (isEmploymentCategory(topRole)) {
+                        topRole = '';
+                    }
+                    const role = topRole || 'FME';
+
+                    const existing = findExistingCandidate(parsedId, parsedName);
+                    if (!existing) {
+                        const key = parsedId ? parsedId.toLowerCase() : (parsedName ? parsedName.toLowerCase() : '');
+                        if (!key) continue;
+                        const cGroups = customerGroup ? [customerGroup] : [];
+                        const rRoles = role ? [role] : [];
                         rosterMap.set(key, {
                             id: parsedId || parsedName,
                             staffId: parsedId || '',
@@ -294,7 +417,9 @@ async function extractRoster() {
                             bu,
                             businessUnit: bu,
                             customerGroup,
+                            customerGroups: cGroups,
                             role,
+                            roles: rRoles,
                             source: 'incentive',
                             sourceType: 'incentive',
                             snapshotTitle: title,
@@ -302,12 +427,30 @@ async function extractRoster() {
                             snapshotPeriod: period
                         });
                     } else {
-                        const existing = rosterMap.get(key);
+                        const canonicalId = preferCanonicalStaffId(existing.staffId, parsedId);
+                        if (canonicalId && canonicalId !== existing.staffId) {
+                            existing.staffId = canonicalId;
+                            existing.id = canonicalId;
+                        }
                         if (!existing.name && parsedName) existing.name = parsedName;
-                        if (!existing.staffId && parsedId) existing.staffId = parsedId;
                         if (!existing.bu && bu) { existing.bu = bu; existing.businessUnit = bu; }
-                        if (!existing.customerGroup && customerGroup) existing.customerGroup = customerGroup;
-                        if ((!existing.role || existing.role === 'STAFF') && role) existing.role = role;
+
+                        if (!Array.isArray(existing.customerGroups)) {
+                            existing.customerGroups = existing.customerGroup ? [existing.customerGroup] : [];
+                        }
+                        if (customerGroup && !existing.customerGroups.includes(customerGroup)) {
+                            existing.customerGroups.push(customerGroup);
+                            existing.customerGroup = existing.customerGroups.join(', ');
+                        }
+
+                        if (!Array.isArray(existing.roles)) {
+                            existing.roles = existing.role ? [existing.role] : [];
+                        }
+                        if (role && !existing.roles.includes(role)) {
+                            existing.roles.push(role);
+                            existing.role = existing.roles.join(', ');
+                        }
+
                         if (title && !existing.snapshotTitles.includes(title)) existing.snapshotTitles.push(title);
                     }
                 }
