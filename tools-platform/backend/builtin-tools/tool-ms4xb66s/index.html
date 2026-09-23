@@ -3291,10 +3291,12 @@ function buildIncentiveSnapshotPayload(customTitle, customPeriod) {
         '客户': r.__customer || r['客户'] || r['客户群'] || '',
         '人员属性': r.__attr || r['人员属性'] || '',
         '计费天数': 0,
+        '等级分布': '',
         '激励合计（元）': 0,
         _buSet: new Set(),
         _custSet: new Set(),
-        _daysSet: new Set()
+        _daysSet: new Set(),
+        _levelMap: {}
       });
     }
     const item = personSummaryMap.get(k);
@@ -3304,11 +3306,13 @@ function buildIncentiveSnapshotPayload(customTitle, customPeriod) {
     if (r.__bu) item._buSet.add(r.__bu);
     if (r.__customer) item._custSet.add(r.__customer);
     if (r.__date) item._daysSet.add(r.__date);
+    if (r.__level) item._levelMap[r.__level] = (item._levelMap[r.__level] || 0) + 1;
     item['激励合计（元）'] += (r.__fee || 0);
   });
   const personnelPeriodSummary = [...personSummaryMap.values()].map(x => {
     const bu = [...x._buSet].filter(Boolean).join(' / ') || x['BU1 / 部门'];
     const cust = [...x._custSet].filter(Boolean).join(' / ') || x['客户'];
+    const levelDist = Object.entries(x._levelMap || {}).map(([lvl, cnt]) => `${lvl}:${cnt}`).join(' / ');
     return {
       '周期': x['周期'],
       '操作人': x['操作人'],
@@ -3317,6 +3321,7 @@ function buildIncentiveSnapshotPayload(customTitle, customPeriod) {
       '客户': cust,
       '人员属性': x['人员属性'],
       '计费天数': x._daysSet.size || 1,
+      '等级分布': levelDist,
       '激励合计（元）': x['激励合计（元）']
     };
   });
@@ -3358,8 +3363,8 @@ function buildIncentiveSnapshotPayload(customTitle, customPeriod) {
     sheets: [
       {
         sheetName: '人员周期汇总',
-        headers: ['周期', '操作人', '姓名', 'BU1 / 部门', '客户', '人员属性', '计费天数', '激励合计（元）'],
-        rows: personnelPeriodSummary.map(x => [x['周期'], x['操作人'], x['姓名'], x['BU1 / 部门'], x['客户'], x['人员属性'], x['计费天数'], x['激励合计（元）']])
+        headers: ['周期', '操作人', '姓名', 'BU1 / 部门', '客户', '人员属性', '计费天数', '等级分布', '激励合计（元）'],
+        rows: personnelPeriodSummary.map(x => [x['周期'], x['操作人'], x['姓名'], x['BU1 / 部门'], x['客户'], x['人员属性'], x['计费天数'], x['等级分布'], x['激励合计（元）']])
       }
     ],
     rawRows: rawRows,

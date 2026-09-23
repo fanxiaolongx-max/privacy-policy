@@ -3193,18 +3193,67 @@ function isChinese(str) {
   return /[\u4e00-\u9fa5]/.test(String(str || ''));
 }
 
+function isOrderNumber(str) {
+  if (!str) return false;
+  const s = String(str).trim();
+  if (!s) return false;
+  if (/^qr\d+/i.test(s) || /^(task|wo|req|inc|chg|cr)\d+/i.test(s)) return true;
+  if (/^[A-Za-z0-9_-]{11,}$/.test(s) && /\d{6,}/.test(s)) return true;
+  return false;
+}
+
+function isInvalidStaffId(id) {
+  if (!id) return false;
+  const s = String(id).trim();
+  if (!s) return false;
+  if (s.length > 10) return true;
+  if (isOrderNumber(s)) return true;
+  return false;
+}
+
+function isStaffIdToken(token) {
+  if (!token) return false;
+  const s = String(token).trim();
+  if (s.length < 4 || s.length > 10) return false;
+  if (isInvalidStaffId(s) || isOrderNumber(s)) return false;
+  const digits = s.replace(/\D/g, '');
+  if (digits.length < 3) return false;
+  return /^[A-Za-z]{0,4}\d{3,9}[A-Za-z]?$/i.test(s);
+}
+
 function preferCanonicalName(n1, n2) {
   const s1 = String(n1 || '').trim();
   const s2 = String(n2 || '').trim();
   if (!s1) return s2;
   if (!s2) return s1;
   if (s1 === s2) return s1;
+
+  // 1. 真实姓名绝对优于工号 Token
+  const isId1 = isStaffIdToken(s1) || (/^[A-Za-z0-9_-]{4,10}$/.test(s1) && /\d{3,}/.test(s1));
+  const isId2 = isStaffIdToken(s2) || (/^[A-Za-z0-9_-]{4,10}$/.test(s2) && /\d{3,}/.test(s2));
+  if (isId1 && !isId2) return s2;
+  if (!isId1 && isId2) return s1;
+  if (isId1 && isId2) return (typeof preferCanonicalStaffId === 'function') ? preferCanonicalStaffId(s1, s2) : s1;
+
+  // 2. 中文姓名优于非中文
   if (isChinese(s1) && !isChinese(s2)) return s1;
   if (isChinese(s2) && !isChinese(s1)) return s2;
+
+  // 3. 不带括号的纯姓名优于带括号（如包含标注/角色）的姓名
   const hasBracket1 = /[\(（]/.test(s1);
   const hasBracket2 = /[\(（]/.test(s2);
   if (!hasBracket1 && hasBracket2) return s1;
   if (!hasBracket2 && hasBracket1) return s2;
+
+  // 4. 外文多词完整姓名优于单词或残缺名（如 "Ahmed Helmy" 优于 "Ahmed"）
+  const words1 = s1.split(/\s+/).filter(Boolean);
+  const words2 = s2.split(/\s+/).filter(Boolean);
+  if (!isChinese(s1) && !isChinese(s2)) {
+    if (words1.length !== words2.length) {
+      return words1.length > words2.length ? s1 : s2;
+    }
+  }
+
   return s1.length <= s2.length ? s1 : s2;
 }
 
@@ -4080,7 +4129,17 @@ async function openSnapshotRosterDialog() {
       let staffId = String(existingStaffId || '').trim();
 
       if (isInvalidStaffId(staffId)) staffId = '';
-      if (!name) return { name: '', staffId };
+      if (!name) {
+        if (staffId && !isStaffIdToken(staffId)) {
+          return cleanNameAndStaffId(staffId, '');
+        }
+        return { name: '', staffId };
+      }
+
+      if (isStaffIdToken(name)) {
+        staffId = preferCanonicalStaffId(staffId, name);
+        return { name: '', staffId };
+      }
 
       // 1. Bracketed pattern
       const mParen = name.match(/^(.*?)\s*[(（]([A-Za-z0-9_-]{4,10})[)）]$/);
@@ -4233,9 +4292,9 @@ async function openSnapshotRosterDialog() {
     }
 
     for (const item of meetingRoster) {
-      const rawText = `${item.name || ''};${item.staffId || ''}`;
+      const hasDelim = /[;\n；|]+/.test(item.name || '') || /[;\n；|]+/.test(item.staffId || '');
       let parsedPeople = [];
-      if (rawText.includes(';') || rawText.includes('；') || rawText.includes('\n')) {
+      if (hasDelim) {
         parsedPeople = splitAndParsePeople(item.name || item.staffId, item.staffId, item.name);
       }
       if (!parsedPeople.length) {
@@ -4300,8 +4359,11 @@ async function openSnapshotRosterDialog() {
           existing.sources.add('meeting');
           const oldId = existing.staffId;
           existing.staffId = preferCanonicalStaffId(existing.staffId, staffId);
-          if (!existing.name && name) existing.name = name;
-          else if (name) existing.name = preferCanonicalName(existing.name, name);
+          if ((!existing.name || isStaffIdToken(existing.name) || existing.name === existing.staffId) && name && !isStaffIdToken(name)) {
+            existing.name = name;
+          } else if (name) {
+            existing.name = preferCanonicalName(existing.name, name);
+          }
           if (!existing.rawBU && rawBU) existing.rawBU = rawBU;
           if (item.snapshotTitles) existing.snapshotTitles.push(...item.snapshotTitles);
           if (item.meetingDates) existing.meetingDates.push(...item.meetingDates);
@@ -4353,9 +4415,9 @@ async function openSnapshotRosterDialog() {
     }
 
     for (const item of incentiveRoster) {
-      const rawText = `${item.name || ''};${item.staffId || ''}`;
+      const hasDelim = /[;\n；|]+/.test(item.name || '') || /[;\n；|]+/.test(item.staffId || '');
       let parsedPeople = [];
-      if (rawText.includes(';') || rawText.includes('；') || rawText.includes('\n')) {
+      if (hasDelim) {
         parsedPeople = splitAndParsePeople(item.name || item.staffId, item.staffId, item.name);
       }
       if (!parsedPeople.length) {
@@ -4420,8 +4482,11 @@ async function openSnapshotRosterDialog() {
           existing.sources.add('incentive');
           const oldId = existing.staffId;
           existing.staffId = preferCanonicalStaffId(existing.staffId, staffId);
-          if (!existing.name && name) existing.name = name;
-          else if (name) existing.name = preferCanonicalName(existing.name, name);
+          if ((!existing.name || isStaffIdToken(existing.name) || existing.name === existing.staffId) && name && !isStaffIdToken(name)) {
+            existing.name = name;
+          } else if (name) {
+            existing.name = preferCanonicalName(existing.name, name);
+          }
           if (!existing.rawBU && rawBU) existing.rawBU = rawBU;
           if (item.snapshotTitles) existing.snapshotTitles.push(...item.snapshotTitles);
           if (itemTraces.length) {
@@ -4541,9 +4606,11 @@ async function openSnapshotRosterDialog() {
 
       const isExisting = Boolean(existing);
       if (isExisting) {
-        cand.staffId = existing.id; // use canonical existing roster staffId
-        if (!cand.name && existing.name) cand.name = existing.name;
-        else if (existing.name) cand.name = preferCanonicalName(cand.name, existing.name);
+        if ((!cand.name || isStaffIdToken(cand.name) || cand.name === cand.staffId) && existing.name && !isStaffIdToken(existing.name)) {
+          cand.name = existing.name;
+        } else if (existing.name) {
+          cand.name = preferCanonicalName(cand.name, existing.name);
+        }
         // Merge existing customer groups
         personGroups(existing).forEach(gid => cand.customerGroupIds.add(gid));
         // Merge existing roles
@@ -4610,7 +4677,11 @@ async function openSnapshotRosterDialog() {
           const digits = normDigits(cLower);
           if (digits) convById.set('digits:' + digits, target);
         }
-        target.name = preferCanonicalName(target.name, cand.name);
+        if ((!target.name || isStaffIdToken(target.name) || target.name === target.staffId) && cand.name && !isStaffIdToken(cand.name)) {
+          target.name = cand.name;
+        } else {
+          target.name = preferCanonicalName(target.name, cand.name);
+        }
         const tNorm = normName(target.name);
         if (tNorm) convByName.set(tNorm, target);
 

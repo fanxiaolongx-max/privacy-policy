@@ -962,6 +962,78 @@ test('Cross-tool attendance check & roster extraction integration test', async (
             await incentiveRepo.deleteSnapshot(testSnapId);
         }
     });
+
+    await t.test('Real name is directly used and unconditionally preserved against staffId overwrite (e.g. Ahmed Helmy vs a00824176)', async () => {
+        const testSnapId = `snap_test_helmy_${Date.now()}`;
+        const snap = {
+            id: testSnapId,
+            title: '2023-05 埃及夜间操作激励核算',
+            period: '2023-05',
+            summary: {
+                totalPeople: 1,
+                totalAmount: 540,
+                personnelSummary: [
+                    {
+                        '周期': '2023-05',
+                        '操作人': 'a00824176',
+                        '姓名': 'Ahmed Helmy',
+                        'BU1 / 部门': 'NIS',
+                        '客户': 'Telecom Egypt',
+                        '人员属性': '自有',
+                        '计费天数': 2,
+                        '等级分布': 'Medium:2',
+                        '激励合计（元）': 360
+                    },
+                    {
+                        '周期': '2023-04',
+                        '操作人': 'a00824176',
+                        '姓名': 'Ahmed Helmy',
+                        'BU1 / 部门': 'NIS',
+                        '客户': 'Telecom Egypt',
+                        '人员属性': '自有',
+                        '计费天数': 1,
+                        '等级分布': 'Medium:1',
+                        '激励合计（元）': 180
+                    }
+                ]
+            },
+            payload: {
+                sheets: [
+                    {
+                        sheetName: '人员周期汇总',
+                        headers: ['周期', '操作人', '姓名', 'BU1 / 部门', '客户', '人员属性', '计费天数', '等级分布', '激励合计（元）'],
+                        rows: [
+                            ['2023-05', 'a00824176', 'Ahmed Helmy', 'NIS', 'Telecom Egypt', '自有', 2, 'Medium:2', 360],
+                            ['2023-04', 'a00824176', 'Ahmed Helmy', 'NIS', 'Telecom Egypt', '自有', 1, 'Medium:1', 180]
+                        ]
+                    }
+                ]
+            }
+        };
+
+        await incentiveRepo.saveSnapshot(snap);
+
+        try {
+            const roster = await incentiveRepo.extractRoster();
+            const helmy = roster.find(r => r.staffId === 'a00824176');
+            assert.ok(helmy, 'a00824176 must be extracted');
+            assert.equal(helmy.name, 'Ahmed Helmy', 'Real name Ahmed Helmy must be directly used and not overwritten by staffId a00824176');
+            assert.equal(helmy.bu, 'NIS');
+            assert.equal(helmy.customerGroup, 'Telecom Egypt');
+            assert.ok(helmy.roles.includes('FME') && helmy.roles.includes('TE'), 'Must have FME and TE dual roles');
+
+            // Verify tool-ms4xb66s builds 等级分布 in sheet headers
+            const ms4Html = fs.readFileSync(path.join(__dirname, '../backend/builtin-tools/tool-ms4xb66s/index.html'), 'utf-8');
+            assert.ok(ms4Html.includes("'等级分布'"), 'tool-ms4xb66s must include 等级分布 in personnelPeriodSummary and sheet headers');
+
+            // Verify department-reward-penalty preferCanonicalName logic prioritizes real name over staffId token
+            const deptHtml = fs.readFileSync(path.join(__dirname, '../backend/builtin-tools/department-reward-penalty/index.html'), 'utf-8');
+            assert.ok(deptHtml.includes('isStaffIdToken(s1)'), 'preferCanonicalName in department-reward-penalty must test for staff ID tokens');
+            assert.ok(deptHtml.includes('words1.length > words2.length'), 'preferCanonicalName in department-reward-penalty must prefer multi-word foreign full names');
+        } finally {
+            await incentiveRepo.deleteSnapshot(testSnapId);
+        }
+    });
 });
 
 

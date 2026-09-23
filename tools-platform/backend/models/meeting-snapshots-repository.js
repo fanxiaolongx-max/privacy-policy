@@ -312,8 +312,9 @@ function cleanNameAndStaffId(rawName, existingStaffId = '') {
         return { name: '', staffId };
     }
 
-    if (isStaffIdToken(name) && !staffId) {
-        return { name: '', staffId: name };
+    if (isStaffIdToken(name)) {
+        staffId = preferCanonicalStaffId(staffId, name);
+        return { name: '', staffId };
     }
 
     // 1. Bracketed pattern
@@ -488,7 +489,11 @@ function getSnapshotAttendees(snapshot) {
             existing.account = preferCanonicalStaffId(existing.account, id);
             existing.staffId = preferCanonicalStaffId(existing.staffId, id);
             existing.id = existing.staffId || existing.account;
-            existing.name = preferCanonicalName(existing.name, name);
+            if ((!existing.name || isStaffIdToken(existing.name) || existing.name === existing.staffId) && name && !isStaffIdToken(name)) {
+                existing.name = name;
+            } else if (name) {
+                existing.name = preferCanonicalName(existing.name, name);
+            }
             if (id) {
                 attById.set(id.toLowerCase(), existing);
                 const digits = getDigits(id);
@@ -940,12 +945,33 @@ function preferCanonicalName(n1, n2) {
     if (!s1) return s2;
     if (!s2) return s1;
     if (s1 === s2) return s1;
+
+    // 1. 真实姓名绝对优于工号 Token
+    const isId1 = isStaffIdToken(s1) || (/^[A-Za-z0-9_-]{4,10}$/.test(s1) && /\d{3,}/.test(s1));
+    const isId2 = isStaffIdToken(s2) || (/^[A-Za-z0-9_-]{4,10}$/.test(s2) && /\d{3,}/.test(s2));
+    if (isId1 && !isId2) return s2;
+    if (!isId1 && isId2) return s1;
+    if (isId1 && isId2) return preferCanonicalStaffId ? preferCanonicalStaffId(s1, s2) : s1;
+
+    // 2. 中文姓名优于非中文
     if (isChinese(s1) && !isChinese(s2)) return s1;
     if (isChinese(s2) && !isChinese(s1)) return s2;
+
+    // 3. 不带括号的纯姓名优于带括号（如包含标注/角色）的姓名
     const hasBracket1 = /[\(（]/.test(s1);
     const hasBracket2 = /[\(（]/.test(s2);
     if (!hasBracket1 && hasBracket2) return s1;
     if (!hasBracket2 && hasBracket1) return s2;
+
+    // 4. 外文多词完整姓名优于单词或残缺名（如 "Ahmed Helmy" 优于 "Ahmed"）
+    const words1 = s1.split(/\s+/).filter(Boolean);
+    const words2 = s2.split(/\s+/).filter(Boolean);
+    if (!isChinese(s1) && !isChinese(s2)) {
+        if (words1.length !== words2.length) {
+            return words1.length > words2.length ? s1 : s2;
+        }
+    }
+
     return s1.length <= s2.length ? s1 : s2;
 }
 
@@ -1077,7 +1103,7 @@ async function extractRoster() {
                     rosterMap.set(canonicalId.toLowerCase(), existingEntry);
                     registerCandidate(existingEntry);
                 }
-                if (!existingEntry.name && name) {
+                if ((!existingEntry.name || isStaffIdToken(existingEntry.name) || existingEntry.name === existingEntry.staffId) && name && !isStaffIdToken(name)) {
                     existingEntry.name = name;
                     registerCandidate(existingEntry);
                 } else if (name) {
@@ -1177,7 +1203,11 @@ async function extractRoster() {
                 const digits = getDigits(canonicalId);
                 if (digits) convById.set('digits:' + digits, target);
             }
-            target.name = preferCanonicalName(target.name, nm);
+            if ((!target.name || isStaffIdToken(target.name) || target.name === target.staffId) && nm && !isStaffIdToken(nm)) {
+                target.name = nm;
+            } else {
+                target.name = preferCanonicalName(target.name, nm);
+            }
             const targetNorm = normName(target.name);
             if (targetNorm) convByName.set(targetNorm, target);
 
