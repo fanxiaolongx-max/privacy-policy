@@ -249,6 +249,30 @@ function extractNameFromFullname(raw, id) {
     return m ? m[1] : str;
 }
 
+function normName(str) {
+    if (!str) return '';
+    return String(str).replace(/[\(（].*?[\)）]/g, '').replace(/[\/\\].*$/, '').replace(/\s+/g, '').trim().toLowerCase();
+}
+
+function isChinese(str) {
+    return /[\u4e00-\u9fa5]/.test(String(str || ''));
+}
+
+function preferCanonicalName(n1, n2) {
+    const s1 = String(n1 || '').trim();
+    const s2 = String(n2 || '').trim();
+    if (!s1) return s2;
+    if (!s2) return s1;
+    if (s1 === s2) return s1;
+    if (isChinese(s1) && !isChinese(s2)) return s1;
+    if (isChinese(s2) && !isChinese(s1)) return s2;
+    const hasBracket1 = /[\(（]/.test(s1);
+    const hasBracket2 = /[\(（]/.test(s2);
+    if (!hasBracket1 && hasBracket2) return s1;
+    if (!hasBracket2 && hasBracket1) return s2;
+    return s1.length <= s2.length ? s1 : s2;
+}
+
 async function extractRoster() {
     await ensureReady();
     const snapshots = await listSnapshots({ includePayload: true });
@@ -258,10 +282,17 @@ async function extractRoster() {
         if (parsedId) {
             const exact = rosterMap.get(parsedId.toLowerCase());
             if (exact) return exact;
+            for (const v of rosterMap.values()) {
+                if (v.staffId && areStaffIdsEquivalent(parsedId, v.staffId)) {
+                    return v;
+                }
+            }
         }
         if (parsedName) {
+            const nName = normName(parsedName);
             for (const v of rosterMap.values()) {
-                if (v.name && v.name.toLowerCase() === parsedName.toLowerCase()) {
+                const vnName = normName(v.name);
+                if ((v.name && v.name.toLowerCase() === parsedName.toLowerCase()) || (nName && vnName && nName === vnName)) {
                     if (!parsedId || !v.staffId || areStaffIdsEquivalent(parsedId, v.staffId)) {
                         return v;
                     }
@@ -352,8 +383,13 @@ async function extractRoster() {
                         if (canonicalId && canonicalId !== existing.staffId) {
                             existing.staffId = canonicalId;
                             existing.id = canonicalId;
+                            rosterMap.set(canonicalId.toLowerCase(), existing);
                         }
-                        if (!existing.name && parsedName) existing.name = parsedName;
+                        if (!existing.name && parsedName) {
+                            existing.name = parsedName;
+                        } else if (parsedName) {
+                            existing.name = preferCanonicalName(existing.name, parsedName);
+                        }
                         if (!existing.bu && bu) { existing.bu = bu; existing.businessUnit = bu; }
                         
                         // Accumulate multiple customer groups
@@ -431,8 +467,13 @@ async function extractRoster() {
                         if (canonicalId && canonicalId !== existing.staffId) {
                             existing.staffId = canonicalId;
                             existing.id = canonicalId;
+                            rosterMap.set(canonicalId.toLowerCase(), existing);
                         }
-                        if (!existing.name && parsedName) existing.name = parsedName;
+                        if (!existing.name && parsedName) {
+                            existing.name = parsedName;
+                        } else if (parsedName) {
+                            existing.name = preferCanonicalName(existing.name, parsedName);
+                        }
                         if (!existing.bu && bu) { existing.bu = bu; existing.businessUnit = bu; }
 
                         if (!Array.isArray(existing.customerGroups)) {

@@ -678,4 +678,63 @@ test('Cross-tool attendance check & roster extraction integration test', async (
             await meetingRepo.deleteSnapshot(testSnapId);
         }
     });
+
+    // Subtest 12: Accurate deduplication across snapshots with parenthesized names & mutually exclusive tab statistics
+    await t.test('Snapshots and UI accurately deduplicate personnel with parenthesized names, aliases, and consistent tab statistics', async () => {
+        const snapId1 = 'snap_dedup_test_1_' + Date.now();
+        const snapId2 = 'snap_dedup_test_2_' + Date.now();
+
+        const snap1 = {
+            id: snapId1,
+            title: '去重测试快照1',
+            meetingDate: '2026-09-23',
+            summary: {
+                totalAttendees: 2,
+                attendees: [
+                    { account: 'mWX9901', name: '孙悟空 (TL)', role: 'TD', bu: 'IT', customerGroup: 'Zain' },
+                    { account: 'WX9902', name: '猪八戒', role: 'FME', bu: 'Core', customerGroup: 'ET' }
+                ],
+                anomalies: []
+            },
+            payload: { sheets: [] }
+        };
+        const snap2 = {
+            id: snapId2,
+            title: '去重测试快照2',
+            meetingDate: '2026-09-24',
+            summary: {
+                totalAttendees: 1,
+                attendees: [
+                    { account: 'WX9901', name: '孙悟空', role: 'PM', bu: 'PMO', customerGroup: 'Orange' }
+                ],
+                anomalies: []
+            },
+            payload: { sheets: [] }
+        };
+
+        await meetingRepo.saveSnapshot(snap1);
+        await meetingRepo.saveSnapshot(snap2);
+
+        try {
+            const roster = await meetingRepo.extractRoster();
+            const sunList = roster.filter(r => r.staffId === 'WX9901' || r.name === '孙悟空');
+            assert.equal(sunList.length, 1, '孙悟空 with mWX9901 and WX9901, and with (TL) in name must be deduplicated into 1 person');
+            assert.equal(sunList[0].staffId, 'WX9901', 'Canonical ID should be WX9901');
+            assert.equal(sunList[0].name, '孙悟空', 'Canonical name should prefer cleaner Chinese name without parentheses');
+            assert.ok(sunList[0].roles.includes('TD') && sunList[0].roles.includes('PM'), 'Roles should accumulate across snapshots');
+            assert.equal(sunList[0].bu, 'PMO', 'PM role forces PMO');
+            assert.ok(sunList[0].customerGroups.includes('Zain') && sunList[0].customerGroups.includes('Orange'), 'Customer groups should accumulate');
+
+            // Verify UI contains both tab and updated deduplication logic
+            const deptHtml = fs.readFileSync(path.join(__dirname, '..', 'backend', 'builtin-tools', 'department-reward-penalty', 'index.html'), 'utf8');
+            assert.ok(deptHtml.includes('data-extract-source="both"'), 'UI must contain 双快照共有 tab');
+            assert.ok(deptHtml.includes('id="extract-count-both"'), 'UI must contain extract-count-both span');
+            assert.ok(deptHtml.includes('preferCanonicalName'), 'UI must define preferCanonicalName');
+            assert.ok(deptHtml.includes('convergedMap'), 'UI must execute final convergence deduplication');
+        } finally {
+            await meetingRepo.deleteSnapshot(snapId1);
+            await meetingRepo.deleteSnapshot(snapId2);
+        }
+    });
 });
+

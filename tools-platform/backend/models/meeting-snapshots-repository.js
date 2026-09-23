@@ -619,6 +619,30 @@ async function batchCheckAttendance(persons = []) {
     return result;
 }
 
+function normName(str) {
+    if (!str) return '';
+    return String(str).replace(/[\(（].*?[\)）]/g, '').replace(/[\/\\].*$/, '').replace(/\s+/g, '').trim().toLowerCase();
+}
+
+function isChinese(str) {
+    return /[\u4e00-\u9fa5]/.test(String(str || ''));
+}
+
+function preferCanonicalName(n1, n2) {
+    const s1 = String(n1 || '').trim();
+    const s2 = String(n2 || '').trim();
+    if (!s1) return s2;
+    if (!s2) return s1;
+    if (s1 === s2) return s1;
+    if (isChinese(s1) && !isChinese(s2)) return s1;
+    if (isChinese(s2) && !isChinese(s1)) return s2;
+    const hasBracket1 = /[\(（]/.test(s1);
+    const hasBracket2 = /[\(（]/.test(s2);
+    if (!hasBracket1 && hasBracket2) return s1;
+    if (!hasBracket2 && hasBracket1) return s2;
+    return s1.length <= s2.length ? s1 : s2;
+}
+
 async function extractRoster() {
     await ensureReady();
     const snapshots = await listSnapshots({ includePayload: true });
@@ -641,12 +665,22 @@ async function extractRoster() {
                 if (rosterMap.has(key)) {
                     existingEntry = rosterMap.get(key);
                     existingKey = key;
+                } else {
+                    for (const [k, v] of rosterMap.entries()) {
+                        if (v.staffId && areStaffIdsEquivalent(id, v.staffId)) {
+                            existingEntry = v;
+                            existingKey = k;
+                            break;
+                        }
+                    }
                 }
             }
 
             if (!existingEntry && name) {
+                const nName = normName(name);
                 for (const [k, v] of rosterMap.entries()) {
-                    if (v.name && v.name.toLowerCase() === name.toLowerCase()) {
+                    const vnName = normName(v.name);
+                    if ((v.name && v.name.toLowerCase() === name.toLowerCase()) || (nName && vnName && nName === vnName)) {
                         if (!id || !v.staffId || areStaffIdsEquivalent(id, v.staffId)) {
                             existingEntry = v;
                             existingKey = k;
@@ -687,8 +721,13 @@ async function extractRoster() {
                 if (canonicalId && canonicalId !== existingEntry.staffId) {
                     existingEntry.staffId = canonicalId;
                     existingEntry.id = canonicalId;
+                    rosterMap.set(canonicalId.toLowerCase(), existingEntry);
                 }
-                if (!existingEntry.name && name) existingEntry.name = name;
+                if (!existingEntry.name && name) {
+                    existingEntry.name = name;
+                } else if (name) {
+                    existingEntry.name = preferCanonicalName(existingEntry.name, name);
+                }
 
                 // Accumulate customer groups
                 if (!Array.isArray(existingEntry.customerGroups)) {

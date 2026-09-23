@@ -1336,6 +1336,7 @@ dialog::backdrop{background:rgba(15,23,42,.48);backdrop-filter:blur(5px);-webkit
           <button type="button" class="tab-btn active" data-extract-source="all" style="font-size:12px;padding:5px 12px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;">全部 (<span id="extract-count-all">0</span>)</button>
           <button type="button" class="tab-btn" data-extract-source="meeting" style="font-size:12px;padding:5px 12px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;">仅会议考勤 (<span id="extract-count-meeting">0</span>)</button>
           <button type="button" class="tab-btn" data-extract-source="incentive" style="font-size:12px;padding:5px 12px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;">仅操作激励 (<span id="extract-count-incentive">0</span>)</button>
+          <button type="button" class="tab-btn" data-extract-source="both" style="font-size:12px;padding:5px 12px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;">双快照共有 (<span id="extract-count-both">0</span>)</button>
           <button type="button" class="tab-btn" data-extract-source="new" style="font-size:12px;padding:5px 12px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;">仅新人员 (<span id="extract-count-new">0</span>)</button>
         </div>
         <div style="display:flex;gap:10px;align-items:center;">
@@ -2847,26 +2848,34 @@ let extractPageSize = 50;
 
 function updateExtractCounts() {
   const allCount = extractedRosterCandidates.length;
-  let meetingCount = 0;
-  let incentiveCount = 0;
+  let meetingOnlyCount = 0;
+  let incentiveOnlyCount = 0;
+  let bothCount = 0;
   let newCount = 0;
   for (const c of extractedRosterCandidates) {
-    if (c.sources && c.sources.has('meeting')) meetingCount++;
-    if (c.sources && c.sources.has('incentive')) incentiveCount++;
+    const hasM = c.sources && c.sources.has('meeting');
+    const hasI = c.sources && c.sources.has('incentive');
+    if (hasM && hasI) bothCount++;
+    else if (hasM) meetingOnlyCount++;
+    else if (hasI) incentiveOnlyCount++;
     if (!c.isExisting) newCount++;
   }
 
   const elAll = $('extract-count-all'); if (elAll) elAll.textContent = allCount;
-  const elM = $('extract-count-meeting'); if (elM) elM.textContent = meetingCount;
-  const elI = $('extract-count-incentive'); if (elI) elI.textContent = incentiveCount;
+  const elM = $('extract-count-meeting'); if (elM) elM.textContent = meetingOnlyCount;
+  const elI = $('extract-count-incentive'); if (elI) elI.textContent = incentiveOnlyCount;
+  const elBoth = $('extract-count-both'); if (elBoth) elBoth.textContent = bothCount;
   const elN = $('extract-count-new'); if (elN) elN.textContent = newCount;
 }
 
 function getFilteredExtractCandidates() {
   const search = String($('extract-search-input')?.value || '').trim().toLowerCase();
   return extractedRosterCandidates.filter(cand => {
-    if (currentExtractFilter === 'meeting' && (!cand.sources || !cand.sources.has('meeting'))) return false;
-    if (currentExtractFilter === 'incentive' && (!cand.sources || !cand.sources.has('incentive'))) return false;
+    const hasM = cand.sources && cand.sources.has('meeting');
+    const hasI = cand.sources && cand.sources.has('incentive');
+    if (currentExtractFilter === 'meeting' && (!hasM || hasI)) return false;
+    if (currentExtractFilter === 'incentive' && (!hasI || hasM)) return false;
+    if (currentExtractFilter === 'both' && (!hasM || !hasI)) return false;
     if (currentExtractFilter === 'new' && cand.isExisting) return false;
     if (search) {
       const matchId = (cand.staffId || '').toLowerCase().includes(search);
@@ -3150,6 +3159,30 @@ function normDigits(str) {
   if (!str) return '';
   const d = String(str).toLowerCase().replace(/^[a-z]+/i, '');
   return d.length >= 5 ? d : '';
+}
+
+function normName(str) {
+  if (!str) return '';
+  return String(str).replace(/[\(（].*?[\)）]/g, '').replace(/[\/\\].*$/, '').replace(/\s+/g, '').trim().toLowerCase();
+}
+
+function isChinese(str) {
+  return /[\u4e00-\u9fa5]/.test(String(str || ''));
+}
+
+function preferCanonicalName(n1, n2) {
+  const s1 = String(n1 || '').trim();
+  const s2 = String(n2 || '').trim();
+  if (!s1) return s2;
+  if (!s2) return s1;
+  if (s1 === s2) return s1;
+  if (isChinese(s1) && !isChinese(s2)) return s1;
+  if (isChinese(s2) && !isChinese(s1)) return s2;
+  const hasBracket1 = /[\(（]/.test(s1);
+  const hasBracket2 = /[\(（]/.test(s2);
+  if (!hasBracket1 && hasBracket2) return s1;
+  if (!hasBracket2 && hasBracket1) return s2;
+  return s1.length <= s2.length ? s1 : s2;
 }
 
 function areStaffIdsEquivalent(id1, id2) {
@@ -4004,7 +4037,12 @@ async function openSnapshotRosterDialog() {
         if (digits) candByDigits.set(digits, c);
       }
       if (c.name) {
-        candByName.set(String(c.name).trim().toLowerCase(), c);
+        const n = String(c.name).trim().toLowerCase();
+        candByName.set(n, c);
+        const cleanN = normName(n);
+        if (cleanN && cleanN !== n) {
+          candByName.set(cleanN, c);
+        }
       }
     }
 
@@ -4020,14 +4058,16 @@ async function openSnapshotRosterDialog() {
           if (digits) found = candByDigits.get(digits);
         }
         if (found) {
-          if (!sName || !found.name || String(found.name).trim().toLowerCase() === sName) {
-            return found;
-          }
+          return found;
         }
       }
 
       if (sName) {
-        const found = candByName.get(sName);
+        let found = candByName.get(sName);
+        if (!found) {
+          const clean = normName(sName);
+          if (clean) found = candByName.get(clean);
+        }
         if (found) {
           if (!sId || !found.staffId || areStaffIdsEquivalent(sId, found.staffId)) {
             return found;
@@ -4091,6 +4131,7 @@ async function openSnapshotRosterDialog() {
         const oldId = existing.staffId;
         existing.staffId = preferCanonicalStaffId(existing.staffId, staffId);
         if (!existing.name && name) existing.name = name;
+        else if (name) existing.name = preferCanonicalName(existing.name, name);
         if (!existing.rawBU && rawBU) existing.rawBU = rawBU;
         if (item.snapshotTitles) existing.snapshotTitles.push(...item.snapshotTitles);
         if (item.meetingDates) existing.meetingDates.push(...item.meetingDates);
@@ -4176,6 +4217,7 @@ async function openSnapshotRosterDialog() {
         const oldId = existing.staffId;
         existing.staffId = preferCanonicalStaffId(existing.staffId, staffId);
         if (!existing.name && name) existing.name = name;
+        else if (name) existing.name = preferCanonicalName(existing.name, name);
         if (!existing.rawBU && rawBU) existing.rawBU = rawBU;
         if (item.snapshotTitles) existing.snapshotTitles.push(...item.snapshotTitles);
         if (existing.staffId !== oldId || (!existing.name && name)) {
@@ -4252,7 +4294,7 @@ async function openSnapshotRosterDialog() {
     let existingCount = 0;
     let newCount = 0;
 
-    extractedRosterCandidates = candidateList.map((cand, idx) => {
+    const rawCandidates = candidateList.map((cand, idx) => {
       const candId = String(cand.staffId || '').trim().toLowerCase();
       const candName = String(cand.name || '').trim().toLowerCase();
 
@@ -4263,12 +4305,21 @@ async function openSnapshotRosterDialog() {
           const digits = normDigits(candId);
           if (digits) existing = pByDigits.get(digits);
         }
-        if (existing && candName && existing.name && String(existing.name).trim().toLowerCase() !== candName) {
-          existing = null;
+        if (existing && candName && existing.name) {
+          const exName = String(existing.name).trim().toLowerCase();
+          if (exName !== candName && normName(exName) !== normName(candName) && !isChinese(candName)) {
+            if (!areStaffIdsEquivalent(candId, existing.id)) {
+              existing = null;
+            }
+          }
         }
       }
       if (!existing && candName) {
-        const byName = pByName.get(candName);
+        let byName = pByName.get(candName);
+        if (!byName) {
+          const clean = normName(candName);
+          if (clean) byName = pByName.get(clean);
+        }
         if (byName && (!candId || !byName.id || areStaffIdsEquivalent(candId, byName.id))) {
           existing = byName;
         }
@@ -4276,9 +4327,9 @@ async function openSnapshotRosterDialog() {
 
       const isExisting = Boolean(existing);
       if (isExisting) {
-        existingCount++;
         cand.staffId = existing.id; // use canonical existing roster staffId
         if (!cand.name && existing.name) cand.name = existing.name;
+        else if (existing.name) cand.name = preferCanonicalName(cand.name, existing.name);
         // Merge existing customer groups
         personGroups(existing).forEach(gid => cand.customerGroupIds.add(gid));
         // Merge existing roles
@@ -4290,8 +4341,6 @@ async function openSnapshotRosterDialog() {
         if (cand.roles.has('PM')) {
           cand.businessUnitId = matchBU('PMO') || 'PMO';
         }
-      } else {
-        newCount++;
       }
       return {
         ...cand,
@@ -4302,6 +4351,47 @@ async function openSnapshotRosterDialog() {
       };
     });
 
+    // 最终唯一性兜底收敛：确保不存在任何重复工号或姓名
+    const convergedMap = new Map();
+    for (const cand of rawCandidates) {
+      const keyId = cand.staffId ? String(cand.staffId).trim().toLowerCase() : '';
+      const keyName = cand.name ? normName(cand.name) : '';
+      const primaryKey = keyId || (keyName ? `name:${keyName}` : null);
+      if (!primaryKey) continue;
+
+      if (!convergedMap.has(primaryKey)) {
+        convergedMap.set(primaryKey, cand);
+      } else {
+        const target = convergedMap.get(primaryKey);
+        cand.sources?.forEach(s => target.sources.add(s));
+        cand.customerGroupIds?.forEach(g => target.customerGroupIds.add(g));
+        cand.rawCustomerGroups?.forEach(g => target.rawCustomerGroups.add(g));
+        cand.roles?.forEach(r => target.roles.add(r));
+        cand.rawRoles?.forEach(r => target.rawRoles.add(r));
+        if (!target.businessUnitId && cand.businessUnitId) target.businessUnitId = cand.businessUnitId;
+        if (!target.name && cand.name) target.name = cand.name;
+        else target.name = preferCanonicalName(target.name, cand.name);
+        target.isExisting = target.isExisting || cand.isExisting;
+        cand.snapshotTitles?.forEach(t => { if (!target.snapshotTitles.includes(t)) target.snapshotTitles.push(t); });
+        cand.meetingDates?.forEach(d => { if (!target.meetingDates.includes(d)) target.meetingDates.push(d); });
+      }
+    }
+
+    extractedRosterCandidates = [...convergedMap.values()];
+    existingCount = extractedRosterCandidates.filter(c => c.isExisting).length;
+    newCount = extractedRosterCandidates.length - existingCount;
+
+    let meetingOnlyCount = 0;
+    let incentiveOnlyCount = 0;
+    let bothCount = 0;
+    for (const c of extractedRosterCandidates) {
+      const hasM = c.sources && c.sources.has('meeting');
+      const hasI = c.sources && c.sources.has('incentive');
+      if (hasM && hasI) bothCount++;
+      else if (hasM) meetingOnlyCount++;
+      else if (hasI) incentiveOnlyCount++;
+    }
+
     extractedRosterCandidates.sort((a, b) => {
       if (a.isExisting !== b.isExisting) return a.isExisting ? 1 : -1;
       return (a.name || '').localeCompare(b.name || '', 'zh-CN');
@@ -4309,7 +4399,7 @@ async function openSnapshotRosterDialog() {
     extractedRosterCandidates.forEach((c, i) => c._idx = i);
     extractPage = 1;
 
-    appendExtractLog(`📊 聚合统计：共生成 ${extractedRosterCandidates.length} 位候选人员 (现有在册: ${existingCount} 人, 新候选人: ${newCount} 人)`, 'info');
+    appendExtractLog(`📊 聚合去重统计：完全去重后共 ${extractedRosterCandidates.length} 位候选人员 (双快照共有: ${bothCount} 人, 仅会议: ${meetingOnlyCount} 人, 仅激励: ${incentiveOnlyCount} 人；其中现有在册: ${existingCount} 人, 新候选人: ${newCount} 人)`, 'info');
     appendExtractLog(`🏷️ 字段映射：角色规则匹配 ${roleMappedCount} 次，客户群规则匹配 ${groupMappedCount} 次，BU规则匹配 ${buMappedCount} 次`, 'info');
 
     updateScannedUnmappedBanner();
@@ -4323,10 +4413,10 @@ async function openSnapshotRosterDialog() {
       appendExtractLog(`⚠️ 发现待配置映射的原始BU (${scannedUnmappedBUs.size}个): [${[...scannedUnmappedBUs].join(', ')}]`, 'warning');
     }
 
-    setExtractProgress(100, `✅ 提取完成！共聚合 ${extractedRosterCandidates.length} 位候选人员`, {
+    setExtractProgress(100, `✅ 提取完成！完全去重后共聚合 ${extractedRosterCandidates.length} 位候选人员`, {
       'extract-step-badge-4': {
         icon: '✅',
-        detail: `聚合 ${extractedRosterCandidates.length} 人 (新:${newCount})`,
+        detail: `去重后 ${extractedRosterCandidates.length} 人 (两源共有:${bothCount}, 新:${newCount})`,
         bg: '#f0fdf4',
         border: '#bbf7d0'
       }
