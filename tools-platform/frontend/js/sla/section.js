@@ -780,14 +780,20 @@ function buildDOM(secId, title, themeColor) {
                     </div>
                     <div id="c-list-${secId}" class="picker-list" style="padding:0;"></div>
                 </div>
-                <div id="metrics-picker-${secId}" class="dropdown-menu" style="right:80px;width:340px;padding:12px;border-color:#9c27b0;max-height:450px;overflow-y:auto;">
-                    <div style="font-weight:bold;color:#8e44ad;font-size:12px;margin-bottom:8px;border-bottom:1px solid #f3e5f5;padding-bottom:5px;">${tt('sla.section.metricHint')}</div>
+                <div id="metrics-picker-${secId}" class="dropdown-menu" style="right:40px;width:520px;max-width:calc(100vw - 40px);padding:16px;border-color:#9c27b0;max-height:min(660px, calc(100vh - 120px));overflow-y:auto;box-shadow:0 8px 30px rgba(0,0,0,0.22);border-radius:8px;">
+                    <div style="font-weight:bold;color:#8e44ad;font-size:13px;margin-bottom:10px;border-bottom:1px solid #f3e5f5;padding-bottom:6px;">${tt('sla.section.metricHint')}</div>
                     
-                    <div style="margin-bottom:8px; display:flex; flex-wrap:wrap; gap:6px 10px; font-size:12px;">
-                        <label><input type="radio" name="m-type-${secId}" value="extract" checked onclick="setMetricCreateType('${secId}', 'extract')"> ${tt('sla.section.extractOne')}</label>
-                        <label><input type="radio" name="m-type-${secId}" value="extract_multi" onclick="setMetricCreateType('${secId}', 'extract_multi')"> ${tt('sla.section.extractMulti')}</label>
-                        <label><input type="radio" name="m-type-${secId}" value="count" onclick="setMetricCreateType('${secId}', 'count')"> ${tt('sla.section.countTimes')}</label>
-                        <label><input type="radio" name="m-type-${secId}" value="ratio" onclick="setMetricCreateType('${secId}', 'ratio')"> ${tt('sla.section.countRatio')}</label>
+                    <div style="margin-bottom:10px; display:flex; flex-wrap:wrap; gap:6px 12px; font-size:12px;">
+                        <label style="cursor:pointer;"><input type="radio" name="m-type-${secId}" value="extract" checked onclick="setMetricCreateType('${secId}', 'extract')"> ${tt('sla.section.extractOne')}</label>
+                        <label style="cursor:pointer;"><input type="radio" name="m-type-${secId}" value="extract_multi" onclick="setMetricCreateType('${secId}', 'extract_multi')"> ${tt('sla.section.extractMulti')}</label>
+                        <label style="cursor:pointer;"><input type="radio" name="m-type-${secId}" value="count" onclick="setMetricCreateType('${secId}', 'count')"> ${tt('sla.section.countTimes')}</label>
+                        <label style="cursor:pointer;"><input type="radio" name="m-type-${secId}" value="ratio" onclick="setMetricCreateType('${secId}', 'ratio')"> ${tt('sla.section.countRatio')}</label>
+                    </div>
+
+                    <div style="margin-bottom:10px; display:flex; align-items:center; gap:12px; font-size:12px; background:#faf5ff; padding:7px 10px; border-radius:6px; border:1px solid #e9d5ff;">
+                        <span style="font-weight:bold; color:#7e22ce;">数据范围:</span>
+                        <label style="cursor:pointer; display:inline-flex; align-items:center; gap:4px;"><input type="radio" name="m-scope-${secId}" value="current" checked> 仅当前表 (默认)</label>
+                        <label style="cursor:pointer; display:inline-flex; align-items:center; gap:4px;"><input type="radio" name="m-scope-${secId}" value="all"> 🌐 跨所有独立表联合提取</label>
                     </div>
 
                     <!-- 提取模式 -->

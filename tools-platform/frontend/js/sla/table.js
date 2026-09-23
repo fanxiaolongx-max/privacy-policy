@@ -77,14 +77,16 @@ function getMetricRulesUsingSection(secId) {
     Object.keys(AppState || {}).forEach(parentSecId => {
         const parentState = AppState[parentSecId];
         (parentState.customMetrics || []).forEach(parentRule => {
+            const isMainCross = parentRule.scope === 'all';
             const mainSource = parentRule.sourceSecId || parentSecId;
-            if (mainSource === secId) {
-                addRule(parentRule, null, '主指标', `current:${parentSecId}`);
+            if (mainSource === secId || isMainCross) {
+                addRule(parentRule, null, isMainCross ? '跨表联合主指标' : '主指标', `current:${parentSecId}`);
             }
             (parentRule.subMetrics || []).forEach(subRule => {
+                const isSubCross = subRule.scope === 'all' || (!subRule.scope && isMainCross);
                 const subSource = subRule.sourceSecId || parentSecId;
-                if (subSource === secId) {
-                    addRule(subRule, parentRule, parentSecId === secId ? '子指标' : '跨表子指标', `current:${parentSecId}:${parentRule.id}`);
+                if (subSource === secId || isSubCross) {
+                    addRule(subRule, parentRule, isSubCross ? '跨表联合子指标' : (parentSecId === secId ? '子指标' : '跨表子指标'), `current:${parentSecId}:${parentRule.id}`);
                 }
             });
         });
@@ -95,14 +97,16 @@ function getMetricRulesUsingSection(secId) {
         const prefSecId = String(prefKey || '').replace(/^sla_prefs_/, '');
         const pref = savedPrefs[prefKey] || {};
         (pref.customMetrics || []).forEach(parentRule => {
+            const isMainCross = parentRule.scope === 'all';
             const mainSource = parentRule.sourceSecId || prefSecId;
-            if (mainSource === secId) {
-                addRule(parentRule, null, '已保存主指标', `saved:${prefKey}`);
+            if (mainSource === secId || isMainCross) {
+                addRule(parentRule, null, isMainCross ? '已保存跨表联合主指标' : '已保存主指标', `saved:${prefKey}`);
             }
             (parentRule.subMetrics || []).forEach(subRule => {
+                const isSubCross = subRule.scope === 'all' || (!subRule.scope && isMainCross);
                 const subSource = subRule.sourceSecId || prefSecId;
-                if (subSource === secId) {
-                    addRule(subRule, parentRule, prefSecId === secId ? '已保存子指标' : '已保存跨表子指标', `saved:${prefKey}:${parentRule.id}`);
+                if (subSource === secId || isSubCross) {
+                    addRule(subRule, parentRule, isSubCross ? '已保存跨表联合子指标' : (prefSecId === secId ? '已保存子指标' : '已保存跨表子指标'), `saved:${prefKey}:${parentRule.id}`);
                 }
             });
         });

@@ -365,6 +365,8 @@ function resetMetricForm(secId) {
     if (conditionsPanel) conditionsPanel.style.display = 'none';
     const conditionsCount = document.getElementById(`m-conditions-count-${secId}`);
     if (conditionsCount) conditionsCount.textContent = '0';
+    const currentScope = document.querySelector(`input[name="m-scope-${secId}"][value="current"]`);
+    if (currentScope) currentScope.checked = true;
 }
 
 function addMetricRule(secId) {
@@ -412,9 +414,12 @@ function addMetricRule(secId) {
     const conditions = readMetricConditionRows(document.getElementById(`m-conditions-${secId}`));
     const aggregation = type === 'extract_multi' ? (document.getElementById(`m-aggregation-${secId}`)?.value || 'sum') : '';
     const filterLogic = type === 'extract_multi' ? (document.getElementById(`m-condition-logic-${secId}`)?.value || 'and') : 'and';
+    const scopeEl = document.querySelector(`input[name="m-scope-${secId}"]:checked`);
+    const scope = scopeEl ? scopeEl.value : 'current';
     const rule = {
         id: 'm_' + new Date().getTime(),
         type, colX, valY, colZ, valK, label, color, conditions, aggregation, filterLogic,
+        scope,
         sourceSecId: secId
     };
 
@@ -739,6 +744,8 @@ function getMetricRuleSearchText(record) {
         record.rule && record.rule.colZ,
         record.rule && record.rule.valK,
         ...getMetricRuleConditions(record.rule).flatMap(item => [item.column, item.value]),
+        record.relationText,
+        record.rule && record.rule.scope === 'all' ? '跨表 跨所有独立表 联合提取' : '',
         translateMetricRuleLabel(record.parentMetricName),
         translateMetricRuleLabel(record.subMetricName),
         translateMetricRuleSectionTitle(record.tableTitle),
@@ -751,7 +758,7 @@ function makeMetricRuleRecord(base) {
     const rule = base.rule || {};
     const parentRule = base.parentRule || null;
     const sourceSecId = rule.sourceSecId || base.sourceSecId || base.parentSecId;
-    const isCrossTable = Boolean(sourceSecId && base.parentSecId && sourceSecId !== base.parentSecId);
+    const isCrossTable = Boolean((sourceSecId && base.parentSecId && sourceSecId !== base.parentSecId) || rule.scope === 'all');
     const parentMetricName = getMetricRuleDisplayLabel(parentRule || rule);
     const subMetricName = base.kind === 'sub'
         ? getMetricRuleDisplayLabel(rule, parentRule)
@@ -772,12 +779,14 @@ function makeMetricRuleRecord(base) {
         label: base.kind === 'sub' ? subMetricName : parentMetricName,
         conditionText: describeMetricCondition(rule),
         resultText: describeMetricRule(rule),
-        relationText: base.kind === 'sub'
-            ? SLAT('sla.rules.attachTo', {
-                table: translateMetricRuleSectionTitle(getSectionDisplayTitle(base.parentSecId, base.prefKey)),
-                metric: translateMetricRuleLabel(parentMetricName)
-            })
-            : SLAT('sla.rules.independent'),
+        relationText: rule.scope === 'all'
+            ? '🌐 跨所有独立表联合提取'
+            : (base.kind === 'sub'
+                ? SLAT('sla.rules.attachTo', {
+                    table: translateMetricRuleSectionTitle(getSectionDisplayTitle(base.parentSecId, base.prefKey)),
+                    metric: translateMetricRuleLabel(parentMetricName)
+                })
+                : SLAT('sla.rules.independent')),
         category: base.kind === 'sub' ? (rule.category || SLAT('sla.rules.uncategorized')) : '-',
         typeText: rule.type === 'count'
             ? SLAT('sla.rules.count')
@@ -1072,11 +1081,13 @@ function renderMetricRuleEditorPreview() {
     const conditions = readMetricConditionRows(document.getElementById('metric-rule-edit-conditions-list'));
     const aggregation = document.getElementById('metric-rule-edit-aggregation')?.value || 'sum';
     const filterLogic = document.getElementById('metric-rule-edit-filter-logic')?.value || 'and';
-    const rule = { type, colX, valY, colZ, valK, conditions, aggregation, filterLogic };
+    const scope = document.getElementById('metric-rule-edit-scope')?.value || 'current';
+    const rule = { type, colX, valY, colZ, valK, conditions, aggregation, filterLogic, scope };
     const preview = document.getElementById('metric-rule-edit-preview');
     if (!preview) return;
+    const scopeBadge = scope === 'all' ? '<span style="color:#7b1fa2; font-weight:bold; margin-left:6px;">[🌐 跨所有独立表联合提取]</span>' : '';
     preview.innerHTML = `
-        <div><b>${SLAT('sla.rules.previewRule')}</b>: IF ${describeMetricCondition(rule)} ➔ ${describeMetricRule(rule)}</div>
+        <div><b>${SLAT('sla.rules.previewRule')}</b>: IF ${describeMetricCondition(rule)} ➔ ${describeMetricRule(rule)}${scopeBadge}</div>
         <div><b>${SLAT('sla.rules.previewOwner')}</b>: ${editingMetricRuleRecord?.kind === 'sub' ? `[${escapeHTML(translateMetricRuleLabel(category || SLAT('sla.rules.uncategorized')))}] ${SLAT('sla.rules.attachToMetric', { metric: escapeHTML(parentText) })}` : SLAT('sla.rules.independent')}</div>
     `;
 }
@@ -1189,11 +1200,16 @@ window.openMetricRuleEditor = function(index) {
         : `saved|${record.prefKey}|${record.parentRuleId}`;
     if (record.kind === 'sub') document.getElementById('metric-rule-edit-parent').value = currentParentValue;
 
+    const scopeEl = document.getElementById('metric-rule-edit-scope');
+    if (scopeEl) {
+        scopeEl.value = rule.scope || 'current';
+    }
+
     document.querySelectorAll('.metric-rule-edit-sub-only').forEach(el => {
         el.style.display = record.kind === 'sub' ? 'flex' : 'none';
     });
     document.getElementById('metric-rule-edit-subtitle').textContent = `${getMetricRuleDisplayOrigin(record.origin)} · ${translateMetricRuleSectionTitle(record.parentTitle)} · ${record.kind === 'sub' ? SLAT('sla.rules.sub') : SLAT('sla.rules.main')}`;
-    ['metric-rule-edit-label', 'metric-rule-edit-colx', 'metric-rule-edit-valy', 'metric-rule-edit-colz', 'metric-rule-edit-valk', 'metric-rule-edit-aggregation', 'metric-rule-edit-filter-logic', 'metric-rule-edit-category', 'metric-rule-edit-parent']
+    ['metric-rule-edit-label', 'metric-rule-edit-colx', 'metric-rule-edit-valy', 'metric-rule-edit-colz', 'metric-rule-edit-valk', 'metric-rule-edit-aggregation', 'metric-rule-edit-filter-logic', 'metric-rule-edit-category', 'metric-rule-edit-parent', 'metric-rule-edit-scope']
         .forEach(id => {
             const el = document.getElementById(id);
             if (el) el.oninput = renderMetricRuleEditorPreview;
@@ -1284,6 +1300,7 @@ window.saveMetricRuleEditor = async function() {
     rule.conditions = conditions;
     rule.aggregation = type === 'extract_multi' ? (document.getElementById('metric-rule-edit-aggregation').value || 'sum') : '';
     rule.filterLogic = type === 'extract_multi' ? (document.getElementById('metric-rule-edit-filter-logic').value || 'and') : 'and';
+    rule.scope = document.getElementById('metric-rule-edit-scope')?.value || 'current';
     rule.label = label;
     if (record.kind === 'sub') {
         rule.category = document.getElementById('metric-rule-edit-category').value || rule.category || '未分类';
@@ -1331,6 +1348,7 @@ function cloneMetricRuleForCopy(sourceRule, record, rowData) {
     cloned.colZ = rowData.colZ;
     cloned.valK = (rowData.type === 'extract' || rowData.type === 'extract_multi') ? '' : rowData.valK;
     cloned.conditions = getMetricRuleConditions({ conditions: rowData.conditions }).map(item => ({ ...item }));
+    cloned.scope = rowData.scope || sourceRule.scope || 'current';
     cloned.label = rowData.label;
     cloned.sourceSecId = sourceRule.sourceSecId || record.sourceSecId;
     if (record.kind === 'main') {
@@ -2241,9 +2259,11 @@ function renderMetricList(secId) {
         if (r.subMetrics && r.subMetrics.length > 0) {
             subHtml = `<div style="margin-top:6px; padding-left: 10px; border-left: 2px solid #e1bee7;">`;
             r.subMetrics.forEach((sm, idx) => {
-                let sourceNote = (sm.sourceSecId && sm.sourceSecId !== secId)
-                    ? `<span style="color:#d32f2f;font-weight:bold;">(跨表数据源: ${escapeHTML(AppState[sm.sourceSecId]?.title || sm.sourceSecId)})</span> `
-                    : '';
+                let sourceNote = (sm.scope === 'all')
+                    ? `<span style="color:#7b1fa2;font-weight:bold;">(🌐 跨所有独立表联合提取)</span> `
+                    : ((sm.sourceSecId && sm.sourceSecId !== secId)
+                        ? `<span style="color:#d32f2f;font-weight:bold;">(跨表数据源: ${escapeHTML(AppState[sm.sourceSecId]?.title || sm.sourceSecId)})</span> `
+                        : '');
                 const smLabel = getMetricRuleDisplayLabel(sm, r);
                 let smDesc = describeMetricRule(sm);
 
@@ -2261,11 +2281,14 @@ function renderMetricList(secId) {
 
         let rDesc = '';
         rDesc = describeMetricRule(r).replace(' ➔ ', ' <br>➔ ');
+        const crossBadge = r.scope === 'all'
+            ? ' <span style="background:#f3e5f5; color:#7b1fa2; font-size:11px; padding:1px 6px; border-radius:10px; font-weight:normal; margin-left:6px;">🌐 跨所有独立表</span>'
+            : '';
 
         html += `
         <div class="rule-config-item" style="border-bottom: 1px dashed #eee; padding-bottom: 8px; margin-bottom: 8px;">
             <div style="display:flex; justify-content: space-between; align-items: center;">
-                <div style="font-weight:bold;color:#4a90e2;font-size:13px;">[${escapeHTML(getMetricRuleDisplayLabel(r))}]</div>
+                <div style="font-weight:bold;color:#4a90e2;font-size:13px;">[${escapeHTML(getMetricRuleDisplayLabel(r))}]${crossBadge}</div>
                 <div>
                     <button class="action-btn" onclick="openMetricRuleEditorById('${secId}', '${r.id}')" style="font-size:11px; padding:2px 6px; background:#e3f2fd; color:#1565c0; margin-right:6px;">✎ 修改</button>
                     <button class="action-btn" onclick="deleteMetricRule('${secId}', '${r.id}')" style="font-size:11px; padding:2px 6px; background:#ffebee; color:#c62828;">✖ 删除</button>

@@ -70,7 +70,18 @@ function evaluateAllMetrics() {
                 }
             };
 
-            let matchedValue = evalRule(rule, state.globalData);
+            const getRuleDataRows = (r, defaultRows, currentSecId) => {
+                if (!r || r.scope !== 'all') return defaultRows || [];
+                const rows = [...(defaultRows || [])];
+                Object.keys(AppState || {}).forEach(otherSecId => {
+                    if (otherSecId !== currentSecId && AppState[otherSecId] && Array.isArray(AppState[otherSecId].globalData)) {
+                        rows.push(...AppState[otherSecId].globalData);
+                    }
+                });
+                return rows;
+            };
+
+            let matchedValue = evalRule(rule, getRuleDataRows(rule, state.globalData, secId));
 
             const ruleColZ = rule.colZ || '';
             const targetKey = `${secId}_${rule.id}`;
@@ -80,10 +91,14 @@ function evaluateAllMetrics() {
             const evaluatedSubMetrics = [];
             if (rule.subMetrics && rule.subMetrics.length > 0) {
                 rule.subMetrics.forEach(sm => {
-                    const sourceData = (sm.sourceSecId && AppState[sm.sourceSecId]) 
+                    const isCross = sm.scope === 'all' || (!sm.scope && rule.scope === 'all');
+                    const effectiveSm = isCross && !sm.scope ? { ...sm, scope: 'all' } : sm;
+                    const baseSecId = sm.sourceSecId || secId;
+                    const baseData = (sm.sourceSecId && AppState[sm.sourceSecId]) 
                                         ? AppState[sm.sourceSecId].globalData 
                                         : (sm.sourceSecId ? [] : state.globalData);
-                    let smValue = evalRule(sm, sourceData);
+                    const smRows = getRuleDataRows(effectiveSm, baseData, baseSecId);
+                    let smValue = evalRule(effectiveSm, smRows);
                     
                     const effectiveLabel = typeof getMetricRuleDisplayLabel === 'function'
                         ? getMetricRuleDisplayLabel(sm, rule)
@@ -92,11 +107,11 @@ function evaluateAllMetrics() {
                     const smTargetKey = `${secId}_${sm.id}`;
                     const smTargetDef = window.GlobalTargets ? (window.GlobalTargets[smTargetKey] || window.GlobalTargets[targetKey]) : null;
                     smValue = formatMetricValueByTarget(smValue, smTargetDef, shouldAutoPercent(effectiveLabel, effectiveColZ), sm.type, sm.aggregation);
-                    evaluatedSubMetrics.push({ category: sm.category, value: smValue });
+                    evaluatedSubMetrics.push({ category: sm.category, value: smValue, scope: effectiveSm.scope });
                 });
             }
 
-            window.GlobalMetrics[`${secId}_${rule.id}`] = { label: displayLabel, value: matchedValue, color: rule.color, subMetrics: evaluatedSubMetrics };
+            window.GlobalMetrics[`${secId}_${rule.id}`] = { label: displayLabel, value: matchedValue, color: rule.color, subMetrics: evaluatedSubMetrics, scope: rule.scope };
         });
     });
     renderTopStickyBar();
