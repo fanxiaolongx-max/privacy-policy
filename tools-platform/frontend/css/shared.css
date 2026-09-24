@@ -37,12 +37,40 @@ body {
     background-color: var(--bg);
     color: var(--text);
     min-height: 100vh;
+    scrollbar-color: auto;
+}
+
+/* Keep page scrolling available while the root scrollbar rests out of view. */
+html {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+}
+
+html.is-page-scrolling {
+    scrollbar-color: rgba(100, 116, 139, .65) transparent;
+}
+
+html::-webkit-scrollbar {
+    width: 8px;
+}
+
+html::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+html::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 999px;
+}
+
+html.is-page-scrolling::-webkit-scrollbar-thumb {
+    background: rgba(100, 116, 139, .65);
 }
 
 /* ── 顶部导航栏 ───────────────────────────────────────── */
 #app-navbar {
     position: fixed;
-    top: 0; left: 0; right: 0;
+    top: 0; left: 0; right: 8px;
     height: var(--navbar-h);
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
     border-bottom: 1px solid #2a3a5a;

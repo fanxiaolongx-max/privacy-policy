@@ -361,6 +361,25 @@ router.get('/market/preview', requireAdmin, async (req, res) => {
     }
 });
 
+router.get('/market/preview-stream', requireAdmin, async (req, res) => {
+    res.setHeader('Content-Type', 'application/x-ndjson; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('X-Accel-Buffering', 'no');
+    res.flushHeaders?.();
+    const send = event => { if (!res.destroyed) res.write(`${JSON.stringify(event)}\n`); };
+    try {
+        const preview = await marketService.previewMarket({
+            force: req.query.refresh === '1',
+            onProgress: event => send({ type: 'progress', ...event })
+        });
+        send({ type: 'result', data: preview });
+    } catch (err) {
+        send({ type: 'error', error: err.message || '读取工具市场失败' });
+    } finally {
+        res.end();
+    }
+});
+
 router.post('/market/apply', requireAdmin, async (req, res) => {
     try {
         const body = req.body || {};
@@ -379,6 +398,36 @@ router.post('/market/apply', requireAdmin, async (req, res) => {
         res.json({ success: result.invalid.length === 0, ...result });
     } catch (err) {
         res.status(err.status || 500).json({ error: err.message || '安装工具市场更新失败' });
+    }
+});
+
+router.post('/market/apply-stream', requireAdmin, async (req, res) => {
+    res.setHeader('Content-Type', 'application/x-ndjson; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('X-Accel-Buffering', 'no');
+    res.flushHeaders?.();
+    const send = event => { if (!res.destroyed) res.write(`${JSON.stringify(event)}\n`); };
+    try {
+        const body = req.body || {};
+        const result = await marketService.applyMarketUpdates({
+            slugs: Array.isArray(body.slugs) ? body.slugs : [],
+            adoptSlugs: Array.isArray(body.adoptSlugs) ? body.adoptSlugs : [],
+            expectedFingerprints: body.expectedFingerprints && typeof body.expectedFingerprints === 'object'
+                ? body.expectedFingerprints : {},
+            expectedSources: body.expectedSources && typeof body.expectedSources === 'object'
+                ? body.expectedSources : {},
+            onProgress: event => send({ type: 'progress', ...event })
+        });
+        if (result.changed.length) {
+            send({ type: 'progress', stage: 'local_index_updating', count: result.changed.length });
+            await repo.reconcileToolsFromDisk();
+            await repo.markToolsUpdated(result.changed);
+        }
+        send({ type: 'result', data: { success: result.invalid.length === 0, ...result } });
+    } catch (err) {
+        send({ type: 'error', error: err.message || '安装工具市场更新失败' });
+    } finally {
+        res.end();
     }
 });
 

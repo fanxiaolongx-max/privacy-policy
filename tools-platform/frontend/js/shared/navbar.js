@@ -8005,6 +8005,15 @@ async function checkBuiltinToolsSync() {
     }
 }
 
+let pageScrollbarIdleTimer;
+window.addEventListener('scroll', () => {
+    document.documentElement.classList.add('is-page-scrolling');
+    clearTimeout(pageScrollbarIdleTimer);
+    pageScrollbarIdleTimer = setTimeout(() => {
+        document.documentElement.classList.remove('is-page-scrolling');
+    }, 900);
+}, { passive: true });
+
 document.addEventListener('DOMContentLoaded', async () => {
     ensureMigrationStatusLoaded();
     await ensureToolsI18nLoaded();

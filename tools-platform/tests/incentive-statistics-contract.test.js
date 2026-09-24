@@ -94,6 +94,39 @@ test('operator rows are split into WX and non-WX scopes with non-WX selected by 
     assert.match(page, /activeOperatorGroup==='wx'\?'WX':'非WX'/);
 });
 
+test('attendance warning and processing list follow the current incentive filters and rule modes', () => {
+    const runtime = createToolRuntime();
+    const result = evaluate(runtime, `
+        validRows = [
+          {__person:'A100',__name:'甲',__bu:'NIS',__customer:'ET',__attr:'FME',__level:'High',__fee:280,__rank:3,__date:'2026-09-02',__start:new Date(2026,8,2),__operatorGroup:'nonwx'},
+          {__person:'A100',__name:'甲',__bu:'NIS',__customer:'ET',__attr:'FME',__level:'Low',__fee:50,__rank:1,__date:'2026-09-02',__start:new Date(2026,8,2),__operatorGroup:'nonwx'},
+          {__person:'A200',__name:'乙',__bu:'Wireless',__customer:'Orange',__attr:'TE',__level:'Low',__fee:50,__rank:1,__date:'2026-08-02',__start:new Date(2026,7,2),__operatorGroup:'nonwx'},
+          {__person:'WX300',__name:'丙',__bu:'NIS',__customer:'ET',__attr:'FME',__level:'High',__fee:280,__rank:3,__date:'2026-09-02',__start:new Date(2026,8,2),__operatorGroup:'wx'}
+        ];
+        attendanceResults = new Map(['a100','a200','wx300'].map(id=>[id,{hasAnomaly:true,anomalies:[{type:'absent',attendance:'Absent'}]}]));
+        $('periodSourceMode').value='start';
+        $('filterMonth').value='09';
+        $('filterBU').value='NIS';
+        updateAttendanceAnomalyAlert();
+        const narrowed = currentAttendanceAnomalies.map(a=>({id:a.staffId,fee:a.totalFee,orders:a.orderCount}));
+        $('dedupMode').value='none';
+        updateAttendanceAnomalyAlert();
+        const noDedup = currentAttendanceAnomalies.map(a=>({id:a.staffId,fee:a.totalFee,orders:a.orderCount}));
+        activeOperatorGroup='wx';
+        updateAttendanceAnomalyAlert();
+        const wx = currentAttendanceAnomalies.map(a=>a.staffId);
+        $('filterPerson').value='no match';
+        updateAttendanceAnomalyAlert();
+        ({narrowed,noDedup,wx,hidden:$('attendanceAnomalyAlert').hidden});
+    `);
+    assert.deepEqual(result, {
+        narrowed: [{ id: 'A100', fee: 280, orders: 1 }],
+        noDedup: [{ id: 'A100', fee: 330, orders: 2 }],
+        wx: ['WX300'],
+        hidden: true
+    });
+});
+
 test('nighttime calculation rejects daytime rows when one endpoint is missing', () => {
     const runtime = createToolRuntime();
     runtime.context.fixtureRows = [

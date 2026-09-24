@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>一键催办 - Tools Platform</title>
-    <link rel="stylesheet" href="/css/shared.css?v=20260922-01">
+    <link rel="stylesheet" href="/css/shared.css?v=20260924-02">
     <style>
         body {
             background: #f4f6f8;
@@ -787,6 +787,11 @@
                     </div>
                 </div>
             </div>
+            <div style="margin-top: 16px; border-top: 1px solid #e2e8f0; padding-top: 14px;">
+                <strong data-i18n="network_mapping_title">单据网络名称映射</strong>
+                <p style="font-size: 12px; color: #64748b; margin: 6px 0 10px;" data-i18n="network_mapping_desc">将第三部分的原始网络名对应到上方指标分类。未匹配的单据只显示在全量简报中，不会发给专属单聊。</p>
+                <div id="dist-network-mappings"></div>
+            </div>
             <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
                 <button class="btn-primary" id="btn-save-policy" onclick="saveDistributionPolicy()"><span
                         data-i18n="btn_save_policy">💾 保存全部配置</span></button>
@@ -879,7 +884,8 @@
     <script src="/js/shared/api.js?v=20260824-01"></script>
     <script src="/js/shared/toast.js?v=20260530-01"></script>
     <script src="/js/shared/i18n.js?v=20260610-01"></script>
-    <script src="/js/shared/navbar.js?v=20260922-01"></script>
+    <script src="/js/shared/navbar.js?v=20260924-02"></script>
+    <script src="/js/expedite/network-mapping.js?v=20260924-01"></script>
     <script>
         function formatExpediteSourceLabel(source) {
             if (source === 'sqlite') return 'SQLite';
@@ -971,6 +977,8 @@
                 "btn_dl_excel": "Download Excel File",
                 "modal_dist_title": "⚙️ WeLink Advanced Distribution Strategy (Click to Assign)",
                 "modal_dist_desc": "Select an employee on the right and click a category on the left to assign. The system will automatically distribute personalized expedite messages based on categories. Roster and configs are saved permanently.",
+                "network_mapping_title": "Ticket Network Name Mapping",
+                "network_mapping_desc": "Map raw network names in the third section to metric categories above. Unmapped tickets remain in the full brief and are excluded from personal chats.",
                 "pool_emp_title": "👤 Employee Roster <span style=\"color:#999;font-weight:normal;\">(Click to reuse)</span>",
                 "btn_add_roster": "＋ Add to Pending Pool",
                 "btn_save_policy": "💾 Save All Configurations",
@@ -1041,6 +1049,8 @@
                 "btn_dl_excel": "下载 Excel 文件",
                 "modal_dist_title": "⚙️ WeLink 高级分发策略配置 (点击分配)",
                 "modal_dist_desc": "选中右侧员工后点击左侧分类框即可分配。系统会自动根据分类分发不同的专属催办信息。员工库及所有配置永久保存。",
+                "network_mapping_title": "单据网络名称映射",
+                "network_mapping_desc": "将第三部分的原始网络名对应到上方指标分类。未匹配的单据只显示在全量简报中，不会发给专属单聊。",
                 "pool_emp_title": "👤 员工名册 <span style=\"color:#999;font-weight:normal;\">(点选复用)</span>",
                 "btn_add_roster": "＋ 添加至待分配库",
                 "btn_save_policy": "💾 保存全部配置",
@@ -1411,38 +1421,46 @@
         }
 
 
-        function getExpiringTicketsText(data) {
-            if (!data.raw_data_json) return '';
-            let rawData;
-            try {
-                rawData = typeof data.raw_data_json === 'string' ? JSON.parse(data.raw_data_json) : data.raw_data_json;
-            } catch (e) {
-                return '';
-            }
-            const tickets = rawData.expiringTickets;
-            if (!tickets || tickets.length === 0) return '';
+        function getDistributionCategories() {
+            return [...new Set([...window.GlobalCategories, ...Object.keys((latestFailingData || {}).failing_metrics || {})])];
+        }
+
+        function getExpiringTicketsText(data, assignedCats = null) {
+            const tickets = window.ExpediteNetwork.getTickets(data);
+            if (!tickets.length) return '';
 
             let text = '\n⚠️ [Expiring/Overdue Alert] The following tickets require immediate action:\n';
             const groupedByNetwork = {};
             tickets.forEach(t => {
-                const td = t.data || {};
-                const network = td.network_name || td['网络名称'] || td.network || 'Unknown Network';
-                if (!groupedByNetwork[network]) groupedByNetwork[network] = [];
-                groupedByNetwork[network].push(t);
+                const network = window.ExpediteNetwork.getRawNetwork(t);
+                const category = window.ExpediteNetwork.resolveCategory(network, getDistributionCategories(), window._distPolicy.networkMappings);
+                if (assignedCats && !assignedCats.includes(category)) return;
+                const label = category ? `[${category}]` : `${network} (unmapped)`;
+                if (!groupedByNetwork[label]) groupedByNetwork[label] = [];
+                groupedByNetwork[label].push(t);
             });
 
+            if (!Object.keys(groupedByNetwork).length) return '';
+
             Object.keys(groupedByNetwork).sort((a, b) => a.localeCompare(b)).forEach(network => {
-                text += `  Network: ${network}\n`;
+                text += `  ${network}\n`;
+
+                const groupedByType = {};
                 groupedByNetwork[network].forEach(t => {
-                    const td = t.data || {};
-                    const id = td.sr_num || td.sr_id || td.task_id || td.risk_id || td.ticket_id || td['单号'] || td['问题风险编号'] || td['问题编号'] || 'Unknown ID';
+                    const type = translateTicketTitle(t.title) || 'Ticket';
+                    if (!groupedByType[type]) groupedByType[type] = [];
+                    groupedByType[type].push(t);
+                });
 
-                    const enTitle = translateTicketTitle(t.title);
-
-                    // Format SLA status
-                    const slaStr = translateSlaStatus(t._slaCleanText, t._slaDays);
-
-                    text += `    ↳ [${enTitle}] Ticket: ${id} | Status: ${slaStr}\n`;
+                Object.keys(groupedByType).forEach(type => {
+                    text += `    ↳ ${type}:\n`;
+                    groupedByType[type].forEach(t => {
+                        const td = t.data || {};
+                        const id = td.sr_num || td.sr_id || td.task_id || td.risk_id || td.ticket_id || td['单号'] || td['问题风险编号'] || td['问题编号'] || 'Unknown ID';
+                        const slaStr = translateSlaStatus(t._slaCleanText, t._slaDays);
+                        const statusPart = slaStr && slaStr !== 'Unknown Status' ? ` (${slaStr})` : '';
+                        text += `      - ${id}${statusPart}\n`;
+                    });
                 });
             });
             return text + '\n';
@@ -1574,7 +1592,8 @@
         // --- Distribution Strategy Logic ---
         window._distPolicy = {
             roster: [],
-            assignments: {}
+            assignments: {},
+            networkMappings: {}
         };
         let selectedRosterId = null;
 
@@ -1583,7 +1602,7 @@
                 const res = await API.get('/api/db/config/welink_policy_v2');
                 if (res && res.roster) {
                     const newAssignments = {};
-                    for (const key in res.assignments) {
+                    for (const key in (res.assignments || {})) {
                         let newKey = key;
                         if (newKey.startsWith('[') && newKey.endsWith(']') && !newKey.startsWith('GLOBAL_')) {
                             newKey = newKey.slice(1, -1);
@@ -1591,7 +1610,8 @@
                         newAssignments[newKey] = res.assignments[key];
                     }
                     res.assignments = newAssignments;
-                    window._distPolicy = res;
+                    window._distPolicy = { roster: res.roster, assignments: newAssignments, networkMappings: res.networkMappings || {} };
+                    if (latestFailingData) renderBriefText();
                 }
                 renderExpediteSourcePanel();
             } catch (e) {
@@ -1609,6 +1629,7 @@
                 if (Array.isArray(data) && data.length > 0) {
                     window.GlobalCategories = data;
                 }
+                if (latestFailingData) renderBriefText();
                 renderExpediteSourcePanel();
             } catch (e) {
                 console.warn('Failed to load global categories', e);
@@ -1668,7 +1689,7 @@
             </div>`;
             rosterPool.innerHTML = finalHtml;
 
-            const dynamicCats = window.GlobalCategories;
+            const dynamicCats = getDistributionCategories();
 
             const renderCategory = (catId, title, icon) => {
                 const assigned = window._distPolicy.assignments[catId] || [];
@@ -1697,6 +1718,49 @@
             catHtml += renderCategory('GLOBAL_MEET', window.currentLang === 'zh' ? '日程/会议邀请 (发起沟通)' : 'Calendar/Meeting Invite (Initiate Comm)', '📅');
 
             categoriesContainer.innerHTML = catHtml;
+            renderNetworkMappings();
+        }
+
+        function renderNetworkMappings() {
+            const container = document.getElementById('dist-network-mappings');
+            const isAdmin = localStorage.getItem('tools_role') === 'admin';
+            const mappings = window._distPolicy.networkMappings || {};
+            const networks = new Set(Object.keys(mappings));
+            window.ExpediteNetwork.getTickets(latestFailingData || {}).forEach(ticket => {
+                networks.add(window.ExpediteNetwork.getRawNetwork(ticket));
+            });
+            container.replaceChildren();
+            if (!networks.size) {
+                container.textContent = window.currentLang === 'zh' ? '当前快照没有临期/超期单据' : 'No expiring or overdue tickets in this snapshot';
+                return;
+            }
+            [...networks].sort((a, b) => a.localeCompare(b)).forEach(network => {
+                const row = document.createElement('div');
+                row.style.cssText = 'display:flex;align-items:center;gap:10px;margin:6px 0;flex-wrap:wrap;font-size:13px;';
+                const label = document.createElement('span');
+                label.textContent = network;
+                label.style.cssText = 'min-width:200px;overflow-wrap:anywhere;';
+                const select = document.createElement('select');
+                select.disabled = !isAdmin;
+                select.style.cssText = 'padding:5px;border:1px solid #cbd5e1;border-radius:4px;max-width:220px;';
+                const empty = document.createElement('option');
+                empty.value = '';
+                empty.textContent = window.currentLang === 'zh' ? '未映射（不单发）' : 'Unmapped (exclude from personal chats)';
+                select.appendChild(empty);
+                getDistributionCategories().forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat;
+                    option.textContent = `[${cat}]`;
+                    select.appendChild(option);
+                });
+                select.value = window.ExpediteNetwork.resolveCategory(network, getDistributionCategories(), mappings);
+                select.addEventListener('change', () => {
+                    window._distPolicy.networkMappings[network] = select.value;
+                    renderBriefText();
+                });
+                row.append(label, select);
+                container.appendChild(row);
+            });
         }
 
         function selectRoster(id) {
@@ -1825,7 +1889,7 @@
                 text += `✅ All metrics for your assigned group have met the targets. Thank you for your support!\n\n`;
             }
 
-            text += getExpiringTicketsText(latestFailingData);
+            text += getExpiringTicketsText(latestFailingData, assignedCats);
             text += expediteTemplate.footer;
             return text.trim();
         }
@@ -1854,7 +1918,7 @@
             const fullTextContent = document.getElementById('brief-textarea').value;
             const enableMedia = document.getElementById('welink-enable-media').checked;
 
-            const dynamicCats = window.GlobalCategories;
+            const dynamicCats = getDistributionCategories();
             const imUsersSet = new Set();
             dynamicCats.forEach(cat => {
                 (window._distPolicy.assignments[cat] || []).forEach(id => imUsersSet.add(id));

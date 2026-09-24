@@ -350,16 +350,23 @@ function compareCatalogTool(item, { targetDir = repo.CUSTOM_TOOLS_DIR, sourceDir
     };
 }
 
-async function loadCatalog({ force = false, url = String(process.env.TOOLS_MARKET_CATALOG_URL || DEFAULT_CATALOG_URL).trim(), allowPrivate = false } = {}) {
+async function loadCatalog({ force = false, url = String(process.env.TOOLS_MARKET_CATALOG_URL || DEFAULT_CATALOG_URL).trim(), allowPrivate = false, onProgress } = {}) {
     const cached = catalogCache.get(url);
-    if (!force && cached && Date.now() - cached.loadedAt < CACHE_MS) return cached.value;
+    if (!force && cached && Date.now() - cached.loadedAt < CACHE_MS) {
+        onProgress?.({ stage: 'catalog_cached', count: cached.value.tools.length });
+        return cached.value;
+    }
+    onProgress?.({ stage: 'catalog_fetching' });
     const parsedUrl = new URL(url);
     const suffix = parsedUrl.search ? `&t=${Date.now()}` : `?t=${Date.now()}`;
     const buffer = await fetchBuffer(`${url}${suffix}`, { limit: CATALOG_MAX_BYTES, catalogHostname: parsedUrl.hostname, allowPrivate });
+    onProgress?.({ stage: 'catalog_received', bytes: buffer.length });
     let raw;
     try { raw = JSON.parse(buffer.toString('utf8')); } catch (_) { throw new Error('工具市场目录不是有效 JSON'); }
     const trust = verifyCatalogSignature(raw);
+    onProgress?.({ stage: 'catalog_parsed', count: Array.isArray(raw.tools) ? raw.tools.length : 0 });
     const catalog = validateCatalog(raw, url);
+    onProgress?.({ stage: 'catalog_validated', count: catalog.tools.length });
     const value = { ...catalog, trust, catalogUrl: url };
     catalogCache.set(url, { loadedAt: Date.now(), value });
     return value;
@@ -371,9 +378,18 @@ async function loadEnabledCatalogs(options = {}) {
         { id: 'github', name: 'GitHub', url: String(process.env.TOOLS_MARKET_CATALOG_URL || DEFAULT_CATALOG_URL).trim(), enabled: settings.githubEnabled, allowPrivate: false },
         ...settings.sources.map(source => ({ ...source, allowPrivate: true }))
     ];
+    options.onProgress?.({ stage: 'sources_ready', count: sources.filter(source => source.enabled).length });
     const results = await Promise.all(sources.filter(source => source.enabled).map(async source => {
-        try { return { source, catalog: await loadCatalog({ ...options, url: source.url, allowPrivate: source.allowPrivate }) }; }
-        catch (error) { return { source, error: error.message }; }
+        const report = event => options.onProgress?.({ ...event, sourceName: source.name });
+        report({ stage: 'source_start' });
+        try {
+            const catalog = await loadCatalog({ ...options, url: source.url, allowPrivate: source.allowPrivate, onProgress: report });
+            report({ stage: 'source_done', count: catalog.tools.length });
+            return { source, catalog };
+        } catch (error) {
+            report({ stage: 'source_error', error: error.message });
+            return { source, error: error.message };
+        }
     }));
     const seen = new Set();
     const tools = [];
@@ -386,6 +402,7 @@ async function loadEnabledCatalogs(options = {}) {
         }
     }
     const loaded = results.filter(result => result.catalog);
+    options.onProgress?.({ stage: 'catalogs_merged', count: tools.length, sourceCount: loaded.length });
     return { tools, sources: sources.map(source => ({ id: source.id, name: source.name, enabled: source.enabled,
         error: results.find(result => result.source.id === source.id)?.error || null })),
         trust: { state: loaded.length && loaded.every(result => result.catalog.trust.state === 'verified') ? 'verified' : 'unsigned' } };
@@ -393,7 +410,9 @@ async function loadEnabledCatalogs(options = {}) {
 
 async function previewMarket(options = {}) {
     const catalog = await loadEnabledCatalogs(options);
+    options.onProgress?.({ stage: 'tools_comparing', count: catalog.tools.length });
     const tools = catalog.tools.map(item => compareCatalogTool(item));
+    options.onProgress?.({ stage: 'preview_done', count: tools.length });
     return {
         sources: catalog.sources,
         trust: catalog.trust,
@@ -448,11 +467,12 @@ function annotateInstalledTool(item) {
     fs.renameSync(temp, target);
 }
 
-async function applyMarketUpdates({ slugs = [], adoptSlugs = [], expectedFingerprints = {}, expectedSources = {} } = {}) {
+async function applyMarketUpdates({ slugs = [], adoptSlugs = [], expectedFingerprints = {}, expectedSources = {}, onProgress } = {}) {
     const selected = [...new Set(slugs.map(normalizeSlug).filter(Boolean))];
     const allowedAdoptions = new Set(adoptSlugs.map(normalizeSlug).filter(slug => selected.includes(slug)));
     if (!selected.length) return { installed: [], adopted: [], updated: [], changed: [], backups: [], invalid: [], preview: await previewMarket() };
-    const catalog = await loadEnabledCatalogs({ force: true });
+    onProgress?.({ stage: 'apply_start', count: selected.length });
+    const catalog = await loadEnabledCatalogs({ force: true, onProgress });
     const items = new Map(catalog.tools.map(item => [item.slug, item]));
     const current = new Map(catalog.tools.map(item => [item.slug, compareCatalogTool(item)]));
     for (const slug of selected) {
@@ -472,6 +492,7 @@ async function applyMarketUpdates({ slugs = [], adoptSlugs = [], expectedFingerp
     const marketSlugs = selected.filter(slug => current.get(slug).selectedSource === 'market');
     let bundledResult = { installed: [], adopted: [], updated: [], backups: [], invalid: [] };
     if (bundledSlugs.length) {
+        onProgress?.({ stage: 'bundled_installing', count: bundledSlugs.length });
         bundledResult = builtinToolsSync.applyBuiltinToolDecisions({
             sourceDir: BUILTIN_SOURCE_DIR,
             targetDir: repo.CUSTOM_TOOLS_DIR,
@@ -479,6 +500,7 @@ async function applyMarketUpdates({ slugs = [], adoptSlugs = [], expectedFingerp
             applySlugs: bundledSlugs,
             expectedFingerprints: Object.fromEntries(bundledSlugs.map(slug => [slug, current.get(slug).fingerprint]))
         });
+        onProgress?.({ stage: 'bundled_done', count: bundledResult.installed.length + bundledResult.adopted.length + bundledResult.updated.length });
     }
     if (!marketSlugs.length) {
         const changed = [...bundledResult.installed, ...bundledResult.adopted, ...bundledResult.updated];
@@ -490,17 +512,23 @@ async function applyMarketUpdates({ slugs = [], adoptSlugs = [], expectedFingerp
     try {
         for (const slug of marketSlugs) {
             const item = items.get(slug);
+            onProgress?.({ stage: 'package_fetching', slug });
             const buffer = await fetchBuffer(item.package.url, { limit: PACKAGE_MAX_BYTES, catalogHostname: new URL(item.catalogUrl).hostname, allowPrivate: item.allowPrivate });
+            onProgress?.({ stage: 'package_received', slug, bytes: buffer.length });
             if (buffer.length !== item.package.size || sha256(buffer) !== item.package.sha256) throw new Error(`${slug} 工具包 SHA-256 或大小校验失败`);
+            onProgress?.({ stage: 'package_verified', slug });
             const toolSource = path.join(sourceDir, slug);
             fs.mkdirSync(toolSource, { recursive: true });
             await extractPackage(buffer, toolSource);
+            onProgress?.({ stage: 'package_extracted', slug });
         }
         const sourcePreview = builtinToolsSync.previewBuiltinTools({ sourceDir, targetDir: repo.CUSTOM_TOOLS_DIR, includeSkipped: true });
         const sourceMap = new Map(sourcePreview.tools.map(item => [item.slug, item]));
         for (const slug of marketSlugs) {
             if (sourceMap.get(slug)?.fingerprint !== items.get(slug).package.directoryFingerprint) throw new Error(`${slug} 解压内容指纹与目录不一致`);
+            onProgress?.({ stage: 'directory_verified', slug });
         }
+        onProgress?.({ stage: 'tools_installing', count: marketSlugs.length });
         const result = builtinToolsSync.applyBuiltinToolDecisions({
             sourceDir,
             targetDir: repo.CUSTOM_TOOLS_DIR,
@@ -511,6 +539,7 @@ async function applyMarketUpdates({ slugs = [], adoptSlugs = [], expectedFingerp
         const marketChanged = [...result.installed, ...result.adopted, ...result.updated];
         marketChanged.forEach(slug => annotateInstalledTool(items.get(slug)));
         const changed = [...bundledResult.installed, ...bundledResult.adopted, ...bundledResult.updated, ...marketChanged];
+        onProgress?.({ stage: 'apply_done', count: changed.length });
         return {
             ...result,
             installed: [...bundledResult.installed, ...result.installed],

@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>埃及维护运营月度报告 - Tools Platform</title>
-    <link rel="stylesheet" href="/css/shared.css?v=20260922-01">
+    <link rel="stylesheet" href="/css/shared.css?v=20260924-02">
+    <link rel="stylesheet" href="/css/report-snapshot-diff.css?v=20260922-03">
     <style>
         body {
             background: #f0f2f5;
@@ -230,6 +231,86 @@
             color: #e31837;
         }
 
+        .monthly-ticket-alert { margin-top: 15px; padding: 12px 16px; background: #fff7e8; border-left: 4px solid #e65100; border-radius: 4px; container: monthly-alert / inline-size; }
+        .monthly-ticket-alert h4 { margin: 0 0 4px; color: #9a3412; font-size: 14px; }
+        .monthly-ticket-intro { display:flex; flex-wrap:wrap; align-items:baseline; column-gap:6px; margin:0 0 8px; }
+        .monthly-ticket-alert p { margin: 0; color: #9a3412; font-size: 13px; }
+        .monthly-ticket-days-legend { color: #a56a43; font-size: 11px; font-weight: 400; }
+        .monthly-ticket-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: start; }
+        .monthly-ticket-network-group { min-width: 0; padding: 5px 15px 10px; border-left: 1px solid rgba(154, 52, 18, 0.18); }
+        .monthly-ticket-network-group:nth-child(4n + 1) { border-left: 0; padding-left: 0; }
+        .monthly-ticket-network-group:nth-child(n + 5) { border-top: 1px solid rgba(154, 52, 18, 0.14); padding-top: 13px; }
+        .monthly-ticket-network { margin: 0 0 5px; color: #7c2d12; font-size: 13px; font-weight: 800; }
+        .monthly-ticket-type { margin: 3px 0 0 16px; color: #9a3412; font-size: 13px; font-weight: 700; }
+        .monthly-ticket-lines { margin: 2px 0 0; padding: 0 0 0 32px; list-style: none; color: #7c2d12; font-size: 13px; line-height: 1.65; }
+        .monthly-ticket-lines li { width: fit-content; max-width: 100%; margin: 2px 0; padding: 1px 6px; border-radius: 4px; overflow-wrap: anywhere; }
+        .monthly-ticket-lines li.is-imminent { background: rgba(234, 88, 12, 0.055); color: #8f3d20; font-weight: 600; }
+        @container monthly-alert (max-width: 950px) {
+            .monthly-ticket-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            .monthly-ticket-network-group:nth-child(n) { border-left: 1px solid rgba(154, 52, 18, 0.18); padding-left: 15px; border-top: 0; padding-top: 5px; }
+            .monthly-ticket-network-group:nth-child(3n + 1) { border-left: 0; padding-left: 0; }
+            .monthly-ticket-network-group:nth-child(n + 4) { border-top: 1px solid rgba(154, 52, 18, 0.14); padding-top: 13px; }
+        }
+        @container monthly-alert (max-width: 680px) {
+            .monthly-ticket-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .monthly-ticket-network-group:nth-child(n) { border-left: 1px solid rgba(154, 52, 18, 0.18); padding-left: 15px; border-top: 0; padding-top: 5px; }
+            .monthly-ticket-network-group:nth-child(2n + 1) { border-left: 0; padding-left: 0; }
+            .monthly-ticket-network-group:nth-child(n + 3) { border-top: 1px solid rgba(154, 52, 18, 0.14); padding-top: 13px; }
+        }
+        @container monthly-alert (max-width: 440px) {
+            .monthly-ticket-grid { grid-template-columns: minmax(0, 1fr); }
+            .monthly-ticket-network-group:nth-child(n) { border-left: 0; padding-left: 0; border-top: 1px solid rgba(154, 52, 18, 0.14); padding-top: 11px; }
+            .monthly-ticket-network-group:first-child { border-top: 0; padding-top: 5px; }
+        }
+        [data-theme="dark"] .monthly-ticket-alert { background: #38291e; border-color: #fb923c; }
+        [data-theme="dark"] .monthly-ticket-alert h4, [data-theme="dark"] .monthly-ticket-alert p, [data-theme="dark"] .monthly-ticket-network, [data-theme="dark"] .monthly-ticket-type, [data-theme="dark"] .monthly-ticket-lines { color: #fed7aa; }
+        [data-theme="dark"] .monthly-ticket-days-legend { color: #fdba74; }
+        [data-theme="dark"] .monthly-ticket-network-group { border-color: rgba(254, 215, 170, 0.2); }
+        [data-theme="dark"] .monthly-ticket-lines li.is-imminent { background: rgba(251, 146, 60, 0.09); color: #ffcca5; }
+        .monthly-selection-toolbar { position:fixed; z-index:1100; display:flex; align-items:center; gap:4px; padding:5px; border:1px solid #d6e0ed; border-radius:9px; background:#fff; box-shadow:0 8px 24px #0f172a24; }
+        .monthly-selection-toolbar[hidden] { display:none; }
+        .monthly-selection-toolbar button { display:grid; place-items:center; width:29px; height:29px; padding:0; border:0; border-radius:5px; background:transparent; color:#17345b; cursor:pointer; font-size:15px; }
+        .monthly-selection-toolbar button:hover, .monthly-selection-toolbar button:focus-visible { background:#eaf1fa; outline:none; }
+        .monthly-selection-toolbar .monthly-selection-divider { height:19px; border-left:1px solid #dbe4ef; margin:0 2px; }
+        .monthly-selection-toolbar button[data-color] { width:22px; height:22px; border:2px solid #fff; border-radius:50%; background:var(--swatch); box-shadow:0 0 0 1px #cbd5e1; }
+        .monthly-selection-toolbar button[data-color]:hover, .monthly-selection-toolbar button[data-color]:focus-visible { box-shadow:0 0 0 2px #4f83cc; }
+        .monthly-selection-toolbar input[type=color] { width:26px; height:26px; padding:1px; border:1px solid #cbd5e1; border-radius:5px; background:#fff; cursor:pointer; }
+        [data-theme="dark"] .monthly-selection-toolbar { background:#1e293b; border-color:#475569; }
+        [data-theme="dark"] .monthly-selection-toolbar button { color:#e2e8f0; }
+        [data-theme="dark"] .monthly-selection-toolbar button:hover, [data-theme="dark"] .monthly-selection-toolbar button:focus-visible { background:#334155; }
+        .monthly-workspace-actions { display:grid; gap:10px; width:min(100%,1160px); margin:18px auto 8px; text-align:left; }
+        .monthly-workspace-actions[hidden] { display:none; }
+        #monthlySourcePanel[hidden] { display:none !important; }
+        .monthly-actions-row { display:grid; grid-template-columns:88px minmax(0,1fr); gap:12px; align-items:center; }
+        .monthly-actions-label { color:#64748b; border-right:1px solid #dbe4ef; padding-right:12px; text-align:right; font-size:12px; font-weight:700; letter-spacing:.02em; white-space:nowrap; }
+        .monthly-actions-buttons { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:8px; min-width:0; }
+        .monthly-actions-buttons > *, .monthly-png-wrap { min-width:0; }
+        .monthly-actions-buttons button, .monthly-actions-buttons #monthlyColorLabel { box-sizing:border-box; display:inline-flex; width:100%; height:38px; min-width:0; align-items:center; justify-content:center; gap:7px; border:1px solid #cbd5e1; background:#fff; color:#17345b; border-radius:7px; padding:0 8px; cursor:pointer; font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; text-align:center; white-space:normal; }
+        .monthly-actions-buttons button:hover, .monthly-actions-buttons #monthlyColorLabel:hover { background:#eaf1fa; border-color:#a9bfda; }
+        .monthly-actions-buttons button:focus-visible, .monthly-actions-buttons #monthlyColorLabel:focus-within { outline:2px solid #4f83cc; outline-offset:2px; }
+        #monthlyTextColor { box-sizing:border-box; width:22px; height:22px; padding:1px; border:1px solid #cbd5e1; border-radius:4px; background:transparent; cursor:pointer; flex:none; }
+        .monthly-png-wrap { position:relative; display:block; }
+        #export-actions { width:100%; margin:0; min-width:0; }
+        #export-actions button { width:100%; }
+        .monthly-png-menu { position:absolute; top:calc(100% + 5px); left:0; z-index:20; background:#fff; box-shadow:0 8px 28px #0003; border:1px solid #cbd5e1; border-radius:8px; padding:5px; min-width:255px; text-align:left; }
+        .monthly-png-menu[hidden] { display:none; }
+        .monthly-png-menu button { display:block; width:100%; height:auto; min-height:38px; border:0; text-align:left; justify-content:flex-start; }
+        .monthly-editable:focus { outline:2px solid #4f83cc; outline-offset:2px; border-radius:3px; }
+        #monthlyWorkspaceStatus { min-height:18px; text-align:center; font-size:12px; color:#64748b; }
+        .monthly-workspace-dialog { border:0; border-radius:12px; width:min(640px,92vw); max-height:80vh; overflow:auto; box-shadow:0 20px 60px #0005; padding:24px; background:#fff; color:#17345b; }
+        .monthly-workspace-dialog::backdrop { background:#0f172a99; }
+        .monthly-workspace-dialog textarea { width:100%; min-height:190px; margin:10px 0; font:13px monospace; }
+        .monthly-workspace-dialog input[type=number] { width:76px; }
+        .monthly-workspace-dialog .dialog-actions { display:flex; justify-content:flex-end; gap:8px; }
+        .monthly-export-sheet { width:1100px; background:#fff; color:#333; padding:28px; box-sizing:border-box; }
+        .monthly-export-sheet .monthly-export-part { margin-bottom:34px; }
+        .monthly-export-sheet .chart-container img { width:100%; height:auto; }
+        @media (max-width:1050px) { .monthly-actions-buttons { grid-template-columns:repeat(4,minmax(0,1fr)); } }
+        @media (max-width:800px) { .monthly-actions-row { grid-template-columns:1fr; gap:6px; } .monthly-actions-label { border-right:0; text-align:left; padding:0 2px; } .monthly-actions-buttons { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+        @media (max-width:500px) { .monthly-actions-buttons { grid-template-columns:repeat(2,minmax(0,1fr)); } .monthly-export-sheet { width:100%; } }
+        [data-theme="dark"] .monthly-actions-buttons button, [data-theme="dark"] .monthly-actions-buttons #monthlyColorLabel, [data-theme="dark"] .monthly-workspace-dialog, [data-theme="dark"] .monthly-png-menu { background:#1e293b; color:#e2e8f0; border-color:#475569; }
+        [data-theme="dark"] .monthly-actions-label { color:#94a3b8; border-color:#475569; }
+
         .charts-row {
             display: flex;
             gap: 20px;
@@ -366,10 +447,44 @@
                     <button id="custom-filter-btn" style="padding: 6px 12px; background: #00285e; color: #fff; border: none; border-radius: 4px; cursor: pointer;" data-i18n="filter">筛选</button>
                 </div>
             </div>
-            <div id="export-actions" style="margin-top: 15px; display: none; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                <button onclick="exportToImage()" style="padding: 8px 16px; background: #00285e; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;" data-i18n="export_image">🖼️ 导出为长图</button>
-                <button onclick="exportToPDF()" style="padding: 8px 16px; background: #e31837; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;" data-i18n="export_pdf">📄 导出为 PDF</button>
-                <button id="export-daily-bundle-btn" onclick="exportDailyBundle()" style="padding: 8px 16px; background: #0f766e; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;" data-i18n="export_daily_bundle">📦 按天导出 PDF 与完整 HTML 日报</button>
+            <div id="monthlyWorkspaceActions" class="monthly-workspace-actions" hidden>
+                <div class="monthly-actions-row">
+                    <span class="monthly-actions-label" data-monthly-group="edit">编辑与设置</span>
+                    <div class="monthly-actions-buttons">
+                        <button data-action="bold" type="button"></button>
+                        <label id="monthlyColorLabel"><span class="monthly-color-text">文字颜色</span><input id="monthlyTextColor" type="color" value="#b91c1c" aria-label="文字颜色"></label>
+                        <button data-action="reset-month" type="button"></button><button data-action="reset-fixed" type="button"></button>
+                        <button data-action="toggle-time" type="button"></button><button data-action="config" type="button"></button>
+                    </div>
+                </div>
+                <div class="monthly-actions-row">
+                    <span class="monthly-actions-label" data-monthly-group="project">工程与版本</span>
+                    <div class="monthly-actions-buttons">
+                        <button data-action="export-project" type="button"></button><button data-action="import-project" type="button"></button>
+                        <button data-action="save-snapshot" type="button"></button><button data-action="snapshots" type="button"></button><button data-action="diff" type="button"></button>
+                    </div>
+                </div>
+                <div class="monthly-actions-row">
+                    <span class="monthly-actions-label" data-monthly-group="download">下载与交付</span>
+                    <div class="monthly-actions-buttons">
+                        <span class="monthly-png-wrap"><button data-action="png-menu" type="button"></button><span id="monthlyPngMenu" class="monthly-png-menu" hidden><button data-png="zh" type="button"></button><button data-png="en" type="button"></button><button data-png="both" type="button"></button><button data-png="all" type="button"></button></span></span>
+                        <button data-action="pdf" type="button"></button><button data-action="html" type="button"></button><button data-action="excel" type="button"></button><button data-action="msg" type="button"></button>
+                        <div id="export-actions" style="display:none"><button id="export-daily-bundle-btn" onclick="exportDailyBundle()" type="button" data-i18n="export_daily_bundle" title="按天导出 PDF 与完整 HTML 日报">按天批量导出</button></div>
+                    </div>
+                </div>
+                <input id="monthlyProjectInput" type="file" accept=".json" hidden>
+            </div>
+            <div id="monthlyWorkspaceStatus" role="status"></div>
+            <div id="monthlySelectionToolbar" class="monthly-selection-toolbar" role="toolbar" hidden data-html2canvas-ignore="true">
+                <button type="button" data-format="bold" aria-label="加粗" title="加粗"><strong>B</strong></button>
+                <button type="button" data-format="italic" aria-label="斜体" title="斜体"><em>I</em></button>
+                <span class="monthly-selection-divider" aria-hidden="true"></span>
+                <button type="button" data-color="#b45309" style="--swatch:#b45309" aria-label="琥珀色" title="琥珀色"></button>
+                <button type="button" data-color="#b91c1c" style="--swatch:#b91c1c" aria-label="红色" title="红色"></button>
+                <button type="button" data-color="#1d4ed8" style="--swatch:#1d4ed8" aria-label="蓝色" title="蓝色"></button>
+                <button type="button" data-color="#166534" style="--swatch:#166534" aria-label="绿色" title="绿色"></button>
+                <button type="button" data-color="#334155" style="--swatch:#334155" aria-label="深灰色" title="深灰色"></button>
+                <input id="monthlySelectionColor" type="color" value="#b91c1c" aria-label="自选文字颜色" title="自选文字颜色">
             </div>
         </div>
 
@@ -491,6 +606,13 @@
             </div>
         </form>
     </div>
+    <dialog id="monthlyWorkspaceDialog" class="monthly-workspace-dialog">
+        <h3 id="monthlyWorkspaceDialogTitle"></h3>
+        <label id="monthlyWarningLabel"></label> <input id="monthlyWarningDays" type="number" min="0" max="365" value="10">
+        <p id="monthlyMappingHelp"></p>
+        <textarea id="monthlyNetworkMappingText" spellcheck="false"></textarea>
+        <div class="dialog-actions"><button id="monthlyConfigCancel" type="button"></button><button id="monthlyConfigSave" type="button"></button></div>
+    </dialog>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -499,7 +621,8 @@
     <script src="/js/shared/toast.js?v=20260530-01"></script>
     <script src="/js/shared/api.js?v=20260824-01"></script>
     <script src="/js/shared/i18n.js?v=20260610-01"></script>
-    <script src="/js/shared/navbar.js?v=20260922-01"></script>
+    <script src="/js/shared/navbar.js?v=20260924-02"></script>
+    <script src="/js/expedite/network-mapping.js?v=20260924-01"></script>
     <script>
         function formatMonthlySourceLabel(source) {
             if (source === 'sqlite') return 'SQLite';
@@ -530,7 +653,11 @@
         window.renderMonthlySourcePanel = renderMonthlySourcePanel;
     </script>
     <script src="/js/report/export-filenames.js?v=20260810-01"></script>
-    <script src="/js/report/monthly.js?v=20260810-02"></script>
+    <script src="/js/shared/exceljs.min.js?v=20260916-01"></script>
+    <script src="/js/shared/report-msg-export.js?v=20260922-03"></script>
+    <script src="/js/shared/report-snapshot-diff.js?v=20260922-03"></script>
+    <script src="/js/report/monthly.js?v=20260924-07"></script>
+    <script src="/js/report/monthly-workspace.js?v=20260924-04"></script>
 </body>
 
 </html>

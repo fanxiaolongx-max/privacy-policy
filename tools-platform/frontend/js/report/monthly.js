@@ -50,7 +50,7 @@ const i18n = {
         filter: '筛选',
         export_image: '🖼️ 导出为长图',
         export_pdf: '📄 导出为 PDF',
-        export_daily_bundle: '📦 按天导出 PDF 与完整 HTML 日报',
+        export_daily_bundle: '按天批量导出',
         loading_report: '正在分析历史数据，生成月报...',
         section1_title: '一、整体状况与关键结论',
         section2_title: '二、历史趋势与波动分析',
@@ -84,12 +84,17 @@ const i18n = {
         group_details_title: '各客户群/代表处/区域详细达标情况如下：',
         group_failing: '共有 <span class="summary-highlight">{count}</span> 项未达标，主要包含：{list}。',
         group_passed: '各项指标 <span style="color:green; font-weight:bold;">全部达标</span>。',
-        expiring_warning: '⚠️ 临期任务预警 ({count}项)',
+        expiring_warning: '⚠️ 临期/超期单据提醒 ({count}项)',
+        expiring_intro: '以下单据需要及时处理：',
+        expiring_days_legend: '（单号后数字：正数=剩余天数，0=今日到期，负数=超期天数）',
+        ticket_unmapped: '未映射',
         special_metric_warning: '🚩 所有人注意 特殊指标提醒 ({count}项)',
         special_metric_format: '<strong>[{metric}]</strong> 全局值: {global} | 目标: {target} | 差距: {gap}',
         unknown_id: '未知单号',
         unknown_network: '未知网络',
-        ticket_format: '<strong>[{title}]</strong> 单号: {id} | 状态: {status}',
+        unknown_ticket_type: '其他单据',
+        unknown_status: '状态未知',
+        ticket_format: '↳ {id} · {status}',
 
         chart1_title: '整体达标率与指标数趋势',
         chart1_overall_rate: '整体达标率',
@@ -165,7 +170,7 @@ const i18n = {
         filter: 'Filter',
         export_image: '🖼️ Export Image',
         export_pdf: '📄 Export PDF',
-        export_daily_bundle: '📦 Export Daily PDF & Full HTML Reports',
+        export_daily_bundle: 'Export by Day',
         loading_report: 'Analyzing historical data, generating report...',
         section1_title: 'I. Overall Status & Key Conclusions',
         section2_title: 'II. Historical Trends & Volatility',
@@ -198,12 +203,17 @@ const i18n = {
         group_details_title: 'Detailed compliance by group:',
         group_failing: '<span class="summary-highlight">{count}</span> non-compliant items, including: {list}.',
         group_passed: 'All metrics <span style="color:green; font-weight:bold;">Compliant</span>.',
-        expiring_warning: '⚠️ Expiring Tasks Warning ({count})',
+        expiring_warning: '⚠️ Expiring/Overdue Alert ({count})',
+        expiring_intro: 'The following tickets require immediate action:',
+        expiring_days_legend: '(Number after ID: positive = days left, 0 = due today, negative = days overdue)',
+        ticket_unmapped: 'unmapped',
         special_metric_warning: '🚩 @ALL Special Alert ({count})',
         special_metric_format: '<strong>[{metric}]</strong> Global: {global} | Target: {target} | Gap: {gap}',
         unknown_id: 'Unknown ID',
         unknown_network: 'Unknown Network',
-        ticket_format: '<strong>[{title}]</strong> ID: {id} | Status: {status}',
+        unknown_ticket_type: 'Other tickets',
+        unknown_status: 'Unknown status',
+        ticket_format: '↳ {id} · {status}',
 
         chart1_title: 'Overall Compliance Rate & Metrics Trend',
         chart1_overall_rate: 'Compliance Rate',
@@ -479,7 +489,25 @@ function translateSlaStatus(statusText) {
 }
 
 function formatMonthlySlaStatus(ticket) {
+    const days = ticket && ticket._slaDays;
+    if (typeof days === 'number' && Number.isInteger(days) && Math.abs(days) < 100000) {
+        return String(days);
+    }
     let text = String(ticket && ticket._slaCleanText || '').trim();
+    const remaining = text.match(/剩余\s*(-?\d+)\s*天/i) || text.match(/due in\s+(\d+)\s+days?/i);
+    if (remaining) return String(Number(remaining[1]));
+    const overdue = text.match(/(?:已超期|超期|逾期)\s*(\d+)\s*天/i) || text.match(/overdue by\s+(\d+)\s+days?/i);
+    if (overdue) return String(-Number(overdue[1]));
+    const composite = text.match(/(?:due in|overdue by)\s+(?:(\d+)\s+months?\s*)?(?:(\d+)\s+weeks?\s*)?(?:(\d+)\s+days?)?/i);
+    if (composite && composite.slice(1).some(Boolean)) {
+        const total = Number(composite[1] || 0) * 30 + Number(composite[2] || 0) * 7 + Number(composite[3] || 0);
+        return String(/overdue by/i.test(composite[0]) ? -total : total);
+    }
+    const chineseComposite = text.match(/(?:剩余|已超期|超期|逾期)\s*(?:(\d+)\s*个月\s*)?(?:(\d+)\s*周\s*)?(?:(\d+)\s*天)?/);
+    if (chineseComposite && chineseComposite.slice(1).some(Boolean)) {
+        const total = Number(chineseComposite[1] || 0) * 30 + Number(chineseComposite[2] || 0) * 7 + Number(chineseComposite[3] || 0);
+        return String(/超期|逾期/.test(chineseComposite[0]) ? -total : total);
+    }
     if (ticket && ticket.collection === 'vulnerability') {
         text = text
             .replace(/^漏洞(?:紧急|提醒)\s*\(([^,，()]+)[,，]\s*(剩余\s*-?\d+\s*天)\)$/, '$1 / $2')
@@ -487,7 +515,7 @@ function formatMonthlySlaStatus(ticket) {
             .replace(/^漏洞(?:紧急|提醒)\s*\((剩余\s*-?\d+\s*天)\)$/, '$1')
             .replace(/^漏洞(?:紧急|提醒)\s*/, '');
     }
-    return translateSlaStatus(text);
+    return translateSlaStatus(text) || t('unknown_status');
 }
 
 function updateStaticI18n() {
@@ -589,6 +617,8 @@ async function loadData(startDate, endDate) {
         if (errorState) errorState.style.display = 'none';
         const exportBtnContainer = document.getElementById('export-actions');
         if (exportBtnContainer) exportBtnContainer.style.display = 'none';
+        const workspaceActions = document.getElementById('monthlyWorkspaceActions');
+        if (workspaceActions) workspaceActions.hidden = true;
 
         const params = new URLSearchParams();
         if (startDate && endDate) {
@@ -599,14 +629,16 @@ async function loadData(startDate, endDate) {
         const mode = window.API.getSourceMode('monthly_sla_data');
         const query = mode === 'auto' ? '' : `?mode=${encodeURIComponent(mode)}`;
 
-        const [data, configData, catDataRes, groupData] = await Promise.all([
+        const [data, configData, catDataRes, groupData, distributionPolicy] = await Promise.all([
             window.API.get(url),
             window.API.get(`/api/sla/config${query}`),
             window.API.get(`/api/sla/categories${query}`),
-            window.API.get(`/api/sla/groups${query}`)
+            window.API.get(`/api/sla/groups${query}`),
+            window.API.get('/api/db/config/welink_policy_v2').catch(() => ({}))
         ]);
 
         window._categories = catDataRes || [];
+        window._monthlyNetworkMappings = distributionPolicy.networkMappings || {};
         window._globalConfig = configData || { targets: {}, prefs: {} };
         window._metricGroups = groupData || [];
 
@@ -614,6 +646,7 @@ async function loadData(startDate, endDate) {
             const loadedI18n = window._globalConfig.prefs.i18nMap;
             const cleanI18n = {};
             for (const [k, v] of Object.entries(loadedI18n)) {
+                if (k === 'expiring_days_legend') continue;
                 if (v && v.includes('<br>')) {
                     const match = v.match(/<span[^>]*>(.*?)<\/span>/);
                     cleanI18n[k] = match ? match[1] : v.replace(/<[^>]+>/g, '');
@@ -716,6 +749,7 @@ function renderAll() {
         renderFullSnapshot(currentLatest, window._categories, window._globalConfig, window._metricGroups, window._manualAdjustItems);
     }
     renderMonthlyExplanation();
+    if (window.MonthlyWorkspace) window.MonthlyWorkspace.afterRender();
 }
 
 function renderMonthlyExplanation() {
@@ -883,6 +917,49 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+function renderMonthlyExpiringTickets(tickets, categoryNames = []) {
+    if (!Array.isArray(tickets) || !tickets.length) return '';
+    const categories = [...new Set([...(Array.isArray(window._categories) ? window._categories : []), ...categoryNames])];
+    const mappings = window.MonthlyWorkspace ? window.MonthlyWorkspace.getNetworkMappings() : (window._monthlyNetworkMappings || {});
+    const grouped = new Map();
+    tickets.forEach(ticket => {
+        const rawNetwork = window.ExpediteNetwork.getRawNetwork(ticket);
+        const category = window.ExpediteNetwork.resolveCategory(rawNetwork, categories, mappings);
+        const label = category ? `[${category}]` : `${rawNetwork === 'Unknown Network' ? t('unknown_network') : rawNetwork} (${t('ticket_unmapped')})`;
+        const ticketType = translateTicketTitle(ticket.title) || t('unknown_ticket_type');
+        if (!grouped.has(label)) grouped.set(label, new Map());
+        const byType = grouped.get(label);
+        if (!byType.has(ticketType)) byType.set(ticketType, []);
+        byType.get(ticketType).push(ticket);
+    });
+
+    let html = `<div class="monthly-ticket-alert">
+        <h4>${t('expiring_warning', { count: tickets.length })}</h4>
+        <div class="monthly-ticket-intro"><p>${t('expiring_intro')}</p><small class="monthly-ticket-days-legend">${t('expiring_days_legend')}</small></div>
+        <div class="monthly-ticket-grid">`;
+    [...grouped.keys()].sort((a, b) => a.localeCompare(b)).forEach(network => {
+        html += `<section class="monthly-ticket-network-group"><div class="monthly-ticket-network">${escapeHTML(network)}</div>`;
+        const byType = grouped.get(network);
+        [...byType.keys()].sort((a, b) => a.localeCompare(b)).forEach(ticketType => {
+            html += `<div class="monthly-ticket-type">[${escapeHTML(ticketType)}]</div><ul class="monthly-ticket-lines">`;
+            byType.get(ticketType).forEach(ticket => {
+                const data = ticket.data || {};
+                const id = data.sr_num || data.sr_id || data.task_id || data.risk_id || data.ticket_id || data['单号'] || data['问题风险编号'] || data['问题编号'] || t('unknown_id');
+                const days = ticket._slaDays;
+                const warningDays = window.MonthlyWorkspace ? window.MonthlyWorkspace.getWarningDays() : 10;
+                const imminent = typeof days === 'number' && Number.isInteger(days) && days <= warningDays;
+                html += `<li${imminent ? ' class="is-imminent"' : ''}>${t('ticket_format', {
+                    id: escapeHTML(String(id)),
+                    status: escapeHTML(formatMonthlySlaStatus(ticket))
+                })}</li>`;
+            });
+            html += '</ul>';
+        });
+        html += '</section>';
+    });
+    return html + '</div></div>';
+}
+
 function generateSummary(trends, latest, globalConfig) {
     if (!latest.metrics || latest.metrics.length === 0) return;
 
@@ -1034,38 +1111,7 @@ function generateSummary(trends, latest, globalConfig) {
         summaryHtml += `</ul></div>`;
     }
 
-    const expiringTickets = rawSnap.expiringTickets || [];
-    if (expiringTickets.length > 0) {
-        summaryHtml += `
-        <div style="margin-top:15px; padding:12px; background-color:#fff3e0; border-left:4px solid #e65100; border-radius:4px;">
-            <h4 style="margin:0 0 8px 0; color:#e65100; font-size:14px;">${t('expiring_warning', { count: expiringTickets.length })}</h4>
-        `;
-        const groupedByNetwork = {};
-        expiringTickets.forEach(tItem => {
-            const td = tItem.data || {};
-            const network = td.network_name || td['网络名称'] || td.network || t('unknown_network');
-            if (!groupedByNetwork[network]) groupedByNetwork[network] = [];
-            groupedByNetwork[network].push(tItem);
-        });
-        Object.keys(groupedByNetwork).sort((a, b) => a.localeCompare(b)).forEach(network => {
-            summaryHtml += `
-                <div style="margin-top:8px; padding:7px 9px; background:#fffaf0; border:1px solid #fed7aa; border-radius:6px;">
-                    <div style="font-weight:bold; color:#9a3412; margin-bottom:4px;">${window.currentLang === 'en' ? 'Network' : '网络'}: ${escapeHTML(network)} <span style="font-size:12px;font-weight:normal;">(${groupedByNetwork[network].length})</span></div>
-                    <ul style="padding-left:20px; margin:0; line-height:1.6; color:#c62828; font-size:13px;">
-            `;
-            groupedByNetwork[network].forEach(tItem => {
-                const td = tItem.data || {};
-                const id = td.sr_num || td.sr_id || td.task_id || td.risk_id || td.ticket_id || td['单号'] || td['问题风险编号'] || td['问题编号'] || t('unknown_id');
-                summaryHtml += `<li>${t('ticket_format', {
-                    title: translateTicketTitle(tItem.title),
-                    id: id,
-                    status: formatMonthlySlaStatus(tItem)
-                })}</li>`;
-            });
-            summaryHtml += '</ul></div>';
-        });
-        summaryHtml += `</div>`;
-    }
+    summaryHtml += renderMonthlyExpiringTickets(rawSnap.expiringTickets || [], Object.keys(catTotalMetrics));
 
     document.getElementById('summary-content').innerHTML = summaryHtml;
 }
@@ -1849,9 +1895,11 @@ async function captureMonthlyReportCanvas() {
     const element = document.querySelector('.page-container');
     const filterContainer = document.getElementById('date-filter-container');
     const btnContainer = document.getElementById('export-actions');
+    const workspaceActions = document.getElementById('monthlyWorkspaceActions');
     const previous = {
         filterDisplay: filterContainer ? filterContainer.style.display : '',
         buttonDisplay: btnContainer ? btnContainer.style.display : '',
+        workspaceDisplay: workspaceActions ? workspaceActions.style.display : '',
         paddingBottom: element.style.paddingBottom,
         scrollY: window.scrollY
     };
@@ -1859,6 +1907,7 @@ async function captureMonthlyReportCanvas() {
     try {
         if (filterContainer) filterContainer.style.display = 'none';
         if (btnContainer) btnContainer.style.display = 'none';
+        if (workspaceActions) workspaceActions.style.display = 'none';
         window.scrollTo(0, 0);
         element.style.paddingBottom = '100px';
         await waitForMonthlyReportPaint();
@@ -1871,6 +1920,7 @@ async function captureMonthlyReportCanvas() {
         element.style.paddingBottom = previous.paddingBottom;
         if (filterContainer) filterContainer.style.display = previous.filterDisplay || 'flex';
         if (btnContainer) btnContainer.style.display = previous.buttonDisplay || 'flex';
+        if (workspaceActions) workspaceActions.style.display = previous.workspaceDisplay;
         window.scrollTo(0, previous.scrollY);
     }
 }
@@ -2071,7 +2121,7 @@ function collectMonthlyStandaloneCss() {
         html { scroll-behavior: smooth; }
         body { margin: 0; background: #f0f2f5; color: #333; }
         .page-container { padding-top: 28px !important; }
-        .source-info-wrapper, #date-filter-container, #export-actions, #loader, #report-empty-state, #report-error-state { display: none !important; }
+        .source-info-wrapper, #date-filter-container, #export-actions, #monthlyWorkspaceActions, #monthlyWorkspaceStatus, #loader, #report-empty-state, #report-error-state { display: none !important; }
         .chart-container { height: auto !important; min-width: 0 !important; padding: 12px; box-sizing: border-box; }
         .standalone-chart-image { display: block; width: 100%; height: auto; }
         .report-export-target-section { page-break-before: always; }
@@ -2137,7 +2187,7 @@ function createDailyHtmlBlob(date, dailyData) {
     if (!source) throw new Error('Report content is not available');
     const clone = source.cloneNode(true);
 
-    clone.querySelectorAll('.source-info-wrapper, #date-filter-container, #export-actions, #loader, #report-empty-state, #report-error-state').forEach(node => node.remove());
+    clone.querySelectorAll('.source-info-wrapper, #date-filter-container, #export-actions, #monthlyWorkspaceActions, #monthlyWorkspaceStatus, #loader, #report-empty-state, #report-error-state').forEach(node => node.remove());
     const reportContent = clone.querySelector('#report-content');
     if (reportContent) reportContent.style.display = 'block';
     const explanation = clone.querySelector('#monthly-explanation-section');
@@ -2392,4 +2442,43 @@ window.exportToPDF = async function () {
         document.getElementById('export-actions').style.display = 'flex';
         showToast(t('msg_export_pdf_fail') + e.message, 'error');
     }
+};
+
+window.MonthlyReportBridge = {
+    getState() {
+        return {
+            trends: currentTrends,
+            latest: currentLatest,
+            categories: window._categories,
+            globalConfig: window._globalConfig,
+            metricGroups: window._metricGroups,
+            manualAdjustItems: window._manualAdjustItems,
+            networkMappings: window._monthlyNetworkMappings,
+            targetMonth: getMonthlyTargetMonth(),
+            startDate: document.getElementById('filter-start-date')?.value || '',
+            endDate: document.getElementById('filter-end-date')?.value || ''
+        };
+    },
+    applyState(state) {
+        currentTrends = state.trends;
+        currentLatest = state.latest;
+        window._categories = state.categories || [];
+        window._globalConfig = state.globalConfig || { targets: {}, prefs: {} };
+        window._metricGroups = state.metricGroups || [];
+        window._manualAdjustItems = state.manualAdjustItems || [];
+        window._monthlyNetworkMappings = state.networkMappings || {};
+        const start = document.getElementById('filter-start-date');
+        const end = document.getElementById('filter-end-date');
+        const month = document.getElementById('monthlyTargetMonth');
+        if (start) start.value = state.startDate || '';
+        if (end) end.value = state.endDate || '';
+        if (month && state.targetMonth) month.value = String(state.targetMonth);
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('report-empty-state').style.display = 'none';
+        document.getElementById('report-error-state').style.display = 'none';
+        document.getElementById('report-content').style.display = 'block';
+        document.getElementById('export-actions').style.display = 'flex';
+        renderAll();
+    },
+    render: renderAll
 };

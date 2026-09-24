@@ -1643,11 +1643,12 @@ function recalculate(){
       __selectedTask:blockedReason?'':selected?.__task||''
     };
   });
+  attendanceCheckVersion++;
+  attendanceResults = new Map();
+  currentAttendanceAnomalies = [];
   syncOperatorGroupCounts();refreshFilters();render();
-  if (typeof fetch === 'function' && dedupRows.length > 0) {
+  if (typeof fetch === 'function' && validRows.length > 0) {
     checkIncentiveAttendanceAnomalies();
-  } else {
-    hideAttendanceAnomalyAlert();
   }
 }
 function uniq(arr){return [...new Set(arr.filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'zh-CN'))}
@@ -1748,6 +1749,7 @@ function money(n){return Math.round(Number(n)||0).toLocaleString('zh-CN')}
 function render(){
   hideTableFocus();
   const rows=filtered();
+  updateAttendanceAnomalyAlert(rows);
   $('sRaw').textContent=rawRows.filter(r=>operatorGroup(personFromRawRow(r))===activeOperatorGroup).length;
   $('sValid').textContent=validRows.filter(operatorMatchesGroup).length;$('sDedup').textContent=rows.length;
   $('sDedupLabel').textContent=isNoDedupMode()?'不剔重有效记录':'同人同日去重后';
@@ -2809,7 +2811,8 @@ identityDetailsModal.addEventListener('click',event=>{
 });
 
 let currentAttendanceAnomalies = [];
-let isCheckingAttendance = false;
+let attendanceResults = new Map();
+let attendanceCheckVersion = 0;
 
 function getPersonAttendanceAnomaly(person, name) {
   if (!currentAttendanceAnomalies || !currentAttendanceAnomalies.length) return null;
@@ -2823,43 +2826,61 @@ function hideAttendanceAnomalyAlert() {
   if ($('attendanceAnomalyAlert')) $('attendanceAnomalyAlert').hidden = true;
 }
 
+function updateAttendanceAnomalyAlert(rows = filtered()) {
+  const rewardedPersonsMap = new Map();
+  rows.forEach(r => {
+    const staffId = clean(r.__person);
+    if (!staffId) return;
+    const key = staffId.toLowerCase();
+    let info = rewardedPersonsMap.get(key);
+    if (!info) {
+      info = { staffId, name: clean(r.__name || r.__fmeName || ''), bu: clean(r.__bu || ''), totalFee: 0, orderCount: 0 };
+      rewardedPersonsMap.set(key, info);
+    }
+    info.totalFee += Number(r.__fee) || 0;
+    info.orderCount++;
+    if (!info.name) info.name = clean(r.__name || r.__fmeName || '');
+    if (!info.bu) info.bu = clean(r.__bu || '');
+  });
+  currentAttendanceAnomalies = [...rewardedPersonsMap.values()].flatMap(info => {
+    const res = attendanceResults.get(info.staffId.toLowerCase());
+    if (!res?.hasAnomaly) return [];
+    const anomalies = res.anomalies || [];
+    return [{ ...info, anomalies,
+      anomalyDesc: anomalies.map(a => `${a.actualDate || a.meetingDate || '考勤'}(${a.title || '快照'}): ${a.attendance}`).join('； '),
+      anomalyCount: res.anomalyCount || anomalies.length || 1 }];
+  });
+  const alertBox = $('attendanceAnomalyAlert');
+  if (alertBox) alertBox.hidden = currentAttendanceAnomalies.length === 0;
+  if (currentAttendanceAnomalies.length) {
+    $('attendanceAnomalyText').textContent = `当前筛选结果中有 ${currentAttendanceAnomalies.length} 位获得激励员工在会议考勤快照中存在缺席或迟到异常！`;
+  }
+  if (attendanceAnomalyModal?.classList.contains('show')) renderAttendanceAnomalyModalTable();
+}
+
 async function checkIncentiveAttendanceAnomalies() {
   if (typeof fetch !== 'function') return;
-  if (!dedupRows || !dedupRows.length) {
-    currentAttendanceAnomalies = [];
-    hideAttendanceAnomalyAlert();
-    return;
-  }
-  if (isCheckingAttendance) return;
-  isCheckingAttendance = true;
+  const version = attendanceCheckVersion;
 
   try {
     const rewardedPersonsMap = new Map();
-    dedupRows.forEach(r => {
+    validRows.forEach(r => {
       const p = clean(r.__person);
       if (!p) return;
       const key = p.toLowerCase();
       if (!rewardedPersonsMap.has(key)) {
         rewardedPersonsMap.set(key, {
           staffId: p,
-          name: clean(r.__name || r.__fmeName || ''),
-          bu: clean(r.__bu || ''),
-          totalFee: r.__fee || 0,
-          orderCount: 1
+          name: clean(r.__name || r.__fmeName || '')
         });
       } else {
         const item = rewardedPersonsMap.get(key);
-        item.totalFee += (r.__fee || 0);
-        item.orderCount += 1;
         if (!item.name && (r.__name || r.__fmeName)) item.name = clean(r.__name || r.__fmeName);
-        if (!item.bu && r.__bu) item.bu = clean(r.__bu);
       }
     });
 
     const persons = [...rewardedPersonsMap.values()].map(p => ({ staffId: p.staffId, name: p.name }));
     if (!persons.length) {
-      currentAttendanceAnomalies = [];
-      hideAttendanceAnomalyAlert();
       return;
     }
 
@@ -2870,37 +2891,19 @@ async function checkIncentiveAttendanceAnomalies() {
     });
     if (!resp.ok) throw new Error('核验请求失败');
     const data = await resp.json();
+    if (version !== attendanceCheckVersion) return;
     const results = data.results || data.data || {};
-
-    currentAttendanceAnomalies = [];
+    const nextResults = new Map();
     rewardedPersonsMap.forEach((info) => {
       const resKey = `${info.staffId}|${info.name}`;
       const res = results[resKey];
-      if (res && res.hasAnomaly) {
-        const desc = (res.anomalies || []).map(a => `${a.actualDate || a.meetingDate || '考勤'}(${a.title || '快照'}): ${a.attendance}`).join('； ');
-        currentAttendanceAnomalies.push({
-          ...info,
-          anomalies: res.anomalies || [],
-          anomalyDesc: desc,
-          anomalyCount: res.anomalyCount || res.anomalies?.length || 1
-        });
-      }
+      if (res?.hasAnomaly) nextResults.set(info.staffId.toLowerCase(), res);
     });
-
-    if (currentAttendanceAnomalies.length > 0) {
-      if ($('attendanceAnomalyAlert')) {
-        $('attendanceAnomalyAlert').hidden = false;
-        $('attendanceAnomalyText').textContent = `检测到 ${currentAttendanceAnomalies.length} 位获得激励员工在近期会议考勤快照中存在缺席或迟到异常！`;
-      }
-      render();
-    } else {
-      hideAttendanceAnomalyAlert();
-    }
+    attendanceResults = nextResults;
+    updateAttendanceAnomalyAlert();
   } catch (err) {
     console.warn('Incentive attendance batch check error:', err);
-    hideAttendanceAnomalyAlert();
-  } finally {
-    isCheckingAttendance = false;
+    if (version === attendanceCheckVersion) hideAttendanceAnomalyAlert();
   }
 }
 
