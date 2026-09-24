@@ -2616,8 +2616,24 @@ window.fetch=async(url,options={})=>{const raw=String(url||'');if(raw.startsWith
         const input = $('#personSearchInput'); if (!input) return; input.value = state.personSearch.query; $('#personSearchClearBtn').classList.toggle('hidden', !state.personSearch.result); $('#personSearchModalResult').innerHTML = state.personSearch.result ? `<div class="search-identity" style="margin:0 0 12px">${bi('本次搜索', 'Query')}：${esc(state.personSearch.result.query)}；${bi('已关联工号', 'Linked IDs')}：${state.personSearch.result.ids.length ? state.personSearch.result.ids.map(esc).join('、') : bi('未从名单中解析到工号，将按姓名匹配', 'No linked ID found; matching by name')}</div>${renderPersonSearchResults(state.personSearch.result)}` : `<div class="search-empty" style="margin-top:4px">${bi('输入姓名或工号后点击搜索，结果将在此处显示。', 'Enter a name or employee ID, then click Search. Results will appear here.')}</div>`;
         input.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); runPersonSearch(); } };
       }
+      function isOrderNumber(str) {
+        if (!str) return false;
+        const s = String(str).trim();
+        if (!s) return false;
+        if (/^qr\d+/i.test(s) || /^(task|wo|req|inc|chg|cr)\d+/i.test(s)) return true;
+        if (/^[A-Za-z0-9_-]{11,}$/.test(s) && /\d{6,}/.test(s)) return true;
+        return false;
+      }
+      function isInvalidStaffId(id) {
+        if (!id) return false;
+        const s = String(id).trim();
+        if (!s) return false;
+        if (s.length > 10) return true;
+        if (isOrderNumber(s)) return true;
+        return false;
+      }
       function idVariants(value) {
-        const id = normalizeAttendanceId(value), out = new Set(); if (!id) return out; out.add(id);
+        const id = normalizeAttendanceId(value), out = new Set(); if (!id || isInvalidStaffId(id)) return out; out.add(id);
         const prefixed = id.match(/^[UA](\d{5,})$/); if (prefixed) out.add(prefixed[1]);
         return out;
       }
@@ -2626,7 +2642,7 @@ window.fetch=async(url,options={})=>{const raw=String(url||'');if(raw.startsWith
       function personMatches(person, queryLower, ids) { return idsOverlap(person.account, ids) || (person.name && person.name.toLowerCase().includes(queryLower)); }
       function resolveSearchIdentities(query) {
         const q = normalizeName(query), lower = q.toLowerCase(), ids = new Set(), names = new Set();
-        if (/^(?:[a-z]{0,4}\d{5,})$/i.test(q)) addIdVariants(ids, q);
+        if (/^(?:[a-z]{0,4}\d{5,})$/i.test(q) && !isInvalidStaffId(q)) addIdVariants(ids, q);
         const people = state.peopleCache ? [...state.peopleCache.qr, ...state.peopleCache.rfc, ...state.peopleCache.wfm, ...state.peopleCache.all] : [];
         people.forEach(p => { if ((p.name || '').toLowerCase().includes(lower) || idsOverlap(p.account, ids) || normalizeAttendanceId(p.account) === normalizeAttendanceId(q)) { addIdVariants(ids, p.account); if (p.name) names.add(p.name); } });
         state.sheets.filter(s => s.category === 'offline').forEach(s => { const ni = headerIndex(s.headers, '姓名'), ii = headerIndex(s.headers, '工号'); s.rows.forEach(row => { const name = cellAt(row, ni), id = cellAt(row, ii); if (name.toLowerCase().includes(lower) || idsOverlap(id, ids) || normalizeAttendanceId(id) === normalizeAttendanceId(q)) { addIdVariants(ids, id); if (name) names.add(name); } }); });
@@ -2739,13 +2755,39 @@ window.fetch=async(url,options={})=>{const raw=String(url||'');if(raw.startsWith
       }
       function cellByAliases(row, headers, ...aliases) { const i = headerIndex(headers, ...aliases); return i >= 0 ? normalizeName(row[i]) : ''; }
       function cellAt(row, index) { return index >= 0 ? normalizeName(row[index]) : ''; }
+      function resolveCustomerGroupCell(s, row) {
+        const candidates = [
+          '客户群/Customer Group', '客户群', 'Customer Group',
+          '客户网络/Network Name', '客户网络', 'Network Name', '网络/Network', '网络', 'Network',
+          '客户组织/Customer Org', '客户组织', 'Customer Org', '组织/Org', '组织', 'Org',
+          '客户名称/Customer Name', '客户名称', 'Customer Name', 'Customer', '客户'
+        ];
+        for (const alias of candidates) {
+          const idx = headerIndex(s.headers, alias);
+          if (idx >= 0) {
+            const val = cellAt(row, idx);
+            if (val && String(val).trim()) return String(val).trim();
+          }
+        }
+        return '';
+      }
       function extractQrPeople() {
         const map = new Map(); let sequence = 0; state.sheets.filter(s => s.category === 'qr').forEach(s => {
-          const ix = { bu: headerIndex(s.headers, 'BU'), customer: headerIndex(s.headers, 'Customer Group'), time: headerIndex(s.headers, 'Create Time'), applyName: headerIndex(s.headers, 'Apply Fullname', 'Apply Full Name'), applyId: headerIndex(s.headers, 'Apply Accountid', 'Apply Account ID'), tdName: headerIndex(s.headers, 'TD Fullname', 'Td Fullname', 'TD Full Name'), tdId: headerIndex(s.headers, 'TD', 'Td') };
+          const ix = {
+            bu: headerIndex(s.headers, 'BU', 'BU/Service Type'),
+            customer: headerIndex(s.headers, 'Customer Group', '客户群/Customer Group', '客户群', 'Customer Name', '客户名称', 'Customer', '客户'),
+            time: headerIndex(s.headers, 'Create Time', '创建时间/Create Time', '创建时间'),
+            applyName: headerIndex(s.headers, 'Apply Fullname', 'Apply Full Name'),
+            applyId: headerIndex(s.headers, 'Apply Accountid', 'Apply Account ID'),
+            tdName: headerIndex(s.headers, 'TD Fullname', 'Td Fullname', 'TD Full Name'),
+            tdId: headerIndex(s.headers, 'TD', 'Td'),
+            role: headerIndex(s.headers, '匹配角色', '角色', 'Role')
+          };
           s.rows.forEach(row => {
-            const bu = cellAt(row, ix.bu), customer = cellAt(row, ix.customer), orderTime = parseCreateTime(cellAt(row, ix.time), ++sequence);
-            parseQrPairedPeople(cellAt(row, ix.applyName), cellAt(row, ix.applyId)).forEach(p => addPerson(map, { role: '申请人', name: p.name, account: p.account, bu, customer, orderTime }));
-            parseQrPairedPeople(cellAt(row, ix.tdName), cellAt(row, ix.tdId)).forEach(p => addPerson(map, { role: 'TD', name: p.name, account: p.account, bu, customer, orderTime }));
+            const bu = cellAt(row, ix.bu), customer = resolveCustomerGroupCell(s, row) || cellAt(row, ix.customer), orderTime = parseCreateTime(cellAt(row, ix.time), ++sequence);
+            const explicitRole = cellAt(row, ix.role);
+            parseQrPairedPeople(cellAt(row, ix.applyName), cellAt(row, ix.applyId)).forEach(p => addPerson(map, { role: explicitRole || '申请人', name: p.name, account: p.account, bu, customer, orderTime }));
+            parseQrPairedPeople(cellAt(row, ix.tdName), cellAt(row, ix.tdId)).forEach(p => addPerson(map, { role: explicitRole || 'TD', name: p.name, account: p.account, bu, customer, orderTime }));
           });
         }); return finalizePeople(map);
       }
@@ -2753,7 +2795,11 @@ window.fetch=async(url,options={})=>{const raw=String(url||'');if(raw.startsWith
         const split = v => normalizeName(v).split(/[;；\n|]+/).map(cleanPersonName).filter(Boolean), names = split(nameValue), accounts = split(accountValue), result = [];
         const count = Math.max(names.length, accounts.length);
         for (let i = 0; i < count; i++) {
-          const name = names[i] || '', embedded = name.match(/([A-Za-z]{0,4}\d{5,})\s*$/i), account = embedded ? embedded[1] : (accounts[i] || '');
+          let name = names[i] || '';
+          const embedded = name.match(/([A-Za-z]{0,4}\d{5,})\s*$/i);
+          let account = embedded ? embedded[1] : (accounts[i] || '');
+          if (isInvalidStaffId(account)) account = '';
+          if (isOrderNumber(name)) name = '';
           if (name || account) result.push({ name, account });
         }
         return result;
@@ -2767,10 +2813,15 @@ window.fetch=async(url,options={})=>{const raw=String(url||'');if(raw.startsWith
           { role: 'L1 Solution Reviewer', aliases: ['L1评审人/L1 Solution Reviewer', 'L1评审人', 'L1 Solution Reviewer'] }
         ];
         const map = new Map(); let sequence = 0; state.sheets.filter(s => s.category === 'rfc').forEach(s => {
-          const buIndex = headerIndex(s.headers, 'BU'), customerIndex = headerIndex(s.headers, '客户群/Customer Group', '客户群', 'Customer Group'), timeIndex = headerIndex(s.headers, '创建时间/Create Time', '创建时间', 'Create Time'), roleIndexes = roles.map(cfg => ({ ...cfg, index: headerIndex(s.headers, ...cfg.aliases) }));
+          const buIndex = headerIndex(s.headers, 'BU', 'BU/Service Type'),
+                customerIndex = headerIndex(s.headers, '客户群/Customer Group', '客户群', 'Customer Group', 'Customer Name', '客户名称', 'Customer', '客户'),
+                timeIndex = headerIndex(s.headers, '创建时间/Create Time', '创建时间', 'Create Time'),
+                roleColIndex = headerIndex(s.headers, '匹配角色', '角色', 'Role'),
+                roleIndexes = roles.map(cfg => ({ ...cfg, index: headerIndex(s.headers, ...cfg.aliases) }));
           s.rows.forEach(row => {
-            const bu = cellAt(row, buIndex), customer = cellAt(row, customerIndex), orderTime = parseCreateTime(cellAt(row, timeIndex), ++sequence);
-            roleIndexes.forEach(cfg => { parsePeopleCell(cellAt(row, cfg.index)).forEach(p => addPerson(map, { role: cfg.role, name: p.name, account: p.account, bu, customer, orderTime })); });
+            const bu = cellAt(row, buIndex), customer = resolveCustomerGroupCell(s, row) || cellAt(row, customerIndex), orderTime = parseCreateTime(cellAt(row, timeIndex), ++sequence);
+            const explicitRole = cellAt(row, roleColIndex);
+            roleIndexes.forEach(cfg => { parsePeopleCell(cellAt(row, cfg.index)).forEach(p => addPerson(map, { role: explicitRole || cfg.role, name: p.name, account: p.account, bu, customer, orderTime })); });
           });
         }); return finalizePeople(map);
       }
@@ -2783,18 +2834,20 @@ window.fetch=async(url,options={})=>{const raw=String(url||'');if(raw.startsWith
         ];
         const map = new Map(); let sequence = 0; state.sheets.filter(s => s.category === 'wfm').forEach(s => {
           const buIndex = headerIndex(s.headers, 'BU', 'BU/Service Type'),
-                customerIndex = headerIndex(s.headers, 'Customer Group', '客户群/Customer Group', '客户群', '网络/Network', '网络', 'Network', '客户名称/Customer Name', '客户名称', 'Customer Name'),
+                customerIndex = headerIndex(s.headers, 'Customer Group', '客户群/Customer Group', '客户群', '网络/Network', '网络', 'Network', '客户名称/Customer Name', '客户名称', 'Customer Name', 'Customer', '客户'),
                 timeIndex = headerIndex(s.headers, 'Task Create Time', 'Create Time', '创建时间/Create Time', '创建时间'),
+                roleColIndex = headerIndex(s.headers, '匹配角色', '角色', 'Role'),
                 roleIndexes = roles.map(cfg => ({ ...cfg, index: headerIndex(s.headers, ...cfg.aliases) }));
           s.rows.forEach(row => {
-            const bu = cellAt(row, buIndex), customer = cellAt(row, customerIndex), orderTime = parseCreateTime(cellAt(row, timeIndex), ++sequence);
+            const bu = cellAt(row, buIndex), customer = resolveCustomerGroupCell(s, row) || cellAt(row, customerIndex), orderTime = parseCreateTime(cellAt(row, timeIndex), ++sequence);
+            const explicitRole = cellAt(row, roleColIndex);
             const seenInRow = new Set();
             roleIndexes.forEach(cfg => {
               parsePeopleCell(cellAt(row, cfg.index)).forEach(p => {
                 const pKey = p.account ? `id:${p.account.replace(/\s+/g, '').toLowerCase()}` : `name:${p.name.toLowerCase()}`;
                 if (seenInRow.has(pKey)) return;
                 seenInRow.add(pKey);
-                addPerson(map, { role: cfg.role, name: p.name, account: p.account, bu, customer, orderTime });
+                addPerson(map, { role: explicitRole || cfg.role, name: p.name, account: p.account, bu, customer, orderTime });
               });
             });
           });
@@ -2803,11 +2856,12 @@ window.fetch=async(url,options={})=>{const raw=String(url||'');if(raw.startsWith
       function extractAllPeople(qr = extractQrPeople(), rfc = extractRfcPeople(), wfm = extractWfmPeople(), attendanceIndex = buildAttendanceIndex()) {
         const map = new Map();[...qr, ...rfc, ...wfm].forEach(p => {
           const key = p.account ? `id:${p.account.replace(/\s+/g, '').toLowerCase()}` : `name:${p.name.toLowerCase()}`;
-          if (!map.has(key)) map.set(key, { names: new Set(), accounts: new Set(), bu: '', buTime: -Infinity, customer: '', customerTime: -Infinity, count: 0 });
+          if (!map.has(key)) map.set(key, { names: new Set(), accounts: new Set(), roles: new Set(), role: '', roleTime: -Infinity, bu: '', buTime: -Infinity, customer: '', customerTime: -Infinity, count: 0 });
           const x = map.get(key); if (p.name) x.names.add(p.name); if (p.account) x.accounts.add(p.account);
+          if (p.role) { x.roles.add(p.role); if ((p._roleTime || 0) >= x.roleTime) { x.role = p.role; x.roleTime = p._roleTime || 0; } }
           if (p.bu && p._buTime >= x.buTime) { x.bu = p.bu; x.buTime = p._buTime; } if (p.customer && p._customerTime >= x.customerTime) { x.customer = p.customer; x.customerTime = p._customerTime; } x.count += p.count || 0;
         });
-        return [...map.values()].map(x => ({ name: [...x.names].join(' / '), account: [...x.accounts].join(' / '), bu: x.bu, customer: mapCustomerGroup(x.customer), count: x.count, _buTime: x.buTime, _customerTime: x.customerTime })).map(p => { const exemption = getExemption(p), record = exemption ? null : getAttendanceRecord(p.account, attendanceIndex); return { ...p, attendance: exemption ? 'Attend on Time' : determineAttendance(p.account, attendanceIndex, p.name), attendanceTime: record?.displayTime || '', attendanceMethod: exemption ? '豁免名单' : record?.method || '无记录' }; }).sort((a, b) => (a.name || a.account).localeCompare(b.name || b.account, 'zh-CN'));
+        return [...map.values()].map(x => ({ name: [...x.names].join(' / '), account: [...x.accounts].join(' / '), role: x.role || [...x.roles].join(' / '), bu: x.bu, customer: mapCustomerGroup(x.customer), customerGroup: mapCustomerGroup(x.customer), count: x.count, _roleTime: x.roleTime, _buTime: x.buTime, _customerTime: x.customerTime })).map(p => { const exemption = getExemption(p), record = exemption ? null : getAttendanceRecord(p.account, attendanceIndex); return { ...p, attendance: exemption ? 'Attend on Time' : determineAttendance(p.account, attendanceIndex, p.name), attendanceTime: record?.displayTime || '', attendanceMethod: exemption ? '豁免名单' : record?.method || '无记录' }; }).sort((a, b) => (a.name || a.account).localeCompare(b.name || b.account, 'zh-CN'));
       }
       function normalizeAttendanceId(value) { return normalizeName(value).replace(/\s+/g, '').toUpperCase(); }
       function identityIds(value) { const out = new Set(); String(value || '').split(/[\n,;，；|/]+/).forEach(part => idVariants(part).forEach(id => out.add(id))); return out; }
@@ -2848,9 +2902,18 @@ window.fetch=async(url,options={})=>{const raw=String(url||'');if(raw.startsWith
       }
       function parsePeopleCell(value) {
         const text = normalizeName(value); if (!text) return []; const people = [], re = /([A-Za-z]{0,4}\d{5,})/g; let match, cursor = 0;
-        while ((match = re.exec(text))) { const baseName = cleanPersonName(text.slice(cursor, match.index)), name = cleanPersonName(`${baseName} ${match[1]}`); people.push({ name, account: match[1] }); cursor = re.lastIndex; }
+        while ((match = re.exec(text))) {
+          const rawAccount = match[1];
+          if (isInvalidStaffId(rawAccount)) {
+            cursor = re.lastIndex;
+            continue;
+          }
+          const baseName = cleanPersonName(text.slice(cursor, match.index)), name = cleanPersonName(`${baseName} ${rawAccount}`);
+          people.push({ name, account: rawAccount });
+          cursor = re.lastIndex;
+        }
         if (people.length) return people;
-        return text.split(/[\n;,，；|]+/).map(cleanPersonName).filter(Boolean).map(name => ({ name, account: '' }));
+        return text.split(/[\n;,，；|]+/).map(cleanPersonName).filter(s => Boolean(s) && !isOrderNumber(s)).map(name => ({ name, account: '' }));
       }
       function cleanPersonName(v) { return normalizeName(v).replace(/^[\s,;，；|/()（）\-]+|[\s,;，；|/()（）\-]+$/g, '').trim(); }
       function parseCreateTime(value, fallbackOrder = 0) {
@@ -2863,15 +2926,49 @@ window.fetch=async(url,options={})=>{const raw=String(url||'');if(raw.startsWith
         const parsed = Date.parse(text); return Number.isFinite(parsed) ? parsed : Number.MIN_SAFE_INTEGER + fallbackOrder;
       }
       function addPerson(map, p) {
-        p.name = cleanPersonName(p.name); p.account = normalizeName(p.account); if (!p.name && !p.account) return;
+        p.name = cleanPersonName(p.name);
+        p.account = normalizeName(p.account);
+        if (isInvalidStaffId(p.account)) {
+          p.account = '';
+        }
+        if (isOrderNumber(p.name)) {
+          p.name = '';
+        }
+        if (!p.name && !p.account) return;
+        if (/总计|合计|小计|^total$/i.test(p.name) || /总计|合计|小计|^total$/i.test(p.account)) return;
+        if (/^\s*pm\s*$/i.test(p.role || '')) {
+          p.bu = 'PMO';
+        }
         const key = p.account ? `id:${p.account.replace(/\s+/g, '').toLowerCase()}` : `name:${p.name.toLowerCase()}`;
-        if (!map.has(key)) map.set(key, { names: new Set(), accounts: new Set(), role: '', roleTime: -Infinity, bu: '', buTime: -Infinity, customer: '', customerTime: -Infinity, count: 0 });
+        if (!map.has(key)) map.set(key, { names: new Set(), accounts: new Set(), role: '', roleTime: -Infinity, roles: new Set(), bu: '', buTime: -Infinity, customer: '', customerTime: -Infinity, customers: new Set(), count: 0 });
         const x = map.get(key), time = Number.isFinite(p.orderTime) ? p.orderTime : Number.MIN_SAFE_INTEGER;
-        if (p.name) x.names.add(p.name); if (p.account) x.accounts.add(p.account); if (p.role && time > x.roleTime) { x.role = p.role; x.roleTime = time; }
-        if (p.bu && time >= x.buTime) { x.bu = p.bu; x.buTime = time; } if (p.customer && time >= x.customerTime) { x.customer = p.customer; x.customerTime = time; } x.count++;
+        if (p.name) x.names.add(p.name);
+        if (p.account) x.accounts.add(p.account);
+        if (p.role) {
+          x.roles.add(p.role);
+          if (time > x.roleTime) { x.role = p.role; x.roleTime = time; }
+        }
+        if (p.bu && time >= x.buTime) { x.bu = p.bu; x.buTime = time; }
+        if (p.customer) {
+          x.customers.add(p.customer);
+          if (time >= x.customerTime) { x.customer = p.customer; x.customerTime = time; }
+        }
+        x.count++;
       }
       function finalizePeople(map) {
-        return [...map.values()].map(x => ({ role: x.role, name: [...x.names].join(' / '), account: [...x.accounts].join(' / '), bu: x.bu, customer: x.customer, count: x.count, _roleTime: x.roleTime, _buTime: x.buTime, _customerTime: x.customerTime })).sort((a, b) => (a.name || a.account).localeCompare(b.name || b.account, 'zh-CN'));
+        return [...map.values()].map(x => ({ 
+          role: x.roles.size > 1 ? [...x.roles].join(' / ') : x.role, 
+          roles: [...x.roles],
+          name: [...x.names].join(' / '), 
+          account: [...x.accounts].join(' / '), 
+          bu: (x.roles.has('PM') || /^\s*pm\s*$/i.test(x.role)) ? 'PMO' : x.bu, 
+          customer: x.customers.size > 1 ? [...x.customers].join(' / ') : x.customer, 
+          customers: [...x.customers],
+          count: x.count, 
+          _roleTime: x.roleTime, 
+          _buTime: x.buTime, 
+          _customerTime: x.customerTime 
+        })).sort((a, b) => (a.name || a.account).localeCompare(b.name || b.account, 'zh-CN'));
       }
       function sheetFingerprint(category, fileName, sheetName, headers, rows) {
         const text = JSON.stringify([headers, rows]); let h1 = 0xdeadbeef ^ text.length, h2 = 0x41c6ce57 ^ text.length;
@@ -3092,9 +3189,12 @@ window.fetch=async(url,options={})=>{const raw=String(url||'');if(raw.startsWith
           account: r.account || '',
           name: r.name || '',
           bu: normalizeName(r.bu) || '',
-          customerGroup: r.customerGroup || '',
+          customerGroup: r.customerGroup || r.customer || '',
+          role: r.role || '',
           attendance: r.attendance || 'Attend on Time',
-          reason: r.reason || ''
+          reason: r.reason || '',
+          date: r.date || (r.attendanceTime && r.attendanceTime.match(/\d{4}-\d{2}-\d{2}/)?.[0]) || meetingDate,
+          attendanceTime: r.attendanceTime || ''
         }));
         const anomalies = attendees.filter(r => r.attendance && r.attendance !== 'Attend on Time');
 
@@ -3144,6 +3244,26 @@ window.fetch=async(url,options={})=>{const raw=String(url||'');if(raw.startsWith
           if (m) {
             meetingDate = `${m[1]}-${String(m[2]).padStart(2, '0')}-${String(m[3]).padStart(2, '0')}`;
             break;
+          }
+        }
+        if (!meetingDate) {
+          for (const s of state.sheets) {
+            if (Array.isArray(s.rows)) {
+              for (const row of s.rows) {
+                if (Array.isArray(row)) {
+                  for (const cell of row) {
+                    const str = String(cell || '').trim();
+                    const m = str.match(/\b(20\d\d)[-_/.](0?[1-9]|1[0-2])[-_/.](0?[1-9]|[12]\d|3[01])\b/);
+                    if (m) {
+                      meetingDate = `${m[1]}-${String(m[2]).padStart(2, '0')}-${String(m[3]).padStart(2, '0')}`;
+                      break;
+                    }
+                  }
+                }
+                if (meetingDate) break;
+              }
+            }
+            if (meetingDate) break;
           }
         }
         if (!meetingDate) meetingDate = new Date().toISOString().slice(0, 10);
@@ -3551,7 +3671,7 @@ window.fetch=async(url,options={})=>{const raw=String(url||'');if(raw.startsWith
       function showLoading(on, text, percent) { $('#loading').classList.toggle('hidden', !on); if (text) $('#loadingText').textContent = text; if (percent != null) { const p = Math.max(0, Math.min(100, Math.round(percent))); $('#loadingBar').style.width = p + '%'; $('#loadingPercent').textContent = p + '%'; } }
       function nextPaint() { return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); }
       function toast(msg, type = '', duration = 2800) { const host = $('#toasts'); if (!host || typeof host.appendChild !== 'function') return; const t = document.createElement('div'); t.className = 'toast ' + type; t.textContent = msg; host.appendChild(t); setTimeout(() => t.remove?.(), duration); }
-      window.__meetingAttendance = { state, CATEGORIES, DEFAULT_COLUMNS, DEFAULT_CUSTOMER_MAPPINGS, DEFAULT_ATTENDANCE_RULES, PRESET_EXEMPTIONS, activeExemptions, handleDeveloperUnlock, disableDeveloperMode, parseDelimited, normalizeRows, classifySheet, defaultColumnIndices, getDisplayColumns, parsePeopleCell, parseQrPairedPeople, parseCreateTime, parseAttendanceMinute, beijingToCairoAttendance, buildAttendanceIndex, getAttendanceRecord, getExemption, determineAttendance, extractQrPeople, extractRfcPeople, extractWfmPeople, extractAllPeople, mapCustomerGroup, resolveSearchIdentities, searchRequiredRows, searchAttendanceRows, validBusinessTimes, formatDateRange, roleCounts, roleLabel, sheetFingerprint, removeDuplicateSheets, renderAttendanceDashboard, renderCombinedPeopleCard, renderPeopleCard, renderPersonSearchPanel, renderPersonSearchResults, buildAnalysisTables, buildAnalysisWorkbook, buildSnapshotPayload, restoreMeetingSnapshot, openSaveSnapshotModal, closeSaveSnapshotModal, openSnapshotManagerModal, closeSnapshotManagerModal, filterSnapshotCards };
+      window.__meetingAttendance = { state, CATEGORIES, DEFAULT_COLUMNS, DEFAULT_CUSTOMER_MAPPINGS, DEFAULT_ATTENDANCE_RULES, PRESET_EXEMPTIONS, isInvalidStaffId, activeExemptions, handleDeveloperUnlock, disableDeveloperMode, parseDelimited, normalizeRows, classifySheet, defaultColumnIndices, getDisplayColumns, parsePeopleCell, parseQrPairedPeople, parseCreateTime, parseAttendanceMinute, beijingToCairoAttendance, buildAttendanceIndex, getAttendanceRecord, getExemption, determineAttendance, extractQrPeople, extractRfcPeople, extractWfmPeople, extractAllPeople, mapCustomerGroup, resolveSearchIdentities, searchRequiredRows, searchAttendanceRows, validBusinessTimes, formatDateRange, roleCounts, roleLabel, sheetFingerprint, removeDuplicateSheets, renderAttendanceDashboard, renderCombinedPeopleCard, renderPeopleCard, renderPersonSearchPanel, renderPersonSearchResults, buildAnalysisTables, buildAnalysisWorkbook, buildSnapshotPayload, restoreMeetingSnapshot, openSaveSnapshotModal, closeSaveSnapshotModal, openSnapshotManagerModal, closeSnapshotManagerModal, filterSnapshotCards };
       init();
     })();
   </script>

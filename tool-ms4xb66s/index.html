@@ -162,9 +162,9 @@ window.fetch=async(url,options={})=>{const raw=String(url||'');if(raw.startsWith
   .toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap}
   .toolbar-left,.toolbar-right{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
   .empty{padding:42px;text-align:center;color:var(--muted);font-size:12px}
-  .progress-mask{position:fixed;inset:0;background:rgba(17,24,39,.35);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:99}
-  .progress-card{width:min(420px,88vw);background:#fff;border-radius:12px;padding:22px;box-shadow:var(--shadow)}
-  .bar{height:7px;border-radius:999px;background:#edf0f4;overflow:hidden;margin-top:13px}.bar>i{display:block;height:100%;width:0;background:var(--red);transition:.25s}
+  .progress-mask{position:fixed;inset:0;background:rgba(17,24,39,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:300}
+  .progress-card{width:min(450px,90vw);background:#fff;border-radius:16px;padding:24px 28px;box-shadow:0 30px 70px rgba(16,24,40,.25);border:1px solid #e2e8f0;text-align:center}
+  .bar{height:8px;border-radius:999px;background:#edf0f4;overflow:hidden;margin-top:14px}.bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--red),#ef4444);transition:.2s ease}
   .warnbox{background:#fffaf0;border-left:3px solid #d69b35;color:#76501b;border-radius:6px;padding:9px 11px;font-size:10.5px;line-height:1.55;margin-top:10px}
   .analytics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:14px}
   .chart-card{background:#fff;border:1px solid #e2e7ed;border-radius:15px;padding:17px 17px 14px;
@@ -1161,16 +1161,16 @@ m00961966"></textarea>
 </div>
 
 <div class="rule-modal" id="attendanceAnomalyModal">
-  <div class="rule-modal-card" style="width:min(980px,94vw)">
-    <div class="rule-modal-head">
+  <div class="rule-modal-card" style="width:min(1120px,96vw);max-height:min(88vh,820px);display:flex;flex-direction:column;overflow:hidden">
+    <div class="rule-modal-head" style="flex-shrink:0">
       <div>
         <div class="rule-modal-title">📋 激励人员会议考勤排查与黑名单处理</div>
         <div class="section-note">系统检测到以下获得激励计发的员工在近期会议考勤快照中存在缺席或迟到异常。您可以灵活勾选，一键加入激励黑名单以扣除激励。</div>
       </div>
       <button class="icon-btn" id="closeAttendanceAnomalyModal" aria-label="关闭">×</button>
     </div>
-    <div class="identity-detail-body" style="padding:16px 20px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding:10px 14px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0">
+    <div class="identity-detail-body" style="padding:16px 20px;display:flex;flex-direction:column;flex:1 1 auto;min-height:0;overflow:hidden">
+      <div style="flex-shrink:0;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding:10px 14px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0">
         <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;font-weight:600">
           <input type="checkbox" id="selectAllAnomalies" checked>
           <span>全选 / 全不选</span>
@@ -1179,7 +1179,7 @@ m00961966"></textarea>
           已选择 0 / 0 人，涉及激励金额 ¥0
         </div>
       </div>
-      <div class="table-wrap" id="attendanceAnomalyTableWrap" style="max-height:380px;overflow-y:auto">
+      <div class="table-wrap" id="attendanceAnomalyTableWrap" style="flex:1 1 auto;min-height:220px;max-height:none;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px">
         <table class="data-table" style="width:100%;font-size:12px">
           <thead>
             <tr>
@@ -1188,17 +1188,17 @@ m00961966"></textarea>
               <th style="width:100px">姓名</th>
               <th style="width:120px">BU1 / 部门</th>
               <th style="width:110px">本期激励</th>
-              <th>会议考勤异常记录明细</th>
+              <th>会议考勤异常记录明细 (鼠标悬停可查看快照来源)</th>
             </tr>
           </thead>
           <tbody id="attendanceAnomalyTableBody"></tbody>
         </table>
       </div>
-      <div class="rule-actions" style="margin-top:16px;display:flex;justify-content:space-between;align-items:center">
+      <div class="rule-actions" style="flex-shrink:0;margin-top:14px;padding-top:12px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center">
         <div style="font-size:12px;color:#64748b">加入黑名单后将自动重新核算并扣除相应激励。若后续需要恢复，可在“黑名单规则”中移除。</div>
         <div style="display:flex;gap:10px">
           <button type="button" class="reset-btn" id="cancelAttendanceAnomalyModal">取消</button>
-          <button type="button" class="danger" id="confirmAddToBlacklistBtn" style="background:var(--red);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:700;cursor:pointer">🚫 一键将所选人员加入激励黑名单</button>
+          <button type="button" class="danger" id="confirmAddToBlacklistBtn" style="background:var(--red);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(220,38,38,.25)">🚫 一键将所选人员加入激励黑名单</button>
         </div>
       </div>
     </div>
@@ -1263,9 +1263,11 @@ m00961966"></textarea>
 
 <div class="progress-mask" id="mask">
   <div class="progress-card">
-    <div style="font-weight:800;font-size:18px">正在分析数据</div>
-    <div id="progressText" style="margin-top:6px;color:var(--muted);font-size:13px">读取工作表...</div>
+    <div style="font-size:26px;margin-bottom:6px">⚡</div>
+    <div id="progressTitle" style="font-weight:800;font-size:16px;color:var(--navy)">正在处理数据</div>
+    <div id="progressText" style="margin-top:6px;color:var(--muted);font-size:13px;min-height:18px">读取工作表...</div>
     <div class="bar"><i id="progressBar"></i></div>
+    <div id="progressPercent" style="margin-top:8px;font-size:12px;font-weight:700;color:var(--red)">0%</div>
   </div>
 </div>
 
@@ -1408,7 +1410,7 @@ const aliases={
   source_month:['月份','月度','month','Month','MONTH'],
   person:['complete_operator'],
   bu:['BU1','部门'],
-  customer:['customer_office','客户名称'],
+  customer:['customer_office','客户名称','客户','客户群','customer','customer_name'],
   attr:['方案实施人属性','人员属性'],
   task:['task_id','icare_task_number'],
   summary:['problem_summary','title'],
@@ -1511,7 +1513,9 @@ function operatorGroup(person){return clean(person).toLowerCase().includes('wx')
 function operatorMatchesGroup(r){return (r&&r.__operatorGroup)===activeOperatorGroup}
 function personFromRow(r,personField){
   const pf=personField||defaultRules.personField;
-  return clean(val(r,[pf,'complete_operator','方案实施人工号','solution_develop_name']));
+  const p=clean(val(r,[pf,'complete_operator','方案实施人工号','solution_develop_name']));
+  if(/总计|合计|小计|^total$/i.test(p))return '';
+  return p;
 }
 function personFromRawRow(r){
   const pf=$('personField')?.value||defaultRules.personField;
@@ -1633,8 +1637,18 @@ function periodKey(d,type){
   if(type==='half')return `${y} H${m<=6?1:2}`;
   return String(y);
 }
-function setProgress(p,t){$('mask').style.display='flex';$('progressBar').style.width=p+'%';$('progressText').textContent=t}
-function hideProgress(){setTimeout(()=>$('mask').style.display='none',180)}
+function setProgress(p, t, title) {
+  if (!$('mask')) return;
+  $('mask').style.display = 'flex';
+  const pct = Math.max(0, Math.min(100, Math.round(p)));
+  if ($('progressBar')) $('progressBar').style.width = pct + '%';
+  if ($('progressText') && t) $('progressText').textContent = t;
+  if ($('progressTitle') && title) $('progressTitle').textContent = title;
+  if ($('progressPercent')) $('progressPercent').textContent = pct + '%';
+}
+function hideProgress() {
+  setTimeout(() => { if ($('mask')) $('mask').style.display = 'none'; }, 200);
+}
 function resetAllFiltersForNewFile(){
   quickRange=null;
   rankPersonShowIds=false;
@@ -1735,11 +1749,12 @@ function recalculate(){
       __selectedTask:blockedReason?'':selected?.__task||''
     };
   });
+  attendanceCheckVersion++;
+  attendanceResults = new Map();
+  currentAttendanceAnomalies = [];
   syncOperatorGroupCounts();refreshFilters();render();
-  if (typeof fetch === 'function' && dedupRows.length > 0) {
+  if (typeof fetch === 'function' && validRows.length > 0) {
     checkIncentiveAttendanceAnomalies();
-  } else {
-    hideAttendanceAnomalyAlert();
   }
 }
 function uniq(arr){return [...new Set(arr.filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'zh-CN'))}
@@ -1840,6 +1855,7 @@ function money(n){return Math.round(Number(n)||0).toLocaleString('zh-CN')}
 function render(){
   hideTableFocus();
   const rows=filtered();
+  updateAttendanceAnomalyAlert(rows);
   $('sRaw').textContent=rawRows.filter(r=>operatorGroup(personFromRawRow(r))===activeOperatorGroup).length;
   $('sValid').textContent=validRows.filter(operatorMatchesGroup).length;$('sDedup').textContent=rows.length;
   $('sDedupLabel').textContent=isNoDedupMode()?'不剔重有效记录':'同人同日去重后';
@@ -2901,7 +2917,8 @@ identityDetailsModal.addEventListener('click',event=>{
 });
 
 let currentAttendanceAnomalies = [];
-let isCheckingAttendance = false;
+let attendanceResults = new Map();
+let attendanceCheckVersion = 0;
 
 function getPersonAttendanceAnomaly(person, name) {
   if (!currentAttendanceAnomalies || !currentAttendanceAnomalies.length) return null;
@@ -2915,43 +2932,61 @@ function hideAttendanceAnomalyAlert() {
   if ($('attendanceAnomalyAlert')) $('attendanceAnomalyAlert').hidden = true;
 }
 
+function updateAttendanceAnomalyAlert(rows = filtered()) {
+  const rewardedPersonsMap = new Map();
+  rows.forEach(r => {
+    const staffId = clean(r.__person);
+    if (!staffId) return;
+    const key = staffId.toLowerCase();
+    let info = rewardedPersonsMap.get(key);
+    if (!info) {
+      info = { staffId, name: clean(r.__name || r.__fmeName || ''), bu: clean(r.__bu || ''), totalFee: 0, orderCount: 0 };
+      rewardedPersonsMap.set(key, info);
+    }
+    info.totalFee += Number(r.__fee) || 0;
+    info.orderCount++;
+    if (!info.name) info.name = clean(r.__name || r.__fmeName || '');
+    if (!info.bu) info.bu = clean(r.__bu || '');
+  });
+  currentAttendanceAnomalies = [...rewardedPersonsMap.values()].flatMap(info => {
+    const res = attendanceResults.get(info.staffId.toLowerCase());
+    if (!res?.hasAnomaly) return [];
+    const anomalies = res.anomalies || [];
+    return [{ ...info, anomalies,
+      anomalyDesc: anomalies.map(a => `${a.actualDate || a.meetingDate || '考勤'}(${a.title || '快照'}): ${a.attendance}`).join('； '),
+      anomalyCount: res.anomalyCount || anomalies.length || 1 }];
+  });
+  const alertBox = $('attendanceAnomalyAlert');
+  if (alertBox) alertBox.hidden = currentAttendanceAnomalies.length === 0;
+  if (currentAttendanceAnomalies.length) {
+    $('attendanceAnomalyText').textContent = `当前筛选结果中有 ${currentAttendanceAnomalies.length} 位获得激励员工在会议考勤快照中存在缺席或迟到异常！`;
+  }
+  if (attendanceAnomalyModal?.classList.contains('show')) renderAttendanceAnomalyModalTable();
+}
+
 async function checkIncentiveAttendanceAnomalies() {
   if (typeof fetch !== 'function') return;
-  if (!dedupRows || !dedupRows.length) {
-    currentAttendanceAnomalies = [];
-    hideAttendanceAnomalyAlert();
-    return;
-  }
-  if (isCheckingAttendance) return;
-  isCheckingAttendance = true;
+  const version = attendanceCheckVersion;
 
   try {
     const rewardedPersonsMap = new Map();
-    dedupRows.forEach(r => {
+    validRows.forEach(r => {
       const p = clean(r.__person);
       if (!p) return;
       const key = p.toLowerCase();
       if (!rewardedPersonsMap.has(key)) {
         rewardedPersonsMap.set(key, {
           staffId: p,
-          name: clean(r.__name || r.__fmeName || ''),
-          bu: clean(r.__bu || ''),
-          totalFee: r.__fee || 0,
-          orderCount: 1
+          name: clean(r.__name || r.__fmeName || '')
         });
       } else {
         const item = rewardedPersonsMap.get(key);
-        item.totalFee += (r.__fee || 0);
-        item.orderCount += 1;
         if (!item.name && (r.__name || r.__fmeName)) item.name = clean(r.__name || r.__fmeName);
-        if (!item.bu && r.__bu) item.bu = clean(r.__bu);
       }
     });
 
     const persons = [...rewardedPersonsMap.values()].map(p => ({ staffId: p.staffId, name: p.name }));
     if (!persons.length) {
-      currentAttendanceAnomalies = [];
-      hideAttendanceAnomalyAlert();
       return;
     }
 
@@ -2962,46 +2997,24 @@ async function checkIncentiveAttendanceAnomalies() {
     });
     if (!resp.ok) throw new Error('核验请求失败');
     const data = await resp.json();
+    if (version !== attendanceCheckVersion) return;
     const results = data.results || data.data || {};
-
-    currentAttendanceAnomalies = [];
+    const nextResults = new Map();
     rewardedPersonsMap.forEach((info) => {
       const resKey = `${info.staffId}|${info.name}`;
       const res = results[resKey];
-      if (res && res.hasAnomaly) {
-        const desc = (res.anomalies || []).map(a => `${a.meetingDate || a.title || '会议'}: ${a.attendance}`).join('； ');
-        currentAttendanceAnomalies.push({
-          ...info,
-          anomalies: res.anomalies || [],
-          anomalyDesc: desc,
-          anomalyCount: res.anomalyCount || res.anomalies?.length || 1
-        });
-      }
+      if (res?.hasAnomaly) nextResults.set(info.staffId.toLowerCase(), res);
     });
-
-    if (currentAttendanceAnomalies.length > 0) {
-      if ($('attendanceAnomalyAlert')) {
-        $('attendanceAnomalyAlert').hidden = false;
-        $('attendanceAnomalyText').textContent = `检测到 ${currentAttendanceAnomalies.length} 位获得激励员工在近期会议考勤快照中存在缺席或迟到异常！`;
-      }
-      render();
-    } else {
-      hideAttendanceAnomalyAlert();
-    }
+    attendanceResults = nextResults;
+    updateAttendanceAnomalyAlert();
   } catch (err) {
     console.warn('Incentive attendance batch check error:', err);
-    hideAttendanceAnomalyAlert();
-  } finally {
-    isCheckingAttendance = false;
+    if (version === attendanceCheckVersion) hideAttendanceAnomalyAlert();
   }
 }
 
 const attendanceAnomalyModal = $('attendanceAnomalyModal');
 function openAttendanceAnomalyModal() {
-  if (!currentAttendanceAnomalies || !currentAttendanceAnomalies.length) {
-    showToast('当前未发现考勤异常的激励员工', 'info');
-    return;
-  }
   if (!attendanceAnomalyModal) return;
   attendanceAnomalyModal.classList.add('show');
   renderAttendanceAnomalyModalTable();
@@ -3015,18 +3028,38 @@ function renderAttendanceAnomalyModalTable() {
   const tbody = $('attendanceAnomalyTableBody');
   if (!tbody) return;
 
-  tbody.innerHTML = currentAttendanceAnomalies.map((item, idx) => `
-    <tr>
-      <td style="text-align:center">
-        <input type="checkbox" class="anomaly-row-cb" data-idx="${idx}" checked>
-      </td>
-      <td><strong>${esc(item.staffId)}</strong></td>
-      <td>${esc(item.name || '—')}</td>
-      <td>${esc(item.bu || '—')}</td>
-      <td><strong style="color:var(--red)">¥${money(item.totalFee)}</strong> (${item.orderCount}单)</td>
-      <td style="color:#b91c1c;font-size:11.5px">${esc(item.anomalyDesc)}</td>
-    </tr>
-  `).join('');
+  tbody.innerHTML = currentAttendanceAnomalies.map((item, idx) => {
+    const anomalyBadges = (item.anomalies || []).map(a => {
+      const dateText = a.actualDate || a.meetingDate || a.attendanceDate || '日期未明';
+      const isAbsent = a.type === 'absent' || String(a.attendance || '').toLowerCase().includes('absent') || String(a.attendance || '').includes('缺席');
+      const attText = a.attendance || (isAbsent ? '缺席' : '迟到');
+      const snapTitle = a.title || a.snapshotTitle || '考勤快照';
+      return `
+        <div class="anomaly-chip" title="快照来源：${esc(snapTitle)}${a.attendanceTime ? ' · 签到时间: ' + esc(a.attendanceTime) : ''}" style="display:inline-flex;align-items:center;gap:6px;padding:3px 9px;background:${isAbsent ? '#fef2f2' : '#fffbeb'};border:1px solid ${isAbsent ? '#fecaca' : '#fde68a'};border-radius:6px;margin:2px 4px 2px 0;font-size:11.5px">
+          <span style="font-weight:700;color:${isAbsent ? '#991b1b' : '#92400e'}">📅 ${esc(dateText)}</span>
+          <span style="padding:1px 5px;border-radius:4px;font-size:11px;font-weight:800;background:${isAbsent ? '#fee2e2' : '#fef3c7'};color:${isAbsent ? '#b91c1c' : '#b45309'}">${esc(attText)}</span>
+          <span style="font-size:11px;color:#64748b;cursor:help;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(snapTitle)}">🏷️ ${esc(snapTitle)}</span>
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <tr>
+        <td style="text-align:center">
+          <input type="checkbox" class="anomaly-row-cb" data-idx="${idx}" checked>
+        </td>
+        <td><strong>${esc(item.staffId)}</strong></td>
+        <td>${esc(item.name || '—')}</td>
+        <td>${esc(item.bu || '—')}</td>
+        <td><strong style="color:var(--red)">¥${money(item.totalFee)}</strong> (${item.orderCount}单)</td>
+        <td>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center">
+            ${anomalyBadges || `<span style="color:#b91c1c">${esc(item.anomalyDesc)}</span>`}
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
 
   updateAnomalySelectionSummary();
   if ($('selectAllAnomalies')) $('selectAllAnomalies').checked = true;
@@ -3293,6 +3326,7 @@ function buildIncentiveSnapshotPayload(customTitle, customPeriod) {
 
   const nonWxRows = dedupRows.filter(r => r.__operatorGroup === 'nonwx');
   const wxRows = dedupRows.filter(r => r.__operatorGroup === 'wx');
+  const totalAmount = dedupRows.reduce((s, r) => s + (r.__fee || 0), 0);
 
   const byLevel = {
     fatal: { count: 0, amount: 0 },
@@ -3324,14 +3358,82 @@ function buildIncentiveSnapshotPayload(customTitle, customPeriod) {
   const personMap = new Map();
   dedupRows.forEach(r => {
     const p = r.__person;
-    if (!personMap.has(p)) personMap.set(p, { person: p, name: r.__name || r.__fmeName || '', bu: r.__bu, count: 0, amount: 0 });
+    const cust = r.__customer || '';
+    if (!personMap.has(p)) {
+      personMap.set(p, {
+        person: p,
+        name: r.__name || r.__fmeName || '',
+        bu: r.__bu,
+        customerGroup: cust,
+        customerGroups: cust ? [cust] : [],
+        role: 'FME',
+        roles: ['FME'],
+        count: 0,
+        amount: 0
+      });
+    }
     const x = personMap.get(p);
+    if (!Array.isArray(x.customerGroups)) x.customerGroups = x.customerGroup ? [x.customerGroup] : [];
+    if (cust && !x.customerGroups.includes(cust)) {
+      x.customerGroups.push(cust);
+      x.customerGroup = x.customerGroups.join(', ');
+    }
     x.count++;
     x.amount += (r.__fee || 0);
   });
   const topPeople = [...personMap.values()].sort((a, b) => b.amount - a.amount || b.count - a.count).slice(0, 10);
 
-  const totalAmount = dedupRows.reduce((s, r) => s + (r.__fee || 0), 0);
+  const personSummaryMap = new Map();
+  const type = $('periodType')?.value || 'month';
+  const sourceRowsForPerson = dedupRows.length ? dedupRows : (validRows.length ? validRows : rawRows);
+  sourceRowsForPerson.forEach(r => {
+    const p = r.__person || r['操作人'] || '';
+    if (!p) return;
+    const pKey = typeof periodKey === 'function' ? periodKey(filterDateForRow(r), type) : period;
+    const k = pKey + '|' + p;
+    if (!personSummaryMap.has(k)) {
+      personSummaryMap.set(k, {
+        '周期': pKey,
+        '操作人': p,
+        '姓名': r.__name || r.__fmeName || r['姓名'] || '',
+        'BU1 / 部门': r.__bu || r['BU1 / 部门'] || r['BU1'] || r['部门'] || '',
+        '客户': r.__customer || r['客户'] || r['客户群'] || '',
+        '人员属性': r.__attr || r['人员属性'] || '',
+        '计费天数': 0,
+        '等级分布': '',
+        '激励合计（元）': 0,
+        _buSet: new Set(),
+        _custSet: new Set(),
+        _daysSet: new Set(),
+        _levelMap: {}
+      });
+    }
+    const item = personSummaryMap.get(k);
+    if (!item['姓名'] && (r.__name || r.__fmeName || r['姓名'])) {
+      item['姓名'] = r.__name || r.__fmeName || r['姓名'];
+    }
+    if (r.__bu) item._buSet.add(r.__bu);
+    if (r.__customer) item._custSet.add(r.__customer);
+    if (r.__date) item._daysSet.add(r.__date);
+    if (r.__level) item._levelMap[r.__level] = (item._levelMap[r.__level] || 0) + 1;
+    item['激励合计（元）'] += (r.__fee || 0);
+  });
+  const personnelPeriodSummary = [...personSummaryMap.values()].map(x => {
+    const bu = [...x._buSet].filter(Boolean).join(' / ') || x['BU1 / 部门'];
+    const cust = [...x._custSet].filter(Boolean).join(' / ') || x['客户'];
+    const levelDist = Object.entries(x._levelMap || {}).map(([lvl, cnt]) => `${lvl}:${cnt}`).join(' / ');
+    return {
+      '周期': x['周期'],
+      '操作人': x['操作人'],
+      '姓名': x['姓名'],
+      'BU1 / 部门': bu,
+      '客户': cust,
+      '人员属性': x['人员属性'],
+      '计费天数': x._daysSet.size || 1,
+      '等级分布': levelDist,
+      '激励合计（元）': x['激励合计（元）']
+    };
+  });
 
   const summary = {
     period,
@@ -3356,6 +3458,7 @@ function buildIncentiveSnapshotPayload(customTitle, customPeriod) {
     byLevel,
     byBu: byBuSerializable,
     topPeople,
+    personnelSummary: personnelPeriodSummary,
     rules: getRuleValues(),
     blacklistCount: incentiveBlacklist.size,
     savedAt: new Date().toISOString()
@@ -3365,6 +3468,14 @@ function buildIncentiveSnapshotPayload(customTitle, customPeriod) {
     version: 1,
     sourceFileName: sourceFileName || '',
     sourceSheetName: sourceSheetName || '',
+    personnelSummary: personnelPeriodSummary,
+    sheets: [
+      {
+        sheetName: '人员周期汇总',
+        headers: ['周期', '操作人', '姓名', 'BU1 / 部门', '客户', '人员属性', '计费天数', '等级分布', '激励合计（元）'],
+        rows: personnelPeriodSummary.map(x => [x['周期'], x['操作人'], x['姓名'], x['BU1 / 部门'], x['客户'], x['人员属性'], x['计费天数'], x['等级分布'], x['激励合计（元）']])
+      }
+    ],
     rawRows: rawRows,
     rules: getRuleValues(),
     blacklistText: serializeBlacklist(incentiveBlacklist),
@@ -3415,9 +3526,11 @@ async function submitSaveSnapshot() {
     return;
   }
   try {
-    setProgress(30, '正在生成快照数据并上传...');
+    setProgress(20, '正在生成快照数据与核算结构…', '📸 保存操作激励快照');
+    await new Promise(r => setTimeout(r, 60));
     const snapshotData = buildIncentiveSnapshotPayload(title, period);
-    setProgress(65, '正在持久化至服务器...');
+    setProgress(60, '正在上传并持久化至服务器数据库…', '📸 保存操作激励快照');
+    await new Promise(r => setTimeout(r, 60));
     const resp = await fetch('/api/operation-incentive-snapshots', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -3427,7 +3540,8 @@ async function submitSaveSnapshot() {
     if (!resp.ok || !res.success) {
       throw new Error(res.error || '保存快照失败');
     }
-    setProgress(100, '保存完成');
+    setProgress(100, '✅ 快照保存成功！', '📸 保存操作激励快照');
+    await new Promise(r => setTimeout(r, 180));
     hideProgress();
     closeSaveSnapshotModal();
     showToast('✅ 操作激励快照已成功保存到服务器！', 'success');
@@ -3637,13 +3751,18 @@ async function handleSnapshotCardAction(e) {
       if (!ok) return;
     }
     try {
-      setProgress(40, '正在从服务器读取快照完整数据…');
+      setProgress(25, '正在从服务器读取快照完整数据…', '⚡ 载入快照到工作区');
+      await new Promise(r => setTimeout(r, 60));
       const resp = await fetch(`/api/operation-incentive-snapshots/${id}`);
       const res = await resp.json();
       if (!resp.ok || !res.success || !res.item) {
         throw new Error(res.error || '获取快照详情失败');
       }
+      setProgress(65, '正在恢复历史数据行、规则配置与考勤状态…', '⚡ 载入快照到工作区');
+      await new Promise(r => setTimeout(r, 60));
       restoreIncentiveSnapshot(res.item);
+      setProgress(100, '✅ 工作区恢复完成！', '⚡ 载入快照到工作区');
+      await new Promise(r => setTimeout(r, 180));
     } catch (err) {
       console.error(err);
       showToast(`载入失败：${err.message}`, 'error');

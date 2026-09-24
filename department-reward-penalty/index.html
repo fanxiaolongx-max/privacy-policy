@@ -693,6 +693,9 @@ dialog::backdrop{background:rgba(15,23,42,.48);backdrop-filter:blur(5px);-webkit
 .backup-diff-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
 .backup-diff-table th{background:#f1f5f9;color:#475569;padding:6px 10px;text-align:left;font-weight:600}
 .backup-diff-table td{padding:6px 10px;border-bottom:1px solid #f1f5f9;color:#1e293b}
+@keyframes spin { 100% { transform: rotate(360deg); } }
+.extract-log-line{padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.04);word-break:break-all;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono',monospace;}
+.extract-log-time{color:#64748b;margin-right:6px;user-select:none;}
 </style>
 </head>
 <body class="tp-locked">
@@ -1337,69 +1340,154 @@ dialog::backdrop{background:rgba(15,23,42,.48);backdrop-filter:blur(5px);-webkit
   </form>
 </dialog>
 
-<dialog id="snapshot-roster-dialog" style="width:min(1100px,calc(100vw - 32px));border-radius:16px;box-shadow:0 30px 70px -15px rgba(15,23,42,.35),0 0 0 1px rgba(15,23,42,.06);background:#fff;border:1px solid #cbd5e1;padding:0;overflow:hidden;">
-  <div class="dialog-head" style="padding:16px 22px;background:#fff;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;">
+<dialog id="snapshot-roster-dialog" style="width:min(1420px,calc(100vw - 40px));border-radius:16px;box-shadow:0 30px 70px -15px rgba(15,23,42,.35),0 0 0 1px rgba(15,23,42,.06);background:#fff;border:1px solid #cbd5e1;padding:0;overflow:hidden;">
+  <div class="dialog-head" style="padding:16px 24px;background:#fff;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;">
     <div>
-      <h3 style="margin:0;font-size:17px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:8px;">
+      <h3 style="margin:0;font-size:18px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:8px;">
         <span>👥</span>
         <span>从快照提取人员名单</span>
       </h3>
-      <div class="muted" style="margin-top:2px;">从历史「会议考勤快照」与「操作激励快照」中聚合提取人员，支持按条件筛选、批量补齐客户群与BU角色后导入人员名册</div>
+      <div class="muted" style="margin-top:3px;font-size:12.5px;">从历史「会议考勤快照」与「操作激励快照」中聚合提取人员，支持按条件筛选、批量补齐客户群与BU角色后导入人员名册</div>
     </div>
     <button type="button" class="dialog-close-btn" id="close-snapshot-roster" aria-label="关闭" title="关闭 (Esc)">
       <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg>
     </button>
   </div>
-  <div style="display:flex;flex-direction:column;max-height:calc(88vh - 70px);">
-    <div style="padding:16px 22px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;">
-      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;">
-        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-          <span style="font-size:12px;font-weight:700;color:#475569;">数据源：</span>
-          <button type="button" class="tab-btn active" data-extract-source="all" style="font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;">全部 (<span id="extract-count-all">0</span>)</button>
-          <button type="button" class="tab-btn" data-extract-source="meeting" style="font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;">仅会议考勤 (<span id="extract-count-meeting">0</span>)</button>
-          <button type="button" class="tab-btn" data-extract-source="incentive" style="font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;">仅操作激励 (<span id="extract-count-incentive">0</span>)</button>
-          <button type="button" class="tab-btn" data-extract-source="new" style="font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;">仅新人员 (<span id="extract-count-new">0</span>)</button>
+  <div style="display:flex;flex-direction:column;max-height:calc(94vh - 50px);">
+    <div style="padding:16px 24px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;">
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 16px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <span style="font-size:12.5px;font-weight:700;color:#475569;">数据源：</span>
+          <button type="button" class="tab-btn active" data-extract-source="all" style="font-size:12px;padding:5px 12px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;">全部 (<span id="extract-count-all">0</span>)</button>
+          <button type="button" class="tab-btn" data-extract-source="meeting" style="font-size:12px;padding:5px 12px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;">仅会议考勤 (<span id="extract-count-meeting">0</span>)</button>
+          <button type="button" class="tab-btn" data-extract-source="incentive" style="font-size:12px;padding:5px 12px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;">仅操作激励 (<span id="extract-count-incentive">0</span>)</button>
+          <button type="button" class="tab-btn" data-extract-source="both" style="font-size:12px;padding:5px 12px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;">双快照共有 (<span id="extract-count-both">0</span>)</button>
+          <button type="button" class="tab-btn" data-extract-source="new" style="font-size:12px;padding:5px 12px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;">仅新人员 (<span id="extract-count-new">0</span>)</button>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <input type="text" id="extract-search-input" placeholder="按工号或姓名过滤..." style="padding:5px 10px;font-size:12px;border:1px solid #cbd5e1;border-radius:6px;width:170px;">
+        <div style="display:flex;gap:10px;align-items:center;">
+          <input type="text" id="extract-search-input" placeholder="按工号或姓名过滤..." style="padding:6px 12px;font-size:12.5px;border:1px solid #cbd5e1;border-radius:6px;width:190px;">
+          <button type="button" class="secondary" id="btn-open-snapshot-mappings" style="font-size:12.5px;padding:5px 14px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;font-weight:600;border:1px solid #cbd5e1;background:#fff;">
+            <span>🔀</span>
+            <span>字段映射配置</span>
+          </button>
         </div>
       </div>
 
-      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:10px 14px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;">
+      <div id="extract-mapping-hint-banner" style="display:none;background:#fefce8;border:1px solid #fef08a;border-radius:10px;padding:10px 16px;font-size:12px;color:#854d0e;">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span style="font-size:15px;">⚠️</span>
+            <span id="extract-mapping-hint-text" style="font-weight:600;">检测到快照中存在未映射的角色或客户群：</span>
+          </div>
+          <button type="button" class="secondary mini" id="btn-quick-config-mappings" style="font-size:11.5px;padding:4px 10px;cursor:pointer;background:#fff;border:1px solid #fde047;font-weight:600;">🔀 配置映射规则 ➔</button>
+        </div>
+        <div id="extract-mapping-hint-chips" style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;"></div>
+      </div>
+
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:10px 16px;display:flex;flex-wrap:wrap;gap:14px;align-items:center;">
         <span style="font-size:12.5px;font-weight:750;color:#1e40af;">⚡ 批量补齐已勾选项：</span>
-        <div style="display:inline-flex;gap:4px;align-items:center;">
+        <div style="display:inline-flex;gap:5px;align-items:center;">
           <label style="font-size:12px;color:#1e3a8a;font-weight:600;">客户群:</label>
           <select id="extract-batch-group" style="padding:4px 8px;font-size:12px;border-radius:4px;border:1px solid #93c5fd;background:#fff;"></select>
-          <button type="button" class="secondary mini" id="btn-apply-batch-group" style="font-size:11.5px;padding:4px 8px;cursor:pointer;">一键填充</button>
+          <button type="button" class="secondary mini" id="btn-apply-batch-group" style="font-size:11.5px;padding:4px 10px;cursor:pointer;">一键填充</button>
         </div>
-        <div style="display:inline-flex;gap:4px;align-items:center;">
+        <div style="display:inline-flex;gap:5px;align-items:center;">
           <label style="font-size:12px;color:#1e3a8a;font-weight:600;">BU:</label>
           <select id="extract-batch-bu" style="padding:4px 8px;font-size:12px;border-radius:4px;border:1px solid #93c5fd;background:#fff;"></select>
-          <button type="button" class="secondary mini" id="btn-apply-batch-bu" style="font-size:11.5px;padding:4px 8px;cursor:pointer;">一键填充</button>
+          <button type="button" class="secondary mini" id="btn-apply-batch-bu" style="font-size:11.5px;padding:4px 10px;cursor:pointer;">一键填充</button>
         </div>
-        <div style="display:inline-flex;gap:4px;align-items:center;">
+        <div style="display:inline-flex;gap:5px;align-items:center;">
           <label style="font-size:12px;color:#1e3a8a;font-weight:600;">角色:</label>
           <select id="extract-batch-role" style="padding:4px 8px;font-size:12px;border-radius:4px;border:1px solid #93c5fd;background:#fff;"></select>
-          <button type="button" class="secondary mini" id="btn-apply-batch-role" style="font-size:11.5px;padding:4px 8px;cursor:pointer;">一键填充</button>
+          <button type="button" class="secondary mini" id="btn-apply-batch-role" style="font-size:11.5px;padding:4px 10px;cursor:pointer;">一键填充</button>
         </div>
       </div>
 
-      <div class="table-wrap" style="max-height:380px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;">
+      <div class="table-wrap" style="min-height:380px;max-height:calc(94vh - 350px);overflow-y:auto;border:1px solid #e2e8f0;border-radius:10px;">
         <table style="width:100%;font-size:12px;border-collapse:collapse;">
           <thead style="position:sticky;top:0;background:#f8fafc;z-index:2;border-bottom:1px solid #cbd5e1;">
             <tr>
-              <th style="width:40px;text-align:center;padding:8px;"><input type="checkbox" id="extract-select-all" checked style="cursor:pointer;accent-color:var(--red);"></th>
-              <th style="width:120px;padding:8px;">工号</th>
-              <th style="width:110px;padding:8px;">姓名</th>
-              <th style="width:145px;padding:8px;">客户群 <span class="req-mark">*</span></th>
-              <th style="width:145px;padding:8px;">BU</th>
-              <th style="width:145px;padding:8px;">角色 <span class="req-mark">*</span></th>
-              <th style="padding:8px;">快照来源</th>
-              <th style="width:85px;text-align:center;padding:8px;">在册状态</th>
+              <th style="width:42px;text-align:center;padding:10px 8px;"><input type="checkbox" id="extract-select-all" checked style="cursor:pointer;accent-color:var(--red);width:15px;height:15px;"></th>
+              <th style="width:125px;padding:10px 10px;">工号</th>
+              <th style="width:115px;padding:10px 10px;">姓名</th>
+              <th style="width:280px;min-width:250px;padding:10px 10px;">客户群 (可多选) <span class="req-mark">*</span></th>
+              <th style="width:160px;min-width:145px;padding:10px 10px;">BU (单选)</th>
+              <th style="width:260px;min-width:235px;padding:10px 10px;">角色 (可多选) <span class="req-mark">*</span></th>
+              <th style="min-width:180px;padding:10px 10px;">快照来源</th>
+              <th style="width:95px;text-align:center;padding:10px 10px;">在册状态</th>
             </tr>
           </thead>
           <tbody id="extract-roster-tbody"></tbody>
         </table>
+      </div>
+      <div class="pager" id="pager-extract-roster" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;padding:6px 4px;margin-top:2px;"></div>
+
+      <!-- 提取进度与详细诊断日志容器 -->
+      <div id="extract-loading-container" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span id="extract-loading-spinner" style="font-size:16px;display:inline-block;animation:spin 1s linear infinite;">⏳</span>
+            <span id="extract-step-desc" style="font-size:12.5px;font-weight:700;color:#1e293b;">正在从会议考勤快照与操作激励快照聚合提取人员名单...</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span id="extract-progress-percent" style="font-size:13px;font-weight:800;color:#2563eb;font-family:monospace;">0%</span>
+            <button type="button" id="btn-retry-extract" class="primary mini" style="display:none;font-size:11px;padding:3px 10px;cursor:pointer;border-radius:5px;font-weight:700;">🔄 重新提取</button>
+          </div>
+        </div>
+
+        <!-- 进度条轨道 -->
+        <div style="width:100%;height:7px;background:#e2e8f0;border-radius:999px;overflow:hidden;position:relative;">
+          <div id="extract-progress-bar" style="width:0%;height:100%;background:linear-gradient(90deg, #3b82f6, #06b6d4);transition:width 0.25s ease;border-radius:999px;"></div>
+        </div>
+
+        <!-- 分步状态卡片 -->
+        <div id="extract-step-badges" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));gap:6px;">
+          <div id="extract-step-badge-1" style="background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:5px 8px;font-size:11px;display:flex;align-items:center;gap:6px;">
+            <span class="step-icon" style="font-size:12px;">⚪</span>
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:600;color:#334155;">1. 映射规则</div>
+              <div class="step-detail" style="font-size:10px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">等待中</div>
+            </div>
+          </div>
+          <div id="extract-step-badge-2" style="background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:5px 8px;font-size:11px;display:flex;align-items:center;gap:6px;">
+            <span class="step-icon" style="font-size:12px;">⚪</span>
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:600;color:#334155;">2. 会议考勤快照</div>
+              <div class="step-detail" style="font-size:10px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">等待中</div>
+            </div>
+          </div>
+          <div id="extract-step-badge-3" style="background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:5px 8px;font-size:11px;display:flex;align-items:center;gap:6px;">
+            <span class="step-icon" style="font-size:12px;">⚪</span>
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:600;color:#334155;">3. 操作激励快照</div>
+              <div class="step-detail" style="font-size:10px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">等待中</div>
+            </div>
+          </div>
+          <div id="extract-step-badge-4" style="background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:5px 8px;font-size:11px;display:flex;align-items:center;gap:6px;">
+            <span class="step-icon" style="font-size:12px;">⚪</span>
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:600;color:#334155;">4. 跨源名册聚合</div>
+              <div class="step-detail" style="font-size:10px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">等待中</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 详细日志控制台 -->
+        <div id="extract-log-wrapper" style="border:1px solid #cbd5e1;border-radius:8px;background:#0f172a;overflow:hidden;box-shadow:inset 0 2px 4px rgba(0,0,0,0.2);">
+          <div style="padding:5px 10px;background:#1e293b;border-bottom:1px solid #334155;display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-size:11px;">📟</span>
+              <span style="font-size:11.5px;font-weight:700;color:#e2e8f0;">详细诊断日志</span>
+              <span id="extract-log-count-badge" style="background:#334155;color:#94a3b8;font-size:10px;padding:1px 6px;border-radius:999px;">0 条</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <button type="button" id="btn-copy-extract-logs" style="font-size:10.5px;padding:2px 8px;background:#334155;color:#f1f5f9;border:1px solid #475569;cursor:pointer;border-radius:4px;">📋 复制日志</button>
+              <button type="button" id="btn-toggle-extract-log-body" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:11px;padding:2px 4px;" title="收起/展开日志">▲ 收起日志</button>
+            </div>
+          </div>
+          <div id="extract-log-terminal" style="max-height:130px;overflow-y:auto;padding:8px 10px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono',monospace;font-size:11px;line-height:1.55;color:#94a3b8;">
+          </div>
+        </div>
       </div>
     </div>
     <div class="dialog-foot" style="padding:12px 22px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;">
@@ -1409,6 +1497,130 @@ dialog::backdrop{background:rgba(15,23,42,.48);backdrop-filter:blur(5px);-webkit
       <div style="display:flex;gap:10px;">
         <button type="button" class="secondary" id="cancel-snapshot-roster">取消</button>
         <button type="button" class="primary" id="confirm-import-snapshot-roster" style="font-weight:700;">✅ 确认导入人员名册</button>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="snapshot-mappings-dialog" style="width:min(980px,calc(100vw - 32px));border-radius:16px;box-shadow:0 30px 70px -15px rgba(15,23,42,.35),0 0 0 1px rgba(15,23,42,.06);background:#fff;border:1px solid #cbd5e1;padding:0;overflow:hidden;">
+  <div class="dialog-head" style="padding:16px 22px;background:#fff;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;">
+    <div>
+      <h3 style="margin:0;font-size:17px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:8px;">
+        <span>🔀</span>
+        <span>快照字段映射配置</span>
+      </h3>
+      <div class="muted" style="margin-top:2px;">配置从历史快照扫描到的原始角色及客户群到负向事件管理系统字段的对应规则，保存后存储在服务器并自动生效</div>
+    </div>
+    <button type="button" class="dialog-close-btn" id="close-snapshot-mappings" aria-label="关闭" title="关闭 (Esc)">
+      <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg>
+    </button>
+  </div>
+  <div style="display:flex;flex-direction:column;max-height:calc(85vh - 70px);">
+    <div style="padding:16px 22px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;">
+      <div style="display:flex;gap:8px;border-bottom:1px solid #e2e8f0;padding-bottom:8px;">
+        <button type="button" class="tab-btn active" id="tab-btn-map-roles" style="font-size:13px;padding:6px 14px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;font-weight:600;">🎭 角色映射 (<span id="count-role-mappings">0</span>)</button>
+        <button type="button" class="tab-btn" id="tab-btn-map-groups" style="font-size:13px;padding:6px 14px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;font-weight:600;">🏢 客户群映射 (<span id="count-group-mappings">0</span>)</button>
+        <button type="button" class="tab-btn" id="tab-btn-map-bus" style="font-size:13px;padding:6px 14px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;font-weight:600;">🏛️ BU映射 (<span id="count-bu-mappings">0</span>)</button>
+      </div>
+
+      <!-- Tab 1: Role Mappings -->
+      <div id="mapping-panel-roles" style="display:flex;flex-direction:column;gap:12px;">
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;">
+          <div style="font-size:12px;font-weight:700;color:#334155;">➕ 新增 / 编辑角色映射：</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <input type="text" id="input-map-role-scanned" placeholder="扫描到的原始角色 (如 Solution Developer)" style="padding:6px 10px;font-size:12px;border:1px solid #cbd5e1;border-radius:6px;flex:1;min-width:200px;">
+            <span style="color:#64748b;font-weight:700;">➔</span>
+            <select id="select-map-role-target" style="padding:6px 10px;font-size:12px;border:1px solid #cbd5e1;border-radius:6px;min-width:140px;background:#fff;"></select>
+            <button type="button" class="primary mini" id="btn-add-role-mapping" style="font-size:12px;padding:6px 14px;cursor:pointer;font-weight:600;">➕ 添加映射</button>
+            <button type="button" class="secondary mini" id="btn-cancel-edit-role-mapping" style="display:none;font-size:12px;padding:6px 12px;cursor:pointer;">取消编辑</button>
+          </div>
+          <div id="unmapped-roles-quick-chips" style="display:none;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px;">
+            <span style="font-size:11.5px;color:#854d0e;font-weight:600;">💡 点击填入未映射角色：</span>
+            <div id="unmapped-roles-chips-list" style="display:flex;gap:4px;flex-wrap:wrap;"></div>
+          </div>
+        </div>
+        <div class="table-wrap" style="max-height:280px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;">
+          <table style="width:100%;font-size:12px;border-collapse:collapse;table-layout:fixed;">
+            <thead style="position:sticky;top:0;background:#f8fafc;z-index:2;border-bottom:1px solid #cbd5e1;">
+              <tr>
+                <th style="padding:8px 12px;text-align:left;width:42%;">快照原始角色</th>
+                <th style="width:40px;text-align:center;"></th>
+                <th style="padding:8px 12px;text-align:left;width:38%;">负向事件系统角色</th>
+                <th style="width:140px;text-align:center;padding:8px;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="table-role-mappings-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab 2: Customer Group Mappings -->
+      <div id="mapping-panel-groups" style="display:none;flex-direction:column;gap:12px;">
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;">
+          <div style="font-size:12px;font-weight:700;color:#334155;">➕ 新增 / 编辑客户群映射 (支持多对一)：</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <input type="text" id="input-map-group-scanned" placeholder="扫描到的原始客户群 (如 Vodafone / VF)" style="padding:6px 10px;font-size:12px;border:1px solid #cbd5e1;border-radius:6px;flex:1;min-width:200px;">
+            <span style="color:#64748b;font-weight:700;">➔</span>
+            <select id="select-map-group-target" style="padding:6px 10px;font-size:12px;border:1px solid #cbd5e1;border-radius:6px;min-width:140px;background:#fff;"></select>
+            <button type="button" class="primary mini" id="btn-add-group-mapping" style="font-size:12px;padding:6px 14px;cursor:pointer;font-weight:600;">➕ 添加映射</button>
+            <button type="button" class="secondary mini" id="btn-cancel-edit-group-mapping" style="display:none;font-size:12px;padding:6px 12px;cursor:pointer;">取消编辑</button>
+          </div>
+          <div id="unmapped-groups-quick-chips" style="display:none;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px;">
+            <span style="font-size:11.5px;color:#854d0e;font-weight:600;">💡 点击填入未映射客户群：</span>
+            <div id="unmapped-groups-chips-list" style="display:flex;gap:4px;flex-wrap:wrap;"></div>
+          </div>
+        </div>
+        <div class="table-wrap" style="max-height:280px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;">
+          <table style="width:100%;font-size:12px;border-collapse:collapse;table-layout:fixed;">
+            <thead style="position:sticky;top:0;background:#f8fafc;z-index:2;border-bottom:1px solid #cbd5e1;">
+              <tr>
+                <th style="padding:8px 12px;text-align:left;width:42%;">快照原始客户群</th>
+                <th style="width:40px;text-align:center;"></th>
+                <th style="padding:8px 12px;text-align:left;width:38%;">负向事件系统客户群</th>
+                <th style="width:140px;text-align:center;padding:8px;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="table-group-mappings-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab 3: BU Mappings -->
+      <div id="mapping-panel-bus" style="display:none;flex-direction:column;gap:12px;">
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;">
+          <div style="font-size:12px;font-weight:700;color:#334155;">➕ 新增 / 编辑 BU 映射：</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <input type="text" id="input-map-bu-scanned" placeholder="扫描到的原始 BU (如 软件 / 无线)" style="padding:6px 10px;font-size:12px;border:1px solid #cbd5e1;border-radius:6px;flex:1;min-width:200px;">
+            <span style="color:#64748b;font-weight:700;">➔</span>
+            <select id="select-map-bu-target" style="padding:6px 10px;font-size:12px;border:1px solid #cbd5e1;border-radius:6px;min-width:140px;background:#fff;"></select>
+            <button type="button" class="primary mini" id="btn-add-bu-mapping" style="font-size:12px;padding:6px 14px;cursor:pointer;font-weight:600;">➕ 添加映射</button>
+            <button type="button" class="secondary mini" id="btn-cancel-edit-bu-mapping" style="display:none;font-size:12px;padding:6px 12px;cursor:pointer;">取消编辑</button>
+          </div>
+          <div id="unmapped-bus-quick-chips" style="display:none;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px;">
+            <span style="font-size:11.5px;color:#854d0e;font-weight:600;">💡 点击填入未映射 BU：</span>
+            <div id="unmapped-bus-chips-list" style="display:flex;gap:4px;flex-wrap:wrap;"></div>
+          </div>
+        </div>
+        <div class="table-wrap" style="max-height:280px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;">
+          <table style="width:100%;font-size:12px;border-collapse:collapse;table-layout:fixed;">
+            <thead style="position:sticky;top:0;background:#f8fafc;z-index:2;border-bottom:1px solid #cbd5e1;">
+              <tr>
+                <th style="padding:8px 12px;text-align:left;width:42%;">快照原始 BU</th>
+                <th style="width:40px;text-align:center;"></th>
+                <th style="padding:8px 12px;text-align:left;width:38%;">负向事件系统 BU</th>
+                <th style="width:140px;text-align:center;padding:8px;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="table-bu-mappings-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="dialog-foot" style="padding:12px 22px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;">
+      <button type="button" class="secondary" id="btn-reset-snapshot-mappings" style="font-size:12px;color:#64748b;">🔄 恢复默认预设</button>
+      <div style="display:flex;gap:10px;">
+        <button type="button" class="secondary" id="cancel-snapshot-mappings">取消</button>
+        <button type="button" class="primary" id="confirm-save-snapshot-mappings" style="font-weight:700;">💾 保存并应用映射</button>
       </div>
     </div>
   </div>
@@ -1943,6 +2155,7 @@ async function request(path,options){
     return {rows:PAGES_SNAPSHOT.audit.slice((page-1)*size,page*size),total,page,pageSize:size,totalPages};
   }
   if(path === '/security') return {hasCustomPin:true};
+  if(path === '/snapshot-mappings') { if(!PAGES_SNAPSHOT) await request('/'); return PAGES_SNAPSHOT.snapshotMappings || { roles: [], customerGroups: [], businessUnits: [] }; }
   await uiAlert('无权限，仅供查看。请联系管理员。','只读页面','warning','🔒'); throw new Error('无权限，仅供查看。请联系管理员。');
 }
 async function refresh(){try{const raw=await request('/');state=Object.assign({personnel:[],rules:[],records:[],roles:[],deductions:[],deductionCategories:[],customerGroups:[],businessUnits:[]},raw);for(const k of ['personnel','rules','records','roles','deductions','deductionCategories','customerGroups','businessUnits']){if(!Array.isArray(state[k]))state[k]=[]} $('status').textContent='数据来自当前租户 · '+new Date().toLocaleString();$('import-legacy').hidden=!(state.canEdit&&!state.personnel.length&&!state.records.length&&localStorage.getItem('hw_dept_db_v11_filters_pagination'));render();if(view==='audit')await loadAudit();if(view==='security')await loadSecurity();if(view==='backup')renderBackupView();}catch(error){$('status').textContent='读取失败：'+error.message;}}
@@ -2772,24 +2985,39 @@ async function openBatchPersonnelDialog(){
 
 let extractedRosterCandidates = [];
 let currentExtractFilter = 'all';
+let extractPage = 1;
+let extractPageSize = 50;
 
 function updateExtractCounts() {
   const allCount = extractedRosterCandidates.length;
-  const meetingCount = extractedRosterCandidates.filter(c => c.sources.has('meeting')).length;
-  const incentiveCount = extractedRosterCandidates.filter(c => c.sources.has('incentive')).length;
-  const newCount = extractedRosterCandidates.filter(c => !c.isExisting).length;
+  let meetingOnlyCount = 0;
+  let incentiveOnlyCount = 0;
+  let bothCount = 0;
+  let newCount = 0;
+  for (const c of extractedRosterCandidates) {
+    const hasM = c.sources && c.sources.has('meeting');
+    const hasI = c.sources && c.sources.has('incentive');
+    if (hasM && hasI) bothCount++;
+    else if (hasM) meetingOnlyCount++;
+    else if (hasI) incentiveOnlyCount++;
+    if (!c.isExisting) newCount++;
+  }
 
   const elAll = $('extract-count-all'); if (elAll) elAll.textContent = allCount;
-  const elM = $('extract-count-meeting'); if (elM) elM.textContent = meetingCount;
-  const elI = $('extract-count-incentive'); if (elI) elI.textContent = incentiveCount;
+  const elM = $('extract-count-meeting'); if (elM) elM.textContent = meetingOnlyCount;
+  const elI = $('extract-count-incentive'); if (elI) elI.textContent = incentiveOnlyCount;
+  const elBoth = $('extract-count-both'); if (elBoth) elBoth.textContent = bothCount;
   const elN = $('extract-count-new'); if (elN) elN.textContent = newCount;
 }
 
 function getFilteredExtractCandidates() {
   const search = String($('extract-search-input')?.value || '').trim().toLowerCase();
   return extractedRosterCandidates.filter(cand => {
-    if (currentExtractFilter === 'meeting' && !cand.sources.has('meeting')) return false;
-    if (currentExtractFilter === 'incentive' && !cand.sources.has('incentive')) return false;
+    const hasM = cand.sources && cand.sources.has('meeting');
+    const hasI = cand.sources && cand.sources.has('incentive');
+    if (currentExtractFilter === 'meeting' && (!hasM || hasI)) return false;
+    if (currentExtractFilter === 'incentive' && (!hasI || hasM)) return false;
+    if (currentExtractFilter === 'both' && (!hasM || !hasI)) return false;
     if (currentExtractFilter === 'new' && cand.isExisting) return false;
     if (search) {
       const matchId = (cand.staffId || '').toLowerCase().includes(search);
@@ -2803,20 +3031,49 @@ function getFilteredExtractCandidates() {
 function updateExtractSummary() {
   const summaryEl = $('extract-selection-summary');
   if (!summaryEl) return;
-  const selected = extractedRosterCandidates.filter(c => c.selected);
-  const totalSelected = selected.length;
-  const readyCount = selected.filter(c => c.staffId?.trim() && c.name?.trim() && c.customerGroupId && c.role).length;
+  let totalSelected = 0;
+  let readyCount = 0;
+  let newCount = 0;
+  for (const c of extractedRosterCandidates) {
+    if (!c.selected) continue;
+    totalSelected++;
+    if (c.staffId?.trim() && c.name?.trim() && (c.customerGroupIds?.size > 0 || c.customerGroupId) && (c.roles?.size > 0 || c.role)) {
+      readyCount++;
+    }
+    if (!c.isExisting) newCount++;
+  }
   const missingCount = totalSelected - readyCount;
-  const newCount = selected.filter(c => !c.isExisting).length;
+
+  const logBtnHtml = `<button type="button" id="btn-toggle-extract-log-summary" style="margin-left:8px;background:none;border:none;color:#2563eb;font-size:12px;cursor:pointer;text-decoration:underline;padding:0;">📋 诊断日志 (<span id="extract-log-summary-count">${extractLogs.length}</span>条)</button>`;
 
   if (totalSelected === 0) {
-    summaryEl.innerHTML = '<span style="color:#64748b;">未勾选任何人员</span>';
+    summaryEl.innerHTML = '<span style="color:#64748b;">未勾选任何人员</span>' + (extractLogs.length ? logBtnHtml : '');
     return;
   }
 
   summaryEl.innerHTML = `已选 <b>${totalSelected}</b> 人 (包含新人员 <b>${newCount}</b> 人) · ` +
     `<span style="color:#16a34a;font-weight:600;">已补齐必填项 ${readyCount} 人</span>` +
-    (missingCount > 0 ? ` · <span style="color:#dc2626;font-weight:700;">⚠️ 仍有 ${missingCount} 人缺少必填项 (工号/姓名/客户群/角色)</span>` : '');
+    (missingCount > 0 ? ` · <span style="color:#dc2626;font-weight:700;">⚠️ 仍有 ${missingCount} 人缺少必填项 (工号/姓名/客户群/角色)</span>` : '') +
+    logBtnHtml;
+}
+
+function formatSourceTraceTooltip(cand) {
+  const traces = Array.isArray(cand.sourceTraces) ? cand.sourceTraces : [];
+  if (!traces.length) {
+    const titles = (cand.snapshotTitles || []).join('、');
+    return titles ? `数据来源快照: ${titles}` : '数据来源: 快照记录';
+  }
+  const lines = [`📍 数据溯源 (共 ${traces.length} 处原始记录):`];
+  traces.forEach((t, i) => {
+    const tag = t.sourceName || (t.source === 'meeting' ? '会议考勤' : '操作激励');
+    const title = t.snapshotTitle ? `《${t.snapshotTitle}》` : '';
+    const sheet = t.sheetName ? ` · ${t.sheetName}` : '';
+    const row = t.rowNumber ? ` · 第 ${t.rowNumber} 行` : '';
+    const field = t.field ? ` [${t.field}]` : '';
+    const raw = t.raw ? `: ${t.raw}` : '';
+    lines.push(`${i + 1}. [${tag}] ${title}${sheet}${row}${field}${raw}`);
+  });
+  return lines.join('\n');
 }
 
 function renderExtractRosterTable() {
@@ -2824,73 +3081,151 @@ function renderExtractRosterTable() {
   if (!tbody) return;
 
   const filtered = getFilteredExtractCandidates();
+  const pagerEl = $('pager-extract-roster');
+
   if (!filtered.length) {
     tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:36px;color:#94a3b8;">未找到符合条件的候选人员快照数据</td></tr>';
+    if (pagerEl) pagerEl.innerHTML = '';
+    const selectAll = $('extract-select-all');
+    if (selectAll) { selectAll.checked = false; selectAll.indeterminate = false; }
     updateExtractSummary();
     return;
   }
+
+  const isAll = extractPageSize === 'all';
+  const sizeNum = isAll ? filtered.length : Number(extractPageSize);
+  const totalPages = isAll ? 1 : Math.max(1, Math.ceil(filtered.length / sizeNum));
+  extractPage = Math.max(1, Math.min(extractPage, totalPages));
+
+  const startIdx = isAll ? 0 : (extractPage - 1) * sizeNum;
+  const endIdx = isAll ? filtered.length : Math.min(startIdx + sizeNum, filtered.length);
+  const pageItems = isAll ? filtered : filtered.slice(startIdx, endIdx);
 
   const groups = active('customerGroups');
   const bus = active('businessUnits');
   const roles = active('roles');
 
-  const rowsHtml = filtered.map(cand => {
-    const rawIdx = extractedRosterCandidates.indexOf(cand);
+  const rowsHtml = pageItems.map(cand => {
+    const rawIdx = cand._idx !== undefined ? cand._idx : extractedRosterCandidates.indexOf(cand);
+    const traceTooltip = formatSourceTraceTooltip(cand);
     const sourceBadges = [];
-    if (cand.sources.has('meeting')) {
-      const titleAttr = cand.snapshotTitles.filter(t => t.includes('会议') || !t.includes('激励')).join('、') || '会议考勤快照';
+    if (cand.sources && cand.sources.has('meeting')) {
+      const titleAttr = (cand.snapshotTitles || []).filter(t => t.includes('会议') || !t.includes('激励')).join('、') || '会议考勤快照';
       sourceBadges.push(`<span class="badge" style="background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;font-size:11px;" title="${escapeHtml(titleAttr)}">📅 会议考勤</span>`);
     }
-    if (cand.sources.has('incentive')) {
-      const titleAttr = cand.snapshotTitles.filter(t => t.includes('激励')).join('、') || '操作激励快照';
+    if (cand.sources && cand.sources.has('incentive')) {
+      const titleAttr = (cand.snapshotTitles || []).filter(t => t.includes('激励')).join('、') || '操作激励快照';
       sourceBadges.push(`<span class="badge" style="background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;font-size:11px;" title="${escapeHtml(titleAttr)}">💰 操作激励</span>`);
     }
 
-    const groupMissing = !cand.customerGroupId;
-    const roleMissing = !cand.role;
+    const groupMissing = !cand.customerGroupIds || cand.customerGroupIds.size === 0;
+    const roleMissing = !cand.roles || cand.roles.size === 0;
+
+    const groupChipsHtml = !groupMissing
+      ? [...cand.customerGroupIds].map(gid => {
+          const g = groups.find(x => x.id === gid);
+          const gName = g ? g.value : groupName(gid);
+          return `<span class="person-group-chip" style="display:inline-flex;align-items:center;gap:4px;font-size:11.5px;padding:2px 7px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:5px;color:#1e40af;">
+            <span>${escapeHtml(gName)}</span>
+            <button type="button" class="btn-remove-cand-group" data-cand-idx="${rawIdx}" data-group-id="${escapeHtml(gid)}" style="background:none;border:none;padding:0 2px;color:#94a3b8;cursor:pointer;font-size:11px;line-height:1;" title="移除客户群">✕</button>
+          </span>`;
+        }).join('')
+      : `<span style="font-size:11.5px;color:#ef4444;font-weight:600;">未选择客户群 *</span>`;
+
+    const roleChipsHtml = !roleMissing
+      ? [...cand.roles].map(r => {
+          return `<span class="badge" style="display:inline-flex;align-items:center;gap:4px;font-size:11.5px;padding:2px 7px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:5px;color:#334155;font-weight:600;">
+            <span>${escapeHtml(r)}</span>
+            <button type="button" class="btn-remove-cand-role" data-cand-idx="${rawIdx}" data-role-name="${escapeHtml(r)}" style="background:none;border:none;padding:0 2px;color:#94a3b8;cursor:pointer;font-size:11px;line-height:1;" title="移除角色">✕</button>
+          </span>`;
+        }).join('')
+      : `<span style="font-size:11.5px;color:#ef4444;font-weight:600;">未选择角色 *</span>`;
+
+    const rawGroupText = cand.rawCustomerGroups ? [...cand.rawCustomerGroups].join(' / ') : '';
+    const rawRoleText = cand.rawRoles ? [...cand.rawRoles].join(' / ') : '';
 
     return `
       <tr style="border-bottom:1px solid #f1f5f9;background:${cand.selected ? (cand.isExisting ? '#f8fafc' : '#ffffff') : '#f8fafc'};">
-        <td style="text-align:center;padding:6px 8px;">
-          <input type="checkbox" class="extract-row-cb" data-cand-idx="${rawIdx}" ${cand.selected ? 'checked' : ''} style="cursor:pointer;accent-color:var(--red);">
+        <td style="text-align:center;padding:8px 8px;">
+          <input type="checkbox" class="extract-row-cb" data-cand-idx="${rawIdx}" ${cand.selected ? 'checked' : ''} style="cursor:pointer;accent-color:var(--red);width:15px;height:15px;">
         </td>
-        <td style="padding:6px 8px;">
-          <input type="text" class="extract-inline-staffid" data-cand-idx="${rawIdx}" value="${escapeHtml(cand.staffId || '')}" placeholder="必填工号" style="width:100px;font-size:11.5px;padding:3px 6px;border:1px solid ${cand.staffId ? '#cbd5e1' : '#f87171'};border-radius:4px;background:#fff;box-sizing:border-box;">
+        <td style="padding:8px 10px;">
+          <input type="text" class="extract-inline-staffid" data-cand-idx="${rawIdx}" value="${escapeHtml(cand.staffId || '')}" placeholder="必填工号" style="width:115px;font-size:12px;padding:4px 8px;border:1px solid ${cand.staffId ? '#cbd5e1' : '#f87171'};border-radius:5px;background:#fff;box-sizing:border-box;">
         </td>
-        <td style="padding:6px 8px;">
-          <input type="text" class="extract-inline-name" data-cand-idx="${rawIdx}" value="${escapeHtml(cand.name || '')}" placeholder="必填姓名" style="width:90px;font-size:11.5px;padding:3px 6px;border:1px solid ${cand.name ? '#cbd5e1' : '#f87171'};border-radius:4px;background:#fff;font-weight:600;box-sizing:border-box;">
+        <td style="padding:8px 10px;" title="${escapeHtml(traceTooltip)}">
+          <div style="display:flex;align-items:center;gap:4px;">
+            <input type="text" class="extract-inline-name" data-cand-idx="${rawIdx}" value="${escapeHtml(cand.name || '')}" placeholder="必填姓名" title="${escapeHtml(traceTooltip)}" style="width:105px;font-size:12px;padding:4px 8px;border:1px solid ${cand.name ? '#cbd5e1' : '#f87171'};border-radius:5px;background:#fff;font-weight:600;box-sizing:border-box;">
+            <span class="source-trace-badge" title="${escapeHtml(traceTooltip)}" style="cursor:help;font-size:13px;line-height:1;display:inline-flex;align-items:center;user-select:none;" aria-label="数据溯源">📍</span>
+          </div>
         </td>
-        <td style="padding:6px 8px;">
-          <select class="extract-row-group" data-cand-idx="${rawIdx}" style="width:130px;font-size:11.5px;padding:3px 4px;border:1px solid ${groupMissing ? '#f87171' : '#cbd5e1'};border-radius:4px;background:${groupMissing ? '#fef2f2' : '#fff'};">
-            <option value="">-- 请选择客户群 * --</option>
-            ${groups.map(g => `<option value="${escapeHtml(g.id)}" ${cand.customerGroupId === g.id ? 'selected' : ''}>${escapeHtml(g.value)}</option>`).join('')}
-          </select>
+        <td style="padding:8px 10px;">
+          <div style="display:flex;flex-direction:column;gap:5px;">
+            <div style="display:flex;flex-wrap:wrap;gap:5px;min-height:24px;align-items:center;">
+              ${groupChipsHtml}
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <select class="extract-add-group-select" data-cand-idx="${rawIdx}" style="font-size:11.5px;padding:3px 6px;border:1px solid ${groupMissing ? '#f87171' : '#cbd5e1'};border-radius:5px;background:#fff;max-width:160px;">
+                <option value="">+ 添加客户群</option>
+                ${groups.map(g => `<option value="${escapeHtml(g.id)}" ${cand.customerGroupIds?.has(g.id) ? 'disabled style="color:#94a3b8;"' : ''}>${escapeHtml(g.value)}</option>`).join('')}
+              </select>
+            </div>
+            ${groupMissing && rawGroupText ? `<div style="font-size:10.5px;color:#d97706;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px;" title="原始快照客户群: ${escapeHtml(rawGroupText)}">扫描: ${escapeHtml(rawGroupText)}</div>` : ''}
+          </div>
         </td>
-        <td style="padding:6px 8px;">
-          <select class="extract-row-bu" data-cand-idx="${rawIdx}" style="width:130px;font-size:11.5px;padding:3px 4px;border:1px solid #cbd5e1;border-radius:4px;background:#fff;">
+        <td style="padding:8px 10px;">
+          <select class="extract-row-bu" data-cand-idx="${rawIdx}" style="width:145px;font-size:12px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:5px;background:#fff;">
             <option value="">-- 未指定 BU --</option>
             ${bus.map(b => `<option value="${escapeHtml(b.id)}" ${cand.businessUnitId === b.id ? 'selected' : ''}>${escapeHtml(b.value)}</option>`).join('')}
           </select>
         </td>
-        <td style="padding:6px 8px;">
-          <select class="extract-row-role" data-cand-idx="${rawIdx}" style="width:130px;font-size:11.5px;padding:3px 4px;border:1px solid ${roleMissing ? '#f87171' : '#cbd5e1'};border-radius:4px;background:${roleMissing ? '#fef2f2' : '#fff'};">
-            <option value="">-- 请选择角色 * --</option>
-            ${roles.map(r => `<option value="${escapeHtml(r.value)}" ${cand.role === r.value ? 'selected' : ''}>${escapeHtml(r.value)}</option>`).join('')}
-          </select>
+        <td style="padding:8px 10px;">
+          <div style="display:flex;flex-direction:column;gap:5px;">
+            <div style="display:flex;flex-wrap:wrap;gap:5px;min-height:24px;align-items:center;">
+              ${roleChipsHtml}
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <select class="extract-add-role-select" data-cand-idx="${rawIdx}" style="font-size:11.5px;padding:3px 6px;border:1px solid ${roleMissing ? '#f87171' : '#cbd5e1'};border-radius:5px;background:#fff;max-width:160px;">
+                <option value="">+ 添加角色</option>
+                ${roles.map(r => `<option value="${escapeHtml(r.value)}" ${cand.roles?.has(r.value) ? 'disabled style="color:#94a3b8;"' : ''}>${escapeHtml(r.value)}</option>`).join('')}
+              </select>
+            </div>
+            ${roleMissing && rawRoleText ? `<div style="font-size:10.5px;color:#d97706;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px;" title="原始快照角色: ${escapeHtml(rawRoleText)}">扫描: ${escapeHtml(rawRoleText)}</div>` : ''}
+          </div>
         </td>
-        <td style="padding:6px 8px;">
-          <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
+        <td style="padding:8px 10px;">
+          <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
             ${sourceBadges.join('')}
           </div>
         </td>
-        <td style="text-align:center;padding:6px 8px;">
-          ${cand.isExisting ? '<span class="badge secondary" style="font-size:11px;">在册已存在</span>' : '<span class="badge primary" style="font-size:11px;background:#eff6ff;color:#1e40af;font-weight:600;">✨ 新人员</span>'}
+        <td style="text-align:center;padding:8px 10px;">
+          ${cand.isExisting ? '<span class="badge secondary" style="font-size:11.5px;padding:2px 7px;">在册已存在</span>' : '<span class="badge primary" style="font-size:11.5px;padding:2px 7px;background:#eff6ff;color:#1e40af;font-weight:600;">✨ 新人员</span>'}
         </td>
       </tr>
     `;
   }).join('');
 
   tbody.innerHTML = rowsHtml;
+
+  if (pagerEl) {
+    pagerEl.innerHTML = `
+      <div style="font-size:12px;color:#475569;display:flex;align-items:center;gap:6px;">
+        <span>共 <b>${filtered.length}</b> 位候选人（当前显示第 <b>${startIdx + 1}</b> ~ <b>${endIdx}</b> 位）· 第 <b>${extractPage}</b> / <b>${totalPages}</b> 页</span>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+        <button type="button" class="secondary mini btn-extract-page" data-extract-page-delta="-1" ${extractPage <= 1 ? 'disabled' : ''} style="font-size:11.5px;padding:3px 8px;cursor:pointer;">上一页</button>
+        <input type="number" id="extract-jump-page-input" min="1" max="${totalPages}" value="${extractPage}" style="width:48px;font-size:11.5px;padding:2px 4px;text-align:center;border:1px solid #cbd5e1;border-radius:4px;" aria-label="跳转页码">
+        <button type="button" class="secondary mini" id="btn-extract-jump-go" style="font-size:11.5px;padding:3px 8px;cursor:pointer;">跳转</button>
+        <button type="button" class="secondary mini btn-extract-page" data-extract-page-delta="1" ${extractPage >= totalPages ? 'disabled' : ''} style="font-size:11.5px;padding:3px 8px;cursor:pointer;">下一页</button>
+        <label style="font-size:12px;color:#475569;margin-left:6px;display:inline-flex;align-items:center;gap:4px;">
+          每页
+          <select id="extract-page-size-select" style="font-size:11.5px;padding:2px 4px;border:1px solid #cbd5e1;border-radius:4px;background:#fff;cursor:pointer;">
+            ${[20, 50, 100, 200, 500].map(n => `<option value="${n}" ${extractPageSize === n ? 'selected' : ''}>${n} 条</option>`).join('')}
+            <option value="all" ${extractPageSize === 'all' ? 'selected' : ''}>全部 (${filtered.length} 条)</option>
+          </select>
+        </label>
+      </div>
+    `;
+  }
 
   const selectAll = $('extract-select-all');
   if (selectAll) {
@@ -2915,12 +3250,844 @@ function applyBatchFill(field, value) {
     return;
   }
   for (const cand of selectedFiltered) {
-    if (field === 'group') cand.customerGroupId = value;
-    else if (field === 'bu') cand.businessUnitId = value;
-    else if (field === 'role') cand.role = value;
+    if (field === 'group') {
+      if (!cand.customerGroupIds) cand.customerGroupIds = new Set();
+      cand.customerGroupIds.add(value);
+    } else if (field === 'bu') {
+      cand.businessUnitId = value;
+    } else if (field === 'role') {
+      if (!cand.roles) cand.roles = new Set();
+      cand.roles.add(value);
+      if (value === 'PM') {
+        const activeBUs = active('businessUnits');
+        const match = activeBUs.find(b => (b.id || '').toLowerCase() === 'pmo' || (b.value || '').toLowerCase() === 'pmo' || (b.value || '').toLowerCase().includes('pmo'));
+        cand.businessUnitId = match ? match.id : 'PMO';
+      }
+    }
   }
   renderExtractRosterTable();
-  showToast(`已批量填充 ${selectedFiltered.length} 位人员的属性！`, 'success');
+  showToast(`已批量应用 ${selectedFiltered.length} 位人员的属性！`, 'success');
+}
+
+const DEFAULT_SNAPSHOT_MAPPINGS = {
+  roles: [
+    { scanned: 'Solution Developer', target: 'TD' },
+    { scanned: '方案制作人', target: 'TD' },
+    { scanned: 'Originator', target: 'PM' },
+    { scanned: '建单人', target: 'PM' },
+    { scanned: 'Creator', target: 'PM' },
+    { scanned: 'Owner', target: 'TL' },
+    { scanned: 'L1 Solution Reviewer', target: 'SPM' },
+    { scanned: 'L1评审人', target: 'SPM' },
+    { scanned: '实施人', target: 'FME' },
+    { scanned: 'Operator', target: 'FME' },
+    { scanned: 'STAFF', target: 'FME' },
+    { scanned: '申请人', target: 'TE' }
+  ],
+  customerGroups: [
+    { scanned: 'ORG', target: 'Orange' },
+    { scanned: 'EG-Egypt Orange', target: 'Orange' },
+    { scanned: 'Orange Egypt', target: 'Orange' },
+    { scanned: 'Orange', target: 'Orange' },
+    { scanned: 'Vodafone', target: 'VDF' },
+    { scanned: 'VF', target: 'VDF' },
+    { scanned: 'VDF', target: 'Vodafone' },
+    { scanned: 'EG-Egypt Vodafone', target: 'Vodafone' },
+    { scanned: 'ET', target: 'Etisalat' },
+    { scanned: 'EG-Egypt ET', target: 'Etisalat' },
+    { scanned: 'ET (Etisalat)', target: 'Etisalat' },
+    { scanned: 'Etisalat', target: 'Etisalat' },
+    { scanned: 'Telecom Egypt', target: 'WE' },
+    { scanned: 'TE', target: 'WE' },
+    { scanned: 'WE', target: 'Telecom Egypt' },
+    { scanned: 'EG-Egypt Telecom', target: 'Telecom Egypt' }
+  ],
+  businessUnits: [
+    { scanned: '软件', target: 'Software' },
+    { scanned: '无线', target: 'Wireless' },
+    { scanned: '核心网', target: 'Core' },
+    { scanned: '数通', target: 'Datacom' },
+    { scanned: '传输', target: 'Transmission' }
+  ]
+};
+
+let scannedUnmappedRoles = new Set();
+let scannedUnmappedGroups = new Set();
+let scannedUnmappedBUs = new Set();
+let tempEditingMappings = { roles: [], customerGroups: [], businessUnits: [] };
+let activeMappingTab = 'roles';
+let editingRoleIdx = null;
+let editingGroupIdx = null;
+let editingBuIdx = null;
+
+function getActiveSnapshotMappings() {
+  if (!state.snapshotMappings || typeof state.snapshotMappings !== 'object') {
+    state.snapshotMappings = JSON.parse(JSON.stringify(DEFAULT_SNAPSHOT_MAPPINGS));
+  }
+  if (!Array.isArray(state.snapshotMappings.roles)) state.snapshotMappings.roles = [...DEFAULT_SNAPSHOT_MAPPINGS.roles];
+  else {
+    for (const def of DEFAULT_SNAPSHOT_MAPPINGS.roles) {
+      if (!state.snapshotMappings.roles.some(m => String(m.scanned || '').trim().toLowerCase() === String(def.scanned).trim().toLowerCase())) {
+        state.snapshotMappings.roles.push(def);
+      }
+    }
+  }
+  if (!Array.isArray(state.snapshotMappings.customerGroups)) state.snapshotMappings.customerGroups = [...DEFAULT_SNAPSHOT_MAPPINGS.customerGroups];
+  else {
+    for (const def of DEFAULT_SNAPSHOT_MAPPINGS.customerGroups) {
+      if (!state.snapshotMappings.customerGroups.some(m => String(m.scanned || '').trim().toLowerCase() === String(def.scanned).trim().toLowerCase())) {
+        state.snapshotMappings.customerGroups.push(def);
+      }
+    }
+  }
+  if (!Array.isArray(state.snapshotMappings.businessUnits)) state.snapshotMappings.businessUnits = [...DEFAULT_SNAPSHOT_MAPPINGS.businessUnits];
+  return state.snapshotMappings;
+}
+
+function normDigits(str) {
+  if (!str) return '';
+  const d = String(str).toLowerCase().replace(/^[a-z]+/i, '');
+  return d.length >= 5 ? d : '';
+}
+
+function normName(str) {
+  if (!str) return '';
+  return String(str).replace(/[\(（].*?[\)）]/g, '').replace(/[\/\\].*$/, '').replace(/\s+/g, '').trim().toLowerCase();
+}
+
+function isChinese(str) {
+  return /[\u4e00-\u9fa5]/.test(String(str || ''));
+}
+
+function isOrderNumber(str) {
+  if (!str) return false;
+  const s = String(str).trim();
+  if (!s) return false;
+  if (/^qr\d+/i.test(s) || /^(task|wo|req|inc|chg|cr)\d+/i.test(s)) return true;
+  if (/^[A-Za-z0-9_-]{11,}$/.test(s) && /\d{6,}/.test(s)) return true;
+  return false;
+}
+
+function isInvalidStaffId(id) {
+  if (!id) return false;
+  const s = String(id).trim();
+  if (!s) return false;
+  if (s.length > 10) return true;
+  if (isOrderNumber(s)) return true;
+  return false;
+}
+
+function isStaffIdToken(token) {
+  if (!token) return false;
+  const s = String(token).trim();
+  if (s.length < 4 || s.length > 10) return false;
+  if (isInvalidStaffId(s) || isOrderNumber(s)) return false;
+  const digits = s.replace(/\D/g, '');
+  if (digits.length < 3) return false;
+  return /^[A-Za-z]{0,4}\d{3,9}[A-Za-z]?$/i.test(s);
+}
+
+function preferCanonicalName(n1, n2) {
+  const s1 = String(n1 || '').trim();
+  const s2 = String(n2 || '').trim();
+  if (!s1) return s2;
+  if (!s2) return s1;
+  if (s1 === s2) return s1;
+
+  // 1. 真实姓名绝对优于工号 Token
+  const isId1 = isStaffIdToken(s1) || (/^[A-Za-z0-9_-]{4,10}$/.test(s1) && /\d{3,}/.test(s1));
+  const isId2 = isStaffIdToken(s2) || (/^[A-Za-z0-9_-]{4,10}$/.test(s2) && /\d{3,}/.test(s2));
+  if (isId1 && !isId2) return s2;
+  if (!isId1 && isId2) return s1;
+  if (isId1 && isId2) return (typeof preferCanonicalStaffId === 'function') ? preferCanonicalStaffId(s1, s2) : s1;
+
+  // 2. 中文姓名优于非中文
+  if (isChinese(s1) && !isChinese(s2)) return s1;
+  if (isChinese(s2) && !isChinese(s1)) return s2;
+
+  // 3. 不带括号的纯姓名优于带括号（如包含标注/角色）的姓名
+  const hasBracket1 = /[\(（]/.test(s1);
+  const hasBracket2 = /[\(（]/.test(s2);
+  if (!hasBracket1 && hasBracket2) return s1;
+  if (!hasBracket2 && hasBracket1) return s2;
+
+  // 4. 外文多词完整姓名优于单词或残缺名（如 "Ahmed Helmy" 优于 "Ahmed"）
+  const words1 = s1.split(/\s+/).filter(Boolean);
+  const words2 = s2.split(/\s+/).filter(Boolean);
+  if (!isChinese(s1) && !isChinese(s2)) {
+    if (words1.length !== words2.length) {
+      return words1.length > words2.length ? s1 : s2;
+    }
+  }
+
+  return s1.length <= s2.length ? s1 : s2;
+}
+
+function areStaffIdsEquivalent(id1, id2) {
+  if (!id1 || !id2) return false;
+  const s1 = String(id1).trim().toLowerCase();
+  const s2 = String(id2).trim().toLowerCase();
+  if (!s1 || !s2) return false;
+  if (s1 === s2) return true;
+  if (s1 === 'm' + s2 || s2 === 'm' + s1) return true;
+  if (s1.length === s2.length + 1 && s1.slice(1) === s2 && s2.length >= 4) return true;
+  if (s2.length === s1.length + 1 && s2.slice(1) === s1 && s1.length >= 4) return true;
+  const num1 = s1.replace(/^[a-z]+/i, '');
+  const num2 = s2.replace(/^[a-z]+/i, '');
+  if (num1 && num1 === num2 && num1.length >= 5) return true;
+  return false;
+}
+
+function resolveMappedRole(rawRole) {
+  if (!rawRole) return '';
+  const s = String(rawRole).trim().toLowerCase();
+  if (!s) return '';
+  const mappings = getActiveSnapshotMappings().roles || [];
+  const activeRoles = active('roles');
+
+  const mapped = mappings.find(m => m.scanned && String(m.scanned).trim().toLowerCase() === s);
+  if (mapped && mapped.target) {
+    const targetLower = String(mapped.target).trim().toLowerCase();
+    const matchedActive = activeRoles.find(r => (r.value || '').toLowerCase() === targetLower);
+    if (matchedActive) return matchedActive.value;
+    return mapped.target;
+  }
+
+  const direct = activeRoles.find(r => (r.value || '').toLowerCase() === s);
+  if (direct) return direct.value;
+
+  const token = activeRoles.find(r => {
+    const rVal = (r.value || '').toLowerCase();
+    return rVal && (rVal.includes(s) || s.includes(rVal));
+  });
+  if (token) return token.value;
+
+  return '';
+}
+
+function resolveMappedCustomerGroup(rawGroup) {
+  if (!rawGroup) return '';
+  const s = String(rawGroup).trim().toLowerCase();
+  if (!s) return '';
+  const mappings = getActiveSnapshotMappings().customerGroups || [];
+  const activeGroups = active('customerGroups');
+
+  // 1. Direct configured mapping rule
+  const mapped = mappings.find(m => m.scanned && String(m.scanned).trim().toLowerCase() === s);
+  if (mapped && mapped.target) {
+    const targetLower = String(mapped.target).trim().toLowerCase();
+    const matchedActive = activeGroups.find(g => (g.id || '').toLowerCase() === targetLower || (g.value || '').toLowerCase() === targetLower);
+    if (matchedActive) return matchedActive.id;
+
+    // Check alias of target in active groups
+    const aliasMatched = activeGroups.find(g => {
+      const gVal = (g.value || '').toLowerCase();
+      if ((targetLower === 'orange' || targetLower === 'org') && (gVal === 'orange' || gVal === 'org')) return true;
+      if ((targetLower === 'vodafone' || targetLower === 'vdf' || targetLower === 'vf') && (gVal === 'vodafone' || gVal === 'vdf' || gVal === 'vf')) return true;
+      if ((targetLower === 'etisalat' || targetLower === 'et') && (gVal === 'etisalat' || gVal === 'et')) return true;
+      if ((targetLower === 'telecom egypt' || targetLower === 'we' || targetLower === 'te') && (gVal === 'telecom egypt' || gVal === 'we' || gVal === 'te')) return true;
+      return false;
+    });
+    if (aliasMatched) return aliasMatched.id;
+  }
+
+  // 2. Direct exact value match against active customer groups
+  const direct = activeGroups.find(g => (g.id || '').toLowerCase() === s || (g.value || '').toLowerCase() === s);
+  if (direct) return direct.id;
+
+  // 3. Known telecom operator abbreviation / alias heuristic
+  const isOrange = s === 'org' || s === 'orange' || s === 'ora' || s.includes('orange');
+  const isVodafone = s === 'vdf' || s === 'vf' || s === 'vodafone' || s.includes('vodafone');
+  const isEtisalat = s === 'et' || s === 'etisalat' || s.includes('etisalat');
+  const isTe = s === 'te' || s === 'we' || s === 'telecom egypt' || s.includes('telecom');
+
+  const heuristicMatch = activeGroups.find(g => {
+    const gVal = (g.value || '').toLowerCase();
+    if (isOrange && (gVal === 'org' || gVal === 'orange' || gVal.includes('orange'))) return true;
+    if (isVodafone && (gVal === 'vdf' || gVal === 'vf' || gVal === 'vodafone' || gVal.includes('vodafone'))) return true;
+    if (isEtisalat && (gVal === 'et' || gVal === 'etisalat' || gVal.includes('etisalat'))) return true;
+    if (isTe && (gVal === 'te' || gVal === 'we' || gVal === 'telecom egypt' || gVal.includes('telecom'))) return true;
+    return false;
+  });
+  if (heuristicMatch) return heuristicMatch.id;
+
+  // 4. Substring / partial match fallback
+  const partial = activeGroups.find(g => {
+    const gVal = (g.value || '').toLowerCase();
+    return gVal && (gVal.includes(s) || s.includes(gVal));
+  });
+  if (partial) return partial.id;
+
+  return '';
+}
+
+function resolveMappedBusinessUnit(rawBU) {
+  if (!rawBU) return '';
+  const s = String(rawBU).trim().toLowerCase();
+  if (!s) return '';
+  const mappings = getActiveSnapshotMappings().businessUnits || [];
+  const activeBUs = active('businessUnits');
+
+  const mapped = mappings.find(m => m.scanned && String(m.scanned).trim().toLowerCase() === s);
+  if (mapped && mapped.target) {
+    const targetLower = String(mapped.target).trim().toLowerCase();
+    const matchedActive = activeBUs.find(b => (b.id || '').toLowerCase() === targetLower || (b.value || '').toLowerCase() === targetLower);
+    if (matchedActive) return matchedActive.id;
+  }
+
+  const direct = activeBUs.find(b => (b.id || '').toLowerCase() === s || (b.value || '').toLowerCase() === s);
+  if (direct) return direct.id;
+
+  const partial = activeBUs.find(b => {
+    const bVal = (b.value || '').toLowerCase();
+    return bVal && (bVal.includes(s) || s.includes(bVal));
+  });
+  if (partial) return partial.id;
+
+  return '';
+}
+
+function updateScannedUnmappedBanner() {
+  scannedUnmappedRoles.clear();
+  scannedUnmappedGroups.clear();
+  scannedUnmappedBUs.clear();
+
+  if (Array.isArray(extractedRosterCandidates)) {
+    for (const c of extractedRosterCandidates) {
+      if (c.rawRoles) {
+        for (const r of c.rawRoles) {
+          if (!resolveMappedRole(r)) scannedUnmappedRoles.add(r.trim());
+        }
+      }
+      if (c.rawCustomerGroups) {
+        for (const g of c.rawCustomerGroups) {
+          if (!resolveMappedCustomerGroup(g)) scannedUnmappedGroups.add(g.trim());
+        }
+      }
+      if (c.rawBU && !c.roles?.has('PM')) {
+        if (!resolveMappedBusinessUnit(c.rawBU)) scannedUnmappedBUs.add(c.rawBU.trim());
+      }
+    }
+  }
+
+  const banner = $('extract-mapping-hint-banner');
+  const chipsList = $('extract-mapping-hint-chips');
+  if (!banner || !chipsList) return;
+
+  if (scannedUnmappedRoles.size === 0 && scannedUnmappedGroups.size === 0 && scannedUnmappedBUs.size === 0) {
+    banner.style.display = 'none';
+    chipsList.innerHTML = '';
+    return;
+  }
+
+  banner.style.display = 'block';
+  const chips = [];
+  scannedUnmappedRoles.forEach(r => {
+    chips.push(`<button type="button" class="badge" data-open-mapping-role="${escapeHtml(r)}" style="background:#fee2e2;color:#991b1b;border:1px solid #fecaca;padding:2px 8px;border-radius:4px;font-size:11px;cursor:pointer;">未映射角色: ${escapeHtml(r)} ➔</button>`);
+  });
+  scannedUnmappedGroups.forEach(g => {
+    chips.push(`<button type="button" class="badge" data-open-mapping-group="${escapeHtml(g)}" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;padding:2px 8px;border-radius:4px;font-size:11px;cursor:pointer;">未映射客户群: ${escapeHtml(g)} ➔</button>`);
+  });
+  scannedUnmappedBUs.forEach(b => {
+    chips.push(`<button type="button" class="badge" data-open-mapping-bu="${escapeHtml(b)}" style="background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;padding:2px 8px;border-radius:4px;font-size:11px;cursor:pointer;">未映射BU: ${escapeHtml(b)} ➔</button>`);
+  });
+  chipsList.innerHTML = chips.join('');
+}
+
+function reevaluateCandidateMappings() {
+  const existingPersonnel = state.personnel || [];
+  const pById = new Map();
+  const pByDigits = new Map();
+  const pByName = new Map();
+
+  for (const p of existingPersonnel) {
+    if (p.archived) continue;
+    if (p.id) {
+      const pid = String(p.id).trim().toLowerCase();
+      pById.set(pid, p);
+      if (pid.startsWith('m') && pid.length >= 4) pById.set(pid.slice(1), p);
+      else pById.set('m' + pid, p);
+      const digits = normDigits(pid);
+      if (digits) pByDigits.set(digits, p);
+    }
+    if (p.name) pByName.set(String(p.name).trim().toLowerCase(), p);
+  }
+
+  for (const cand of extractedRosterCandidates) {
+    if (cand.rawRoles) {
+      for (const r of cand.rawRoles) {
+        const m = resolveMappedRole(r);
+        if (m) cand.roles.add(m);
+      }
+    }
+    if (cand.rawCustomerGroups) {
+      for (const g of cand.rawCustomerGroups) {
+        const m = resolveMappedCustomerGroup(g);
+        if (m) cand.customerGroupIds.add(m);
+      }
+    }
+    if (cand.roles && cand.roles.has('PM')) {
+      const activeBUs = active('businessUnits');
+      const match = activeBUs.find(b => (b.id || '').toLowerCase() === 'pmo' || (b.value || '').toLowerCase() === 'pmo' || (b.value || '').toLowerCase().includes('pmo'));
+      cand.businessUnitId = match ? match.id : 'PMO';
+    } else if (cand.rawBU) {
+      const mappedBU = resolveMappedBusinessUnit(cand.rawBU);
+      if (mappedBU) cand.businessUnitId = mappedBU;
+    }
+
+    const candId = String(cand.staffId || '').trim().toLowerCase();
+    const candName = String(cand.name || '').trim().toLowerCase();
+    let existing = null;
+    if (candId) {
+      existing = pById.get(candId);
+      if (!existing) {
+        const digits = normDigits(candId);
+        if (digits) existing = pByDigits.get(digits);
+      }
+      if (existing && candName && existing.name && String(existing.name).trim().toLowerCase() !== candName) {
+        existing = null;
+      }
+    }
+    if (!existing && candName) {
+      const byName = pByName.get(candName);
+      if (byName && (!candId || !byName.id || areStaffIdsEquivalent(candId, byName.id))) {
+        existing = byName;
+      }
+    }
+
+    if (existing) {
+      personGroups(existing).forEach(gid => cand.customerGroupIds.add(gid));
+      if (!cand.businessUnitId && personBusinessUnits(existing).length) cand.businessUnitId = personBusinessUnits(existing)[0];
+      personRoles(existing).forEach(r => cand.roles.add(r));
+    }
+  }
+  updateScannedUnmappedBanner();
+  renderExtractRosterTable();
+}
+
+function openSnapshotMappingsDialog(initialTab = 'roles', prefillScanned = '') {
+  const dialog = $('snapshot-mappings-dialog');
+  if (!dialog) return;
+
+  editingRoleIdx = null;
+  editingGroupIdx = null;
+  editingBuIdx = null;
+  if ($('btn-add-role-mapping')) $('btn-add-role-mapping').textContent = '➕ 添加映射';
+  if ($('btn-cancel-edit-role-mapping')) $('btn-cancel-edit-role-mapping').style.display = 'none';
+  if ($('btn-add-group-mapping')) $('btn-add-group-mapping').textContent = '➕ 添加映射';
+  if ($('btn-cancel-edit-group-mapping')) $('btn-cancel-edit-group-mapping').style.display = 'none';
+  if ($('btn-add-bu-mapping')) $('btn-add-bu-mapping').textContent = '➕ 添加映射';
+  if ($('btn-cancel-edit-bu-mapping')) $('btn-cancel-edit-bu-mapping').style.display = 'none';
+
+  const current = getActiveSnapshotMappings();
+  tempEditingMappings = {
+    roles: Array.isArray(current.roles) ? JSON.parse(JSON.stringify(current.roles)) : [],
+    customerGroups: Array.isArray(current.customerGroups) ? JSON.parse(JSON.stringify(current.customerGroups)) : [],
+    businessUnits: Array.isArray(current.businessUnits) ? JSON.parse(JSON.stringify(current.businessUnits)) : []
+  };
+
+  const roleSelect = $('select-map-role-target');
+  if (roleSelect) {
+    roleSelect.innerHTML = active('roles').map(r => `<option value="${escapeHtml(r.value)}">${escapeHtml(r.value)}</option>`).join('');
+  }
+
+  const groupSelect = $('select-map-group-target');
+  if (groupSelect) {
+    groupSelect.innerHTML = active('customerGroups').map(g => `<option value="${escapeHtml(g.value)}">${escapeHtml(g.value)}</option>`).join('');
+  }
+
+  const buSelect = $('select-map-bu-target');
+  if (buSelect) {
+    buSelect.innerHTML = active('businessUnits').map(b => `<option value="${escapeHtml(b.id || b.value)}">${escapeHtml(b.value || b.id)}${b.id && b.value && b.id !== b.value ? ' (' + escapeHtml(b.id) + ')' : ''}</option>`).join('');
+  }
+
+  const roleChipsWrap = $('unmapped-roles-quick-chips');
+  const roleChipsList = $('unmapped-roles-chips-list');
+  if (roleChipsWrap && roleChipsList) {
+    if (scannedUnmappedRoles.size > 0) {
+      roleChipsWrap.style.display = 'flex';
+      roleChipsList.innerHTML = Array.from(scannedUnmappedRoles).map(r => `
+        <button type="button" class="secondary mini" style="font-size:11px;padding:2px 8px;cursor:pointer;border-radius:4px;background:#fef2f2;border:1px solid #fecaca;color:#991b1b;" data-fill-scanned-role="${escapeHtml(r)}">
+          ${escapeHtml(r)}
+        </button>
+      `).join('');
+    } else {
+      roleChipsWrap.style.display = 'none';
+      roleChipsList.innerHTML = '';
+    }
+  }
+
+  const groupChipsWrap = $('unmapped-groups-quick-chips');
+  const groupChipsList = $('unmapped-groups-chips-list');
+  if (groupChipsWrap && groupChipsList) {
+    if (scannedUnmappedGroups.size > 0) {
+      groupChipsWrap.style.display = 'flex';
+      groupChipsList.innerHTML = Array.from(scannedUnmappedGroups).map(g => `
+        <button type="button" class="secondary mini" style="font-size:11px;padding:2px 8px;cursor:pointer;border-radius:4px;background:#fef3c7;border:1px solid #fde68a;color:#92400e;" data-fill-scanned-group="${escapeHtml(g)}">
+          ${escapeHtml(g)}
+        </button>
+      `).join('');
+    } else {
+      groupChipsWrap.style.display = 'none';
+      groupChipsList.innerHTML = '';
+    }
+  }
+
+  const buChipsWrap = $('unmapped-bus-quick-chips');
+  const buChipsList = $('unmapped-bus-chips-list');
+  if (buChipsWrap && buChipsList) {
+    if (scannedUnmappedBUs.size > 0) {
+      buChipsWrap.style.display = 'flex';
+      buChipsList.innerHTML = Array.from(scannedUnmappedBUs).map(b => `
+        <button type="button" class="secondary mini" style="font-size:11px;padding:2px 8px;cursor:pointer;border-radius:4px;background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;" data-fill-scanned-bu="${escapeHtml(b)}">
+          ${escapeHtml(b)}
+        </button>
+      `).join('');
+    } else {
+      buChipsWrap.style.display = 'none';
+      buChipsList.innerHTML = '';
+    }
+  }
+
+  const roleInp = $('input-map-role-scanned');
+  if (roleInp) roleInp.value = initialTab === 'roles' ? (prefillScanned || '') : '';
+  const groupInp = $('input-map-group-scanned');
+  if (groupInp) groupInp.value = initialTab === 'groups' ? (prefillScanned || '') : '';
+  const buInp = $('input-map-bu-scanned');
+  if (buInp) buInp.value = (initialTab === 'bus' || initialTab === 'bu') ? (prefillScanned || '') : '';
+
+  switchMappingTab(initialTab === 'bu' ? 'bus' : initialTab);
+  renderSnapshotMappingsTables();
+  dialog.showModal();
+}
+
+function switchMappingTab(tab) {
+  const normTab = (tab === 'bu' || tab === 'bus') ? 'bus' : (tab === 'groups' ? 'groups' : 'roles');
+  activeMappingTab = normTab;
+  $('tab-btn-map-roles')?.classList.toggle('active', normTab === 'roles');
+  $('tab-btn-map-groups')?.classList.toggle('active', normTab === 'groups');
+  $('tab-btn-map-bus')?.classList.toggle('active', normTab === 'bus');
+  const pRoles = $('mapping-panel-roles');
+  const pGroups = $('mapping-panel-groups');
+  const pBUs = $('mapping-panel-bus');
+  if (pRoles) pRoles.style.display = normTab === 'roles' ? 'flex' : 'none';
+  if (pGroups) pGroups.style.display = normTab === 'groups' ? 'flex' : 'none';
+  if (pBUs) pBUs.style.display = normTab === 'bus' ? 'flex' : 'none';
+}
+
+function renderSnapshotMappingsTables() {
+  const roleTbody = $('table-role-mappings-tbody');
+  const groupTbody = $('table-group-mappings-tbody');
+  const buTbody = $('table-bu-mappings-tbody');
+  const roleCount = $('count-role-mappings');
+  const groupCount = $('count-group-mappings');
+  const buCount = $('count-bu-mappings');
+
+  if (roleCount) roleCount.textContent = tempEditingMappings.roles.length;
+  if (groupCount) groupCount.textContent = tempEditingMappings.customerGroups.length;
+  if (buCount) buCount.textContent = (tempEditingMappings.businessUnits || []).length;
+
+  if (roleTbody) {
+    if (!tempEditingMappings.roles.length) {
+      roleTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:#94a3b8;">暂无角色映射规则</td></tr>';
+    } else {
+      roleTbody.innerHTML = tempEditingMappings.roles.map((m, idx) => {
+        const isEditing = editingRoleIdx === idx;
+        const rowBg = isEditing ? 'background:#eff6ff;' : '';
+        return `
+        <tr style="border-bottom:1px solid #f1f5f9;${rowBg}">
+          <td style="padding:8px 12px;font-weight:600;color:#1e293b;">
+            ${escapeHtml(m.scanned)}
+            ${isEditing ? '<span class="badge mini" style="margin-left:6px;background:#dbeafe;color:#1e40af;font-size:10px;">编辑中</span>' : ''}
+          </td>
+          <td style="text-align:center;color:#64748b;font-weight:700;">➔</td>
+          <td style="padding:8px 12px;"><span class="badge primary" style="font-weight:600;">${escapeHtml(m.target)}</span></td>
+          <td style="text-align:center;padding:8px;white-space:nowrap;">
+            <button type="button" class="icon-btn" style="padding:2px 7px;font-size:11px;cursor:pointer;margin-right:4px;border:1px solid #cbd5e1;border-radius:4px;background:#fff;" data-edit-role-idx="${idx}" title="编辑此规则">✏️ 编辑</button>
+            <button type="button" class="icon-btn text-danger" style="padding:2px 7px;font-size:11px;cursor:pointer;border:1px solid #fecaca;border-radius:4px;background:#fef2f2;" data-del-role-idx="${idx}" title="删除此规则">✕ 删除</button>
+          </td>
+        </tr>
+      `;
+      }).join('');
+    }
+  }
+
+  if (groupTbody) {
+    const activeGroups = active('customerGroups');
+    if (!tempEditingMappings.customerGroups.length) {
+      groupTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:#94a3b8;">暂无客户群映射规则</td></tr>';
+    } else {
+      groupTbody.innerHTML = tempEditingMappings.customerGroups.map((m, idx) => {
+        const targetLower = String(m.target || '').trim().toLowerCase();
+        const grp = activeGroups.find(g => (g.id || '').toLowerCase() === targetLower || (g.value || '').toLowerCase() === targetLower);
+        const displayTarget = grp ? grp.value : m.target;
+        const isEditing = editingGroupIdx === idx;
+        const rowBg = isEditing ? 'background:#eff6ff;' : '';
+        return `
+          <tr style="border-bottom:1px solid #f1f5f9;${rowBg}">
+            <td style="padding:8px 12px;font-weight:600;color:#1e293b;">
+              ${escapeHtml(m.scanned)}
+              ${isEditing ? '<span class="badge mini" style="margin-left:6px;background:#dbeafe;color:#1e40af;font-size:10px;">编辑中</span>' : ''}
+            </td>
+            <td style="text-align:center;color:#64748b;font-weight:700;">➔</td>
+            <td style="padding:8px 12px;"><span class="badge" style="background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;font-weight:600;">${escapeHtml(displayTarget)}</span></td>
+            <td style="text-align:center;padding:8px;white-space:nowrap;">
+              <button type="button" class="icon-btn" style="padding:2px 7px;font-size:11px;cursor:pointer;margin-right:4px;border:1px solid #cbd5e1;border-radius:4px;background:#fff;" data-edit-group-idx="${idx}" title="编辑此规则">✏️ 编辑</button>
+              <button type="button" class="icon-btn text-danger" style="padding:2px 7px;font-size:11px;cursor:pointer;border:1px solid #fecaca;border-radius:4px;background:#fef2f2;" data-del-group-idx="${idx}" title="删除此规则">✕ 删除</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+  }
+
+  if (buTbody) {
+    const activeBUs = active('businessUnits');
+    const busList = tempEditingMappings.businessUnits || [];
+    if (!busList.length) {
+      buTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:#94a3b8;">暂无 BU 映射规则</td></tr>';
+    } else {
+      buTbody.innerHTML = busList.map((m, idx) => {
+        const targetLower = String(m.target || '').trim().toLowerCase();
+        const bu = activeBUs.find(b => (b.id || '').toLowerCase() === targetLower || (b.value || '').toLowerCase() === targetLower);
+        const displayTarget = bu ? (bu.value + (bu.id && bu.id !== bu.value ? ` (${bu.id})` : '')) : m.target;
+        const isEditing = editingBuIdx === idx;
+        const rowBg = isEditing ? 'background:#eff6ff;' : '';
+        return `
+          <tr style="border-bottom:1px solid #f1f5f9;${rowBg}">
+            <td style="padding:8px 12px;font-weight:600;color:#1e293b;">
+              ${escapeHtml(m.scanned)}
+              ${isEditing ? '<span class="badge mini" style="margin-left:6px;background:#dbeafe;color:#1e40af;font-size:10px;">编辑中</span>' : ''}
+            </td>
+            <td style="text-align:center;color:#64748b;font-weight:700;">➔</td>
+            <td style="padding:8px 12px;"><span class="badge" style="background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;font-weight:600;">${escapeHtml(displayTarget)}</span></td>
+            <td style="text-align:center;padding:8px;white-space:nowrap;">
+              <button type="button" class="icon-btn" style="padding:2px 7px;font-size:11px;cursor:pointer;margin-right:4px;border:1px solid #cbd5e1;border-radius:4px;background:#fff;" data-edit-bu-idx="${idx}" title="编辑此规则">✏️ 编辑</button>
+              <button type="button" class="icon-btn text-danger" style="padding:2px 7px;font-size:11px;cursor:pointer;border:1px solid #fecaca;border-radius:4px;background:#fef2f2;" data-del-bu-idx="${idx}" title="删除此规则">✕ 删除</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+  }
+}
+
+function cancelEditRoleMapping() {
+  editingRoleIdx = null;
+  if ($('btn-add-role-mapping')) $('btn-add-role-mapping').textContent = '➕ 添加映射';
+  if ($('btn-cancel-edit-role-mapping')) $('btn-cancel-edit-role-mapping').style.display = 'none';
+  if ($('input-map-role-scanned')) $('input-map-role-scanned').value = '';
+  renderSnapshotMappingsTables();
+}
+
+function cancelEditGroupMapping() {
+  editingGroupIdx = null;
+  if ($('btn-add-group-mapping')) $('btn-add-group-mapping').textContent = '➕ 添加映射';
+  if ($('btn-cancel-edit-group-mapping')) $('btn-cancel-edit-group-mapping').style.display = 'none';
+  if ($('input-map-group-scanned')) $('input-map-group-scanned').value = '';
+  renderSnapshotMappingsTables();
+}
+
+function cancelEditBuMapping() {
+  editingBuIdx = null;
+  if ($('btn-add-bu-mapping')) $('btn-add-bu-mapping').textContent = '➕ 添加映射';
+  if ($('btn-cancel-edit-bu-mapping')) $('btn-cancel-edit-bu-mapping').style.display = 'none';
+  if ($('input-map-bu-scanned')) $('input-map-bu-scanned').value = '';
+  renderSnapshotMappingsTables();
+}
+
+function clean(v, maxLen = 100) {
+  return String(v ?? '').trim().slice(0, maxLen);
+}
+
+function addRoleMappingFromInput() {
+  const scanned = clean($('input-map-role-scanned')?.value, 100);
+  const target = clean($('select-map-role-target')?.value, 100);
+  if (!scanned) {
+    uiAlert('请输入扫描到的原始角色名称');
+    return;
+  }
+  if (!target) {
+    uiAlert('请选择要映射到的系统角色');
+    return;
+  }
+  if (editingRoleIdx !== null && editingRoleIdx >= 0 && editingRoleIdx < tempEditingMappings.roles.length) {
+    tempEditingMappings.roles[editingRoleIdx] = { scanned, target };
+    editingRoleIdx = null;
+    if ($('btn-add-role-mapping')) $('btn-add-role-mapping').textContent = '➕ 添加映射';
+    if ($('btn-cancel-edit-role-mapping')) $('btn-cancel-edit-role-mapping').style.display = 'none';
+  } else {
+    const existing = tempEditingMappings.roles.find(m => m.scanned.toLowerCase() === scanned.toLowerCase());
+    if (existing) {
+      existing.target = target;
+    } else {
+      tempEditingMappings.roles.push({ scanned, target });
+    }
+  }
+  if ($('input-map-role-scanned')) $('input-map-role-scanned').value = '';
+  renderSnapshotMappingsTables();
+}
+
+function addGroupMappingFromInput() {
+  const scanned = clean($('input-map-group-scanned')?.value, 100);
+  const target = clean($('select-map-group-target')?.value, 100);
+  if (!scanned) {
+    uiAlert('请输入扫描到的原始客户群名称');
+    return;
+  }
+  if (!target) {
+    uiAlert('请选择要映射到的系统客户群');
+    return;
+  }
+  if (editingGroupIdx !== null && editingGroupIdx >= 0 && editingGroupIdx < tempEditingMappings.customerGroups.length) {
+    tempEditingMappings.customerGroups[editingGroupIdx] = { scanned, target };
+    editingGroupIdx = null;
+    if ($('btn-add-group-mapping')) $('btn-add-group-mapping').textContent = '➕ 添加映射';
+    if ($('btn-cancel-edit-group-mapping')) $('btn-cancel-edit-group-mapping').style.display = 'none';
+  } else {
+    const existing = tempEditingMappings.customerGroups.find(m => m.scanned.toLowerCase() === scanned.toLowerCase());
+    if (existing) {
+      existing.target = target;
+    } else {
+      tempEditingMappings.customerGroups.push({ scanned, target });
+    }
+  }
+  if ($('input-map-group-scanned')) $('input-map-group-scanned').value = '';
+  renderSnapshotMappingsTables();
+}
+
+function addBuMappingFromInput() {
+  const scanned = clean($('input-map-bu-scanned')?.value, 100);
+  const target = clean($('select-map-bu-target')?.value, 100);
+  if (!scanned) {
+    uiAlert('请输入扫描到的原始 BU 名称');
+    return;
+  }
+  if (!target) {
+    uiAlert('请选择要映射到的系统 BU');
+    return;
+  }
+  if (!Array.isArray(tempEditingMappings.businessUnits)) {
+    tempEditingMappings.businessUnits = [];
+  }
+  if (editingBuIdx !== null && editingBuIdx >= 0 && editingBuIdx < tempEditingMappings.businessUnits.length) {
+    tempEditingMappings.businessUnits[editingBuIdx] = { scanned, target };
+    editingBuIdx = null;
+    if ($('btn-add-bu-mapping')) $('btn-add-bu-mapping').textContent = '➕ 添加映射';
+    if ($('btn-cancel-edit-bu-mapping')) $('btn-cancel-edit-bu-mapping').style.display = 'none';
+  } else {
+    const existing = tempEditingMappings.businessUnits.find(m => m.scanned.toLowerCase() === scanned.toLowerCase());
+    if (existing) {
+      existing.target = target;
+    } else {
+      tempEditingMappings.businessUnits.push({ scanned, target });
+    }
+  }
+  if ($('input-map-bu-scanned')) $('input-map-bu-scanned').value = '';
+  renderSnapshotMappingsTables();
+}
+
+async function resetSnapshotMappingsToDefault() {
+  const ok = await uiConfirm('确定要恢复系统默认的快照字段映射规则吗？这将重置当前编辑列表为初始预设。', '确认恢复默认', 'warning', '🔄');
+  if (!ok) return;
+  tempEditingMappings = JSON.parse(JSON.stringify(DEFAULT_SNAPSHOT_MAPPINGS));
+  editingRoleIdx = null;
+  editingGroupIdx = null;
+  editingBuIdx = null;
+  if ($('btn-add-role-mapping')) $('btn-add-role-mapping').textContent = '➕ 添加映射';
+  if ($('btn-cancel-edit-role-mapping')) $('btn-cancel-edit-role-mapping').style.display = 'none';
+  if ($('btn-add-group-mapping')) $('btn-add-group-mapping').textContent = '➕ 添加映射';
+  if ($('btn-cancel-edit-group-mapping')) $('btn-cancel-edit-group-mapping').style.display = 'none';
+  if ($('btn-add-bu-mapping')) $('btn-add-bu-mapping').textContent = '➕ 添加映射';
+  if ($('btn-cancel-edit-bu-mapping')) $('btn-cancel-edit-bu-mapping').style.display = 'none';
+  renderSnapshotMappingsTables();
+  showToast('已重置为默认映射预设，点击下方保存即可应用！', 'info');
+}
+
+async function saveSnapshotMappingsHandler() {
+  const saveBtn = $('confirm-save-snapshot-mappings');
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.textContent = '⏳ 正在保存...';
+  }
+  try {
+    const payload = {
+      roles: tempEditingMappings.roles.filter(m => m && m.scanned && m.target),
+      customerGroups: tempEditingMappings.customerGroups.filter(m => m && m.scanned && m.target),
+      businessUnits: (tempEditingMappings.businessUnits || []).filter(m => m && m.scanned && m.target)
+    };
+    if (state.canEdit) {
+      await request('/snapshot-mappings', {
+        method: 'PUT',
+        body: JSON.stringify(payload)
+      });
+    }
+    state.snapshotMappings = payload;
+    reevaluateCandidateMappings();
+    $('snapshot-mappings-dialog')?.close();
+    await uiAlert('快照字段映射已成功保存并在当前列表生效！', '保存成功', 'success', '💾');
+  } catch (err) {
+    await uiAlert('保存快照映射失败：' + err.message, '保存失败', 'danger', '❌');
+  } finally {
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.textContent = '💾 保存并应用映射';
+    }
+  }
+}
+
+let extractLogs = [];
+
+function clearExtractLogs() {
+  extractLogs = [];
+  const term = $('extract-log-terminal');
+  if (term) term.innerHTML = '';
+  const countBadge = $('extract-log-count-badge');
+  if (countBadge) countBadge.textContent = '0 条';
+  const summaryCount = $('extract-log-summary-count');
+  if (summaryCount) summaryCount.textContent = '0';
+}
+
+function appendExtractLog(msg, type = 'info') {
+  const now = new Date();
+  const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}.${String(now.getMilliseconds()).padStart(3, '0')}`;
+  extractLogs.push({ time: timeStr, msg, type });
+  const term = $('extract-log-terminal');
+  if (term) {
+    const line = document.createElement('div');
+    line.className = 'extract-log-line';
+    let colorStyle = 'color:#94a3b8;';
+    if (type === 'success') colorStyle = 'color:#4ade80;font-weight:600;';
+    else if (type === 'warning') colorStyle = 'color:#facc15;font-weight:600;';
+    else if (type === 'error') colorStyle = 'color:#f87171;font-weight:700;';
+    line.innerHTML = `<span class="extract-log-time">[${timeStr}]</span><span style="${colorStyle}">${escapeHtml(msg)}</span>`;
+    term.appendChild(line);
+    term.scrollTop = term.scrollHeight;
+  }
+  const countBadge = $('extract-log-count-badge');
+  if (countBadge) countBadge.textContent = `${extractLogs.length} 条`;
+  const summaryCount = $('extract-log-summary-count');
+  if (summaryCount) summaryCount.textContent = String(extractLogs.length);
+}
+
+function setExtractProgress(percent, desc, badgeUpdates = {}) {
+  const pBar = $('extract-progress-bar');
+  if (pBar) pBar.style.width = `${Math.min(100, Math.max(0, percent))}%`;
+  const pText = $('extract-progress-percent');
+  if (pText) pText.textContent = `${Math.min(100, Math.max(0, percent))}%`;
+  const pDesc = $('extract-step-desc');
+  if (pDesc && desc) pDesc.textContent = desc;
+
+  for (const [badgeId, info] of Object.entries(badgeUpdates)) {
+    const card = $(badgeId);
+    if (!card) continue;
+    const icon = card.querySelector('.step-icon');
+    const detail = card.querySelector('.step-detail');
+    if (icon && info.icon) icon.textContent = info.icon;
+    if (detail && info.detail) detail.textContent = info.detail;
+    if (info.bg) card.style.background = info.bg;
+    if (info.border) card.style.borderColor = info.border;
+  }
 }
 
 async function openSnapshotRosterDialog() {
@@ -2932,10 +4099,34 @@ async function openSnapshotRosterDialog() {
   if (!dialog) return;
 
   extractedRosterCandidates = [];
+  scannedUnmappedRoles.clear();
+  scannedUnmappedGroups.clear();
   currentExtractFilter = 'all';
+
+  const container = $('extract-loading-container');
+  if (container) container.style.display = 'flex';
+  const retryBtn = $('btn-retry-extract');
+  if (retryBtn) retryBtn.style.display = 'none';
+  const spinner = $('extract-loading-spinner');
+  if (spinner) {
+    spinner.textContent = '⏳';
+    spinner.style.animation = 'spin 1s linear infinite';
+  }
+
+  clearExtractLogs();
+  setExtractProgress(5, '正在初始化扫描环境与快照映射…', {
+    'extract-step-badge-1': { icon: '⏳', detail: '读取映射中...', bg: '#fff', border: '#cbd5e1' },
+    'extract-step-badge-2': { icon: '⚪', detail: '等待中', bg: '#fff', border: '#e2e8f0' },
+    'extract-step-badge-3': { icon: '⚪', detail: '等待中', bg: '#fff', border: '#e2e8f0' },
+    'extract-step-badge-4': { icon: '⚪', detail: '等待中', bg: '#fff', border: '#e2e8f0' }
+  });
+
+  appendExtractLog('🚀 开始跨快照聚合提取人员名单任务...', 'info');
+  appendExtractLog(`ℹ️ 本地名册当前在册人员数: ${(state.personnel || []).length} 人`, 'info');
+
   const tbody = $('extract-roster-tbody');
   if (tbody) {
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:#64748b;"><span style="font-size:18px;">⏳</span> 正在从会议考勤快照与操作激励快照聚合提取人员名单...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:#64748b;"><span style="font-size:18px;">⏳</span> 正在从会议考勤快照与操作激励快照聚合提取人员名单...（详细进度与日志见下方）</td></tr>';
   }
   const searchInput = $('extract-search-input');
   if (searchInput) searchInput.value = '';
@@ -2956,126 +4147,838 @@ async function openSnapshotRosterDialog() {
   dialog.showModal();
 
   try {
-    const [meetingRes, incentiveRes] = await Promise.all([
-      fetch('/api/meeting-snapshots/extract-roster').then(r => r.ok ? r.json() : { roster: [] }).catch(() => ({ roster: [] })),
-      fetch('/api/operation-incentive-snapshots/extract-roster').then(r => r.ok ? r.json() : { roster: [] }).catch(() => ({ roster: [] }))
-    ]);
+    // 步骤 1: 读取映射规则
+    try {
+      appendExtractLog('🔀 正在向服务器请求字段映射规则 (/snapshot-mappings)...', 'info');
+      if (!state.snapshotMappings) {
+        const mappingRes = await Promise.race([
+          request('/snapshot-mappings'),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('映射配置请求超时')), 8000))
+        ]);
+        if (mappingRes) state.snapshotMappings = mappingRes;
+      }
+      const roleCount = (state.snapshotMappings?.roles || []).length;
+      const groupCount = (state.snapshotMappings?.customerGroups || []).length;
+      const buCount = (state.snapshotMappings?.businessUnits || []).length;
+      appendExtractLog(`✅ 字段映射规则就绪：已载入 ${roleCount} 条角色映射规则，${groupCount} 条客户群映射规则，${buCount} 条BU映射规则`, 'success');
+      setExtractProgress(20, '字段映射规则就绪，开始并行拉取快照数据...', {
+        'extract-step-badge-1': { icon: '✅', detail: `角色:${roleCount}, 客户群:${groupCount}, BU:${buCount}`, bg: '#f0fdf4', border: '#bbf7d0' },
+        'extract-step-badge-2': { icon: '⏳', detail: '正在拉取...', bg: '#eff6ff', border: '#bfdbfe' },
+        'extract-step-badge-3': { icon: '⏳', detail: '正在拉取...', bg: '#eff6ff', border: '#bfdbfe' }
+      });
+    } catch (mErr) {
+      appendExtractLog(`⚠️ 映射规则获取异常 (${mErr.message})，将使用内置基线规则`, 'warning');
+      setExtractProgress(20, '映射配置就绪，开始拉取快照数据...', {
+        'extract-step-badge-1': { icon: '⚠️', detail: '使用基线规则', bg: '#fefce8', border: '#fef08a' },
+        'extract-step-badge-2': { icon: '⏳', detail: '正在拉取...', bg: '#eff6ff', border: '#bfdbfe' },
+        'extract-step-badge-3': { icon: '⏳', detail: '正在拉取...', bg: '#eff6ff', border: '#bfdbfe' }
+      });
+    }
 
-    const meetingRoster = Array.isArray(meetingRes?.roster) ? meetingRes.roster : [];
-    const incentiveRoster = Array.isArray(incentiveRes?.roster) ? incentiveRes.roster : [];
-
-    const candidateMap = new Map();
-    const activeGroups = active('customerGroups');
-    const activeBUs = active('businessUnits');
-    const activeRoles = active('roles');
-
-    const matchGroup = (str) => {
-      if (!str) return '';
-      const s = String(str).toLowerCase().trim();
-      const match = activeGroups.find(g => g.id.toLowerCase() === s || g.value.toLowerCase() === s || g.value.toLowerCase().includes(s) || s.includes(g.value.toLowerCase()));
-      return match ? match.id : '';
+    // 步骤 2 & 3: 并行拉取会议考勤快照与操作激励快照人员
+    const fetchEndpoint = async (url, label, timeoutMs = 90000) => {
+      const t0 = performance.now();
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      appendExtractLog(`📡 正在拉取 ${label} 数据: GET ${url} ...`, 'info');
+      try {
+        const res = await fetch(url, { credentials: 'same-origin', signal: controller.signal });
+        clearTimeout(timeoutId);
+        const elapsed = Math.round(performance.now() - t0);
+        if (!res.ok) {
+          appendExtractLog(`❌ ${label} 接口返回异常: HTTP ${res.status} (${elapsed}ms)`, 'error');
+          return { roster: [], error: `HTTP ${res.status}`, elapsed };
+        }
+        const data = await res.json().catch(() => ({ roster: [] }));
+        const count = Array.isArray(data.roster) ? data.roster.length : 0;
+        appendExtractLog(`✅ ${label} 响应成功: 获取 ${count} 条人员记录 (耗时 ${elapsed}ms)`, 'success');
+        return { roster: data.roster || [], count, elapsed };
+      } catch (err) {
+        clearTimeout(timeoutId);
+        const elapsed = Math.round(performance.now() - t0);
+        const isTimeout = err.name === 'AbortError';
+        const msg = isTimeout ? `请求超时 (${timeoutMs / 1000}s) [可能原因: 后端快照历史数据量大或后台正在执行同步，建议稍后重试]` : err.message;
+        appendExtractLog(`❌ ${label} 拉取失败: ${msg} (${elapsed}ms)`, 'error');
+        return { roster: [], error: msg, elapsed };
+      }
     };
 
+    let pCurrent = 20;
+    const meetingTask = fetchEndpoint('/api/meeting-snapshots/extract-roster', '会议考勤快照').then(res => {
+      pCurrent = Math.max(pCurrent + 35, 55);
+      setExtractProgress(pCurrent, '会议考勤快照拉取完毕，等待操作激励数据...', {
+        'extract-step-badge-2': {
+          icon: res.error ? '❌' : '✅',
+          detail: res.error ? res.error : `提取 ${res.count} 人 (${res.elapsed}ms)`,
+          bg: res.error ? '#fef2f2' : '#f0fdf4',
+          border: res.error ? '#fca5a5' : '#bbf7d0'
+        }
+      });
+      return res;
+    });
+
+    const incentiveTask = fetchEndpoint('/api/operation-incentive-snapshots/extract-roster', '操作激励快照').then(res => {
+      pCurrent = Math.max(pCurrent + 30, 80);
+      setExtractProgress(pCurrent, '操作激励快照拉取完毕，正在准备数据聚合...', {
+        'extract-step-badge-3': {
+          icon: res.error ? '❌' : '✅',
+          detail: res.error ? res.error : `提取 ${res.count} 人 (${res.elapsed}ms)`,
+          bg: res.error ? '#fef2f2' : '#f0fdf4',
+          border: res.error ? '#fca5a5' : '#bbf7d0'
+        }
+      });
+      return res;
+    });
+
+    const [meetingRes, incentiveRes] = await Promise.all([meetingTask, incentiveTask]);
+
+    const meetingRoster = meetingRes.roster;
+    const incentiveRoster = incentiveRes.roster;
+
+    // 步骤 4: 跨源聚合与去重比对
+    setExtractProgress(88, '正在进行跨数据源去重、角色与客户群映射匹配...', {
+      'extract-step-badge-4': { icon: '⏳', detail: '聚合去重中...', bg: '#eff6ff', border: '#bfdbfe' }
+    });
+    appendExtractLog('🔄 开始跨快照交叉聚合人员名单并执行自动映射...', 'info');
+
+    // 让出执行权以确保浏览器在执行密集哈希聚合前立即渲染第7条日志与进度条
+    await new Promise(r => setTimeout(r, 20));
+
+    const activeBUs = active('businessUnits');
+    let buMappedCount = 0;
     const matchBU = (str) => {
       if (!str) return '';
+      const mapped = resolveMappedBusinessUnit(str);
+      if (mapped) {
+        buMappedCount++;
+        return mapped;
+      }
       const s = String(str).toLowerCase().trim();
-      const match = activeBUs.find(b => b.id.toLowerCase() === s || b.value.toLowerCase() === s || b.value.toLowerCase().includes(s) || s.includes(b.value.toLowerCase()));
+      const match = activeBUs.find(b => {
+        const bId = (b.id || '').toLowerCase();
+        const bVal = (b.value || '').toLowerCase();
+        return bId === s || bVal === s || (bVal && bVal.includes(s)) || (bVal && s.includes(bVal));
+      });
       return match ? match.id : '';
     };
 
-    const matchRole = (str) => {
-      if (!str) return '';
-      const s = String(str).toLowerCase().trim();
-      const match = activeRoles.find(r => r.value.toLowerCase() === s || r.value.toLowerCase().includes(s) || s.includes(r.value.toLowerCase()));
-      return match ? match.value : '';
+    const existingRosterIds = new Set((state.personnel || []).map(p => p.id));
+    const isTotalRow = (id, name) => /总计|合计|小计|^total$/i.test(String(id || '')) || /总计|合计|小计|^total$/i.test(String(name || ''));
+
+    function isOrderNumber(str) {
+      if (!str) return false;
+      const s = String(str).trim();
+      if (!s) return false;
+      if (/^qr\d+/i.test(s) || /^(task|wo|req|inc|chg|cr)\d+/i.test(s)) return true;
+      if (/^[A-Za-z0-9_-]{11,}$/.test(s) && /\d{6,}/.test(s)) return true;
+      return false;
+    }
+
+    function isInvalidStaffId(id) {
+      if (!id) return false;
+      const s = String(id).trim();
+      if (!s) return false;
+      // 自动过滤超过10位字符的非工号（如 QR20260610000307 共16位）
+      if (s.length > 10) return true;
+      // 单号/工单号特征过滤（如 QR...、TASK...、WO...）
+      if (isOrderNumber(s)) return true;
+      return false;
+    }
+
+    function preferCanonicalStaffId(id1, id2) {
+      const s1 = String(id1 || '').trim();
+      const s2 = String(id2 || '').trim();
+      if (isInvalidStaffId(s1) && !isInvalidStaffId(s2)) return s2;
+      if (isInvalidStaffId(s2) && !isInvalidStaffId(s1)) return s1;
+      if (isInvalidStaffId(s1) && isInvalidStaffId(s2)) return '';
+      if (!s1) return s2;
+      if (!s2) return s1;
+      if (s1.toLowerCase() === s2.toLowerCase()) return s1;
+
+      if (existingRosterIds.has(s1) && !existingRosterIds.has(s2)) return s1;
+      if (existingRosterIds.has(s2) && !existingRosterIds.has(s1)) return s2;
+
+      const isM1 = /^m/i.test(s1) && (s2.toLowerCase() === s1.slice(1).toLowerCase() || areStaffIdsEquivalent(s1, s2));
+      const isM2 = /^m/i.test(s2) && (s1.toLowerCase() === s2.slice(1).toLowerCase() || areStaffIdsEquivalent(s1, s2));
+      if (isM1 && !isM2) return s2;
+      if (isM2 && !isM1) return s1;
+
+      if (/^wx\d+/i.test(s1) && !/^wx\d+/i.test(s2)) return s1;
+      if (/^wx\d+/i.test(s2) && !/^wx\d+/i.test(s1)) return s2;
+
+      if (s1.length !== s2.length) return s1.length < s2.length ? s1 : s2;
+      return s1;
+    }
+
+    function isStaffIdToken(token) {
+      if (!token) return false;
+      const s = String(token).trim();
+      if (s.length < 4 || s.length > 10) return false;
+      if (isInvalidStaffId(s) || isOrderNumber(s)) return false;
+      const digits = s.replace(/\D/g, '');
+      if (digits.length < 3) return false;
+      return /^[A-Za-z]{0,4}\d{3,9}[A-Za-z]?$/i.test(s);
+    }
+
+    function cleanNameAndStaffId(rawName, existingStaffId = '') {
+      let name = String(rawName || '').trim();
+      let staffId = String(existingStaffId || '').trim();
+
+      if (!name) {
+        if (staffId && !isStaffIdToken(staffId)) {
+          return cleanNameAndStaffId(staffId, '');
+        }
+        if (isInvalidStaffId(staffId)) staffId = '';
+        return { name: '', staffId };
+      }
+      if (isInvalidStaffId(staffId)) staffId = '';
+
+      if (isStaffIdToken(name)) {
+        if (staffId && !isStaffIdToken(staffId)) {
+          return cleanNameAndStaffId(staffId, name);
+        }
+        staffId = preferCanonicalStaffId(staffId, name);
+        return { name: '', staffId };
+      }
+
+      // 1. Bracketed pattern
+      const mParen = name.match(/^(.*?)\s*[(（]([A-Za-z0-9_-]{4,10})[)）]$/);
+      if (mParen && isStaffIdToken(mParen[2])) {
+        name = mParen[1].trim();
+        staffId = preferCanonicalStaffId(staffId, mParen[2].trim());
+      } else {
+        const mParenStart = name.match(/^[(（]([A-Za-z0-9_-]{4,10})[)）]\s*(.*?)$/);
+        if (mParenStart && isStaffIdToken(mParenStart[1])) {
+          name = mParenStart[2].trim();
+          staffId = preferCanonicalStaffId(staffId, mParenStart[1].trim());
+        }
+      }
+
+      // 2. Suffix pattern
+      const mSuffix = name.match(/^(.*?)\s+([A-Za-z0-9_-]{4,10})$/);
+      if (mSuffix && isStaffIdToken(mSuffix[2])) {
+        name = mSuffix[1].trim();
+        staffId = preferCanonicalStaffId(staffId, mSuffix[2].trim());
+      }
+
+      // 3. Prefix pattern
+      const mPrefix = name.match(/^([A-Za-z0-9_-]{4,10})\s+(.*?)$/);
+      if (mPrefix && isStaffIdToken(mPrefix[1])) {
+        staffId = preferCanonicalStaffId(staffId, mPrefix[1].trim());
+        name = mPrefix[2].trim();
+      }
+
+      // 4. Strip known staffId from name
+      if (staffId) {
+        const idEscaped = staffId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const idRegex = new RegExp(`(^|\\s+|[(（])${idEscaped}($|\\s+|[)）])`, 'gi');
+        if (idRegex.test(name)) {
+          name = name.replace(idRegex, ' ').replace(/\s+/g, ' ').trim();
+        }
+        const digits = normDigits(staffId);
+        if (digits && digits.length >= 5) {
+          const digitsRegex = new RegExp(`(^|\\s+|[(（])${digits}($|\\s+|[)）])`, 'gi');
+          if (digitsRegex.test(name)) {
+            name = name.replace(digitsRegex, ' ').replace(/\s+/g, ' ').trim();
+          }
+        }
+      }
+
+      name = name.replace(/^[\s,;，；|/()（）\-]+|[\s,;，；|/()（）\-]+$/g, '').trim();
+      return { name, staffId };
+    }
+
+    function splitAndParsePeople(rawStr, defaultStaffId = '', defaultName = '') {
+      if (!rawStr) return [];
+      const text = String(rawStr).trim();
+      if (!text) return [];
+
+      const tokens = text.split(/[;\n；|]+/).map(t => t.trim()).filter(Boolean);
+      const results = [];
+
+      for (const token of tokens) {
+        let { name, staffId } = cleanNameAndStaffId(token, defaultStaffId);
+
+        if (!staffId && !name) {
+          if (/[\u4e00-\u9fa5]/.test(token) || /\s+/.test(token)) {
+            name = token;
+            staffId = defaultStaffId || '';
+          } else if (isStaffIdToken(token)) {
+            staffId = token;
+            name = defaultName || '';
+          } else {
+            name = token;
+            staffId = '';
+          }
+        }
+
+        if (isInvalidStaffId(staffId)) staffId = '';
+        if (isOrderNumber(name)) name = '';
+        if (name) name = name.replace(/^[\s,;，；|/()（）\-]+|[\s,;，；|/()（）\-]+$/g, '').trim();
+
+        if ((name || staffId) && !isTotalRow(staffId, name)) {
+          results.push({ name: name || staffId, staffId: staffId || '' });
+        }
+      }
+      return results;
+    }
+
+    const candidateList = [];
+    const candById = new Map();
+    const candByDigits = new Map();
+    const candByName = new Map();
+
+    function indexCandidate(c) {
+      if (c.staffId) {
+        const sId = String(c.staffId).trim().toLowerCase();
+        candById.set(sId, c);
+        if (sId.startsWith('m') && sId.length >= 4) {
+          candById.set(sId.slice(1), c);
+        } else {
+          candById.set('m' + sId, c);
+        }
+        const digits = normDigits(sId);
+        if (digits) candByDigits.set(digits, c);
+      }
+      if (c.name) {
+        const n = String(c.name).trim().toLowerCase();
+        candByName.set(n, c);
+        const cleanN = normName(n);
+        if (cleanN && cleanN !== n) {
+          candByName.set(cleanN, c);
+        }
+      }
+    }
+
+    const findExistingCandidate = (staffId, name) => {
+      const sId = String(staffId || '').trim().toLowerCase();
+      const sName = String(name || '').trim().toLowerCase();
+      if (!sId && !sName) return null;
+
+      if (sId) {
+        let found = candById.get(sId);
+        if (!found) {
+          const digits = normDigits(sId);
+          if (digits) found = candByDigits.get(digits);
+        }
+        if (found) {
+          return found;
+        }
+      }
+
+      if (sName) {
+        let found = candByName.get(sName);
+        if (!found) {
+          const clean = normName(sName);
+          if (clean) found = candByName.get(clean);
+        }
+        if (found) {
+          if (!sId || !found.staffId || areStaffIdsEquivalent(sId, found.staffId)) {
+            return found;
+          }
+        }
+      }
+      return null;
     };
 
-    for (const item of meetingRoster) {
-      const staffId = String(item.staffId || '').trim();
-      const name = String(item.name || '').trim();
-      const key = staffId || name;
-      if (!key) continue;
+    let roleMappedCount = 0;
+    let groupMappedCount = 0;
 
-      if (!candidateMap.has(key)) {
-        candidateMap.set(key, {
-          staffId,
-          name,
-          customerGroupId: matchGroup(item.customerGroup),
-          businessUnitId: matchBU(item.businessUnit),
-          role: matchRole(item.role),
-          sources: new Set(['meeting']),
-          snapshotTitles: item.snapshotTitles ? [...item.snapshotTitles] : [],
-          meetingDates: item.meetingDates ? [...item.meetingDates] : [],
-          selected: true
+    function isEmploymentCategory(str) {
+      if (!str) return false;
+      const s = String(str).trim();
+      return /^(自有|租赁|合作|外包|派遣|自有人|租赁人|合作方|全职|兼职|自有员工|租赁员工|合作人员)$/i.test(s)
+          || /属性|用工性质|用工类型|员工分类|雇佣/i.test(s);
+    }
+
+    for (const item of meetingRoster) {
+      const hasDelim = /[;\n；|]+/.test(item.name || '') || /[;\n；|]+/.test(item.staffId || '');
+      let parsedPeople = [];
+      if (hasDelim) {
+        parsedPeople = splitAndParsePeople(item.name || item.staffId, item.staffId, item.name);
+      }
+      if (!parsedPeople.length) {
+        parsedPeople = [{ staffId: item.staffId || '', name: item.name || '' }];
+      }
+
+      const itemTraces = Array.isArray(item.sourceTraces) ? [...item.sourceTraces] : [];
+      const rawBU = String(item.businessUnit || item.bu || '').trim();
+      const rawGroups = [];
+      if (Array.isArray(item.customerGroups) && item.customerGroups.length) {
+        rawGroups.push(...item.customerGroups);
+      } else if (item.customerGroup || item.customer) {
+        String(item.customerGroup || item.customer).split(/[,，;/]+/).forEach(g => rawGroups.push(g.trim()));
+      }
+
+      const rawRoles = [];
+      if (Array.isArray(item.roles) && item.roles.length) {
+        rawRoles.push(...item.roles);
+      } else if (item.role) {
+        String(item.role).split(/[,，;/]+/).forEach(r => rawRoles.push(r.trim()));
+      }
+
+      for (const p of parsedPeople) {
+        const cleaned = cleanNameAndStaffId(p.name, p.staffId);
+        let staffId = String(cleaned.staffId || '').trim();
+        let name = String(cleaned.name || '').trim();
+        if (isInvalidStaffId(staffId)) {
+          if (!name || name === staffId || isOrderNumber(name)) {
+            appendExtractLog(`ℹ️ [${staffId}] 识别为超长非工号字符(超过10位/单号)，已自动过滤`, 'info');
+            continue;
+          }
+          appendExtractLog(`ℹ️ [${name}] 原工号「${staffId}」超过10位字符，已自动过滤工号仅保留姓名`, 'info');
+          staffId = '';
+        }
+        if (isOrderNumber(name)) {
+          if (!staffId) continue;
+          name = '';
+        }
+        if (!staffId && !name) continue;
+        if (isTotalRow(staffId, name)) continue;
+
+        let existing = findExistingCandidate(staffId, name);
+        if (!existing) {
+          existing = {
+            staffId,
+            name,
+            rawBU: rawBU || '',
+            rawRoles: new Set(),
+            rawCustomerGroups: new Set(),
+            customerGroupIds: new Set(),
+            roles: new Set(),
+            businessUnitId: '',
+            sources: new Set(['meeting']),
+            snapshotTitles: item.snapshotTitles ? [...item.snapshotTitles] : [],
+            meetingDates: item.meetingDates ? [...item.meetingDates] : [],
+            sourceTraces: [...itemTraces],
+            selected: true
+          };
+          candidateList.push(existing);
+          indexCandidate(existing);
+        } else {
+          existing.sources.add('meeting');
+          const oldId = existing.staffId;
+          existing.staffId = preferCanonicalStaffId(existing.staffId, staffId);
+          if ((!existing.name || isStaffIdToken(existing.name) || existing.name === existing.staffId) && name && !isStaffIdToken(name)) {
+            existing.name = name;
+          } else if (name) {
+            existing.name = preferCanonicalName(existing.name, name);
+          }
+          if (!existing.rawBU && rawBU) existing.rawBU = rawBU;
+          if (item.snapshotTitles) existing.snapshotTitles.push(...item.snapshotTitles);
+          if (item.meetingDates) existing.meetingDates.push(...item.meetingDates);
+          if (itemTraces.length) {
+            if (!Array.isArray(existing.sourceTraces)) existing.sourceTraces = [];
+            for (const t of itemTraces) {
+              if (!existing.sourceTraces.some(et => et.snapshotTitle === t.snapshotTitle && et.rowNumber === t.rowNumber && et.field === t.field && et.sheetName === t.sheetName)) {
+                existing.sourceTraces.push(t);
+              }
+            }
+          }
+          if (existing.staffId !== oldId || (!existing.name && name)) {
+            indexCandidate(existing);
+          }
+        }
+
+        // Add customer groups
+        rawGroups.forEach(g => {
+          const str = String(g || '').trim();
+          if (!str) return;
+          existing.rawCustomerGroups.add(str);
+          const mapped = resolveMappedCustomerGroup(str);
+          if (mapped) {
+            existing.customerGroupIds.add(mapped);
+            groupMappedCount++;
+          }
         });
-      } else {
-        const cand = candidateMap.get(key);
-        cand.sources.add('meeting');
-        if (!cand.customerGroupId) cand.customerGroupId = matchGroup(item.customerGroup);
-        if (!cand.businessUnitId) cand.businessUnitId = matchBU(item.businessUnit);
-        if (!cand.role) cand.role = matchRole(item.role);
-        if (item.snapshotTitles) cand.snapshotTitles.push(...item.snapshotTitles);
-        if (item.meetingDates) cand.meetingDates.push(...item.meetingDates);
+
+        // Add roles
+        rawRoles.forEach(r => {
+          const str = String(r || '').trim();
+          if (!str || isEmploymentCategory(str)) return;
+          existing.rawRoles.add(str);
+          const mapped = resolveMappedRole(str);
+          if (mapped) {
+            existing.roles.add(mapped);
+            roleMappedCount++;
+          }
+        });
+
+        // BU remains singular: if PM exists, BU = PMO; else assign first valid BU
+        const isPm = existing.roles.has('PM') || [...existing.rawRoles].some(r => /^\s*pm\s*$/i.test(r));
+        if (isPm) {
+          existing.businessUnitId = matchBU('PMO') || 'PMO';
+        } else if (!existing.businessUnitId && rawBU) {
+          existing.businessUnitId = matchBU(rawBU);
+        }
       }
     }
 
     for (const item of incentiveRoster) {
-      const staffId = String(item.staffId || '').trim();
-      const name = String(item.name || '').trim();
-      const key = staffId || name;
-      if (!key) continue;
+      const hasDelim = /[;\n；|]+/.test(item.name || '') || /[;\n；|]+/.test(item.staffId || '');
+      let parsedPeople = [];
+      if (hasDelim) {
+        parsedPeople = splitAndParsePeople(item.name || item.staffId, item.staffId, item.name);
+      }
+      if (!parsedPeople.length) {
+        parsedPeople = [{ staffId: item.staffId || '', name: item.name || '' }];
+      }
 
-      if (!candidateMap.has(key)) {
-        candidateMap.set(key, {
-          staffId,
-          name,
-          customerGroupId: '',
-          businessUnitId: '',
-          role: matchRole(item.role),
-          sources: new Set(['incentive']),
-          snapshotTitles: item.snapshotTitles ? [...item.snapshotTitles] : [],
-          meetingDates: [],
-          selected: true
+      const itemTraces = Array.isArray(item.sourceTraces) ? [...item.sourceTraces] : [];
+      const rawBU = String(item.businessUnit || item.bu || '').trim();
+      const rawGroups = [];
+      if (Array.isArray(item.customerGroups) && item.customerGroups.length) {
+        rawGroups.push(...item.customerGroups);
+      } else if (item.customerGroup || item.customer) {
+        String(item.customerGroup || item.customer).split(/[,，;/]+/).forEach(g => rawGroups.push(g.trim()));
+      }
+
+      const rawRoles = [];
+      if (Array.isArray(item.roles) && item.roles.length) {
+        rawRoles.push(...item.roles);
+      } else if (item.role) {
+        String(item.role).split(/[,，;/]+/).forEach(r => rawRoles.push(r.trim()));
+      }
+
+      for (const p of parsedPeople) {
+        const cleaned = cleanNameAndStaffId(p.name, p.staffId);
+        let staffId = String(cleaned.staffId || '').trim();
+        let name = String(cleaned.name || '').trim();
+        if (isInvalidStaffId(staffId)) {
+          if (!name || name === staffId || isOrderNumber(name)) {
+            appendExtractLog(`ℹ️ [${staffId}] 识别为超长非工号字符(超过10位/单号)，已自动过滤`, 'info');
+            continue;
+          }
+          appendExtractLog(`ℹ️ [${name}] 原工号「${staffId}」超过10位字符，已自动过滤工号仅保留姓名`, 'info');
+          staffId = '';
+        }
+        if (isOrderNumber(name)) {
+          if (!staffId) continue;
+          name = '';
+        }
+        if (!staffId && !name) continue;
+        if (isTotalRow(staffId, name)) continue;
+
+        let existing = findExistingCandidate(staffId, name);
+        if (!existing) {
+          existing = {
+            staffId,
+            name,
+            rawBU: rawBU || '',
+            rawRoles: new Set(),
+            rawCustomerGroups: new Set(),
+            customerGroupIds: new Set(),
+            roles: new Set(),
+            businessUnitId: '',
+            sources: new Set(['incentive']),
+            snapshotTitles: item.snapshotTitles ? [...item.snapshotTitles] : [],
+            meetingDates: [],
+            sourceTraces: [...itemTraces],
+            selected: true
+          };
+          candidateList.push(existing);
+          indexCandidate(existing);
+        } else {
+          existing.sources.add('incentive');
+          const oldId = existing.staffId;
+          existing.staffId = preferCanonicalStaffId(existing.staffId, staffId);
+          if ((!existing.name || isStaffIdToken(existing.name) || existing.name === existing.staffId) && name && !isStaffIdToken(name)) {
+            existing.name = name;
+          } else if (name) {
+            existing.name = preferCanonicalName(existing.name, name);
+          }
+          if (!existing.rawBU && rawBU) existing.rawBU = rawBU;
+          if (item.snapshotTitles) existing.snapshotTitles.push(...item.snapshotTitles);
+          if (itemTraces.length) {
+            if (!Array.isArray(existing.sourceTraces)) existing.sourceTraces = [];
+            for (const t of itemTraces) {
+              if (!existing.sourceTraces.some(et => et.snapshotTitle === t.snapshotTitle && et.rowNumber === t.rowNumber && et.field === t.field && et.sheetName === t.sheetName)) {
+                existing.sourceTraces.push(t);
+              }
+            }
+          }
+          if (existing.staffId !== oldId || (!existing.name && name)) {
+            indexCandidate(existing);
+          }
+        }
+
+        // Add customer groups
+        rawGroups.forEach(g => {
+          const str = String(g || '').trim();
+          if (!str) return;
+          existing.rawCustomerGroups.add(str);
+          const mapped = resolveMappedCustomerGroup(str);
+          if (mapped) {
+            existing.customerGroupIds.add(mapped);
+            groupMappedCount++;
+          }
         });
-      } else {
-        const cand = candidateMap.get(key);
-        cand.sources.add('incentive');
-        if (!cand.role) cand.role = matchRole(item.role);
-        if (item.snapshotTitles) cand.snapshotTitles.push(...item.snapshotTitles);
+
+        // 操作激励快照“人员周期汇总”默认赋予 FME 和 TE 双重角色
+        ['FME', 'TE'].forEach(r => {
+          existing.rawRoles.add(r);
+          const mapped = resolveMappedRole(r);
+          if (mapped) {
+            existing.roles.add(mapped);
+            roleMappedCount++;
+          }
+        });
+
+        // Filter employment categories and add accurate roles if any
+        rawRoles.forEach(r => {
+          const str = String(r || '').trim();
+          if (!str || str === 'FME' || str === 'TE') return;
+          if (isEmploymentCategory(str)) {
+            appendExtractLog(`ℹ️ [${staffId || name}] 发现员工分类字段「${str}」，已自动排除`, 'info');
+            return;
+          }
+          existing.rawRoles.add(str);
+          const mapped = resolveMappedRole(str);
+          if (mapped) {
+            existing.roles.add(mapped);
+            roleMappedCount++;
+          }
+        });
+
+        // BU remains singular
+        const isPm = existing.roles.has('PM') || [...existing.rawRoles].some(r => /^\s*pm\s*$/i.test(r));
+        if (isPm) {
+          existing.businessUnitId = matchBU('PMO') || 'PMO';
+        } else if (!existing.businessUnitId && rawBU) {
+          existing.businessUnitId = matchBU(rawBU);
+        }
       }
     }
 
     const existingPersonnel = state.personnel || [];
-    extractedRosterCandidates = Array.from(candidateMap.values()).map(cand => {
-      const existing = existingPersonnel.find(p => !p.archived && ((cand.staffId && p.id === cand.staffId) || (cand.name && p.name === cand.name)));
+    const pById = new Map();
+    const pByDigits = new Map();
+    const pByName = new Map();
+
+    for (const p of existingPersonnel) {
+      if (p.archived) continue;
+      if (p.id) {
+        const pid = String(p.id).trim().toLowerCase();
+        pById.set(pid, p);
+        if (pid.startsWith('m') && pid.length >= 4) pById.set(pid.slice(1), p);
+        else pById.set('m' + pid, p);
+        const digits = normDigits(pid);
+        if (digits) pByDigits.set(digits, p);
+      }
+      if (p.name) {
+        pByName.set(String(p.name).trim().toLowerCase(), p);
+      }
+    }
+
+    let existingCount = 0;
+    let newCount = 0;
+
+    const rawCandidates = candidateList.map((cand, idx) => {
+      const candId = String(cand.staffId || '').trim().toLowerCase();
+      const candName = String(cand.name || '').trim().toLowerCase();
+
+      let existing = null;
+      if (candId) {
+        existing = pById.get(candId);
+        if (!existing) {
+          const digits = normDigits(candId);
+          if (digits) existing = pByDigits.get(digits);
+        }
+        if (existing && candName && existing.name) {
+          const exName = String(existing.name).trim().toLowerCase();
+          if (exName !== candName && normName(exName) !== normName(candName) && !isChinese(candName)) {
+            if (!areStaffIdsEquivalent(candId, existing.id)) {
+              existing = null;
+            }
+          }
+        }
+      }
+      if (!existing && candName) {
+        let byName = pByName.get(candName);
+        if (!byName) {
+          const clean = normName(candName);
+          if (clean) byName = pByName.get(clean);
+        }
+        if (byName && (!candId || !byName.id || areStaffIdsEquivalent(candId, byName.id))) {
+          existing = byName;
+        }
+      }
+
       const isExisting = Boolean(existing);
-      if (existing) {
-        if (!cand.customerGroupId && personGroups(existing).length) cand.customerGroupId = personGroups(existing)[0];
-        if (!cand.businessUnitId && personBusinessUnits(existing).length) cand.businessUnitId = personBusinessUnits(existing)[0];
-        if (!cand.role && personRoles(existing).length) cand.role = personRoles(existing)[0];
-        if (!cand.staffId && existing.id) cand.staffId = existing.id;
-        if (!cand.name && existing.name) cand.name = existing.name;
+      if (isExisting) {
+        if ((!cand.name || isStaffIdToken(cand.name) || cand.name === cand.staffId) && existing.name && !isStaffIdToken(existing.name)) {
+          cand.name = existing.name;
+        } else if (existing.name) {
+          cand.name = preferCanonicalName(cand.name, existing.name);
+        }
+        // Merge existing customer groups
+        personGroups(existing).forEach(gid => cand.customerGroupIds.add(gid));
+        // Merge existing roles
+        personRoles(existing).forEach(r => cand.roles.add(r));
+        // BU is singular
+        if (!cand.businessUnitId && personBusinessUnits(existing).length) {
+          cand.businessUnitId = personBusinessUnits(existing)[0];
+        }
+        if (cand.roles.has('PM')) {
+          cand.businessUnitId = matchBU('PMO') || 'PMO';
+        }
       }
       return {
         ...cand,
+        _idx: idx,
         isExisting,
         snapshotTitles: [...new Set(cand.snapshotTitles)],
-        meetingDates: [...new Set(cand.meetingDates)]
+        meetingDates: [...new Set(cand.meetingDates)],
+        sourceTraces: Array.isArray(cand.sourceTraces) ? [...cand.sourceTraces] : []
       };
     });
+
+    // 最终唯一性兜底收敛：确保不存在任何重复工号或姓名（同姓名记录完全收敛，只保留信息最全的一条）
+    const convergedMap = new Map();
+    const convergedList = [];
+    const convById = new Map();
+    const convByName = new Map();
+
+    for (const cand of rawCandidates) {
+      const keyId = cand.staffId ? String(cand.staffId).trim().toLowerCase() : '';
+      const keyName = cand.name ? normName(cand.name) : '';
+      if (!keyId && !keyName) continue;
+
+      let target = null;
+      if (keyId) {
+        target = convById.get(keyId);
+        if (!target) {
+          const digits = normDigits(keyId);
+          if (digits) target = convById.get('digits:' + digits);
+        }
+      }
+      if (!target && keyName) {
+        target = convByName.get(keyName);
+      }
+
+      if (!target) {
+        target = { ...cand };
+        convergedList.push(target);
+        if (keyId) {
+          convById.set(keyId, target);
+          const digits = normDigits(keyId);
+          if (digits) convById.set('digits:' + digits, target);
+        }
+        if (keyName) {
+          convByName.set(keyName, target);
+        }
+      } else {
+        // Merge cand into target, keeping the most complete information!
+        const canonicalId = preferCanonicalStaffId(target.staffId, cand.staffId);
+        if (canonicalId) {
+          target.staffId = canonicalId;
+          const cLower = canonicalId.toLowerCase();
+          convById.set(cLower, target);
+          const digits = normDigits(cLower);
+          if (digits) convById.set('digits:' + digits, target);
+        }
+        if ((!target.name || isStaffIdToken(target.name) || target.name === target.staffId) && cand.name && !isStaffIdToken(cand.name)) {
+          target.name = cand.name;
+        } else {
+          target.name = preferCanonicalName(target.name, cand.name);
+        }
+        const tNorm = normName(target.name);
+        if (tNorm) convByName.set(tNorm, target);
+
+        cand.sources?.forEach(s => target.sources.add(s));
+        cand.customerGroupIds?.forEach(g => target.customerGroupIds.add(g));
+        cand.rawCustomerGroups?.forEach(g => target.rawCustomerGroups.add(g));
+        cand.roles?.forEach(r => target.roles.add(r));
+        cand.rawRoles?.forEach(r => target.rawRoles.add(r));
+        if (!target.businessUnitId && cand.businessUnitId) target.businessUnitId = cand.businessUnitId;
+        target.isExisting = target.isExisting || cand.isExisting;
+        cand.snapshotTitles?.forEach(t => { if (!target.snapshotTitles.includes(t)) target.snapshotTitles.push(t); });
+        cand.meetingDates?.forEach(d => { if (!target.meetingDates.includes(d)) target.meetingDates.push(d); });
+
+        if (Array.isArray(cand.sourceTraces)) {
+          if (!Array.isArray(target.sourceTraces)) target.sourceTraces = [];
+          for (const tr of cand.sourceTraces) {
+            if (!target.sourceTraces.some(et => et.snapshotTitle === tr.snapshotTitle && et.rowNumber === tr.rowNumber && et.field === tr.field && et.sheetName === tr.sheetName)) {
+              target.sourceTraces.push(tr);
+            }
+          }
+        }
+      }
+    }
+
+    extractedRosterCandidates = convergedList;
+    existingCount = extractedRosterCandidates.filter(c => c.isExisting).length;
+    newCount = extractedRosterCandidates.length - existingCount;
+
+    let meetingOnlyCount = 0;
+    let incentiveOnlyCount = 0;
+    let bothCount = 0;
+    for (const c of extractedRosterCandidates) {
+      const hasM = c.sources && c.sources.has('meeting');
+      const hasI = c.sources && c.sources.has('incentive');
+      if (hasM && hasI) bothCount++;
+      else if (hasM) meetingOnlyCount++;
+      else if (hasI) incentiveOnlyCount++;
+    }
 
     extractedRosterCandidates.sort((a, b) => {
       if (a.isExisting !== b.isExisting) return a.isExisting ? 1 : -1;
       return (a.name || '').localeCompare(b.name || '', 'zh-CN');
     });
+    extractedRosterCandidates.forEach((c, i) => c._idx = i);
+    extractPage = 1;
+
+    appendExtractLog(`📊 聚合去重统计：完全去重后共 ${extractedRosterCandidates.length} 位候选人员 (双快照共有: ${bothCount} 人, 仅会议: ${meetingOnlyCount} 人, 仅激励: ${incentiveOnlyCount} 人；其中现有在册: ${existingCount} 人, 新候选人: ${newCount} 人)`, 'info');
+    appendExtractLog(`🏷️ 字段映射：角色规则匹配 ${roleMappedCount} 次，客户群规则匹配 ${groupMappedCount} 次，BU规则匹配 ${buMappedCount} 次`, 'info');
+
+    updateScannedUnmappedBanner();
+    if (scannedUnmappedRoles.size > 0) {
+      appendExtractLog(`⚠️ 发现待配置映射的原始角色 (${scannedUnmappedRoles.size}个): [${[...scannedUnmappedRoles].join(', ')}]`, 'warning');
+    }
+    if (scannedUnmappedGroups.size > 0) {
+      appendExtractLog(`⚠️ 发现待配置映射的原始客户群 (${scannedUnmappedGroups.size}个): [${[...scannedUnmappedGroups].join(', ')}]`, 'warning');
+    }
+    if (scannedUnmappedBUs.size > 0) {
+      appendExtractLog(`⚠️ 发现待配置映射的原始BU (${scannedUnmappedBUs.size}个): [${[...scannedUnmappedBUs].join(', ')}]`, 'warning');
+    }
+
+    setExtractProgress(100, `✅ 提取完成！完全去重后共聚合 ${extractedRosterCandidates.length} 位候选人员`, {
+      'extract-step-badge-4': {
+        icon: '✅',
+        detail: `去重后 ${extractedRosterCandidates.length} 人 (两源共有:${bothCount}, 新:${newCount})`,
+        bg: '#f0fdf4',
+        border: '#bbf7d0'
+      }
+    });
+
+    if (spinner) {
+      spinner.textContent = '✅';
+      spinner.style.animation = 'none';
+    }
+
+    appendExtractLog('🎉 快照人员名单提取与渲染就绪', 'success');
+
+    if (extractedRosterCandidates.length === 0) {
+      appendExtractLog('⚠️ 未能从历史快照中解析到任何候选人员，请检查快照库中是否有已保存的会议考勤或操作激励快照', 'warning');
+      if (retryBtn) retryBtn.style.display = 'inline-block';
+    }
 
     updateExtractCounts();
     document.querySelectorAll('[data-extract-source]').forEach(t => t.classList.toggle('active', t.dataset.extractSource === 'all'));
     renderExtractRosterTable();
   } catch (err) {
     console.error('Failed to extract roster:', err);
+    appendExtractLog(`❌ 提取流程发生未捕获异常: ${err.message}`, 'error');
+    setExtractProgress(100, `❌ 提取发生错误：${err.message}`, {
+      'extract-step-badge-4': { icon: '❌', detail: '流程异常', bg: '#fef2f2', border: '#fca5a5' }
+    });
+    if (spinner) {
+      spinner.textContent = '❌';
+      spinner.style.animation = 'none';
+    }
+    if (retryBtn) retryBtn.style.display = 'inline-block';
     if (tbody) {
-      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:30px;color:#ef4444;">⚠️ 提取人员名单失败：${escapeHtml(err.message)}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:30px;color:#ef4444;">⚠️ 提取人员名单失败：${escapeHtml(err.message)}（详见下方诊断日志）</td></tr>`;
     }
   }
 }
@@ -3087,9 +4990,15 @@ async function confirmImportSnapshotRoster() {
     return;
   }
 
-  const invalid = selected.filter(c => !c.staffId?.trim() || !c.name?.trim() || !c.customerGroupId || !c.role);
+  const invalid = selected.filter(c => {
+    const hasId = Boolean(c.staffId?.trim());
+    const hasName = Boolean(c.name?.trim());
+    const hasGroup = Boolean((c.customerGroupIds && c.customerGroupIds.size > 0) || c.customerGroupId);
+    const hasRole = Boolean((c.roles && c.roles.size > 0) || c.role);
+    return !hasId || !hasName || !hasGroup || !hasRole;
+  });
   if (invalid.length > 0) {
-    await uiAlert(`所选人员中有 ${invalid.length} 人尚未补齐必填项（工号、姓名、客户群及角色为必填项）。\n请先使用上方的批量填充或在列表中逐行补齐后再导入。`, '必填字段不完整', 'warning', '⚠️');
+    await uiAlert(`所选人员中有 ${invalid.length} 人尚未补齐必填项（工号、姓名、客户群及角色为必填项，且每人至少关联一个客户群和一个角色）。\n请先使用上方的批量填充或在列表中逐行补齐后再导入。`, '必填字段不完整', 'warning', '⚠️');
     return;
   }
 
@@ -3109,12 +5018,18 @@ async function confirmImportSnapshotRoster() {
   try {
     let successCount = 0;
     for (const cand of selected) {
+      const groupIds = cand.customerGroupIds && cand.customerGroupIds.size > 0 
+        ? [...cand.customerGroupIds] 
+        : (cand.customerGroupId ? [cand.customerGroupId] : []);
+      const roleList = cand.roles && cand.roles.size > 0 
+        ? [...cand.roles] 
+        : (cand.role ? [cand.role] : []);
       const payload = {
         id: cand.staffId.trim(),
         name: cand.name.trim(),
-        customerGroupIds: [cand.customerGroupId],
+        customerGroupIds: groupIds,
         businessUnitIds: cand.businessUnitId ? [cand.businessUnitId] : [],
-        roles: [cand.role]
+        roles: roleList
       };
       await request('/personnel', { method: 'POST', body: JSON.stringify(payload) });
       successCount++;
@@ -4850,12 +6765,269 @@ if(event.target.closest('#btn-extract-roster')){
   openSnapshotRosterDialog();
   return;
 }
+if(event.target.closest('#btn-copy-extract-logs')){
+  const text = extractLogs.map(l => `[${l.time}] [${l.type.toUpperCase()}] ${l.msg}`).join('\n');
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>{
+      const btn = $('btn-copy-extract-logs');
+      if(btn){
+        const old = btn.textContent;
+        btn.textContent = '✅ 已复制';
+        setTimeout(() => { btn.textContent = old; }, 2000);
+      }
+    }).catch(()=>{});
+  }
+  return;
+}
+if(event.target.closest('#btn-retry-extract')){
+  openSnapshotRosterDialog();
+  return;
+}
+if(event.target.closest('#btn-toggle-extract-log-body')){
+  const term = $('extract-log-terminal');
+  const btn = $('btn-toggle-extract-log-body');
+  if(term){
+    const isHidden = term.style.display === 'none';
+    term.style.display = isHidden ? 'block' : 'none';
+    if(btn) btn.textContent = isHidden ? '▲ 收起日志' : '▼ 展开日志';
+  }
+  return;
+}
+if(event.target.closest('#btn-toggle-extract-log-summary')){
+  const c = $('extract-loading-container');
+  const term = $('extract-log-terminal');
+  const btn = $('btn-toggle-extract-log-body');
+  if(c){
+    c.style.display = 'flex';
+    if(term) term.style.display = 'block';
+    if(btn) btn.textContent = '▲ 收起日志';
+    c.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+  return;
+}
+const removeGrpBtn = event.target.closest('.btn-remove-cand-group');
+if (removeGrpBtn) {
+  const idx = Number(removeGrpBtn.dataset.candIdx);
+  const gid = removeGrpBtn.dataset.groupId;
+  if (extractedRosterCandidates[idx] && extractedRosterCandidates[idx].customerGroupIds) {
+    extractedRosterCandidates[idx].customerGroupIds.delete(gid);
+    renderExtractRosterTable();
+  }
+  return;
+}
+const removeRoleBtn = event.target.closest('.btn-remove-cand-role');
+if (removeRoleBtn) {
+  const idx = Number(removeRoleBtn.dataset.candIdx);
+  const rName = removeRoleBtn.dataset.roleName;
+  if (extractedRosterCandidates[idx] && extractedRosterCandidates[idx].roles) {
+    extractedRosterCandidates[idx].roles.delete(rName);
+    renderExtractRosterTable();
+  }
+  return;
+}
 if(event.target.closest('#close-snapshot-roster')||event.target.closest('#cancel-snapshot-roster')){
   $('snapshot-roster-dialog')?.close();
   return;
 }
 if(event.target.id==='snapshot-roster-dialog'){
   $('snapshot-roster-dialog')?.close();
+  return;
+}
+if(event.target.closest('#btn-open-snapshot-mappings')||event.target.closest('#btn-quick-config-mappings')){
+  openSnapshotMappingsDialog('roles');
+  return;
+}
+const mapRoleChip=event.target.closest('[data-open-mapping-role]');
+if(mapRoleChip){
+  openSnapshotMappingsDialog('roles',mapRoleChip.dataset.openMappingRole);
+  return;
+}
+const mapGroupChip=event.target.closest('[data-open-mapping-group]');
+if(mapGroupChip){
+  openSnapshotMappingsDialog('groups',mapGroupChip.dataset.openMappingGroup);
+  return;
+}
+const mapBuChip=event.target.closest('[data-open-mapping-bu]');
+if(mapBuChip){
+  openSnapshotMappingsDialog('bus',mapBuChip.dataset.openMappingBu);
+  return;
+}
+if(event.target.closest('#close-snapshot-mappings')||event.target.closest('#cancel-snapshot-mappings')){
+  $('snapshot-mappings-dialog')?.close();
+  return;
+}
+if(event.target.id==='snapshot-mappings-dialog'){
+  $('snapshot-mappings-dialog')?.close();
+  return;
+}
+if(event.target.closest('#tab-btn-map-roles')){
+  switchMappingTab('roles');
+  return;
+}
+if(event.target.closest('#tab-btn-map-groups')){
+  switchMappingTab('groups');
+  return;
+}
+if(event.target.closest('#tab-btn-map-bus')){
+  switchMappingTab('bus');
+  return;
+}
+if(event.target.closest('#btn-add-role-mapping')){
+  addRoleMappingFromInput();
+  return;
+}
+if(event.target.closest('#btn-add-group-mapping')){
+  addGroupMappingFromInput();
+  return;
+}
+if(event.target.closest('#btn-add-bu-mapping')){
+  addBuMappingFromInput();
+  return;
+}
+if(event.target.closest('#btn-cancel-edit-role-mapping')){
+  cancelEditRoleMapping();
+  return;
+}
+if(event.target.closest('#btn-cancel-edit-group-mapping')){
+  cancelEditGroupMapping();
+  return;
+}
+if(event.target.closest('#btn-cancel-edit-bu-mapping')){
+  cancelEditBuMapping();
+  return;
+}
+const editRoleBtn=event.target.closest('[data-edit-role-idx]');
+if(editRoleBtn){
+  const idx=Number(editRoleBtn.dataset.editRoleIdx);
+  if(!isNaN(idx)&&idx>=0&&idx<tempEditingMappings.roles.length){
+    editingRoleIdx=idx;
+    const m=tempEditingMappings.roles[idx];
+    if($('input-map-role-scanned')) $('input-map-role-scanned').value=m.scanned;
+    if($('select-map-role-target')) {
+      const activeRoles = active('roles');
+      const targetLower = String(m.target || '').trim().toLowerCase();
+      const rMatch = activeRoles.find(r => (r.value || '').toLowerCase() === targetLower || (r.id || '').toLowerCase() === targetLower);
+      $('select-map-role-target').value = rMatch ? rMatch.value : m.target;
+    }
+    if($('btn-add-role-mapping')) $('btn-add-role-mapping').textContent='💾 更新角色映射';
+    if($('btn-cancel-edit-role-mapping')) $('btn-cancel-edit-role-mapping').style.display='inline-block';
+    if($('input-map-role-scanned')) $('input-map-role-scanned').focus();
+    renderSnapshotMappingsTables();
+  }
+  return;
+}
+const editGroupBtn=event.target.closest('[data-edit-group-idx]');
+if(editGroupBtn){
+  const idx=Number(editGroupBtn.dataset.editGroupIdx);
+  if(!isNaN(idx)&&idx>=0&&idx<tempEditingMappings.customerGroups.length){
+    editingGroupIdx=idx;
+    const m=tempEditingMappings.customerGroups[idx];
+    if($('input-map-group-scanned')) $('input-map-group-scanned').value=m.scanned;
+    if($('select-map-group-target')) {
+      const activeGroups = active('customerGroups');
+      const targetLower = String(m.target || '').trim().toLowerCase();
+      const gMatch = activeGroups.find(g => (g.id || '').toLowerCase() === targetLower || (g.value || '').toLowerCase() === targetLower);
+      $('select-map-group-target').value = gMatch ? gMatch.value : m.target;
+    }
+    if($('btn-add-group-mapping')) $('btn-add-group-mapping').textContent='💾 更新客户群映射';
+    if($('btn-cancel-edit-group-mapping')) $('btn-cancel-edit-group-mapping').style.display='inline-block';
+    if($('input-map-group-scanned')) $('input-map-group-scanned').focus();
+    renderSnapshotMappingsTables();
+  }
+  return;
+}
+const editBuBtn=event.target.closest('[data-edit-bu-idx]');
+if(editBuBtn){
+  const idx=Number(editBuBtn.dataset.editBuIdx);
+  if(!isNaN(idx)&&idx>=0&&idx<(tempEditingMappings.businessUnits||[]).length){
+    editingBuIdx=idx;
+    const m=tempEditingMappings.businessUnits[idx];
+    if($('input-map-bu-scanned')) $('input-map-bu-scanned').value=m.scanned;
+    if($('select-map-bu-target')) {
+      const activeBUs = active('businessUnits');
+      const targetLower = String(m.target || '').trim().toLowerCase();
+      const bMatch = activeBUs.find(b => (b.id || '').toLowerCase() === targetLower || (b.value || '').toLowerCase() === targetLower);
+      $('select-map-bu-target').value = bMatch ? (bMatch.id || bMatch.value) : m.target;
+    }
+    if($('btn-add-bu-mapping')) $('btn-add-bu-mapping').textContent='💾 更新 BU 映射';
+    if($('btn-cancel-edit-bu-mapping')) $('btn-cancel-edit-bu-mapping').style.display='inline-block';
+    if($('input-map-bu-scanned')) $('input-map-bu-scanned').focus();
+    renderSnapshotMappingsTables();
+  }
+  return;
+}
+const delRoleBtn=event.target.closest('[data-del-role-idx]');
+if(delRoleBtn){
+  const idx=Number(delRoleBtn.dataset.delRoleIdx);
+  if(!isNaN(idx)&&idx>=0&&idx<tempEditingMappings.roles.length){
+    tempEditingMappings.roles.splice(idx,1);
+    if(editingRoleIdx===idx){
+      editingRoleIdx=null;
+      if($('btn-add-role-mapping')) $('btn-add-role-mapping').textContent='➕ 添加映射';
+      if($('btn-cancel-edit-role-mapping')) $('btn-cancel-edit-role-mapping').style.display='none';
+      if($('input-map-role-scanned')) $('input-map-role-scanned').value='';
+    } else if(editingRoleIdx>idx){
+      editingRoleIdx--;
+    }
+    renderSnapshotMappingsTables();
+  }
+  return;
+}
+const delGroupBtn=event.target.closest('[data-del-group-idx]');
+if(delGroupBtn){
+  const idx=Number(delGroupBtn.dataset.delGroupIdx);
+  if(!isNaN(idx)&&idx>=0&&idx<tempEditingMappings.customerGroups.length){
+    tempEditingMappings.customerGroups.splice(idx,1);
+    if(editingGroupIdx===idx){
+      editingGroupIdx=null;
+      if($('btn-add-group-mapping')) $('btn-add-group-mapping').textContent='➕ 添加映射';
+      if($('btn-cancel-edit-group-mapping')) $('btn-cancel-edit-group-mapping').style.display='none';
+      if($('input-map-group-scanned')) $('input-map-group-scanned').value='';
+    } else if(editingGroupIdx>idx){
+      editingGroupIdx--;
+    }
+    renderSnapshotMappingsTables();
+  }
+  return;
+}
+const delBuBtn=event.target.closest('[data-del-bu-idx]');
+if(delBuBtn){
+  const idx=Number(delBuBtn.dataset.delBuIdx);
+  if(!isNaN(idx)&&idx>=0&&idx<(tempEditingMappings.businessUnits||[]).length){
+    tempEditingMappings.businessUnits.splice(idx,1);
+    if(editingBuIdx===idx){
+      editingBuIdx=null;
+      if($('btn-add-bu-mapping')) $('btn-add-bu-mapping').textContent='➕ 添加映射';
+      if($('btn-cancel-edit-bu-mapping')) $('btn-cancel-edit-bu-mapping').style.display='none';
+      if($('input-map-bu-scanned')) $('input-map-bu-scanned').value='';
+    } else if(editingBuIdx>idx){
+      editingBuIdx--;
+    }
+    renderSnapshotMappingsTables();
+  }
+  return;
+}
+const fillRoleChip=event.target.closest('[data-fill-scanned-role]');
+if(fillRoleChip){
+  if($('input-map-role-scanned')) $('input-map-role-scanned').value=fillRoleChip.dataset.fillScannedRole;
+  return;
+}
+const fillGroupChip=event.target.closest('[data-fill-scanned-group]');
+if(fillGroupChip){
+  if($('input-map-group-scanned')) $('input-map-group-scanned').value=fillGroupChip.dataset.fillScannedGroup;
+  return;
+}
+const fillBuChip=event.target.closest('[data-fill-scanned-bu]');
+if(fillBuChip){
+  if($('input-map-bu-scanned')) $('input-map-bu-scanned').value=fillBuChip.dataset.fillScannedBu;
+  return;
+}
+if(event.target.closest('#btn-reset-snapshot-mappings')){
+  resetSnapshotMappingsToDefault();
+  return;
+}
+if(event.target.closest('#confirm-save-snapshot-mappings')){
+  saveSnapshotMappingsHandler();
   return;
 }
 if(event.target.closest('#btn-apply-batch-group')){
@@ -4877,8 +7049,23 @@ if(event.target.closest('#confirm-import-snapshot-roster')){
 const extractTab=event.target.closest('[data-extract-source]');
 if(extractTab){
   currentExtractFilter=extractTab.dataset.extractSource;
+  extractPage=1;
   document.querySelectorAll('[data-extract-source]').forEach(t=>t.classList.toggle('active',t===extractTab));
   renderExtractRosterTable();
+  return;
+}
+const extractPageBtn=event.target.closest('.btn-extract-page');
+if(extractPageBtn && extractPageBtn.dataset.extractPageDelta){
+  extractPage += Number(extractPageBtn.dataset.extractPageDelta);
+  renderExtractRosterTable();
+  return;
+}
+if(event.target.closest('#btn-extract-jump-go')){
+  const jInput = $('extract-jump-page-input');
+  if(jInput){
+    extractPage = Math.max(1, Number(jInput.value) || 1);
+    renderExtractRosterTable();
+  }
   return;
 }
 if(event.target.closest('#close-batch-personnel')||event.target.closest('#cancel-batch-personnel')){
@@ -5099,6 +7286,12 @@ document.addEventListener('change',async event=>{
 const kind=event.target.dataset.pageSize;
 if(kind){pageSizes[kind]=Number(event.target.value);pages[kind]=1;localStorage.setItem('hw_dept_page_sizes_v1',JSON.stringify(pageSizes));render()}
 if(event.target.id==='audit-quick-size'){auditPageSize=Number(event.target.value);auditPage=1;await loadAudit()}
+if(event.target.id==='extract-page-size-select'){
+  extractPageSize = event.target.value === 'all' ? 'all' : Number(event.target.value);
+  extractPage = 1;
+  renderExtractRosterTable();
+  return;
+}
 if(event.target.id==='extract-select-all'){
   const checked=event.target.checked;
   getFilteredExtractCandidates().forEach(c=>c.selected=checked);
@@ -5119,13 +7312,13 @@ if(event.target.classList?.contains('extract-row-cb')){
   }
   return;
 }
-if(event.target.classList?.contains('extract-row-group')){
+if(event.target.classList?.contains('extract-add-group-select')){
   const idx=Number(event.target.dataset.candIdx);
-  if(extractedRosterCandidates[idx]){
-    extractedRosterCandidates[idx].customerGroupId=event.target.value;
-    event.target.style.borderColor=event.target.value?'#cbd5e1':'#f87171';
-    event.target.style.backgroundColor=event.target.value?'#fff':'#fef2f2';
-    updateExtractSummary();
+  const val=event.target.value;
+  if(val && extractedRosterCandidates[idx]){
+    if(!extractedRosterCandidates[idx].customerGroupIds) extractedRosterCandidates[idx].customerGroupIds = new Set();
+    extractedRosterCandidates[idx].customerGroupIds.add(val);
+    renderExtractRosterTable();
   }
   return;
 }
@@ -5136,13 +7329,17 @@ if(event.target.classList?.contains('extract-row-bu')){
   }
   return;
 }
-if(event.target.classList?.contains('extract-row-role')){
+if(event.target.classList?.contains('extract-add-role-select')){
   const idx=Number(event.target.dataset.candIdx);
-  if(extractedRosterCandidates[idx]){
-    extractedRosterCandidates[idx].role=event.target.value;
-    event.target.style.borderColor=event.target.value?'#cbd5e1':'#f87171';
-    event.target.style.backgroundColor=event.target.value?'#fff':'#fef2f2';
-    updateExtractSummary();
+  const val=event.target.value;
+  if(val && extractedRosterCandidates[idx]){
+    if(!extractedRosterCandidates[idx].roles) extractedRosterCandidates[idx].roles = new Set();
+    extractedRosterCandidates[idx].roles.add(val);
+    if(val === 'PM'){
+      const pmoBU = active('businessUnits').find(b => (b.value || '').toUpperCase() === 'PMO' || (b.id || '').toUpperCase() === 'PMO');
+      if(pmoBU) extractedRosterCandidates[idx].businessUnitId = pmoBU.id;
+    }
+    renderExtractRosterTable();
   }
   return;
 }
@@ -5165,7 +7362,7 @@ if(event.target.classList?.contains('extract-inline-name')){
   return;
 }
 });
-$('extract-search-input')?.addEventListener('input',()=>renderExtractRosterTable());
+$('extract-search-input')?.addEventListener('input',()=>{ extractPage = 1; renderExtractRosterTable(); });
 document.addEventListener('input',event=>{
   if(event.target.classList?.contains('extract-inline-staffid')){
     const idx=Number(event.target.dataset.candIdx);
@@ -5183,8 +7380,22 @@ document.addEventListener('input',event=>{
     }
   }
 });
-document.addEventListener('keydown',event=>{if(event.key==='Enter'&&event.target.dataset.jumpInput){event.preventDefault();const kind=event.target.dataset.jumpInput;pages[kind]=Math.max(1,Number(event.target.value)||1);render()}});
+document.addEventListener('keydown',event=>{
+  if(event.key==='Enter'&&event.target.dataset.jumpInput){
+    event.preventDefault();
+    const kind=event.target.dataset.jumpInput;
+    pages[kind]=Math.max(1,Number(event.target.value)||1);
+    render();
+  }
+  if(event.key==='Enter'&&event.target.id==='extract-jump-page-input'){
+    event.preventDefault();
+    extractPage=Math.max(1,Number(event.target.value)||1);
+    renderExtractRosterTable();
+  }
+});
 ['new-group','new-bu','new-role','new-category','new-deduction'].forEach(id=>{const el=$(id);if(el)el.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();(el.closest('.org-add-card')?.querySelector('button[data-config]')||el.parentElement?.querySelector('button[data-config]'))?.click()}})});
+$('input-map-role-scanned')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addRoleMappingFromInput();}});
+$('input-map-group-scanned')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addGroupMappingFromInput();}});
 
 const expBtn=$('export-records-btn');
 if(expBtn){
