@@ -7,7 +7,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
 app.use('/api/report-msg', require('../backend/routes/report-msg'));
 
 test('both monthly reports offer the MSG export action', () => {
@@ -84,6 +84,15 @@ test('report MSG export rejects empty content', async () => {
     assert.equal(response.status, 400);
 });
 
+test('report MSG export accepts a full bilingual report larger than the old HTML limit', async () => {
+    const html = `<html><body><p>${'Monthly report content '.repeat(100_000)}</p></body></html>`;
+    const response = await request(app).post('/api/report-msg/export')
+        .send({ subject:'完整中英文月报', html, text:'Monthly report' });
+    assert.ok(html.length > 2_000_000);
+    assert.equal(response.status, 200);
+    assert.equal(Number(response.headers['x-report-msg-html-size']), Buffer.byteLength(html, 'utf8'));
+});
+
 test('report MSG export supports envelope base64 wrapped requests', async () => {
     const html = '<html><body><table><tr><td style="color:#1d4ed8">信封封装月报</td></tr></table></body></html>';
     const payload = {
@@ -115,4 +124,3 @@ test('report-msg-export.js defines buildLocalOutlookEml with X-Unsent draft supp
     assert.match(source, /multipart\/mixed/);
     assert.match(source, /isProxyBlock/);
 });
-

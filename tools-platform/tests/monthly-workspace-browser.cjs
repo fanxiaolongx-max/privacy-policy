@@ -142,6 +142,13 @@ app.whenReady().then(async () => {
     assert.equal(await evaluate(() => window.MonthlyWorkspace.collectProject().settings.sourceTimeHidden), true);
     await evaluate(() => {
         document.querySelector('[data-action="config"]').click();
+    });
+    assert.equal(await evaluate(() => {
+        const rect = document.getElementById('monthlyWorkspaceDialog').getBoundingClientRect();
+        return Math.abs(rect.left + rect.width / 2 - document.documentElement.clientWidth / 2) < 2 && Math.abs(rect.top + rect.height / 2 - innerHeight / 2) < 2;
+    }), true);
+    assert.equal(await evaluate(() => document.getElementById('monthlyNetworkMappingText').getBoundingClientRect().right <= document.getElementById('monthlyWorkspaceDialog').getBoundingClientRect().right), true);
+    await evaluate(() => {
         document.getElementById('monthlyWarningDays').value = '5';
         document.getElementById('monthlyNetworkMappingText').value = 'EG-Egypt ET = ET';
         document.getElementById('monthlyConfigSave').click();
@@ -195,6 +202,16 @@ app.whenReady().then(async () => {
     assert.equal(fs.readFileSync(pdf).subarray(0,4).toString(), '%PDF');
     await evaluate(() => { window.prompt = () => 'Smoke snapshot'; document.querySelector('[data-action="save-snapshot"]').click(); });
     await until(async () => (await window.ReportSnapshotDiff.Store.listSnapshots({ toolKey:'standard-monthly-report:default' })).some(item => item.name === 'Smoke snapshot'));
+    await evaluate(() => document.querySelector('[data-action="snapshots"]').click());
+    await until(() => !!document.querySelector('.monthly-snapshot-manager .report-snapshot-mgr-dialog'));
+    assert.equal(await evaluate(() => document.querySelectorAll('.report-snapshot-item-actions button').length), 4);
+    assert.equal(await evaluate(() => [...document.querySelectorAll('.report-snapshot-item-actions button')].every(button => getComputedStyle(button).height === '36px')), true);
+    assert.equal(await evaluate(() => {
+        const info = document.querySelector('.report-snapshot-item-info').getBoundingClientRect();
+        const actions = document.querySelector('.report-snapshot-item-actions').getBoundingClientRect();
+        return info.right < actions.left && actions.right <= document.querySelector('.report-snapshot-item').getBoundingClientRect().right;
+    }), true);
+    await evaluate(() => document.getElementById('smCloseBtn').click());
     await evaluate(() => document.querySelector('[data-action="diff"]').click());
     await until(() => !!document.getElementById('reportDiffModalOverlay'));
     assert.match(await evaluate(() => document.getElementById('rdBaselineSelect').textContent), /Smoke snapshot/);
@@ -204,6 +221,10 @@ app.whenReady().then(async () => {
     assert.ok(fs.statSync(msg).size > 1000);
     assert.equal(msgHtmlHasChart, true);
     assert.equal(msgHtmlHasBothLanguages, true);
+    assert.match(await evaluate(() => document.querySelector('#monthlyMsgProgress .monthly-msg-log').textContent), /HTML 正文：.*附件编码：.*请求总量：/);
+    assert.match(await evaluate(() => document.querySelector('#monthlyMsgProgress .monthly-msg-log').textContent), /服务端响应：HTTP 200/);
+    assert.equal(await evaluate(() => document.querySelector('#monthlyMsgProgress .monthly-msg-done').disabled), false);
+    await evaluate(() => document.querySelector('#monthlyMsgProgress .monthly-msg-done').click());
     assert.equal(msgHtmlHasSubtleHighlight, true);
     win.setSize(600, 900);
     await evaluate(() => document.documentElement.setAttribute('data-theme','dark'));
@@ -213,11 +234,28 @@ app.whenReady().then(async () => {
     assert.equal(await evaluate(() => getComputedStyle(document.querySelectorAll('.monthly-ticket-network-group')[3]).borderLeftWidth), '1px');
     assert.equal(await evaluate(() => getComputedStyle(document.getElementById('monthlyWorkspaceActions')).display), 'grid');
     assert.equal(await evaluate(() => getComputedStyle(document.querySelector('[data-action="pdf"]')).color), 'rgb(226, 232, 240)');
+    await evaluate(() => document.querySelector('[data-action="config"]').click());
+    assert.equal(await evaluate(() => getComputedStyle(document.getElementById('monthlyWorkspaceDialog')).backgroundColor), 'rgb(30, 41, 59)');
+    await evaluate(() => document.getElementById('monthlyConfigClose').click());
     win.setSize(380, 900);
     await until(() => getComputedStyle(document.querySelector('.monthly-ticket-grid')).gridTemplateColumns.split(' ').length === 1);
     assert.equal(await evaluate(() => getComputedStyle(document.querySelector('.monthly-ticket-grid')).gridTemplateColumns.split(' ').length), 1);
     assert.equal(await evaluate(() => getComputedStyle(document.querySelector('.monthly-actions-buttons')).gridTemplateColumns.split(' ').length), 2);
     assert.equal(await evaluate(() => document.getElementById('monthlyWorkspaceActions').scrollWidth <= document.getElementById('monthlyWorkspaceActions').clientWidth + 1), true);
+    await evaluate(() => document.querySelector('[data-action="snapshots"]').click());
+    await until(() => !!document.querySelector('.monthly-snapshot-manager .report-snapshot-mgr-dialog'));
+    assert.equal(await evaluate(() => {
+        const card = document.querySelector('.report-snapshot-item').getBoundingClientRect();
+        const actions = document.querySelector('.report-snapshot-item-actions').getBoundingClientRect();
+        return actions.left >= card.left && actions.right <= card.right && actions.top > document.querySelector('.report-snapshot-item-info').getBoundingClientRect().top;
+    }), true);
+    await evaluate(() => document.getElementById('smCloseBtn').click());
+    await evaluate(() => document.querySelector('[data-action="config"]').click());
+    assert.equal(await evaluate(() => {
+        const rect = document.getElementById('monthlyWorkspaceDialog').getBoundingClientRect();
+        return rect.left >= 0 && rect.right <= innerWidth && rect.top >= 0 && rect.bottom <= innerHeight;
+    }), true);
+    await evaluate(() => document.getElementById('monthlyConfigClose').click());
     console.log('Monthly workspace browser smoke test passed.');
 }).catch(error => { console.error(error); process.exitCode = 1; }).finally(async () => {
     if (win && !win.isDestroyed()) win.destroy();

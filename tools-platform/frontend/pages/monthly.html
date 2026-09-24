@@ -297,19 +297,87 @@
         .monthly-png-menu button { display:block; width:100%; height:auto; min-height:38px; border:0; text-align:left; justify-content:flex-start; }
         .monthly-editable:focus { outline:2px solid #4f83cc; outline-offset:2px; border-radius:3px; }
         #monthlyWorkspaceStatus { min-height:18px; text-align:center; font-size:12px; color:#64748b; }
-        .monthly-workspace-dialog { border:0; border-radius:12px; width:min(640px,92vw); max-height:80vh; overflow:auto; box-shadow:0 20px 60px #0005; padding:24px; background:#fff; color:#17345b; }
-        .monthly-workspace-dialog::backdrop { background:#0f172a99; }
-        .monthly-workspace-dialog textarea { width:100%; min-height:190px; margin:10px 0; font:13px monospace; }
-        .monthly-workspace-dialog input[type=number] { width:76px; }
-        .monthly-workspace-dialog .dialog-actions { display:flex; justify-content:flex-end; gap:8px; }
+        #monthlyWorkspaceDialog { box-sizing:border-box; width:min(600px,calc(100vw - 32px)); max-height:min(760px,calc(100dvh - 32px)); padding:0; overflow:auto; border:1px solid #dce5ef; border-radius:16px; background:#fff; color:#17345b; box-shadow:0 28px 80px #0f172a38; font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; }
+        #monthlyWorkspaceDialog[open] { position:fixed; inset:50% auto auto 50%; transform:translate(-50%,-50%); margin:0; }
+        #monthlyWorkspaceDialog::backdrop { background:#0f172a8c; }
+        .monthly-config-header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; padding:23px 26px 19px; background:linear-gradient(120deg,#f5f9ff,#fff); border-bottom:1px solid #e9eef5; }
+        .monthly-config-header h3 { margin:0; font-size:19px; line-height:1.35; color:#102b50; }
+        .monthly-config-header p { margin:5px 0 0; color:#64748b; font-size:12px; }
+        #monthlyConfigClose { flex:none; display:grid; place-items:center; width:30px; height:30px; padding:0; border:0; border-radius:7px; background:transparent; color:#64748b; cursor:pointer; font-size:21px; line-height:1; }
+        #monthlyConfigClose:hover { background:#e8eff8; color:#17345b; }
+        .monthly-config-body { display:grid; gap:21px; padding:22px 26px 25px; }
+        .monthly-config-threshold { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:15px 17px; border:1px solid #e4ebf3; border-radius:10px; background:#f8fafd; }
+        .monthly-config-threshold label, .monthly-config-mapping label { display:block; color:#17345b; font-size:13px; font-weight:700; }
+        .monthly-config-threshold-control { display:flex; align-items:center; gap:8px; flex:none; color:#64748b; font-size:12px; }
+        #monthlyWarningDays { box-sizing:border-box; width:76px; height:38px; padding:0 8px; border:1px solid #cbd5e1; border-radius:7px; background:#fff; color:#17345b; text-align:center; font-size:14px; font-weight:600; }
+        #monthlyMappingHelp { margin:5px 0 10px; color:#64748b; font-size:12px; line-height:1.6; }
+        #monthlyNetworkMappingText { box-sizing:border-box; display:block; width:100%; min-height:168px; padding:12px 14px; resize:vertical; border:1px solid #cbd5e1; border-radius:8px; background:#fff; color:#17345b; font:13px/1.65 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+        #monthlyNetworkMappingText::placeholder { color:#94a3b8; }
+        #monthlyWarningDays:focus, #monthlyNetworkMappingText:focus { outline:2px solid #87b5ed; outline-offset:1px; border-color:#5d98db; }
+        .monthly-config-footer { display:flex; justify-content:flex-end; gap:9px; padding:15px 26px; border-top:1px solid #e9eef5; background:#fafcff; }
+        .monthly-config-footer button { min-width:80px; height:36px; padding:0 14px; border:1px solid #cbd5e1; border-radius:7px; background:#fff; color:#17345b; cursor:pointer; font-size:13px; font-weight:600; }
+        .monthly-config-footer button:hover { background:#edf3fa; }
+        #monthlyConfigSave { border-color:#123c72; background:#123c72; color:#fff; }
+        #monthlyConfigSave:hover { background:#0d305d; }
+        #monthlyConfigClose:focus-visible, .monthly-config-footer button:focus-visible { outline:2px solid #4f83cc; outline-offset:2px; }
         .monthly-export-sheet { width:1100px; background:#fff; color:#333; padding:28px; box-sizing:border-box; }
         .monthly-export-sheet .monthly-export-part { margin-bottom:34px; }
         .monthly-export-sheet .chart-container img { width:100%; height:auto; }
         @media (max-width:1050px) { .monthly-actions-buttons { grid-template-columns:repeat(4,minmax(0,1fr)); } }
         @media (max-width:800px) { .monthly-actions-row { grid-template-columns:1fr; gap:6px; } .monthly-actions-label { border-right:0; text-align:left; padding:0 2px; } .monthly-actions-buttons { grid-template-columns:repeat(3,minmax(0,1fr)); } }
         @media (max-width:500px) { .monthly-actions-buttons { grid-template-columns:repeat(2,minmax(0,1fr)); } .monthly-export-sheet { width:100%; } }
-        [data-theme="dark"] .monthly-actions-buttons button, [data-theme="dark"] .monthly-actions-buttons #monthlyColorLabel, [data-theme="dark"] .monthly-workspace-dialog, [data-theme="dark"] .monthly-png-menu { background:#1e293b; color:#e2e8f0; border-color:#475569; }
+        [data-theme="dark"] .monthly-actions-buttons button, [data-theme="dark"] .monthly-actions-buttons #monthlyColorLabel, [data-theme="dark"] .monthly-png-menu { background:#1e293b; color:#e2e8f0; border-color:#475569; }
+        [data-theme="dark"] #monthlyWorkspaceDialog { background:#1e293b; color:#e2e8f0; border-color:#475569; }
+        [data-theme="dark"] .monthly-config-header { background:linear-gradient(120deg,#25364d,#1e293b); border-color:#3c4b60; }
+        [data-theme="dark"] .monthly-config-header h3, [data-theme="dark"] .monthly-config-threshold label, [data-theme="dark"] .monthly-config-mapping label { color:#e2e8f0; }
+        [data-theme="dark"] .monthly-config-header p, [data-theme="dark"] #monthlyMappingHelp, [data-theme="dark"] .monthly-config-threshold-control { color:#aebed0; }
+        [data-theme="dark"] .monthly-config-threshold, [data-theme="dark"] .monthly-config-footer { background:#243348; border-color:#3c4b60; }
+        [data-theme="dark"] #monthlyWarningDays, [data-theme="dark"] #monthlyNetworkMappingText, [data-theme="dark"] .monthly-config-footer button:not(#monthlyConfigSave) { background:#172437; color:#e2e8f0; border-color:#4b5d73; }
+        @media (max-width:500px) { .monthly-config-header { padding:19px 19px 16px; } .monthly-config-body { padding:18px 19px 21px; } .monthly-config-footer { padding:13px 19px; } .monthly-config-threshold { align-items:flex-start; flex-direction:column; gap:10px; } }
         [data-theme="dark"] .monthly-actions-label { color:#94a3b8; border-color:#475569; }
+        .monthly-snapshot-manager .report-snapshot-mgr-dialog { box-sizing:border-box; width:min(860px,calc(100vw - 32px)); max-width:none; max-height:min(760px,calc(100dvh - 32px)); border-radius:16px; box-shadow:0 28px 80px #0f172a52; }
+        .monthly-snapshot-manager .report-diff-header { padding:19px 22px; }
+        .monthly-snapshot-manager .report-diff-header-top { gap:20px; }
+        .monthly-snapshot-manager .report-diff-title-wrap { min-width:0; flex-direction:column; align-items:flex-start; gap:3px; }
+        .monthly-snapshot-manager .report-diff-title { font-size:18px; }
+        .monthly-snapshot-manager .report-diff-subtitle { line-height:1.5; }
+        .monthly-snapshot-manager .report-diff-top-actions { flex:none; }
+        .monthly-snapshot-manager #smNewSnapshotBtn { min-height:36px; padding:0 13px; white-space:nowrap; }
+        .monthly-snapshot-manager .report-snapshot-mgr-list { padding:18px 22px 22px; }
+        .monthly-snapshot-manager .report-snapshot-item { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:18px; padding:16px 18px; border-radius:10px; }
+        .monthly-snapshot-manager .report-snapshot-item-info { min-width:0; }
+        .monthly-snapshot-manager .report-snapshot-item-title { display:block; min-width:0; overflow-wrap:anywhere; line-height:1.45; }
+        .monthly-snapshot-manager .report-snapshot-item-meta { display:flex; align-items:center; flex-wrap:wrap; gap:6px 10px; }
+        .monthly-snapshot-manager .report-snapshot-item-meta .report-diff-pane-badge { max-width:100%; margin:0; padding:2px 7px; overflow-wrap:anywhere; }
+        .monthly-snapshot-manager .report-snapshot-item-actions { display:grid; grid-template-columns:repeat(4,74px); gap:7px; }
+        .monthly-snapshot-manager .report-snapshot-item-actions .report-diff-btn { box-sizing:border-box; width:74px; min-width:0; height:36px; padding:0 4px; justify-content:center; gap:4px; white-space:nowrap; line-height:1; }
+        .monthly-snapshot-manager .report-snapshot-item-actions .sm-delete-btn { color:#b42330; border-color:#b4233038; }
+        .monthly-snapshot-manager .report-snapshot-item-actions .sm-delete-btn:hover { color:#991b1b; background:#b4233012; border-color:#b423306b; }
+        .monthly-snapshot-manager .monthly-snapshot-empty { display:flex; flex-direction:column; align-items:center; gap:7px; padding:42px 16px; text-align:center; color:var(--rd-muted); font-size:13px; }
+        .monthly-snapshot-manager .monthly-snapshot-empty strong { color:var(--rd-text); font-size:15px; }
+        .monthly-snapshot-manager .monthly-snapshot-empty span:first-child { font-size:27px; margin-bottom:3px; }
+        @media (max-width:720px) { .monthly-snapshot-manager .report-snapshot-item { grid-template-columns:minmax(0,1fr); gap:13px; } .monthly-snapshot-manager .report-snapshot-item-actions { grid-template-columns:repeat(4,minmax(0,1fr)); } .monthly-snapshot-manager .report-snapshot-item-actions .report-diff-btn { width:100%; } }
+        @media (max-width:520px) { .monthly-snapshot-manager .report-diff-header { padding:16px; } .monthly-snapshot-manager .report-diff-header-top { align-items:flex-start; } .monthly-snapshot-manager .report-diff-top-actions { flex-direction:column-reverse; align-items:flex-end; gap:5px; } .monthly-snapshot-manager #smNewSnapshotBtn { font-size:12px; } .monthly-snapshot-manager .report-snapshot-mgr-list { padding:14px; } .monthly-snapshot-manager .report-snapshot-item { padding:14px; } .monthly-snapshot-manager .report-snapshot-item-actions { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+        .monthly-msg-overlay { position:fixed; inset:0; z-index:2147483640; display:grid; place-items:center; padding:16px; background:#0f172ab0; backdrop-filter:blur(6px); }
+        .monthly-msg-dialog { box-sizing:border-box; display:flex; flex-direction:column; width:min(680px,100%); max-height:min(700px,calc(100dvh - 32px)); overflow:hidden; border:1px solid #334155; border-radius:15px; background:#0f172a; color:#e2e8f0; box-shadow:0 24px 70px #0007; text-align:left; font:13px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; }
+        .monthly-msg-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:17px 20px; border-bottom:1px solid #334155; background:#172437; }
+        .monthly-msg-head h3 { margin:0; color:#f8fafc; font-size:16px; }
+        .monthly-msg-head p { margin:4px 0 0; color:#94a3b8; font-size:12px; }
+        .monthly-msg-close { flex:none; width:27px; height:27px; border:0; border-radius:6px; background:transparent; color:#94a3b8; cursor:pointer; font-size:21px; line-height:1; }
+        .monthly-msg-close:hover { background:#334155; color:#fff; }
+        .monthly-msg-progress { padding:14px 20px 9px; color:#bfdbfe; font-weight:600; }
+        .monthly-msg-log { min-height:180px; max-height:390px; overflow:auto; margin:0 20px 16px; padding:12px 14px; border:1px solid #334155; border-radius:8px; background:#08111f; color:#cbd5e1; font:12px/1.65 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; white-space:pre-wrap; overflow-wrap:anywhere; }
+        .monthly-msg-log-line { margin:0 0 3px; }
+        .monthly-msg-log-line[data-level="success"] { color:#86efac; }
+        .monthly-msg-log-line[data-level="error"] { color:#fca5a5; }
+        .monthly-msg-log-line[data-level="step"] { color:#93c5fd; }
+        .monthly-msg-foot { display:flex; justify-content:flex-end; gap:8px; padding:13px 20px; border-top:1px solid #334155; }
+        .monthly-msg-foot button { min-height:34px; padding:0 13px; border:1px solid #475569; border-radius:7px; background:#1e293b; color:#e2e8f0; cursor:pointer; font-size:12px; font-weight:600; }
+        .monthly-msg-foot button:hover { background:#334155; }
+        .monthly-msg-foot .monthly-msg-done { border-color:#2563eb; background:#2563eb; color:#fff; }
+        .monthly-msg-foot .monthly-msg-done:disabled { opacity:.45; cursor:not-allowed; }
+        .monthly-msg-foot .monthly-msg-done:not(:disabled):hover { background:#1d4ed8; }
+        @media (max-width:500px) { .monthly-msg-head { padding:14px 16px; } .monthly-msg-progress { padding:12px 16px 8px; } .monthly-msg-log { margin:0 16px 12px; } .monthly-msg-foot { padding:12px 16px; } }
 
         .charts-row {
             display: flex;
@@ -606,12 +674,13 @@
             </div>
         </form>
     </div>
-    <dialog id="monthlyWorkspaceDialog" class="monthly-workspace-dialog">
-        <h3 id="monthlyWorkspaceDialogTitle"></h3>
-        <label id="monthlyWarningLabel"></label> <input id="monthlyWarningDays" type="number" min="0" max="365" value="10">
-        <p id="monthlyMappingHelp"></p>
-        <textarea id="monthlyNetworkMappingText" spellcheck="false"></textarea>
-        <div class="dialog-actions"><button id="monthlyConfigCancel" type="button"></button><button id="monthlyConfigSave" type="button"></button></div>
+    <dialog id="monthlyWorkspaceDialog" aria-labelledby="monthlyWorkspaceDialogTitle" aria-describedby="monthlyConfigSubtitle">
+        <div class="monthly-config-header"><div><h3 id="monthlyWorkspaceDialogTitle"></h3><p id="monthlyConfigSubtitle"></p></div><button id="monthlyConfigClose" type="button" aria-label="关闭" title="关闭">×</button></div>
+        <div class="monthly-config-body">
+            <div class="monthly-config-threshold"><label id="monthlyWarningLabel" for="monthlyWarningDays"></label><div class="monthly-config-threshold-control"><input id="monthlyWarningDays" type="number" min="0" max="365" value="10"><span id="monthlyWarningUnit"></span></div></div>
+            <div class="monthly-config-mapping"><label id="monthlyMappingLabel" for="monthlyNetworkMappingText"></label><p id="monthlyMappingHelp"></p><textarea id="monthlyNetworkMappingText" spellcheck="false"></textarea></div>
+        </div>
+        <div class="monthly-config-footer"><button id="monthlyConfigCancel" type="button"></button><button id="monthlyConfigSave" type="button"></button></div>
     </dialog>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
@@ -657,7 +726,7 @@
     <script src="/js/shared/report-msg-export.js?v=20260922-03"></script>
     <script src="/js/shared/report-snapshot-diff.js?v=20260922-03"></script>
     <script src="/js/report/monthly.js?v=20260924-07"></script>
-    <script src="/js/report/monthly-workspace.js?v=20260924-04"></script>
+    <script src="/js/report/monthly-workspace.js?v=20260924-09"></script>
 </body>
 
 </html>

@@ -47,12 +47,25 @@ router.post('/export', async (req, res) => {
     const html = String(body?.html || '');
     const text = String(body?.text || '').trim();
     const attachment = body?.attachment;
-    if (!subject || subject.length > 200 || !html || html.length > 2_000_000) {
-        return res.status(400).json({ error: 'INVALID_REPORT', message: '月报内容无效或过大' });
+    const htmlBytes = Buffer.byteLength(html, 'utf8');
+    const textBytes = Buffer.byteLength(text, 'utf8');
+    const attachmentData = String(attachment?.data || '');
+    if (!subject || subject.length > 200) {
+        return res.status(400).json({ error: 'INVALID_SUBJECT', message: '月报邮件主题无效' });
+    }
+    if (!html) {
+        return res.status(400).json({ error: 'INVALID_REPORT', message: '月报正文为空' });
+    }
+    if (htmlBytes > 20_000_000) {
+        return res.status(400).json({ error: 'HTML_TOO_LARGE', message: '月报 HTML 正文超过 20 MB', htmlBytes, limitBytes: 20_000_000 });
+    }
+    const requestDataBytes = htmlBytes + textBytes + attachmentData.length;
+    if (requestDataBytes > 46_000_000) {
+        return res.status(400).json({ error: 'REPORT_TOO_LARGE', message: '月报正文、纯文本和附件合计超过 46 MB', requestDataBytes, limitBytes: 46_000_000 });
     }
     if (attachment && (!/^.{1,160}\.xlsx$/i.test(String(attachment.filename || '')) ||
-        !/^[A-Za-z0-9+/]+={0,2}$/.test(String(attachment.data || '')) ||
-        String(attachment.data).length > 40_000_000)) {
+        !/^[A-Za-z0-9+/]+={0,2}$/.test(attachmentData) ||
+        attachmentData.length > 40_000_000)) {
         return res.status(400).json({ error: 'INVALID_ATTACHMENT', message: '月报附件无效或过大' });
     }
     try {
@@ -107,4 +120,3 @@ router.post('/export', async (req, res) => {
 
 module.exports = router;
 module.exports.encapsulateHtmlToRtf = encapsulateHtmlToRtf;
-
