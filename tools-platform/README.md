@@ -1278,6 +1278,8 @@ sequenceDiagram
 - 首页管理员区域提供“工具市场”，可比较本地版本、目录版本、包大小和 SHA-256 指纹，并支持按需安装或更新。
 - `.github/workflows/tools-market.yml` 在 `backend/builtin-tools/` 变化时独立生成每工具 ZIP 和 `catalog.json`，发布到 `tool-market` 分支，不递增桌面端版本、不重新构建 EXE。
 - 客户端默认读取官方仓库的 `tool-market` 分支；私有部署可用 `TOOLS_MARKET_CATALOG_URL` 替换目录地址，并用 `TOOLS_MARKET_ALLOWED_HOSTS` 增加逗号分隔的可信下载域名。
+- 工具市场右上角的齿轮可添加多个第三方 `catalog.json` 仓库，并分别启停 GitHub 和第三方仓库。启用时 GitHub 优先；同名工具只显示优先仓库的版本。某个仓库不可用时，其余仓库仍会正常显示。设置按租户保存在 `tools.db`。
+- 内网部署时，把 `catalog.json` 和 `packages/` 放在内网 HTTP(S) 静态服务中，目录里的 `package.url` 使用同站地址或相对路径，并保持包大小与 SHA-256 正确。市场设置中的“帮助”按钮提供操作步骤。第三方目录允许使用内网地址，安装时仍会校验目录格式、包大小、SHA-256 和解压内容指纹。
 - Actions 可通过 `TOOLS_MARKET_SIGNING_PRIVATE_KEY` Secret 使用 Ed25519 签名目录。客户端通过 `TOOLS_MARKET_PUBLIC_KEY` 验签；设置 `TOOLS_MARKET_REQUIRE_SIGNATURE=1` 后会拒绝未签名目录。密钥均使用 DER 格式的 Base64 文本（私钥 PKCS#8，公钥 SPKI）。
 - 工具更新仅替换受管理的程序文件，替换前备份到当前租户的 `backups/tool-market/`；未关联的手动导入工具遇到同名 slug 时不会被自动覆盖。
 

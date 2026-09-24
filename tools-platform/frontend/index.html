@@ -822,6 +822,16 @@
         .tool-market-warning { color:#fbbf24 !important; }
         .tool-market-message { min-height:18px; color:#93c5fd; font-size:12px; }
         .tool-market-empty { padding:35px 15px; text-align:center; color:#94a3b8; }
+        .tool-market-head-actions { display:flex; align-items:center; gap:8px; }
+        .tool-market-settings { display:none; padding:14px; border-bottom:1px solid rgba(148,163,184,.2); }
+        .tool-market-settings.open { display:block; max-height:45vh; overflow:auto; }
+        .tool-market-source { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:9px 0; }
+        .tool-market-source input[type="text"], .tool-market-source input[type="url"] { min-width:130px; flex:1; padding:8px; border:1px solid #64748b; border-radius:8px; background:var(--bg-primary,#101827); color:inherit; }
+        .tool-market-source input[type="url"] { flex:2; }
+        .tool-market-settings-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+        .tool-market-help { display:none; margin:12px 0; padding:12px; border-radius:8px; background:rgba(100,116,139,.13); line-height:1.65; }
+        .tool-market-help.open { display:block; }
+        .tool-market-source-note { font-size:12px; opacity:.8; }
         .tool-market-footer { margin-top:16px; padding-top:16px; border-top:1px solid rgba(148,163,184,.12); }
         .tool-market-progress { display:none; margin-top:10px; padding:10px 12px; border:1px solid rgba(96,165,250,.2); border-radius:11px; background:rgba(15,23,42,.72); }
         .tool-market-progress.visible { display:block; }
@@ -1396,11 +1406,19 @@
             <div class="tool-import-head">
                 <div>
                     <h2 class="tool-import-title" id="toolMarketTitle">工具市场</h2>
-                    <p class="tool-import-subtitle" id="toolMarketSubtitle">获取官方 HTML 工具，无需重新下载完整 EXE。</p>
+                    <p class="tool-import-subtitle" id="toolMarketSubtitle">从已启用的仓库安装或更新 HTML 工具。</p>
                 </div>
-                <button type="button" class="tool-import-close" id="toolMarketClose" aria-label="关闭">×</button>
+                <div class="tool-market-head-actions"><button type="button" class="tool-import-btn" id="toolMarketSettingsBtn" aria-label="仓库设置" title="仓库设置">⚙</button><button type="button" class="tool-import-close" id="toolMarketClose" aria-label="关闭">×</button></div>
             </div>
             <div class="tool-market-body">
+                <div class="tool-market-settings" id="toolMarketSettings">
+                    <strong id="toolMarketSettingsTitle">仓库设置</strong>
+                    <div class="tool-market-source"><label><input type="checkbox" id="toolMarketGithubEnabled"> <span id="toolMarketGithubLabel">启用 GitHub 官方仓库（优先）</span></label></div>
+                    <div id="toolMarketSources"></div>
+                    <div class="tool-market-settings-actions"><button type="button" class="tool-import-btn" id="toolMarketAddSource">添加第三方仓库</button><button type="button" class="tool-import-btn" id="toolMarketHelpBtn">帮助</button><button type="button" class="tool-import-btn primary" id="toolMarketSaveSettings">保存设置</button></div>
+                    <div class="tool-market-help" id="toolMarketHelp"></div>
+                    <div class="tool-market-source-note" id="toolMarketSettingsMessage" aria-live="polite"></div>
+                </div>
                 <div class="tool-market-toolbar">
                     <span id="toolMarketSummary">正在加载最新工具目录…</span>
                     <span class="tool-market-trust" id="toolMarketTrust"></span>
@@ -1520,7 +1538,7 @@
                 'home.custom.upload': '导入 HTML / ZIP 工具',
                 'home.market.button': '🛍️ 工具市场',
                 'home.market.title': '工具市场',
-                'home.market.subtitle': '获取官方 HTML 工具，无需重新下载完整 EXE。',
+                'home.market.subtitle': '从已启用的仓库安装或更新 HTML 工具。',
                 'home.import.title': '导入自定义工具',
                 'home.import.subtitle': '一次填写工具信息并上传 HTML 或 ZIP 工具包。',
                 'home.import.fileTitle': '选择 HTML / ZIP 文件',
@@ -1717,7 +1735,7 @@
                 'home.custom.upload': 'Import HTML / ZIP Tool',
                 'home.market.button': '🛍️ Tool Market',
                 'home.market.title': 'Tool Market',
-                'home.market.subtitle': 'Get official HTML tools without downloading the complete EXE again.',
+                'home.market.subtitle': 'Install or update HTML tools from enabled sources.',
                 'home.import.title': 'Import Custom Tool',
                 'home.import.subtitle': 'Enter all tool details and select an HTML or ZIP package in one place.',
                 'home.import.fileTitle': 'Choose HTML / ZIP file',
@@ -2978,6 +2996,9 @@
             if (!button || !modal || !list || !applyButton) return;
             let preview = null;
             let loading = false;
+            const settingsPanel = document.getElementById('toolMarketSettings');
+            const sourceList = document.getElementById('toolMarketSources');
+            const settingsMessage = document.getElementById('toolMarketSettingsMessage');
 
             const resetProgress = () => {
                 progress.classList.remove('visible');
@@ -2993,6 +3014,54 @@
 
             const english = () => (window.ToolsI18n?.getLanguage?.() || localStorage.getItem('tools_language')) === 'en-US';
             const text = (zh, en) => english() ? en : zh;
+            const sourceRow = source => `<div class="tool-market-source" data-source-id="${escapeHtml(source.id || '')}">
+                <label><input type="checkbox" class="source-enabled" ${source.enabled !== false ? 'checked' : ''} aria-label="${text('启用仓库', 'Enable source')}"></label>
+                <input type="text" class="source-name" value="${escapeHtml(source.name || '')}" placeholder="${text('仓库名称', 'Source name')}" aria-label="${text('仓库名称', 'Source name')}">
+                <input type="url" class="source-url" value="${escapeHtml(source.url || '')}" placeholder="http://intranet.example.com/tool-market/catalog.json" aria-label="catalog.json URL">
+                <button type="button" class="tool-import-btn source-remove">${text('删除', 'Remove')}</button></div>`;
+            const renderSettings = settings => {
+                document.getElementById('toolMarketGithubEnabled').checked = settings.githubEnabled;
+                sourceList.innerHTML = settings.sources.map(sourceRow).join('');
+            };
+            const readSettings = () => ({
+                githubEnabled: document.getElementById('toolMarketGithubEnabled').checked,
+                sources: [...sourceList.querySelectorAll('.tool-market-source')].map(row => ({
+                    id: row.dataset.sourceId, name: row.querySelector('.source-name').value.trim(),
+                    url: row.querySelector('.source-url').value.trim(), enabled: row.querySelector('.source-enabled').checked
+                }))
+            });
+            document.getElementById('toolMarketSettingsBtn').addEventListener('click', async () => {
+                settingsPanel.classList.toggle('open');
+                if (settingsPanel.classList.contains('open')) {
+                    try { renderSettings(await API.get('/api/custom-tools/market/settings')); settingsMessage.textContent = ''; }
+                    catch (error) { settingsMessage.textContent = error.message; }
+                }
+            });
+            document.getElementById('toolMarketAddSource').addEventListener('click', () => {
+                sourceList.insertAdjacentHTML('beforeend', sourceRow({ enabled: true }));
+                sourceList.lastElementChild.querySelector('.source-name').focus();
+            });
+            sourceList.addEventListener('click', event => {
+                if (event.target.closest('.source-remove')) event.target.closest('.tool-market-source').remove();
+            });
+            document.getElementById('toolMarketSaveSettings').addEventListener('click', async () => {
+                const save = document.getElementById('toolMarketSaveSettings');
+                save.disabled = true;
+                try {
+                    renderSettings(await API.put('/api/custom-tools/market/settings', readSettings()));
+                    settingsMessage.textContent = text('设置已保存。', 'Settings saved.');
+                    await load(true);
+                } catch (error) { settingsMessage.textContent = error.message; }
+                finally { save.disabled = false; }
+            });
+            document.getElementById('toolMarketHelpBtn').addEventListener('click', () => {
+                const help = document.getElementById('toolMarketHelp');
+                help.classList.toggle('open');
+                help.innerHTML = text(
+                    '<strong>从零配置内网仓库</strong><ol><li>将工具市场仓库的 <code>catalog.json</code> 和 <code>packages/</code> 目录放在内网 HTTP(S) 静态服务器上。</li><li>确认目录内每个工具的 <code>package.url</code> 指向内网包地址，或使用相对路径；包的大小和 SHA-256 必须与目录一致。</li><li>点击“添加第三方仓库”，填写名称和 <code>catalog.json</code> 完整地址，保存后刷新市场。</li><li>内网无法连接 GitHub 时，可取消勾选 GitHub；需要停用某个内网仓库时，取消该仓库左侧勾选。</li></ol>',
+                    '<strong>Set up an intranet source</strong><ol><li>Host the market repository’s <code>catalog.json</code> and <code>packages/</code> folder on an HTTP(S) server.</li><li>Use intranet or relative <code>package.url</code> values and keep each package size and SHA-256 accurate.</li><li>Add a source with its name and full <code>catalog.json</code> URL, save, then refresh.</li><li>Disable GitHub when it is unreachable; disable any custom source with its checkbox.</li></ol>'
+                );
+            });
             const size = bytes => {
                 const value = Number(bytes) || 0;
                 if (value < 1024) return `${value} B`;
@@ -3034,12 +3103,20 @@
 
                 const unchangedCount = tools.filter(t => t.status === 'unchanged').length;
 
-                summary.textContent = actionable > 0
+                const enabledSources = (data.sources || []).filter(source => source.enabled);
+                const failedSources = enabledSources.filter(source => source.error);
+                summary.textContent = enabledSources.length === 0
+                    ? text('所有仓库已停用。可在右上角齿轮中启用。', 'All sources are disabled. Enable one in settings.')
+                    : failedSources.length === enabledSources.length
+                        ? text('仓库暂时不可用，请检查地址或网络后刷新。', 'Sources are unavailable. Check their addresses or network and refresh.')
+                    : actionable > 0
                     ? text(`共 ${tools.length} 个工具，${actionable} 个建议安装/更新（已优先置顶）`, `${tools.length} tools, ${actionable} recommended updates (pinned to top)`)
                     : text(`共 ${tools.length} 个工具，全部已是最新版本`, `${tools.length} tools, all up to date`);
+                message.textContent = failedSources.length && failedSources.length < enabledSources.length
+                    ? text(`${failedSources.length} 个仓库暂时不可用，其余仓库已正常加载。`, `${failedSources.length} sources unavailable; others loaded.`) : '';
                 const trustState = data?.trust?.state || 'unsigned';
                 trust.className = `tool-market-trust${trustState === 'verified' ? '' : ' unverified'}`;
-                trust.textContent = trustState === 'verified'
+                trust.textContent = !enabledSources.length ? '' : trustState === 'verified'
                     ? text('✓ 目录签名已验证', '✓ Catalog signature verified')
                     : text('⚠ HTTPS + SHA-256 校验', '⚠ HTTPS + SHA-256 verification');
                 const statusLabels = labels();
@@ -3093,7 +3170,7 @@
                             <div class="tool-market-title">${escapeHtml(english() ? (tool.nameEn || tool.name) : tool.name)}${badgeHtml}</div>
                             <p>${escapeHtml(description || '')}</p>${localModified}${conflict}
                             <div class="tool-market-meta">
-                                <span>${escapeHtml(sourceLabel)}</span>
+                                <span>${escapeHtml(tool.sourceName || 'GitHub')} · ${escapeHtml(sourceLabel)}</span>
                                 <span>${text('内置', 'Bundled')} ${escapeHtml(tool.builtinVersion || '-')} / ${text('市场', 'Market')} ${escapeHtml(tool.marketVersion)}</span>
                                 <span>${text('本地', 'Local')} ${escapeHtml(tool.localVersion || (tool.localSource === 'bundled' ? text('随平台内置', 'Bundled') : '-'))} → ${escapeHtml(tool.releaseVersion || '-')}</span>
                                 ${tool.selectedSource === 'market' ? `<span>${size(tool.packageSize)}</span><span>${text('需平台', 'Requires')} ${escapeHtml(tool.minPlatformVersion)}+</span>` : ''}
@@ -3120,7 +3197,6 @@
                 try {
                     const data = await API.get(`/api/custom-tools/market/preview${force ? '?refresh=1' : ''}`);
                     render(data);
-                    message.textContent = '';
                 } catch (error) {
                     preview = null;
                     list.innerHTML = `<div class="tool-market-empty">${escapeHtml(error.message || text('市场加载失败', 'Failed to load market'))}</div>`;
@@ -3183,7 +3259,8 @@
                             const result = await API.post('/api/custom-tools/market/apply', {
                                 slugs: [slug],
                                 adoptSlugs: adoptSlugs.includes(slug) ? [slug] : [],
-                                expectedFingerprints: { [slug]: fingerprints[slug] }
+                                expectedFingerprints: { [slug]: fingerprints[slug] },
+                                expectedSources: { [slug]: tool.sourceId || 'github' }
                             });
                             succeeded += Array.isArray(result.changed) ? result.changed.length : 0;
                             appendLog(tool?.selectedSource === 'builtin'

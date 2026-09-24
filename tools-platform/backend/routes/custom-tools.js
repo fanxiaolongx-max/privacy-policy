@@ -342,6 +342,16 @@ router.post('/builtin-sync/apply', requireAdmin, async (req, res) => {
     }
 });
 
+router.get('/market/settings', requireAdmin, async (_req, res) => {
+    try { res.json(await marketService.getMarketSettings()); }
+    catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.put('/market/settings', requireAdmin, async (req, res) => {
+    try { res.json(await marketService.saveMarketSettings(req.body)); }
+    catch (err) { res.status(err.status || 500).json({ error: err.message }); }
+});
+
 router.get('/market/preview', requireAdmin, async (req, res) => {
     try {
         res.setHeader('Cache-Control', 'no-store');
@@ -358,7 +368,9 @@ router.post('/market/apply', requireAdmin, async (req, res) => {
             slugs: Array.isArray(body.slugs) ? body.slugs : [],
             adoptSlugs: Array.isArray(body.adoptSlugs) ? body.adoptSlugs : [],
             expectedFingerprints: body.expectedFingerprints && typeof body.expectedFingerprints === 'object'
-                ? body.expectedFingerprints : {}
+                ? body.expectedFingerprints : {},
+            expectedSources: body.expectedSources && typeof body.expectedSources === 'object'
+                ? body.expectedSources : {}
         });
         if (result.changed.length) {
             await repo.reconcileToolsFromDisk();

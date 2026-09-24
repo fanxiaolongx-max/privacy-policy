@@ -10,6 +10,7 @@ const builtinToolsSync = require('./builtin-tools-sync');
 const repo = require('./custom-tools-repository');
 const { fingerprintFiles } = require('./tool-content-fingerprint');
 const { getDataDir } = require('./store');
+const { run, get } = require('./app-db');
 const BUILTIN_SOURCE_DIR = path.join(__dirname, '../builtin-tools');
 
 const DEFAULT_CATALOG_URL = 'https://raw.githubusercontent.com/fanxiaolongx-max/privacy-policy/tool-market/catalog.json';
@@ -18,7 +19,56 @@ const PACKAGE_MAX_BYTES = 50 * 1024 * 1024;
 const EXTRACTED_MAX_BYTES = 120 * 1024 * 1024;
 const MAX_FILES = 1500;
 const CACHE_MS = 5 * 60 * 1000;
-let catalogCache = null;
+const catalogCache = new Map();
+const SETTINGS_KEY = 'sources';
+
+async function ensureSettingsTable() {
+    await run('CREATE TABLE IF NOT EXISTS tool_market_settings (key TEXT PRIMARY KEY, value_json TEXT NOT NULL)');
+}
+
+async function getMarketSettings() {
+    await ensureSettingsTable();
+    const row = await get('SELECT value_json FROM tool_market_settings WHERE key = ?', [SETTINGS_KEY]);
+    let saved = {};
+    try { saved = row ? JSON.parse(row.value_json) : {}; } catch (_) {}
+    return {
+        githubEnabled: saved.githubEnabled !== false,
+        sources: Array.isArray(saved.sources) ? saved.sources : []
+    };
+}
+
+function validateSourceUrl(value) {
+    let url;
+    try { url = new URL(String(value || '').trim()); }
+    catch (_) { throw Object.assign(new Error('请输入有效的 catalog.json 地址'), { status: 400 }); }
+    if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password || url.hash || !url.hostname
+        || !url.pathname.endsWith('.json')) throw Object.assign(new Error('请输入不含账号密码的 catalog.json HTTP(S) 地址'), { status: 400 });
+    return url.toString();
+}
+
+async function saveMarketSettings(input) {
+    if (!input || typeof input.githubEnabled !== 'boolean' || !Array.isArray(input.sources) || input.sources.length > 20) {
+        throw Object.assign(new Error('仓库设置格式无效（最多 20 个第三方仓库）'), { status: 400 });
+    }
+    const seen = new Set();
+    const seenIds = new Set();
+    const sources = input.sources.map(source => {
+        const name = String(source.name || '').trim().slice(0, 80);
+        const url = validateSourceUrl(source.url);
+        if (!name || seen.has(url) || url === String(process.env.TOOLS_MARKET_CATALOG_URL || DEFAULT_CATALOG_URL).trim()) {
+            throw Object.assign(new Error('仓库名称不能为空，目录地址不能重复'), { status: 400 });
+        }
+        seen.add(url);
+        let id = /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(source.id || '') ? source.id : crypto.randomUUID();
+        if (seenIds.has(id)) id = crypto.randomUUID();
+        seenIds.add(id);
+        return { id, name, url, enabled: source.enabled !== false };
+    });
+    await ensureSettingsTable();
+    await run('INSERT INTO tool_market_settings (key, value_json) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json',
+        [SETTINGS_KEY, JSON.stringify({ githubEnabled: input.githubEnabled, sources })]);
+    return { githubEnabled: input.githubEnabled, sources };
+}
 
 function sha256(value) {
     return crypto.createHash('sha256').update(value).digest('hex');
@@ -57,17 +107,17 @@ function allowedHostname(hostname, catalogHostname) {
         || configured.includes(value);
 }
 
-async function assertPublicHttps(urlValue, catalogHostname) {
+async function assertMarketUrl(urlValue, catalogHostname, allowPrivate = false) {
     const parsed = new URL(urlValue);
-    if (parsed.protocol !== 'https:') throw new Error('工具市场只允许 HTTPS 下载地址');
+    if (parsed.username || parsed.password || !['https:', ...(allowPrivate ? ['http:'] : [])].includes(parsed.protocol)) throw new Error('工具市场地址协议或凭据无效');
     if (!allowedHostname(parsed.hostname, catalogHostname || parsed.hostname)) throw new Error('工具包下载域名不在允许列表');
     if (net.isIP(parsed.hostname)) {
-        if (isPrivateIp(parsed.hostname)) throw new Error('工具市场不允许访问本地或内网地址');
+        if (isPrivateIp(parsed.hostname) && (!allowPrivate || parsed.hostname !== catalogHostname)) throw new Error('工具市场不允许访问此内网地址');
         return parsed;
     }
     const records = await dns.lookup(parsed.hostname, { all: true, verbatim: true });
-    if (!records.length || records.some(record => isPrivateIp(record.address))) {
-        throw new Error('工具市场地址未解析到安全的公网地址');
+    if (!records.length || (records.some(record => isPrivateIp(record.address)) && (!allowPrivate || parsed.hostname !== catalogHostname))) {
+        throw new Error('工具市场地址未解析到允许的地址');
     }
     return parsed;
 }
@@ -97,8 +147,8 @@ async function readLimitedResponse(response, limit) {
     return Buffer.concat(chunks, total);
 }
 
-async function fetchBuffer(urlValue, { limit, catalogHostname }) {
-    let current = await assertPublicHttps(urlValue, catalogHostname);
+async function fetchBuffer(urlValue, { limit, catalogHostname, allowPrivate = false }) {
+    let current = await assertMarketUrl(urlValue, catalogHostname, allowPrivate);
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 20000);
     if (typeof timeout.unref === 'function') timeout.unref();
@@ -111,7 +161,7 @@ async function fetchBuffer(urlValue, { limit, catalogHostname }) {
             });
             if (response.status >= 300 && response.status < 400 && response.headers.get('location')) {
                 if (redirects === 4) throw new Error('工具市场重定向次数过多');
-                current = await assertPublicHttps(new URL(response.headers.get('location'), current).toString(), catalogHostname);
+                current = await assertMarketUrl(new URL(response.headers.get('location'), current).toString(), catalogHostname, allowPrivate);
                 continue;
             }
             if (!response.ok) throw new Error(`工具市场返回 HTTP ${response.status}`);
@@ -273,6 +323,8 @@ function compareCatalogTool(item, { targetDir = repo.CUSTOM_TOOLS_DIR, sourceDir
     else if (localFingerprint !== selectedFingerprint) status = 'update';
     return {
         id: item.id,
+        sourceId: item.sourceId || 'github',
+        sourceName: item.sourceName || 'GitHub',
         slug: item.slug,
         name: item.tool.name || item.slug,
         nameEn: item.tool.nameEn || '',
@@ -298,27 +350,52 @@ function compareCatalogTool(item, { targetDir = repo.CUSTOM_TOOLS_DIR, sourceDir
     };
 }
 
-async function loadCatalog({ force = false } = {}) {
-    const url = String(process.env.TOOLS_MARKET_CATALOG_URL || DEFAULT_CATALOG_URL).trim();
-    if (!force && catalogCache && catalogCache.url === url && Date.now() - catalogCache.loadedAt < CACHE_MS) return catalogCache.value;
+async function loadCatalog({ force = false, url = String(process.env.TOOLS_MARKET_CATALOG_URL || DEFAULT_CATALOG_URL).trim(), allowPrivate = false } = {}) {
+    const cached = catalogCache.get(url);
+    if (!force && cached && Date.now() - cached.loadedAt < CACHE_MS) return cached.value;
     const parsedUrl = new URL(url);
     const suffix = parsedUrl.search ? `&t=${Date.now()}` : `?t=${Date.now()}`;
-    const buffer = await fetchBuffer(`${url}${suffix}`, { limit: CATALOG_MAX_BYTES, catalogHostname: parsedUrl.hostname });
+    const buffer = await fetchBuffer(`${url}${suffix}`, { limit: CATALOG_MAX_BYTES, catalogHostname: parsedUrl.hostname, allowPrivate });
     let raw;
     try { raw = JSON.parse(buffer.toString('utf8')); } catch (_) { throw new Error('工具市场目录不是有效 JSON'); }
     const trust = verifyCatalogSignature(raw);
     const catalog = validateCatalog(raw, url);
     const value = { ...catalog, trust, catalogUrl: url };
-    catalogCache = { url, loadedAt: Date.now(), value };
+    catalogCache.set(url, { loadedAt: Date.now(), value });
     return value;
 }
 
+async function loadEnabledCatalogs(options = {}) {
+    const settings = await getMarketSettings();
+    const sources = [
+        { id: 'github', name: 'GitHub', url: String(process.env.TOOLS_MARKET_CATALOG_URL || DEFAULT_CATALOG_URL).trim(), enabled: settings.githubEnabled, allowPrivate: false },
+        ...settings.sources.map(source => ({ ...source, allowPrivate: true }))
+    ];
+    const results = await Promise.all(sources.filter(source => source.enabled).map(async source => {
+        try { return { source, catalog: await loadCatalog({ ...options, url: source.url, allowPrivate: source.allowPrivate }) }; }
+        catch (error) { return { source, error: error.message }; }
+    }));
+    const seen = new Set();
+    const tools = [];
+    for (const result of results) {
+        if (!result.catalog) continue;
+        for (const item of result.catalog.tools) {
+            if (seen.has(item.slug)) continue;
+            seen.add(item.slug);
+            tools.push({ ...item, sourceId: result.source.id, sourceName: result.source.name, catalogUrl: result.catalog.catalogUrl, allowPrivate: result.source.allowPrivate });
+        }
+    }
+    const loaded = results.filter(result => result.catalog);
+    return { tools, sources: sources.map(source => ({ id: source.id, name: source.name, enabled: source.enabled,
+        error: results.find(result => result.source.id === source.id)?.error || null })),
+        trust: { state: loaded.length && loaded.every(result => result.catalog.trust.state === 'verified') ? 'verified' : 'unsigned' } };
+}
+
 async function previewMarket(options = {}) {
-    const catalog = await loadCatalog(options);
+    const catalog = await loadEnabledCatalogs(options);
     const tools = catalog.tools.map(item => compareCatalogTool(item));
     return {
-        publisher: catalog.publisher,
-        generatedAt: catalog.generatedAt,
+        sources: catalog.sources,
         trust: catalog.trust,
         tools,
         counts: tools.reduce((result, tool) => {
@@ -358,7 +435,8 @@ function annotateInstalledTool(item) {
     const manifest = JSON.parse(fs.readFileSync(target, 'utf8'));
     manifest.market = {
         id: item.id,
-        publisher: 'tools-platform-official',
+        publisher: item.sourceName || 'GitHub',
+        sourceId: item.sourceId || 'github',
         releaseVersion: item.releaseVersion,
         packageSha256: item.package.sha256,
         directoryFingerprint: item.package.directoryFingerprint,
@@ -370,17 +448,18 @@ function annotateInstalledTool(item) {
     fs.renameSync(temp, target);
 }
 
-async function applyMarketUpdates({ slugs = [], adoptSlugs = [], expectedFingerprints = {} } = {}) {
+async function applyMarketUpdates({ slugs = [], adoptSlugs = [], expectedFingerprints = {}, expectedSources = {} } = {}) {
     const selected = [...new Set(slugs.map(normalizeSlug).filter(Boolean))];
     const allowedAdoptions = new Set(adoptSlugs.map(normalizeSlug).filter(slug => selected.includes(slug)));
     if (!selected.length) return { installed: [], adopted: [], updated: [], changed: [], backups: [], invalid: [], preview: await previewMarket() };
-    const catalog = await loadCatalog({ force: true });
+    const catalog = await loadEnabledCatalogs({ force: true });
     const items = new Map(catalog.tools.map(item => [item.slug, item]));
     const current = new Map(catalog.tools.map(item => [item.slug, compareCatalogTool(item)]));
     for (const slug of selected) {
         const item = items.get(slug);
         const comparison = current.get(slug);
         if (!item) throw Object.assign(new Error(`工具市场中不存在 ${slug}`), { status: 404 });
+        if (expectedSources[slug] && expectedSources[slug] !== item.sourceId) throw Object.assign(new Error(`${slug} 的仓库来源已变化，请重新加载市场`), { status: 409 });
         if (expectedFingerprints[slug] !== comparison.fingerprint) throw Object.assign(new Error(`${slug} 的推荐来源已变化，请重新加载市场`), { status: 409 });
         if (comparison.status === 'conflict' && !allowedAdoptions.has(slug)) {
             throw Object.assign(new Error(`${slug} 与未关联的本地工具同名，需要明确确认接管`), { status: 409 });
@@ -409,10 +488,9 @@ async function applyMarketUpdates({ slugs = [], adoptSlugs = [], expectedFingerp
     fs.mkdirSync(tempParent, { recursive: true });
     const sourceDir = fs.mkdtempSync(path.join(tempParent, 'apply-'));
     try {
-        const catalogHost = new URL(catalog.catalogUrl).hostname;
         for (const slug of marketSlugs) {
             const item = items.get(slug);
-            const buffer = await fetchBuffer(item.package.url, { limit: PACKAGE_MAX_BYTES, catalogHostname: catalogHost });
+            const buffer = await fetchBuffer(item.package.url, { limit: PACKAGE_MAX_BYTES, catalogHostname: new URL(item.catalogUrl).hostname, allowPrivate: item.allowPrivate });
             if (buffer.length !== item.package.size || sha256(buffer) !== item.package.sha256) throw new Error(`${slug} 工具包 SHA-256 或大小校验失败`);
             const toolSource = path.join(sourceDir, slug);
             fs.mkdirSync(toolSource, { recursive: true });
@@ -452,8 +530,11 @@ module.exports = {
     DEFAULT_CATALOG_URL,
     applyMarketUpdates,
     compareCatalogTool,
+    getMarketSettings,
     loadCatalog,
+    loadEnabledCatalogs,
     previewMarket,
+    saveMarketSettings,
     validateCatalog,
     verifyCatalogSignature,
     versionAtLeast
