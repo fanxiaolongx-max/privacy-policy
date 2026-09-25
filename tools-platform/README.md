@@ -1,6 +1,6 @@
 # Tools Platform
 
-Tools Platform 是一个面向运维数据抓取、SLA 指标导入、报表看板、月报分析、一键催办、胶片设计/PPT 素材库、PR 审计、FRT 核算、需求广场、问卷调研、系统告警与 AI 智能知识图谱的综合性本地/内网工具中台。
+Tools Platform 是一个面向运维数据抓取、SLA 指标合控、质量看板、月报工作区、一键催办、胶片设计/PPT 素材库、专题分析、部门奖惩与负向事件治理、正向激励申报、Dragon Claw 智能体与 2D/3D 知识图谱的综合性本地/内网工具中台。
 
 项目采用 **Express + 原生多页面静态前端 + SQLite** 的轻量高效架构，同时提供 Windows Electron 托盘常驻安装版/绿色免安装版，并配套 iOS/KMP 移动端工程生态。
 
@@ -14,13 +14,14 @@ Tools Platform 是一个面向运维数据抓取、SLA 指标导入、报表看�
    - [2.2 SLA 数据合控与指标规则引擎](#22-sla-数据合控与指标规则引擎)
    - [默认快速上手包](#默认快速上手包)
    - [租户模式与数据隔离](#租户模式与数据隔离)
-   - [2.3 报表看板、月报与运营大屏](#23-报表看板月报与运营大屏)
+   - [2.3 报表看板、月报工作区与运营大屏](#23-报表看板月报工作区与运营大屏)
    - [2.4 一键精准催办与导出](#24-一键精准催办与导出)
    - [2.5 胶片设计与 PPT 素材库](#25-胶片设计与-ppt-素材库)
-   - [2.6 专项治理工具链 (PR审计 / FRT / 需求广场 / 问卷调研)](#26-专项治理工具链-pr审计--frt--需求广场--问卷调研)
+   - [2.6 专项治理工具链 (专题分析 / 部门奖惩 / 正向激励 / 会议考勤与花名册 / PR审计 / FRT / 需求广场 / 问卷调研)](#26-专项治理工具链)
    - [2.7 平台效能大盘、服务监控与友情链接](#27-平台效能大盘服务监控与友情链接)
-   - [2.8 自定义工具与内置工具同步生态](#28-自定义工具与内置工具同步生态)
-   - [2.9 智能客服 AI 与 2D/3D 双视图知识图谱](#29-智能客服-ai-与-2d3d-双视图知识图谱)
+   - [2.8 自定义工具与多源工具市场生态](#28-自定义工具与多源工具市场生态)
+   - [2.9 Dragon Claw 智能体与 2D/3D 双视图知识图谱](#29-dragon-claw-智能体与-2d3d-双视图知识图谱)
+   - [2.10 光影大厅 (Tools Cinema) 与多媒体生态](#210-光影大厅-tools-cinema-与多媒体生态)
 3. [安全授权与双轨 License 体系 (含安全基线与脱敏)](#3-安全授权与双轨-license-体系)
 4. [数据存储、启动自愈与 Schema 字典](#4-数据存储启动自愈与迁移治理)
 5. [备份恢复与远端主站同步](#5-备份恢复与远端主站同步)
@@ -57,16 +58,18 @@ flowchart TD
         A4 --> B1["SLA 数据导入页 (/sla)"]
         B2["手动上传 (Excel / CSV)"] --> B1
         B1 --> B3["多表识别与智能分流合并 (风险/整改/CPT/SR等)"]
-        B3 --> B4["指标规则引擎 (提取/统计/占比/分月目标/加减分)"]
-        B4 --> B5["沉淀历史快照 (report.db)"]
+        B3 --> B4["指标规则引擎 (提取/统计/占比/分月目标/加减分/跨表作用域/替换守卫)"]
+        B4 --> B5["沉淀历史快照 (report.db / tools.db)"]
     end
 
     subgraph 展现与应用层["3. 展现与业务应用"]
         B5 --> C1["报表看板 (/report)<br/>(健康度排名/比例计分/短板透视)"]
-        B5 --> C2["月度质量报告 (/monthly)<br/>(多月演进趋势/环比分析)"]
+        B5 --> C2["月度质量报告与工作区 (/monthly)<br/>(行内富文本编辑/Diff比对/长图与MSG导出)"]
         B5 --> C3["运营大屏 (/bigscreen)<br/>(会议室态势驾驶舱)"]
-        B5 --> C4["一键催办 (/expedite)<br/>(文案组装/全屏截图/Excel导出)"]
-        B5 --> C5["移动端 API (/api/external/metrics)<br/>(iOS / KMP App 只读查看)"]
+        B5 --> C4["一键催办 (/expedite)<br/>(文案组装/全屏截图/Excel导出/网络别名映射)"]
+        B5 --> C5["专题分析中心 (/topic-analysis)<br/>(NetCare/DataFab历史快照/EOS收编进展)"]
+        B5 --> C6["光影大厅 (/cinema)<br/>(多媒体点播与展厅模式)"]
+        B5 --> C7["移动端 API (/api/external/metrics)<br/>(iOS / KMP App 只读查看)"]
     end
 
     subgraph 支撑与治理层["4. 专项工具与中台支撑"]
@@ -74,9 +77,12 @@ flowchart TD
         D2["PR 审计与 PDF 导出 (/praudit)"]
         D3["FRT KPI 自动核算 (/frt)"]
         D4["需求广场与问卷调研 (/requirements, /surveys)"]
-        D5["系统告警中心 & AI分析 (/alert-center)"]
-        D6["AI客服与2D/3D知识图谱 (/api/ai)"]
-        D7["自定义工具与内置工具同步 (/custom-tools)"]
+        D5["部门奖惩与负向事件治理 (/api/department-reward-penalty)"]
+        D6["正向激励方案申报与核算 (/api/reward-program)"]
+        D7["会议考勤与操作激励快照 (/api/meeting-snapshots)"]
+        D8["系统告警中心 & AI分析 (/alert-center)"]
+        D9["Dragon Claw 智能体与知识图谱 (/api/ai)"]
+        D10["多源工具市场与自定义扩展 (/custom-tools)"]
     end
 ```
 
@@ -134,7 +140,9 @@ flowchart TD
   - 采用智能列名归一化与相似度算法，支持异构表格列自动映射。
 - **指标与子指标规则引擎**：
   - **计算模式**：支持提取值、计数统计、占比百分比、加减分统筹等多种计算逻辑。
-  - **分月目标基线**：支持针对 1~12 个月分别设定差异化的目标基线值。
+  - **跨表指标作用域切换**：支持指标规则自由切换全局跨表提取或限定单一源表，轻松满足多张异构表格联合计分诉求。
+  - **分月目标基线与批量防护**：支持针对 1~12 个月分别设定差异化目标基线值；内置 **SLA 目标基线批量替换防护守卫 (Bulk replacement guard)**，防范并发请求或外部调用导致基线目标被意外全量清空覆盖。
+  - **超宽规则配置工作台**：规则弹窗重构为全屏超宽沉浸式视野，支持多子指标、多条件公式、分月目标与权重联动高效编辑。
   - **预警呼吸灯与倒计时**：基于剩余处理时间与 SLA 阈值，前端动态渲染红/黄/绿呼吸灯与倒计时标签。
 - **偏好持久化与快照管理**：
   - 用户配置的列宽、显隐、冻结列、排序、计算开关保存在 `tools.db`；入库历史快照沉淀至 `report.db`。
@@ -417,15 +425,26 @@ flowchart TD
 
 ---
 
-### 2.3 报表看板、月报与运营大屏
+### 2.3 报表看板、月报工作区与运营大屏
 - **报表看板 (`/report`)**：
   - **客户群健康度排名**：汇总各维度加减分，动态生成客户群/代表处健康度积分与梯队排名。
   - **比例计分系统**：根据实际达成值相对于目标基线的偏移比例动态计分。
   - **Others 额外监控弱化机制**：部分指标仅作为日常监控参考，在看板与月报中以弱化样式呈现，**自动不计入总分**，避免干扰主绩效。
   - **短板透视矩阵**：直接定位扣分严重、不达标频次最高的客户群与责任指标。
-- **月度质量报告 (`/monthly`)**：
-  - 深度读取 `report.db` 入库快照，支持按月份、代表处、客户群进行多维交叉透视。
-  - 跨月长期演进趋势折线图，直观展现同比、环比波动与短板攻坚改善效果。
+- **月度质量报告与月报工作区 (`/monthly`)**：
+  - **标准化月报全功能交互工作区 (Monthly Workspace)**：
+    - **行内交互式富文本编辑**：点击月报正文段落或表格单元格直接就地修改；选中文本后弹出浮动工具栏，支持快速加粗、设为斜体，以及 5 种空间主题文字颜色高亮（琥珀色、红色、蓝色、绿色、深灰色）。
+    - **文案智能重置与展示控制**：提供“恢复本月自动文案”与“恢复固定文案”两级重置；支持一键切换“隐藏/显示月报导入时间与数据源小字”，满足正式汇报排版洁净度需求。
+    - **网络名称别名映射与临期预警阈值**：支持自定义网络归属别名映射规则（如 `EG-Egypt ET = ET`，支持跨大区/多网络映射，与一键催办共享映射体系）；支持自定义单据临期预警重点提示天数（含已超期单据统计）。
+    - **工程化版本管理与历史比对 (Diff)**：
+      - **📦 导出工程 / 📂 导入工程**：一键导出包含完整底层离线数据与全部中英文编辑内容的 `.json` 工程文件，支持离线流转与团队协同。
+      - **📸 保存快照 / 📚 快照库**：支持将当前月报数据、定制文案与排版保存为持久化历史快照（跨设备云端同步，存储于 `monthly_report_snapshots` 表）。
+      - **🔍 月报比对 (Diff)**：支持任意两个历史快照或快照与当前月报的分屏深度比对，自动高亮标注正文、表格数据及样式颜色的变更差异。
+    - **全矩阵多格式导出交付**：
+      - **长图 PNG 矩阵**：支持独立下载“🇨🇳 中文版 PNG（仅中文简报与图表）”、“🇬🇧 英文版 PNG（仅英文简报与图表）”、“🌐 中英文合一双语对照高清 PNG”以及“📦 一键打包下载全部（3张）”。
+      - **文档与表格导出**：支持一键导出排版规范的标准 **PDF** 报告、单文件离线 **HTML** 交互报告、原生带格式 **Excel** 表格。
+      - **Outlook 邮件格式 (`.msg`)**：通过后端专有路由 `/api/report-msg` 将富文本排版封装为标准 RTF，直接导出符合 Microsoft Outlook 规范的 `.msg` 邮件草稿，包含格式化表格与高亮短板，方便一键发送业务群组与领导层。
+  - **跨月长期演进趋势**：深度读取 `report.db` 入库快照，支持按月份、代表处、客户群进行多维交叉透视，直观展现同比、环比波动与短板攻坚改善效果。
 - **运营质量大屏 (`/bigscreen`)**：
   - 专为会议室全屏展示与运维中枢大屏设计，包含态势总览、达标巡检雷达、风险客户群排行榜、短板指标分布与实时数据探针。
 
@@ -444,6 +463,7 @@ flowchart LR
 
 - **一键精准催办 (`/expedite`)**：
   - 基于当前最新报表快照，自动提取扣分短板与超时未达标项，一键组装高优先级跟进催办文案。
+  - **网络映射与分类穿透 (`network-mapping.js`)**：与月报工作区共享同一套网络别名映射字典（例如将 `EG-Egypt ET` 规范解析为 `ET`），精准过滤收件人名下的短板单据。
   - **关键词过滤**：支持自定义忽略特定关键词或豁免客户群。
   - **多模板配置**：支持按业务群、高层汇报、责任人催办等多种风格模板一键切换。
   - **全屏截图与原生导出**：一键生成全屏高清长截图，支持导出带公式的原生 Excel 报表。
@@ -471,7 +491,28 @@ flowchart TD
 
 ---
 
-### 2.6 专项治理工具链 (PR审计 / FRT / 需求广场 / 问卷调研)
+### 2.6 专项治理工具链
+
+针对交付与运维中的高复杂度场景，平台打造了覆盖专题历史回顾、负向事件奖惩、正向激励审批及花名册考勤的专项治理工具矩阵：
+
+- **专题分析中心与历史快照 (`/topic-analysis`, `/api/topic-snapshots`)**：
+  - **租户级快照数据中心**：集中归档 NetCare 与 DataFab 的批次导入快照，保留完整的原始 JSON 结构，支持跨月份按时间轴追溯与穿透检索。
+  - **EOS 产品与版本收编进展月报**：专为 EOS 重点项目构建的交互式月报，打通月报工作区能力，支持计划数对比、工程导出导入、快照版本分屏 Diff 及多格式长图下载。
+- **部门奖惩与负向事件治理 (`/api/department-reward-penalty`)**：
+  - **全生命周期闭环**：涵盖红线违规登记、证据链留存、免责归因、跨代表处流转与整改闭环追踪。
+  - **自动化 Pages 与单文件发布 (`snapshot-publish-service.js`)**：
+    - **单文件离线发布**：支持一键生成内嵌完整结构化数据与全部证据附件（图片/PDF）的单文件 HTML，实现完全离线化只读审计。
+    - **Git Pages 自动化持续发布**：后端集成 Git 克隆、差异比对与推送管道；支持按租户配置部署分支与路径模板（`{toolSlug}/index.html`），可发布为“单文件内嵌版”或“Pages 数据分离版”。
+    - **多工具快照聚合与首页菜单维护**：推送时自动维护仓库根目录的 `index.html` 站点导航目录和说明文档，自动聚合月报与奖惩等多工具快照。
+    - **定时自动发布调度与执行终端**：后台调度器依配置周期 (`auto_push_minutes`) 自动检测新数据并执行推送；前端弹窗内置实时 Web 终端，流式展示克隆、比对、提交与推送全过程，并配有门禁解锁 (Gatekeeper unlock) 安全防护。
+- **正向激励方案管理 (`/api/reward-program`)**：
+  - **规范化申报与核算**：支持多维度业务正向激励方案设定、月度/季度申报立项、激励额度核算、佐证凭证（PDF/图片/压缩包）上传及多级审批流转。
+  - **异议与留痕台账**：支持对激励结果发起在线异议申诉，系统完整记录版本修订历史与审计日志。
+  - **快照同步发布**：同样支持一键将正向激励台账打包并自动化推送至 Pages 站点归档。
+- **会议考勤与操作激励花名册体系 (`/api/meeting-snapshots`, `/api/operation-incentive-snapshots`)**：
+  - **花名册多源智能提取与清洗**：支持从 QR、RFC、WFM 等多类型表格中提取人员名单；算法自动对包含分号/逗号的复合单元格进行拆分去重。
+  - **工号归一化与防误触过滤 (`staff-id-normalization.js`)**：智能剥离工号的 `m` 前缀别名、严格过滤超过 10 位的工单号或无效单据号，精准识别 FME/TE 双重角色与在册人员周期。
+  - **高性能秒级哈希匹配**：底层采用 $O(1)$ 哈希映射算法取代传统 $O(N^2)$ 遍历，将全量名单交叉核验性能提升数十倍，请求超时阈值放宽至 90 秒守护稳定运行。
 - **PR 进展审计 (`/praudit`)**：
   - 审计级批量自检系统，检查 PR 进展附件记录是否完整合规，支持导入 Excel 校验并导出双语 PDF 报告。
 - **FRT KPI 自动核算 (`/frt`)**：
@@ -493,13 +534,14 @@ flowchart TD
 
 ---
 
-### 2.8 自定义工具与内置工具同步生态
+### 2.8 自定义工具与多源工具市场生态
 
 ```mermaid
 flowchart TD
     subgraph 工具接入["工具注册与部署"]
         T1["内置系统工具 (builtin-tools/)"] -->|启动自检与版本比对| T3["统一挂载与安全沙箱"]
         T2["上传自定义工具 (HTML / ZIP)"] -->|解压与校验清单| T3
+        T0["多源工具市场 (GitHub / 内网第三方源)"] -->|Ed25519 验签与解压| T3
     end
     subgraph 运行时与分发["多语言与导出"]
         T3 --> T4["生成首页卡片与导航入口 (/tools/:slug)"]
@@ -513,12 +555,15 @@ flowchart TD
   - 上传 HTML 或 ZIP 工具包后自动解压校验并挂载独立 URL (`/tools/:slug`)，生成首页卡片与导航。
 - **内置系统工具自动同步 (`builtin-tools-sync.js`)**：
   - 服务启动时自动扫描 `backend/builtin-tools/`，对比哈希并自动安装缺失的系统工具。
+- **多源工具市场生态 (`/api/custom-tools/market/sources`)**：
+  - 支持聚合官方 GitHub `tool-market` 分支与多个第三方内网静态源（HTTP/HTTPS），可随时启停源仓库。
+  - 同名工具按优先级展示并支持一键安装/更新；支持 Ed25519 签名与 SHA-256 指纹校验，确保企业内网分发绝对可信。
 - **多语言 (i18n) 运行时注入**：
   - 动态注入 `custom-tool-i18n-runtime.js`，支持单文件离线导出。
 
 ---
 
-### 2.9 智能客服 AI 与 2D/3D 双视图知识图谱
+### 2.9 Dragon Claw 智能体与 2D/3D 双视图知识图谱
 
 ```mermaid
 flowchart TD
@@ -529,11 +574,21 @@ flowchart TD
     K2 --> SEC
     SEC --> LLM["统一大模型客户端 (Gemini/OpenAI/Claude/MiniMax)"]
     LLM --> OUT["流式 Chunk 输出 + 前端打字机渲染 + 精准依据来源展示"]
+    OUT --> SESS["跨页面会话归档与恢复 (/api/ai/sessions-archive)"]
 ```
+
+- **Dragon Claw 智能体专属品牌形象**：
+  - 系统 AI 品牌全面定制升级为 **“Dragon Claw 智能体”**，对话弹窗左上角搭载用户专属绿恐龙品牌形象，问候语、思考动效与输入框占位符全链路同步呈现。
+- **租户全局跨页面历史会话检索与恢复 (`/api/ai/sessions-archive`)**：
+  - **打破页面孤岛**：默认汇聚租户内所有页面的有效问答记录（包含活跃和归档），支持按关键词进行跨页面全文检索与状态过滤。
+  - **无缝恢复与续聊**：前端会话浏览器清晰标注“活跃 / 已归档”标签，支持一键切换进入活跃对话或恢复归档历史会话继续深入讨论。
+  - **业务数据兼容增强**：完善静态快照考勤工号前缀别名兼容，精准识别提问中的业务实体与人员对象。
 
 - **多模型提供商接入与流式体验**：
   - 原生适配 **Google Gemini、OpenAI / Azure OpenAI、Anthropic Claude、MiniMax** 以及兼容 OpenAI 接口规范的各大内外部大模型。
   - 后端通过 `ai-provider-client.js` 统一适配，支持真实的 Server-Sent Events / Chunk 流式输出与前端打字机渲染，支持用户中途主动中断生成。
+  - **多模型自动故障转移 (Auto-Switch Failover)**：支持在设置中心按优先级编排备用模型链；当主力模型发生 429 并发上限、503 服务过载、网关超时或格式畸变时，客户端自动无感熔断并热切换至下一顺位模型重试，前端实时标注实际响应模型与降级标签。
+  - **单模型 Token 用量与成本独立核算 (`ai_usage_daily_models`)**：按模型粒度精确统计当日 Prompt Token、Completion Token 与等效财务成本，提供基于单价配置的精细化费用分析与限额保护。
   - 设置中心支持配置不同模型的 API Token、模型标识、系统提示词与输入/输出 Token 单价，前端对话实时显示 **Token 消耗量与成本费用估算**。
 
 - **双引擎只读安全检索架构**：
@@ -583,6 +638,16 @@ graph TD
     - 按“月份规则 → 指标分类 → 核心指标 → 子指标”展示，支持月份动态切换与仿真推演；点击指标节点可穿透查看已保存的历史录入值、基线目标、扣分明细与达标状态。
   - **全局多语言实时联动**：
     - 智能客服与知识图谱深度订阅全局语言切换事件；顶部导航切换为英文后，客服界面、图谱节点、连线关系与 AI 默认回答语言均同步切换为英文。
+
+---
+
+### 2.10 光影大厅 (Tools Cinema) 与多媒体生态
+
+- **光影大厅 (`/cinema.html`)**：
+  - 专为运维复盘、项目宣讲、胶片多媒体回顾与技术分享打造的专属沉浸式影院播放大厅。
+  - 支持多类型多媒体格式点播、高保真视听呈现与响应式全屏播放体验。
+- **多媒体流式服务与安全控制 (`/api/media`)**：
+  - 提供视频/音频的流式切片分发、按需 Range 分段加载与访问权限隔离，确保内网多媒体资产平稳加载不卡顿。
 
 ---
 
@@ -658,10 +723,10 @@ flowchart LR
 
 | 数据库 / 存储文件 | 宿主目录 | 存储内容与核心表 |
 | :--- | :--- | :--- |
-| **`tools.db`** | `backend/data/` | 账号鉴权 (`users`, `sessions`)、UIV 脚本仓库 (`uiv_categories`, `uiv_scripts`)、SLA 规则配置 (`sla_targets`, `sla_prefs`, `sla_groups`, `sla_snapshots`)、FRT 规则、PR 审计配置、告警事件 (`alert_events`)、服务状态指标等 |
+| **`tools.db`** | `backend/data/` | 账号鉴权 (`users`, `sessions`)、租户元数据 (`tenants`)、UIV 脚本仓库 (`uiv_categories`, `uiv_scripts`)、SLA 规则配置 (`sla_targets`, `sla_prefs`, `sla_groups`, `sla_snapshots`)、月报工作区快照 (`monthly_report_snapshots`)、专题快照 (`topic_snapshots`)、会议考勤与操作激励快照 (`meeting_attendance_snapshots`, `operation_incentive_snapshots`)、负向事件与奖惩 (`department_reward_penalty_*`)、正向激励 (`reward_program_*`)、静态推送 (`snapshot_publish_*`)、多源市场 (`tool_market_settings`)、FRT 规则、PR 审计配置、告警事件 (`alert_events`)、服务状态指标等 |
 | **`report.db`** | `data/` | 报表看板入库历史快照、各代表处/客户群月度得分、全量指标计算明细数据、月报读取主库 |
 | **`requirements.db`** | `data/` | 需求广场提议记录 (`requirements`)、需求流转状态变更日志与评论 |
-| **`ai-knowledge.db`** | `backend/data/` | AI 客服代码与项目文档增量向量/BM25 索引缓存（可随源码更新随时重建） |
+| **`ai-knowledge.db`** | `backend/data/` | Dragon Claw 智能体代码与项目文档增量向量/BM25 索引缓存（可随源码更新随时重建） |
 | **`custom-tools/`** | `backend/data/` | 所有上传的自定义 HTML 工具与静态资源文件 |
 | **`images/`** | `data/` | 报表全屏高清截图、导出 Excel/PDF 临时缓存文件 |
 
@@ -696,16 +761,38 @@ flowchart TD
 | :--- | :--- | :--- |
 | `users` | `username` (PK), `password_hash`, `role`, `created_at` | 用户身份认证、哈希密码存储与角色权限 |
 | `sessions` | `token` (PK), `username`, `expires_at`, `created_at` | 登录态 Session 凭据管理 |
+| `tenants` | `id` (PK), `name`, `status`, `created_at` | 租户注册表、租户生命周期与状态管理 |
 | `uiv_categories` | `id` (PK), `name`, `icon`, `sort_order` | UIVF12 抓取脚本分类体系 |
 | `uiv_scripts` | `id` (PK), `category_id`, `name`, `code`, `console_code`, `payload` | UI.Vision 宏与 F12 抓取脚本实体与版本 |
-| `sla_targets` | `metric_key` (PK), `target_json`, `weight`, `updated_at` | SLA 各指标 1~12 月基线目标与权重配置 |
+| `sla_targets` | `metric_key` (PK), `target_json`, `weight`, `updated_at` | SLA 各指标 1~12 月基线目标与权重配置（带批量替换防清空守卫） |
 | `sla_prefs` | `pref_key` (PK), `pref_json`, `updated_at` | 每张表的显示列、排序、冻结列与计算模式偏好 |
 | `sla_groups` | `id` (PK), `name`, `metrics_json`, `sort_order` | 指标大类与分组聚合配置 |
 | `sla_snapshots` | `id` (PK), `month`, `snapshot_name`, `data_json`, `created_at` | SLA 上传与计算的历史快照沉淀 |
+| `monthly_report_snapshots` | `id` (PK), `tool_key`, `topic_key`, `month`, `snapshot_name`, `summary_json`, `created_at` | 标准化月报工作区保存的历史快照（支持版本比对 Diff） |
+| `topic_snapshots` | `id` (PK), `source`, `batch_id`, `captured_at`, `payload_json`, `created_at` | NetCare 与 DataFab 专题历史快照（保存原始 JSON 结构） |
+| `meeting_attendance_snapshots`| `id` (PK), `meeting_date`, `roster_json`, `summary_json`, `created_at` | 例会花名册、参会考勤与状态快照（支持智能工号去 m 与去重） |
+| `operation_incentive_snapshots`| `id` (PK), `period`, `records_json`, `summary_json`, `created_at` | 操作激励在册人员名单与周期激励快照 |
+| `department_reward_penalty_items`| `id` (PK), `date`, `person_id`, `category`, `score_impact`, `evidence_json` | 部门奖惩与负向事件登记、证据归因与整改跟踪主表 |
+| `reward_program_applications` | `id` (PK), `category`, `rule_id`, `period`, `applicant`, `status`, `amount_minor` | 正向激励方案申报、审批流转与额度核算主表 |
+| `snapshot_publish_settings` | `tenant_id` (PK), `repo_url`, `branch`, `path_template`, `format`, `auto_push_minutes` | 静态页面 Git 仓库克隆与 Pages 自动化推送配置 |
+| `snapshot_publish_jobs` | `id` (PK), `tenant_id`, `trigger_type`, `status`, `logs_text`, `created_at` | 静态页面 Git 自动化发布调度历史与执行流水日志 |
+| `tool_market_settings` | `key` (PK), `value_json`, `updated_at` | 多源工具市场第三方仓库源与开关偏好设置 |
+| `custom_tools` | `slug` (PK), `name`, `version`, `entry`, `manifest_json`, `updated_at` | 自定义 HTML/ZIP 工具与内置系统工具注册表 |
+| `custom_tools_snapshots` | `id` (PK), `tool_slug`, `snapshot_name`, `data_json`, `created_at` | 自定义工具数据状态历史快照 |
+| `slide_design_projects` | `id` (PK), `title`, `slides_json`, `metadata_json`, `updated_at` | 胶片设计工作区项目实体与单页挑选清单 |
+| `slide_library_assets` | `id` (PK), `project_id`, `category`, `tags`, `thumb_path`, `asset_path` | 胶片素材库切片、分类标签与高清缩略图索引 |
+| `survey_templates` | `id` (PK), `title`, `schema_json`, `status`, `created_at` | 动态问卷调研设计模板 |
+| `survey_submissions` | `id` (PK), `template_id`, `submitter`, `answers_json`, `created_at` | 问卷调研填报记录与答卷结果 |
+| `praudit_configs` | `id` (PK), `rules_json`, `thresholds_json`, `updated_at` | PR 进展合规性审计规则与判定阈值 |
+| `frt_snapshots` | `id` (PK), `month`, `kpi_json`, `summary_json`, `created_at` | FRT KPI 动态核算结果与历史归档快照 |
+| `ai_chat_sessions` | `session_id` (PK), `tenant_id`, `page_route`, `title`, `status`, `created_at`, `updated_at` | Dragon Claw 智能体跨页面会话元数据与归档管理主表 |
+| `ai_chat_messages` | `id` (PK), `session_id`, `role`, `content`, `model`, `tokens`, `created_at` | 智能体会话流式消息内容、使用模型与 Token 计量明细 |
+| `ai_usage_daily_models` | `date_key`, `model_id` (PK), `prompt_tokens`, `completion_tokens`, `cost_estimate` | 单模型粒度日调用量、Token 消耗与财务成本核算 |
 | `alert_events` | `id` (PK), `event_type`, `severity`, `status`, `title`, `message`, `detail_json` | 系统告警事件、AI 诊断建议回填与流转记录 |
 | `service_status_daily` | `service_key`, `status_date` (PK), `request_count`, `success_count`, `duration_ms` | 平台 API 服务可用性与耗时统计日聚合表 |
 | `service_status_failures` | `id` (PK), `service_key`, `request_at`, `method`, `path`, `status_code`, `detail` | 4xx/5xx 异常链路追踪明细（自动脱敏） |
 | `config_fingerprints` | `scope` (PK), `hash`, `summary_json`, `updated_at` | 核心配置 SHA-256 指纹监控基准表 |
+| `auth_login_attempts` | `ip`, `username` (PK), `failed_count`, `locked_until`, `last_attempt_at` | 登录防暴力破解安全审计与动态 IP/账号封锁表 |
 
 #### 2. `data/report.db` (报表看板与月报分析库)
 | 表名 | 核心字段 | 业务用途与说明 |
@@ -719,6 +806,18 @@ flowchart TD
 | :--- | :--- | :--- |
 | `requirements` | `id` (PK), `title`, `description`, `status`, `submitter`, `created_at` | 全民需求提议与流转状态 |
 | `requirement_logs` | `id` (PK), `requirement_id`, `actor`, `action`, `comment`, `created_at` | 需求评审、评估、开发与上线审计留痕 |
+
+#### 4. `backend/data/chat-history.db` (租户隔离的聊天记录中心与全文检索库)
+| 表名 | 核心字段 | 业务用途与说明 |
+| :--- | :--- | :--- |
+| `chat_conversations` | `conversation_id` (PK), `title`, `type`, `member_count`, `message_count`, `pinned` | 单聊/群组会话元数据、置顶状态与成员统计 |
+| `chat_messages` | `message_id` (PK), `conversation_id`, `sender_id`, `sender_name`, `sent_at`, `body` | 聊天记录历史消息正文、发送人与高精度时间戳 |
+| `chat_messages_fts` | `body`, `sender_name` (FTS5 Virtual Table) | 聊天正文高效分词全文检索虚表 |
+| `chat_person_directory` | `person_id` (PK), `display_name`, `staff_id`, `aliases_json`, `groups_json` | 发言人通讯录、工号去 m 别名归一化与归属群组索引 |
+| `chat_analytics_cache` | `cache_key` (PK), `data_json`, `expires_at` | 互动频次热力图、发言活跃度与人际拓扑关系图谱缓存 |
+| `chat_favorites` | `id` (PK), `username`, `message_id`, `created_at` | 用户个人重要消息与证据收藏夹 |
+| `chat_user_states` | `username`, `conversation_id` (PK), `last_read_message_id`, `read_at` | 个人维度的各会话已读位置与未读数管理 |
+| `chat_group_preferences`| `conversation_id`, `username` (PK), `is_pinned`, `alias` | 个人对群组的置顶与备注偏好 |
 
 ---
 
@@ -820,15 +919,17 @@ flowchart TD
 | **数据抓取** | `/uivf12` | 需登录 | UIVF12 脚本仓库、UI.Vision 批量调度与 F12 抓取控制台 |
 | **数据导入** | `/sla` | 需登录 (修改需Admin) | SLA 多表数据合并、列映射、指标规则管理与历史快照上传 |
 | **报表看板** | `/report` | 需登录 | 客户群健康度排名、比例计分、入库计算、短板透视矩阵 |
-| **月报页面** | `/monthly` | 需登录 | 跨月历史指标演进趋势比对、同比环比分析、月度质量报告归档 |
-| **一键催办** | `/expedite` | 需登录 | 基于快照自动生成催办跟例文案、全屏长截图与 Excel 导出 |
+| **月报工作区** | `/monthly` | 需登录 | 跨月历史指标演进趋势、标准化月报工作区（行内富文本编辑、快照比对 Diff、长图与 MSG 导出） |
+| **一键催办** | `/expedite` | 需登录 | 基于快照自动生成催办文案、网络别名映射、全屏长截图与 Excel 导出 |
 | **大屏看板** | `/bigscreen` | 需登录 | 全屏运营态势驾驶舱、短板风险分布、雷达巡检 |
+| **专题分析** | `/topic-analysis.html` | 需登录 | NetCare/DataFab 租户级历史快照中心、EOS 收编进展月报、版本 Diff 比对与工程导出导入 |
+| **光影大厅** | `/cinema.html` | 需登录 | Tools Cinema 沉浸式影院播放大厅、运维复盘点播与多媒体展映 |
 | **PR 审计** | `/praudit` | 需登录 | PR 进展附件审计、Excel 导入校验与双语 PDF 报告导出 |
 | **FRT 核算** | `/frt` | 需登录 | FRT 动态规则引擎与 KPI 自动化核算平台 |
 | **需求广场** | `/requirements`| 需登录 | 平台功能需求提议、流转状态看板与评论日志追踪 |
 | **存储迁移** | `/storage` | 需登录 (修改需Admin) | SQLite/JSON 迁移进度核对、数据一致性 Parity 校验与安全清理 |
 | **数据探索** | `/db-explorer` | 需登录 (修改需Admin) | SQLite 底层物理表可视化查询与多日日志打包导出 |
-| **自定义工具** | `/custom-tool` / `/tools/:slug` | 按工具配置 | 运行与管理自定义 HTML/ZIP 工具 |
+| **自定义工具** | `/custom-tool` / `/tools/:slug` | 按工具配置 | 运行与管理自定义 HTML/ZIP 工具，支持多源市场扩展 |
 | **License 管理** | `/desktop-license-admin` | 管理员专有 | 管理员签发、续期、失效与归档客户端 License（服务端专有） |
 | **合规与隐私** | `/privacy`, `/terms` | 公开 | 平台合规静态说明页，支持独立或弹窗访问 |
 
@@ -843,15 +944,23 @@ flowchart TD
 | `/api/auth` | `auth.js` | 部分公开 | 用户登录、退出、Session 状态校验、修改密码与账号管理 |
 | `/api/tenants` | `tenants.js` | 需登录（管理写操作需 Admin） | 当前 Session 的租户清单与切换，以及租户新增、编辑和安全归档 |
 | `/api/nav-settings` | `nav-settings.js` | 需登录 (写需Admin) | 顶部导航栏配置、分类及菜单显隐排序 |
-| `/api/ai-settings` | `ai-settings.js` | 需登录 (写需Admin) | 智能客服模型提供商 (Gemini/OpenAI/Claude/MiniMax)、Token 与提示词配置 |
-| `/api/ai` | `ai.js` | 需登录 | 流式聊天对话、代码/文档增量知识库检索、只读报表分析、知识图谱数据 |
+| `/api/ai-settings` | `ai-settings.js` | 需登录 (写需Admin) | Dragon Claw 智能体模型提供商 (Gemini/OpenAI/Claude/MiniMax)、Token 与提示词配置 |
+| `/api/ai` | `ai.js` | 需登录 | Dragon Claw 智能体流式问答、代码/文档知识库检索、跨页面会话检索恢复 (`/sessions-archive`)、只读报表分析、知识图谱数据 |
 | `/api/uiv` | `uiv.js` | 需登录 (写需Admin) | UIVF12 脚本仓库 CRUD 与 UI.Vision Macro 临时 runner 调度 |
 | `/api/uiv-ai-adapter` | `uiv-ai-adapter.js` | 需登录 (写需Admin) | 目标站点抓取请求 AST 分析与 AI 规则自动推断 |
 | `/api/uiv-auto-import` | `uiv-auto-import.js`| 需登录 | 抓取后自动导入的结构化 rows 临时桥接会话 |
-| `/api/sla` | `sla.js` | 需登录 (写需Admin) | SLA 指标规则、分月目标、列映射偏好、合并入库与快照管理 |
+| `/api/sla` | `sla.js` | 需登录 (写需Admin) | SLA 指标规则、分月目标、跨表作用域、列映射偏好、批量替换守卫与快照入库 |
 | `/api/upload` | `upload.js` | 需登录 | 上传文件历史记录与临时附件处理 |
 | `/api/db` | `db.js` | 需登录 (写需Admin) | 报表看板计算、客户群得分、月报指标读取与配置存储 |
+| `/api/monthly-snapshots`| `monthly-snapshots.js`| 需登录 | 标准化月报工作区跨设备快照保存、列表读取与多版本 Diff 比对 |
+| `/api/report-msg` | `report-msg.js` | 需登录 | 月报富文本 RTF 封装与 Outlook `.msg` 邮件草稿一键生成与导出 |
+| `/api/topic-snapshots` | `topic-snapshots.js` | 需登录 | NetCare 与 DataFab 专题历史快照持久化管理与时间序列分析 |
+| `/api/department-reward-penalty`| `department-reward-penalty.js`| 需登录 (写需Admin)| 部门奖惩与负向事件治理、证据附件归档与静态单文件/Pages 自动化发布 |
+| `/api/reward-program` | `reward-program.js` | 需登录 (管理需Admin) | 正向激励方案申报立项、额度核算、证明凭证管理与审批流转 |
+| `/api/meeting-snapshots`| `meeting-snapshots.js`| 需登录 | 会议考勤历史快照管理与在册人员校验 (支持工号去 m 与复合名单去重) |
+| `/api/operation-incentive-snapshots`| `operation-incentive-snapshots.js`| 需登录 | 操作激励历史快照管理与全量在册人员提取 (别名: `/api/incentive-snapshots`) |
 | `/api/external/metrics`| `external-metrics.js` | 需登录/Token | 面向移动端 (iOS/KMP) 和外部系统的只读指标 OpenAPI |
+| `/api/media` | `media.js` | 需登录 | 光影大厅 (Tools Cinema) 多媒体流媒体切片分发与 Range 断点播放 |
 | `/api/praudit` | `praudit.js` | 需登录 (写需Admin) | PR 进展审计规则配置、抽查数据校验与 PDF 报告生成 |
 | `/api/chat-history` | `chat-history.js` | 需登录（导入/删除需 Admin） | 递归 TXT 导入、会话浏览、全文检索、个人收藏/已读状态及人员统计 |
 | `/api/frt` | `frt.js` | 需登录 (写需Admin) | FRT 动态核算规则配置与 KPI 历史快照计算 |
@@ -862,7 +971,7 @@ flowchart TD
 | `/api/platform-metrics`| `platform-metrics.js`| 需登录 | 首页效能大盘统计指标与 API 服务请求状态监控追踪 |
 | `/api/friend-links` | `friend-links.js` | 需登录 (写需Admin) | 首页友情链接维护与后台定时可用性探活 |
 | `/api/onboarding` | `onboarding.js` | 需登录 (写需Admin) | 首次启动默认内容预览/决策、从全局设置重新补齐默认内容，以及带安全备份与完整归档的程序数据初始化 |
-| `/api/custom-tools` | `custom-tools.js` | 需登录 (写需Admin) | 自定义 HTML/ZIP 工具上传、状态恢复与内置工具同步 |
+| `/api/custom-tools` | `custom-tools.js` | 需登录 (写需Admin) | 自定义 HTML/ZIP 工具上传、多源市场源管理 (`/market/sources`) 与状态同步 |
 | `/api/global-backup` | `global-backup.js` | 需登录 (写需Admin) | 当前租户核心数据备份包生成、租户级自动备份调度与同租户恢复 |
 | `/api/storage` | `storage.js` | 需登录 (写需Admin) | SQLite/JSON 存储迁移状态、读源切换与遗留 JSON 安全清理 |
 | `/api/db-explorer` | `db-explorer.js` | 需登录 (写需Admin) | SQLite 物理表结构查询、数据探针与日志文件打包下载 |
@@ -901,7 +1010,7 @@ privacy-policy/
     │   ├── preflight.js                   # 启动前端口与系统环境预检
     │   ├── ecosystem.config.js            # PM2 生产运维配置文件
     │   ├── package.json                   # 后端依赖配置
-    │   ├── routes/                        # 27 个业务 API 路由模块
+    │   ├── routes/                        # 38 个业务 API 路由模块
     │   ├── models/                        # 数据库仓储 (app-db, report-store)、业务引擎与 AI 适配器
     │   ├── middleware/                    # JWT 鉴权与管理员权限控制中间件
     │   ├── logger/                        # 日志按日轮转与格式化输出
@@ -910,7 +1019,7 @@ privacy-policy/
     │
     ├── frontend/                          # 原生多页面静态前端
     │   ├── index.html                     # 首页大中台主页面
-    │   ├── pages/                         # 各独立业务页面 (uivf12, sla, report, monthly 等)
+    │   ├── pages/                         # 各独立业务页面 (uivf12, sla, report, monthly, topic-analysis, cinema 等)
     │   ├── css/                           # 全局样式、设计系统与暗黑主题
     │   ├── js/                            # 前端业务逻辑
     │   │   ├── shared/                    # 公共组件 (navbar, api, ai-assistant, 2D/3D知识图谱等)
