@@ -81,3 +81,12 @@ test('flashcard phonetic labels analyze only the selected key letter', () => {
     assert.match(source, /keyPhonetics\.vowelDetail/);
     assert.doesNotMatch(source, /starter-card-phonetic-badge[^\n]*word\.vowelClass/);
 });
+
+test('Egyptian dialect vocabulary is properly defined and integrated into flashcards deck', () => {
+    assert.match(source, /const EGYPTIAN_DIALECT_VOCAB = \[/);
+    assert.match(source, /filterDeckByTag\('egyptian'\)/);
+    assert.match(source, /function toggleDialectTable/);
+    assert.match(source, /function locateDialectCard/);
+    assert.match(source, /starter-card-homophone/);
+    assert.match(source, /starter-extra-point/);
+});

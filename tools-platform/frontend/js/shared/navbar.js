@@ -1317,8 +1317,11 @@ function sortNavItems(items, orderIds) {
 }
 
 const NAV_RECENT_STORAGE_KEY = 'tools_recent_nav_tools';
+let recentNavIds = null;
+let recentNavWriteQueue = Promise.resolve();
 
 function getRecentNavToolIds() {
+    if (recentNavIds) return recentNavIds;
     try {
         const tenantId = localStorage.getItem('tools_tenant_id') || 'default';
         const raw = localStorage.getItem(`${NAV_RECENT_STORAGE_KEY}:${tenantId}`);
@@ -1337,8 +1340,39 @@ function recordRecentNavTool(toolId) {
         const key = `${NAV_RECENT_STORAGE_KEY}:${tenantId}`;
         const ids = getRecentNavToolIds().filter(id => id !== toolId);
         ids.unshift(toolId);
-        localStorage.setItem(key, JSON.stringify(ids.slice(0, 16)));
+        recentNavIds = ids.slice(0, 16);
+        localStorage.setItem(key, JSON.stringify(recentNavIds));
     } catch (_) {}
+    if (hasNavAuthToken()) {
+        recentNavWriteQueue = recentNavWriteQueue.then(async () => {
+            const response = await fetch('/api/recent-nav', {
+                method: 'POST',
+                keepalive: true,
+                headers: { 'Content-Type': 'application/json', ...getAuthHeaderForNav() },
+                body: JSON.stringify({ toolId })
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        }).catch(error => console.warn('[Navbar] save recent tool failed:', error));
+    }
+}
+
+async function loadRecentNavTools() {
+    if (!hasNavAuthToken()) return;
+    try {
+        const response = await fetch('/api/recent-nav', { headers: getAuthHeaderForNav() });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        if (!Array.isArray(data.ids)) return;
+        const localIds = getRecentNavToolIds();
+        recentNavIds = data.ids.filter(id => typeof id === 'string').slice(0, 16);
+        if (!recentNavIds.length && localIds.length) {
+            // 首次升级时，把该浏览器原有的最近使用顺序写入服务端。
+            localIds.slice(0, 16).reverse().forEach(recordRecentNavTool);
+        }
+        refreshNavMoreRecent();
+    } catch (error) {
+        console.warn('[Navbar] load recent tools failed:', error);
+    }
 }
 
 function trackCurrentPageAsRecentNavTool() {
@@ -1718,6 +1752,7 @@ async function loadNavigationData() {
     }
     notifyRequirementPageCategoriesChanged();
     renderNavLinksFromState();
+    await loadRecentNavTools();
     trackCurrentPageAsRecentNavTool();
     if (document.getElementById('navSettingsModal')) renderNavSettingsContent();
 }
@@ -1880,7 +1915,6 @@ function renderNavbar() {
 
     renderNavLinksFromState();
     loadTenantNavigation();
-    trackCurrentPageAsRecentNavTool();
 }
 
 document.addEventListener('click', (event) => {

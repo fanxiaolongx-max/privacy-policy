@@ -115,15 +115,11 @@ test('operation-incentive-snapshots-repository performs complete CRUD and filter
     }
 });
 
-test('tool-ms4xb66s index.html ensures exact parity and embeds snapshot UI controls', () => {
+test('tool-ms4xb66s versioned source embeds snapshot UI controls', () => {
     const builtinPath = path.join(__dirname, '../backend/builtin-tools/tool-ms4xb66s/index.html');
-    const dataPath = path.join(__dirname, '../backend/data/custom-tools/tool-ms4xb66s/index.html');
 
     const builtinHtml = fs.readFileSync(builtinPath, 'utf8');
-    const dataHtml = fs.readFileSync(dataPath, 'utf8');
-
-    // Exact byte-for-byte parity between builtin and custom data copy
-    assert.equal(builtinHtml, dataHtml, 'builtin-tools and data/custom-tools tool-ms4xb66s index.html must be identical');
+    // The runtime custom-tools copy is user data and is refreshed by builtin-tools-sync.
 
     // Action buttons in Hero and Top actions
     assert.match(builtinHtml, /id="heroSaveSnapshotBtn"/);

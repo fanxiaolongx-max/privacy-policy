@@ -88,6 +88,22 @@ registerProvider('tool-ms4xb66s', {
     buildPagesSnapshot: (tenantId, opts) => require('./operation-incentive-snapshot').buildPagesSnapshot(tenantId, opts)
 });
 
+registerProvider('tool-mqp55fna', {
+    name: '六个一信息收集',
+    description: '查看调查模板与全部提交记录的只读快照。',
+    defaultFile: 'tool-mqp55fna/index.html',
+    buildSnapshot: (tenantId, opts) => require('./catalog-tool-snapshot').buildSnapshot('tool-mqp55fna', tenantId, opts),
+    buildPagesSnapshot: (tenantId, opts) => require('./catalog-tool-snapshot').buildPagesSnapshot('tool-mqp55fna', tenantId, opts)
+});
+
+registerProvider('f12-to-extension', {
+    name: 'F12 扩展打包',
+    description: '在静态页面载入脚本并下载浏览器扩展 ZIP；不签发 License。',
+    defaultFile: 'f12-to-extension/index.html',
+    buildSnapshot: (tenantId, opts) => require('./f12-static-packer').buildSnapshot(tenantId, opts),
+    buildPagesSnapshot: (tenantId, opts) => require('./f12-static-packer').buildPagesSnapshot(tenantId, opts)
+});
+
 function getPagesMarker(toolSlug) {
     return JSON.stringify({ toolId: toolSlug, format: 1 }) + '\n';
 }

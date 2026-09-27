@@ -502,6 +502,12 @@ async function listSubmissions({ templateId = '', limit = 100 } = {}) {
     return rows.map(mapSubmission);
 }
 
+async function listAllSubmissions() {
+    await ensureReady();
+    const rows = await all('SELECT * FROM survey_submissions ORDER BY created_at DESC');
+    return rows.map(mapSubmission);
+}
+
 async function getSubmission(id) {
     await ensureReady();
     const row = await get('SELECT * FROM survey_submissions WHERE id = ?', [id]);
@@ -542,6 +548,7 @@ async function deleteSubmission(id) {
 module.exports = {
     ensureReady,
     listTemplates,
+    listAllSubmissions,
     getTemplate,
     saveTemplate,
     deleteTemplate,

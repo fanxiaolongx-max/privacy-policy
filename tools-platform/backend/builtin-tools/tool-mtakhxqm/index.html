@@ -364,6 +364,122 @@
         .starter-flip-back .shift-btn:hover { background: #4f46e5; color: #fff; border-color: #4f46e5; }
         .shift-btn.active-cat { opacity: 0.45; cursor: default; pointer-events: none; }
 
+        /* 卡片正面谐音与背面练习点 */
+        .starter-card-homophone { display: inline-block; font-size: 11px; font-weight: 600; color: #fef08a; background: rgba(0,0,0,0.24); padding: 1px 8px; border-radius: 10px; margin-top: 2px; max-width: 90%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border: 1px solid rgba(254, 240, 138, 0.25); }
+        .starter-card-scene { display: inline-block; font-size: 10.5px; font-weight: 600; color: #bae6fd; background: rgba(0,0,0,0.24); padding: 1px 7px; border-radius: 8px; margin-top: 2px; max-width: 90%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border: 1px solid rgba(186, 230, 253, 0.28); }
+        .starter-back-extra { display: flex; flex-direction: column; align-items: center; gap: 3px; margin-top: 4px; width: 94%; }
+        .starter-extra-scene { font-size: 10.5px; color: #0284c7; font-weight: 600; background: #f0f9ff; padding: 1px 8px; border-radius: 6px; border: 1px solid #bae6fd; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .starter-extra-homophone { font-size: 11px; color: #b45309; font-weight: 700; background: #fffbeb; padding: 1px 8px; border-radius: 6px; border: 1px solid #fef3c7; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .starter-extra-point { font-size: 10.5px; color: #4338ca; font-weight: 600; background: #eef2ff; padding: 1px 8px; border-radius: 6px; border: 1px solid #e0e7ff; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .starter-extra-example { font-size: 10.5px; color: #059669; font-weight: 600; background: #ecfdf5; padding: 1px 8px; border-radius: 6px; border: 1px solid #a7f3d0; max-width: 100%; }
+        .starter-breakdown-space { display: inline-block; width: 8px; flex-shrink: 0; }
+        .starter-breakdown-punct { font-family: "Amiri", "Traditional Arabic", serif; font-size: 22px; font-weight: 700; color: #64748b; padding: 0 2px; line-height: 1; align-self: center; }
+        @keyframes locatePulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7); }
+            50% { transform: scale(1.03); box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); border-color: #6366f1; }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+        }
+        .starter-flip-card.locate-highlight {
+            animation: locatePulse 1.2s ease-in-out 2;
+            border-color: #6366f1 !important;
+            z-index: 10;
+        }
+
+        /* 埃及方言发音路线与问询词汇整理库样式 */
+        .egyptian-dialect-board { background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); border: 1.5px solid #cbd5e1; border-radius: 18px; padding: 22px; margin-bottom: 22px; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05); }
+        .dialect-board-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 14px; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid #e2e8f0; }
+        .dialect-kicker { display: inline-block; font-size: 11.5px; font-weight: 800; color: #c2410c; background: #ffedd5; padding: 2px 10px; border-radius: 12px; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .dialect-board-title { margin: 0 0 6px; font-size: 19px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px; }
+        .dialect-board-desc { margin: 0; font-size: 13px; color: #475569; line-height: 1.55; max-width: 820px; }
+        .dialect-header-badges { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .dialect-stat-badge { font-size: 12px; font-weight: 700; color: #1e293b; background: #f1f5f9; border: 1px solid #cbd5e1; padding: 4px 12px; border-radius: 12px; display: inline-flex; align-items: center; gap: 6px; }
+
+        .dialect-features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-bottom: 18px; }
+        .dialect-feat-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 14px; display: flex; gap: 12px; align-items: flex-start; box-shadow: 0 1px 4px rgba(0,0,0,0.02); transition: transform .15s ease, box-shadow .15s ease; }
+        .dialect-feat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); border-color: #cbd5e1; }
+        .feat-icon { flex-shrink: 0; font-family: "Amiri", "Traditional Arabic", serif; font-size: 18px; font-weight: 800; color: #ea580c; background: #fff7ed; border: 1px solid #ffedd5; width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; text-align: center; }
+        .feat-content { flex: 1; min-width: 0; }
+        .feat-title { font-size: 13px; font-weight: 700; color: #1e293b; margin-bottom: 3px; }
+        .feat-desc { font-size: 11.5px; color: #64748b; line-height: 1.45; }
+
+        .dialect-routes-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; margin-bottom: 18px; }
+        .dialect-route-box { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.02); }
+        .route-box-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px dashed #e2e8f0; }
+        .route-badge { font-size: 12.5px; font-weight: 800; padding: 3px 10px; border-radius: 8px; }
+        .route-badge.badge-g { background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; }
+        .route-badge.badge-h { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+        .route-sound-tag { font-size: 11.5px; font-weight: 700; color: #64748b; font-family: monospace; }
+        .route-examples-list { display: flex; flex-direction: column; gap: 8px; }
+        .route-example-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 10px; background: #f8fafc; border: 1px solid #edf2f7; cursor: pointer; transition: all .15s ease; }
+        .route-example-row:hover { background: #eef2ff; border-color: #c7d2fe; transform: translateX(2px); }
+        .route-example-row:active { transform: scale(0.99); }
+        .rer-ar { font-family: "Amiri", "Traditional Arabic", serif; font-size: 20px; font-weight: 700; color: #4338ca; width: 34px; text-align: center; line-height: 1; }
+        .rer-sound { font-size: 12px; font-weight: 700; color: #0284c7; font-family: monospace; min-width: 28px; }
+        .rer-arrow { color: #94a3b8; font-size: 12px; }
+        .rer-word { font-family: "Amiri", "Traditional Arabic", serif; font-size: 20px; font-weight: 700; color: #1e293b; min-width: 65px; line-height: 1; }
+        .rer-pron { font-size: 12px; color: #64748b; font-weight: 600; min-width: 105px; }
+        .rer-zh { font-size: 12px; color: #334155; font-weight: 700; flex: 1; text-align: right; }
+        .rer-audio { color: #818cf8; font-size: 13px; margin-left: 4px; }
+        .route-example-row:hover .rer-audio { color: #4f46e5; }
+
+        .dialect-meta-dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-bottom: 18px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px 16px; }
+        .meta-subhead { font-size: 12.5px; font-weight: 800; color: #334155; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+        .meta-symbols-pills, .meta-letters-pills { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+        .symbol-pill { display: inline-flex; align-items: center; gap: 5px; background: #fff; border: 1px solid #cbd5e1; padding: 3px 8px; border-radius: 8px; font-size: 11.5px; font-weight: 600; color: #334155; }
+        .sym-mark { font-family: "Amiri", "Traditional Arabic", serif; font-size: 16px; color: #dc2626; font-weight: 800; line-height: 1; }
+        .sym-name { color: #64748b; font-size: 11px; }
+        .sym-ex { font-family: "Amiri", "Traditional Arabic", serif; font-size: 15px; color: #2563eb; font-weight: 700; line-height: 1; }
+        .letter-pill { width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-family: "Amiri", "Traditional Arabic", serif; font-size: 16px; font-weight: 700; background: #fff; border: 1.5px solid #cbd5e1; color: #334155; line-height: 1; }
+        .letter-pill.done { border-color: #10b981; background: #ecfdf5; color: #047857; }
+        .meta-next-tip { margin-top: 8px; font-size: 11.5px; color: #64748b; line-height: 1.45; }
+        .next-letters { color: #d97706; font-weight: 700; font-family: "Amiri", sans-serif; }
+
+        .dialect-table-wrapper { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden; }
+        .dialect-table-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; flex-wrap: wrap; gap: 10px; }
+        .dth-left { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: #1e293b; }
+        .dth-tip { font-size: 11.5px; color: #64748b; font-weight: normal; margin-left: 6px; }
+        .dth-toggle-btn { border: 1px solid #cbd5e1; background: #fff; color: #475569; font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all .15s ease; }
+        .dth-toggle-btn:hover { border-color: #6366f1; color: #4f46e5; }
+        .dialect-table-scroll { max-height: 480px; overflow-y: auto; transition: max-height .3s ease; }
+        .dialect-table-scroll.collapsed { max-height: 0; overflow: hidden; }
+        .dialect-review-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+        .dialect-review-table th { background: #f1f5f9; padding: 10px 12px; font-weight: 700; color: #475569; border-bottom: 1px solid #cbd5e1; position: sticky; top: 0; z-index: 2; }
+        .dialect-review-table td { padding: 9px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+        .dialect-review-table tr:hover td { background: #f8fafc; }
+        .drt-ar { font-family: "Amiri", "Traditional Arabic", serif; font-size: 21px; font-weight: 700; color: #312e81; line-height: 1.3; }
+        .drt-pron { font-family: monospace; font-size: 12.5px; font-weight: 700; color: #0284c7; }
+        .drt-hz { font-size: 13px; font-weight: 700; color: #b45309; background: #fffbeb; padding: 2px 8px; border-radius: 6px; border: 1px solid #fef3c7; display: inline-block; }
+        .drt-zh { font-weight: 600; color: #1e293b; }
+        .drt-point { font-size: 11.5px; color: #4338ca; background: #eef2ff; padding: 2px 7px; border-radius: 6px; font-weight: 600; display: inline-block; }
+        .drt-action-btn { border: 1px solid #cbd5e1; background: #fff; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; color: #475569; transition: all .15s ease; display: inline-flex; align-items: center; gap: 4px; }
+        .drt-action-btn:hover { border-color: #6366f1; color: #4f46e5; background: #eef2ff; }
+        .drt-scene { font-size: 11px; color: #0284c7; background: #f0f9ff; padding: 2px 7px; border-radius: 6px; border: 1px solid #e0f2fe; display: inline-block; font-weight: 600; }
+        .drt-group-tag { font-size: 10.5px; color: #64748b; background: #f1f5f9; padding: 1px 6px; border-radius: 4px; font-weight: 700; display: inline-block; }
+
+        .dialect-filter-bar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; padding: 10px 14px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
+        .df-btn { border: 1px solid #cbd5e1; background: #fff; color: #475569; font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 20px; cursor: pointer; transition: all .15s ease; }
+        .df-btn:hover { border-color: #ea580c; color: #c2410c; background: #fff7ed; }
+        .df-btn.active { background: #ea580c; border-color: #ea580c; color: #fff; }
+
+        .dialect-core-rules-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-bottom: 18px; }
+        .dcr-card { background: #fff; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); transition: transform .15s ease, box-shadow .15s ease; }
+        .dcr-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); border-color: #cbd5e1; }
+        .dcr-header { display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 800; color: #1e293b; margin-bottom: 8px; }
+        .dcr-badge { font-size: 11px; padding: 2px 7px; border-radius: 6px; background: #ffedd5; color: #c2410c; font-weight: 800; }
+        .dcr-body { font-size: 12px; color: #475569; line-height: 1.5; }
+        .dcr-compare { background: #f8fafc; border: 1px solid #edf2f7; border-radius: 8px; padding: 6px 10px; margin-top: 6px; font-size: 11.5px; display: flex; flex-direction: column; gap: 3px; }
+        .dcr-compare .tag-msa { color: #64748b; font-weight: 700; }
+        .dcr-compare .tag-egypt { color: #ea580c; font-weight: 800; }
+
+        .dialect-conv-chain { background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%); border: 1.5px solid #bae6fd; border-radius: 14px; padding: 14px 16px; margin-bottom: 18px; }
+        .dcc-title { font-size: 13px; font-weight: 800; color: #0369a1; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+        .dcc-steps { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .dcc-step { background: #fff; border: 1px solid #93c5fd; border-radius: 10px; padding: 6px 10px; display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; transition: all .15s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.03); }
+        .dcc-step:hover { border-color: #2563eb; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(37,99,235,0.12); }
+        .dcc-step .step-ar { font-family: "Amiri", "Traditional Arabic", serif; font-size: 17px; font-weight: 700; color: #1e3a8a; line-height: 1.1; }
+        .dcc-step .step-zh { font-size: 11px; font-weight: 600; color: #475569; }
+        .dcc-arrow { color: #60a5fa; font-weight: 700; font-size: 14px; }
+
         /* 分批加载更多按钮 */
         .deck-load-more-wrap { grid-column: 1 / -1; display: flex; justify-content: center; margin-top: 14px; margin-bottom: 6px; }
         .deck-load-more-btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 24px; border-radius: 999px; border: 1px solid #cbd5e1; background: #fff; color: #475569; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .2s ease; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
@@ -2283,7 +2399,1035 @@
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:14px;">
                     <div>
                         <h2 class="section-title" style="margin-bottom:4px;">✨ 全局单词卡片汇总与记忆库</h2>
-                        <p class="section-desc" style="margin-bottom:0;">涵盖本课所有标签下的全部词汇。点击正面单词发音，点击卡片翻转并可单字母拼读；自由归类至三大记忆分区！</p>
+                        <p class="section-desc" style="margin-bottom:0;">涵盖本课所有标签下的全部词汇，已同步融入近期问询整理的<strong>埃及方言核心实际读法词库</strong>。点击正面单词发音，点击卡片翻转并可单字母拼读；自由归类至三大记忆分区！</p>
+                    </div>
+                </div>
+
+                <!-- 埃及方言实际读法与字母练习路线复习看板 -->
+                <div class="egyptian-dialect-board">
+                    <div class="dialect-board-header">
+                        <div class="dialect-header-left">
+                            <span class="dialect-kicker">🇪🇬 专属整理 · 实际口语读法</span>
+                            <h3 class="dialect-board-title"><i class="fa-solid fa-graduation-cap" style="color:#ea580c;"></i> 埃及方言实际读法与字母练习路线</h3>
+                            <p class="dialect-board-desc">
+                                严格契合你的学习方式：<strong>阿语（带完整符号） → 埃及实际读法 → 中文谐音 → 意思 → 练习重点</strong>。所有词汇已作为标准卡片录入下方记忆库，支持三大记忆分区与拼读。
+                            </p>
+                        </div>
+                        <div class="dialect-header-badges">
+                            <span class="dialect-stat-badge"><i class="fa-solid fa-layer-group" style="color:#6366f1;"></i> 22 个核心词条</span>
+                            <span class="dialect-stat-badge"><i class="fa-solid fa-circle-check" style="color:#10b981;"></i> 10 个已覆盖字母</span>
+                        </div>
+                    </div>
+
+                    <!-- 埃及方言四大核心特点卡片 -->
+                    <div class="dialect-features-grid">
+                        <div class="dialect-feat-card">
+                            <div class="feat-icon">ج = g</div>
+                            <div class="feat-content">
+                                <div class="feat-title">ج 大部分情况读 g</div>
+                                <div class="feat-desc">在开罗/埃及方言中，ج 大部分读作硬 g（如 <em>gamal</em> 骆驼、<em>gesr</em> 桥、<em>gobn</em> 奶酪）。</div>
+                            </div>
+                        </div>
+                        <div class="dialect-feat-card">
+                            <div class="feat-icon">ُ ≈ o</div>
+                            <div class="feat-content">
+                                <div class="feat-title">闭口符 ُ 经常偏向 o</div>
+                                <div class="feat-desc">短元音 ُ 在埃及口语中常弱化接近中圆唇元音 o（如 <em>gobn</em> 奶酪、<em>ḥobb</em> 爱、<em>ḥosān</em> 马）。</div>
+                            </div>
+                        </div>
+                        <div class="dialect-feat-card">
+                            <div class="feat-icon">ح / خ</div>
+                            <div class="feat-content">
+                                <div class="feat-title">严格保留深喉音</div>
+                                <div class="feat-desc">清咽擦音 ح 与小舌擦音 خ 必须保持喉部摩擦发音质感（如 <em>ḥagar</em> 石头、<em>baḥr</em> 海）。</div>
+                            </div>
+                        </div>
+                        <div class="dialect-feat-card">
+                            <div class="feat-icon">َ ِ ُ ْ ّ</div>
+                            <div class="feat-content">
+                                <div class="feat-title">保留完整发音符号</div>
+                                <div class="feat-desc">短音符号省略时极易产生词性与词意歧义（如 <em>ḥagar</em> 石头 vs <em>ḥagr</em> 限制/隔离），故全量保留。</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 字母练习路线：ج 组 & ح 组 -->
+                    <div class="dialect-routes-container">
+                        <!-- ج 组 -->
+                        <div class="dialect-route-box">
+                            <div class="route-box-header">
+                                <span class="route-badge badge-g">ج 组练习路线</span>
+                                <span class="route-sound-tag">埃及声音：ga / ge / go</span>
+                            </div>
+                            <div class="route-examples-list">
+                                <div class="route-example-row" onclick="playUnit('words', 'جَمَل', 'egyptian', this)" title="点击发音">
+                                    <div class="rer-ar" lang="ar">جَ</div>
+                                    <div class="rer-sound">ga</div>
+                                    <div class="rer-arrow">→</div>
+                                    <div class="rer-word" lang="ar">جَمَل</div>
+                                    <div class="rer-pron">gamal (嘎马勒)</div>
+                                    <div class="rer-zh">🐪 骆驼</div>
+                                    <i class="fa-solid fa-volume-high rer-audio"></i>
+                                </div>
+                                <div class="route-example-row" onclick="playUnit('words', 'جِسْر', 'egyptian', this)" title="点击发音">
+                                    <div class="rer-ar" lang="ar">جِ</div>
+                                    <div class="rer-sound">ge</div>
+                                    <div class="rer-arrow">→</div>
+                                    <div class="rer-word" lang="ar">جِسْر</div>
+                                    <div class="rer-pron">gesr (给斯尔)</div>
+                                    <div class="rer-zh">🌉 桥</div>
+                                    <i class="fa-solid fa-volume-high rer-audio"></i>
+                                </div>
+                                <div class="route-example-row" onclick="playUnit('words', 'جُبْن', 'egyptian', this)" title="点击发音">
+                                    <div class="rer-ar" lang="ar">جُ</div>
+                                    <div class="rer-sound">go</div>
+                                    <div class="rer-arrow">→</div>
+                                    <div class="rer-word" lang="ar">جُبْن</div>
+                                    <div class="rer-pron">gobn (哥布恩)</div>
+                                    <div class="rer-zh">🧀 奶酪</div>
+                                    <i class="fa-solid fa-volume-high rer-audio"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ح 组 -->
+                        <div class="dialect-route-box">
+                            <div class="route-box-header">
+                                <span class="route-badge badge-h">ح 组练习路线</span>
+                                <span class="route-sound-tag">声音：ḥa / ḥi (ḥe) / ḥo</span>
+                            </div>
+                            <div class="route-examples-list">
+                                <div class="route-example-row" onclick="playUnit('words', 'حَجَر', 'egyptian', this)" title="点击发音">
+                                    <div class="rer-ar" lang="ar">حَ</div>
+                                    <div class="rer-sound">ḥa</div>
+                                    <div class="rer-arrow">→</div>
+                                    <div class="rer-word" lang="ar">حَجَر</div>
+                                    <div class="rer-pron">ḥagar (哈嘎尔)</div>
+                                    <div class="rer-zh">🪨 石头</div>
+                                    <i class="fa-solid fa-volume-high rer-audio"></i>
+                                </div>
+                                <div class="route-example-row" onclick="playUnit('words', 'حِصَان', 'egyptian', this)" title="点击发音">
+                                    <div class="rer-ar" lang="ar">حِ</div>
+                                    <div class="rer-sound">ḥi/ḥo</div>
+                                    <div class="rer-arrow">→</div>
+                                    <div class="rer-word" lang="ar">حِصَان</div>
+                                    <div class="rer-pron">ḥosān (侯萨安)</div>
+                                    <div class="rer-zh">🐎 马</div>
+                                    <i class="fa-solid fa-volume-high rer-audio"></i>
+                                </div>
+                                <div class="route-example-row" onclick="playUnit('words', 'حُبّ', 'egyptian', this)" title="点击发音">
+                                    <div class="rer-ar" lang="ar">حُ</div>
+                                    <div class="rer-sound">ḥo</div>
+                                    <div class="rer-arrow">→</div>
+                                    <div class="rer-word" lang="ar">حُبّ</div>
+                                    <div class="rer-pron">ḥobb (侯布)</div>
+                                    <div class="rer-zh">❤️ 爱</div>
+                                    <i class="fa-solid fa-volume-high rer-audio"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 特殊符号与已覆盖基础字母概览 -->
+                    <div class="dialect-meta-dashboard">
+                        <div class="meta-symbols-col">
+                            <div class="meta-subhead"><i class="fa-solid fa-feather-pointed" style="color:#6366f1;"></i> 特殊符号已学清单</div>
+                            <div class="meta-symbols-pills">
+                                <span class="symbol-pill"><span class="sym-mark">َ</span> <span class="sym-name">开口符</span> <span class="sym-ex" lang="ar">حَ</span></span>
+                                <span class="symbol-pill"><span class="sym-mark">ِ</span> <span class="sym-name">齐齿符</span> <span class="sym-ex" lang="ar">حِ</span></span>
+                                <span class="symbol-pill"><span class="sym-mark">ُ</span> <span class="sym-name">闭口符</span> <span class="sym-ex" lang="ar">حُ</span></span>
+                                <span class="symbol-pill"><span class="sym-mark">ْ</span> <span class="sym-name">静符</span> <span class="sym-ex" lang="ar">بَحْر</span></span>
+                                <span class="symbol-pill"><span class="sym-mark">ّ</span> <span class="sym-name">双写/叠音</span> <span class="sym-ex" lang="ar">حُبّ</span></span>
+                            </div>
+                        </div>
+                        <div class="meta-letters-col">
+                            <div class="meta-subhead"><i class="fa-solid fa-circle-check" style="color:#10b981;"></i> 当前词汇已覆盖基础字母</div>
+                            <div class="meta-letters-pills">
+                                <span class="letter-pill done" title="已掌握 ج">ج</span>
+                                <span class="letter-pill done" title="已掌握 ح">ح</span>
+                                <span class="letter-pill done" title="已掌握 ب">ب</span>
+                                <span class="letter-pill done" title="已掌握 م">م</span>
+                                <span class="letter-pill done" title="已掌握 ع">ع</span>
+                                <span class="letter-pill done" title="已掌握 س">س</span>
+                                <span class="letter-pill done" title="已掌握 ر">ر</span>
+                                <span class="letter-pill done" title="已掌握 ص">ص</span>
+                                <span class="letter-pill done" title="已掌握 ل">ل</span>
+                                <span class="letter-pill done" title="已掌握 ن">ن</span>
+                            </div>
+                            <div class="meta-next-tip">
+                                <i class="fa-solid fa-forward-step" style="color:#d97706;"></i> <strong>下一阶段进阶字母预告：</strong>
+                                <span class="next-letters">خ（kh）· د（d）· ذ（dh）· ش（sh）· ك（k）</span>
+                            </div>
+                        </div>
+                    </div>
+
+                                        <!-- ⑦ 重点：埃及口语核心变化卡片 -->
+                    <div class="dialect-core-rules-grid">
+                        <div class="dcr-card">
+                            <div class="dcr-header">
+                                <span class="dcr-badge">规则 1</span>
+                                <span>标准 العربية → 埃及口语实际音变</span>
+                            </div>
+                            <div class="dcr-body">
+                                标准语长句在口语中往往更加紧凑口语化，提问与否定发生词汇级替换：
+                                <div class="dcr-compare">
+                                    <div><span class="tag-msa">标准语：</span>كَيْفَ حَالُكَ？ (你好吗？男) → <span class="tag-egypt">埃及口语：</span><strong>إِزَّيَّك؟</strong></div>
+                                    <div><span class="tag-msa">标准语：</span>كَيْفَ حَالُكِ？ (你好吗？女) → <span class="tag-egypt">埃及口语：</span><strong>إِزَّيِّك؟</strong></div>
+                                    <div><span class="tag-msa">标准语：</span>هَذَا / هَذِهِ (这个) → <span class="tag-egypt">埃及口语：</span><strong>دَه / دِي</strong></div>
+                                    <div><span class="tag-msa">标准语：</span>لَيْسَ (不是) → <span class="tag-egypt">埃及口语：</span><strong>مِش</strong></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dcr-card">
+                            <div class="dcr-header">
+                                <span class="dcr-badge">规则 2</span>
+                                <span>男性 vs 女性词尾区别律</span>
+                            </div>
+                            <div class="dcr-body">
+                                面对不同性别对象时，词尾代词及问候有严格对应的阳性/阴性规律：
+                                <div class="dcr-compare">
+                                    <div><strong>👨 对男性：</strong>尾缀 <b>ـكَ (-ak)</b>，如 <code>اِسْمَك</code> (你的名字·男)、<code>إِزَّيَّك؟</code>、<code>أَهْلًا بِيك</code></div>
+                                    <div><strong>👩 对女性：</strong>尾缀 <b>ـكِ (-ik/-ek)</b>，如 <code>اِسْمِك</code> (你的名字·女)、<code>إِزَّيِّك؟</code>、<code>أَهْلًا بِيكِ</code></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dcr-card">
+                            <div class="dcr-header">
+                                <span class="dcr-badge">规则 3</span>
+                                <span>亲爱的人称区分（称呼伴侣/朋友）</span>
+                            </div>
+                            <div class="dcr-body">
+                                日常生活极高频的亲切爱称，严格区分男女对象：
+                                <div class="dcr-compare">
+                                    <div><strong>👨 男性对象：</strong><code>حَبِيبِي</code> (ḥabiibi) = 我的亲爱的 / 亲爱的朋友</div>
+                                    <div><strong>👩 女性对象：</strong><code>حَبِيبَتِي</code> (ḥabiibti) = 我的亲爱的 / 亲爱的（女）</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dcr-card">
+                            <div class="dcr-header">
+                                <span class="dcr-badge">阶段重点</span>
+                                <span>从“字母发音”贯通到“日常会话第一课”</span>
+                            </div>
+                            <div class="dcr-body">
+                                之前练习的 <b>ح / ج / خ / ش</b> 咽喉音与擦音，直接实战无缝融入日常会话核心词：
+                                <div class="dcr-compare">
+                                    <div>• <code>ح</code> → <strong>حَبِيب</strong> (亲爱的) · <strong>حِجَاب</strong> (头巾)</div>
+                                    <div>• <code>ج</code> (读 g) → <strong>حِجَاب</strong> (he-gaab) · <strong>وَاجِب</strong> (waa-gib)</div>
+                                    <div>• <code>خ</code> → <strong>أَخْبَار</strong> (新闻/消息)</div>
+                                    <div>• <code>ش</code> → <strong>شَارِع</strong> (街道) · <strong>مِش</strong> (不是)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 核心会话串联速查带 -->
+                    <div class="dialect-conv-chain">
+                        <div class="dcc-title">
+                            <i class="fa-solid fa-comments"></i> 埃及口语第一课核心会话串联路线（字母 → 单词 → 句子）
+                        </div>
+                        <div class="dcc-steps">
+                            <div class="dcc-step" onclick="locateDialectCard('أَهْلًا')">
+                                <span class="step-ar" lang="ar">أَهْلًا</span>
+                                <span class="step-zh">你好</span>
+                            </div>
+                            <span class="dcc-arrow">➔</span>
+                            <div class="dcc-step" onclick="locateDialectCard('إِزَّيَّك؟')">
+                                <span class="step-ar" lang="ar">إِزَّيَّك؟</span>
+                                <span class="step-zh">你好吗？</span>
+                            </div>
+                            <span class="dcc-arrow">➔</span>
+                            <div class="dcc-step" onclick="locateDialectCard('الحَمْدُ لله')">
+                                <span class="step-ar" lang="ar">الحَمْدُ لله</span>
+                                <span class="step-zh">感谢上帝/还好</span>
+                            </div>
+                            <span class="dcc-arrow">➔</span>
+                            <div class="dcc-step" onclick="locateDialectCard('تَمَام')">
+                                <span class="step-ar" lang="ar">تَمَام</span>
+                                <span class="step-zh">很好/OK</span>
+                            </div>
+                            <span class="dcc-arrow">➔</span>
+                            <div class="dcc-step" onclick="locateDialectCard('اِسْمِي')">
+                                <span class="step-ar" lang="ar">اِسْمِي...</span>
+                                <span class="step-zh">我的名字是...</span>
+                            </div>
+                            <span class="dcc-arrow">➔</span>
+                            <div class="dcc-step" onclick="locateDialectCard('اِتْشَرَّفْنَا')">
+                                <span class="step-ar" lang="ar">اِتْشَرَّفْنَا</span>
+                                <span class="step-zh">很高兴认识你</span>
+                            </div>
+                            <span class="dcc-arrow">➔</span>
+                            <div class="dcc-step" onclick="locateDialectCard('أَهْلًا وَسَهْلًا')">
+                                <span class="step-ar" lang="ar">أَهْلًا وَسَهْلًا</span>
+                                <span class="step-zh">欢迎！</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 埃及阿拉伯语实际用法对照表（共 47 词句 · 7大模块） -->
+                    <div class="dialect-table-wrapper">
+                        <div class="dialect-table-header">
+                            <div class="dth-left">
+                                <i class="fa-solid fa-table-list" style="color:#ea580c;"></i>
+                                <strong>埃及阿拉伯语学习对照表（偏口语实际用法 · 共 60 词句 · 8大模块）</strong>
+                                <span class="dth-tip">点击发音即可试听；点击“卡片”快速在记忆库定位</span>
+                            </div>
+                            <button type="button" class="dth-toggle-btn" onclick="toggleDialectTable(this)">
+                                <span class="toggle-text">收起表格</span> <i class="fa-solid fa-chevron-up"></i>
+                            </button>
+                        </div>
+                        <div class="dialect-filter-bar">
+                            <span style="font-size:12px; font-weight:700; color:#64748b; margin-right:4px;">分类筛选:</span>
+                            <button type="button" class="df-btn active" data-group="all" onclick="filterDialectReviewTable('all')">全部 (60)</button>
+                            <button type="button" class="df-btn" data-group="greetings" onclick="filterDialectReviewTable('greetings')">① 基础问候 (6)</button>
+                            <button type="button" class="df-btn" data-group="meeting" onclick="filterDialectReviewTable('meeting')">② 认识别人 (6)</button>
+                            <button type="button" class="df-btn" data-group="condition" onclick="filterDialectReviewTable('condition')">③ 状态问询 (5)</button>
+                            <button type="button" class="df-btn" data-group="status" onclick="filterDialectReviewTable('status')">④ 回答状态 (5)</button>
+                            <button type="button" class="df-btn" data-group="demonstrative" onclick="filterDialectReviewTable('demonstrative')">⑤ 指示代词 (4)</button>
+                            <button type="button" class="df-btn" data-group="daily" onclick="filterDialectReviewTable('daily')">⑥ 日常词汇 (9)</button>
+                            <button type="button" class="df-btn" data-group="phonetics" onclick="filterDialectReviewTable('phonetics')">⑦ 发音实践 (12)</button>
+                            <button type="button" class="df-btn" data-group="dal_dhal" onclick="filterDialectReviewTable('dal_dhal')">⑧ 字母 د·ذ 与拓展 (13)</button>
+                        </div>
+                        <div class="dialect-table-scroll" id="dialect-table-container">
+                            <table class="dialect-review-table">
+                                <thead>
+                                    <tr>
+                                        <th>模块</th>
+                                        <th>阿语（带符号）</th>
+                                        <th>埃及读法</th>
+                                        <th>中文谐音</th>
+                                        <th>意思</th>
+                                        <th>使用场景 / 练习重点</th>
+                                        <th style="text-align:center;">操作联动</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr data-group="greetings">
+                                        <td><span class="drt-group-tag">基础问候</span></td>
+                                        <td><span class="drt-ar" lang="ar">أَهْلًا</span></td>
+                                        <td><span class="drt-pron">ahlan</span></td>
+                                        <td><span class="drt-hz">阿赫兰</span></td>
+                                        <td><span class="drt-zh">👋 你好 / 欢迎</span></td>
+                                        <td><span class="drt-scene">🎬 日常问候</span> <span class="drt-point">💡 هْ静符短促发音</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'أَهْلًا', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('أَهْلًا')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="greetings">
+                                        <td><span class="drt-group-tag">基础问候</span></td>
+                                        <td><span class="drt-ar" lang="ar">أَهْلًا بِيك</span></td>
+                                        <td><span class="drt-pron">ahlan biik</span></td>
+                                        <td><span class="drt-hz">阿赫兰 比克</span></td>
+                                        <td><span class="drt-zh">🙋‍♂️ 欢迎你（男）</span></td>
+                                        <td><span class="drt-scene">🎬 回应男性</span> <span class="drt-point">💡 长音 ī，男用后缀</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'أَهْلًا بِيك', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('أَهْلًا بِيك')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="greetings">
+                                        <td><span class="drt-group-tag">基础问候</span></td>
+                                        <td><span class="drt-ar" lang="ar">أَهْلًا بِيكِ</span></td>
+                                        <td><span class="drt-pron">ahlan biiki</span></td>
+                                        <td><span class="drt-hz">阿赫兰 比琪</span></td>
+                                        <td><span class="drt-zh">🙋‍♀️ 欢迎你（女）</span></td>
+                                        <td><span class="drt-scene">🎬 回应女性</span> <span class="drt-point">💡 尾音变短 i / i-ki，女用</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'أَهْلًا بِيكِ', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('أَهْلًا بِيكِ')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="greetings">
+                                        <td><span class="drt-group-tag">基础问候</span></td>
+                                        <td><span class="drt-ar" lang="ar">أَهْلًا وَسَهْلًا</span></td>
+                                        <td><span class="drt-pron">ahlan wa sahlan</span></td>
+                                        <td><span class="drt-hz">阿赫兰 哇 萨赫兰</span></td>
+                                        <td><span class="drt-zh">🤝 欢迎</span></td>
+                                        <td><span class="drt-scene">🎬 热情迎客</span> <span class="drt-point">💡 固定客气问候连读</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'أَهْلًا وَسَهْلًا', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('أَهْلًا وَسَهْلًا')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="greetings">
+                                        <td><span class="drt-group-tag">基础问候</span></td>
+                                        <td><span class="drt-ar" lang="ar">السَّلَامُ عَلَيْكُمْ</span></td>
+                                        <td><span class="drt-pron">es-salām ʿalaykom</span></td>
+                                        <td><span class="drt-hz">艾萨拉姆 阿莱库姆</span></td>
+                                        <td><span class="drt-zh">🕊️ 愿平安降临你</span></td>
+                                        <td><span class="drt-scene">🎬 正式平安问候</span> <span class="drt-point">💡 冠词太阳字母同化 es-</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'السَّلَامُ عَلَيْكُمْ', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('السَّلَامُ عَلَيْكُمْ')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="greetings">
+                                        <td><span class="drt-group-tag">基础问候</span></td>
+                                        <td><span class="drt-ar" lang="ar">وَعَلَيْكُمُ السَّلَام</span></td>
+                                        <td><span class="drt-pron">wa ʿalaykom es-salām</span></td>
+                                        <td><span class="drt-hz">瓦阿莱库姆 艾萨拉姆</span></td>
+                                        <td><span class="drt-zh">🤲 回复问候</span></td>
+                                        <td><span class="drt-scene">🎬 回复平安问候</span> <span class="drt-point">💡 固定对答回复</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'وَعَلَيْكُمُ السَّلَام', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('وَعَلَيْكُمُ السَّلَام')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="meeting">
+                                        <td><span class="drt-group-tag">认识别人</span></td>
+                                        <td><span class="drt-ar" lang="ar">اِتْشَرَّفْنَا</span></td>
+                                        <td><span class="drt-pron">itsharrafna</span></td>
+                                        <td><span class="drt-hz">伊特沙拉夫纳</span></td>
+                                        <td><span class="drt-zh">🤝 很高兴认识你</span></td>
+                                        <td><span class="drt-scene">🎬 初次结识</span> <span class="drt-point">💡 ش + ّ 双音叠读</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'اِتْشَرَّفْنَا', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('اِتْشَرَّفْنَا')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="meeting">
+                                        <td><span class="drt-group-tag">认识别人</span></td>
+                                        <td><span class="drt-ar" lang="ar">إِنْتَ</span></td>
+                                        <td><span class="drt-pron">enta</span></td>
+                                        <td><span class="drt-hz">恩塔</span></td>
+                                        <td><span class="drt-zh">👨 你（男）</span></td>
+                                        <td><span class="drt-scene">🎬 称呼男对方</span> <span class="drt-point">💡 埃及口语短音 e 开头</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'إِنْتَ', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('إِنْتَ')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="meeting">
+                                        <td><span class="drt-group-tag">认识别人</span></td>
+                                        <td><span class="drt-ar" lang="ar">إِنْتِي</span></td>
+                                        <td><span class="drt-pron">enti</span></td>
+                                        <td><span class="drt-hz">恩蒂</span></td>
+                                        <td><span class="drt-zh">👩 你（女）</span></td>
+                                        <td><span class="drt-scene">🎬 称呼女对方</span> <span class="drt-point">💡 女性长音结尾 -i</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'إِنْتِي', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('إِنْتِي')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="meeting">
+                                        <td><span class="drt-group-tag">认识别人</span></td>
+                                        <td><span class="drt-ar" lang="ar">اِسْمِي</span></td>
+                                        <td><span class="drt-pron">esmi</span></td>
+                                        <td><span class="drt-hz">伊斯米</span></td>
+                                        <td><span class="drt-zh">🪪 我的名字</span></td>
+                                        <td><span class="drt-scene">🎬 自我介绍</span> <span class="drt-point">💡 代词加 -i，如: اِسْمِي أحمد (我的名字是Ahmed)</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'اِسْمِي', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('اِسْمِي')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="meeting">
+                                        <td><span class="drt-group-tag">认识别人</span></td>
+                                        <td><span class="drt-ar" lang="ar">اِسْمَك</span></td>
+                                        <td><span class="drt-pron">esmak</span></td>
+                                        <td><span class="drt-hz">伊斯马克</span></td>
+                                        <td><span class="drt-zh">🙋‍♂️ 你的名字（男）</span></td>
+                                        <td><span class="drt-scene">🎬 询问男性姓名</span> <span class="drt-point">💡 男性后缀 -ak</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'اِسْمَك', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('اِسْمَك')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="meeting">
+                                        <td><span class="drt-group-tag">认识别人</span></td>
+                                        <td><span class="drt-ar" lang="ar">اِسْمِك</span></td>
+                                        <td><span class="drt-pron">esmek</span></td>
+                                        <td><span class="drt-hz">伊斯梅克</span></td>
+                                        <td><span class="drt-zh">🙋‍♀️ 你的名字（女）</span></td>
+                                        <td><span class="drt-scene">🎬 询问女性姓名</span> <span class="drt-point">💡 女性后缀 -ik / -ek</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'اِسْمِك', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('اِسْمِك')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="condition">
+                                        <td><span class="drt-group-tag">状态问询</span></td>
+                                        <td><span class="drt-ar" lang="ar">كَيْفَ؟</span></td>
+                                        <td><span class="drt-pron">keif?</span></td>
+                                        <td><span class="drt-hz">凯夫？</span></td>
+                                        <td><span class="drt-zh">❓ 怎么样？（标准）</span></td>
+                                        <td><span class="drt-scene">🎬 标准疑问句</span> <span class="drt-point">💡 标准语疑问词，双元音 ay/ei</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'كَيْفَ؟', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('كَيْفَ؟')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="condition">
+                                        <td><span class="drt-group-tag">状态问询</span></td>
+                                        <td><span class="drt-ar" lang="ar">إِزَّيَّك؟</span></td>
+                                        <td><span class="drt-pron">ezzayak?</span></td>
+                                        <td><span class="drt-hz">伊扎亚克？</span></td>
+                                        <td><span class="drt-zh">🙋‍♂️ 你好吗？（男）</span></td>
+                                        <td><span class="drt-scene">🎬 埃及问候男近况</span> <span class="drt-point">💡 زّ + يّ 双重重音，男尾 -ak</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'إِزَّيَّك؟', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('إِزَّيَّك؟')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="condition">
+                                        <td><span class="drt-group-tag">状态问询</span></td>
+                                        <td><span class="drt-ar" lang="ar">إِزَّيِّك؟</span></td>
+                                        <td><span class="drt-pron">ezzayek?</span></td>
+                                        <td><span class="drt-hz">伊扎耶克？</span></td>
+                                        <td><span class="drt-zh">🙋‍♀️ 你好吗？（女）</span></td>
+                                        <td><span class="drt-scene">🎬 埃及问候女近况</span> <span class="drt-point">💡 女尾变 -ik / -ek</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'إِزَّيِّك؟', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('إِزَّيِّك؟')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="condition">
+                                        <td><span class="drt-group-tag">状态问询</span></td>
+                                        <td><span class="drt-ar" lang="ar">كِيفَك؟</span></td>
+                                        <td><span class="drt-pron">kiifak?</span></td>
+                                        <td><span class="drt-hz">基法克？</span></td>
+                                        <td><span class="drt-zh">🇱🇧 你好吗？（沙姆地区）</span></td>
+                                        <td><span class="drt-scene">🎬 沙姆地区方言</span> <span class="drt-point">💡 沙姆方言长音 ī</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'كِيفَك؟', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('كِيفَك؟')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="condition">
+                                        <td><span class="drt-group-tag">状态问询</span></td>
+                                        <td><span class="drt-ar" lang="ar">الحَمْدُ لله</span></td>
+                                        <td><span class="drt-pron">el hamdulillah</span></td>
+                                        <td><span class="drt-hz">艾哈姆杜利拉</span></td>
+                                        <td><span class="drt-zh">🤲 感谢上帝 / 还好</span></td>
+                                        <td><span class="drt-scene">🎬 回答问候与感恩</span> <span class="drt-point">💡 最常用口头禅，表顺利/还好</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'الحَمْدُ لله', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('الحَمْدُ لله')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="status">
+                                        <td><span class="drt-group-tag">回答状态</span></td>
+                                        <td><span class="drt-ar" lang="ar">تَمَام</span></td>
+                                        <td><span class="drt-pron">tamaam</span></td>
+                                        <td><span class="drt-hz">塔玛姆</span></td>
+                                        <td><span class="drt-zh">👌 很好 / OK</span></td>
+                                        <td><span class="drt-scene">🎬 表示顺畅/赞同</span> <span class="drt-point">💡 长音 ā，日常万能肯定词</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'تَمَام', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('تَمَام')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="status">
+                                        <td><span class="drt-group-tag">回答状态</span></td>
+                                        <td><span class="drt-ar" lang="ar">كُوَيِّس</span></td>
+                                        <td><span class="drt-pron">kowayyes</span></td>
+                                        <td><span class="drt-hz">库维耶斯</span></td>
+                                        <td><span class="drt-zh">👍 好</span></td>
+                                        <td><span class="drt-scene">🎬 形容状态好</span> <span class="drt-point">💡 يّ 叠音滑动</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'كُوَيِّس', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('كُوَيِّس')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="status">
+                                        <td><span class="drt-group-tag">回答状态</span></td>
+                                        <td><span class="drt-ar" lang="ar">مَاشِي</span></td>
+                                        <td><span class="drt-pron">maashi</span></td>
+                                        <td><span class="drt-hz">马希</span></td>
+                                        <td><span class="drt-zh">🚶 好吧 / 可以</span></td>
+                                        <td><span class="drt-scene">🎬 答应提议/顺从</span> <span class="drt-point">💡 字面“走着”，口语表“行、没问题”</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'مَاشِي', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('مَاشِي')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="status">
+                                        <td><span class="drt-group-tag">回答状态</span></td>
+                                        <td><span class="drt-ar" lang="ar">مِش</span></td>
+                                        <td><span class="drt-pron">mish</span></td>
+                                        <td><span class="drt-hz">米什</span></td>
+                                        <td><span class="drt-zh">🚫 不 / 不是</span></td>
+                                        <td><span class="drt-scene">🎬 口语否定前缀</span> <span class="drt-point">💡 埃及口语核心否定，如 مش كويس (不好)</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'مِش', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('مِش')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="status">
+                                        <td><span class="drt-group-tag">回答状态</span></td>
+                                        <td><span class="drt-ar" lang="ar">لَيْسَ</span></td>
+                                        <td><span class="drt-pron">leisa</span></td>
+                                        <td><span class="drt-hz">莱萨</span></td>
+                                        <td><span class="drt-zh">📖 不是（正式）</span></td>
+                                        <td><span class="drt-scene">🎬 标准书面否定</span> <span class="drt-point">💡 标准现代阿拉伯语否定动词</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'لَيْسَ', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('لَيْسَ')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="demonstrative">
+                                        <td><span class="drt-group-tag">指示代词</span></td>
+                                        <td><span class="drt-ar" lang="ar">دَه</span></td>
+                                        <td><span class="drt-pron">da</span></td>
+                                        <td><span class="drt-hz">达</span></td>
+                                        <td><span class="drt-zh">👉 这个（男/阳性）</span></td>
+                                        <td><span class="drt-scene">🎬 指代阳性事物/男</span> <span class="drt-point">💡 埃及口语指示词（如 ده كتاب 这个书）</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'دَه', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('دَه')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="demonstrative">
+                                        <td><span class="drt-group-tag">指示代词</span></td>
+                                        <td><span class="drt-ar" lang="ar">دِي</span></td>
+                                        <td><span class="drt-pron">di</span></td>
+                                        <td><span class="drt-hz">迪</span></td>
+                                        <td><span class="drt-zh">👈 这个（女/阴性）</span></td>
+                                        <td><span class="drt-scene">🎬 指代阴性事物/女</span> <span class="drt-point">💡 埃及口语指示词（如 دي بنت 这个女生）</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'دِي', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('دِي')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="demonstrative">
+                                        <td><span class="drt-group-tag">指示代词</span></td>
+                                        <td><span class="drt-ar" lang="ar">هَذَا</span></td>
+                                        <td><span class="drt-pron">haadha</span></td>
+                                        <td><span class="drt-hz">哈达</span></td>
+                                        <td><span class="drt-zh">👉 这个（标准男）</span></td>
+                                        <td><span class="drt-scene">🎬 标准语指代阳性</span> <span class="drt-point">💡 标准语舌尖齿间音 ذ (dh)</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'هَذَا', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('هَذَا')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="demonstrative">
+                                        <td><span class="drt-group-tag">指示代词</span></td>
+                                        <td><span class="drt-ar" lang="ar">هَذِهِ</span></td>
+                                        <td><span class="drt-pron">haadhihi</span></td>
+                                        <td><span class="drt-hz">哈迪希</span></td>
+                                        <td><span class="drt-zh">👈 这个（标准女）</span></td>
+                                        <td><span class="drt-scene">🎬 标准语指代阴性</span> <span class="drt-point">💡 标准语阴性指示词</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'هَذِهِ', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('هَذِهِ')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="daily">
+                                        <td><span class="drt-group-tag">日常词汇</span></td>
+                                        <td><span class="drt-ar" lang="ar">وَ</span></td>
+                                        <td><span class="drt-pron">wa</span></td>
+                                        <td><span class="drt-hz">哇</span></td>
+                                        <td><span class="drt-zh">➕ 和 / 与</span></td>
+                                        <td><span class="drt-scene">🎬 连接词与句子</span> <span class="drt-point">💡 连词，书写紧贴后词连读</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'وَ', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('وَ')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="daily">
+                                        <td><span class="drt-group-tag">日常词汇</span></td>
+                                        <td><span class="drt-ar" lang="ar">كِتَاب</span></td>
+                                        <td><span class="drt-pron">kitaab</span></td>
+                                        <td><span class="drt-hz">基塔布</span></td>
+                                        <td><span class="drt-zh">📚 书</span></td>
+                                        <td><span class="drt-scene">🎬 学习阅读</span> <span class="drt-point">💡 长音 ā，实战字母 ك + ت + ا + ب</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'كِتَاب', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('كِتَاب')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="daily">
+                                        <td><span class="drt-group-tag">日常词汇</span></td>
+                                        <td><span class="drt-ar" lang="ar">أَخْبَار</span></td>
+                                        <td><span class="drt-pron">akhbaar</span></td>
+                                        <td><span class="drt-hz">阿赫巴尔</span></td>
+                                        <td><span class="drt-zh">📰 新闻 / 消息</span></td>
+                                        <td><span class="drt-scene">🎬 日常闲聊问候</span> <span class="drt-point">💡 خْ 喉小舌擦音 + 长音 ā</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'أَخْبَار', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('أَخْبَار')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="daily">
+                                        <td><span class="drt-group-tag">日常词汇</span></td>
+                                        <td><span class="drt-ar" lang="ar">بَيْت</span></td>
+                                        <td><span class="drt-pron">beit</span></td>
+                                        <td><span class="drt-hz">贝特</span></td>
+                                        <td><span class="drt-zh">🏠 房子 / 家</span></td>
+                                        <td><span class="drt-scene">🎬 住所家庭</span> <span class="drt-point">💡 口语双元音弱化为 ei</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'بَيْت', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('بَيْت')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="daily">
+                                        <td><span class="drt-group-tag">日常词汇</span></td>
+                                        <td><span class="drt-ar" lang="ar">شَارِع</span></td>
+                                        <td><span class="drt-pron">shaareʿ</span></td>
+                                        <td><span class="drt-hz">沙雷</span></td>
+                                        <td><span class="drt-zh">🛣️ 街道</span></td>
+                                        <td><span class="drt-scene">🎬 户外出行问路</span> <span class="drt-point">💡 ع 咽喉音结尾，复数 شوارع</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'شَارِع', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('شَارِع')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="daily">
+                                        <td><span class="drt-group-tag">日常词汇</span></td>
+                                        <td><span class="drt-ar" lang="ar">وَاجِب</span></td>
+                                        <td><span class="drt-pron">waagib</span></td>
+                                        <td><span class="drt-hz">工作 / 职责 / 作业</span></td>
+                                        <td><span class="drt-zh">💼 undefined</span></td>
+                                        <td><span class="drt-scene">🎬 责任义务功课</span> <span class="drt-point">💡 埃及口语 ج 读 g</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'وَاجِب', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('وَاجِب')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="daily">
+                                        <td><span class="drt-group-tag">日常词汇</span></td>
+                                        <td><span class="drt-ar" lang="ar">حِجَاب</span></td>
+                                        <td><span class="drt-pron">ḥegaab</span></td>
+                                        <td><span class="drt-hz">面纱 / 头巾</span></td>
+                                        <td><span class="drt-zh">🧕 undefined</span></td>
+                                        <td><span class="drt-scene">🎬 传统服饰文化</span> <span class="drt-point">💡 ح 清咽擦音 + ج 读 g</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'حِجَاب', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('حِجَاب')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="daily">
+                                        <td><span class="drt-group-tag">日常词汇</span></td>
+                                        <td><span class="drt-ar" lang="ar">حَبِيبِي</span></td>
+                                        <td><span class="drt-pron">ḥabiibi</span></td>
+                                        <td><span class="drt-hz">我的亲爱的（男）</span></td>
+                                        <td><span class="drt-zh">❤️ undefined</span></td>
+                                        <td><span class="drt-scene">🎬 称呼男性密友/伴侣</span> <span class="drt-point">💡 ح + 长音 ī，亲昵称呼男</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'حَبِيبِي', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('حَبِيبِي')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="daily">
+                                        <td><span class="drt-group-tag">日常词汇</span></td>
+                                        <td><span class="drt-ar" lang="ar">حَبِيبَتِي</span></td>
+                                        <td><span class="drt-pron">ḥabiibti</span></td>
+                                        <td><span class="drt-hz">我的亲爱的（女）</span></td>
+                                        <td><span class="drt-zh">💖 undefined</span></td>
+                                        <td><span class="drt-scene">🎬 称呼女性密友/伴侣</span> <span class="drt-point">💡 阴性后缀 -ti，亲昵称呼女</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'حَبِيبَتِي', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('حَبِيبَتِي')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="phonetics">
+                                        <td><span class="drt-group-tag">发音实践</span></td>
+                                        <td><span class="drt-ar" lang="ar">جَمَل</span></td>
+                                        <td><span class="drt-pron">gamal</span></td>
+                                        <td><span class="drt-hz">嘎马勒</span></td>
+                                        <td><span class="drt-zh">🐪 骆驼</span></td>
+                                        <td><span class="drt-scene">🎬 沙漠动物</span> <span class="drt-point">💡 جَ → g</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'جَمَل', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('جَمَل')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="phonetics">
+                                        <td><span class="drt-group-tag">发音实践</span></td>
+                                        <td><span class="drt-ar" lang="ar">جِسْر</span></td>
+                                        <td><span class="drt-pron">gesr</span></td>
+                                        <td><span class="drt-hz">给斯尔</span></td>
+                                        <td><span class="drt-zh">🌉 桥</span></td>
+                                        <td><span class="drt-scene">🎬 交通建筑</span> <span class="drt-point">💡 جِ + ْ静符</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'جِسْر', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('جِسْر')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="phonetics">
+                                        <td><span class="drt-group-tag">发音实践</span></td>
+                                        <td><span class="drt-ar" lang="ar">جُبْن</span></td>
+                                        <td><span class="drt-pron">gobn</span></td>
+                                        <td><span class="drt-hz">哥布恩</span></td>
+                                        <td><span class="drt-zh">🧀 奶酪</span></td>
+                                        <td><span class="drt-scene">🎬 早餐食品</span> <span class="drt-point">💡 جُ → go</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'جُبْن', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('جُبْن')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="phonetics">
+                                        <td><span class="drt-group-tag">发音实践</span></td>
+                                        <td><span class="drt-ar" lang="ar">حَجَر</span></td>
+                                        <td><span class="drt-pron">ḥagar</span></td>
+                                        <td><span class="drt-hz">哈嘎尔</span></td>
+                                        <td><span class="drt-zh">🪨 石头</span></td>
+                                        <td><span class="drt-scene">🎬 自然建筑</span> <span class="drt-point">💡 حَ + جَ</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'حَجَر', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('حَجَر')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="phonetics">
+                                        <td><span class="drt-group-tag">发音实践</span></td>
+                                        <td><span class="drt-ar" lang="ar">حَجْر</span></td>
+                                        <td><span class="drt-pron">ḥagr</span></td>
+                                        <td><span class="drt-hz">哈格尔</span></td>
+                                        <td><span class="drt-zh">🚧 限制、隔离、禁止</span></td>
+                                        <td><span class="drt-scene">🎬 管理法规</span> <span class="drt-point">💡 جْ静符</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'حَجْر', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('حَجْر')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="phonetics">
+                                        <td><span class="drt-group-tag">发音实践</span></td>
+                                        <td><span class="drt-ar" lang="ar">حِصَان</span></td>
+                                        <td><span class="drt-pron">ḥosān</span></td>
+                                        <td><span class="drt-hz">侯萨安</span></td>
+                                        <td><span class="drt-zh">🐎 马</span></td>
+                                        <td><span class="drt-scene">🎬 骑行动物</span> <span class="drt-point">💡 ص 重音</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'حِصَان', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('حِصَان')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="phonetics">
+                                        <td><span class="drt-group-tag">发音实践</span></td>
+                                        <td><span class="drt-ar" lang="ar">حُبّ</span></td>
+                                        <td><span class="drt-pron">ḥobb</span></td>
+                                        <td><span class="drt-hz">侯布</span></td>
+                                        <td><span class="drt-zh">❤️ 爱</span></td>
+                                        <td><span class="drt-scene">🎬 情感表达</span> <span class="drt-point">💡 ّ双写</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'حُبّ', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('حُبّ')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="phonetics">
+                                        <td><span class="drt-group-tag">发音实践</span></td>
+                                        <td><span class="drt-ar" lang="ar">حُوت</span></td>
+                                        <td><span class="drt-pron">ḥoot</span></td>
+                                        <td><span class="drt-hz">胡特</span></td>
+                                        <td><span class="drt-zh">🐋 鲸鱼/大鱼</span></td>
+                                        <td><span class="drt-scene">🎬 海洋生物</span> <span class="drt-point">💡 حُ</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'حُوت', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('حُوت')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="phonetics">
+                                        <td><span class="drt-group-tag">发音实践</span></td>
+                                        <td><span class="drt-ar" lang="ar">بَحْر</span></td>
+                                        <td><span class="drt-pron">baḥr</span></td>
+                                        <td><span class="drt-hz">巴赫尔</span></td>
+                                        <td><span class="drt-zh">🌊 海</span></td>
+                                        <td><span class="drt-scene">🎬 自然风光</span> <span class="drt-point">💡 حْ</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'بَحْر', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('بَحْر')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="phonetics">
+                                        <td><span class="drt-group-tag">发音实践</span></td>
+                                        <td><span class="drt-ar" lang="ar">حَارِس</span></td>
+                                        <td><span class="drt-pron">ḥāres</span></td>
+                                        <td><span class="drt-hz">哈雷斯</span></td>
+                                        <td><span class="drt-zh">👮 警卫</span></td>
+                                        <td><span class="drt-scene">🎬 职业安保</span> <span class="drt-point">💡 حَ</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'حَارِس', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('حَارِس')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="phonetics">
+                                        <td><span class="drt-group-tag">发音实践</span></td>
+                                        <td><span class="drt-ar" lang="ar">حَلّ</span></td>
+                                        <td><span class="drt-pron">ḥall</span></td>
+                                        <td><span class="drt-hz">哈勒</span></td>
+                                        <td><span class="drt-zh">💡 办法、解决方案</span></td>
+                                        <td><span class="drt-scene">🎬 难题化解</span> <span class="drt-point">💡 لّ双写</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'حَلّ', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('حَلّ')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="phonetics">
+                                        <td><span class="drt-group-tag">发音实践</span></td>
+                                        <td><span class="drt-ar" lang="ar">جَامِعَة</span></td>
+                                        <td><span class="drt-pron">gaamʿa</span></td>
+                                        <td><span class="drt-hz">嘎米阿</span></td>
+                                        <td><span class="drt-zh">🎓 大学</span></td>
+                                        <td><span class="drt-scene">🎬 高等教育</span> <span class="drt-point">💡 ع 眼音</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'جَامِعَة', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('جَامِعَة')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="dal_dhal">
+                                        <td><span class="drt-group-tag">字母 د·ذ 拼读与拓展</span></td>
+                                        <td><span class="drt-ar" lang="ar">دَجَاجَة</span></td>
+                                        <td><span class="drt-pron">dagaaga</span></td>
+                                        <td><span class="drt-hz">达嘎嘎</span></td>
+                                        <td><span class="drt-zh">🐔 鸡 / 母鸡</span></td>
+                                        <td><span class="drt-scene">🎬 家禽禽肉</span> <span class="drt-point">💡 دَ 开口 + ج 变 g</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'دَجَاجَة', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('دَجَاجَة')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="dal_dhal">
+                                        <td><span class="drt-group-tag">字母 د·ذ 拼读与拓展</span></td>
+                                        <td><span class="drt-ar" lang="ar">دِيك</span></td>
+                                        <td><span class="drt-pron">deek</span></td>
+                                        <td><span class="drt-hz">迪克</span></td>
+                                        <td><span class="drt-zh">🐓 公鸡</span></td>
+                                        <td><span class="drt-scene">🎬 农场晨鸣</span> <span class="drt-point">💡 دِ 齐齿长音 ī + 轻音 ك</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'دِيك', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('دِيك')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="dal_dhal">
+                                        <td><span class="drt-group-tag">字母 د·ذ 拼读与拓展</span></td>
+                                        <td><span class="drt-ar" lang="ar">دُبّ</span></td>
+                                        <td><span class="drt-pron">dobb</span></td>
+                                        <td><span class="drt-hz">多布</span></td>
+                                        <td><span class="drt-zh">🐻 熊</span></td>
+                                        <td><span class="drt-scene">🎬 野生动物</span> <span class="drt-point">💡 ُ 偏 o + بّ 叠音双写</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'دُبّ', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('دُبّ')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="dal_dhal">
+                                        <td><span class="drt-group-tag">字母 د·ذ 拼读与拓展</span></td>
+                                        <td><span class="drt-ar" lang="ar">دَار</span></td>
+                                        <td><span class="drt-pron">daar</span></td>
+                                        <td><span class="drt-hz">达尔</span></td>
+                                        <td><span class="drt-zh">🏡 房子 / 家 / 宅院</span></td>
+                                        <td><span class="drt-scene">🎬 居所宅院</span> <span class="drt-point">💡 د 不左连 + 长音 ā + 颤音 r</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'دَار', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('دَار')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="dal_dhal">
+                                        <td><span class="drt-group-tag">字母 د·ذ 拼读与拓展</span></td>
+                                        <td><span class="drt-ar" lang="ar">دُودَة</span></td>
+                                        <td><span class="drt-pron">dooda</span></td>
+                                        <td><span class="drt-hz">多达</span></td>
+                                        <td><span class="drt-zh">🐛 虫子 / 蠕虫</span></td>
+                                        <td><span class="drt-scene">🎬 昆虫自然</span> <span class="drt-point">💡 首尾 د + 长音 oo + ة 读 a</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'دُودَة', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('دُودَة')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="dal_dhal">
+                                        <td><span class="drt-group-tag">字母 د·ذ 拼读与拓展</span></td>
+                                        <td><span class="drt-ar" lang="ar">ذَهَب</span></td>
+                                        <td><span class="drt-pron">dahab</span></td>
+                                        <td><span class="drt-hz">达哈卜</span></td>
+                                        <td><span class="drt-zh">🪙 金子 / 黄金</span></td>
+                                        <td><span class="drt-scene">🎬 首饰黄金</span> <span class="drt-point">💡 ★ 埃及口语 ذ 读作 d</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'ذَهَب', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('ذَهَب')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="dal_dhal">
+                                        <td><span class="drt-group-tag">字母 د·ذ 拼读与拓展</span></td>
+                                        <td><span class="drt-ar" lang="ar">ذِرَاع</span></td>
+                                        <td><span class="drt-pron">deraaʿ</span></td>
+                                        <td><span class="drt-hz">德拉阿</span></td>
+                                        <td><span class="drt-zh">💪 胳膊 / 手臂</span></td>
+                                        <td><span class="drt-scene">🎬 身体部位</span> <span class="drt-point">💡 ذ 读作 d + 咽喉眼音 ع</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'ذِرَاع', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('ذِرَاع')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="dal_dhal">
+                                        <td><span class="drt-group-tag">字母 د·ذ 拼读与拓展</span></td>
+                                        <td><span class="drt-ar" lang="ar">ذَيْل</span></td>
+                                        <td><span class="drt-pron">deil</span></td>
+                                        <td><span class="drt-hz">代勒</span></td>
+                                        <td><span class="drt-zh">🦊 尾巴</span></td>
+                                        <td><span class="drt-scene">🎬 动物特征</span> <span class="drt-point">💡 ذ 读作 d + ay 音变变 ei</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'ذَيْل', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('ذَيْل')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="dal_dhal">
+                                        <td><span class="drt-group-tag">字母 د·ذ 拼读与拓展</span></td>
+                                        <td><span class="drt-ar" lang="ar">ذُرَة</span></td>
+                                        <td><span class="drt-pron">dora</span></td>
+                                        <td><span class="drt-hz">多拉</span></td>
+                                        <td><span class="drt-zh">🌽 玉米</span></td>
+                                        <td><span class="drt-scene">🎬 街头烤玉米</span> <span class="drt-point">💡 ذ 读作 d + ُ 读偏 o</span></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'ذُرَة', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('ذُرَة')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="dal_dhal">
+                                        <td><span class="drt-group-tag">字母 د·ذ 拼读与拓展</span></td>
+                                        <td><span class="drt-ar" lang="ar">بَعِيد</span></td>
+                                        <td><span class="drt-pron">beʿeed</span></td>
+                                        <td><span class="drt-hz">贝伊德</span></td>
+                                        <td><span class="drt-zh">🏃‍♂️ 远 / 很远</span></td>
+                                        <td><span class="drt-scene">🎬 问路出行</span> <span class="drt-point">💡 咽音 ع + 长音 ee；很远说: بَعِيد قَوِي (beʿeed awi)</span><div style="font-size:11px;color:#0284c7;margin-top:2px;">🗣️ بَعِيد قَوِي (很远！)</div></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'بَعِيد', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('بَعِيد')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="dal_dhal">
+                                        <td><span class="drt-group-tag">字母 د·ذ 拼读与拓展</span></td>
+                                        <td><span class="drt-ar" lang="ar">ذَوْق</span></td>
+                                        <td><span class="drt-pron">zōʾ</span></td>
+                                        <td><span class="drt-hz">佐格/佐</span></td>
+                                        <td><span class="drt-zh">👅 味道 / 品味 / 教养</span></td>
+                                        <td><span class="drt-scene">🎬 品味与素养</span> <span class="drt-point">💡 ★ 雅词中 ذ 读成 z + ق 读成喉塞音 ء</span><div style="font-size:11px;color:#0284c7;margin-top:2px;">🗣️ إِنْسَان ذَوْق (有品味/有修养的人)</div></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'ذَوْق', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('ذَوْق')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="dal_dhal">
+                                        <td><span class="drt-group-tag">字母 د·ذ 拼读与拓展</span></td>
+                                        <td><span class="drt-ar" lang="ar">طَعْم</span></td>
+                                        <td><span class="drt-pron">ṭaʿm</span></td>
+                                        <td><span class="drt-hz">塔阿姆</span></td>
+                                        <td><span class="drt-zh">🍲 味道 / 滋味</span></td>
+                                        <td><span class="drt-scene">🎬 餐饮口味</span> <span class="drt-point">💡 重辅音 ط + 咽音 ع</span><div style="font-size:11px;color:#0284c7;margin-top:2px;">🗣️ طَعْمُه حِلْو (味道很好吃)</div></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'طَعْم', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('طَعْم')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                    <tr data-group="dal_dhal">
+                                        <td><span class="drt-group-tag">字母 د·ذ 拼读与拓展</span></td>
+                                        <td><span class="drt-ar" lang="ar">ذَلِكَ</span></td>
+                                        <td><span class="drt-pron">zaalik</span></td>
+                                        <td><span class="drt-hz">扎里克</span></td>
+                                        <td><span class="drt-zh">👉 那个（很远）</span></td>
+                                        <td><span class="drt-scene">🎬 远距离指代</span> <span class="drt-point">💡 远指指示词；对应“很远”的事物，口语常用 دَه هِنَاك</span><div style="font-size:11px;color:#0284c7;margin-top:2px;">🗣️ ذَلِكَ كِتَاب (那是本书)</div></td>
+                                        <td style="text-align:center;">
+                                            <button type="button" class="drt-action-btn" onclick="playUnit('words', 'ذَلِكَ', 'egyptian', this)" title="播放读音"><i class="fa-solid fa-volume-high"></i> 发音</button>
+                                            <button type="button" class="drt-action-btn" onclick="locateDialectCard('ذَلِكَ')" title="在下方记忆库中定位"><i class="fa-solid fa-crosshairs"></i> 卡片</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
@@ -2312,6 +3456,7 @@
                         <div class="deck-filter-chips" id="deck-filter-chips">
                             <span style="font-size:12px; font-weight:700; color:#64748b; margin-right:4px;">来源标签:</span>
                             <button type="button" class="deck-chip active" onclick="filterDeckByTag('all')">全部来源</button>
+                            <button type="button" class="deck-chip" onclick="filterDeckByTag('egyptian')">🇪🇬 埃及方言</button>
                             <button type="button" class="deck-chip" onclick="filterDeckByTag('starter')">生活拼读</button>
                             <button type="button" class="deck-chip" onclick="filterDeckByTag('symbol-vocab')">符号词汇</button>
                             <button type="button" class="deck-chip" onclick="filterDeckByTag('family')">家庭称谓</button>
@@ -2347,8 +3492,14 @@
                             <button type="button" class="deck-chip letter-chip" onclick="filterDeckByLetter('ب')"><span class="chip-ar">ب</span> Bāʾ</button>
                             <button type="button" class="deck-chip letter-chip" onclick="filterDeckByLetter('ت')"><span class="chip-ar">ت</span> Tāʾ</button>
                             <button type="button" class="deck-chip letter-chip" onclick="filterDeckByLetter('ث')"><span class="chip-ar">ث</span> Thāʾ</button>
+                            <button type="button" class="deck-chip letter-chip" onclick="filterDeckByLetter('ج')"><span class="chip-ar">ج</span> Gīm/Jīm</button>
+                            <button type="button" class="deck-chip letter-chip" onclick="filterDeckByLetter('ح')"><span class="chip-ar">ح</span> Ḥāʾ</button>
                             <button type="button" class="deck-chip letter-chip" onclick="filterDeckByLetter('و')"><span class="chip-ar">و</span> Wāw</button>
                             <button type="button" class="deck-chip letter-chip" onclick="filterDeckByLetter('ي')"><span class="chip-ar">ي</span> Yāʾ</button>
+                            <button type="button" class="deck-chip letter-chip" onclick="filterDeckByLetter('خ')"><span class="chip-ar">خ</span> Khāʾ</button>
+                            <button type="button" class="deck-chip letter-chip" onclick="filterDeckByLetter('د')"><span class="chip-ar">د</span> Dāl</button>
+                            <button type="button" class="deck-chip letter-chip" onclick="filterDeckByLetter('ش')"><span class="chip-ar">ش</span> Shīn</button>
+                            <button type="button" class="deck-chip letter-chip" onclick="filterDeckByLetter('ك')"><span class="chip-ar">ك</span> Kāf</button>
                         </div>
                     </div>
 
@@ -2599,9 +3750,98 @@
             { key: 'ب', name: 'Bāʾ', forms: ['ب', 'بـ', 'ـبـ', 'ـب'], note: '双向连接' },
             { key: 'ت', name: 'Tāʾ', forms: ['ت', 'تـ', 'ـتـ', 'ـت'], note: '双向连接' },
             { key: 'ث', name: 'Thāʾ', forms: ['ث', 'ثـ', 'ـثـ', 'ـث'], note: '双向连接' },
+            { key: 'ج', name: 'Jīm / Gīm', forms: ['ج', 'جـ', 'ـجـ', 'ـج'], note: '双向连接 · 埃及方言大部分读 g' },
+            { key: 'ح', name: 'Ḥāʾ', forms: ['ح', 'حـ', 'ـحـ', 'ـح'], note: '双向连接 · 清咽擦喉音' },
             { key: 'و', name: 'Wāw', forms: ['و', 'و', 'ـو', 'ـو'], note: '不向左连接' },
             { key: 'ى', name: 'Alif maqṣūrah', forms: ['ى', '—', '—', 'ـى'], note: '通常只在词尾' },
-            { key: 'ي', name: 'Yāʾ', forms: ['ي', 'يـ', 'ـيـ', 'ـي'], note: '双向连接' }
+            { key: 'ي', name: 'Yāʾ', forms: ['ي', 'يـ', 'ـيـ', 'ـي'], note: '双向连接' },
+            { key: 'خ', name: 'Khāʾ', forms: ['خ', 'خـ', 'ـخـ', 'ـخ'], note: '双向连接 · 舌根小舌清擦音' },
+            { key: 'د', name: 'Dāl', forms: ['د', 'د', 'ـد', 'ـد'], note: '不向左连接 · 齿龈塞音' },
+            { key: 'ذ', name: 'Dhāl', forms: ['ذ', 'ذ', 'ـذ', 'ـذ'], note: '不向左连接 · 舌尖齿间浊擦音' },
+            { key: 'ش', name: 'Shīn', forms: ['ش', 'شـ', 'ـشـ', 'ـش'], note: '双向连接 · 类似 sh 音' },
+            { key: 'ك', name: 'Kāf', forms: ['ك', 'كـ', 'ـكـ', 'ـك'], note: '双向连接 · 清软腭塞音 k' },
+            { key: 'ف', name: 'Fāʾ', forms: ['ف', 'فـ', 'ـفـ', 'ـف'], note: '双向连接 · 唇齿清擦音 f' },
+            { key: 'ه', name: 'Hāʾ', forms: ['ه', 'هـ', 'ـهـ', 'ـه'], note: '双向连接 · 喉壁清擦音 h' },
+            { key: 'ط', name: 'Ṭāʾ', forms: ['ط', 'طـ', 'ـطـ', 'ـط'], note: '双向连接 · 舌根后缩重辅音 ṭ' }
+        ];
+
+        /* ================= 埃及方言实际读法核心词汇表（22词） ================= */
+        const EGYPTIAN_DIALECT_VOCAB = [
+            // ① 基础问候
+            { ar: 'أَهْلًا', pron: 'ahlan', hz: '阿赫兰', translation: '你好 / 欢迎', scene: '日常问候', point: 'هْ静符短促发音', group: 'greetings', groupName: '① 基础问候', emoji: '👋', explicit: ['ا'] },
+            { ar: 'أَهْلًا بِيك', pron: 'ahlan biik', hz: '阿赫兰 比克', translation: '欢迎你（男）', scene: '回应男性', point: '长音 ī，男用后缀', group: 'greetings', groupName: '① 基础问候', emoji: '🙋‍♂️', explicit: ['ا', 'ب'], allowMultiWord: true },
+            { ar: 'أَهْلًا بِيكِ', pron: 'ahlan biiki', hz: '阿赫兰 比琪', translation: '欢迎你（女）', scene: '回应女性', point: '尾音变短 i / i-ki，女用', group: 'greetings', groupName: '① 基础问候', emoji: '🙋‍♀️', explicit: ['ا', 'ب'], allowMultiWord: true },
+            { ar: 'أَهْلًا وَسَهْلًا', pron: 'ahlan wa sahlan', hz: '阿赫兰 哇 萨赫兰', translation: '欢迎', scene: '热情迎客', point: '固定客气问候连读', group: 'greetings', groupName: '① 基础问候', emoji: '🤝', explicit: ['ا', 'و'], allowMultiWord: true },
+            { ar: 'السَّلَامُ عَلَيْكُمْ', pron: 'es-salām ʿalaykom', hz: '艾萨拉姆 阿莱库姆', translation: '愿平安降临你', scene: '正式平安问候', point: '冠词太阳字母同化 es-', group: 'greetings', groupName: '① 基础问候', emoji: '🕊️', explicit: ['س', 'ع'], allowMultiWord: true },
+            { ar: 'وَعَلَيْكُمُ السَّلَام', pron: 'wa ʿalaykom es-salām', hz: '瓦阿莱库姆 艾萨拉姆', translation: '回复问候', scene: '回复平安问候', point: '固定对答回复', group: 'greetings', groupName: '① 基础问候', emoji: '🤲', explicit: ['و', 'س'], allowMultiWord: true },
+
+            // ② 认识别人
+            { ar: 'اِتْشَرَّفْنَا', pron: 'itsharrafna', hz: '伊特沙拉夫纳', translation: '很高兴认识你', scene: '初次结识', point: 'ش + ّ 双音叠读', group: 'meeting', groupName: '② 认识别人', emoji: '🤝', explicit: ['ت', 'ش', 'ر'] },
+            { ar: 'إِنْتَ', pron: 'enta', hz: '恩塔', translation: '你（男）', scene: '称呼男对方', point: '埃及口语短音 e 开头', group: 'meeting', groupName: '② 认识别人', emoji: '👨', explicit: ['ا', 'ت'] },
+            { ar: 'إِنْتِي', pron: 'enti', hz: '恩蒂', translation: '你（女）', scene: '称呼女对方', point: '女性长音结尾 -i', group: 'meeting', groupName: '② 认识别人', emoji: '👩', explicit: ['ا', 'ت', 'ي'] },
+            { ar: 'اِسْمِي', pron: 'esmi', hz: '伊斯米', translation: '我的名字', scene: '自我介绍', point: '代词加 -i，如: اِسْمِي أحمد (我的名字是Ahmed)', example: 'اِسْمِي أحمد (我的名字是Ahmed)', group: 'meeting', groupName: '② 认识别人', emoji: '🪪', explicit: ['ا', 'س', 'م', 'ي'] },
+            { ar: 'اِسْمَك', pron: 'esmak', hz: '伊斯马克', translation: '你的名字（男）', scene: '询问男性姓名', point: '男性后缀 -ak', group: 'meeting', groupName: '② 认识别人', emoji: '🙋‍♂️', explicit: ['ا', 'س', 'م', 'ك'] },
+            { ar: 'اِسْمِك', pron: 'esmek', hz: '伊斯梅克', translation: '你的名字（女）', scene: '询问女性姓名', point: '女性后缀 -ik / -ek', group: 'meeting', groupName: '② 认识别人', emoji: '🙋‍♀️', explicit: ['ا', 'س', 'م', 'ك'] },
+
+            // ③ 怎么样？还好吗？
+            { ar: 'كَيْفَ؟', pron: 'keif?', hz: '凯夫？', translation: '怎么样？（标准）', scene: '标准疑问句', point: '标准语疑问词，双元音 ay/ei', group: 'condition', groupName: '③ 状态问询', emoji: '❓', explicit: ['ك', 'ي', 'ف'] },
+            { ar: 'إِزَّيَّك؟', pron: 'ezzayak?', hz: '伊扎亚克？', translation: '你好吗？（男）', scene: '埃及问候男近况', point: 'زّ + يّ 双重重音，男尾 -ak', group: 'condition', groupName: '③ 状态问询', emoji: '🙋‍♂️', explicit: ['ا', 'ز', 'ي', 'ك'] },
+            { ar: 'إِزَّيِّك؟', pron: 'ezzayek?', hz: '伊扎耶克？', translation: '你好吗？（女）', scene: '埃及问候女近况', point: '女尾变 -ik / -ek', group: 'condition', groupName: '③ 状态问询', emoji: '🙋‍♀️', explicit: ['ا', 'ز', 'ي', 'ك'] },
+            { ar: 'كِيفَك؟', pron: 'kiifak?', hz: '基法克？', translation: '你好吗？（沙姆地区）', scene: '沙姆地区方言', point: '沙姆方言长音 ī', group: 'condition', groupName: '③ 状态问询', emoji: '🇱🇧', explicit: ['ك', 'ي', 'ف'] },
+            { ar: 'الحَمْدُ لله', pron: 'el hamdulillah', hz: '艾哈姆杜利拉', translation: '感谢上帝 / 还好', scene: '回答问候与感恩', point: '最常用口头禅，表顺利/还好', group: 'condition', groupName: '③ 状态问询', emoji: '🤲', explicit: ['ح', 'م', 'د', 'ل'], allowMultiWord: true },
+
+            // ④ 回答状态
+            { ar: 'تَمَام', pron: 'tamaam', hz: '塔玛姆', translation: '很好 / OK', scene: '表示顺畅/赞同', point: '长音 ā，日常万能肯定词', group: 'status', groupName: '④ 回答状态', emoji: '👌', explicit: ['ت', 'م'] },
+            { ar: 'كُوَيِّس', pron: 'kowayyes', hz: '库维耶斯', translation: '好', scene: '形容状态好', point: 'يّ 叠音滑动', group: 'status', groupName: '④ 回答状态', emoji: '👍', explicit: ['ك', 'و', 'ي', 'س'] },
+            { ar: 'مَاشِي', pron: 'maashi', hz: '马希', translation: '好吧 / 可以', scene: '答应提议/顺从', point: '字面“走着”，口语表“行、没问题”', group: 'status', groupName: '④ 回答状态', emoji: '🚶', explicit: ['م', 'ش', 'ي'] },
+            { ar: 'مِش', pron: 'mish', hz: '米什', translation: '不 / 不是', scene: '口语否定前缀', point: '埃及口语核心否定，如 مش كويس (不好)', group: 'status', groupName: '④ 回答状态', emoji: '🚫', explicit: ['م', 'ش'] },
+            { ar: 'لَيْسَ', pron: 'leisa', hz: '莱萨', translation: '不是（正式）', scene: '标准书面否定', point: '标准现代阿拉伯语否定动词', group: 'status', groupName: '④ 回答状态', emoji: '📖', explicit: ['ل', 'ي', 'س'] },
+
+            // ⑤ 指示词：这个
+            { ar: 'دَه', pron: 'da', hz: '达', translation: '这个（男/阳性）', scene: '指代阳性事物/男', point: '埃及口语指示词（如 ده كتاب 这个书）', group: 'demonstrative', groupName: '⑤ 指示代词', emoji: '👉', explicit: ['د', 'ه'] },
+            { ar: 'دِي', pron: 'di', hz: '迪', translation: '这个（女/阴性）', scene: '指代阴性事物/女', point: '埃及口语指示词（如 دي بنت 这个女生）', group: 'demonstrative', groupName: '⑤ 指示代词', emoji: '👈', explicit: ['د', 'ي'] },
+            { ar: 'هَذَا', pron: 'haadha', hz: '哈达', translation: '这个（标准男）', scene: '标准语指代阳性', point: '标准语舌尖齿间音 ذ (dh)', group: 'demonstrative', groupName: '⑤ 指示代词', emoji: '👉', explicit: ['ه', 'ذ'] },
+            { ar: 'هَذِهِ', pron: 'haadhihi', hz: '哈迪希', translation: '这个（标准女）', scene: '标准语指代阴性', point: '标准语阴性指示词', group: 'demonstrative', groupName: '⑤ 指示代词', emoji: '👈', explicit: ['ه', 'ذ'] },
+
+            // ⑥ 日常词汇
+            { ar: 'وَ', pron: 'wa', hz: '哇', translation: '和 / 与', scene: '连接词与句子', point: '连词，书写紧贴后词连读', group: 'daily', groupName: '⑥ 日常词汇', emoji: '➕', explicit: ['و'] },
+            { ar: 'كِتَاب', pron: 'kitaab', hz: '基塔布', translation: '书', scene: '学习阅读', point: '长音 ā，实战字母 ك + ت + ا + ب', group: 'daily', groupName: '⑥ 日常词汇', emoji: '📚', explicit: ['ك', 'ت', 'ا', 'ب'] },
+            { ar: 'أَخْبَار', pron: 'akhbaar', hz: '阿赫巴尔', translation: '新闻 / 消息', scene: '日常闲聊问候', point: 'خْ 喉小舌擦音 + 长音 ā', group: 'daily', groupName: '⑥ 日常词汇', emoji: '📰', explicit: ['ا', 'خ', 'ب', 'ر'] },
+            { ar: 'بَيْت', pron: 'beit', hz: '贝特', translation: '房子 / 家', scene: '住所家庭', point: '口语双元音弱化为 ei', group: 'daily', groupName: '⑥ 日常词汇', emoji: '🏠', explicit: ['ب', 'ي', 'ت'] },
+            { ar: 'شَارِع', pron: 'shaareʿ', hz: '沙雷', translation: '街道', scene: '户外出行问路', point: 'ع 咽喉音结尾，复数 شوارع', group: 'daily', groupName: '⑥ 日常词汇', emoji: '🛣️', explicit: ['ش', 'ر', 'ع'] },
+            { ar: 'وَاجِب', pron: 'waagib', hz: '工作 / 职责 / 作业', scene: '责任义务功课', point: '埃及口语 ج 读 g', group: 'daily', groupName: '⑥ 日常词汇', emoji: '💼', explicit: ['و', 'ج', 'ب'] },
+            { ar: 'حِجَاب', pron: 'ḥegaab', hz: '面纱 / 头巾', scene: '传统服饰文化', point: 'ح 清咽擦音 + ج 读 g', group: 'daily', groupName: '⑥ 日常词汇', emoji: '🧕', explicit: ['ح', 'ج', 'ب'] },
+            { ar: 'حَبِيبِي', pron: 'ḥabiibi', hz: '我的亲爱的（男）', scene: '称呼男性密友/伴侣', point: 'ح + 长音 ī，亲昵称呼男', group: 'daily', groupName: '⑥ 日常词汇', emoji: '❤️', explicit: ['ح', 'ب', 'ي'] },
+            { ar: 'حَبِيبَتِي', pron: 'ḥabiibti', hz: '我的亲爱的（女）', scene: '称呼女性密友/伴侣', point: '阴性后缀 -ti，亲昵称呼女', group: 'daily', groupName: '⑥ 日常词汇', emoji: '💖', explicit: ['ح', 'ب', 'ي', 'ت'] },
+
+            // ⑦ 辅音与发音实践词汇
+            { ar: 'جَمَل', pron: 'gamal', hz: '嘎马勒', translation: '骆驼', scene: '沙漠动物', point: 'جَ → g', group: 'phonetics', groupName: '⑦ 发音实践', emoji: '🐪', explicit: ['ج', 'م', 'ل'] },
+            { ar: 'جِسْر', pron: 'gesr', hz: '给斯尔', translation: '桥', scene: '交通建筑', point: 'جِ + ْ静符', group: 'phonetics', groupName: '⑦ 发音实践', emoji: '🌉', explicit: ['ج', 'س', 'ر'] },
+            { ar: 'جُبْن', pron: 'gobn', hz: '哥布恩', translation: '奶酪', scene: '早餐食品', point: 'جُ → go', group: 'phonetics', groupName: '⑦ 发音实践', emoji: '🧀', explicit: ['ج', 'ب', 'ن'] },
+            { ar: 'حَجَر', pron: 'ḥagar', hz: '哈嘎尔', translation: '石头', scene: '自然建筑', point: 'حَ + جَ', group: 'phonetics', groupName: '⑦ 发音实践', emoji: '🪨', explicit: ['ح', 'ج', 'ر'] },
+            { ar: 'حَجْر', pron: 'ḥagr', hz: '哈格尔', translation: '限制、隔离、禁止', scene: '管理法规', point: 'جْ静符', group: 'phonetics', groupName: '⑦ 发音实践', emoji: '🚧', explicit: ['ح', 'ج', 'ر'] },
+            { ar: 'حِصَان', pron: 'ḥosān', hz: '侯萨安', translation: '马', scene: '骑行动物', point: 'ص 重音', group: 'phonetics', groupName: '⑦ 发音实践', emoji: '🐎', explicit: ['ح', 'ص', 'ن'] },
+            { ar: 'حُبّ', pron: 'ḥobb', hz: '侯布', translation: '爱', scene: '情感表达', point: 'ّ双写', group: 'phonetics', groupName: '⑦ 发音实践', emoji: '❤️', explicit: ['ح', 'ب'] },
+            { ar: 'حُوت', pron: 'ḥoot', hz: '胡特', translation: '鲸鱼/大鱼', scene: '海洋生物', point: 'حُ', group: 'phonetics', groupName: '⑦ 发音实践', emoji: '🐋', explicit: ['ح', 'و', 'ت'] },
+            { ar: 'بَحْر', pron: 'baḥr', hz: '巴赫尔', translation: '海', scene: '自然风光', point: 'حْ', group: 'phonetics', groupName: '⑦ 发音实践', emoji: '🌊', explicit: ['ب', 'ح', 'ر'] },
+            { ar: 'حَارِس', pron: 'ḥāres', hz: '哈雷斯', translation: '警卫', scene: '职业安保', point: 'حَ', group: 'phonetics', groupName: '⑦ 发音实践', emoji: '👮', explicit: ['ح', 'ر', 'س'] },
+            { ar: 'حَلّ', pron: 'ḥall', hz: '哈勒', translation: '办法、解决方案', scene: '难题化解', point: 'لّ双写', group: 'phonetics', groupName: '⑦ 发音实践', emoji: '💡', explicit: ['ح', 'ل'] },
+            { ar: 'جَامِعَة', pron: 'gaamʿa', hz: '嘎米阿', translation: '大学', scene: '高等教育', point: 'ع 眼音', group: 'phonetics', groupName: '⑦ 发音实践', emoji: '🎓', explicit: ['ج', 'م', 'ع'] },
+
+            // ⑧ 字母 د·ذ 拼读与生活拓展
+            { ar: 'دَجَاجَة', pron: 'dagaaga', hz: '达嘎嘎', translation: '鸡 / 母鸡', scene: '家禽禽肉', point: 'دَ 开口 + ج 变 g', group: 'dal_dhal', groupName: '⑧ 字母 د·ذ 拼读与拓展', emoji: '🐔', explicit: ['د', 'ج'] },
+            { ar: 'دِيك', pron: 'deek', hz: '迪克', translation: '公鸡', scene: '农场晨鸣', point: 'دِ 齐齿长音 ī + 轻音 ك', group: 'dal_dhal', groupName: '⑧ 字母 د·ذ 拼读与拓展', emoji: '🐓', explicit: ['د', 'ي', 'ك'] },
+            { ar: 'دُبّ', pron: 'dobb', hz: '多布', translation: '熊', scene: '野生动物', point: 'ُ 偏 o + بّ 叠音双写', group: 'dal_dhal', groupName: '⑧ 字母 د·ذ 拼读与拓展', emoji: '🐻', explicit: ['د', 'ب'] },
+            { ar: 'دَار', pron: 'daar', hz: '达尔', translation: '房子 / 家 / 宅院', scene: '居所宅院', point: 'د 不左连 + 长音 ā + 颤音 r', group: 'dal_dhal', groupName: '⑧ 字母 د·ذ 拼读与拓展', emoji: '🏡', explicit: ['د', 'ا', 'ر'] },
+            { ar: 'دُودَة', pron: 'dooda', hz: '多达', translation: '虫子 / 蠕虫', scene: '昆虫自然', point: '首尾 د + 长音 oo + ة 读 a', group: 'dal_dhal', groupName: '⑧ 字母 د·ذ 拼读与拓展', emoji: '🐛', explicit: ['د', 'و'] },
+            { ar: 'ذَهَب', pron: 'dahab', hz: '达哈卜', translation: '金子 / 黄金', scene: '首饰黄金', point: '★ 埃及口语 ذ 读作 d', group: 'dal_dhal', groupName: '⑧ 字母 د·ذ 拼读与拓展', emoji: '🪙', explicit: ['ذ', 'ه', 'ب'] },
+            { ar: 'ذِرَاع', pron: 'deraaʿ', hz: '德拉阿', translation: '胳膊 / 手臂', scene: '身体部位', point: 'ذ 读作 d + 咽喉眼音 ع', group: 'dal_dhal', groupName: '⑧ 字母 د·ذ 拼读与拓展', emoji: '💪', explicit: ['ذ', 'ر', 'ع'] },
+            { ar: 'ذَيْل', pron: 'deil', hz: '代勒', translation: '尾巴', scene: '动物特征', point: 'ذ 读作 d + ay 音变变 ei', group: 'dal_dhal', groupName: '⑧ 字母 د·ذ 拼读与拓展', emoji: '🦊', explicit: ['ذ', 'ي', 'ل'] },
+            { ar: 'ذُرَة', pron: 'dora', hz: '多拉', translation: '玉米', scene: '街头烤玉米', point: 'ذ 读作 d + ُ 读偏 o', group: 'dal_dhal', groupName: '⑧ 字母 د·ذ 拼读与拓展', emoji: '🌽', explicit: ['ذ', 'ر'] },
+            { ar: 'بَعِيد', pron: 'beʿeed', hz: '贝伊德', translation: '远 / 很远', scene: '问路出行', point: '咽音 ع + 长音 ee；很远说: بَعِيد قَوِي (beʿeed awi)', example: 'بَعِيد قَوِي (很远！)', group: 'dal_dhal', groupName: '⑧ 字母 د·ذ 拼读与拓展', emoji: '🏃‍♂️', explicit: ['ب', 'ع', 'د'] },
+            { ar: 'ذَوْق', pron: 'zōʾ', hz: '佐格/佐', translation: '味道 / 品味 / 教养', scene: '品味与素养', point: '★ 雅词中 ذ 读成 z + ق 读成喉塞音 ء', example: 'إِنْسَان ذَوْق (有品味/有修养的人)', group: 'dal_dhal', groupName: '⑧ 字母 د·ذ 拼读与拓展', emoji: '👅', explicit: ['ذ', 'و', 'ق'] },
+            { ar: 'طَعْم', pron: 'ṭaʿm', hz: '塔阿姆', translation: '味道 / 滋味', scene: '餐饮口味', point: '重辅音 ط + 咽音 ع', example: 'طَعْمُه حِلْو (味道很好吃)', group: 'dal_dhal', groupName: '⑧ 字母 د·ذ 拼读与拓展', emoji: '🍲', explicit: ['ط', 'ع', 'م'] },
+            { ar: 'ذَلِكَ', pron: 'zaalik', hz: '扎里克', translation: '那个（很远）', scene: '远距离指代', point: '远指指示词；对应“很远”的事物，口语常用 دَه هِنَاك', example: 'ذَلِكَ كِتَاب (那是本书)', group: 'dal_dhal', groupName: '⑧ 字母 د·ذ 拼读与拓展', emoji: '👉', explicit: ['ذ', 'ل', 'ك'] }
         ];
 
         /* ================= 完整数据源 (提取自图片) ================= */
@@ -4094,6 +5334,8 @@
                 'ب': new Set(),
                 'ت': new Set(),
                 'ث': new Set(),
+                'ج': new Set(),
+                'ح': new Set(),
                 'و': new Set(),
                 'ي': new Set()
             };
@@ -4104,6 +5346,8 @@
                 if (ch === 'ب') return 'ب';
                 if (ch === 'ت' || ch === 'ة') return 'ت';
                 if (ch === 'ث') return 'ث';
+                if (ch === 'ج') return 'ج';
+                if (ch === 'ح') return 'ح';
                 if (ch === 'و') return 'و';
                 if (ch === 'ي' || ch === 'ى') return 'ي';
                 return null;
@@ -4220,12 +5464,15 @@
         function buildAggregatedWordList() {
             const list = [];
             const seenDedupe = new Set();
-            const LEARNED_LETTERS = new Set(['ا', 'أ', 'إ', 'آ', 'ء', 'ئ', 'ؤ', 'ب', 'ت', 'ة', 'ث', 'و', 'ي', 'ى']);
+            const LEARNED_LETTERS = new Set([
+                'ا', 'أ', 'إ', 'آ', 'ء', 'ئ', 'ؤ', 'ب', 'ت', 'ة', 'ث', 'ج', 'ح', 'و', 'ي', 'ى',
+                'م', 'ع', 'س', 'ر', 'ص', 'ل', 'ن', 'خ', 'د', 'ذ', 'ش', 'ك', 'ف', 'ه', 'ق', 'ز', 'ط'
+            ]);
             // 初学者卡片使用的完整标音形式。保留原文作为音频和记忆状态的稳定键，
             // 只在显示层补齐短元音、静音和叠音，避免升级后丢失用户的熟悉度标记。
             const BEGINNER_DIACRITIZED_WORDS = {
                 'أبي': 'أَبِي', 'أمي': 'أُمِّي', 'ابن': 'اِبْن', 'بنت': 'بِنْت',
-                'عم': 'عَمّ', 'عمة': 'عَمَّة', 'عمي': 'عَمِّي', 'عمتي': 'عَمَّتِي',
+                'عم': 'عَمّ', 'عمة': 'عَمَّة', 'عمي': 'عَمِّي', 'عمتi': 'عَمَّتِي',
                 'خال': 'خَال', 'خالة': 'خَالَة', 'خالي': 'خَالِي', 'خالتي': 'خَالَتِي',
                 'عايز': 'عَايِز', 'عايزة': 'عَايْزَة', 'موجود': 'مَوْجُود', 'مفيش': 'مَفِيش',
                 'آسف': 'آسِف', 'اتفضل': 'اِتْفَضَّل', 'هات': 'هَات', 'شوف': 'شُوف',
@@ -4235,7 +5482,25 @@
                 'تلاتين': 'تَلَاتِين', 'أربعين': 'أَرْبَعِين', 'الحساب': 'اِلْحِسَاب',
                 'كام': 'كَام', 'معاك': 'مَعَاك', 'فكة': 'فَكَّة', 'الباقي': 'اِلْبَاقِي',
                 'حاجة': 'حَاجَة', 'تانية': 'تَانْيَة', 'بس': 'بَسّ', 'كده': 'كِدَه', 'خلاص': 'خَلَاص',
-                'أرخص': 'أَرْخَص', 'أكتر': 'أَكْتَر', 'أقل': 'أَقَلّ'
+                'أرخص': 'أَرْخَص', 'أكتر': 'أَكْتَر', 'أقل': 'أَقَلّ',
+                'جمل': 'جَمَل', 'جسر': 'جِسْر', 'جبن': 'جُبْن', 'حجر': 'حَجَر',
+                'حصان': 'حِصَان', 'حب': 'حُبّ', 'حوت': 'حُوت', 'بحر': 'بَحْر',
+                'حارس': 'حَارِس', 'حل': 'حَلّ', 'جامعة': 'جَامِعَة',
+                'دجاجة': 'دَجَاجَة', 'ديك': 'دِيك', 'دب': 'دُبّ', 'دار': 'دَار', 'دودة': 'دُودَة',
+                'ذهب': 'ذَهَب', 'ذراع': 'ذِرَاع', 'ذيل': 'ذَيْل', 'ذرة': 'ذُرَة', 'بعيد': 'بَعِيد',
+                'ذوق': 'ذَوْق', 'طعم': 'طَعْم', 'ذلك': 'ذَلِكَ',
+                'أهلا': 'أَهْلًا',
+                'أهلا وسهلا': 'أَهْلًا وَسَهْلًا', 'اتشرفنا': 'اِتْشَرَّفْنَا',
+                'السلام عليكم': 'السَّلَامُ عَلَيْكُمْ', 'وعليكم السلام': 'وَعَلَيْكُمُ السَّلَام',
+                'إنت': 'إِنْتَ', 'إنتي': 'إِنْتِي', 'اسمي': 'اِسْمِي', 'اسمك': 'اِسْمَك',
+                'أهلا بيك': 'أَهْلًا بِيك', 'أهلا بيكي': 'أَهْلًا بِيكِ',
+                'كيف': 'كَيْفَ؟', 'إزيك': 'إِزَّيَّك؟', 'كيفك': 'كِيفَك؟',
+                'الحمد لله': 'الحَمْدُ لله', 'تمام': 'تَمَام', 'كويس': 'كُوَيِّس',
+                'ماشي': 'مَاشِي', 'مش': 'مِش', 'ليس': 'لَيْسَ',
+                'ده': 'دَه', 'دي': 'دِي', 'هذا': 'هَذَا', 'هذه': 'هَذِهِ',
+                'و': 'وَ', 'أخبار': 'أَخْبَار', 'شارع': 'شَارِع',
+                'واجب': 'وَاجِب', 'حجاب': 'حِجَاب', 'حبيبي': 'حَبِيبِي',
+                'حبيبتي': 'حَبِيبَتِي'
             };
 
             function beginnerVocalizedArabic(ar) {
@@ -4267,8 +5532,26 @@
                 const cz = cleanChineseMeaning(translation);
 
                 // 保留合理的异义同形词 / 阴阳性区分
+                if (nAr === 'اهلابيك' && (cz.includes('男') || cz.includes('女'))) {
+                    return cz.includes('男') ? 'اهلابيك_male' : 'اهلابيك_female';
+                }
+                if (nAr === 'ازيك' && (cz.includes('男') || cz.includes('女'))) {
+                    return cz.includes('男') ? 'ازيك_male' : 'ازيك_female';
+                }
                 if (nAr === 'انت' && (cz.includes('男') || cz.includes('女'))) {
-                    return cz.includes('男') ? 'انت_male' : 'انت_female';
+                    const isEgyptian = (ar || '').includes('إ') || (ar || '').includes('تِي');
+                    return (isEgyptian ? 'egypt_' : '') + (cz.includes('男') ? 'انت_male' : 'انت_female');
+                }
+                if (nAr === 'اسمك' && (cz.includes('男') || cz.includes('女'))) {
+                    return cz.includes('男') ? 'اسمك_male' : 'اسمك_female';
+                }
+                if (nAr === 'حجر') {
+                    if (cz.includes('石')) return 'حجر_stone';
+                    if (cz.includes('限制') || cz.includes('隔离') || cz.includes('禁止')) return 'حجر_quarantine';
+                }
+                if (nAr === 'حب') {
+                    if (cz.includes('喜爱')) return 'حب_verb';
+                    if (cz.includes('爱')) return 'حب_noun';
                 }
                 if ((nAr === 'عايز' || nAr === 'عايزه') && (cz.includes('男') || cz.includes('女'))) {
                     return cz.includes('女') ? 'عايزه_female' : 'عايز_male';
@@ -4310,6 +5593,10 @@
                         letters.add('ت');
                     } else if (ch === 'ث') {
                         letters.add('ث');
+                    } else if (ch === 'ج') {
+                        letters.add('ج');
+                    } else if (ch === 'ح') {
+                        letters.add('ح');
                     } else if (ch === 'و') {
                         letters.add('و');
                     } else if (ch === 'ي' || ch === 'ى') {
@@ -4319,11 +5606,11 @@
                 return Array.from(letters);
             }
 
-            function registerWord(item, sourceTag, sourceName, fallbackEmoji = '📖', explicitLetters = []) {
+            function registerWord(item, sourceTag, sourceName, fallbackEmoji = '📖', explicitLetters = [], allowMultiWord = false) {
                 const cleanAr = (item.ar || '').replace(/[.؟،!…0-9]/g, '').trim();
-                if (!cleanAr || cleanAr.includes(' ') || (sourceTag !== 'starter' && !containsLearnedLetters(cleanAr))) return;
+                if (!cleanAr || (!allowMultiWord && cleanAr.includes(' ')) || (sourceTag !== 'starter' && sourceTag !== 'egyptian' && !containsLearnedLetters(cleanAr))) return;
 
-                const dedupeKey = getWordDeduplicationKey(cleanAr, item.translation || item.zh);
+                const dedupeKey = (sourceTag === 'egyptian' ? 'egypt_' : '') + getWordDeduplicationKey(item.ar || cleanAr, item.translation || item.zh);
                 if (seenDedupe.has(dedupeKey)) return;
                 seenDedupe.add(dedupeKey);
 
@@ -4332,7 +5619,7 @@
                 const finalEmoji = item.emoji || (emojiMatch && emojiMatch[2] ? emojiMatch[1] : fallbackEmoji);
                 const finalZh = (emojiMatch && emojiMatch[2]) ? emojiMatch[2] : translation;
                 const phonetics = analyzeWordPhonetics(cleanAr, item.pron || item.py);
-                const displayAr = beginnerVocalizedArabic(cleanAr);
+                const displayAr = beginnerVocalizedArabic(item.ar || cleanAr);
 
                 const targetLetters = extractWordTargetLetters(cleanAr, explicitLetters);
                 if (targetLetters.length === 0 && phonetics.initialLetter) {
@@ -4360,12 +5647,19 @@
                     emoji: finalEmoji,
                     translation: finalZh,
                     pron: item.pron || item.py || '',
+                    homophone: item.homophone || item.hz || '',
+                    practicePoint: item.practicePoint || item.point || '',
+                    scene: item.scene || '',
+                    example: item.example || '',
+                    group: item.group || '',
                     sourceTag: sourceTag,
                     sourceName: sourceName,
                     targetLetters: targetLetters,
                     primaryLetter: primaryLetter,
                     primaryLetterRank: getArabicLetterRank(primaryLetter),
                     letterPositions: posData.letterPositions,
+                    anyPositions: posData.anyPositions,
+                    primaryPositions: primaryPositions,
                     anyPositions: posData.anyPositions,
                     primaryPositions: primaryPositions,
                     primaryPosShort: primaryPosShort,
@@ -4524,6 +5818,23 @@
                 registerWord({ ar: item.ar, emoji: item.emoji || '📖', translation: item.zh, pron: item.pron }, item.tag, item.name);
             });
 
+            // 8. 埃及方言实际读法核心词库（近期问询整理表）
+            if (typeof EGYPTIAN_DIALECT_VOCAB !== 'undefined' && Array.isArray(EGYPTIAN_DIALECT_VOCAB)) {
+                EGYPTIAN_DIALECT_VOCAB.forEach(item => {
+                    registerWord({
+                        ar: item.ar,
+                        emoji: item.emoji || '🇪🇬',
+                        translation: item.translation,
+                        pron: item.pron,
+                        homophone: item.hz,
+                        practicePoint: item.point,
+                        scene: item.scene,
+                        example: item.example,
+                        group: item.group
+                    }, 'egyptian', '埃及方言', item.emoji || '🇪🇬', item.explicit || [], item.allowMultiWord);
+                });
+            }
+
             return list;
         }
 
@@ -4571,6 +5882,7 @@
                 const isTarget = tag === 'all'
                     ? chip.textContent.includes('全部来源')
                     : (tag === 'starter' && chip.textContent.includes('生活拼读')) ||
+                      (tag === 'egyptian' && chip.textContent.includes('埃及方言')) ||
                       (tag === 'symbol-vocab' && chip.textContent.includes('符号词汇')) ||
                       (tag === 'family' && chip.textContent.includes('家庭称谓')) ||
                       (tag === 'basic' && chip.textContent.includes('基础口语')) ||
@@ -4615,8 +5927,14 @@
                     (letter === 'ب' && chip.textContent.includes('Bāʾ')) ||
                     (letter === 'ت' && chip.textContent.includes('Tāʾ')) ||
                     (letter === 'ث' && chip.textContent.includes('Thāʾ')) ||
+                    (letter === 'ج' && (chip.textContent.includes('Gīm') || chip.textContent.includes('Jīm'))) ||
+                    (letter === 'ح' && chip.textContent.includes('Ḥāʾ')) ||
                     (letter === 'و' && chip.textContent.includes('Wāw')) ||
-                    (letter === 'ي' && chip.textContent.includes('Yāʾ'));
+                    (letter === 'ي' && chip.textContent.includes('Yāʾ')) ||
+                    (letter === 'خ' && chip.textContent.includes('Khāʾ')) ||
+                    (letter === 'د' && chip.textContent.includes('Dāl')) ||
+                    (letter === 'ش' && chip.textContent.includes('Shīn')) ||
+                    (letter === 'ك' && chip.textContent.includes('Kāf'));
                 chip.classList.toggle('active', isTarget);
             });
             resetZonePageLimits();
@@ -4647,6 +5965,80 @@
             }, 120);
         }
 
+                function filterDialectReviewTable(group) {
+            const table = document.querySelector('.dialect-review-table');
+            if (!table) return;
+            const rows = table.querySelectorAll('tbody tr');
+            rows.forEach(tr => {
+                if (group === 'all') {
+                    tr.style.display = '';
+                } else {
+                    const rowGroup = tr.dataset.group;
+                    tr.style.display = (rowGroup === group) ? '' : 'none';
+                }
+            });
+            document.querySelectorAll('.dialect-filter-bar .df-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.group === group);
+            });
+        }
+
+        function toggleDialectTable(btn) {
+            const container = document.getElementById('dialect-table-container');
+            if (!container) return;
+            const isCollapsed = container.classList.toggle('collapsed');
+            const textEl = btn ? btn.querySelector('.toggle-text') : null;
+            const iconEl = btn ? btn.querySelector('i') : null;
+            if (isCollapsed) {
+                if (textEl) textEl.textContent = '展开表格';
+                if (iconEl) iconEl.className = 'fa-solid fa-chevron-down';
+            } else {
+                if (textEl) textEl.textContent = '收起表格';
+                if (iconEl) iconEl.className = 'fa-solid fa-chevron-up';
+            }
+        }
+
+        function locateDialectCard(wordAr) {
+            if (!wordAr) return;
+            // 确保切到全部或者保证目标卡片可见
+            activeTagFilter = 'all';
+            activeVowelFilter = 'all';
+            activeLetterFilter = 'all';
+            activePositionFilter = 'all';
+            // 同步顶部筛选按钮的状态
+            document.querySelectorAll('#deck-filter-chips .deck-chip').forEach(c => c.classList.toggle('active', c.textContent.includes('全部来源')));
+            document.querySelectorAll('#deck-vowel-chips .deck-chip').forEach(c => c.classList.toggle('active', c.textContent.includes('全部音性')));
+            document.querySelectorAll('#deck-letter-chips .deck-chip').forEach(c => c.classList.toggle('active', c.textContent.includes('全部字母')));
+            document.querySelectorAll('#deck-position-chips .deck-chip').forEach(c => c.classList.toggle('active', c.textContent.includes('全部位置')));
+
+            // 设置搜索关键词并更新输入框
+            const searchInput = document.getElementById('deck-search-input');
+            if (searchInput) searchInput.value = wordAr;
+            deckSearchKeyword = wordAr.trim().toLowerCase();
+
+            // 确保三大分区均处于展示视图
+            if (activeDeckView !== 'all') {
+                switchDeckView('all');
+            } else {
+                resetZonePageLimits();
+                renderAggregatedFlashcards();
+            }
+
+            // 滚动定位并高亮卡片
+            setTimeout(() => {
+                const targetCard = document.querySelector(`[data-word-key="${wordAr}"]`) || Array.from(document.querySelectorAll('.starter-flip-card')).find(card => {
+                    const text = card.querySelector('.starter-word')?.textContent.trim();
+                    return text === wordAr || (text && text.replace(/[\u064B-\u065F\u0670]/g, '') === wordAr.replace(/[\u064B-\u065F\u0670]/g, ''));
+                });
+                if (targetCard) {
+                    targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    targetCard.classList.add('locate-highlight');
+                    setTimeout(() => {
+                        targetCard.classList.remove('locate-highlight');
+                    }, 2500);
+                }
+            }, 100);
+        }
+
         function resolveCardKeyLetter(word) {
             let keyLetter = word.primaryLetter || word.initialLetter;
             if (activeLetterFilter !== 'all' && word.targetLetters?.includes(activeLetterFilter)) {
@@ -4672,6 +6064,7 @@
         function createUnifiedWordCard(word, currentCategory) {
             const card = document.createElement('article');
             card.className = 'starter-flip-card';
+            card.dataset.wordKey = word.ar;
             card.tabIndex = 0;
             card.setAttribute('role', 'button');
             card.setAttribute('aria-label', `${word.translation}，点击翻转卡片`);
@@ -4690,11 +6083,28 @@
 
             const units = graphemeParts(word.displayAr || word.ar);
             const breakdownHtml = units.map(({ display, key }) => {
+                if (display === ' ' || display.trim() === '') {
+                    return `<span class="starter-breakdown-space" aria-hidden="true">&nbsp;</span>`;
+                }
+                if (/[؟?!.,;،؛]/.test(display)) {
+                    return `<span class="starter-breakdown-punct" aria-hidden="true">${escapeHtml(display)}</span>`;
+                }
                 const isKey = isKeyLetterMatch(key, badgeLetter);
                 const keyClass = isKey ? ' is-key-letter' : '';
                 const keyTitle = isKey ? `关键字母: ${escapeHtml(display)} · 点击发音` : `点击播放 ${escapeHtml(display)}`;
                 return `<span class="starter-breakdown-letter${keyClass}" lang="ar" role="button" tabindex="0" data-display="${escapeHtml(display)}" data-key="${escapeHtml(key)}" data-is-key="${isKey ? 'true' : 'false'}" title="${keyTitle}">${escapeHtml(display)}</span>`;
-            }).join('<span class="starter-breakdown-plus" aria-hidden="true">+</span>');
+            }).reduce((acc, curr, idx) => {
+                if (idx === 0) return [curr];
+                const isCurrSpace = curr.includes('starter-breakdown-space');
+                const isPrevSpace = acc[acc.length - 1].includes('starter-breakdown-space');
+                const isCurrPunct = curr.includes('starter-breakdown-punct');
+                if (isCurrSpace || isPrevSpace || isCurrPunct) {
+                    acc.push(curr);
+                } else {
+                    acc.push('<span class="starter-breakdown-plus" aria-hidden="true">+</span>', curr);
+                }
+                return acc;
+            }, []).join('');
 
             const categoryButtonsHtml = `
                 <div class="card-shift-actions" onclick="event.stopPropagation()">
@@ -4716,6 +6126,8 @@
                         ${badgeTagHtml}
                         <span class="starter-word" lang="ar" role="button" tabindex="0" title="点击播放整词">${escapeHtml(word.displayAr || word.ar)}</span>
                         <span class="starter-meaning">${word.emoji} ${escapeHtml(word.translation)}</span>
+                        ${word.homophone ? `<span class="starter-card-homophone" title="中文谐音: ${escapeHtml(word.homophone)}">🗣️ 谐音: ${escapeHtml(word.homophone)}</span>` : ''}
+                        ${word.scene ? `<span class="starter-card-scene" title="使用场景: ${escapeHtml(word.scene)}">🎬 ${escapeHtml(word.scene)}</span>` : ''}
                         <span class="starter-card-hint">点击单词发音 · 点击空白处翻转</span>
                         ${categoryButtonsHtml}
                     </div>
@@ -4728,6 +6140,14 @@
                         <div class="starter-breakdown" aria-label="逐字母点读">${breakdownHtml}</div>
                         <span class="starter-pron">/${escapeHtml(word.pron || '')}/</span>
                         <span class="starter-meaning">${word.emoji} ${escapeHtml(word.translation)}</span>
+                        ${(word.homophone || word.practicePoint || word.scene || word.example) ? `
+                            <div class="starter-back-extra">
+                                ${word.scene ? `<span class="starter-extra-scene" title="使用场景">🎬 场景: ${escapeHtml(word.scene)}</span>` : ''}
+                                ${word.homophone ? `<span class="starter-extra-homophone" title="中文谐音">🗣️ 谐音: ${escapeHtml(word.homophone)}</span>` : ''}
+                                ${word.practicePoint ? `<span class="starter-extra-point" title="练习重点/口语变化">💡 重点: ${escapeHtml(word.practicePoint)}</span>` : ''}
+                                ${word.example ? `<span class="starter-extra-example" title="实用例句">📌 例句: ${escapeHtml(word.example)}</span>` : ''}
+                            </div>
+                        ` : ''}
                     </div>
                 </div>`;
 
@@ -4776,11 +6196,11 @@
                 });
             });
 
-            // 卡片翻转交互（超过 4 个字母时，翻转后自动扩展为两倍宽度 span-2，避免挤压遮挡前后卡片）
+            // 卡片翻转交互（超过 4 个字母或为短语时，翻转后自动扩展为两倍宽度 span-2，避免挤压遮挡前后卡片）
             const toggleFlip = () => {
                 const isFlippingToBack = !card.classList.contains('flipped');
                 card.classList.toggle('flipped');
-                if (units.length >= 4) {
+                if (units.length >= 4 || word.ar.includes(' ') || word.scene || word.example) {
                     if (isFlippingToBack) {
                         card.classList.add('span-2');
                     } else {
@@ -4843,7 +6263,9 @@
                     }
                 }
                 if (deckSearchKeyword) {
-                    const matchAr = w.ar.toLowerCase().includes(deckSearchKeyword);
+                    const cleanKeyword = deckSearchKeyword.replace(/[\u064B-\u065F\u0670]/g, '');
+                    const cleanAr = w.ar.replace(/[\u064B-\u065F\u0670]/g, '').toLowerCase();
+                    const matchAr = w.ar.toLowerCase().includes(deckSearchKeyword) || (cleanKeyword && cleanAr.includes(cleanKeyword));
                     const matchZh = (w.translation || '').toLowerCase().includes(deckSearchKeyword);
                     const matchPy = (w.pron || '').toLowerCase().includes(deckSearchKeyword);
                     const matchLetter = (w.primaryLetter || '').includes(deckSearchKeyword) ||
@@ -4851,7 +6273,11 @@
                                         (w.targetLetters && w.targetLetters.includes(deckSearchKeyword));
                     const matchVowel = getCardKeyPhonetics(w).vowelDetail.toLowerCase().includes(deckSearchKeyword);
                     const matchPos = (w.positionSummaryZh || '').includes(deckSearchKeyword);
-                    if (!matchAr && !matchZh && !matchPy && !matchLetter && !matchVowel && !matchPos) return false;
+                    const matchHomo = (w.homophone || '').toLowerCase().includes(deckSearchKeyword);
+                    const matchPoint = (w.practicePoint || '').toLowerCase().includes(deckSearchKeyword);
+                    const matchScene = (w.scene || '').toLowerCase().includes(deckSearchKeyword);
+                    const matchExample = (w.example || '').toLowerCase().includes(deckSearchKeyword);
+                    if (!matchAr && !matchZh && !matchPy && !matchLetter && !matchVowel && !matchPos && !matchHomo && !matchPoint && !matchScene && !matchExample) return false;
                 }
                 return true;
             });

@@ -206,3 +206,55 @@ test('legacy default amounts migrate to the revised defaults', () => {
     );
     assert.equal(values.nightOnly, true);
 });
+
+test('WeLink script includes every imported WX and non-WX ID once, login check, result file and summary', () => {
+    const runtime = createToolRuntime();
+    const result = evaluate(runtime, `
+      rawRows=[{complete_operator:'00197735'},{complete_operator:'WX100'},{complete_operator:'00197735'}];
+      const script=buildWelinkScript(allImportedPeople());
+      ({ids:allImportedPeople(),script});
+    `);
+    assert.deepEqual(result.ids, ['00197735', 'WX100']);
+    assert.match(result.script, /welink-cli auth login/);
+    assert.match(result.script, /welink-cli auth status/);
+    assert.match(result.script, /User Token:\\s\*valid/);
+    assert.match(result.script, /welink-cli search person --text "00197735"/);
+    assert.match(result.script, /welink-cli search person --text "WX100"/);
+    assert.match(result.script, /Invoke-Item -LiteralPath \$outputFile/);
+    assert.match(result.script, /完成：成功查询/);
+});
+
+test('WeLink output joins by query or returned employee number and nonpayment rules cover both groups', () => {
+    const runtime = createToolRuntime();
+    const result = evaluate(runtime, `
+      const output='welink-cli search person --text "00197735"\\n'+JSON.stringify({data:[{employeeNumber:'00197735',deptName:'Finance'}]})+'\\nwelink-cli search person --text "WX100"\\n'+JSON.stringify({search_cli_person:{data:[{employeeNumber:'WX100',deptName:'Finance'}]}});
+      installWelinkPeople(parseWelinkPeople(output));
+      rawRows=[
+        {task_status:'completed',complete_operator:'00197735','当地开始时间':'2026-09-01 23:00',operate_level:'High',BU1:'NIS'},
+        {task_status:'completed',complete_operator:'WX100','当地开始时间':'2026-09-01 23:00',operate_level:'Low',BU1:'NIS'}
+      ];
+      nonpaymentRules=[{field:'welink:deptName',mode:'equals',value:'Finance'}];
+      recalculate();
+      ({parsed:parseWelinkPeople(output).length,matched:allImportedPeople().map(personFieldValue),hits:ruleHitPeople(nonpaymentRules[0]).map(r=>r.__person),paid:dedupRows.length,details:calcDetailRows.map(r=>r.__ignoreReason)});
+    `);
+    assert.deepEqual(result.parsed, 2);
+    assert.deepEqual(result.matched, ['Finance', 'Finance']);
+    assert.deepEqual(result.hits, ['00197735', 'WX100']);
+    assert.equal(result.paid, 0);
+    assert.ok(result.details.every(reason => reason.includes('不发放规则')));
+});
+
+test('a source-column rule blocks a person across all of their valid rows', () => {
+    const runtime = createToolRuntime();
+    const result = evaluate(runtime, `
+      rawRows=[
+        {task_status:'completed',complete_operator:'A100','当地开始时间':'2026-09-01 23:00',operate_level:'High',BU1:'Special'},
+        {task_status:'completed',complete_operator:'A100','当地开始时间':'2026-09-02 23:00',operate_level:'Low',BU1:'Normal'},
+        {task_status:'completed',complete_operator:'WX200','当地开始时间':'2026-09-02 23:00',operate_level:'Low',BU1:'Normal'}
+      ];
+      nonpaymentRules=[{field:'source:BU1',mode:'contains',value:'spec'}];
+      recalculate();
+      ({paid:dedupRows.map(r=>r.__person),blocked:calcDetailRows.filter(r=>r.__blacklisted).map(r=>r.__person),hits:ruleHitPeople(nonpaymentRules[0]).length});
+    `);
+    assert.deepEqual(result, { paid: ['WX200'], blocked: ['A100', 'A100'], hits: 1 });
+});
