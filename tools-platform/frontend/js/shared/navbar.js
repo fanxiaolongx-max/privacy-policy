@@ -6912,7 +6912,13 @@ window.doLogout = async function () {
     const preservedEntries = [];
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key && (key.startsWith('tools_recent_nav_tools') || key === 'tools_tenant_id')) {
+        if (key && (
+            key.startsWith('tools_recent_nav_tools') ||
+            key === 'tools_tenant_id' ||
+            key === 'builtin_tools_sync_snooze_date_v1' ||
+            key.startsWith('tools_ai_proactive_alerts_snoozed') ||
+            key.startsWith('tools_ai_proactive_alerts_seen')
+        )) {
             preservedEntries.push([key, localStorage.getItem(key)]);
         }
     }
