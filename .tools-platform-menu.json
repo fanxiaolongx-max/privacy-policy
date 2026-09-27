@@ -36,6 +36,24 @@
       "encrypted": true,
       "fingerprint": "e5c2be30cedcfd83bc36c92888e42eee8a6253a862902a6b5ada8da784446600",
       "updatedAt": "2026-09-27T13:26:58.515Z"
+    },
+    {
+      "slug": "tool-mqp55fna",
+      "name": "六个一一",
+      "description": "由独立 HTML 导入的平台工具，可在统一入口和顶部导航中访问。",
+      "href": "./tool-mqp55fna/index.html",
+      "encrypted": true,
+      "fingerprint": "63aefd5905a06183131882dcc9f110a70a6f0750decc1b151d4d63faaab45462",
+      "updatedAt": "2026-09-27T17:41:02.231Z"
+    },
+    {
+      "slug": "f12-to-extension",
+      "name": "F12扩展打包",
+      "description": "F12 控制台脚本扩展打包器，支持内置脚本、默认代码混淆、可完全离线验签的月度 License、Popup 手动启动、兼容性检查和 Manifest V3 Edge/Chrome 扩展生成。",
+      "href": "./f12-to-extension/index.html",
+      "encrypted": true,
+      "fingerprint": "60f91d27d86851c61413148b5839f39894e3debc446a7d8db62c25b615d365bb",
+      "updatedAt": "2026-09-27T17:41:02.258Z"
     }
   ]
 }
