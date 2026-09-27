@@ -283,6 +283,20 @@ test('changed employee ID badge appears in personnel tables only for a changed q
     assert.equal((result.personnel.match(/工号有变更/g) || []).length, 1);
 });
 
+test('one name initial before a numeric or WX ID does not count as an employee ID change', () => {
+    const runtime = createToolRuntime();
+    const result = evaluate(runtime, `
+      installWelinkPeople([
+        {__queryEmpNo:'a00824176',employeeNumber:'00824176',deptName:'Finance'},
+        {__queryEmpNo:'mWX1459632',employeeNumber:'WX1459632',deptName:'Operations'},
+        {__queryEmpNo:'a00824177',employeeNumber:'00824178',deptName:'Finance'},
+        {__queryEmpNo:'aa00824176',employeeNumber:'00824176',deptName:'Finance'}
+      ],false);
+      ({numeric:changedEmployeeId('a00824176'),wx:changedEmployeeId('mWX1459632'),actualChange:changedEmployeeId('a00824177'),doublePrefix:changedEmployeeId('aa00824176')});
+    `);
+    assert.deepEqual(result, { numeric: '', wx: '', actualChange: '00824178', doublePrefix: '00824176' });
+});
+
 test('successful empty WeLink search is marked as suspected departure and can be reviewed', () => {
     const runtime = createToolRuntime();
     const result = evaluate(runtime, `

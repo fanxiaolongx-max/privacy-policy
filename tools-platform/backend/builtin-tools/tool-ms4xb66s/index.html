@@ -1438,7 +1438,10 @@ function showSuspectedDepartedDetails(){
 }
 function changedEmployeeId(person){
   const p=welinkFor(person),query=personKey(p?.__queryEmpNo),returned=personKey(p?.employeeNumber);
-  return query&&query===personKey(person)&&returned&&query!==returned?clean(p.employeeNumber):'';
+  // Keep parity with backend/models/staff-id-normalization.js: strip one leading
+  // import/name initial only before a numeric or WX-number employee ID.
+  const normalized=id=>/^[a-z](?=(?:wx\d{5,}|\d{5,})$)/i.test(id)?id.slice(1):id;
+  return query&&query===personKey(person)&&returned&&normalized(query)!==normalized(returned)?clean(p.employeeNumber):'';
 }
 function changedEmployeeTag(person){
   const newId=changedEmployeeId(person);
