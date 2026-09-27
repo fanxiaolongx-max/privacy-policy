@@ -32,6 +32,8 @@ function createToolRuntime(savedRules = null) {
                 contains: name => classes.has(name)
             },
             addEventListener() {},
+            appendChild() {},
+            remove() {},
             setAttribute() {},
             scrollIntoView() {},
             getBoundingClientRect() { return { width: 100, height: 40, left: 0, top: 0, bottom: 40 }; },
@@ -45,6 +47,7 @@ function createToolRuntime(savedRules = null) {
     if (savedRules) storage.set('nightAllowanceRulesV1', JSON.stringify(savedRules));
     const document = {
         getElementById: element,
+        createElement: () => element('created'),
         querySelectorAll() { return []; },
         querySelector() { return null; },
         body: { classList: element('body').classList }
@@ -244,6 +247,91 @@ test('WeLink output joins by query or returned employee number and nonpayment ru
     assert.ok(result.details.every(reason => reason.includes('不发放规则')));
 });
 
+test('queried employee ID wins when WeLink returns a changed or colliding employee number', () => {
+    const runtime = createToolRuntime();
+    const result = evaluate(runtime, `
+      const output='welink-cli search person --text "OLD100"\\n'+JSON.stringify({data:[{employeeNumber:'NEW200',deptName:'Original person'}]})+'\\nwelink-cli search person --text "NEW200"\\n'+JSON.stringify({data:[{employeeNumber:'NEW300',deptName:'Other person'}]});
+      installWelinkPeople(parseWelinkPeople(output));
+      ({old:welinkFor('OLD100')?.deptName,newId:welinkFor('NEW200')?.deptName,returned:welinkFor('NEW300')?.deptName});
+    `);
+    assert.deepEqual(result, { old: 'Original person', newId: 'Other person', returned: 'Other person' });
+});
+
+test('changed employee ID badge appears in personnel tables only for a changed queried ID', () => {
+    const runtime = createToolRuntime();
+    const result = evaluate(runtime, `
+      installWelinkPeople([
+        {__queryEmpNo:'OLD100',employeeNumber:'NEW200',deptName:'Finance'},
+        {__queryEmpNo:'KEEP300',employeeNumber:'KEEP300',deptName:'Operations'}
+      ],false);
+      rawRows=[
+        {task_status:'completed',complete_operator:'OLD100','当地开始时间':'2026-09-01 23:00',operate_level:'High'},
+        {task_status:'completed',complete_operator:'KEEP300','当地开始时间':'2026-09-01 23:00',operate_level:'Low'}
+      ];
+      recalculate();
+      currentView='person';render();
+      const personnel=$('tableWrap').innerHTML;
+      currentView='detail';render();
+      ({old:changedEmployeeId('OLD100'),returned:changedEmployeeId('NEW200'),same:changedEmployeeId('KEEP300'),personnel,detail:$('tableWrap').innerHTML});
+    `);
+    assert.equal(result.old, 'NEW200');
+    assert.equal(result.returned, '');
+    assert.equal(result.same, '');
+    assert.match(result.personnel, /OLD100.*工号有变更/);
+    assert.match(result.personnel, /查询工号：OLD100；WeLink 返回工号：NEW200/);
+    assert.match(result.detail, /OLD100.*工号有变更/);
+    assert.equal((result.personnel.match(/工号有变更/g) || []).length, 1);
+});
+
+test('successful empty WeLink search is marked as suspected departure and can be reviewed', () => {
+    const runtime = createToolRuntime();
+    const result = evaluate(runtime, `
+      const empty={search_cli_person:{code:'200',data:[],l1Department:[],message:'success',pagination:null},'verify-sign':{code:'200',message:'verify success!'}};
+      const failed={search_cli_person:{code:'500',data:[],message:'server error'}};
+      const output='welink-cli search person --text "OLD100"\\n'+JSON.stringify(empty)+'\\nwelink-cli search person --text "BAD200"\\n'+JSON.stringify(failed);
+      const people=parseWelinkPeople(output);
+      installWelinkPeople(people,false);
+      rawRows=[{task_status:'completed',complete_operator:'OLD100','当地开始时间':'2026-09-01 23:00',operate_level:'High'}];
+      recalculate();
+      currentView='person';render();
+      const renderedTable=$('tableWrap').innerHTML;
+      showSuspectedDepartedDetails();
+      ({people,department:personFieldValue('OLD100'),count:suspectedDepartedPeople().length,label:$('welinkDepartedCount').textContent,table:renderedTable,details:$('welinkDepartedTable').innerHTML});
+    `);
+    assert.equal(result.people.length, 1);
+    assert.equal(result.people[0].__queryEmpNo, 'OLD100');
+    assert.equal(result.department, '疑似已离职');
+    assert.equal(result.count, 1);
+    assert.equal(result.label, '疑似已离职：1 人');
+    assert.match(result.table, /possible-departed-value[^>]*>疑似已离职/);
+    assert.match(result.details, /OLD100/);
+    assert.doesNotMatch(result.details, /BAD200/);
+});
+
+test('a later populated response clears a suspected departure for the same queried ID', () => {
+    const runtime = createToolRuntime();
+    const result = evaluate(runtime, `
+      installWelinkPeople([
+        {__queryEmpNo:'A100',__suspectedDeparted:true,deptName:'疑似已离职'},
+        {__queryEmpNo:'A100',employeeNumber:'A100',deptName:'Finance'}
+      ],false);
+      ({department:personFieldValue('A100'),suspected:suspectedDepartedPeople().length});
+    `);
+    assert.deepEqual(result, { department: 'Finance', suspected: 0 });
+});
+
+test('single pasted empty JSON uses an explicitly entered query ID', () => {
+    const runtime = createToolRuntime();
+    const result = evaluate(runtime, `
+      const empty=JSON.stringify({search_cli_person:{code:'200',data:[],message:'success'}});
+      ({without:parseWelinkPeople(empty).length,withId:parseWelinkPeople(empty,'00197735'),ambiguous:parseWelinkPeople(empty+'\\n'+empty,'00197735').length});
+    `);
+    assert.equal(result.without, 0);
+    assert.equal(result.withId.length, 1);
+    assert.equal(result.withId[0].__queryEmpNo, '00197735');
+    assert.equal(result.ambiguous, 0);
+});
+
 test('a source-column rule blocks a person across all of their valid rows', () => {
     const runtime = createToolRuntime();
     const result = evaluate(runtime, `
@@ -257,4 +345,25 @@ test('a source-column rule blocks a person across all of their valid rows', () =
       ({paid:dedupRows.map(r=>r.__person),blocked:calcDetailRows.filter(r=>r.__blacklisted).map(r=>r.__person),hits:ruleHitPeople(nonpaymentRules[0]).length});
     `);
     assert.deepEqual(result, { paid: ['WX200'], blocked: ['A100', 'A100'], hits: 1 });
+});
+
+test('new snapshots restore WeLink flags, display field, nonpayment rules and view modes; old snapshots clear absent fields', () => {
+    const runtime = createToolRuntime();
+    const result = evaluate(runtime, `
+      rawRows=[{task_status:'completed',complete_operator:'WX100','当地开始时间':'2026-09-01 23:00',operate_level:'High'}];
+      installWelinkPeople([{__queryEmpNo:'WX100',__suspectedDeparted:true,deptName:'疑似已离职'}],false);
+      nonpaymentRules=[{field:'welink:deptName',mode:'equals',value:'疑似已离职'}];
+      welinkDisplayField='departmentName';
+      $('dedupMode').value='none';$('blacklistMode').value='disabled';$('periodSourceMode').value='start';activeOperatorGroup='wx';
+      recalculate();
+      const saved=buildIncentiveSnapshotPayload('测试','2026-09');
+      installWelinkPeople([],false);nonpaymentRules=[];welinkDisplayField='deptName';
+      restoreIncentiveSnapshot(saved);
+      const restored={people:suspectedDepartedPeople().length,field:welinkDisplayField,rules:nonpaymentRules.length,dedup:$('dedupMode').value,blacklist:$('blacklistMode').value,period:$('periodSourceMode').value,group:activeOperatorGroup};
+      restoreIncentiveSnapshot({title:'旧快照',payload:{rawRows:saved.payload.rawRows}});
+      ({stored:saved.payload.welinkPeople.length,restored,legacy:{people:welinkPeople.size,rules:nonpaymentRules.length,field:welinkDisplayField}});
+    `);
+    assert.equal(result.stored, 1);
+    assert.deepEqual(result.restored, { people: 1, field: 'departmentName', rules: 1, dedup: 'none', blacklist: 'disabled', period: 'start', group: 'wx' });
+    assert.deepEqual(result.legacy, { people: 0, rules: 0, field: 'deptName' });
 });

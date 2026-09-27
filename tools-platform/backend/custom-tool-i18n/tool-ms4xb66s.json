@@ -355,5 +355,21 @@
   "匹配值": "Match Value",
   "查看详表": "View Details",
   "删除": "Delete",
-  "部门名称": "Department Name"
+  "部门名称": "Department Name",
+  "工号有变更": "Employee ID Changed",
+  "工号变更": "Employee ID Change",
+  "查询工号：": "Queried ID: ",
+  "WeLink 返回工号：": "WeLink returned ID: ",
+  "现工号：": "Current ID: ",
+  "疑似已离职": "Possibly Departed",
+  "疑似已离职人员核查": "Review Possibly Departed Personnel",
+  "查看疑似已离职人员详表": "View Possibly Departed Personnel",
+  "仅表示查询结果 data 为空，请人工二次确认。": "An empty query result only; please verify manually.",
+  "查询结果未返回人员数据，需人工二次确认。": "The query returned no personnel data; manual verification is required.",
+  "WeLink 查询结果 data 为空，请人工二次确认": "WeLink returned an empty data list; please verify manually.",
+  "Excel 记录数": "Excel Record Count",
+  "部门显示": "Displayed Department",
+  "核查提示": "Review Note",
+  "单独粘贴一条 JSON 时的查询工号（可选）": "Queried ID for a Single Pasted JSON Result (Optional)",
+  "例如：00197735；完整脚本 TXT 无需填写": "Example: 00197735; leave blank for the full script TXT"
 }
