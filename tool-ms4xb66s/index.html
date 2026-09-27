@@ -1443,7 +1443,8 @@ let analyticsMetric='money',trendHitPoints=[],heatmapHitCells=[];
 const barChartHitRows=new Map();
 let sourceWorkbook=null, sourceSheetName='', sourceWorksheet=null, sourceFileName='';
 const WELINK_FIELDS=[['查询工号','__queryEmpNo'],['工号','employeeNumber'],['中文名','chineseName'],['英文名','englishName'],['性别','sex'],['邮箱','personMail'],['手机号','mobilePhone'],['联系电话','contactPhone'],['WeLink ID','welinkId'],['W3账户','w3account'],['sip号','sipNum'],['uid','uid'],['部门编码','departmentCode'],['部门层级','departmentLevel'],['一级部门','deptL1Name'],['一级部门英文','deptL1NameEn'],['部门名称','deptName'],['部门英文名','deptNameEn'],['部门全称','departmentName'],['是否外部','isExternal'],['人员类型','personType'],['上级主管工号','moduleTlEmpNum'],['上级主管','moduleTlName'],['任职等级','appointGrade'],['任职岗位','appointPos'],['岗位','position'],['其他','personOther'],['手机区号','personMobileCode'],['电话区号','personPhoneCode'],['是否匿名电话','phoneAnonymous'],['高管模式','seniorMode'],['备注','remark']];
-let welinkPeople=new Map(),welinkDisplayField='deptName',nonpaymentRules=[],nonpaymentHits=new Map();
+let welinkPeople=new Map(),welinkDisplayField='deptName',nonpaymentRules=[],nonpaymentHits=new Map(),nonpaymentReasons=new Map();
+let ruleSourceFieldsCache={rows:null,fields:[]};
 const NONPAYMENT_STORAGE_KEY='nightAllowanceNonpaymentRulesV1';
 function personKey(v){return clean(v).toLowerCase()}
 function allImportedPeople(){return uniq(rawRows.map(personFromRawRow))}
@@ -1544,7 +1545,10 @@ function showSuspectedDepartedDetails(){
 }
 function changedEmployeeId(person){
   const p=welinkFor(person),query=personKey(p?.__queryEmpNo),returned=personKey(p?.employeeNumber);
-  return query&&query===personKey(person)&&returned&&query!==returned?clean(p.employeeNumber):'';
+  // Keep parity with backend/models/staff-id-normalization.js: strip one leading
+  // import/name initial only before a numeric or WX-number employee ID.
+  const normalized=id=>/^[a-z](?=(?:wx\d{5,}|\d{5,})$)/i.test(id)?id.slice(1):id;
+  return query&&query===personKey(person)&&returned&&normalized(query)!==normalized(returned)?clean(p.employeeNumber):'';
 }
 function changedEmployeeTag(person){
   const newId=changedEmployeeId(person);
@@ -1563,7 +1567,11 @@ function refreshWelinkFieldSelect(){
 }
 function welinkDisplayLabel(){return availableWelinkFields().find(([,key])=>key===welinkDisplayField)?.[0]||welinkDisplayField}
 function ruleFields(){
-  const imported=uniq(rawRows.flatMap(r=>Object.keys(r))).map(k=>({key:'source:'+k,label:'导入列 · '+k}));
+  if(ruleSourceFieldsCache.rows!==rawRows){
+    const names=new Set();rawRows.forEach(r=>Object.keys(r).forEach(key=>names.add(key)));
+    ruleSourceFieldsCache={rows:rawRows,fields:uniq([...names]).map(k=>({key:'source:'+k,label:'导入列 · '+k}))};
+  }
+  const imported=ruleSourceFieldsCache.fields;
   const calculated=[['__person','操作人工号'],['__name','姓名'],['__operatorGroup','WX/非WX'],['__level','操作等级'],['__bu','BU1 / 部门'],['__customer','客户'],['__attr','人员属性'],['__status','任务状态'],['__identityStatus','姓名工号校验'],['__byField','字段夜间'],['__byTime','时间夜间']].map(([key,label])=>({key:'tag:'+key,label:'计算标签 · '+label}));
   return [...imported,...calculated,...availableWelinkFields().map(([label,key])=>({key:'welink:'+key,label:'WeLink · '+label}))];
 }
@@ -1581,14 +1589,16 @@ function ruleMatches(row,rule){
   return rule.mode==='equals'?actual===expected:actual.includes(expected);
 }
 function ruleHitPeople(rule){
+  if(!rule?.field||!clean(rule.value))return [];
   const hits=new Map();validRows.forEach(r=>{if(ruleMatches(r,rule)&&!hits.has(personKey(r.__person)))hits.set(personKey(r.__person),r)});return [...hits.values()];
 }
 function nonpaymentReason(person){
-  const hit=nonpaymentHits.get(personKey(person));
-  return hit?`不发放规则：${ruleFields().find(f=>f.key===hit.field)?.label||hit.field} ${hit.mode==='equals'?'等于':'包含'} ${hit.value}`:'';
+  return nonpaymentReasons.get(personKey(person))||'';
 }
 function rebuildNonpaymentHits(){
-  nonpaymentHits=new Map();nonpaymentRules.forEach(rule=>validRows.forEach(r=>{const key=personKey(r.__person);if(!nonpaymentHits.has(key)&&ruleMatches(r,rule))nonpaymentHits.set(key,rule)}));
+  nonpaymentHits=new Map();nonpaymentRules.filter(rule=>rule?.field&&clean(rule.value)).forEach(rule=>validRows.forEach(r=>{const key=personKey(r.__person);if(!nonpaymentHits.has(key)&&ruleMatches(r,rule))nonpaymentHits.set(key,rule)}));
+  const labels=nonpaymentHits.size?new Map(ruleFields().map(f=>[f.key,f.label])):new Map();
+  nonpaymentReasons=new Map([...nonpaymentHits].map(([person,hit])=>[person,`不发放规则：${labels.get(hit.field)||hit.field} ${hit.mode==='equals'?'等于':'包含'} ${hit.value}`]));
 }
 function paymentBlockReason(person,includeBlacklist=true){return (includeBlacklist&&blacklistReason(person))||nonpaymentReason(person)}
 function saveNonpaymentRules(){try{localStorage.setItem(NONPAYMENT_STORAGE_KEY,JSON.stringify(nonpaymentRules))}catch(e){}}
@@ -1604,7 +1614,7 @@ function renderNonpaymentRules(){
   }).join(''):'<div class="hint">尚无不发放规则。</div>';
 }
 function changeNonpaymentRule(index,changes){
-  Object.assign(nonpaymentRules[index],changes);saveNonpaymentRules();rebuildNonpaymentHits();if(rawRows.length)recalculate();renderNonpaymentRules();
+  Object.assign(nonpaymentRules[index],changes);saveNonpaymentRules();if(rawRows.length)applyPaymentRules();renderNonpaymentRules();
 }
 function showNonpaymentDetails(index){
   const rule=nonpaymentRules[index],rows=ruleHitPeople(rule);
@@ -1948,6 +1958,9 @@ function recalculate(){
       __operatorGroup:operatorGroup(person)};
     if(completed&&nightOk&&person&&start)validRows.push(base); else excludedRows.push({...base,__reason:reasons.join('；')||'规则未满足'});
   });
+  applyPaymentRules(true);
+}
+function applyPaymentRules(sourceChanged=false){
   rebuildNonpaymentHits();
   const best=new Map();
   validRows.forEach(r=>{
@@ -1973,13 +1986,14 @@ function recalculate(){
       __selectedTask:blockedReason?'':selected?.__task||''
     };
   });
-  attendanceCheckVersion++;
-  attendanceResults = new Map();
-  currentAttendanceAnomalies = [];
-  syncOperatorGroupCounts();refreshFilters();render();
-  if (typeof fetch === 'function' && validRows.length > 0) {
-    checkIncentiveAttendanceAnomalies();
+  if(sourceChanged){
+    attendanceCheckVersion++;
+    attendanceResults = new Map();
+    currentAttendanceAnomalies = [];
+    syncOperatorGroupCounts();refreshFilters();
   }
+  render();
+  if(sourceChanged&&typeof fetch === 'function'&&validRows.length>0)checkIncentiveAttendanceAnomalies();
 }
 function uniq(arr){return [...new Set(arr.filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'zh-CN'))}
 function fillSelect(id,vals){
@@ -1987,7 +2001,7 @@ function fillSelect(id,vals){
   if(vals.includes(old))el.value=old;
 }
 function refreshFilters(){
-  const source=rowsForSelectedDedupMode();
+  const source=validRows.filter(operatorMatchesGroup);
   fillSelect('filterYear',uniq(source.map(r=>{
     const d=filterDateForRow(r);return d?String(d.getFullYear()):''
   })));
@@ -2951,7 +2965,7 @@ $('nonpaymentRuleRows').addEventListener('change',e=>{
 });
 $('nonpaymentRuleRows').addEventListener('click',e=>{
   const index=Number(e.target.closest('[data-index]')?.dataset.index);if(!Number.isInteger(index))return;
-  if(e.target.closest('.rule-remove')){nonpaymentRules.splice(index,1);saveNonpaymentRules();if(rawRows.length)recalculate();renderNonpaymentRules()}
+  if(e.target.closest('.rule-remove')){nonpaymentRules.splice(index,1);saveNonpaymentRules();if(rawRows.length)applyPaymentRules();renderNonpaymentRules()}
   if(e.target.closest('.rule-details'))showNonpaymentDetails(index);
 });
 ['welinkImportModal','welinkDepartedModal','nonpaymentModal','nonpaymentDetailsModal'].forEach(id=>$(id).addEventListener('click',e=>{if(e.target===$(id))$(id).classList.remove('show')}));
@@ -3167,7 +3181,7 @@ blacklistModal.addEventListener('click',e=>{if(e.target===blacklistModal)blackli
 $('blacklistInput').addEventListener('input',updateBlacklistCount);
 $('saveBlacklistBtn').onclick=()=>{
   saveBlacklist();
-  if(rawRows.length)recalculate();
+  if(rawRows.length)applyPaymentRules();
   blacklistModal.classList.remove('show');
 };
 $('clearBlacklistBtn').onclick=()=>{
@@ -3382,7 +3396,7 @@ function applyAnomaliesToBlacklist() {
   }
 
   closeAttendanceAnomalyModal();
-  recalculate();
+  applyPaymentRules();
   showToast(`✅ 已成功将 ${selected.length} 位考勤异常人员加入激励黑名单，并自动重新计算！`, 'success');
 }
 
