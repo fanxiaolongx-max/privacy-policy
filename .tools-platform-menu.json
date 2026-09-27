@@ -7,8 +7,8 @@
       "description": "用于维护部门负向事件与违规记录、扣罚规则、人员名册与操作审计日志，支持草稿发布、规则分类筛选和人员 CSV 导入导出。",
       "href": "./department-reward-penalty/index.html",
       "encrypted": true,
-      "fingerprint": "18172ffc80102e8bff87c8b6250155036e4bf7040cc081616c8088b2f718c25b",
-      "updatedAt": "2026-09-24T19:13:51.683Z"
+      "fingerprint": "8e57d1dd2be8a1ff9c21650eedc50f2377c470b462060ae1deff3c9a87b7c795",
+      "updatedAt": "2026-09-27T11:26:58.426Z"
     },
     {
       "slug": "reward-program",
