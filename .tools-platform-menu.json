@@ -34,8 +34,8 @@
       "description": "导入夜间操作 Excel，按人员、周期和操作等级核算操作激励并生成分析与导出结果。",
       "href": "./tool-ms4xb66s/index.html",
       "encrypted": true,
-      "fingerprint": "9dda95c141255790345b791f13cab3a707091f4ffa598ca787b65d727a3d19eb",
-      "updatedAt": "2026-09-27T09:26:58.591Z"
+      "fingerprint": "518a35ff7ea00b092af4b5f2789d4bcc18877ce3329b9ef90954eaef12f36e3d",
+      "updatedAt": "2026-09-27T10:26:58.504Z"
     }
   ]
 }
