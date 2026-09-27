@@ -140,6 +140,12 @@ window.fetch=async(url,options={})=>{const raw=String(url||'');if(raw.startsWith
   input,select{width:100%;border:1px solid #d7dce3;border-radius:7px;padding:8px 9px;background:#fff;color:var(--ink);font-size:12px}
   .setting-box{background:#f7f8fa;border:1px solid #eceff2;border-radius:8px;padding:9px}
   .hint{font-size:10.5px;color:var(--muted);line-height:1.55;margin-top:8px}
+  .person-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;padding:12px;background:#f7f8fa;border:1px solid var(--line);border-radius:9px}
+  .person-tools .hint{margin:0;flex-basis:100%}
+  .person-modal-body{padding:18px;overflow:auto;max-height:70vh}
+  .person-modal-body textarea{width:100%;min-height:180px;resize:vertical;border:1px solid var(--line);border-radius:7px;padding:10px;font:12px Consolas,monospace}
+  .person-rule-row{display:grid;grid-template-columns:minmax(150px,1fr) 100px minmax(150px,1fr) auto auto;gap:8px;align-items:center;margin:8px 0}
+  @media(max-width:700px){.person-rule-row{grid-template-columns:1fr 1fr}.person-rule-row input{grid-column:1/-1}}
   .filters{display:grid;grid-template-columns:repeat(6,minmax(130px,1fr));gap:9px}
   .quick-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:0 0 12px}
   .quick-label{font-size:11px;color:var(--muted);font-weight:700;margin-right:2px}
@@ -771,6 +777,13 @@ window.fetch=async(url,options={})=>{const raw=String(url||'');if(raw.startsWith
         <button type="button" class="operator-scope-btn" data-operator-group="wx" aria-pressed="false">WX 操作人<span class="operator-scope-count" id="wxCount">0</span></button>
       </div>
     </div>
+    <div class="person-tools">
+      <button class="secondary" id="downloadWelinkScript">下载 WeLink 人员查询脚本</button>
+      <button class="secondary" id="openWelinkImport">导入 WeLink 查询结果</button>
+      <button class="secondary" id="openNonpaymentRules">不发放规则 <span id="nonpaymentRuleCount">0</span></button>
+      <span id="welinkImportStatus" class="section-note">尚未导入人员信息</span>
+      <div class="hint">查询脚本覆盖当前 Excel 中非 WX 与 WX 的全部工号；人员信息和不发放规则应用于本次核算。</div>
+    </div>
     <div class="quick-row">
       <span class="quick-label">快速筛选</span>
       <button class="quick-btn active" data-quick="all">全部</button>
@@ -1119,6 +1132,28 @@ window.fetch=async(url,options={})=>{const raw=String(url||'');if(raw.startsWith
 </div>
 
 
+<div class="rule-modal" id="welinkImportModal">
+  <div class="rule-modal-card" style="width:min(900px,96vw)">
+    <div class="rule-modal-head"><div><div class="rule-modal-title">导入 WeLink 人员信息</div><div class="section-note">上传查询脚本生成的 TXT，或粘贴完整查询输出。按查询工号或返回工号关联。</div></div><button class="icon-btn" id="closeWelinkImport">×</button></div>
+    <div class="person-modal-body">
+      <input type="file" id="welinkTxtFile" accept=".txt,text/plain">
+      <textarea id="welinkTxtInput" placeholder="在此粘贴 welink-cli search person 查询输出"></textarea>
+      <label>在个人相关表格展示的人员字段</label><select id="welinkDisplayField"></select>
+      <div class="hint" id="welinkParseStatus">默认展示部门名称；查询结果的其他字段也可选作显示列。</div>
+      <div class="rule-actions"><button class="reset-btn" id="clearWelinkData">清空人员信息</button><button class="primary" id="applyWelinkImport">解析并应用</button></div>
+    </div>
+  </div>
+</div>
+<div class="rule-modal" id="nonpaymentModal">
+  <div class="rule-modal-card" style="width:min(1100px,97vw)">
+    <div class="rule-modal-head"><div><div class="rule-modal-title">不发放规则</div><div class="section-note">按导入列、计算标签及 WeLink 人员字段匹配。命中任一规则的人员不计发激励；人数按当前 Excel 全部有效人员去重。</div></div><button class="icon-btn" id="closeNonpaymentRules">×</button></div>
+    <div class="person-modal-body"><div id="nonpaymentRuleRows"></div><button class="secondary" id="addNonpaymentRule">＋ 增加规则</button></div>
+  </div>
+</div>
+<div class="rule-modal" id="nonpaymentDetailsModal">
+  <div class="rule-modal-card" style="width:min(1050px,97vw)"><div class="rule-modal-head"><div><div class="rule-modal-title">规则命中人员</div><div class="section-note" id="nonpaymentDetailsTitle"></div></div><button class="icon-btn" id="closeNonpaymentDetails">×</button></div><div class="person-modal-body"><div class="table-wrap" id="nonpaymentDetailsTable"></div></div></div>
+</div>
+
 <div class="rule-modal" id="blacklistModal">
   <div class="rule-modal-card">
     <div class="rule-modal-head">
@@ -1399,6 +1434,126 @@ let rankPersonShowIds=false,rankPersonHitRows=[];
 let analyticsMetric='money',trendHitPoints=[],heatmapHitCells=[];
 const barChartHitRows=new Map();
 let sourceWorkbook=null, sourceSheetName='', sourceWorksheet=null, sourceFileName='';
+const WELINK_FIELDS=[['查询工号','__queryEmpNo'],['工号','employeeNumber'],['中文名','chineseName'],['英文名','englishName'],['性别','sex'],['邮箱','personMail'],['手机号','mobilePhone'],['联系电话','contactPhone'],['WeLink ID','welinkId'],['W3账户','w3account'],['sip号','sipNum'],['uid','uid'],['部门编码','departmentCode'],['部门层级','departmentLevel'],['一级部门','deptL1Name'],['一级部门英文','deptL1NameEn'],['部门名称','deptName'],['部门英文名','deptNameEn'],['部门全称','departmentName'],['是否外部','isExternal'],['人员类型','personType'],['上级主管工号','moduleTlEmpNum'],['上级主管','moduleTlName'],['任职等级','appointGrade'],['任职岗位','appointPos'],['岗位','position'],['其他','personOther'],['手机区号','personMobileCode'],['电话区号','personPhoneCode'],['是否匿名电话','phoneAnonymous'],['高管模式','seniorMode'],['备注','remark']];
+let welinkPeople=new Map(),welinkDisplayField='deptName',nonpaymentRules=[],nonpaymentHits=new Map();
+const NONPAYMENT_STORAGE_KEY='nightAllowanceNonpaymentRulesV1';
+function personKey(v){return clean(v).toLowerCase()}
+function allImportedPeople(){return uniq(rawRows.map(personFromRawRow))}
+function psQuote(v){return `'${String(v).replace(/'/g,"''")}'`}
+function psDoubleQuote(v){return '"'+String(v).replace(/[`$"\r\n]/g,c=>c==='\r'||c==='\n'?'':('`'+c))+'"'}
+function buildWelinkScript(ids){
+  const lines=["$ErrorActionPreference = 'Continue'","$outputFile = Join-Path (Get-Location) ('welink-person-results-' + (Get-Date -Format 'yyyyMMdd-HHmmss') + '.txt')","$success = 0","$total = "+ids.length,"welink-cli auth login","$status = welink-cli auth status 2>&1 | Out-String","if ($LASTEXITCODE -ne 0 -or $status -notmatch 'User Token:\\s*valid') { Write-Host 'WeLink 登录无效，查询已停止。'; exit 1 }","Set-Content -LiteralPath $outputFile -Value '' -Encoding UTF8"];
+  ids.forEach(id=>{
+    lines.push(`$id = ${psQuote(id)}`);
+    lines.push(`$result = welink-cli search person --text ${psDoubleQuote(id)} 2>&1 | Out-String`);
+    lines.push('$code = $LASTEXITCODE');
+    lines.push("Add-Content -LiteralPath $outputFile -Value ('welink-cli search person --text \"' + $id + '\"') -Encoding UTF8");
+    lines.push('Add-Content -LiteralPath $outputFile -Value $result -Encoding UTF8');
+    lines.push("if ($code -eq 0 -and $result -match 'employeeNumber|chineseName') { $success++ }");
+    lines.push("Write-Host ($success.ToString() + '/' + $total.ToString() + ' 查询成功；当前工号 ' + $id)");
+  });
+  lines.push("Write-Host ('完成：成功查询 ' + $success + ' / ' + $total + ' 人。结果：' + $outputFile)","Invoke-Item -LiteralPath $outputFile");
+  return '\ufeff'+lines.join('\r\n')+'\r\n';
+}
+function downloadText(name,content,type){
+  const url=URL.createObjectURL(new Blob([content],{type}));
+  const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function parseWelinkPeople(text){
+  const people=[];const queries=[...String(text).matchAll(/--text\s+["']([^"']+)["']/g)].map(m=>({pos:m.index,id:m[1]}));
+  let start=-1,depth=0,inString=false,escape=false;
+  const source=String(text);
+  for(let i=0;i<source.length;i++){
+    const c=source[i];
+    if(start<0){if(c==='{'){start=i;depth=1}continue}
+    if(inString){if(escape)escape=false;else if(c==='\\')escape=true;else if(c==='"')inString=false;continue}
+    if(c==='"'){inString=true;continue}
+    if(c==='{')depth++;
+    if(c==='}'&&--depth===0){
+      try{
+        const obj=JSON.parse(source.slice(start,i+1));
+        const data=Array.isArray(obj.data)?obj.data:Array.isArray(obj.search_cli_person?.data)?obj.search_cli_person.data:(obj.employeeNumber||obj.chineseName)?[obj]:[];
+        const query=queries.filter(q=>q.pos<start).at(-1)?.id||'';
+        data.forEach(p=>{if(p&&typeof p==='object'&&!Array.isArray(p)&&!('pagination' in p))people.push({...p,__queryEmpNo:query})});
+      }catch(e){}
+      start=-1;
+    }
+  }
+  return people;
+}
+function installWelinkPeople(people,recompute=true){
+  welinkPeople=new Map();
+  const byQuery=new Map();
+  people.forEach(p=>{const id=personKey(p.employeeNumber),query=personKey(p.__queryEmpNo);if(id)welinkPeople.set(id,p);if(query){if(!byQuery.has(query))byQuery.set(query,[]);byQuery.get(query).push(p)}});
+  byQuery.forEach((matches,query)=>{if(!welinkPeople.has(query)&&matches.length===1)welinkPeople.set(query,matches[0])});
+  $('welinkImportStatus').textContent=`已关联 ${new Set(welinkPeople.values()).size} 条人员信息`;
+  refreshWelinkFieldSelect();
+  if(recompute&&rawRows.length)recalculate();
+}
+function welinkFor(person){return welinkPeople.get(personKey(person))||null}
+function personFieldValue(person){return clean(welinkFor(person)?.[welinkDisplayField])}
+function availableWelinkFields(){
+  const known=new Set(WELINK_FIELDS.map(([,key])=>key));
+  const extra=uniq([...welinkPeople.values()].flatMap(p=>Object.keys(p).filter(k=>!known.has(k)&&!k.startsWith('__'))));
+  return [...WELINK_FIELDS,...extra.map(key=>[key,key])];
+}
+function refreshWelinkFieldSelect(){
+  const fields=availableWelinkFields();
+  $('welinkDisplayField').innerHTML=fields.map(([label,key])=>`<option value="${esc(key)}">${esc(label)}</option>`).join('');
+  if(fields.some(([,key])=>key===welinkDisplayField))$('welinkDisplayField').value=welinkDisplayField;
+  else welinkDisplayField='deptName';
+}
+function welinkDisplayLabel(){return availableWelinkFields().find(([,key])=>key===welinkDisplayField)?.[0]||welinkDisplayField}
+function ruleFields(){
+  const imported=uniq(rawRows.flatMap(r=>Object.keys(r))).map(k=>({key:'source:'+k,label:'导入列 · '+k}));
+  const calculated=[['__person','操作人工号'],['__name','姓名'],['__operatorGroup','WX/非WX'],['__level','操作等级'],['__bu','BU1 / 部门'],['__customer','客户'],['__attr','人员属性'],['__status','任务状态'],['__identityStatus','姓名工号校验'],['__byField','字段夜间'],['__byTime','时间夜间']].map(([key,label])=>({key:'tag:'+key,label:'计算标签 · '+label}));
+  return [...imported,...calculated,...availableWelinkFields().map(([label,key])=>({key:'welink:'+key,label:'WeLink · '+label}))];
+}
+function ruleValue(row,field){
+  const split=field.indexOf(':');if(split<0)return '';
+  const kind=field.slice(0,split),key=field.slice(split+1);
+  if(kind==='source')return clean(row[key]);
+  if(kind==='tag')return clean(row[key]);
+  if(kind==='welink')return clean(welinkFor(row.__person)?.[key]);
+  return '';
+}
+function ruleMatches(row,rule){
+  if(!rule?.field||!clean(rule.value))return false;
+  const actual=ruleValue(row,rule.field).toLowerCase(),expected=clean(rule.value).toLowerCase();
+  return rule.mode==='equals'?actual===expected:actual.includes(expected);
+}
+function ruleHitPeople(rule){
+  const hits=new Map();validRows.forEach(r=>{if(ruleMatches(r,rule)&&!hits.has(personKey(r.__person)))hits.set(personKey(r.__person),r)});return [...hits.values()];
+}
+function nonpaymentReason(person){
+  const hit=nonpaymentHits.get(personKey(person));
+  return hit?`不发放规则：${ruleFields().find(f=>f.key===hit.field)?.label||hit.field} ${hit.mode==='equals'?'等于':'包含'} ${hit.value}`:'';
+}
+function rebuildNonpaymentHits(){
+  nonpaymentHits=new Map();nonpaymentRules.forEach(rule=>validRows.forEach(r=>{const key=personKey(r.__person);if(!nonpaymentHits.has(key)&&ruleMatches(r,rule))nonpaymentHits.set(key,rule)}));
+}
+function paymentBlockReason(person,includeBlacklist=true){return (includeBlacklist&&blacklistReason(person))||nonpaymentReason(person)}
+function saveNonpaymentRules(){try{localStorage.setItem(NONPAYMENT_STORAGE_KEY,JSON.stringify(nonpaymentRules))}catch(e){}}
+function loadNonpaymentRules(){try{const saved=JSON.parse(localStorage.getItem(NONPAYMENT_STORAGE_KEY)||'[]');nonpaymentRules=Array.isArray(saved)?saved.filter(r=>r&&typeof r.field==='string'&&typeof r.value==='string'):[]}catch(e){nonpaymentRules=[]}}
+function renderNonpaymentRules(){
+  const fields=ruleFields();
+  $('nonpaymentRuleCount').textContent=String(nonpaymentRules.length);
+  $('nonpaymentRuleRows').innerHTML=nonpaymentRules.length?nonpaymentRules.map((rule,index)=>{
+    const options=fields.map(f=>`<option value="${esc(f.key)}" ${rule.field===f.key?'selected':''}>${esc(f.label)}</option>`).join('');
+    const missing=rule.field&&!fields.some(f=>f.key===rule.field)?`<option value="${esc(rule.field)}" selected>已缺失 · ${esc(rule.field)}</option>`:'';
+    const count=ruleHitPeople(rule).length;
+    return `<div class="person-rule-row" data-index="${index}"><select class="rule-field"><option value="">选择字段</option>${missing}${options}</select><select class="rule-mode"><option value="contains" ${rule.mode!=='equals'?'selected':''}>包含</option><option value="equals" ${rule.mode==='equals'?'selected':''}>等于</option></select><input class="rule-value" value="${esc(rule.value)}" placeholder="匹配值"><button class="secondary rule-details" ${count?'':'disabled'}>${count} 人 · 查看详表</button><button class="danger rule-remove">删除</button></div>`;
+  }).join(''):'<div class="hint">尚无不发放规则。</div>';
+}
+function changeNonpaymentRule(index,changes){
+  Object.assign(nonpaymentRules[index],changes);saveNonpaymentRules();rebuildNonpaymentHits();if(rawRows.length)recalculate();renderNonpaymentRules();
+}
+function showNonpaymentDetails(index){
+  const rule=nonpaymentRules[index],rows=ruleHitPeople(rule);
+  $('nonpaymentDetailsTitle').textContent=`${ruleFields().find(f=>f.key===rule.field)?.label||rule.field} ${rule.mode==='equals'?'等于':'包含'} ${rule.value} · ${rows.length} 人`;
+  $('nonpaymentDetailsTable').innerHTML='<table><thead><tr><th>工号</th><th>姓名</th><th>WX/非 WX</th><th>匹配字段值</th><th>BU1 / 部门</th><th>WeLink · '+esc(welinkDisplayLabel())+'</th></tr></thead><tbody>'+rows.map(r=>`<tr><td>${esc(r.__person)}</td><td>${esc(displayPersonName(r))}</td><td>${r.__operatorGroup==='wx'?'WX':'非 WX'}</td><td>${esc(ruleValue(r,rule.field))}</td><td>${esc(r.__bu)}</td><td>${esc(personFieldValue(r.__person))}</td></tr>`).join('')+'</tbody></table>';
+  $('nonpaymentDetailsModal').classList.add('show');
+}
 const levelRank={fatal:4,high:3,medium:2,low:1};
 const aliases={
   task_status:['task_status','任务状态'],
@@ -1691,8 +1846,18 @@ async function loadFile(file){
   sourceWorksheet=ws;
   sourceFileName=file.name;
   rawRows=XLSX.utils.sheet_to_json(ws,{defval:'',raw:true});
+  const headers=XLSX.utils.sheet_to_json(ws,{header:1,range:0,raw:false})[0]||[];
+  const range=XLSX.utils.decode_range(ws['!ref']||'A1:A1');
+  const personColumns=['complete_operator','方案实施人工号','solution_develop_name'];
+  rawRows.forEach((row,index)=>personColumns.forEach(key=>{
+    const col=headers.indexOf(key);if(col<0)return;
+    const cell=ws[XLSX.utils.encode_cell({r:Number.isInteger(row.__rowNum__)?row.__rowNum__:range.s.r+index+1,c:range.s.c+col})];
+    if(typeof row[key]==='number'&&/^0\d+$/.test(clean(cell?.w)))row[key]=clean(cell.w);
+  }));
+  welinkPeople=new Map();$('welinkImportStatus').textContent='尚未导入人员信息';refreshWelinkFieldSelect();
   setProgress(70,`已读取 ${rawRows.length} 行，正在应用计算规则...`);
   recalculate();
+  renderNonpaymentRules();
   $('contentStage').classList.remove('locked');
   $('importGate').classList.add('gate-hidden');
   $('topFileName').textContent=`当前文件：${file.name} · ${rawRows.length} 条记录`;
@@ -1725,9 +1890,10 @@ function recalculate(){
       __operatorGroup:operatorGroup(person)};
     if(completed&&nightOk&&person&&start)validRows.push(base); else excludedRows.push({...base,__reason:reasons.join('；')||'规则未满足'});
   });
+  rebuildNonpaymentHits();
   const best=new Map();
   validRows.forEach(r=>{
-    if(blacklistReason(r.__person))return;
+    if(paymentBlockReason(r.__person))return;
     const key=r.__person+'|'+r.__date;
     const selected=best.get(key);
     if(!selected||r.__rank>selected.__rank||(r.__rank===selected.__rank&&r.__fee>selected.__fee))best.set(key,r);
@@ -1736,7 +1902,7 @@ function recalculate(){
   calcDetailRows=validRows.map(r=>{
     const key=r.__person+'|'+r.__date;
     const selected=best.get(key);
-    const blockedReason=blacklistReason(r.__person);
+    const blockedReason=paymentBlockReason(r.__person);
     const counted=!blockedReason&&selected===r;
     return {
       ...r,
@@ -1744,7 +1910,7 @@ function recalculate(){
       __blacklisted:Boolean(blockedReason),
       __calcFee:counted?r.__fee:0,
       __calcStatus:counted?'计发':'忽略',
-      __ignoreReason:counted?'':blockedReason?`激励黑名单：${blockedReason}`:'同日多单，已由更高等级记录计发',
+      __ignoreReason:counted?'':blockedReason?blockedReason:'同日多单，已由更高等级记录计发',
       __selectedLevel:blockedReason?'':selected?.__level||'',
       __selectedTask:blockedReason?'':selected?.__task||''
     };
@@ -1794,7 +1960,7 @@ function isBlacklistEnabled(){
 }
 function rowsForRuleMode({dedup=true,blacklist=true}={}){
   const groupRows=validRows.filter(operatorMatchesGroup);
-  const candidates=blacklist?groupRows.filter(r=>!blacklistReason(r.__person)):groupRows;
+  const candidates=groupRows.filter(r=>!paymentBlockReason(r.__person,blacklist));
   if(!dedup)return candidates;
   const best=new Map();
   candidates.forEach(r=>{
@@ -1829,7 +1995,7 @@ function filteredCalcDetails(){
   const selectedByKey=new Map(selectedRows.map(r=>[r.__person+'|'+r.__date,r]));
   const blacklistEnabled=isBlacklistEnabled();
   return calcDetailRows.filter(rowMatchesFilters).map(r=>{
-    const blockedByBlacklist=blacklistEnabled&&r.__blacklisted;
+    const blockedByBlacklist=Boolean(paymentBlockReason(r.__person,blacklistEnabled));
     const counted=!blockedByBlacklist&&selectedIds.has(r.__row);
     const noDedupView=isNoDedupMode()&&counted;
     const selected=selectedByKey.get(r.__person+'|'+r.__date);
@@ -1840,7 +2006,7 @@ function filteredCalcDetails(){
       __noDedupView:noDedupView,
       __calcFee:counted?r.__fee:0,
       __calcStatus:counted?(noDedupView?'计发（不剔重）':'计发'):'忽略',
-      __ignoreReason:counted?'':blockedByBlacklist?`激励黑名单：${blacklistReason(r.__person)}`:'同日多单，已由更高等级记录计发',
+      __ignoreReason:counted?'':blockedByBlacklist?paymentBlockReason(r.__person,blacklistEnabled):'同日多单，已由更高等级记录计发',
       __selectedLevel:counted||blockedByBlacklist?'':selected?.__level||'',
       __selectedTask:counted||blockedByBlacklist?'':selected?.__task||''
     };
@@ -1938,14 +2104,14 @@ function renderDimension(rows){
   const meta=dimensionMeta(),isPerson=activeDimension==='person';
   const data=aggregateDimension(rows).map((x,i)=>{
     const row=[i+1,esc(x.name)];
-    if(isPerson)row.push(esc([...x.names].join(' / ')||'—'));
+    if(isPerson)row.push(esc([...x.names].join(' / ')||'—'),esc(personFieldValue(x.name)));
     row.push(x.count,x.days.size,x.people.size,
       esc(Object.entries(x.levels).map(([k,v])=>`${k}:${v}`).join(' / ')),
       `<span class="money">${money(x.money)}</span>`);
     return row;
   });
   const headers=['排名',meta.label];
-  if(isPerson)headers.push('姓名');
+  if(isPerson)headers.push('姓名','WeLink · '+welinkDisplayLabel());
   headers.push('计费记录','操作天数','涉及人员','等级分布','激励合计（元）');
   table(headers,data);
 }
@@ -2388,14 +2554,14 @@ function renderSummary(rows){
     .sort((a,b)=>b.p.localeCompare(a.p)||b.money-a.money||b.count-a.count)
     .map(x=>{
       const row=[esc(x.p),esc(x.d)];
-      if(activeCrossDimension==='person')row.push(esc(x.name||'—'));
+      if(activeCrossDimension==='person')row.push(esc(x.name||'—'),esc(personFieldValue(x.d)));
       row.push(x.count,x.days.size,x.people.size,
         esc(Object.entries(x.levels).map(([k,v])=>`${k}:${v}`).join(' / ')),
         `<span class="money">${money(x.money)}</span>`);
       return row;
     });
   const headers=['周期',meta.label];
-  if(activeCrossDimension==='person')headers.push('姓名');
+  if(activeCrossDimension==='person')headers.push('姓名','WeLink · '+welinkDisplayLabel());
   headers.push('计费记录','操作天数','涉及人员','等级分布','激励合计（元）');
   table(headers,data);
 }
@@ -2408,11 +2574,11 @@ function renderPerson(rows){
     const anom=getPersonAttendanceAnomaly(x.person,x.name);
     const nameCell=esc(x.name||'—')+(anom?` <span class="tag bad" title="${esc(anom.anomalyDesc)}">⚠️ 考勤异常</span>`:'');
     return [
-      esc(x.p),esc(x.person),nameCell,esc([...x.bu].filter(Boolean).join(' / ')),esc([...x.c].filter(Boolean).join(' / ')),
+      esc(x.p),esc(x.person),nameCell,esc(personFieldValue(x.person)),esc([...x.bu].filter(Boolean).join(' / ')),esc([...x.c].filter(Boolean).join(' / ')),
       esc([...x.a].filter(Boolean).join(' / ')),x.days.size,esc(Object.entries(x.levels).map(([k,v])=>`${k}:${v}`).join(' / ')),`<span class="money">${money(x.money)}</span>`
     ];
   });
-  table(['周期','操作人','姓名','BU1 / 部门','客户','人员属性','计费天数','等级分布','激励合计（元）'],data);
+  table(['周期','操作人','姓名','WeLink · '+welinkDisplayLabel(),'BU1 / 部门','客户','人员属性','计费天数','等级分布','激励合计（元）'],data);
 }
 function renderDetail(rows){
   const sorted=[...rows].sort((a,b)=>
@@ -2430,6 +2596,7 @@ function renderDetail(rows){
       esc(r.__date),
       esc(r.__person),
       esc(displayPersonName(r)),
+      esc(personFieldValue(r.__person)),
       identityCheckCell(r),
       `${baseStatus}${attTag}`,
       esc(r.__level||'未识别'),
@@ -2443,12 +2610,12 @@ function renderDetail(rows){
       esc(r.__start?r.__start.toLocaleString('zh-CN'):'')
     ];
   });
-  table(['操作日期','操作人','姓名','姓名工号校验','计算状态','操作等级','本行激励（元）','忽略原因','当日计发等级','当日计发任务号','BU1','客户','人员属性','任务号','操作摘要','操作时间校验','当地时间校验','当地开始时间'],data);
+  table(['操作日期','操作人','姓名','WeLink · '+welinkDisplayLabel(),'姓名工号校验','计算状态','操作等级','本行激励（元）','忽略原因','当日计发等级','当日计发任务号','BU1','客户','人员属性','任务号','操作摘要','操作时间校验','当地时间校验','当地开始时间'],data);
 }
 function renderExcluded(rows=filteredExcludedRows()){
-  const data=[...rows].sort((a,b)=>(b.__date||'').localeCompare(a.__date||'')||a.__row-b.__row).map(r=>[r.__row,esc(r.__reason),esc(r.__person),esc(displayPersonName(r)),identityCheckCell(r),esc(r.__status),esc(r.__level),esc(r.__task),esc(r.__summary),
+  const data=[...rows].sort((a,b)=>(b.__date||'').localeCompare(a.__date||'')||a.__row-b.__row).map(r=>[r.__row,esc(r.__reason),esc(r.__person),esc(displayPersonName(r)),esc(personFieldValue(r.__person)),identityCheckCell(r),esc(r.__status),esc(r.__level),esc(r.__task),esc(r.__summary),
     r.__byField?'是':'否',r.__byTime?'是':'否',esc(r.__start?r.__start.toLocaleString('zh-CN'):'')]);
-  table(['Excel行号','排除/异常原因','操作人','姓名','姓名工号校验','任务状态','等级','任务号','摘要','字段判定夜间','时间判定夜间','当地开始时间'],data);
+  table(['Excel行号','排除/异常原因','操作人','姓名','WeLink · '+welinkDisplayLabel(),'姓名工号校验','任务状态','等级','任务号','摘要','字段判定夜间','时间判定夜间','当地开始时间'],data);
 }
 function hideTableFocus(){
   if($('tableFocusNotice'))$('tableFocusNotice').hidden=true;
@@ -2623,7 +2790,7 @@ function exportCurrent(){
   const sourceRange=XLSX.utils.decode_range(sourceWorksheet['!ref']||'A1:A1');
   const headerRow=sourceRange.s.r;
   const keepSourceRows=[headerRow,...[...detailByRow.keys()].map(n=>n-1).filter(r=>r>headerRow).sort((a,b)=>a-b)];
-  const outputLastCol=sourceRange.e.c+1;
+  const outputLastCol=sourceRange.e.c+2;
   const outWs={};
 
   keepSourceRows.forEach((srcRow,outRow)=>{
@@ -2633,14 +2800,17 @@ function exportCurrent(){
       const copied=cloneCell(sourceWorksheet[srcAddr]);
       if(copied)outWs[outAddr]=copied;
     }
-    const extraAddr=XLSX.utils.encode_cell({r:outRow,c:outputLastCol});
+    const extraAddr=XLSX.utils.encode_cell({r:outRow,c:outputLastCol-1});
+    const personAddr=XLSX.utils.encode_cell({r:outRow,c:outputLastCol});
     if(outRow===0){
       outWs[extraAddr]={t:'s',v:'本行激励（元）'};
+      outWs[personAddr]={t:'s',v:'WeLink · '+welinkDisplayLabel()};
       const firstHeader=sourceWorksheet[XLSX.utils.encode_cell({r:headerRow,c:sourceRange.s.c})];
       if(firstHeader?.s)outWs[extraAddr].s=cloneCell({s:firstHeader.s}).s;
     }else{
       const detail=detailByRow.get(srcRow+1);
       outWs[extraAddr]={t:'n',v:detail&&detail.__counted?Math.round(Number(detail.__fee||0)):0,z:'#,##0'};
+      outWs[personAddr]={t:'s',v:personFieldValue(detail?.__person)};
       const sourceCell=sourceWorksheet[XLSX.utils.encode_cell({r:srcRow,c:sourceRange.e.c})];
       if(sourceCell?.s)outWs[extraAddr].s=cloneCell({s:sourceCell.s}).s;
     }
@@ -2657,7 +2827,7 @@ function exportCurrent(){
       catch(e){return {...x}}
     });
   }else outWs['!cols']=[];
-  outWs['!cols'][outputLastCol]={wch:14};
+  outWs['!cols'][outputLastCol-1]={wch:14};outWs['!cols'][outputLastCol]={wch:24};
 
   if(sourceWorksheet['!rows']){
     outWs['!rows']=keepSourceRows.map(r=>{
@@ -2691,6 +2861,38 @@ function exportCurrent(){
   );
 }
 const fileInput=$('fileInput');
+$('downloadWelinkScript').onclick=()=>{
+  const ids=allImportedPeople();if(!ids.length){uiAlert('请先导入包含工号的 Excel 文件');return}
+  downloadText('welink-人员信息查询.ps1',buildWelinkScript(ids),'text/plain;charset=utf-8');
+};
+$('openWelinkImport').onclick=()=>{$('welinkImportModal').classList.add('show');refreshWelinkFieldSelect()};
+$('closeWelinkImport').onclick=()=>$('welinkImportModal').classList.remove('show');
+$('welinkTxtFile').onchange=async e=>{const file=e.target.files?.[0];if(file)$('welinkTxtInput').value=await file.text()};
+$('applyWelinkImport').onclick=()=>{
+  const people=parseWelinkPeople($('welinkTxtInput').value);
+  if(!people.length){$('welinkParseStatus').textContent='未解析出人员信息，请检查 TXT 内容。';return}
+  installWelinkPeople(people);$('welinkParseStatus').textContent=`已解析 ${people.length} 条，匹配当前 Excel ${allImportedPeople().filter(id=>welinkFor(id)).length} 人。`;
+  renderNonpaymentRules();
+};
+$('clearWelinkData').onclick=()=>{$('welinkTxtInput').value='';$('welinkTxtFile').value='';installWelinkPeople([]);$('welinkParseStatus').textContent='人员信息已清空';renderNonpaymentRules()};
+$('welinkDisplayField').onchange=e=>{welinkDisplayField=e.target.value;if(rawRows.length)render();renderNonpaymentRules()};
+$('openNonpaymentRules').onclick=()=>{renderNonpaymentRules();$('nonpaymentModal').classList.add('show')};
+$('closeNonpaymentRules').onclick=()=>$('nonpaymentModal').classList.remove('show');
+$('closeNonpaymentDetails').onclick=()=>$('nonpaymentDetailsModal').classList.remove('show');
+$('addNonpaymentRule').onclick=()=>{nonpaymentRules.push({field:'',mode:'contains',value:''});saveNonpaymentRules();renderNonpaymentRules()};
+$('nonpaymentRuleRows').addEventListener('change',e=>{
+  const index=Number(e.target.closest('[data-index]')?.dataset.index);if(!Number.isInteger(index))return;
+  if(e.target.matches('.rule-field'))changeNonpaymentRule(index,{field:e.target.value});
+  if(e.target.matches('.rule-mode'))changeNonpaymentRule(index,{mode:e.target.value});
+  if(e.target.matches('.rule-value'))changeNonpaymentRule(index,{value:e.target.value});
+});
+$('nonpaymentRuleRows').addEventListener('click',e=>{
+  const index=Number(e.target.closest('[data-index]')?.dataset.index);if(!Number.isInteger(index))return;
+  if(e.target.closest('.rule-remove')){nonpaymentRules.splice(index,1);saveNonpaymentRules();if(rawRows.length)recalculate();renderNonpaymentRules()}
+  if(e.target.closest('.rule-details'))showNonpaymentDetails(index);
+});
+['welinkImportModal','nonpaymentModal','nonpaymentDetailsModal'].forEach(id=>$(id).addEventListener('click',e=>{if(e.target===$(id))$(id).classList.remove('show')}));
+refreshWelinkFieldSelect();loadNonpaymentRules();renderNonpaymentRules();
 if(fileInput){
   fileInput.addEventListener('change',e=>{
     const file=e.target.files&&e.target.files[0];
@@ -3396,6 +3598,7 @@ function buildIncentiveSnapshotPayload(customTitle, customPeriod) {
         '周期': pKey,
         '操作人': p,
         '姓名': r.__name || r.__fmeName || r['姓名'] || '',
+        'WeLink人员字段': personFieldValue(p),
         'BU1 / 部门': r.__bu || r['BU1 / 部门'] || r['BU1'] || r['部门'] || '',
         '客户': r.__customer || r['客户'] || r['客户群'] || '',
         '人员属性': r.__attr || r['人员属性'] || '',
@@ -3426,6 +3629,7 @@ function buildIncentiveSnapshotPayload(customTitle, customPeriod) {
       '周期': x['周期'],
       '操作人': x['操作人'],
       '姓名': x['姓名'],
+      ['WeLink · '+welinkDisplayLabel()]: x['WeLink人员字段'],
       'BU1 / 部门': bu,
       '客户': cust,
       '人员属性': x['人员属性'],
@@ -3472,13 +3676,16 @@ function buildIncentiveSnapshotPayload(customTitle, customPeriod) {
     sheets: [
       {
         sheetName: '人员周期汇总',
-        headers: ['周期', '操作人', '姓名', 'BU1 / 部门', '客户', '人员属性', '计费天数', '等级分布', '激励合计（元）'],
-        rows: personnelPeriodSummary.map(x => [x['周期'], x['操作人'], x['姓名'], x['BU1 / 部门'], x['客户'], x['人员属性'], x['计费天数'], x['等级分布'], x['激励合计（元）']])
+        headers: ['周期', '操作人', '姓名', 'WeLink · '+welinkDisplayLabel(), 'BU1 / 部门', '客户', '人员属性', '计费天数', '等级分布', '激励合计（元）'],
+        rows: personnelPeriodSummary.map(x => [x['周期'], x['操作人'], x['姓名'], x['WeLink · '+welinkDisplayLabel()], x['BU1 / 部门'], x['客户'], x['人员属性'], x['计费天数'], x['等级分布'], x['激励合计（元）']])
       }
     ],
     rawRows: rawRows,
     rules: getRuleValues(),
     blacklistText: serializeBlacklist(incentiveBlacklist),
+    welinkPeople: [...new Set(welinkPeople.values())],
+    welinkDisplayField,
+    nonpaymentRules,
     activeOperatorGroup: activeOperatorGroup || 'nonwx',
     dedupMode: $('dedupMode')?.value || 'highest',
     blacklistMode: $('blacklistMode')?.value || 'enabled',
@@ -3911,6 +4118,10 @@ function restoreIncentiveSnapshot(snapshot) {
     if ($('blacklistInput')) $('blacklistInput').value = p.blacklistText;
     updateBlacklistCount();
   }
+  welinkDisplayField=p.welinkDisplayField||'deptName';
+  installWelinkPeople(Array.isArray(p.welinkPeople)?p.welinkPeople:[],false);
+  nonpaymentRules=Array.isArray(p.nonpaymentRules)?p.nonpaymentRules:[];saveNonpaymentRules();
+  renderNonpaymentRules();
   if (p.dedupMode && $('dedupMode')) $('dedupMode').value = p.dedupMode;
   if (p.blacklistMode && $('blacklistMode')) $('blacklistMode').value = p.blacklistMode;
   if (p.periodSourceMode && $('periodSourceMode')) $('periodSourceMode').value = p.periodSourceMode;
