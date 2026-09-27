@@ -7,8 +7,8 @@
       "description": "用于维护部门负向事件与违规记录、扣罚规则、人员名册与操作审计日志，支持草稿发布、规则分类筛选和人员 CSV 导入导出。",
       "href": "./department-reward-penalty/index.html",
       "encrypted": true,
-      "fingerprint": "8e57d1dd2be8a1ff9c21650eedc50f2377c470b462060ae1deff3c9a87b7c795",
-      "updatedAt": "2026-09-27T11:26:58.426Z"
+      "fingerprint": "ca341b8743f89d747da02aec9d48ef179a6cbc79f0a03f2ea0ad8ce6a9923ef5",
+      "updatedAt": "2026-09-27T17:43:41.902Z"
     },
     {
       "slug": "reward-program",
@@ -16,8 +16,8 @@
       "description": "独立的悬赏奖、岗位激励、操作激励与代表处评优申报、规则和审批公示工作台。",
       "href": "./reward-program/index.html",
       "encrypted": true,
-      "fingerprint": "c9b61e07e2f5a4a2a27b95f23fe5d97c9bd76db0f9b7b476feb99b52fbafae73",
-      "updatedAt": "2026-09-22T20:05:35.194Z"
+      "fingerprint": "9bcf287fd0aa90a3dd8f121462468322998b36234c986146253c8d203059c3f3",
+      "updatedAt": "2026-09-27T17:43:41.911Z"
     },
     {
       "slug": "tool-msf5b7nn",
@@ -25,8 +25,8 @@
       "description": "批量导入QR、RFC、WFM名单及线上线下签到表，合并去重参会人员，按最早签到时间判定准时、迟到、虚假签到或缺席，并支持检索与导出。",
       "href": "./tool-msf5b7nn/index.html",
       "encrypted": true,
-      "fingerprint": "9eb53898dd6990c4662b00d4cc28a0bf58d205c61ada4884895e9b94b516510c",
-      "updatedAt": "2026-09-24T19:13:51.699Z"
+      "fingerprint": "0c75bbcfb19372bb16caf1814e0e4f444c239d075e3bd3882129e88e25203e10",
+      "updatedAt": "2026-09-27T17:43:41.917Z"
     },
     {
       "slug": "tool-ms4xb66s",
@@ -34,8 +34,8 @@
       "description": "导入夜间操作 Excel，按人员、周期和操作等级核算操作激励并生成分析与导出结果。",
       "href": "./tool-ms4xb66s/index.html",
       "encrypted": true,
-      "fingerprint": "e5c2be30cedcfd83bc36c92888e42eee8a6253a862902a6b5ada8da784446600",
-      "updatedAt": "2026-09-27T13:26:58.515Z"
+      "fingerprint": "0f1c668a7a66015da51ebe66b1a4c253e2d3f4a1b3fab9ecd418da7ba4c6fa55",
+      "updatedAt": "2026-09-27T17:43:41.923Z"
     },
     {
       "slug": "tool-mqp55fna",
