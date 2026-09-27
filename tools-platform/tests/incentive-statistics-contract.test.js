@@ -381,3 +381,25 @@ test('new snapshots restore WeLink flags, display field, nonpayment rules and vi
     assert.deepEqual(result.restored, { people: 1, field: 'departmentName', rules: 1, dedup: 'none', blacklist: 'disabled', period: 'start', group: 'wx' });
     assert.deepEqual(result.legacy, { people: 0, rules: 0, field: 'deptName' });
 });
+
+test('editing a nonpayment rule reuses parsed rows and attendance results without another attendance request', () => {
+    const runtime = createToolRuntime();
+    runtime.context.fetchCount = 0;
+    runtime.context.fetch = () => {
+        runtime.context.fetchCount++;
+        return Promise.resolve({ ok: true, json: async () => ({ results: {} }) });
+    };
+    const result = evaluate(runtime, `
+      rawRows=[
+        {task_status:'completed',complete_operator:'A100','当地开始时间':'2026-09-01 23:00',operate_level:'High',BU1:'Excluded'},
+        {task_status:'completed',complete_operator:'A200','当地开始时间':'2026-09-01 23:00',operate_level:'Low',BU1:'Included'}
+      ];
+      recalculate();
+      const parsed=validRows,requestCount=fetchCount,version=attendanceCheckVersion;
+      attendanceResults=new Map([['a200',{hasAnomaly:true,anomalies:[]}]]);
+      nonpaymentRules=[{field:'source:BU1',mode:'equals',value:''}];
+      changeNonpaymentRule(0,{value:'Excluded'});
+      ({sameParsed:parsed===validRows,requestsBefore:requestCount,requestsAfter:fetchCount,versionBefore:version,versionAfter:attendanceCheckVersion,attendanceKept:attendanceResults.has('a200'),paid:dedupRows.map(r=>r.__person)});
+    `);
+    assert.deepEqual(result, { sameParsed: true, requestsBefore: 1, requestsAfter: 1, versionBefore: 1, versionAfter: 1, attendanceKept: true, paid: ['A200'] });
+});
