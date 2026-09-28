@@ -111,6 +111,7 @@ window.fetch=async(url,options={})=>{const raw=String(url||'');if(raw.startsWith
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>埃及代表处夜间操作激励统计工具</title>
 <script src="/js/shared/xlsx.full.min.js"></script>
+<script src="/js/shared/exceljs.min.js"></script>
 <style>
   :root{
     --red:#c8102e; --red-dark:#9f1026; --navy:#182230; --ink:#29313d; --muted:#7a8492;
@@ -1204,42 +1205,50 @@ m00961966"></textarea>
 </div>
 
 <div class="rule-modal" id="attendanceAnomalyModal">
-  <div class="rule-modal-card" style="width:min(1120px,96vw);max-height:min(88vh,820px);display:flex;flex-direction:column;overflow:hidden">
+  <div class="rule-modal-card" style="width:min(1420px,97vw);height:min(92vh,920px);max-height:94vh;display:flex;flex-direction:column;overflow:hidden">
     <div class="rule-modal-head" style="flex-shrink:0">
       <div>
         <div class="rule-modal-title">📋 激励人员会议考勤排查与黑名单处理</div>
-        <div class="section-note">系统检测到以下获得激励计发的员工在近期会议考勤快照中存在缺席或迟到异常。您可以灵活勾选，一键加入激励黑名单以扣除激励。</div>
+        <div class="section-note">系统检测到以下获得激励计发的员工在近期会议考勤快照中存在缺席或迟到异常。您可以灵活勾选，一键加入激励黑名单以扣除激励，或单独导出排查清单为 Excel 表格。</div>
       </div>
       <button class="icon-btn" id="closeAttendanceAnomalyModal" aria-label="关闭">×</button>
     </div>
     <div class="identity-detail-body" style="padding:16px 20px;display:flex;flex-direction:column;flex:1 1 auto;min-height:0;overflow:hidden">
-      <div style="flex-shrink:0;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding:10px 14px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0">
-        <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;font-weight:600">
-          <input type="checkbox" id="selectAllAnomalies" checked>
-          <span>全选 / 全不选</span>
-        </label>
-        <div id="anomalySelectionSummary" style="font-size:12.5px;color:#475569">
-          已选择 0 / 0 人，涉及激励金额 ¥0
+      <div style="flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;padding:10px 16px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;flex-wrap:wrap">
+        <div style="display:inline-flex;align-items:center;gap:14px;flex-wrap:wrap">
+          <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;font-weight:600">
+            <input type="checkbox" id="selectAllAnomalies" checked>
+            <span>全选 / 全不选</span>
+          </label>
+          <div id="anomalySelectionSummary" style="font-size:12.5px;color:#475569">
+            已选择 0 / 0 人，涉及激励金额 ¥0
+          </div>
+        </div>
+        <div style="display:inline-flex;align-items:center;gap:8px">
+          <button type="button" class="btn secondary" id="exportAttendanceAnomalyExcelBtn" style="display:inline-flex;align-items:center;gap:6px;font-weight:600;padding:6px 14px;border-radius:6px;font-size:12.5px;color:#0f172a;background:#fff;border:1px solid #cbd5e1;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.04)" title="导出当前会议考勤异常人员及明细清单为美观的 Excel 表格">
+            <span>📥 导出排查清单 Excel</span>
+          </button>
         </div>
       </div>
-      <div class="table-wrap" id="attendanceAnomalyTableWrap" style="flex:1 1 auto;min-height:220px;max-height:none;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px">
-        <table class="data-table" style="width:100%;font-size:12px">
+      <div class="table-wrap" id="attendanceAnomalyTableWrap" style="flex:1 1 auto;min-height:280px;max-height:none;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px">
+        <table class="data-table" style="width:100%;font-size:12.5px">
           <thead>
             <tr>
-              <th style="width:40px;text-align:center">选择</th>
-              <th style="width:110px">工号</th>
-              <th style="width:100px">姓名</th>
-              <th style="width:120px">BU1 / 部门</th>
-              <th style="width:110px">本期激励</th>
+              <th style="width:48px;text-align:center">选择</th>
+              <th style="width:120px">工号</th>
+              <th style="width:110px">姓名</th>
+              <th style="width:140px">BU1 / 部门</th>
+              <th style="width:140px">本期激励</th>
               <th>会议考勤异常记录明细 (鼠标悬停可查看快照来源)</th>
             </tr>
           </thead>
           <tbody id="attendanceAnomalyTableBody"></tbody>
         </table>
       </div>
-      <div class="rule-actions" style="flex-shrink:0;margin-top:14px;padding-top:12px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center">
+      <div class="rule-actions" style="flex-shrink:0;margin-top:14px;padding-top:12px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
         <div style="font-size:12px;color:#64748b">加入黑名单后将自动重新核算并扣除相应激励。若后续需要恢复，可在“黑名单规则”中移除。</div>
-        <div style="display:flex;gap:10px">
+        <div style="display:flex;gap:10px;align-items:center">
+          <button type="button" class="btn secondary" id="exportAttendanceAnomalyExcelBtnFooter" style="display:inline-flex;align-items:center;gap:5px;font-weight:600;padding:8px 14px;border-radius:6px;font-size:12px;cursor:pointer">📥 导出 Excel</button>
           <button type="button" class="reset-btn" id="cancelAttendanceAnomalyModal">取消</button>
           <button type="button" class="danger" id="confirmAddToBlacklistBtn" style="background:var(--red);color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(220,38,38,.25)">🚫 一键将所选人员加入激励黑名单</button>
         </div>
@@ -3400,9 +3409,396 @@ function applyAnomaliesToBlacklist() {
   showToast(`✅ 已成功将 ${selected.length} 位考勤异常人员加入激励黑名单，并自动重新计算！`, 'success');
 }
 
+async function exportAttendanceAnomalyExcel() {
+  if (!currentAttendanceAnomalies || !currentAttendanceAnomalies.length) {
+    showToast('当前没有会议考勤异常人员可供导出', 'warning');
+    return;
+  }
+
+  const cbMap = new Map();
+  document.querySelectorAll('.anomaly-row-cb').forEach(cb => {
+    cbMap.set(Number(cb.dataset.idx), cb.checked);
+  });
+
+  const period = $('snapPeriodInput')?.value || inferPeriodFromRows() || '全部周期';
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const timeStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  const dateSlug = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}`;
+
+  const totalPersons = currentAttendanceAnomalies.length;
+  const totalIncentive = currentAttendanceAnomalies.reduce((s, a) => s + (a.totalFee || 0), 0);
+  const totalAnomalies = currentAttendanceAnomalies.reduce((s, a) => s + (a.anomalyCount || (a.anomalies?.length || 1)), 0);
+
+  if (typeof ExcelJS === 'undefined') {
+    try {
+      await new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = '/js/shared/exceljs.min.js';
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    } catch (_) {}
+  }
+
+  if (typeof ExcelJS !== 'undefined') {
+    try {
+      const wb = new ExcelJS.Workbook();
+      wb.creator = '埃及代表处夜间操作激励统计工具';
+      wb.created = now;
+
+      // Sheet 1: 考勤异常人员汇总
+      const ws1 = wb.addWorksheet('考勤异常人员汇总', {
+        views: [{ state: 'frozen', ySplit: 4 }]
+      });
+
+      ws1.columns = [
+        { width: 8 },   // A: 序号
+        { width: 16 },  // B: 工号
+        { width: 16 },  // C: 姓名
+        { width: 22 },  // D: BU1 / 部门
+        { width: 20 },  // E: 本期激励金额
+        { width: 14 },  // F: 计发单数
+        { width: 15 },  // G: 异常总频次
+        { width: 13 },  // H: 缺席次数
+        { width: 13 },  // I: 迟到次数
+        { width: 24 },  // J: 处置状态
+        { width: 60 }   // K: 考勤异常记录摘要
+      ];
+
+      // Row 1: Title Banner
+      ws1.mergeCells('A1:K1');
+      const t1 = ws1.getCell('A1');
+      t1.value = '📋 激励人员会议考勤排查清单 / Attendance Anomaly Roster';
+      t1.font = { name: 'Microsoft YaHei', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
+      t1.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } };
+      t1.alignment = { horizontal: 'center', vertical: 'middle' };
+      ws1.getRow(1).height = 38;
+
+      // Row 2: Subtitle
+      ws1.mergeCells('A2:K2');
+      const sub1 = ws1.getCell('A2');
+      sub1.value = `核算周期: ${period}  |  导出时间: ${timeStr}  |  异常人员: ${totalPersons} 人  |  涉及激励: ¥${money(totalIncentive)}  |  异常总频次: ${totalAnomalies} 次`;
+      sub1.font = { name: 'Microsoft YaHei', size: 9.5, color: { argb: 'FF334155' } };
+      sub1.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+      sub1.alignment = { horizontal: 'center', vertical: 'middle' };
+      ws1.getRow(2).height = 22;
+
+      ws1.getRow(3).height = 6;
+
+      // Row 4: Table Headers
+      const headers1 = ['序号', '工号', '姓名', 'BU1 / 部门', '本期激励金额 (元)', '计发单数', '异常总频次', '缺席次数', '迟到次数', '处置状态', '考勤异常明细摘要'];
+      const hRow1 = ws1.getRow(4);
+      hRow1.height = 28;
+      headers1.forEach((h, i) => {
+        const cell = hRow1.getCell(i + 1);
+        cell.value = h;
+        cell.font = { name: 'Microsoft YaHei', size: 10.5, bold: true, color: { argb: 'FFFFFFFF' } };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF334155' } };
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FF475569' } },
+          bottom: { style: 'thin', color: { argb: 'FF475569' } },
+          left: { style: 'thin', color: { argb: 'FF475569' } },
+          right: { style: 'thin', color: { argb: 'FF475569' } }
+        };
+      });
+
+      // Data Rows
+      currentAttendanceAnomalies.forEach((item, idx) => {
+        const rIdx = 5 + idx;
+        const row = ws1.getRow(rIdx);
+        row.height = 26;
+        const isChecked = cbMap.has(idx) ? cbMap.get(idx) : true;
+        const absences = (item.anomalies || []).filter(a => a.type === 'absent' || String(a.attendance || '').includes('缺席')).length;
+        const lates = (item.anomalies || []).filter(a => a.type !== 'absent' && !String(a.attendance || '').includes('缺席')).length;
+        const summary = (item.anomalies || []).map(a => `${a.actualDate || a.meetingDate || '考勤'}[${a.attendance || '异常'}] ${a.title || a.snapshotTitle || ''}`).join('; ');
+        const statusText = isChecked ? '已勾选加黑 (扣除激励)' : '未勾选 (保留激励)';
+
+        row.getCell(1).value = idx + 1;
+        row.getCell(2).value = item.staffId;
+        row.getCell(3).value = item.name || '—';
+        row.getCell(4).value = item.bu || '—';
+        row.getCell(5).value = Number(item.totalFee) || 0;
+        row.getCell(5).numFmt = '¥#,##0';
+        row.getCell(6).value = Number(item.orderCount) || 0;
+        row.getCell(7).value = Number(item.anomalyCount) || (item.anomalies?.length || 1);
+        row.getCell(8).value = absences;
+        row.getCell(9).value = lates;
+        row.getCell(10).value = statusText;
+        row.getCell(11).value = summary;
+
+        const bg = idx % 2 === 0 ? 'FFFFFFFF' : 'FFF8FAFC';
+        for (let c = 1; c <= 11; c++) {
+          const cell = row.getCell(c);
+          cell.font = cell.font || { name: 'Microsoft YaHei', size: 9.5 };
+          cell.fill = cell.fill || { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } };
+          cell.border = {
+            top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+            bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+            left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+            right: { style: 'thin', color: { argb: 'FFE2E8F0' } }
+          };
+          if (c === 1 || c === 2 || c === 3 || c === 4 || c === 6 || c === 7) {
+            cell.alignment = { horizontal: 'center', vertical: 'middle' };
+          } else if (c === 5) {
+            cell.alignment = { horizontal: 'right', vertical: 'middle' };
+            cell.font = { name: 'Microsoft YaHei', size: 9.5, bold: true, color: { argb: 'FFB91C1C' } };
+          } else if (c === 8) {
+            cell.alignment = { horizontal: 'center', vertical: 'middle' };
+            if (absences > 0) {
+              cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEE2E2' } };
+              cell.font = { name: 'Microsoft YaHei', size: 9.5, bold: true, color: { argb: 'FF991B1B' } };
+            }
+          } else if (c === 9) {
+            cell.alignment = { horizontal: 'center', vertical: 'middle' };
+            if (lates > 0) {
+              cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEF3C7' } };
+              cell.font = { name: 'Microsoft YaHei', size: 9.5, bold: true, color: { argb: 'FF92400E' } };
+            }
+          } else if (c === 10) {
+            cell.alignment = { horizontal: 'center', vertical: 'middle' };
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: isChecked ? 'FFFEE2E2' : 'FFEFF6FF' } };
+            cell.font = { name: 'Microsoft YaHei', size: 9, bold: true, color: { argb: isChecked ? 'FF991B1B' : 'FF1E40AF' } };
+          } else if (c === 11) {
+            cell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
+          }
+        }
+      });
+
+      // Total Row
+      const endRowIdx = 4 + currentAttendanceAnomalies.length;
+      const totalRowIdx = endRowIdx + 1;
+      ws1.mergeCells(`A${totalRowIdx}:D${totalRowIdx}`);
+      const totCell = ws1.getCell(`A${totalRowIdx}`);
+      totCell.value = '合计 / Total';
+      totCell.font = { name: 'Microsoft YaHei', size: 10, bold: true, color: { argb: 'FF1E293B' } };
+      totCell.alignment = { horizontal: 'center', vertical: 'middle' };
+
+      const totRow = ws1.getRow(totalRowIdx);
+      totRow.height = 26;
+      totRow.getCell(5).value = { formula: `SUM(E5:E${endRowIdx})` };
+      totRow.getCell(5).numFmt = '¥#,##0';
+      totRow.getCell(5).font = { name: 'Microsoft YaHei', size: 10, bold: true, color: { argb: 'FFB91C1C' } };
+      totRow.getCell(5).alignment = { horizontal: 'right', vertical: 'middle' };
+
+      totRow.getCell(6).value = { formula: `SUM(F5:F${endRowIdx})` };
+      totRow.getCell(6).font = { name: 'Microsoft YaHei', size: 10, bold: true };
+      totRow.getCell(6).alignment = { horizontal: 'center', vertical: 'middle' };
+
+      totRow.getCell(7).value = { formula: `SUM(G5:G${endRowIdx})` };
+      totRow.getCell(7).font = { name: 'Microsoft YaHei', size: 10, bold: true };
+      totRow.getCell(7).alignment = { horizontal: 'center', vertical: 'middle' };
+
+      totRow.getCell(8).value = { formula: `SUM(H5:H${endRowIdx})` };
+      totRow.getCell(8).font = { name: 'Microsoft YaHei', size: 10, bold: true };
+      totRow.getCell(8).alignment = { horizontal: 'center', vertical: 'middle' };
+
+      totRow.getCell(9).value = { formula: `SUM(I5:I${endRowIdx})` };
+      totRow.getCell(9).font = { name: 'Microsoft YaHei', size: 10, bold: true };
+      totRow.getCell(9).alignment = { horizontal: 'center', vertical: 'middle' };
+
+      for (let c = 1; c <= 11; c++) {
+        const cell = totRow.getCell(c);
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FF94A3B8' } },
+          bottom: { style: 'double', color: { argb: 'FF475569' } },
+          left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+          right: { style: 'thin', color: { argb: 'FFE2E8F0' } }
+        };
+      }
+
+      // Sheet 2: 考勤异常明细台账
+      const ws2 = wb.addWorksheet('考勤异常明细台账', {
+        views: [{ state: 'frozen', ySplit: 4 }]
+      });
+
+      ws2.columns = [
+        { width: 8 },   // A: 序号
+        { width: 16 },  // B: 工号
+        { width: 16 },  // C: 姓名
+        { width: 22 },  // D: BU1 / 部门
+        { width: 16 },  // E: 会议/考勤日期
+        { width: 14 },  // F: 考勤异常类型
+        { width: 16 },  // G: 签到时间
+        { width: 38 },  // H: 来源考勤快照名称
+        { width: 20 },  // I: 本期激励总额
+        { width: 14 },  // J: 计发单数
+        { width: 20 }   // K: 处置建议
+      ];
+
+      // Row 1: Title Banner
+      ws2.mergeCells('A1:K1');
+      const t2 = ws2.getCell('A1');
+      t2.value = '📑 会议考勤异常详细台账 (单次明细) / Detailed Attendance Anomalies Log';
+      t2.font = { name: 'Microsoft YaHei', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
+      t2.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF83152F' } };
+      t2.alignment = { horizontal: 'center', vertical: 'middle' };
+      ws2.getRow(1).height = 38;
+
+      // Row 2: Subtitle
+      ws2.mergeCells('A2:K2');
+      const sub2 = ws2.getCell('A2');
+      sub2.value = `核算周期: ${period}  |  导出时间: ${timeStr}  |  涉及异常人员: ${totalPersons} 人  |  异常明细总记录: ${totalAnomalies} 条`;
+      sub2.font = { name: 'Microsoft YaHei', size: 9.5, color: { argb: 'FF334155' } };
+      sub2.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+      sub2.alignment = { horizontal: 'center', vertical: 'middle' };
+      ws2.getRow(2).height = 22;
+
+      ws2.getRow(3).height = 6;
+
+      // Row 4: Table Headers
+      const headers2 = ['序号', '工号', '姓名', 'BU1 / 部门', '会议/考勤日期', '考勤异常类型', '签到时间', '来源考勤快照名称', '员工本期激励总额', '计发单数', '处置建议'];
+      const hRow2 = ws2.getRow(4);
+      hRow2.height = 28;
+      headers2.forEach((h, i) => {
+        const cell = hRow2.getCell(i + 1);
+        cell.value = h;
+        cell.font = { name: 'Microsoft YaHei', size: 10.5, bold: true, color: { argb: 'FFFFFFFF' } };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF475569' } };
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FF334155' } },
+          bottom: { style: 'thin', color: { argb: 'FF334155' } },
+          left: { style: 'thin', color: { argb: 'FF334155' } },
+          right: { style: 'thin', color: { argb: 'FF334155' } }
+        };
+      });
+
+      // Data Rows
+      let detailCount = 0;
+      currentAttendanceAnomalies.forEach((item, pIdx) => {
+        const isChecked = cbMap.has(pIdx) ? cbMap.get(pIdx) : true;
+        const anomalies = item.anomalies || [];
+        anomalies.forEach(a => {
+          detailCount++;
+          const rIdx = 4 + detailCount;
+          const row = ws2.getRow(rIdx);
+          row.height = 24;
+          const isAbsent = a.type === 'absent' || String(a.attendance || '').includes('缺席');
+          const attText = a.attendance || (isAbsent ? '缺席' : '迟到');
+
+          row.getCell(1).value = detailCount;
+          row.getCell(2).value = item.staffId;
+          row.getCell(3).value = item.name || '—';
+          row.getCell(4).value = item.bu || '—';
+          row.getCell(5).value = a.actualDate || a.meetingDate || a.attendanceDate || '—';
+          row.getCell(6).value = attText;
+          row.getCell(7).value = a.attendanceTime || '—';
+          row.getCell(8).value = a.title || a.snapshotTitle || '考勤快照';
+          row.getCell(9).value = Number(item.totalFee) || 0;
+          row.getCell(9).numFmt = '¥#,##0';
+          row.getCell(10).value = Number(item.orderCount) || 0;
+          row.getCell(11).value = isChecked ? '已勾选加黑扣除' : '保留激励待核查';
+
+          const bg = detailCount % 2 === 0 ? 'FFFFFFFF' : 'FFF8FAFC';
+          for (let c = 1; c <= 11; c++) {
+            const cell = row.getCell(c);
+            cell.font = cell.font || { name: 'Microsoft YaHei', size: 9.5 };
+            cell.fill = cell.fill || { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } };
+            cell.border = {
+              top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+              bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+              left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+              right: { style: 'thin', color: { argb: 'FFE2E8F0' } }
+            };
+            if (c === 1 || c === 2 || c === 3 || c === 4 || c === 5 || c === 7 || c === 10) {
+              cell.alignment = { horizontal: 'center', vertical: 'middle' };
+            } else if (c === 6) {
+              cell.alignment = { horizontal: 'center', vertical: 'middle' };
+              cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: isAbsent ? 'FFFEE2E2' : 'FFFEF3C7' } };
+              cell.font = { name: 'Microsoft YaHei', size: 9.5, bold: true, color: { argb: isAbsent ? 'FF991B1B' : 'FF92400E' } };
+            } else if (c === 8) {
+              cell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
+            } else if (c === 9) {
+              cell.alignment = { horizontal: 'right', vertical: 'middle' };
+              cell.font = { name: 'Microsoft YaHei', size: 9.5, bold: true, color: { argb: 'FFB91C1C' } };
+            } else if (c === 11) {
+              cell.alignment = { horizontal: 'center', vertical: 'middle' };
+              cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: isChecked ? 'FFFEE2E2' : 'FFEFF6FF' } };
+              cell.font = { name: 'Microsoft YaHei', size: 9, bold: true, color: { argb: isChecked ? 'FF991B1B' : 'FF1E40AF' } };
+            }
+          }
+        });
+      });
+
+      const buffer = await wb.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `激励人员会议考勤排查清单_${period}_${dateSlug}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      showToast('✅ 考勤异常排查清单 Excel 导出成功！', 'success');
+      return;
+    } catch (err) {
+      console.error('ExcelJS export error, falling back to XLSX:', err);
+    }
+  }
+
+  // Fallback to XLSX
+  if (typeof XLSX !== 'undefined') {
+    const summaryRows = currentAttendanceAnomalies.map((item, idx) => {
+      const isChecked = cbMap.has(idx) ? cbMap.get(idx) : true;
+      const absences = (item.anomalies || []).filter(a => a.type === 'absent' || String(a.attendance || '').includes('缺席')).length;
+      const lates = (item.anomalies || []).filter(a => a.type !== 'absent' && !String(a.attendance || '').includes('缺席')).length;
+      return {
+        '序号': idx + 1,
+        '工号': item.staffId,
+        '姓名': item.name || '—',
+        'BU1 / 部门': item.bu || '—',
+        '本期激励金额(元)': item.totalFee,
+        '计发单数': item.orderCount,
+        '异常总频次': item.anomalyCount || (item.anomalies?.length || 1),
+        '缺席次数': absences,
+        '迟到次数': lates,
+        '处置状态': isChecked ? '已勾选加黑 (扣除激励)' : '未勾选 (保留激励)',
+        '考勤异常记录摘要': (item.anomalies || []).map(a => `${a.actualDate || a.meetingDate || '考勤'}[${a.attendance || '异常'}] ${a.title || a.snapshotTitle || ''}`).join('; ')
+      };
+    });
+
+    const detailRows = [];
+    currentAttendanceAnomalies.forEach((item, pIdx) => {
+      const isChecked = cbMap.has(pIdx) ? cbMap.get(pIdx) : true;
+      (item.anomalies || []).forEach(a => {
+        detailRows.push({
+          '序号': detailRows.length + 1,
+          '工号': item.staffId,
+          '姓名': item.name || '—',
+          'BU1 / 部门': item.bu || '—',
+          '会议/考勤日期': a.actualDate || a.meetingDate || a.attendanceDate || '—',
+          '考勤异常类型': a.attendance || (a.type === 'absent' ? '缺席' : '迟到'),
+          '签到时间': a.attendanceTime || '—',
+          '来源考勤快照名称': a.title || a.snapshotTitle || '考勤快照',
+          '员工本期激励总额(元)': item.totalFee,
+          '计发单数': item.orderCount,
+          '处置建议': isChecked ? '已勾选加黑扣除' : '保留激励待核查'
+        });
+      });
+    });
+
+    const wb = XLSX.utils.book_new();
+    const ws1 = XLSX.utils.json_to_sheet(summaryRows);
+    const ws2 = XLSX.utils.json_to_sheet(detailRows);
+    XLSX.utils.book_append_sheet(wb, ws1, '考勤异常人员汇总');
+    XLSX.utils.book_append_sheet(wb, ws2, '考勤异常明细台账');
+    XLSX.writeFile(wb, `激励人员会议考勤排查清单_${period}_${dateSlug}.xlsx`);
+    showToast('✅ 考勤异常排查清单 Excel 导出成功！', 'success');
+  } else {
+    showToast('导出组件未就绪，请刷新重试', 'error');
+  }
+}
+
 if ($('attendanceAnomalyBtn')) $('attendanceAnomalyBtn').onclick = openAttendanceAnomalyModal;
 if ($('closeAttendanceAnomalyModal')) $('closeAttendanceAnomalyModal').onclick = closeAttendanceAnomalyModal;
 if ($('cancelAttendanceAnomalyModal')) $('cancelAttendanceAnomalyModal').onclick = closeAttendanceAnomalyModal;
+if ($('exportAttendanceAnomalyExcelBtn')) $('exportAttendanceAnomalyExcelBtn').onclick = exportAttendanceAnomalyExcel;
+if ($('exportAttendanceAnomalyExcelBtnFooter')) $('exportAttendanceAnomalyExcelBtnFooter').onclick = exportAttendanceAnomalyExcel;
 if (attendanceAnomalyModal) {
   attendanceAnomalyModal.addEventListener('click', event => {
     if (event.target === attendanceAnomalyModal) closeAttendanceAnomalyModal();

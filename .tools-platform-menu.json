@@ -7,8 +7,8 @@
       "description": "用于维护部门负向事件与违规记录、扣罚规则、人员名册与操作审计日志，支持草稿发布、规则分类筛选和人员 CSV 导入导出。",
       "href": "./department-reward-penalty/index.html",
       "encrypted": true,
-      "fingerprint": "ece7c65b4dabdcdb8efcb7217c5ed139d6b9c83fb630fbdfc36a6980091e1424",
-      "updatedAt": "2026-09-28T14:43:41.410Z"
+      "fingerprint": "22312eb427ceaa4e682e5cb109187cd220c0ae8becc5d25933a2bb63a7561f72",
+      "updatedAt": "2026-09-28T15:43:41.427Z"
     },
     {
       "slug": "reward-program",
@@ -34,8 +34,8 @@
       "description": "导入夜间操作 Excel，按人员、周期和操作等级核算操作激励并生成分析与导出结果。",
       "href": "./tool-ms4xb66s/index.html",
       "encrypted": true,
-      "fingerprint": "0f1c668a7a66015da51ebe66b1a4c253e2d3f4a1b3fab9ecd418da7ba4c6fa55",
-      "updatedAt": "2026-09-27T17:43:41.923Z"
+      "fingerprint": "a3bbf102cc07666755743a127886f45c07275408d010a5ea9be0bf141a1c50cb",
+      "updatedAt": "2026-09-28T15:43:41.445Z"
     },
     {
       "slug": "tool-mqp55fna",
