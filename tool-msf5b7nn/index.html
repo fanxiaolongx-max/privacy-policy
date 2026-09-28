@@ -2166,13 +2166,20 @@ window.fetch=async(url,options={})=>{const raw=String(url||'');if(raw.startsWith
         zh: { brand: '会议出席统计工具', clear: '清空全部', import: '一键导入全部表格', saveSnapshot: '保存快照', manageSnapshots: '历史快照库', dataInput: '数据输入', results: '处理结果', people: '人员提取结果', pageSize: '每页行数', imported: '已导入表格', rows: '行', peopleUnit: '人', emptyTitle: '当前类别还没有表格', emptyDesc: '导入后将按文件与工作表顺序依次显示', columns: '选择显示列', remove: '删除', peopleTitle: '人员提取结果', peopleDesc: '从 QR、RFC 和 WFM 原始表中提取人员并去重；角色、BU与客户群均依据最新订单取值。' },
         en: { brand: 'Meeting Attendance Analyzer', clear: 'Clear All', import: 'Import All Tables', saveSnapshot: 'Save Snapshot', manageSnapshots: 'Snapshot Library', dataInput: 'Data Input', results: 'Results', people: 'People Results', pageSize: 'Rows per page', imported: 'Imported Tables', rows: 'rows', peopleUnit: 'people', emptyTitle: 'No table in this category', emptyDesc: 'Imported sheets will appear in file and sheet order.', columns: 'Choose Columns', remove: 'Delete', peopleTitle: 'People Results', peopleDesc: 'Extract and deduplicate people from QR, RFC and WFM; role, BU and Customer Group use the latest order.' }
       };
-      function loadLanguage() { try { return localStorage.getItem(LANGUAGE_STORAGE_KEY) === 'en' ? 'en' : 'zh'; } catch (e) { return 'zh'; } }
+      const I18N_DICT = (typeof window !== 'undefined' && window.__TOOLS_CUSTOM_I18N__ && window.__TOOLS_CUSTOM_I18N__.translations) || {};
+      function loadLanguage() {
+        try {
+          const parentLang = localStorage.getItem('tools_lang');
+          if (parentLang) return parentLang.startsWith('en') ? 'en' : 'zh';
+          return localStorage.getItem(LANGUAGE_STORAGE_KEY) === 'en' ? 'en' : 'zh';
+        } catch (e) { return 'zh'; }
+      }
       function loadSidebarCollapsed() { try { return localStorage.getItem(SIDEBAR_STORAGE_KEY) === '1'; } catch (e) { return false; } }
       function loadDeveloperMode() { try { return sessionStorage.getItem(DEVELOPER_SESSION_KEY) === '1'; } catch (e) { return false; } }
       const state = { active: 'qr', lang: loadLanguage(), sidebarCollapsed: loadSidebarCollapsed(), pageSize: 200, sheets: [], seq: 0, editingSheet: null, peoplePages: { all: 1, qr: 1, rfc: 1, wfm: 1 }, buFilter: '', personSearch: { query: '', result: null, pages: { qr: 1, rfc: 1, wfm: 1, offline: 1, online: 1 } }, dataVersion: 0, peopleCache: null, qualityCache: null, peopleBuildId: 0, customerMappings: loadCustomerMappings(), attendanceRules: loadAttendanceRules(), exemptions: loadExemptions(), developerMode: loadDeveloperMode(), developerClicks: [], openPeopleCards: new Set(), snapshotsList: [] };
       const $ = s => document.querySelector(s);
       const t = key => UI[state.lang][key] || UI.zh[key] || key;
-      const bi = (zh, en) => state.lang === 'en' ? en : zh;
+      const bi = (zh, en) => state.lang === 'en' ? (en || I18N_DICT[zh] || zh) : zh;
       const roleLabel = role => state.lang === 'en' && role === '申请人' ? 'Applicant' : role;
       const categoryName = c => state.lang === 'en' ? c.enName : c.name;
       const categoryNavName = c => ({ qr: bi('QR名单', 'QR List'), rfc: bi('RFC名单', 'RFC List'), wfm: bi('WFM名单', 'WFM List'), offline: bi('现场签到', 'On-site Scan'), online: bi('在线参会', 'Online Meeting') })[c.id] || categoryName(c);
@@ -2307,7 +2314,15 @@ window.fetch=async(url,options={})=>{const raw=String(url||'');if(raw.startsWith
         renderNav(); applyStaticLanguage(); applySidebarState();
         applyDeveloperMode(); $('#brandHeading').addEventListener('click', handleDeveloperUnlock); $('#developerModeBtn').onclick = openDeveloperModal;
         $('#nav').addEventListener('click', e => { const b = e.target.closest('.nav-item'); if (b) { state.active = b.dataset.id; render(); } });
-        $('#langBtn').onclick = () => { state.lang = state.lang === 'zh' ? 'en' : 'zh'; try { localStorage.setItem(LANGUAGE_STORAGE_KEY, state.lang); } catch (e) { } renderNav(); applyStaticLanguage(); applySidebarState(); render(); if (!$('#personSearchModal').classList.contains('hidden')) renderPersonSearchModal(); };
+        $('#langBtn').onclick = () => {
+          state.lang = state.lang === 'zh' ? 'en' : 'zh';
+          try {
+            localStorage.setItem(LANGUAGE_STORAGE_KEY, state.lang);
+            localStorage.setItem('tools_lang', state.lang === 'en' ? 'en-US' : 'zh-CN');
+          } catch (e) { }
+          renderNav(); applyStaticLanguage(); applySidebarState(); render();
+          if (!$('#personSearchModal').classList.contains('hidden')) renderPersonSearchModal();
+        };
         $('#globalSearchBtn').onclick = openPersonSearchModal;
         $('#saveSnapshotBtn').onclick = openSaveSnapshotModal;
         $('#manageSnapshotsBtn').onclick = openSnapshotManagerModal;
@@ -2401,8 +2416,26 @@ window.fetch=async(url,options={})=>{const raw=String(url||'');if(raw.startsWith
         set('#attendanceModal .modal-head h3', bi('考勤时间规则', 'Attendance Time Rules')); set('#attendanceModal .modal-head p', bi('使用同一工号最早的有效记录；现场签到由北京时间自动换算为开罗时间。', 'Uses the earliest valid record for the same ID; on-site Beijing time is converted to Cairo time.')); set('#attendanceDefaultBtn', bi('恢复默认', 'Restore Defaults')); set('#attendanceCancelBtn', bi('取消', 'Cancel')); set('#attendanceSaveBtn', bi('保存并应用', 'Save & Apply'));
         set('#attendanceRuleHint', bi('≤ 准时截止时间：Attend on Time；介于两者之间：Delay；≥ 虚假签到时间：Fake Attendance；没有任何签到记录：Absent。', '≤ on-time cutoff: Attend on Time; between cutoffs: Delay; ≥ fake-attendance start: Fake Attendance; no record: Absent.'));
         const labels = $('#attendanceModal').querySelectorAll('label'); if (labels[0]) labels[0].childNodes[0].nodeValue = bi('准时截止时间', 'On-time cutoff'); if (labels[1]) labels[1].childNodes[0].nodeValue = bi('虚假签到起始时间', 'Fake-attendance start');
-        set('#developerModalTitle', bi('开发者模式 · 会议豁免名单', 'Developer Mode · Meeting Exemption List')); set('#developerModalSub', bi('名单中的人员无需参加会议，统计时始终按 Attend on Time 计算。建议优先填写工号。', 'People on this list do not need to attend and are always counted as Attend on Time. Employee ID is recommended.')); set('#exemptionAddBtn', bi('＋ 新增豁免人员', '＋ Add Exempt Person')); set('#exemptionNameHead', bi('姓名', 'Name')); set('#exemptionAccountHead', bi('工号 / Account', 'Employee ID / Account')); set('#exemptionHint', bi('此处维护浏览器保存的名单；代码预置名单请在 PRESET_EXEMPTIONS 中修改。保存后会立即重新计算。', 'This editor manages the browser-saved list. Edit PRESET_EXEMPTIONS for code presets. Saving recalculates immediately.')); set('#developerDisableBtn', bi('关闭开发者模式', 'Disable Developer Mode')); set('#developerCancelBtn', bi('取消', 'Cancel')); set('#developerSaveBtn', bi('保存并应用', 'Save & Apply'));
+        set('#developerModeBtn', `⚗ ${bi('开发者模式', 'Developer Mode')}`);
+        set('#listLabel', bi('已导入表格', 'Imported Tables'));
+        set('#loadingText', bi('正在读取表格…', 'Loading tables…'));
         set('#personSearchModalTitle', bi('人员全记录搜索', 'Person Record Search')); set('#personSearchModalSub', bi('按姓名或工号关联五类完整原始记录及角色统计。', 'Link five source records and role statistics by name or employee ID.')); set('#personSearchRunBtn', bi('一键搜索', 'Search')); set('#personSearchClearBtn', bi('清除结果', 'Clear Results')); $('#personSearchInput').placeholder = bi('例如 Ahmed Atef 或 WX1463619', 'e.g. Ahmed Atef or WX1463619');
+        if (state.lang === 'en' && typeof I18N_DICT === 'object' && Object.keys(I18N_DICT).length) {
+          const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+          let n;
+          while ((n = walker.nextNode())) {
+            const p = n.parentElement;
+            if (!p || ['SCRIPT', 'STYLE'].includes(p.tagName)) continue;
+            const val = (n.nodeValue || '').trim();
+            if (val && I18N_DICT[val]) {
+              n.nodeValue = n.nodeValue.replace(val, I18N_DICT[val]);
+            }
+          }
+          document.querySelectorAll('[title], [placeholder]').forEach(el => {
+            if (el.title && I18N_DICT[el.title.trim()]) el.title = I18N_DICT[el.title.trim()];
+            if (el.placeholder && I18N_DICT[el.placeholder.trim()]) el.placeholder = I18N_DICT[el.placeholder.trim()];
+          });
+        }
       }
 
       function render() {

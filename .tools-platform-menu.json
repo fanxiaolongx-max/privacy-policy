@@ -7,8 +7,8 @@
       "description": "用于维护部门负向事件与违规记录、扣罚规则、人员名册与操作审计日志，支持草稿发布、规则分类筛选和人员 CSV 导入导出。",
       "href": "./department-reward-penalty/index.html",
       "encrypted": true,
-      "fingerprint": "22312eb427ceaa4e682e5cb109187cd220c0ae8becc5d25933a2bb63a7561f72",
-      "updatedAt": "2026-09-28T15:43:41.427Z"
+      "fingerprint": "033f499b20734162a903371612fc6fd213a9904ea1bd330fbfe0727680a8dd0d",
+      "updatedAt": "2026-09-28T17:43:41.765Z"
     },
     {
       "slug": "reward-program",
@@ -25,8 +25,8 @@
       "description": "批量导入QR、RFC、WFM名单及线上线下签到表，合并去重参会人员，按最早签到时间判定准时、迟到、虚假签到或缺席，并支持检索与导出。",
       "href": "./tool-msf5b7nn/index.html",
       "encrypted": true,
-      "fingerprint": "0c75bbcfb19372bb16caf1814e0e4f444c239d075e3bd3882129e88e25203e10",
-      "updatedAt": "2026-09-27T17:43:41.917Z"
+      "fingerprint": "ef60f7f63b18ce45346acf814ef6b8df154661bb0abcbd07f59c9b574854d7c6",
+      "updatedAt": "2026-09-28T17:43:41.787Z"
     },
     {
       "slug": "tool-ms4xb66s",
