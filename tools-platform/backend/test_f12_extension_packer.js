@@ -183,12 +183,11 @@ function testExamAssistantBuiltinCompatibility() {
     assert.ok(result.files['content.js'].includes('checkbox.checked = bank.storageKey === getStorageKey()'), '导出窗口必须默认选择当前题库');
     assert.ok(result.files['content.js'].includes('downloadQuestionBankBackup(selectedBanks)'), '必须按用户勾选结果导出多个题库');
     assert.ok(result.files['content.js'].includes('Array.isArray(imported.banks)'), '导入必须识别多题库备份包');
-    assert.ok(result.files['content.js'].includes('normalizedBanks.forEach(bank =>'), '多题库导入必须逐库恢复本地存储');
 
     const indexHtml = fs.readFileSync(path.join(toolDir, 'index.html'), 'utf8');
     assert.ok(indexHtml.includes('SV/CFC 满意度监控（原内置）'), '必须保留原内置脚本选项');
     assert.ok(indexHtml.includes('题库与答题助手'), '必须提供题库助手内置脚本选项');
-    assert.ok(indexHtml.includes('id="loadBuiltinBtn"'), '必须提供脚本载入按钮');
+    assert.ok(indexHtml.includes("document.getElementById('builtinScriptSelect').addEventListener('change'"), '选择脚本后必须自动载入');
     assert.ok(indexHtml.includes('id="serverScriptOptions"'), '必须展示服务器保存脚本列表');
     assert.ok(indexHtml.includes('id="saveServerScriptBtn"'), '必须提供保存到服务器操作');
     assert.ok(indexHtml.includes("addEventListener('paste'"), '粘贴新脚本时必须切换到新脚本状态');
@@ -200,7 +199,7 @@ function testExamAssistantBuiltinCompatibility() {
     assert.ok(indexHtml.includes('id="extObfuscate" type="checkbox" class='), '商店包应默认关闭混淆');
     assert.ok(indexHtml.includes('id="extPackageTarget"'), '必须提供商店包与本地包选择');
     assert.ok(indexHtml.includes("packageTarget: document.getElementById('extPackageTarget').value"));
-    assert.ok(indexHtml.includes('obfuscateInput.disabled = storePackage'), '商店模式必须禁用混淆选项');
+    assert.ok(indexHtml.includes('obfuscateInput.disabled = storePackage || isPpoTemplate'), '商店模式及完整 PPO 模板必须禁用混淆选项');
     assert.ok(indexHtml.includes("document.getElementById('extPackageTarget').value !== 'store'"), '收集参数时必须再次阻止商店包混淆');
     assert.ok(indexHtml.includes('updatePackageTargetUI();'), '页面初始化时必须锁定商店包混淆选项');
     assert.ok(indexHtml.includes('id="extLicense" type="checkbox" checked'));

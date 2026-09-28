@@ -27,16 +27,20 @@ function safeJson(value) {
 
 function readTranslations(slug) {
     const candidates = [
+        path.join(__dirname, '../builtin-tools', slug, '.i18n.json'),
         path.join(getDataDir(), 'custom-tools', slug, '.i18n.json'),
         path.join(TRANSLATIONS_DIR, `${slug}.json`)
     ];
+    let result = {};
     for (const file of candidates) {
         try {
             const parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
-            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) return parsed;
+            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                Object.assign(result, parsed);
+            }
         } catch (_) {}
     }
-    return {};
+    return result;
 }
 
 function formatLocalTimestamp(date) {

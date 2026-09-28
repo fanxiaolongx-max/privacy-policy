@@ -731,6 +731,15 @@ initializePopup();`;
       matches: ["<all_urls>"],
       isFullExtension: true,
       templateZip: "./chrome-capture-pro.template.zip"
+    },
+    "ppo-traffic-autofill": {
+      id: "ppo-traffic-autofill",
+      name: "PPO 交通违章表单自动填表器",
+      defaultVersion: "1.0.13",
+      description: "在 PPO 交通违章网站辅助填写表单。",
+      matches: ["*://www.ppo.gov.eg/*", "*://ppo.gov.eg/*", "*://*.ppo.gov.eg/*"],
+      isFullExtension: true,
+      templateZip: "./ppo-traffic-autofill.template.zip"
     }
   };
 

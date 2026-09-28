@@ -55,7 +55,9 @@ test('F12 snapshot carries saved and built-in scripts plus offline packer assets
     assert.equal(saved.matches, 'https://private.example/*');
     assert.ok(data.builtins.find(item => item.id === 'sv-cfc-monitor').code.length > 100);
     assert.ok(data.builtins.find(item => item.id === 'chrome-capture-pro').isFullExtension);
+    assert.ok(data.builtins.find(item => item.id === 'ppo-traffic-autofill').isFullExtension);
     assert.ok(output.files.get('data/chrome-capture-pro.template.zip').length > 100000);
+    assert.ok(output.files.get('data/ppo-traffic-autofill.template.zip').length > 100000);
     assert.ok(output.files.has('data/assets/packer-core.js'));
     assert.ok(output.files.has('data/assets/jszip.min.js'));
     assert.ok(output.files.has('data/assets/static-packer-runtime.js'));

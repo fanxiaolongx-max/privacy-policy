@@ -7,11 +7,13 @@ const SOURCE_DIR = path.join(__dirname, '../builtin-tools/f12-to-extension');
 const JSZIP_FILE = path.join(__dirname, '../../frontend/js/shared/jszip.min.js');
 const RUNTIME_FILE = path.join(__dirname, 'f12-static-packer-runtime.js');
 const TEMPLATE_FILE = 'chrome-capture-pro.template.zip';
+const PPO_TEMPLATE_FILE = 'ppo-traffic-autofill.template.zip';
 const BUILTINS = [
     { id: 'sv-cfc-monitor', file: 'default-f12.js', name: 'SV/CFC 满意度监控', description: '监控 SV/CFC 餐厅满意度，分析问卷明细并复核评分。', matches: 'https://w3.huawei.com/*', world: 'MAIN', includePopup: true },
     { id: 'exam-question-bank', file: 'exam-question-bank-assistant.js', name: '题库与答题助手', description: '抓取考试题目、维护本地题库并辅助自动答题。', matches: 'https://w3.huawei.com/*\nhttps://ilearning.huawei.com/*', world: 'MAIN', includePopup: true, manualLaunch: true },
     { id: 'authorized-media-exporter', file: 'authorized-media-exporter.js', name: '授权媒体下载脚本生成器', description: '扫描当前页面已直接暴露的视频地址，并生成可审阅的下载脚本。', matches: '<all_urls>', world: 'MAIN', includePopup: true, manualLaunch: true },
-    { id: 'chrome-capture-pro', name: 'Chrome Capture Pro', description: '屏幕录制、截图与标注扩展模板。', matches: '<all_urls>', world: 'MAIN', includePopup: true, isFullExtension: true }
+    { id: 'chrome-capture-pro', name: 'Chrome Capture Pro', description: '屏幕录制、截图与标注扩展模板。', matches: '<all_urls>', world: 'MAIN', includePopup: true, isFullExtension: true },
+    { id: 'ppo-traffic-autofill', name: 'PPO 交通违章表单自动填表器', description: '在 PPO 交通违章网站辅助填写表单。', matches: '*://www.ppo.gov.eg/*\n*://ppo.gov.eg/*\n*://*.ppo.gov.eg/*', world: 'ISOLATED', includePopup: true, isFullExtension: true }
 ];
 
 async function collect() {
@@ -31,7 +33,7 @@ function renderHtml(data, pages, options = {}) {
         ? '<script src="./data/assets/jszip.min.js"></script><script src="./data/assets/packer-core.js"></script><script src="./data/assets/static-packer-runtime.js"></script>'
         : `<script>${fs.readFileSync(JSZIP_FILE, 'utf8')}</script><script>${fs.readFileSync(path.join(SOURCE_DIR, 'packer-core.js'), 'utf8')}</script><script>${fs.readFileSync(RUNTIME_FILE, 'utf8')}</script>`;
     const dataScript = pages
-        ? `<script>window.TP_F12_DATA_URL='./data/f12-presets.json';window.TP_F12_TEMPLATE_URL='./data/${TEMPLATE_FILE}';</script>`
+        ? `<script>window.TP_F12_DATA_URL='./data/f12-presets.json';window.TP_F12_TEMPLATE_URL='./data/${TEMPLATE_FILE}';window.TP_F12_PPO_TEMPLATE_URL='./data/${PPO_TEMPLATE_FILE}';</script>`
         : `<script>window.TP_F12_DATA=${safeJson(data)};</script>`;
     let html = `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="${csp}"><title>F12 扩展打包 · 静态版</title><style>
 *{box-sizing:border-box}body{margin:0;background:#0e1729;color:#e5edf7;font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}main{max-width:1300px;margin:auto;padding:24px}header{padding:22px 26px;background:#183557;border:1px solid #345271;border-radius:15px}h1{font-size:23px;margin:0 0 6px}p{margin:0}.hint{color:#aec8df}.grid{display:grid;grid-template-columns:minmax(300px,1fr) minmax(360px,1.2fr);gap:20px;margin-top:20px}.panel{padding:20px;border:1px solid #304861;background:#17263a;border-radius:14px}.fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}.wide{grid-column:1/-1}label{display:block;font-weight:600;font-size:13px}label>span{display:block;margin-bottom:5px}.check{display:flex;gap:8px;align-items:center;font-weight:400}input,textarea,select{width:100%;padding:9px 10px;background:#0d1b2e;color:#eef5ff;border:1px solid #48627d;border-radius:8px;font:inherit}textarea{resize:vertical}input[type=checkbox]{width:auto}button{padding:11px 18px;border:0;border-radius:9px;background:#367fd2;color:#fff;font:600 14px system-ui;cursor:pointer}button:disabled{opacity:.5;cursor:wait}button:hover:not(:disabled){background:#4995ed}.actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px}.status{white-space:pre-wrap;color:#b7cde2;min-height:22px}.status.error{color:#ffb3ae}.status.ok{color:#a8e9c2}.code{width:100%;min-height:420px;font:12px/1.5 ui-monospace,SFMono-Regular,monospace;tab-size:2}.small{font-size:12px;color:#aec8df}.badge{display:inline-block;background:#365071;color:#dceaff;padding:2px 7px;border-radius:5px;margin-left:8px}@media(max-width:900px){.grid{grid-template-columns:1fr}}@media(max-width:560px){main{padding:10px}.panel,header{padding:15px}.fields{grid-template-columns:1fr}.wide{grid-column:auto}}
@@ -44,6 +46,7 @@ function renderHtml(data, pages, options = {}) {
 async function buildSnapshot(tenantId, options = {}) {
     const data = await collect();
     data.templateBase64 = fs.readFileSync(path.join(SOURCE_DIR, TEMPLATE_FILE)).toString('base64');
+    data.ppoTemplateBase64 = fs.readFileSync(path.join(SOURCE_DIR, PPO_TEMPLATE_FILE)).toString('base64');
     return renderHtml(data, false, options);
 }
 
@@ -54,6 +57,7 @@ async function buildPagesSnapshot(tenantId, options = {}) {
         files: new Map([
             ['data/f12-presets.json', safeJson(data) + '\n'],
             [`data/${TEMPLATE_FILE}`, fs.readFileSync(path.join(SOURCE_DIR, TEMPLATE_FILE))],
+            [`data/${PPO_TEMPLATE_FILE}`, fs.readFileSync(path.join(SOURCE_DIR, PPO_TEMPLATE_FILE))],
             ['data/assets/jszip.min.js', fs.readFileSync(JSZIP_FILE)],
             ['data/assets/packer-core.js', fs.readFileSync(path.join(SOURCE_DIR, 'packer-core.js'))],
             ['data/assets/static-packer-runtime.js', fs.readFileSync(RUNTIME_FILE)]

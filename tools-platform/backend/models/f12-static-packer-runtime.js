@@ -81,8 +81,10 @@
     }
 
     async function chromeTemplate() {
-        if (catalog.templateBase64) return JSZip.loadAsync(catalog.templateBase64, { base64: true });
-        const response = await fetch(window.TP_F12_TEMPLATE_URL, { cache: 'no-store' });
+        const isPpoTraffic = selected?.id === 'ppo-traffic-autofill';
+        const base64 = isPpoTraffic ? catalog.ppoTemplateBase64 : catalog.templateBase64;
+        if (base64) return JSZip.loadAsync(base64, { base64: true });
+        const response = await fetch(isPpoTraffic ? window.TP_F12_PPO_TEMPLATE_URL : window.TP_F12_TEMPLATE_URL, { cache: 'no-store' });
         if (!response.ok) throw new Error('扩展模板读取失败：HTTP ' + response.status);
         return JSZip.loadAsync(await response.arrayBuffer());
     }
@@ -95,7 +97,9 @@
             const manifest = JSON.parse(await manifestFile.async('string'));
             const updated = F12ExtensionPacker.transformChromeCaptureManifest(manifest, options);
             zip.file('manifest.json', JSON.stringify(updated, null, 2));
-            zip.file('license-config.json', JSON.stringify({ enabled: false, productId: options.name, validationUrl: '', publicKeyJwk: null }, null, 2));
+            if (selected.id === 'chrome-capture-pro') {
+                zip.file('license-config.json', JSON.stringify({ enabled: false, productId: options.name, validationUrl: '', publicKeyJwk: null }, null, 2));
+            }
             return zip;
         }
         const generated = F12ExtensionPacker.buildPackage(options);

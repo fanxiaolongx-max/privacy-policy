@@ -191,6 +191,7 @@
                 <option value="exam-question-bank">题库与答题助手</option>
                 <option value="authorized-media-exporter">授权媒体下载脚本生成器</option>
                 <option value="chrome-capture-pro">Chrome Capture Pro 屏幕录制与截图增强版</option>
+                <option value="ppo-traffic-autofill">PPO 交通违章表单自动填表器</option>
               </optgroup>
               <optgroup id="serverScriptOptions" label="服务器保存脚本"></optgroup>
             </select>
@@ -317,6 +318,17 @@
 // • 内置专业 GIF / 视频多轨帧编辑器与 Fabric.js 画板涂鸦
 // • 本地离线 ECDSA P-256 License 签名授权与在线管理
 // ========================================================`
+      },
+      'ppo-traffic-autofill': {
+        type: 'template',
+        templateZip: './ppo-traffic-autofill.template.zip',
+        name: 'PPO 交通违章表单自动填表器',
+        description: '在 PPO 交通违章网站辅助填写表单。',
+        matches: '*://www.ppo.gov.eg/*\n*://ppo.gov.eg/*\n*://*.ppo.gov.eg/*',
+        world: 'ISOLATED',
+        includePopup: true,
+        isFullExtension: true,
+        overviewCode: '// PPO 交通违章表单自动填表器：完整扩展模板（含 Popup、后台脚本与资源文件）。'
       }
     };
 
@@ -363,6 +375,9 @@
 
     function startNewScript({ clearCode = true, reason = '' } = {}) {
       setActiveScript(null, null);
+      document.getElementById('extLicense').disabled = false;
+      document.getElementById('extCode').readOnly = false;
+      updatePackageTargetUI();
       document.getElementById('builtinScriptSelect').value = '__new__';
       document.getElementById('extName').value = '';
       document.getElementById('extVersion').value = '';
@@ -439,10 +454,25 @@
       return F12ExtensionPacker.isValidVersion(savedVersion) ? savedVersion : '';
     }
 
+    function versionIsEarlier(left, right) {
+      const leftParts = left.split('.').map(Number);
+      const rightParts = right.split('.').map(Number);
+      for (let index = 0; index < Math.max(leftParts.length, rightParts.length); index++) {
+        const difference = (leftParts[index] || 0) - (rightParts[index] || 0);
+        if (difference) return difference < 0;
+      }
+      return false;
+    }
+
     async function requestServerVersion(action, name) {
       const token = localStorage.getItem('tools_token');
       const apiPath = VERSION_API_PATHS[action];
       if (!apiPath) throw new Error('无效的版本服务操作');
+      let legacyVersion = getLegacySavedVersion(name);
+      if (activeScriptRef?.kind === 'builtin' && activeScriptRef.id === 'ppo-traffic-autofill') {
+        const sourceVersion = '1.0.13';
+        if (!legacyVersion || versionIsEarlier(legacyVersion, sourceVersion)) legacyVersion = sourceVersion;
+      }
       const res = await fetch(apiPath, {
         method: 'POST',
         headers: {
@@ -451,7 +481,7 @@
         },
         body: JSON.stringify({
           productId: name,
-          legacyVersion: getLegacySavedVersion(name) || undefined
+          legacyVersion: legacyVersion || undefined
         })
       });
       const payload = await res.json().catch(() => ({}));
@@ -502,8 +532,12 @@
       try {
         if (preset.type === 'template' || preset.isFullExtension) {
           document.getElementById('extCode').value = preset.overviewCode || '// 完整扩展工程模板已就绪';
+          document.getElementById('extCode').readOnly = true;
           if (applyPreset) applyScriptMetadata(preset);
+          document.getElementById('extLicense').disabled = scriptId === 'ppo-traffic-autofill';
+          if (scriptId === 'ppo-traffic-autofill') document.getElementById('extLicense').checked = false;
           setActiveScript('builtin', scriptId);
+          updatePackageTargetUI();
           await refreshVersionPreview();
           const validation = F12ExtensionPacker.validateOptions(collectOptions());
           renderReport(validation);
@@ -514,8 +548,11 @@
         const code = await res.text();
         if (!code.trim()) throw new Error('内置脚本内容为空。');
         document.getElementById('extCode').value = code;
+        document.getElementById('extCode').readOnly = false;
+        document.getElementById('extLicense').disabled = false;
         if (applyPreset) applyScriptMetadata(preset);
         setActiveScript('builtin', scriptId);
+        updatePackageTargetUI();
         await refreshVersionPreview();
         const validation = F12ExtensionPacker.validateOptions(collectOptions());
         renderReport(validation);
@@ -534,15 +571,20 @@
         const script = serverScripts.find(item => item.id === scriptId);
         if (!script) throw new Error('服务器脚本不存在，请刷新页面');
         document.getElementById('extCode').value = script.code;
+        document.getElementById('extCode').readOnly = false;
+        document.getElementById('extLicense').disabled = false;
         applyScriptMetadata(script);
         setActiveScript('server', script.id);
+        updatePackageTargetUI();
         await refreshVersionPreview();
         renderReport(F12ExtensionPacker.validateOptions(collectOptions()));
         setScriptLibraryStatus(`已自动载入服务器脚本：${script.name}`, 'text-emerald-300');
         return;
       }
       await loadBuiltinScript(selected);
-      setScriptLibraryStatus('已自动载入系统内置脚本。', 'text-emerald-300');
+      setScriptLibraryStatus(selected === 'ppo-traffic-autofill'
+        ? '已载入完整扩展模板；打包仅更新名称、描述、版本和扩展身份，原有网站权限与脚本保持不变。'
+        : '已自动载入系统内置脚本。', 'text-emerald-300');
     }
 
     window.addEventListener('DOMContentLoaded', async () => {
@@ -973,9 +1015,10 @@
     });
     function updatePackageTargetUI() {
       const storePackage = document.getElementById('extPackageTarget').value === 'store';
+      const isPpoTemplate = activeScriptRef?.kind === 'builtin' && activeScriptRef.id === 'ppo-traffic-autofill';
       const obfuscateInput = document.getElementById('extObfuscate');
-      if (storePackage) obfuscateInput.checked = false;
-      obfuscateInput.disabled = storePackage;
+      if (storePackage || isPpoTemplate) obfuscateInput.checked = false;
+      obfuscateInput.disabled = storePackage || isPpoTemplate;
       document.getElementById('identityHint').textContent = storePackage
         ? '商店包由 Microsoft 分配扩展 ID，不写入 Manifest Key'
         : '固定扩展 ID：按扩展名称永久复用 Manifest Key';
@@ -1038,10 +1081,14 @@
         const isChromeCapture = activeScriptRef
           && activeScriptRef.kind === 'builtin'
           && activeScriptRef.id === 'chrome-capture-pro';
+        const isPpoTraffic = activeScriptRef
+          && activeScriptRef.kind === 'builtin'
+          && activeScriptRef.id === 'ppo-traffic-autofill';
 
-        if (isChromeCapture) {
-          const templateZipRes = await fetch('./chrome-capture-pro.template.zip?v=' + Date.now());
-          if (!templateZipRes.ok) throw new Error('读取 ChromeCapture 模板包失败');
+        if (isChromeCapture || isPpoTraffic) {
+          const template = BUILTIN_SCRIPTS[activeScriptRef.id];
+          const templateZipRes = await fetch(template.templateZip + '?v=' + Date.now());
+          if (!templateZipRes.ok) throw new Error('读取完整扩展模板包失败');
           const templateBlob = await templateZipRes.blob();
           const zip = await JSZip.loadAsync(templateBlob);
 
@@ -1052,8 +1099,10 @@
             zip.file('manifest.json', JSON.stringify(transformedManifest, null, 2));
           }
 
-          const licenseConfigData = F12ExtensionPacker.createChromeCaptureLicenseConfig(options);
-          zip.file('license-config.json', JSON.stringify(licenseConfigData, null, 2));
+          if (isChromeCapture) {
+            const licenseConfigData = F12ExtensionPacker.createChromeCaptureLicenseConfig(options);
+            zip.file('license-config.json', JSON.stringify(licenseConfigData, null, 2));
+          }
 
           const content = await zip.generateAsync({ type: "blob" });
           const targetSuffix = options.packageTarget === 'store' ? '-edge-store' : '-local';
