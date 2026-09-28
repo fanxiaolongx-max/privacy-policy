@@ -2321,7 +2321,7 @@ dialog#mediaFormDialog.is-importing {
 .snapshot-security-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
 .snapshot-security strong { font-size: 13px; color: #3b3363; }
 .snapshot-security p { margin: 4px 0 0; color: #6a638b; font-size: 11px; line-height: 1.6; }
-.snapshot-tools-list { display: grid; gap: 10px; }
+.snapshot-tools-list { display: grid; gap: 10px; max-height: 480px; overflow-y: auto; padding-right: 4px; }
 .snapshot-tool-item { border: 1px solid #e2def5; border-radius: 11px; padding: 12px 14px; background: #fff; display: grid; gap: 10px; }
 .snapshot-tool-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .snapshot-tool-enable { display: flex; align-items: center; gap: 8px; cursor: pointer; color: #2d264f; font-size: 13px; }

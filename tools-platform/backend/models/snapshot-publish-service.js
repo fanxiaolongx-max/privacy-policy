@@ -32,7 +32,192 @@ const EVIDENCE_FILE = /^[a-f0-9-]{36}\.(?:pdf|png|jpg|jpeg|txt|zip|rar|7z|tar|gz
 const PAGES_MARKER = '{"toolId":"department-reward-penalty","format":1}\n';
 const bad = (message, status = 400) => Object.assign(new Error(message), { status });
 
-const providers = new Map();
+const { injectGatekeeper } = require('./snapshot-gatekeeper');
+
+const explicitProviders = new Map();
+
+function getCustomToolsRepo() {
+    return require('./custom-tools-repository');
+}
+
+function getStaticToolRootDir(slug) {
+    if (!slug || typeof slug !== 'string') return null;
+    try {
+        return getCustomToolsRepo().getToolRootDir(slug);
+    } catch (_) {
+        return null;
+    }
+}
+
+function isStaticTool(slug) {
+    const rootDir = getStaticToolRootDir(slug);
+    if (!rootDir) return false;
+    const indexPath = path.join(rootDir, 'index.html');
+    return fs.existsSync(indexPath) && fs.statSync(indexPath).isFile();
+}
+
+function collectStaticToolFiles(rootDir) {
+    const files = new Map();
+    let totalBytes = 0;
+    const MAX_TOTAL_BYTES = 100 * 1024 * 1024;
+
+    function walk(dir) {
+        const entries = fs.readdirSync(dir, { withFileTypes: true });
+        for (const entry of entries) {
+            if (entry.name.startsWith('.')) continue;
+            const fullPath = path.join(dir, entry.name);
+            if (entry.isSymbolicLink()) continue;
+
+            if (entry.isDirectory()) {
+                walk(fullPath);
+            } else if (entry.isFile()) {
+                const relativePath = path.relative(rootDir, fullPath).replace(/\\/g, '/');
+                if (relativePath.toLowerCase() === 'index.html') continue;
+
+                const stat = fs.statSync(fullPath);
+                totalBytes += stat.size;
+                if (totalBytes > MAX_TOTAL_BYTES) {
+                    throw bad('静态工具资源文件总大小超出 100 MB 限制');
+                }
+                files.set(relativePath, fs.readFileSync(fullPath));
+            }
+        }
+    }
+
+    walk(rootDir);
+    return files;
+}
+
+function createStaticToolProvider(slug) {
+    const rootDir = getStaticToolRootDir(slug);
+    if (!rootDir) return null;
+    const indexPath = path.join(rootDir, 'index.html');
+    if (!fs.existsSync(indexPath) || !fs.statSync(indexPath).isFile()) return null;
+
+    let toolName = slug;
+    let toolDesc = '纯静态页面，可直接离线查看。';
+    try {
+        const manifestFile = path.join(rootDir, '.tool-manifest.json');
+        if (fs.existsSync(manifestFile)) {
+            const parsed = JSON.parse(fs.readFileSync(manifestFile, 'utf8'));
+            if (parsed?.tool?.name) toolName = parsed.tool.name;
+            if (parsed?.tool?.description) toolDesc = parsed.tool.description;
+        }
+    } catch (_) {}
+
+    return {
+        slug,
+        name: toolName,
+        description: toolDesc,
+        defaultFile: `${slug}/index.html`,
+        isGenericStatic: true,
+        buildSnapshot: async (tenantId, options = {}) => {
+            if (!fs.existsSync(indexPath)) throw bad(`静态工具入口 index.html 不存在：${slug}`, 404);
+            let html = fs.readFileSync(indexPath, 'utf8');
+            const encryption = options.encryption;
+            if (encryption?.enabled && (encryption.passwordHash || encryption.hash)) {
+                html = injectGatekeeper(html, encryption, slug);
+            }
+            return html;
+        },
+        buildPagesSnapshot: async (tenantId, options = {}) => {
+            if (!fs.existsSync(indexPath)) throw bad(`静态工具入口 index.html 不存在：${slug}`, 404);
+            let html = fs.readFileSync(indexPath, 'utf8');
+            const encryption = options.encryption;
+            if (encryption?.enabled && (encryption.passwordHash || encryption.hash)) {
+                html = injectGatekeeper(html, encryption, slug);
+            }
+            const files = collectStaticToolFiles(rootDir);
+            return { html, files };
+        }
+    };
+}
+
+function listStaticToolSlugs() {
+    const slugs = new Set();
+    try {
+        const repo = getCustomToolsRepo();
+        const customDir = repo.getCustomToolsDir();
+        if (fs.existsSync(customDir)) {
+            for (const dirent of fs.readdirSync(customDir, { withFileTypes: true })) {
+                if (dirent.isDirectory() && !dirent.name.startsWith('.')) {
+                    if (isStaticTool(dirent.name)) slugs.add(dirent.name);
+                }
+            }
+        }
+        const builtinDir = repo.BUILTIN_TOOLS_DIR;
+        if (fs.existsSync(builtinDir)) {
+            for (const dirent of fs.readdirSync(builtinDir, { withFileTypes: true })) {
+                if (dirent.isDirectory() && !dirent.name.startsWith('.')) {
+                    if (isStaticTool(dirent.name)) slugs.add(dirent.name);
+                }
+            }
+        }
+    } catch (_) {}
+    return slugs;
+}
+
+class ProviderRegistry extends Map {
+    has(key) {
+        if (explicitProviders.has(key)) return true;
+        return isStaticTool(key);
+    }
+
+    get(key) {
+        if (explicitProviders.has(key)) return explicitProviders.get(key);
+        if (isStaticTool(key)) return createStaticToolProvider(key);
+        return undefined;
+    }
+
+    set(key, value) {
+        explicitProviders.set(key, value);
+        return this;
+    }
+
+    delete(key) {
+        return explicitProviders.delete(key);
+    }
+
+    clear() {
+        explicitProviders.clear();
+    }
+
+    *keys() {
+        const seen = new Set();
+        for (const key of explicitProviders.keys()) {
+            seen.add(key);
+            yield key;
+        }
+        for (const key of listStaticToolSlugs()) {
+            if (!seen.has(key)) {
+                seen.add(key);
+                yield key;
+            }
+        }
+    }
+
+    *[Symbol.iterator]() {
+        for (const key of this.keys()) {
+            yield [key, this.get(key)];
+        }
+    }
+
+    *entries() {
+        yield* this[Symbol.iterator]();
+    }
+
+    *values() {
+        for (const key of this.keys()) {
+            yield this.get(key);
+        }
+    }
+
+    get size() {
+        return Array.from(this.keys()).length;
+    }
+}
+
+const providers = new ProviderRegistry();
 
 function fingerprintSnapshotBundle(output, mode) {
     const hash = crypto.createHash('sha256');
@@ -790,8 +975,12 @@ async function publish(job, tenantId, settings, options = {}) {
                     rejectSymlinkParents(checkout, file);
                     fs.mkdirSync(path.dirname(file), { recursive: true });
                     fs.writeFileSync(file, contents);
+                    paths.push(path.posix.join(path.posix.dirname(toolResolvedFile), relative));
                 }
                 paths.push(dataRelative);
+                if (path.posix.dirname(toolResolvedFile) !== '.') {
+                    paths.push(path.posix.dirname(toolResolvedFile));
+                }
                 await recordCommandLog(job, {
                     at: new Date().toISOString(),
                     type: 'info',

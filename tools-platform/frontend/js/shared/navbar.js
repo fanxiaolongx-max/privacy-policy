@@ -3367,6 +3367,7 @@ async function renderSnapshotPublishSettings(content) {
                             <strong>${navEscape(snapshotText('已接入静态发布的工具', 'Tools with Snapshot Publishing'))}</strong>
                             <p>${navEscape(snapshotText('可独立控制各工具是否参与推送，以及是否开启访问密码保护。开启密码后，静态托管页面需输入对应密码方可解锁。', 'Independently control whether each tool is published and protected with an access password. Protected pages require a password to view.'))}</p>
                         </div>
+                        <input type="search" id="snapshotToolsFilter" class="nav-settings-input" style="max-width: 170px; padding: 5px 10px; font-size: 12px; margin-left: auto;" placeholder="${navEscape(snapshotText('搜索工具…', 'Filter tools…'))}" oninput="filterSnapshotTools(this.value)">
                     </div>
                     <div class="snapshot-tools-list">
                         ${(settings.tools || [
@@ -3411,6 +3412,16 @@ async function renderSnapshotPublishSettings(content) {
         content.innerHTML = `<div class="nav-settings-empty">${navEscape(snapshotText('读取失败：', 'Failed to load: '))}${navEscape(error.message)}</div>`;
     }
 }
+
+window.filterSnapshotTools = function (query) {
+    const q = String(query || '').trim().toLowerCase();
+    document.querySelectorAll('.snapshot-tool-item[data-tool-slug]').forEach(item => {
+        const slug = (item.dataset.toolSlug || '').toLowerCase();
+        const name = (item.querySelector('strong')?.textContent || '').toLowerCase();
+        const match = !q || slug.includes(q) || name.includes(q);
+        item.style.display = match ? '' : 'none';
+    });
+};
 
 window.toggleSnapshotToolPassword = function (slug) {
     const enabled = document.getElementById('snapshotEncryptionEnabled_' + slug)?.checked;
