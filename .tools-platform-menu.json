@@ -2,60 +2,6 @@
   "version": 1,
   "items": [
     {
-      "slug": "department-reward-penalty",
-      "name": "负向事件管理",
-      "description": "用于维护部门负向事件与违规记录、扣罚规则、人员名册与操作审计日志，支持草稿发布、规则分类筛选和人员 CSV 导入导出。",
-      "href": "./department-reward-penalty/index.html",
-      "encrypted": true,
-      "fingerprint": "033f499b20734162a903371612fc6fd213a9904ea1bd330fbfe0727680a8dd0d",
-      "updatedAt": "2026-09-28T17:43:41.765Z"
-    },
-    {
-      "slug": "reward-program",
-      "name": "奖励申报与评优",
-      "description": "独立的悬赏奖、岗位激励、操作激励与代表处评优申报、规则和审批公示工作台。",
-      "href": "./reward-program/index.html",
-      "encrypted": true,
-      "fingerprint": "9bcf287fd0aa90a3dd8f121462468322998b36234c986146253c8d203059c3f3",
-      "updatedAt": "2026-09-27T17:43:41.911Z"
-    },
-    {
-      "slug": "tool-msf5b7nn",
-      "name": "会议考勤",
-      "description": "批量导入QR、RFC、WFM名单及线上线下签到表，合并去重参会人员，按最早签到时间判定准时、迟到、虚假签到或缺席，并支持检索与导出。",
-      "href": "./tool-msf5b7nn/index.html",
-      "encrypted": true,
-      "fingerprint": "ef60f7f63b18ce45346acf814ef6b8df154661bb0abcbd07f59c9b574854d7c6",
-      "updatedAt": "2026-09-28T17:43:41.787Z"
-    },
-    {
-      "slug": "tool-ms4xb66s",
-      "name": "操作激励统计",
-      "description": "导入夜间操作 Excel，按人员、周期和操作等级核算操作激励并生成分析与导出结果。",
-      "href": "./tool-ms4xb66s/index.html",
-      "encrypted": true,
-      "fingerprint": "a3bbf102cc07666755743a127886f45c07275408d010a5ea9be0bf141a1c50cb",
-      "updatedAt": "2026-09-28T15:43:41.445Z"
-    },
-    {
-      "slug": "tool-mqp55fna",
-      "name": "六个一一",
-      "description": "由独立 HTML 导入的平台工具，可在统一入口和顶部导航中访问。",
-      "href": "./tool-mqp55fna/index.html",
-      "encrypted": true,
-      "fingerprint": "63aefd5905a06183131882dcc9f110a70a6f0750decc1b151d4d63faaab45462",
-      "updatedAt": "2026-09-27T17:41:02.231Z"
-    },
-    {
-      "slug": "f12-to-extension",
-      "name": "F12扩展打包",
-      "description": "F12 控制台脚本扩展打包器，支持内置脚本、默认代码混淆、可完全离线验签的月度 License、Popup 手动启动、兼容性检查和 Manifest V3 Edge/Chrome 扩展生成。",
-      "href": "./f12-to-extension/index.html",
-      "encrypted": true,
-      "fingerprint": "60f91d27d86851c61413148b5839f39894e3debc446a7d8db62c25b615d365bb",
-      "updatedAt": "2026-09-27T17:41:02.258Z"
-    },
-    {
       "slug": "optical-transfer",
       "name": "光码传文件",
       "description": "电脑屏幕播放动态二维码，手机摄像头连续扫码接收小文件或文本；文件内容不经过平台服务器。",
