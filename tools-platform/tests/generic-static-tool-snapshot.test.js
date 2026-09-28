@@ -215,3 +215,71 @@ test('publishing a custom static tool pushes HTML and assets to git repository a
     assert.match(readme, /ZIP 静态包工具/);
     assert.match(readme, /zip-demo-tool\/index\.html/);
 });
+
+test('full publish removes unchecked remote tool bundles while targeted publish leaves them intact', async () => {
+    const bare = path.join(temp, 'unpublish-remote.git');
+    const mirror = path.join(temp, 'unpublish-mirror');
+    execFileSync('git', ['init', '--bare', '--initial-branch=main', bare]);
+    execFileSync('git', ['clone', bare, mirror]);
+    fs.writeFileSync(path.join(mirror, 'keep.txt'), 'manually managed');
+    execFileSync('git', ['-C', mirror, 'add', 'keep.txt']);
+    execFileSync('git', ['-C', mirror, '-c', 'user.name=Tester', '-c', 'user.email=tester@test.local', 'commit', '-m', 'Initial commit']);
+    execFileSync('git', ['-C', mirror, 'push', '-u', 'origin', 'HEAD:main']);
+
+    const tools = (await publishService.getSettings()).tools.map(item => ({
+        toolSlug: item.toolSlug,
+        enabled: ['static-demo-tool', 'zip-demo-tool'].includes(item.toolSlug),
+        encryptionEnabled: false
+    }));
+    await publishService.saveSettings({ repoDir: mirror, branch: 'main', file: '{toolSlug}/index.html', publishMode: 'pages', tools });
+    async function publish(options = {}) {
+        const started = await publishService.startJob('default', options);
+        for (let i = 0; i < 100; i++) {
+            const job = await publishService.getJob(started.id);
+            if (job.status !== 'running') {
+                assert.equal(job.status, 'success', JSON.stringify(job.entries));
+                return job;
+            }
+            await new Promise(resolve => setTimeout(resolve, 40));
+        }
+        assert.fail('publish job timed out');
+    }
+    const tree = () => execFileSync('git', ['--git-dir', bare, 'ls-tree', '-r', '--name-only', 'main']).toString();
+    const menu = () => JSON.parse(execFileSync('git', ['--git-dir', bare, 'show', 'main:.tools-platform-menu.json']).toString());
+
+    await publish();
+    assert.match(tree(), /zip-demo-tool\/assets\/icon\.txt/);
+    assert.equal(menu().items.length, 2);
+
+    await publishService.saveToolSettings('zip-demo-tool', { enabled: false, encryptionEnabled: false });
+    await publish({ toolSlug: 'static-demo-tool' });
+    assert.match(tree(), /zip-demo-tool\/index\.html/, 'single-tool publish must not remove unchecked tools');
+
+    await publish();
+    assert.doesNotMatch(tree(), /zip-demo-tool\//);
+    assert.match(tree(), /static-demo-tool\/index\.html/);
+    assert.match(tree(), /keep\.txt/);
+    assert.deepEqual(menu().items.map(item => item.slug), ['static-demo-tool']);
+    const guide = execFileSync('git', ['--git-dir', bare, 'show', 'main:README.md']).toString();
+    assert.doesNotMatch(guide, /zip-demo-tool/);
+
+    await publishService.saveToolSettings('static-demo-tool', { enabled: false, encryptionEnabled: false });
+    await publish();
+    assert.doesNotMatch(tree(), /static-demo-tool\//);
+    assert.match(tree(), /keep\.txt/);
+    assert.deepEqual(menu().items, []);
+
+    await publishService.saveToolSettings('static-demo-tool', { enabled: true, encryptionEnabled: false });
+    await publishService.saveSettings({ repoDir: mirror, branch: 'main', file: '{toolSlug}/index.html', publishMode: 'single' });
+    await publish();
+    execFileSync('git', ['-C', mirror, 'pull', '--ff-only', 'origin', 'main']);
+    fs.writeFileSync(path.join(mirror, 'static-demo-tool', 'manual.html'), '<p>Manual page</p>');
+    execFileSync('git', ['-C', mirror, 'add', 'static-demo-tool/manual.html']);
+    execFileSync('git', ['-C', mirror, '-c', 'user.name=Tester', '-c', 'user.email=tester@test.local', 'commit', '-m', 'Add manually managed page']);
+    execFileSync('git', ['-C', mirror, 'push', 'origin', 'HEAD:main']);
+    await publishService.saveToolSettings('static-demo-tool', { enabled: false, encryptionEnabled: false });
+    await publish();
+    assert.doesNotMatch(tree(), /static-demo-tool\/index\.html/);
+    assert.match(tree(), /static-demo-tool\/manual\.html/, 'single-file cleanup must preserve unrelated files');
+    assert.deepEqual(menu().items, []);
+});

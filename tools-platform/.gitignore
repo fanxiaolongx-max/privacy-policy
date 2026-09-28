@@ -37,6 +37,8 @@ outputs/
 *.zip
 !backend/builtin-tools/f12-to-extension/chrome-capture-pro.template.zip
 !backend/builtin-tools/f12-to-extension/ppo-traffic-autofill.template.zip
+!backend/builtin-tools/f12-to-extension/overseas-salary-calculator.template.zip
+!extensions/overseas-salary-calculator/dist/*.zip
 !backend/builtin-tools/*/audio/audio.bundle.zip
 !frontend/downloads/uivision-extension-9.6.1.zip
 

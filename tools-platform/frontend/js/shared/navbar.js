@@ -3663,10 +3663,10 @@ window.startSnapshotPublish = async function (options = {}) {
             ? snapshotText('确认强制重新发布快照', 'Force republish snapshot?')
             : snapshotText('确认发布只读快照', 'Publish read-only snapshot?'),
         message: isForce
-            ? snapshotText(`${selectedTool ? `仅针对「${selectedTool}」，` : ''}即使文件未发生变化，本次也将强制创建 Git 提交并推送到远端仓库，以触发静态托管平台（Pages）的重新构建与部署。`, `${selectedTool ? `For ${selectedTool}, ` : ''}this will create a Git commit and push to remote even when files have not changed, triggering a Pages redeploy.`)
+            ? snapshotText(`${selectedTool ? `仅针对「${selectedTool}」，` : '本次还会清理远端已发布但现已取消勾选的工具。'}即使文件未发生变化，本次也将强制创建 Git 提交并推送到远端仓库，以触发静态托管平台（Pages）的重新构建与部署。`, `${selectedTool ? `For ${selectedTool}, ` : 'Previously published tools that are now unchecked will also be removed from the remote. '}this will create a Git commit and push to remote even when files have not changed, triggering a Pages redeploy.`)
             : selectedTool
                 ? snapshotText(`本次将根据已保存配置生成「${selectedTool}」的只读快照，并推送到目标仓库。`, `This will publish a read-only snapshot of ${selectedTool} using the saved destination settings.`)
-                : snapshotText('本次将根据配置生成各已启用工具的只读快照，并推送到目标仓库。请确认目标仓库及 Pages 的访问权限。', 'This will generate read-only snapshots of all enabled tools and publish them to the target repository. Confirm repository and Pages access first.'),
+                : snapshotText('本次将生成并推送各已启用工具的只读快照，同时从远端删除已发布但现已取消勾选的工具页面及受管理资源。请确认目标仓库及 Pages 的访问权限。', 'This will publish read-only snapshots of enabled tools and remove previously published, now unchecked tools and their managed assets from the remote. Confirm repository and Pages access first.'),
         confirmText: isForce ? snapshotText('强制推送', 'Force publish') : snapshotText('生成并推送', 'Generate & publish'),
         cancelText: snapshotText('取消', 'Cancel')
     });

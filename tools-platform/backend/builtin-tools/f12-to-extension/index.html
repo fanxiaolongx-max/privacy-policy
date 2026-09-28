@@ -192,6 +192,7 @@
                 <option value="authorized-media-exporter">授权媒体下载脚本生成器</option>
                 <option value="chrome-capture-pro">Chrome Capture Pro 屏幕录制与截图增强版</option>
                 <option value="ppo-traffic-autofill">PPO 交通违章表单自动填表器</option>
+                <option value="overseas-salary-calculator">💼 驻外薪资换汇计算器</option>
               </optgroup>
               <optgroup id="serverScriptOptions" label="服务器保存脚本"></optgroup>
             </select>
@@ -329,6 +330,17 @@
         includePopup: true,
         isFullExtension: true,
         overviewCode: '// PPO 交通违章表单自动填表器：完整扩展模板（含 Popup、后台脚本与资源文件）。'
+      },
+      'overseas-salary-calculator': {
+        type: 'template',
+        templateZip: './overseas-salary-calculator.template.zip',
+        name: '驻外薪资换汇计算器',
+        description: '专为驻外员工打造的薪资换汇与盈亏核算工具，实时获取官方汇率，精准测算 USD → EGP → CNY 汇差得失。',
+        matches: '<all_urls>',
+        world: 'MAIN',
+        includePopup: true,
+        isFullExtension: true,
+        overviewCode: '// 💼 驻外薪资换汇计算器：完整独立扩展模板（含 Popup 交互界面、实时汇率拉取与多币种核算）。'
       }
     };
 
@@ -473,6 +485,10 @@
         const sourceVersion = '1.0.13';
         if (!legacyVersion || versionIsEarlier(legacyVersion, sourceVersion)) legacyVersion = sourceVersion;
       }
+      if (activeScriptRef?.kind === 'builtin' && activeScriptRef.id === 'overseas-salary-calculator') {
+        const sourceVersion = '1.0.0';
+        if (!legacyVersion || versionIsEarlier(legacyVersion, sourceVersion)) legacyVersion = sourceVersion;
+      }
       const res = await fetch(apiPath, {
         method: 'POST',
         headers: {
@@ -534,8 +550,8 @@
           document.getElementById('extCode').value = preset.overviewCode || '// 完整扩展工程模板已就绪';
           document.getElementById('extCode').readOnly = true;
           if (applyPreset) applyScriptMetadata(preset);
-          document.getElementById('extLicense').disabled = scriptId === 'ppo-traffic-autofill';
-          if (scriptId === 'ppo-traffic-autofill') document.getElementById('extLicense').checked = false;
+          document.getElementById('extLicense').disabled = scriptId === 'ppo-traffic-autofill' || scriptId === 'overseas-salary-calculator';
+          if (scriptId === 'ppo-traffic-autofill' || scriptId === 'overseas-salary-calculator') document.getElementById('extLicense').checked = false;
           setActiveScript('builtin', scriptId);
           updatePackageTargetUI();
           await refreshVersionPreview();
@@ -582,7 +598,7 @@
         return;
       }
       await loadBuiltinScript(selected);
-      setScriptLibraryStatus(selected === 'ppo-traffic-autofill'
+      setScriptLibraryStatus(selected === 'ppo-traffic-autofill' || selected === 'overseas-salary-calculator'
         ? '已载入完整扩展模板；打包仅更新名称、描述、版本和扩展身份，原有网站权限与脚本保持不变。'
         : '已自动载入系统内置脚本。', 'text-emerald-300');
     }
@@ -1015,7 +1031,8 @@
     });
     function updatePackageTargetUI() {
       const storePackage = document.getElementById('extPackageTarget').value === 'store';
-      const isPpoTemplate = activeScriptRef?.kind === 'builtin' && activeScriptRef.id === 'ppo-traffic-autofill';
+      const isPpoTemplate = activeScriptRef?.kind === 'builtin'
+        && (activeScriptRef.id === 'ppo-traffic-autofill' || activeScriptRef.id === 'overseas-salary-calculator');
       const obfuscateInput = document.getElementById('extObfuscate');
       if (storePackage || isPpoTemplate) obfuscateInput.checked = false;
       obfuscateInput.disabled = storePackage || isPpoTemplate;
@@ -1084,8 +1101,11 @@
         const isPpoTraffic = activeScriptRef
           && activeScriptRef.kind === 'builtin'
           && activeScriptRef.id === 'ppo-traffic-autofill';
+        const isSalaryCalculator = activeScriptRef
+          && activeScriptRef.kind === 'builtin'
+          && activeScriptRef.id === 'overseas-salary-calculator';
 
-        if (isChromeCapture || isPpoTraffic) {
+        if (isChromeCapture || isPpoTraffic || isSalaryCalculator) {
           const template = BUILTIN_SCRIPTS[activeScriptRef.id];
           const templateZipRes = await fetch(template.templateZip + '?v=' + Date.now());
           if (!templateZipRes.ok) throw new Error('读取完整扩展模板包失败');

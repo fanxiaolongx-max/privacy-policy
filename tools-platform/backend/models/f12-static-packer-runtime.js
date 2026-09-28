@@ -82,9 +82,15 @@
 
     async function chromeTemplate() {
         const isPpoTraffic = selected?.id === 'ppo-traffic-autofill';
-        const base64 = isPpoTraffic ? catalog.ppoTemplateBase64 : catalog.templateBase64;
+        const isSalaryCalculator = selected?.id === 'overseas-salary-calculator';
+        const base64 = isPpoTraffic ? catalog.ppoTemplateBase64 : isSalaryCalculator ? catalog.salaryTemplateBase64 : catalog.templateBase64;
         if (base64) return JSZip.loadAsync(base64, { base64: true });
-        const response = await fetch(isPpoTraffic ? window.TP_F12_PPO_TEMPLATE_URL : window.TP_F12_TEMPLATE_URL, { cache: 'no-store' });
+        const templateUrl = isPpoTraffic
+            ? window.TP_F12_PPO_TEMPLATE_URL
+            : isSalaryCalculator
+                ? window.TP_F12_SALARY_TEMPLATE_URL
+                : window.TP_F12_TEMPLATE_URL;
+        const response = await fetch(templateUrl, { cache: 'no-store' });
         if (!response.ok) throw new Error('扩展模板读取失败：HTTP ' + response.status);
         return JSZip.loadAsync(await response.arrayBuffer());
     }

@@ -6,7 +6,7 @@ const { execFile } = require('child_process');
 const { promisify } = require('util');
 const { run, get, all, getDbPath } = require('./app-db');
 const { getTenantId, runWithTenant } = require('./tenant-context');
-const { updatePublishMenu, MENU_FILE } = require('./snapshot-publish-menu');
+const { updatePublishMenu, removePublishMenuItems, readPublishMenuItems, MENU_FILE } = require('./snapshot-publish-menu');
 
 const execGit = promisify(execFile);
 const git = (file, args, options = {}) => execGit(file, args, {
@@ -853,6 +853,45 @@ async function runGit(job, args, options = {}, displayCmdOverride = '') {
     }
 }
 
+function removeDisabledPublishedTool(checkout, item, paths) {
+    const relativePage = item.href.slice(2);
+    const page = path.resolve(checkout, relativePage);
+    if (!page.startsWith(checkout + path.sep)) throw bad('停用工具的远端页面路径无效，已停止清理');
+    rejectSymlinkParents(checkout, page);
+    const pageStat = fs.lstatSync(page, { throwIfNoEntry: false });
+    if (pageStat && !pageStat.isFile()) throw bad(`停用工具页面不是普通文件：${relativePage}`);
+
+    const relativeDir = path.posix.dirname(relativePage);
+    const dataDir = path.join(path.dirname(page), 'data');
+    rejectSymlinkParents(checkout, dataDir);
+    const marker = path.join(dataDir, '.tools-platform-snapshot.json');
+    const markerStat = fs.lstatSync(marker, { throwIfNoEntry: false });
+    let managedData = false;
+    if (markerStat) {
+        if (!markerStat.isFile()) throw bad(`停用工具的数据标记不是普通文件：${item.slug}`);
+        let parsed;
+        try { parsed = JSON.parse(fs.readFileSync(marker, 'utf8')); }
+        catch { throw bad(`停用工具的数据标记无效：${item.slug}`); }
+        if (parsed?.toolId !== item.slug || parsed?.format !== 1) throw bad(`停用工具的数据目录归属不匹配：${item.slug}`);
+        managedData = true;
+    }
+
+    // A dedicated slug directory with its own marker belongs to this published tool,
+    // including the CSS/JS/assets written beside index.html by generic static tools.
+    if (managedData && path.posix.basename(relativeDir) === item.slug) {
+        fs.rmSync(path.dirname(page), { recursive: true, force: true });
+        paths.push(relativeDir);
+        return '目录';
+    }
+    if (pageStat) fs.unlinkSync(page);
+    paths.push(relativePage);
+    if (managedData) {
+        fs.rmSync(dataDir, { recursive: true, force: true });
+        paths.push(path.posix.join(relativeDir, 'data'));
+    }
+    return managedData ? '页面和数据目录' : '页面（未标记的其他文件已保留）';
+}
+
 async function publish(job, tenantId, settings, options = {}) {
     const key = getDbPath() + ':' + job.id;
     active.add(key);
@@ -860,15 +899,16 @@ async function publish(job, tenantId, settings, options = {}) {
     try {
         const config = validate(settings);
         let targetSlugs = [];
+        const disabledSlugs = new Set();
         if (options.toolSlug) {
             targetSlugs = [options.toolSlug];
         } else {
             for (const slug of providers.keys()) {
                 const toolSettings = await getToolSettings(slug);
                 if (toolSettings.enabled !== false) targetSlugs.push(slug);
+                else disabledSlugs.add(slug);
             }
         }
-        if (!targetSlugs.length) throw bad('请至少启用一个静态发布工具');
         if (options.toolSlug && options.toolSlug !== DEFAULT_TOOL_SLUG
             && !config.file.includes('{toolSlug}')
             && !resolvePublishPath(config.file, options.toolSlug).split('/').includes(options.toolSlug)) {
@@ -920,6 +960,17 @@ async function publish(job, tenantId, settings, options = {}) {
 
         const paths = ['index.html', MENU_FILE];
         let guideName = 'README.md';
+        const disabledPublishedItems = options.toolSlug ? [] : readPublishMenuItems(checkout).filter(item => disabledSlugs.has(item.slug));
+        if (!targetSlugs.length && !disabledPublishedItems.length) throw bad('没有已启用或待清理的静态发布工具');
+        if (disabledPublishedItems.length) {
+            await updateJob(job, 'running', '清理停用工具', 43, `发现 ${disabledPublishedItems.length} 个已取消勾选且仍存在于远端菜单的工具`);
+            for (const item of disabledPublishedItems) {
+                const scope = removeDisabledPublishedTool(checkout, item, paths);
+                await recordCommandLog(job, { at: new Date().toISOString(), type: 'info', msg: `[停用清理] ${item.name} (${item.slug})：已删除${scope}` });
+            }
+            const menuResult = removePublishMenuItems(checkout, disabledSlugs);
+            if (menuResult) guideName = menuResult.guideName;
+        }
 
         for (const slug of targetSlugs) {
             const provider = providers.get(slug);
@@ -1040,7 +1091,10 @@ async function publish(job, tenantId, settings, options = {}) {
         const changed = diffRes.stdout.trim().split('\n').filter(Boolean);
         const dirty = changed.length > 0;
         const forceDeploy = Boolean(options.force);
-        const summaryNames = targetSlugs.map(s => providers.get(s)?.name || s).join('、');
+        const summaryNames = [
+            ...targetSlugs.map(s => providers.get(s)?.name || s),
+            ...disabledPublishedItems.map(item => `停用${item.name}`)
+        ].join('、');
         if (dirty) {
             await updateJob(job, 'running', '检查变更', 75, '本次变更 ' + changed.length + ' 个文件：' + changed.slice(0, 4).join('、') + (changed.length > 4 ? ' 等' : ''));
             await runGit(job, ['-C', checkout, '-c', 'user.name=Tools Platform', '-c', 'user.email=tools-platform@localhost', 'commit', '-m', `Update readonly tools snapshot (${summaryNames})`], { timeout: 30000 }, `git commit -m "Update readonly tools snapshot (${summaryNames})"`);

@@ -740,6 +740,15 @@ initializePopup();`;
       matches: ["*://www.ppo.gov.eg/*", "*://ppo.gov.eg/*", "*://*.ppo.gov.eg/*"],
       isFullExtension: true,
       templateZip: "./ppo-traffic-autofill.template.zip"
+    },
+    "overseas-salary-calculator": {
+      id: "overseas-salary-calculator",
+      name: "驻外薪资换汇计算器",
+      defaultVersion: "1.0.0",
+      description: "专为驻外员工打造的薪资换汇与盈亏核算工具，实时获取官方汇率，精准测算 USD → EGP → CNY 汇差得失。",
+      matches: ["<all_urls>"],
+      isFullExtension: true,
+      templateZip: "./overseas-salary-calculator.template.zip"
     }
   };
 

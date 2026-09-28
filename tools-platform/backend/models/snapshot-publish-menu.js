@@ -126,8 +126,28 @@ function updateIndex(html, menu) {
     return html.replace(/<body\b[^>]*>/i, match => match + '\n' + menu + '\n');
 }
 
-function updatePublishMenu(checkout, entry) {
-    const item = validateItem(entry);
+function readPublishMenuItems(checkout) {
+    const indexFile = path.join(checkout, 'index.html');
+    const manifestFile = path.join(checkout, MENU_FILE);
+    for (const file of [indexFile, manifestFile]) {
+        const stat = fs.lstatSync(file, { throwIfNoEntry: false });
+        if (stat && !stat.isFile()) throw bad('仓库首页或菜单清单不是普通文件，已停止发布');
+    }
+    if (!fs.existsSync(manifestFile)) {
+        if (fs.existsSync(indexFile) && fs.readFileSync(indexFile, 'utf8').includes(START)) {
+            throw bad('仓库首页已有工具菜单但缺少清单，请先恢复 ' + MENU_FILE);
+        }
+        return [];
+    }
+    let parsed;
+    try { parsed = JSON.parse(fs.readFileSync(manifestFile, 'utf8')); } catch { throw bad('仓库工具菜单清单不是有效 JSON'); }
+    if (parsed?.version !== 1 || !Array.isArray(parsed.items) || parsed.items.length > 200) throw bad('仓库工具菜单清单版本或条目数无效');
+    const items = parsed.items.map(validateItem);
+    if (new Set(items.map(row => row.slug)).size !== items.length) throw bad('仓库工具菜单清单存在重复 slug');
+    return items;
+}
+
+function writePublishMenuItems(checkout, items) {
     const indexFile = path.join(checkout, 'index.html');
     const manifestFile = path.join(checkout, MENU_FILE);
     const guideName = chooseGuideFile(checkout);
@@ -136,24 +156,6 @@ function updatePublishMenu(checkout, entry) {
         const stat = fs.lstatSync(file, { throwIfNoEntry: false });
         if (stat && !stat.isFile()) throw bad('仓库首页、菜单清单或说明文件不是普通文件，已停止发布');
     }
-    let items = [];
-    if (fs.existsSync(manifestFile)) {
-        let parsed;
-        try { parsed = JSON.parse(fs.readFileSync(manifestFile, 'utf8')); } catch { throw bad('仓库工具菜单清单不是有效 JSON'); }
-        if (parsed?.version !== 1 || !Array.isArray(parsed.items) || parsed.items.length > 200) throw bad('仓库工具菜单清单版本或条目数无效');
-        items = parsed.items.map(validateItem);
-        if (new Set(items.map(row => row.slug)).size !== items.length) throw bad('仓库工具菜单清单存在重复 slug');
-    } else if (fs.existsSync(indexFile) && fs.readFileSync(indexFile, 'utf8').includes(START)) {
-        throw bad('仓库首页已有工具菜单但缺少清单，请先恢复 ' + MENU_FILE);
-    }
-    const existing = items.findIndex(row => row.slug === item.slug);
-    if (item.fingerprint) {
-        item.updatedAt = existing >= 0 && items[existing].fingerprint === item.fingerprint && items[existing].updatedAt
-            ? items[existing].updatedAt
-            : new Date().toISOString();
-    }
-    if (existing >= 0) items[existing] = item;
-    else items.push(item);
     const menu = renderMenu(items);
     const current = fs.existsSync(indexFile) ? fs.readFileSync(indexFile, 'utf8') : '';
     const next = current
@@ -169,4 +171,26 @@ function updatePublishMenu(checkout, entry) {
     return { indexFile, manifestFile, guideFile, guideName, items };
 }
 
-module.exports = { updatePublishMenu, MENU_FILE };
+function updatePublishMenu(checkout, entry) {
+    const item = validateItem(entry);
+    const items = readPublishMenuItems(checkout);
+    const existing = items.findIndex(row => row.slug === item.slug);
+    if (item.fingerprint) {
+        item.updatedAt = existing >= 0 && items[existing].fingerprint === item.fingerprint && items[existing].updatedAt
+            ? items[existing].updatedAt
+            : new Date().toISOString();
+    }
+    if (existing >= 0) items[existing] = item;
+    else items.push(item);
+    return writePublishMenuItems(checkout, items);
+}
+
+function removePublishMenuItems(checkout, slugs) {
+    const items = readPublishMenuItems(checkout);
+    const removed = items.filter(item => slugs.has(item.slug));
+    if (!removed.length) return null;
+    const result = writePublishMenuItems(checkout, items.filter(item => !slugs.has(item.slug)));
+    return { ...result, removed };
+}
+
+module.exports = { updatePublishMenu, removePublishMenuItems, readPublishMenuItems, MENU_FILE };

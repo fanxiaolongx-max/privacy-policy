@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="appTitle">驻外薪资换汇计算器</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-main">
+        <div class="title-row">
+          <span class="app-icon" role="img" aria-label="briefcase">💼</span>
+          <h1 class="app-title" data-i18n="appTitle">驻外薪资换汇计算器</h1>
+        </div>
+        <p class="app-subtitle" data-i18n="appSubtitle">基准：USD发薪 → EGP到手 → 换回CNY 的最终得失</p>
+      </div>
+      <div class="header-actions">
+        <!-- Language Switcher Button -->
+        <button id="btn-lang" class="action-btn lang-btn" data-i18n-title="switchLangTitle" title="Switch to English" aria-label="切换语言">EN</button>
+
+        <!-- Refresh Rates Button -->
+        <button id="btn-refresh" class="action-btn" data-i18n-title="refreshTitle" title="刷新今日实时官方汇率" aria-label="刷新汇率">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <polyline points="1 20 1 14 7 14"></polyline>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+        </button>
+
+        <!-- Open in Full Tab Button -->
+        <button id="btn-open-tab" class="action-btn" data-i18n-title="openTabTitle" title="在新标签页全屏打开" aria-label="在新标签页打开">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <line x1="10" y1="14" x2="21" y2="3"></line>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Realtime Rates Banner -->
+    <div class="rates-banner">
+      <div class="rate-card rate-card-egp">
+        <span class="rate-card-title" data-i18n="rateUsdEgpTitle">今日实时官方汇率 (USD/EGP)</span>
+        <div class="rate-card-value">
+          <span class="rate-unit-prefix">$1 = </span>
+          <span id="live-usd-egp" class="rate-num rate-num-egp animate-pulse">--</span>
+          <span class="rate-unit-suffix">EGP</span>
+        </div>
+      </div>
+      <div class="rate-card rate-card-cny">
+        <span class="rate-card-title" data-i18n="rateUsdCnyTitle">今日实时官方汇率 (USD/CNY)</span>
+        <div class="rate-card-value">
+          <span class="rate-unit-prefix">$1 = </span>
+          <span id="live-usd-cny" class="rate-num rate-num-cny animate-pulse">--</span>
+          <span class="rate-unit-suffix">CNY</span>
+        </div>
+      </div>
+    </div>
+    <div id="rate-sync-status" class="rate-sync-status">正在获取最新官方汇率…</div>
+
+    <!-- Calculator Panels (Two columns) -->
+    <div class="calculator-grid">
+      <!-- Company Payout Panel (USD -> EGP) -->
+      <section class="card panel-company">
+        <h2 class="card-title text-blue">
+          <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M12 6v12M15 9.5a3.5 3.5 0 0 0-5 0c0 2 3 2.5 3 4.5a3.5 3.5 0 0 1-5 0"></path>
+          </svg>
+          <span data-i18n="panelCompanyTitle">公司发薪设定 (USD → EGP)</span>
+        </h2>
+
+        <div class="form-group">
+          <label class="form-label" for="salary-usd" data-i18n="labelSalaryUsd">固定美元工资总额 (USD)</label>
+          <div class="input-prefix-wrapper">
+            <span class="input-prefix">$</span>
+            <input type="number" id="salary-usd" value="2000" min="0" step="100" class="form-input has-prefix" placeholder="2000">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="buy-date" data-i18n="labelBuyDate">公司结算日 (决定折算汇率)</label>
+          <select id="buy-date" class="form-select">
+            <option value="" data-i18n="loadingDates">正在加载日期...</option>
+          </select>
+        </div>
+
+        <div class="info-box-blue">
+          <div class="info-row">
+            <span class="info-label" data-i18n="labelBuyRateEgp">当日公司结汇 (USD/EGP):</span>
+            <span class="info-val font-mono" id="buy-rate-egp">--</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label" data-i18n="labelBuyRateCny">当日基准汇率 (USD/CNY):</span>
+            <span class="info-val font-mono" id="buy-rate-cny">--</span>
+          </div>
+          <div class="info-row info-row-highlight">
+            <span class="info-label" data-i18n="labelReceivedEgp">公司实际发给你的 EGP:</span>
+            <span class="info-val-strong font-mono" id="received-egp">--</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- User Sell Panel (EGP -> CNY) -->
+      <section class="card panel-user">
+        <h2 class="card-title text-rose">
+          <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M7 16V4m0 0L3 8m4-4l4 4m6 4v12m0 0l4-4m-4 4l-4-4"></path>
+          </svg>
+          <span data-i18n="panelUserTitle">自己换回设定 (EGP → CNY)</span>
+        </h2>
+
+        <div class="form-group">
+          <label class="form-label" for="sell-egp" data-i18n="labelSellEgp">本次准备换回的 EGP 金额</label>
+          <div class="input-action-wrapper">
+            <input type="number" id="sell-egp" value="0" min="0" step="1000" class="form-input" data-i18n-placeholder="placeholderSellEgp" placeholder="输入换回金额">
+            <button id="btn-max" type="button" class="inline-btn" data-i18n="btnMax" data-i18n-title="btnMaxTitle" title="点击填入全部到手埃镑">全额换回</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="sell-rate" data-i18n="labelSellRate">实际成交汇率 (1 CNY = ? EGP)</label>
+          <input type="number" id="sell-rate" value="0.0000" min="0" step="0.0001" class="form-input" data-i18n-placeholder="placeholderSellRate" placeholder="例如 7.20">
+          <p class="form-hint" data-i18n="hintSellRate">提示：填入实际成交价。例如 7.20 (代表 7.2 EGP 换 1 人民币)</p>
+        </div>
+      </section>
+    </div>
+
+    <!-- Result Section (Dark Card) -->
+    <section class="result-card">
+      <div class="result-backdrop-glow"></div>
+      <h2 class="result-title">
+        <svg class="result-icon text-emerald" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="2" width="16" height="20" rx="2"></rect>
+          <line x1="8" y1="6" x2="16" y2="6"></line>
+          <line x1="16" y1="14" x2="16" y2="18"></line>
+          <path d="M16 10h.01M12 10h.01M8 10h.01M12 14h.01M8 14h.01M12 18h.01M8 18h.01"></path>
+        </svg>
+        <span data-i18n="resultTitle">换回人民币 (CNY) 最终得失核算</span>
+      </h2>
+
+      <div class="result-metrics">
+        <div class="metric-block">
+          <span class="metric-label" data-i18n="labelOriginalCny" data-i18n-title="tooltipOriginalCny" title="发薪当日，这部分EGP对应的USD直接换CNY的价值">发薪当日基准价值 (CNY)</span>
+          <span id="original-cny" class="metric-val font-mono">--</span>
+        </div>
+
+        <div class="metric-block">
+          <span class="metric-label" data-i18n="labelFinalCny">现在实际换到手 (CNY)</span>
+          <span id="final-cny" class="metric-val font-mono">--</span>
+        </div>
+
+        <div class="metric-block metric-block-profit">
+          <span class="metric-label" data-i18n="labelProfitCny">相比发薪日基准盈亏：</span>
+          <div class="profit-row">
+            <span id="profit-cny" class="profit-val font-mono">--</span>
+            <span id="profit-label" class="profit-badge hidden"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <span data-i18n="footerSource">数据来源: jsDelivr CDN / fawazahmed0 Currency API</span>
+      <span class="footer-separator">•</span>
+      <span data-i18n="footerNotice">汇率仅供参考，计算结果取决于输入准确性</span>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
