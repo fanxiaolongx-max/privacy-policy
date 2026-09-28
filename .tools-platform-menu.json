@@ -54,6 +54,60 @@
       "encrypted": true,
       "fingerprint": "60f91d27d86851c61413148b5839f39894e3debc446a7d8db62c25b615d365bb",
       "updatedAt": "2026-09-27T17:41:02.258Z"
+    },
+    {
+      "slug": "optical-transfer",
+      "name": "光码传文件",
+      "description": "电脑屏幕播放动态二维码，手机摄像头连续扫码接收小文件或文本；文件内容不经过平台服务器。",
+      "href": "./optical-transfer/index.html",
+      "encrypted": false,
+      "fingerprint": "d53ae95669d11c7f656829f8c5dcbb444cffa3569a7c63a10d61fd440a475422",
+      "updatedAt": "2026-09-28T18:30:32.995Z"
+    },
+    {
+      "slug": "particle-effects",
+      "name": "粒子特效",
+      "description": "可跟随内置音乐、音频文件或麦克风实时变化的 3D Chladni 粒子视觉特效。",
+      "href": "./particle-effects/index.html",
+      "encrypted": false,
+      "fingerprint": "6f11c62aed2ec91648751a1c56fd21f3d86e233521d003626032cb935a0a0f8c",
+      "updatedAt": "2026-09-28T18:30:33.013Z"
+    },
+    {
+      "slug": "tool-mrrgpqy4",
+      "name": "人数计数",
+      "description": "轻量、适合移动端使用的现场人数计数器。",
+      "href": "./tool-mrrgpqy4/index.html",
+      "encrypted": false,
+      "fingerprint": "287001a8d16ce0d4a41be1575f1f9fdfce9208a36d88c568552de0b06388f717",
+      "updatedAt": "2026-09-28T18:30:33.018Z"
+    },
+    {
+      "slug": "tool-mrrn48dc",
+      "name": "旅游计时",
+      "description": "土耳其海边旅行倒计时页面。",
+      "href": "./tool-mrrn48dc/index.html",
+      "encrypted": false,
+      "fingerprint": "6aee83e96cddb3e7ebd155d65ac52220f0f9cc4b1d3942ec933d3b18196b1fbd",
+      "updatedAt": "2026-09-28T18:30:33.082Z"
+    },
+    {
+      "slug": "tool-msqfmv82",
+      "name": "文档整编",
+      "description": "一款在浏览器本地运行的 PDF 处理应用，可压缩、合并文件，排序、旋转或删除页面，并支持双页裁切拼接，适合日常文档整理。",
+      "href": "./tool-msqfmv82/index.html",
+      "encrypted": false,
+      "fingerprint": "5e531b0f673c67caf78b5eb4c8527690c92cfee7ac0482dd61d67dbf8d201488",
+      "updatedAt": "2026-09-28T18:30:33.091Z"
+    },
+    {
+      "slug": "tool-msqfplq0",
+      "name": "文档编辑",
+      "description": "一款浏览器端PDF编辑应用，可添加文字、图片、遮盖、画笔与高亮标注，调整页面旋转和缩放，并保存工程或导出合成后的PDF。",
+      "href": "./tool-msqfplq0/index.html",
+      "encrypted": false,
+      "fingerprint": "18da61da38e43d6bbd393fda1e2176758cca4cb5d4d96ff5c4223888e118a752",
+      "updatedAt": "2026-09-28T18:30:33.104Z"
     }
   ]
 }
