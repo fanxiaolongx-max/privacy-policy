@@ -238,6 +238,129 @@ test('buildSnapshotPayload and restoreMeetingSnapshot handle state serialization
     assert.equal(api.state.active, 'people');
 });
 
+test('multi-meeting session detection, per-session switching, and matrix comparison', async () => {
+    const api = loadSandboxTool();
+
+    // Import QR roster (baseline people)
+    api.state.sheets = [
+        {
+            id: 'sheet_qr',
+            category: 'qr',
+            fileName: 'QR_Baseline.xlsx',
+            sheetName: 'Sheet1',
+            headers: ['BU', 'Customer Group', 'Apply Full Name', 'Apply Account ID', 'TD Full Name', 'TD'],
+            rows: [
+                ['Software', 'ET', 'Alice User', 'U10001', 'Bob TD', 'U10002']
+            ],
+            visibleColumns: [0, 1, 2, 3, 4, 5],
+            page: 1,
+            order: 1
+        },
+        // Session 1 Offline Scan
+        {
+            id: 'sheet_sess1_offline',
+            category: 'offline',
+            fileName: '2026-09-22 网安例会_签到.xlsx',
+            sheetName: 'Sheet1',
+            headers: ['工号', '姓名', '签到时间'],
+            rows: [
+                ['U10001', 'Alice User', '2026-09-22 10:30:00'],
+                ['U10002', 'Bob TD', '2026-09-22 18:30:00']
+            ],
+            visibleColumns: [0, 1, 2],
+            page: 1,
+            order: 2
+        },
+        // Session 2 Offline Scan
+        {
+            id: 'sheet_sess2_offline',
+            category: 'offline',
+            fileName: '2026-09-29 网安例会_签到.xlsx',
+            sheetName: 'Sheet1',
+            headers: ['工号', '姓名', '签到时间'],
+            rows: [
+                ['U10001', 'Alice User', '2026-09-29 10:30:00']
+            ],
+            visibleColumns: [0, 1, 2],
+            page: 1,
+            order: 3
+        }
+    ];
+
+    // 1. Session Title Normalization
+    assert.equal(api.cleanSessionTitle('2026-09-22 网安例会_签到.xlsx'), '2026-09-22 网安例会');
+    assert.equal(api.cleanSessionTitle('2026-09-22 网安例会_入会记录.xlsx'), '2026-09-22 网安例会');
+    assert.equal(api.cleanSessionTitle('2026-09-29 网安例会-现场签到.xlsx'), '2026-09-29 网安例会');
+
+    // 2. Discover sessions
+    const sessions = api.getMeetingSessions();
+    assert.equal(sessions.length, 2);
+    assert.equal(sessions[0].name, '2026-09-22 网安例会');
+    assert.equal(sessions[1].name, '2026-09-29 网安例会');
+
+    // 3. Process people cache
+    const cache = await api.ensurePeopleCache();
+    assert.equal(cache.sessions.length, 2);
+    assert.equal(cache.all.length, 2);
+
+    const alice = cache.all.find(p => p.account === 'U10001');
+    const bob = cache.all.find(p => p.account === 'U10002');
+    assert.ok(alice, 'Alice should be in cache');
+    assert.ok(bob, 'Bob should be in cache');
+
+    // Alice attended both sessions on-time -> 全勤 (全准时)
+    assert.equal(alice.sessionRecords['2026-09-22 网安例会'].attendance, 'Attend on Time');
+    assert.equal(alice.sessionRecords['2026-09-29 网安例会'].attendance, 'Attend on Time');
+    assert.match(alice.multiSessionStatus, /全勤/);
+
+    // Bob only attended session 1 -> 部分出席
+    assert.notEqual(bob.sessionRecords['2026-09-22 网安例会'].attendance, 'Absent');
+    assert.equal(bob.sessionRecords['2026-09-29 网安例会'].attendance, 'Absent');
+    assert.match(bob.multiSessionStatus, /部分出席/);
+
+    // 4. Session-specific row mapping
+    const sess1Rows = api.getSessionPeopleRows(cache.all, '2026-09-22 网安例会');
+    const sess1Alice = sess1Rows.find(p => p.account === 'U10001');
+    assert.equal(sess1Alice.attendance, 'Attend on Time');
+
+    const sess2Rows = api.getSessionPeopleRows(cache.all, '2026-09-29 网安例会');
+    const sess2Bob = sess2Rows.find(p => p.account === 'U10002');
+    assert.equal(sess2Bob.attendance, 'Absent');
+
+    // 5. Multi-session export tables
+    const tables = api.buildAnalysisTables(cache.all);
+    assert.ok(tables.multiMatrix, 'Multi-session matrix table should be generated');
+    assert.equal(tables.multiMatrix[0][4], '2026-09-22 网安例会');
+    assert.equal(tables.multiMatrix[0][5], '2026-09-29 网安例会');
+    assert.equal(tables.multiMatrix[0][6], 'Overall Status');
+
+    // 6. Test fallback when only attendance files imported without QR/RFC/WFM
+    api.state.sheets = [
+        {
+            id: 'offline_1',
+            category: 'offline',
+            fileName: '会议A_签到.xlsx',
+            sheetName: 'Sheet1',
+            headers: ['工号', '姓名', '签到时间', 'BU'],
+            rows: [
+                ['U88801', 'Charlie Standalone', '2026-09-22 10:30:00', 'IT-BU']
+            ],
+            visibleColumns: [0, 1, 2, 3],
+            page: 1,
+            order: 1
+        }
+    ];
+    api.invalidatePeopleCache();
+    const sourcePeople = api.extractAttendanceSourcePeople();
+    assert.equal(sourcePeople.length, 1);
+    assert.equal(sourcePeople[0].account, 'U88801');
+    assert.equal(sourcePeople[0].name, 'Charlie Standalone');
+
+    const fallbackAll = api.extractAllPeople([], [], [], new Map());
+    assert.equal(fallbackAll.length, 1);
+    assert.equal(fallbackAll[0].account, 'U88801');
+});
+
 test('meeting-snapshots REST API routes respond correctly to GET, POST, PUT, DELETE', async () => {
     const express = require('express');
     const meetingRoutes = require('../backend/routes/meeting-snapshots');

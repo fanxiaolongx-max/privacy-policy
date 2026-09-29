@@ -1822,8 +1822,159 @@
       animation: uiScaleUp .15s ease-out;
     }
 
-    @keyframes uiFadeIn { from { opacity: 0; } to { opacity: 1; } }
-    @keyframes uiScaleUp { from { transform: scale(0.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    /* ===== Multi-session styles ===== */
+    .session-switcher-bar {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 10px 14px;
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      margin-bottom: 14px;
+    }
+    .session-switcher-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #334155;
+    }
+    .session-tabs-list {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .session-tab-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      background: #fff;
+      font-size: 13px;
+      font-weight: 500;
+      color: #334155;
+      cursor: pointer;
+      transition: all .15s ease;
+      user-select: none;
+    }
+    .session-tab-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: #fff8f8;
+    }
+    .session-tab-btn.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+      box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2);
+    }
+    .session-tab-badge {
+      font-size: 11px;
+      padding: 1px 6px;
+      border-radius: 10px;
+      background: #f1f5f9;
+      color: #475569;
+      font-weight: 600;
+    }
+    .session-tab-btn.active .session-tab-badge {
+      background: rgba(255, 255, 255, 0.25);
+      color: #fff;
+    }
+    .session-notice-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 10px;
+      padding: 10px 16px;
+      margin-bottom: 14px;
+    }
+    .session-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .session-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+    .session-card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .session-card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0f172a;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .session-card-stats {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .session-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      background: #f1f5f9;
+      color: #0f172a;
+      padding: 1px 6px;
+      border-radius: 4px;
+      border: 1px solid #cbd5e1;
+      font-size: 11px;
+      font-weight: 600;
+      margin-left: 4px;
+    }
+    .multi-status-tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+    .multi-status-tag.full-ontime {
+      background: #dcfce7;
+      color: #15803d;
+      border: 1px solid #bbf7d0;
+    }
+    .multi-status-tag.full-delay {
+      background: #fef9c3;
+      color: #854d0e;
+      border: 1px solid #fef08a;
+    }
+    .multi-status-tag.partial {
+      background: #e0f2fe;
+      color: #0369a1;
+      border: 1px solid #bae6fd;
+    }
+    .multi-status-tag.none {
+      background: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+    }
   </style>
 </head>
 
@@ -2083,7 +2234,7 @@
       }
       function loadSidebarCollapsed() { try { return localStorage.getItem(SIDEBAR_STORAGE_KEY) === '1'; } catch (e) { return false; } }
       function loadDeveloperMode() { try { return sessionStorage.getItem(DEVELOPER_SESSION_KEY) === '1'; } catch (e) { return false; } }
-      const state = { active: 'qr', lang: loadLanguage(), sidebarCollapsed: loadSidebarCollapsed(), pageSize: 200, sheets: [], seq: 0, editingSheet: null, peoplePages: { all: 1, qr: 1, rfc: 1, wfm: 1 }, buFilter: '', personSearch: { query: '', result: null, pages: { qr: 1, rfc: 1, wfm: 1, offline: 1, online: 1 } }, dataVersion: 0, peopleCache: null, qualityCache: null, peopleBuildId: 0, customerMappings: loadCustomerMappings(), attendanceRules: loadAttendanceRules(), exemptions: loadExemptions(), developerMode: loadDeveloperMode(), developerClicks: [], openPeopleCards: new Set(), snapshotsList: [] };
+      const state = { active: 'qr', lang: loadLanguage(), sidebarCollapsed: loadSidebarCollapsed(), pageSize: 200, sheets: [], seq: 0, editingSheet: null, peoplePages: { all: 1, qr: 1, rfc: 1, wfm: 1 }, buFilter: '', selectedSession: 'all', personSearch: { query: '', result: null, pages: { qr: 1, rfc: 1, wfm: 1, offline: 1, online: 1 } }, dataVersion: 0, peopleCache: null, qualityCache: null, peopleBuildId: 0, customerMappings: loadCustomerMappings(), attendanceRules: loadAttendanceRules(), exemptions: loadExemptions(), developerMode: loadDeveloperMode(), developerClicks: [], openPeopleCards: new Set(), snapshotsList: [] };
       const $ = s => document.querySelector(s);
       const t = key => UI[state.lang][key] || UI.zh[key] || key;
       const bi = (zh, en) => state.lang === 'en' ? (en || I18N_DICT[zh] || zh) : zh;
@@ -2391,6 +2542,99 @@
         if (!items.length) { $('#sheetList').innerHTML = `<div class="empty"><strong>${t('emptyTitle')}</strong>${t('emptyDesc')}</div>`; return; }
         $('#sheetList').innerHTML = items.map(renderSheetCard).join('');
       }
+      function cleanSessionTitle(title) {
+        if (!title) return '';
+        let str = String(title).trim();
+        str = str.replace(/\.(xlsx|xls|csv|tsv)$/i, '');
+        str = str.replace(/[_\-\s]*(?:现场签到|签到表|签到名单|签到数据|入会记录|参会记录|参会名单|会议记录|签到|参会|入会|考勤|attendance|signin|sign_in|meeting_records?)$/i, '');
+        str = str.trim();
+        return str || String(title).trim();
+      }
+      function isGenericTitle(str) {
+        if (!str) return true;
+        const s = str.trim().toLowerCase();
+        return /^(sheet\d*|入会记录|参会记录|会议记录|签到表|签到|参会|export|meeting|attendees|records?|attendance|data|table|新建工作表)$/i.test(s);
+      }
+      function getSheetRowSessionNames(s) {
+        if (!s || !s.headers || !s.rows) return [];
+        const titleCol = headerIndex(s.headers, 'meeting_title', '会议名称', '会议主题', '场次', '会议');
+        if (titleCol < 0) return [];
+        const set = new Set();
+        s.rows.forEach(r => {
+          const val = cleanSessionTitle(cellAt(r, titleCol));
+          if (val && !isGenericTitle(val)) set.add(val);
+        });
+        return [...set];
+      }
+      function getSheetDefaultSessionName(s) {
+        if (!s) return '默认场次';
+        if (s.sessionName) return s.sessionName;
+        const fileClean = cleanSessionTitle(s.fileName);
+        const rowSessions = getSheetRowSessionNames(s);
+        if (rowSessions.length === 1 && isGenericTitle(fileClean)) {
+          return rowSessions[0];
+        }
+        const sheetClean = normalizeName(s.sheetName);
+        if (sheetClean && sheetClean !== '入会记录' && sheetClean !== 'Sheet1' && sheetClean !== 'sheet1' && !/^sheet\s*\d+$/i.test(sheetClean)) {
+          if (fileClean && !fileClean.includes(sheetClean) && !isGenericTitle(fileClean)) {
+            return `${fileClean} - ${sheetClean}`;
+          }
+          return sheetClean;
+        }
+        return fileClean || s.sheetName || '默认场次';
+      }
+      function getSheetSessionName(s) {
+        if (!s) return '默认场次';
+        if (s.sessionName) return s.sessionName;
+        const rowSessions = getSheetRowSessionNames(s);
+        if (rowSessions.length > 1) {
+          return bi(`多场次 (${rowSessions.length} 场)`, `Multiple Sessions (${rowSessions.length})`);
+        }
+        return getSheetDefaultSessionName(s);
+      }
+      function getRowSessionName(s, row) {
+        if (!s) return '默认场次';
+        if (s.sessionName) return s.sessionName;
+        const titleCol = headerIndex(s.headers, 'meeting_title', '会议名称', '会议主题', '场次', '会议');
+        if (titleCol >= 0) {
+          const rowSessions = getSheetRowSessionNames(s);
+          if (rowSessions.length > 1) {
+            const val = cleanSessionTitle(cellAt(row, titleCol));
+            if (val) return val;
+          }
+        }
+        return getSheetDefaultSessionName(s);
+      }
+      function getMeetingSessions() {
+        const sessionMap = new Map();
+        const attSheets = state.sheets.filter(s => s.category === 'offline' || s.category === 'online');
+        attSheets.forEach(s => {
+          const rowSessions = getSheetRowSessionNames(s);
+          if (!s.sessionName && rowSessions.length > 1) {
+            const titleCol = headerIndex(s.headers, 'meeting_title', '会议名称', '会议主题', '场次', '会议');
+            s.rows.forEach(r => {
+              const sessName = cleanSessionTitle(cellAt(r, titleCol)) || getSheetDefaultSessionName(s);
+              if (!sessionMap.has(sessName)) {
+                sessionMap.set(sessName, { name: sessName, offlineSheets: 0, onlineSheets: 0, rowCount: 0 });
+              }
+              const item = sessionMap.get(sessName);
+              item.rowCount++;
+              if (s.category === 'offline') item.offlineSheets++;
+              else item.onlineSheets++;
+            });
+          } else {
+            const sessName = s.sessionName || getSheetDefaultSessionName(s);
+            if (!sessionMap.has(sessName)) {
+              sessionMap.set(sessName, { name: sessName, offlineSheets: 0, onlineSheets: 0, rowCount: 0 });
+            }
+            const item = sessionMap.get(sessName);
+            item.rowCount += s.rows.length;
+            if (s.category === 'offline') item.offlineSheets++;
+            else item.onlineSheets++;
+          }
+        });
+        return [...sessionMap.values()];
+      }
       function renderSheetCard(s) {
         const total = Math.max(1, Math.ceil(s.rows.length / state.pageSize)); s.page = Math.min(Math.max(1, s.page || 1), total);
         const start = (s.page - 1) * state.pageSize, pageRows = s.rows.slice(start, start + state.pageSize);
@@ -2398,14 +2642,40 @@
         const headers = Array.from({ length: width }, (_, i) => s.headers[i] || `列 ${i + 1}`);
         const columns = getDisplayColumns(s, headers), shownHeaders = columns.map(i => headers[i]);
         const body = pageRows.length ? pageRows.map((r, ri) => `<tr><td>${start + ri + 1}</td>${columns.map(i => `<td title="${esc(r[i])}">${esc(r[i])}</td>`).join('')}</tr>`).join('') : `<tr><td></td><td colspan="${Math.max(1, columns.length)}">${bi('该工作表没有数据行', 'This sheet has no data rows')}</td></tr>`;
+        const isAttSheet = ['offline', 'online'].includes(s.category);
+        const sessionBadge = isAttSheet ? `<span class="session-badge" title="${bi('所属会议场次', 'Meeting Session')}">🏷️ ${esc(getSheetSessionName(s))}</span>` : '';
+        const sessionBtn = isAttSheet ? `<button class="icon-btn" data-action="rename-session" title="${bi('修改所属会议场次', 'Edit Meeting Session')}">✏️ ${bi('改场次', 'Session')}</button>` : '';
         return `<article class="sheet-card" data-sheet="${s.id}">
-      <div class="sheet-head"><div class="sheet-title"><h3 title="${esc(s.fileName)} / ${esc(s.sheetName)}">${esc(s.fileName)} · ${esc(s.sheetName)}</h3><div class="sheet-meta">${s.rows.length.toLocaleString()} ${t('rows')} · ${bi('显示', 'Showing')} ${columns.length} / ${width} ${bi('列', 'columns')} · ${bi('导入序号', 'Import #')} ${s.order}</div></div><div class="sheet-actions"><button class="icon-btn" data-action="columns">${t('columns')}</button><button class="icon-btn danger" data-action="remove">${t('remove')}</button></div></div>
+      <div class="sheet-head"><div class="sheet-title"><h3 title="${esc(s.fileName)} / ${esc(s.sheetName)}">${esc(s.fileName)} · ${esc(s.sheetName)}</h3><div class="sheet-meta">${s.rows.length.toLocaleString()} ${t('rows')} · ${bi('显示', 'Showing')} ${columns.length} / ${width} ${bi('列', 'columns')} · ${bi('导入序号', 'Import #')} ${s.order} ${sessionBadge}</div></div><div class="sheet-actions">${sessionBtn}<button class="icon-btn" data-action="columns">${t('columns')}</button><button class="icon-btn danger" data-action="remove">${t('remove')}</button></div></div>
       <div class="table-wrap"><table class="data-table"><thead><tr><th>#</th>${shownHeaders.map(h => `<th title="${esc(h)}">${esc(h)}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table></div>
       <div class="pager"><span>${bi('显示', 'Showing')} ${s.rows.length ? start + 1 : 0}–${Math.min(start + state.pageSize, s.rows.length)} / ${s.rows.length.toLocaleString()} ${t('rows')}</span><div class="pager-controls"><button class="page-btn" data-action="first" ${s.page === 1 ? 'disabled' : ''}>«</button><button class="page-btn" data-action="prev" ${s.page === 1 ? 'disabled' : ''}>‹</button><span class="page-current">${s.page} / ${total}</span><button class="page-btn" data-action="next" ${s.page === total ? 'disabled' : ''}>›</button><button class="page-btn" data-action="last" ${s.page === total ? 'disabled' : ''}>»</button></div></div>
     </article>`;
       }
       function handleSheetAction(e) {
         const btn = e.target.closest('[data-action]'); if (!btn) return;
+        if (btn.dataset.action === 'switch-session') {
+          state.selectedSession = btn.dataset.session || 'all';
+          state.peoplePages.all = 1;
+          renderPeopleResults();
+          return;
+        }
+        if (btn.dataset.action === 'rename-session') {
+          const card = e.target.closest('[data-sheet]'); if (!card) return;
+          const s = state.sheets.find(x => x.id === card.dataset.sheet); if (!s) return;
+          const cur = getSheetDefaultSessionName(s);
+          uiPrompt(bi('请输入此工作表所属的会议场次名称：', 'Enter session name for this sheet:'), s.sessionName || cur, {
+            title: bi('修改会议场次', 'Edit Meeting Session'),
+            placeholder: bi('例如：2026-09-22 网安例会 或 第一场', 'e.g. 2026-09-22 Meeting or Session 1')
+          }).then(newName => {
+            if (newName !== null && newName.trim() && newName.trim() !== (s.sessionName || cur)) {
+              s.sessionName = newName.trim();
+              invalidatePeopleCache();
+              render();
+              toast(bi(`已将该表场次更新为：${s.sessionName}`, `Session updated to: ${s.sessionName}`));
+            }
+          });
+          return;
+        }
         if (btn.dataset.action === 'person-search-open') { openPersonSearchModal(); return; }
         if (btn.dataset.action === 'bu-filter') {
           const bu = btn.dataset.bu || ''; state.buFilter = state.buFilter === bu ? '' : bu; state.peoplePages.all = 1; renderPeopleResults();
@@ -2534,15 +2804,397 @@
         const version = state.dataVersion; showLoading(true, bi('正在整理 QR 人员…', 'Processing QR people…'), 10); await nextPaint(); const qr = extractQrPeople();
         showLoading(true, bi('正在整理 RFC 人员…', 'Processing RFC people…'), 35); await nextPaint(); const rfc = extractRfcPeople();
         showLoading(true, bi('正在整理 WFM 人员…', 'Processing WFM people…'), 55); await nextPaint(); const wfm = extractWfmPeople();
-        showLoading(true, bi('正在匹配在线与离线签到记录…', 'Matching online and on-site records…'), 75); await nextPaint(); const attendanceIndex = buildAttendanceIndex();
-        showLoading(true, bi('正在合并、去重并计算考勤状态…', 'Merging, deduplicating and calculating attendance…'), 90); await nextPaint(); const all = extractAllPeople(qr, rfc, wfm, attendanceIndex);
+        showLoading(true, bi('正在匹配会议场次与考勤记录…', 'Detecting sessions and matching records…'), 75); await nextPaint();
+        const sessions = getMeetingSessions();
+        const attendanceIndex = buildAttendanceIndex();
+        showLoading(true, bi('正在合并、去重并计算各场次考勤…', 'Merging, deduplicating and calculating attendance…'), 90); await nextPaint();
+        const all = extractAllPeople(qr, rfc, wfm, attendanceIndex);
+
+        const sessionIndexes = {};
+        const sessionStats = {};
+        if (sessions.length > 1) {
+          sessions.forEach(sess => {
+            const sIndex = buildAttendanceIndex(sess.name);
+            sessionIndexes[sess.name] = sIndex;
+            const sCounts = { Absent: 0, 'Attend on Time': 0, Delay: 0, 'Fake Attendance': 0 };
+            const sByBu = new Map();
+            all.forEach(p => {
+              if (!p.sessionRecords) p.sessionRecords = {};
+              const exemption = getExemption(p);
+              const record = exemption ? null : getAttendanceRecord(p.account, sIndex);
+              const attendance = exemption ? 'Attend on Time' : determineAttendance(p.account, sIndex, p.name);
+              p.sessionRecords[sess.name] = {
+                attendance,
+                attendanceTime: record?.displayTime || '',
+                attendanceMethod: exemption ? '豁免名单' : (record?.method || '无记录')
+              };
+              sCounts[attendance] = (sCounts[attendance] || 0) + 1;
+              const bu = normalizeName(p.bu) || '未识别 BU';
+              if (!sByBu.has(bu)) sByBu.set(bu, { total: 0, 'Attend on Time': 0, Delay: 0, Absent: 0, 'Fake Attendance': 0 });
+              const b = sByBu.get(bu);
+              b.total++;
+              b[attendance] = (b[attendance] || 0) + 1;
+            });
+            sessionStats[sess.name] = { counts: sCounts, byBu: sByBu, total: all.length };
+          });
+
+          all.forEach(p => {
+            const attendedCount = sessions.filter(s => p.sessionRecords?.[s.name]?.attendance && p.sessionRecords[s.name].attendance !== 'Absent').length;
+            const onTimeCount = sessions.filter(s => p.sessionRecords?.[s.name]?.attendance === 'Attend on Time').length;
+            let statusText = '';
+            let statusTag = '';
+            if (attendedCount === sessions.length) {
+              if (onTimeCount === sessions.length) {
+                statusText = bi('全勤 (全准时)', 'Full (All On-time)');
+                statusTag = 'full-ontime';
+              } else {
+                statusText = bi('全勤 (有迟到)', 'Full (With Delay)');
+                statusTag = 'full-delay';
+              }
+            } else if (attendedCount > 0) {
+              statusText = bi(`部分出席 (${attendedCount}/${sessions.length})`, `Partial (${attendedCount}/${sessions.length})`);
+              statusTag = 'partial';
+            } else {
+              statusText = bi('全部缺席', 'All Absent');
+              statusTag = 'none';
+            }
+            p.multiSessionStatus = statusText;
+            p.multiSessionStatusTag = statusTag;
+            p.attendedSessionsCount = attendedCount;
+          });
+        }
+
         if (version !== state.dataVersion) return ensurePeopleCache();
-        state.peopleCache = { version, qr, rfc, wfm, all, attendanceIndex }; showLoading(true, bi('人员名单与考勤状态整理完成', 'People and attendance processing complete'), 100); await nextPaint(); return state.peopleCache;
+        state.peopleCache = { version, qr, rfc, wfm, all, attendanceIndex, sessions, sessionIndexes, sessionStats };
+        showLoading(true, bi('人员名单与考勤状态整理完成', 'People and attendance processing complete'), 100); await nextPaint();
+        return state.peopleCache;
       }
-      function invalidatePeopleCache() { state.dataVersion++; state.peopleCache = null; state.qualityCache = null; state.peoplePages = { all: 1, qr: 1, rfc: 1, wfm: 1 }; state.buFilter = ''; state.personSearch = { query: '', result: null, pages: { qr: 1, rfc: 1, wfm: 1, offline: 1, online: 1 } }; }
+      function invalidatePeopleCache() {
+        state.dataVersion++;
+        state.peopleCache = null;
+        state.qualityCache = null;
+        state.peoplePages = { all: 1, qr: 1, rfc: 1, wfm: 1 };
+        state.buFilter = '';
+        state.selectedSession = 'all';
+        state.personSearch = { query: '', result: null, pages: { qr: 1, rfc: 1, wfm: 1, offline: 1, online: 1 } };
+      }
+      function getSessionPeopleRows(all, sessionName) {
+        return all.map(p => {
+          const rec = p.sessionRecords?.[sessionName] || { attendance: 'Absent', attendanceTime: '', attendanceMethod: '无记录' };
+          return {
+            ...p,
+            attendance: rec.attendance,
+            attendanceTime: rec.attendanceTime,
+            attendanceMethod: rec.attendanceMethod
+          };
+        });
+      }
+      function renderSessionSwitcher(sessions, selectedSession) {
+        if (!sessions || sessions.length <= 1) return '';
+        const isAll = selectedSession === 'all';
+        const allTab = `
+          <button class="session-tab-btn ${isAll ? 'active' : ''}" data-action="switch-session" data-session="all">
+            <span style="font-size:14px">🌐</span>
+            <span>${bi('全部场次比对 (多场总览)', 'All Sessions Comparison')}</span>
+            <span class="session-tab-badge">${sessions.length} ${bi('场会议', 'Sessions')}</span>
+          </button>
+        `;
+        const sessionTabs = sessions.map((sess, idx) => {
+          const active = selectedSession === sess.name;
+          const stats = state.peopleCache?.sessionStats?.[sess.name];
+          const total = stats?.total || 0;
+          const onTime = stats?.counts?.['Attend on Time'] || 0;
+          const rate = total ? `${(onTime / total * 100).toFixed(0)}%` : '';
+          return `
+            <button class="session-tab-btn ${active ? 'active' : ''}" data-action="switch-session" data-session="${esc(sess.name)}" title="${esc(sess.name)}">
+              <span style="font-size:14px">📅</span>
+              <span>${bi(`场次 ${idx + 1}`, `Session ${idx + 1}`)}: ${esc(sess.name)}</span>
+              ${rate ? `<span class="session-tab-badge" title="${bi('按时出席率', 'On-time rate')}">${rate}</span>` : ''}
+            </button>
+          `;
+        }).join('');
+
+        return `
+          <div class="session-switcher-bar">
+            <div class="session-switcher-label">
+              <span style="font-size:16px">🏷️</span>
+              <span>${bi('会议场次切换', 'Switch Meeting Session')}:</span>
+            </div>
+            <div class="session-tabs-list">
+              ${allTab}
+              ${sessionTabs}
+            </div>
+          </div>
+        `;
+      }
+      function renderSessionNoticeBar(sessionName, sessions, sessionPeople) {
+        const onTimeCount = sessionPeople.filter(p => p.attendance === 'Attend on Time').length;
+        const rate = sessionPeople.length ? `${(onTimeCount / sessionPeople.length * 100).toFixed(1)}%` : '0.0%';
+        return `
+          <div class="session-notice-bar">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <span style="font-size:18px">📌</span>
+              <div>
+                <strong style="font-size:14px;color:#1e3a8a">${bi('当前查看单场会议', 'Current Session View')}：${esc(sessionName)}</strong>
+                <span style="font-size:12px;color:#3b82f6;margin-left:8px">${sessionPeople.length} ${t('peopleUnit')} · ${bi('准时率', 'On-time Rate')}: <strong>${rate}</strong></span>
+              </div>
+            </div>
+            <button class="btn btn-sm btn-primary" data-action="switch-session" data-session="all" style="padding:5px 12px;font-size:12px">
+              ${bi('🌐 返回多场次横向总览', '🌐 Return to Multi-Session Overview')}
+            </button>
+          </div>
+        `;
+      }
+      function renderMultiSessionOverview(sessions, data) {
+        const rate = (onTime, total) => total ? `${(onTime / total * 100).toFixed(1)}%` : '0.0%';
+        const cards = sessions.map((sess, idx) => {
+          const stats = data.sessionStats?.[sess.name] || { counts: { 'Attend on Time': 0, Delay: 0, Absent: 0, 'Fake Attendance': 0 }, total: data.all.length };
+          const counts = stats.counts;
+          const total = data.all.length;
+          const onTimeRate = rate(counts['Attend on Time'], total);
+          return `
+            <div class="session-card">
+              <div class="session-card-head">
+                <div class="session-card-title">
+                  <span style="color:var(--primary);margin-right:4px">#${idx + 1}</span>
+                  <span title="${esc(sess.name)}">${esc(sess.name)}</span>
+                </div>
+                <button class="btn btn-sm" data-action="switch-session" data-session="${esc(sess.name)}" style="padding:3px 8px;font-size:12px;cursor:pointer">
+                  ${bi('查看该场 ➜', 'View Session ➜')}
+                </button>
+              </div>
+              <div class="session-card-stats">
+                <div class="snap-chip rate" title="${bi('按时出席', 'Attend on Time')}">${bi('准时', 'On-time')}: ${counts['Attend on Time']} (${onTimeRate})</div>
+                <div class="snap-chip delay" title="${bi('迟到', 'Delay')}">${bi('迟到', 'Delay')}: ${counts.Delay}</div>
+                <div class="snap-chip fake" title="${bi('虚假签到', 'Fake Attendance')}">${bi('虚假', 'Fake')}: ${counts['Fake Attendance']}</div>
+                <div class="snap-chip absent" title="${bi('缺席', 'Absent')}">${bi('缺席', 'Absent')}: ${counts.Absent}</div>
+              </div>
+              <div class="session-card-footer" style="font-size:11px;color:#64748b;margin-top:2px">
+                ${sess.offlineSheets ? `${bi('现场扫码', 'On-site')}: ${sess.offlineSheets} ${bi('表', 'sheet(s)')} · ` : ''}${sess.onlineSheets ? `${bi('在线记录', 'Online')}: ${sess.onlineSheets} ${bi('表', 'sheet(s)')} · ` : ''}${bi('共', 'total')} ${sess.rowCount} ${bi('行记录', 'records')}
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        return `<div class="session-cards-grid">${cards}</div>`;
+      }
+      function renderMultiSessionBuTable(sessions, all) {
+        const byBu = new Map();
+        const rate = (n, total) => total ? `${(n / total * 100).toFixed(1)}%` : '0.0%';
+
+        all.forEach(p => {
+          const bu = normalizeName(p.bu) || '未识别 BU';
+          if (!byBu.has(bu)) {
+            const init = { total: 0, fullAttend: 0, sessions: {} };
+            sessions.forEach(s => init.sessions[s.name] = { onTime: 0, attended: 0 });
+            byBu.set(bu, init);
+          }
+          const item = byBu.get(bu);
+          item.total++;
+          let isFull = true;
+          sessions.forEach(s => {
+            const att = p.sessionRecords?.[s.name]?.attendance;
+            if (att === 'Attend on Time') item.sessions[s.name].onTime++;
+            if (att && att !== 'Absent') item.sessions[s.name].attended++;
+            else isFull = false;
+          });
+          if (isFull) item.fullAttend++;
+        });
+
+        const buRows = [...byBu.entries()].sort((a, b) => b[1].total - a[1].total).map(([bu, x]) => {
+          const sessionCols = sessions.map(s => {
+            const onTime = x.sessions[s.name]?.onTime || 0;
+            return `<td class="num rate">${rate(onTime, x.total)} <small style="color:#64748b;font-weight:normal">(${onTime}/${x.total})</small></td>`;
+          }).join('');
+          const fullRate = rate(x.fullAttend, x.total);
+          const selected = state.buFilter === bu ? 'selected' : '';
+          return `
+            <tr class="${selected}" data-action="bu-filter" data-bu="${esc(bu)}" title="${state.buFilter === bu ? bi('点击取消筛选', 'Click to clear filter') : bi('点击筛选下方人员名单', 'Click to filter people list')}">
+              <td title="${esc(bu)}"><strong>${esc(bu)}</strong></td>
+              <td class="num">${x.total}</td>
+              ${sessionCols}
+              <td class="num ontime">${x.fullAttend}</td>
+              <td class="num rate" style="font-weight:700">${fullRate}</td>
+            </tr>
+          `;
+        }).join('');
+
+        const totalPeople = all.length;
+        const totalFull = all.filter(p => sessions.every(s => p.sessionRecords?.[s.name]?.attendance && p.sessionRecords[s.name].attendance !== 'Absent')).length;
+        const totalSessionCols = sessions.map(s => {
+          const onTimeTotal = all.filter(p => p.sessionRecords?.[s.name]?.attendance === 'Attend on Time').length;
+          return `<td class="num rate">${rate(onTimeTotal, totalPeople)} <small style="color:#64748b;font-weight:normal">(${onTimeTotal}/${totalPeople})</small></td>`;
+        }).join('');
+
+        return `
+          <div class="chart-card" style="margin-bottom:16px">
+            <div class="chart-head" style="margin-bottom:10px">
+              <div>
+                <h3>${bi('多场次 BU 达标率横向对比', 'Multi-Session BU Attendance Rate Comparison')}</h3>
+                <p>${bi('点击任意BU行筛选下方多场次比对表，再次点击取消筛选', 'Click any BU row to filter the matrix table below; click again to clear')}${state.buFilter ? `；${bi('当前筛选', 'Current filter')}：<strong>${esc(state.buFilter)}</strong>` : ''}</p>
+              </div>
+            </div>
+            <div class="bu-summary-wrap">
+              <table class="bu-summary-table">
+                <thead>
+                  <tr>
+                    <th>BU</th>
+                    <th>${bi('总人数', 'Total')}</th>
+                    ${sessions.map(s => `<th title="${esc(s.name)}">${esc(s.name)} ${bi('准时率', 'On-time')}</th>`).join('')}
+                    <th>${bi('全勤人数', 'Full Attendance')}</th>
+                    <th>${bi('综合全勤率', 'Full Rate')}</th>
+                  </tr>
+                </thead>
+                <tbody>${buRows}</tbody>
+                <tfoot>
+                  <tr>
+                    <td>${bi('总计', 'Total')}</td>
+                    <td class="num">${totalPeople}</td>
+                    ${totalSessionCols}
+                    <td class="num ontime">${totalFull}</td>
+                    <td class="num rate" style="font-weight:700">${rate(totalFull, totalPeople)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        `;
+      }
+      function renderMultiSessionMatrixCard(sessions, all) {
+        const sorted = [...all].sort((a, b) => {
+          if ((b.attendedSessionsCount ?? 0) !== (a.attendedSessionsCount ?? 0)) {
+            return (b.attendedSessionsCount ?? 0) - (a.attendedSessionsCount ?? 0);
+          }
+          return (b.count || 0) - (a.count || 0) || (a.name || a.account).localeCompare(b.name || b.account, 'zh-CN');
+        });
+        const filtered = state.buFilter ? sorted.filter(r => (normalizeName(r.bu) || '未识别 BU') === state.buFilter) : sorted;
+        const kind = 'all';
+        const total = Math.max(1, Math.ceil(filtered.length / state.pageSize));
+        state.peoplePages[kind] = Math.min(Math.max(1, state.peoplePages[kind] || 1), total);
+        const page = state.peoplePages[kind];
+        const start = (page - 1) * state.pageSize;
+        const items = filtered.slice(start, start + state.pageSize);
+
+        const body = items.length ? items.map((r, i) => {
+          const sessionCells = sessions.map(s => {
+            const rec = r.sessionRecords?.[s.name] || { attendance: 'Absent', attendanceTime: '', attendanceMethod: '无记录' };
+            return `
+              <td>
+                <div style="display:flex;flex-direction:column;align-items:flex-start;gap:2px">
+                  <span class="status-pill ${statusClass(rec.attendance)}">${rec.attendance}</span>
+                  ${rec.attendanceTime ? `<span style="font-size:11px;color:#64748b">${esc(rec.attendanceTime)}</span>` : ''}
+                  <span style="font-size:10px;color:#94a3b8">${esc(rec.attendanceMethod === '豁免名单' ? bi('豁免', 'Exemption') : rec.attendanceMethod === '现场扫码' ? bi('现场', 'Scan') : rec.attendanceMethod === '线上会议' ? bi('线上', 'Online') : '')}</span>
+                </div>
+              </td>
+            `;
+          }).join('');
+
+          return `
+            <tr>
+              <td>${start + i + 1}</td>
+              <td><strong>${esc(r.name)}</strong></td>
+              <td><code>${esc(r.account)}</code></td>
+              <td>${esc(r.bu)}</td>
+              <td>${esc(r.customer)}</td>
+              ${sessionCells}
+              <td><span class="multi-status-tag ${r.multiSessionStatusTag || ''}">${esc(r.multiSessionStatus || '')}</span></td>
+              <td class="attention-count">${r.count}</td>
+            </tr>
+          `;
+        }).join('') : `<tr><td></td><td colspan="${7 + sessions.length}">${state.buFilter ? bi('该 BU 暂无人员', 'No people in this BU') : bi('尚未导入人员数据', 'No people data')}</td></tr>`;
+
+        return `
+          <article class="sheet-card" data-people="all">
+            <div class="sheet-head">
+              <div class="sheet-title">
+                <h3>${bi('多场次人员考勤横向比对表', 'Multi-Session Attendance Comparison Matrix')}${state.buFilter ? ` · ${esc(state.buFilter)}` : ''}</h3>
+                <div class="sheet-meta">
+                  ${state.buFilter ? `${bi('筛选后', 'Filtered')} ${filtered.length.toLocaleString()} / ${all.length.toLocaleString()} ${t('peopleUnit')}` : `${all.length.toLocaleString()} ${t('peopleUnit')}`} · 
+                  ${bi(`共比对 ${sessions.length} 场会议`, `Comparing ${sessions.length} sessions`)} · 
+                  ${bi('按参会完整度与记录数排列', 'Sorted by attendance completion and records')}
+                </div>
+              </div>
+              <div class="sheet-actions">
+                <button class="icon-btn" data-action="attendance-rules">⚙ ${bi('考勤规则', 'Attendance Rules')}</button>
+                <button class="icon-btn" data-action="mapping">⚙ ${bi('映射设置', 'Mapping')}</button>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>${bi('姓名', 'Name')}</th>
+                    <th>${bi('工号 / Account', 'Employee ID / Account')}</th>
+                    <th>BU</th>
+                    <th>Customer Group</th>
+                    ${sessions.map(s => `<th title="${esc(s.name)}">${esc(s.name)}</th>`).join('')}
+                    <th>${bi('综合出勤', 'Overall Status')}</th>
+                    <th>${bi('关联记录数', 'Related Records')}</th>
+                  </tr>
+                </thead>
+                <tbody>${body}</tbody>
+              </table>
+            </div>
+            <div class="pager">
+              <span>${bi('显示', 'Showing')} ${filtered.length ? start + 1 : 0}–${Math.min(start + state.pageSize, filtered.length)} / ${filtered.length.toLocaleString()} ${t('peopleUnit')}</span>
+              <div class="pager-controls">
+                <button class="page-btn" data-action="first" ${page === 1 ? 'disabled' : ''}>«</button>
+                <button class="page-btn" data-action="prev" ${page === 1 ? 'disabled' : ''}>‹</button>
+                <span class="page-current">${page} / ${total}</span>
+                <button class="page-btn" data-action="next" ${page === total ? 'disabled' : ''}>›</button>
+                <button class="page-btn" data-action="last" ${page === total ? 'disabled' : ''}>»</button>
+              </div>
+            </div>
+          </article>
+        `;
+      }
       function renderPeopleResults(data = state.peopleCache) {
-        if (!data) return; const { qr, rfc, wfm, all } = data;
-        $('#sheetList').innerHTML = `${renderAttendanceDashboard(all)}<div class="section-note"><span class="dot"></span><span>${bi(`三类备用名单再次合并去重后共 ${all.length} 人；合并名单不保留角色列`, `The three source lists are merged and deduplicated into ${all.length} people; roles are omitted from the combined list.`)}</span></div>${renderCombinedPeopleCard(all)}${renderPeopleCard('qr', bi('QR 人员备用名单', 'QR People List'), qr)}${renderPeopleCard('rfc', bi('RFC 人员备用名单', 'RFC People List'), rfc)}${renderPeopleCard('wfm', bi('WFM 人员备用名单', 'WFM People List'), wfm)}`; updateGlobalSearchButton();
+        if (!data) return;
+        const { qr, rfc, wfm, all, sessions = [] } = data;
+        let contentHtml = '';
+
+        if (sessions.length > 1) {
+          if (state.selectedSession !== 'all' && !sessions.some(s => s.name === state.selectedSession)) {
+            state.selectedSession = 'all';
+          }
+          const switcherHtml = renderSessionSwitcher(sessions, state.selectedSession);
+          if (state.selectedSession === 'all') {
+            contentHtml = `
+              ${switcherHtml}
+              ${renderMultiSessionOverview(sessions, data)}
+              ${renderMultiSessionBuTable(sessions, all)}
+              ${renderMultiSessionMatrixCard(sessions, all)}
+              ${renderPeopleCard('qr', bi('QR 人员备用名单', 'QR People List'), qr)}
+              ${renderPeopleCard('rfc', bi('RFC 人员备用名单', 'RFC People List'), rfc)}
+              ${renderPeopleCard('wfm', bi('WFM 人员备用名单', 'WFM People List'), wfm)}
+            `;
+          } else {
+            const sessionRows = getSessionPeopleRows(all, state.selectedSession);
+            contentHtml = `
+              ${switcherHtml}
+              ${renderSessionNoticeBar(state.selectedSession, sessions, sessionRows)}
+              ${renderAttendanceDashboard(sessionRows)}
+              <div class="section-note"><span class="dot"></span><span>${bi(`当前为场次【${state.selectedSession}】的单场考勤结果，名单共 ${sessionRows.length} 人。`, `Showing single-session attendance for [${state.selectedSession}], total ${sessionRows.length} people.`)}</span></div>
+              ${renderCombinedPeopleCard(sessionRows)}
+              ${renderPeopleCard('qr', bi('QR 人员备用名单', 'QR People List'), qr)}
+              ${renderPeopleCard('rfc', bi('RFC 人员备用名单', 'RFC People List'), rfc)}
+              ${renderPeopleCard('wfm', bi('WFM 人员备用名单', 'WFM People List'), wfm)}
+            `;
+          }
+        } else {
+          contentHtml = `
+            ${renderAttendanceDashboard(all)}
+            <div class="section-note"><span class="dot"></span><span>${bi(`三类备用名单再次合并去重后共 ${all.length} 人；合并名单不保留角色列`, `The three source lists are merged and deduplicated into ${all.length} people; roles are omitted from the combined list.`)}</span></div>
+            ${renderCombinedPeopleCard(all)}
+            ${renderPeopleCard('qr', bi('QR 人员备用名单', 'QR People List'), qr)}
+            ${renderPeopleCard('rfc', bi('RFC 人员备用名单', 'RFC People List'), rfc)}
+            ${renderPeopleCard('wfm', bi('WFM 人员备用名单', 'WFM People List'), wfm)}
+          `;
+        }
+
+        $('#sheetList').innerHTML = contentHtml;
+        updateGlobalSearchButton();
         document.querySelectorAll('.result-details').forEach(d => d.addEventListener('toggle', () => { d.open ? state.openPeopleCards.add(d.dataset.people) : state.openPeopleCards.delete(d.dataset.people); }));
       }
       function renderPersonSearchPanel() {
@@ -2793,8 +3445,74 @@
           });
         }); return finalizePeople(map);
       }
+      function extractAttendanceSourcePeople() {
+        const map = new Map();
+        state.sheets.filter(s => s.category === 'offline').forEach(s => {
+          const idIndex = headerIndex(s.headers, '工号', '用户id', 'user_id', '账号', '工号/账号');
+          const nameIndex = headerIndex(s.headers, '姓名', 'name', '人员', '姓名/name');
+          const buIndex = headerIndex(s.headers, 'BU', '部门', '一级部门', '二级部门', 'bu');
+          const customerIndex = headerIndex(s.headers, '客户群/Customer Group', '客户群', 'Customer Group', 'Customer Name', '客户名称', 'Customer', '客户');
+          s.rows.forEach(r => {
+            const id = cellAt(r, idIndex);
+            const name = cellAt(r, nameIndex);
+            const bu = cellAt(r, buIndex);
+            const customer = cellAt(r, customerIndex);
+            if (!id && !name) return;
+            const key = id ? `id:${id.replace(/\s+/g, '').toLowerCase()}` : `name:${name.toLowerCase()}`;
+            if (!map.has(key)) {
+              map.set(key, { names: new Set(), accounts: new Set(), roles: new Set(), role: '参会人员', roleTime: 0, bu: '', buTime: 0, customer: '', customerTime: 0, count: 0 });
+            }
+            const item = map.get(key);
+            if (name) item.names.add(name);
+            if (id) item.accounts.add(id);
+            if (bu && !item.bu) item.bu = bu;
+            if (customer && !item.customer) item.customer = customer;
+            item.count++;
+          });
+        });
+
+        state.sheets.filter(s => s.category === 'online').forEach(s => {
+          const idIndex = headerIndex(s.headers, 'user_id', '工号', '用户id', '账号');
+          const nameIndex = headerIndex(s.headers, 'name', 'user_name', 'nickname', '姓名');
+          const buIndex = headerIndex(s.headers, 'bu', 'BU', '部门');
+          const customerIndex = headerIndex(s.headers, 'customer', '客户群', 'Customer Group');
+          s.rows.forEach(r => {
+            const id = cellAt(r, idIndex);
+            const name = cellAt(r, nameIndex);
+            const bu = cellAt(r, buIndex);
+            const customer = cellAt(r, customerIndex);
+            if (!id && !name) return;
+            const key = id ? `id:${id.replace(/\s+/g, '').toLowerCase()}` : `name:${name.toLowerCase()}`;
+            if (!map.has(key)) {
+              map.set(key, { names: new Set(), accounts: new Set(), roles: new Set(), role: '参会人员', roleTime: 0, bu: '', buTime: 0, customer: '', customerTime: 0, count: 0 });
+            }
+            const item = map.get(key);
+            if (name) item.names.add(name);
+            if (id) item.accounts.add(id);
+            if (bu && !item.bu) item.bu = bu;
+            if (customer && !item.customer) item.customer = customer;
+            item.count++;
+          });
+        });
+
+        return [...map.values()].map(x => ({
+          name: [...x.names].join(' / '),
+          account: [...x.accounts].join(' / '),
+          role: x.role,
+          bu: x.bu || '未识别 BU',
+          customer: mapCustomerGroup(x.customer) || '—',
+          customerGroup: mapCustomerGroup(x.customer) || '—',
+          count: x.count,
+          _roleTime: 0,
+          _buTime: 0,
+          _customerTime: 0
+        }));
+      }
       function extractAllPeople(qr = extractQrPeople(), rfc = extractRfcPeople(), wfm = extractWfmPeople(), attendanceIndex = buildAttendanceIndex()) {
-        const map = new Map();[...qr, ...rfc, ...wfm].forEach(p => {
+        const basePeople = [...(qr || []), ...(rfc || []), ...(wfm || [])];
+        const sourceList = basePeople.length ? basePeople : extractAttendanceSourcePeople();
+        const map = new Map();
+        sourceList.forEach(p => {
           const key = p.account ? `id:${p.account.replace(/\s+/g, '').toLowerCase()}` : `name:${p.name.toLowerCase()}`;
           if (!map.has(key)) map.set(key, { names: new Set(), accounts: new Set(), roles: new Set(), role: '', roleTime: -Infinity, bu: '', buTime: -Infinity, customer: '', customerTime: -Infinity, count: 0 });
           const x = map.get(key); if (p.name) x.names.add(p.name); if (p.account) x.accounts.add(p.account);
@@ -2828,10 +3546,10 @@
         const hasDate = /(\d{4})[\-\/.年]|(\d{1,2})[\-\/.](\d{1,2})[\-\/.](\d{4})/.test(text), displayTime = `${cairo.hour}:${cairo.minute}`;
         return { minute: cairoMinute, displayTime: hasDate ? `${cairo.year}-${cairo.month}-${cairo.day} ${displayTime}` : displayTime };
       }
-      function buildAttendanceIndex() {
+      function buildAttendanceIndex(targetSessionName) {
         const index = new Map(), add = (rawId, rawTime, source) => { const ids = idVariants(rawId); if (!ids.size) return; const converted = source === 'offline' ? beijingToCairoAttendance(rawTime) : { minute: parseAttendanceMinute(rawTime), displayTime: normalizeName(rawTime) }, record = { minute: converted.minute, displayTime: converted.displayTime, method: source === 'offline' ? '现场扫码' : '线上会议' }; ids.forEach(id => { const old = index.get(id); if (!old || (record.minute != null && (old.minute == null || record.minute < old.minute))) index.set(id, record); }); };
-        state.sheets.filter(s => s.category === 'offline').forEach(s => { const idIndex = headerIndex(s.headers, '工号'), timeIndex = headerIndex(s.headers, '签到时间'); s.rows.forEach(row => add(cellAt(row, idIndex), cellAt(row, timeIndex), 'offline')); });
-        state.sheets.filter(s => s.category === 'online').forEach(s => { const idIndex = headerIndex(s.headers, 'user_id'), timeIndex = headerIndex(s.headers, 'join_time'); s.rows.forEach(row => add(cellAt(row, idIndex), cellAt(row, timeIndex), 'online')); });
+        state.sheets.filter(s => s.category === 'offline').forEach(s => { const idIndex = headerIndex(s.headers, '工号'), timeIndex = headerIndex(s.headers, '签到时间'); s.rows.forEach(row => { if (targetSessionName && getRowSessionName(s, row) !== targetSessionName) return; add(cellAt(row, idIndex), cellAt(row, timeIndex), 'offline'); }); });
+        state.sheets.filter(s => s.category === 'online').forEach(s => { const idIndex = headerIndex(s.headers, 'user_id'), timeIndex = headerIndex(s.headers, 'join_time'); s.rows.forEach(row => { if (targetSessionName && getRowSessionName(s, row) !== targetSessionName) return; add(cellAt(row, idIndex), cellAt(row, timeIndex), 'online'); }); });
         return index;
       }
       function getAttendanceRecord(account, index) { let best = null; for (const id of idVariants(account)) { const record = index.get(id); if (record && (!best || (record.minute != null && (best.minute == null || record.minute < best.minute)))) best = record; } return best; }
@@ -3063,7 +3781,31 @@
         summary.push(['Total', rows.length, counts.Absent, counts['Attend on Time'], counts.Delay, counts['Fake Attendance'], rate(counts['Attend on Time'], rows.length)]);
         const people = [['Name', 'Employee ID / Account', 'BU', 'Customer Group', 'Attendance Status', 'Meeting / Scan Time (Cairo)', 'Decision Source', 'Related Records']];
         [...rows].sort((a, b) => (b.count || 0) - (a.count || 0) || (a.name || a.account).localeCompare(b.name || b.account, 'en')).forEach(r => people.push([r.name, r.account, r.bu, r.customer, r.attendance, r.attendanceTime || '', r.attendanceMethod === '豁免名单' ? 'Exemption List' : r.attendanceMethod === '现场扫码' ? 'On-site Scan' : r.attendanceMethod === '线上会议' ? 'Online Meeting' : 'No Record', r.count || 0]));
-        return { summary, people };
+
+        let multiMatrix = null;
+        if (state.peopleCache?.sessions?.length > 1) {
+          const sessions = state.peopleCache.sessions;
+          const multiHeaders = ['Name', 'Employee ID / Account', 'BU', 'Customer Group', ...sessions.map(s => s.name), 'Overall Status', 'Related Records'];
+          multiMatrix = [multiHeaders];
+          const allPeople = state.peopleCache.all;
+          [...allPeople].sort((a, b) => (b.attendedSessionsCount ?? 0) - (a.attendedSessionsCount ?? 0) || (b.count || 0) - (a.count || 0)).forEach(r => {
+            const sessStatuses = sessions.map(s => {
+              const rec = r.sessionRecords?.[s.name];
+              if (!rec || rec.attendance === 'Absent') return 'Absent';
+              return `${rec.attendance}${rec.attendanceTime ? ` (${rec.attendanceTime})` : ''}`;
+            });
+            multiMatrix.push([
+              r.name,
+              r.account,
+              r.bu,
+              r.customer,
+              ...sessStatuses,
+              r.multiSessionStatus || '',
+              r.count || 0
+            ]);
+          });
+        }
+        return { summary, people, multiMatrix };
       }
       function xmlEscape(value) { return String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' }[c])); }
       function excelColumnName(index) { let name = ''; for (let n = index + 1; n; n = Math.floor((n - 1) / 26))name = String.fromCharCode(65 + (n - 1) % 26) + name; return name; }
@@ -3084,14 +3826,32 @@
         const centralBytes = concatBytes(centrals), end = binaryHeader(22, w => { w.u32(0, 0x06054b50); w.u16(4, 0); w.u16(6, 0); w.u16(8, files.length); w.u16(10, files.length); w.u32(12, centralBytes.length); w.u32(16, offset); w.u16(20, 0); }); return concatBytes([...locals, centralBytes, end]);
       }
       function buildAnalysisWorkbook(rows) {
-        const { summary, people } = buildAnalysisTables(rows), files = [
-          ['[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>'],
+        const { summary, people, multiMatrix } = buildAnalysisTables(rows);
+        const contentTypesSheets = multiMatrix
+          ? `<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet3.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`
+          : `<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`;
+        const workbookSheets = multiMatrix
+          ? `<sheets><sheet name="Attendance Summary" sheetId="1" r:id="rId1"/><sheet name="Attendance People List" sheetId="2" r:id="rId2"/><sheet name="Multi-Session Comparison" sheetId="3" r:id="rId3"/></sheets>`
+          : `<sheets><sheet name="Attendance Summary" sheetId="1" r:id="rId1"/><sheet name="Attendance People List" sheetId="2" r:id="rId2"/></sheets>`;
+        const relsSheets = multiMatrix
+          ? `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet3.xml"/><Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`
+          : `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`;
+
+        const files = [
+          ['[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>${contentTypesSheets}<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`],
           ['_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'],
-          ['xl/workbook.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Attendance Summary" sheetId="1" r:id="rId1"/><sheet name="Attendance People List" sheetId="2" r:id="rId2"/></sheets></workbook>'],
-          ['xl/_rels/workbook.xml.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>'],
+          ['xl/workbook.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">${workbookSheets}</workbook>`],
+          ['xl/_rels/workbook.xml.rels', relsSheets],
           ['xl/styles.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="3"><font><sz val="11"/><name val="Calibri"/></font><font><b/><color rgb="FFFFFFFF"/><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFC7000B"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE7E9EE"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="2"><border/><border><left style="thin"><color rgb="FFE0E3E8"/></left><right style="thin"><color rgb="FFE0E3E8"/></right><top style="thin"><color rgb="FFE0E3E8"/></top><bottom style="thin"><color rgb="FFE0E3E8"/></bottom></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="3"><xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment vertical="center"/></xf><xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf><xf numFmtId="0" fontId="2" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>'],
-          ['xl/worksheets/sheet1.xml', worksheetXml(summary, [22, 14, 12, 19, 12, 19, 24], summary.length)], ['xl/worksheets/sheet2.xml', worksheetXml(people, [30, 22, 16, 24, 20, 28, 18, 17])]
-        ]; return zipStore(files);
+          ['xl/worksheets/sheet1.xml', worksheetXml(summary, [22, 14, 12, 19, 12, 19, 24], summary.length)],
+          ['xl/worksheets/sheet2.xml', worksheetXml(people, [30, 22, 16, 24, 20, 28, 18, 17])]
+        ];
+        if (multiMatrix) {
+          const sessionCount = (state.peopleCache?.sessions || []).length;
+          const sessionColWidths = Array.from({ length: sessionCount }, () => 25);
+          files.push(['xl/worksheets/sheet3.xml', worksheetXml(multiMatrix, [30, 22, 16, 24, ...sessionColWidths, 22, 17])]);
+        }
+        return zipStore(files);
       }
       async function buildSnapshotPayload(customTitle, customDate) {
         const cache = await ensurePeopleCache();
@@ -3109,7 +3869,14 @@
         if (!meetingDate) {
           meetingDate = new Date().toISOString().slice(0, 10);
         }
-        const title = customTitle ? customTitle.trim() : `${meetingDate} ${bi('会议考勤分析', 'Meeting Attendance Analysis')}`;
+        let title = customTitle ? customTitle.trim() : '';
+        if (!title) {
+          if (cache.sessions && cache.sessions.length > 1) {
+            title = `${meetingDate} 多场次会议考勤分析 (${cache.sessions.length}场)`;
+          } else {
+            title = `${meetingDate} ${bi('会议考勤分析', 'Meeting Attendance Analysis')}`;
+          }
+        }
 
         const counts = { Absent: 0, 'Attend on Time': 0, Delay: 0, 'Fake Attendance': 0 };
         const byBu = {};
@@ -3148,6 +3915,7 @@
           byBu,
           attendees,
           anomalies,
+          sessions: (cache.sessions && cache.sessions.length > 1) ? cache.sessions.map(s => ({ name: s.name, rowCount: s.rowCount, counts: cache.sessionStats?.[s.name]?.counts })) : undefined,
           savedAt: new Date().toISOString()
         };
 
@@ -3158,12 +3926,14 @@
             category: s.category,
             fileName: s.fileName,
             sheetName: s.sheetName,
+            sessionName: s.sessionName || '',
             headers: s.headers,
             rows: s.rows,
             visibleColumns: s.visibleColumns,
             page: s.page || 1,
             order: s.order
           })),
+          selectedSession: state.selectedSession || 'all',
           customerMappings: state.customerMappings,
           attendanceRules: state.attendanceRules,
           exemptions: state.exemptions,
@@ -3572,6 +4342,7 @@
           category: s.category,
           fileName: s.fileName,
           sheetName: s.sheetName,
+          sessionName: s.sessionName || '',
           headers: s.headers,
           rows: s.rows,
           visibleColumns: s.visibleColumns || defaultColumnIndices(s.category, s.headers),
@@ -3593,6 +4364,7 @@
         }
 
         invalidatePeopleCache();
+        state.selectedSession = p.selectedSession || 'all';
         state.active = 'people';
         state.sidebarCollapsed = true;
         try { localStorage.setItem(SIDEBAR_STORAGE_KEY, '1'); } catch (e) { }
@@ -3603,15 +4375,19 @@
       }
 
       async function exportAnalysis() {
-        if (!state.sheets.some(s => ['qr', 'rfc', 'wfm'].includes(s.category))) { toast(bi('请先导入 QR、RFC 或 WFM 表格', 'Import QR, RFC or WFM tables first'), 'error'); return; }
+        if (!state.sheets.some(s => ['qr', 'rfc', 'wfm', 'offline', 'online'].includes(s.category))) { toast(bi('请先导入考勤或名单表格', 'Import attendance or roster tables first'), 'error'); return; }
         try {
-          showLoading(true, bi('正在准备分析结果…', 'Preparing analysis results…'), 15); await nextPaint(); const cache = await ensurePeopleCache(); showLoading(true, bi('正在生成两个英文结果表…', 'Building two English result sheets…'), 60); await nextPaint(); const bytes = buildAnalysisWorkbook(cache.all); showLoading(true, bi('正在下载 Excel 文件…', 'Downloading Excel file…'), 90); await nextPaint(); const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), url = URL.createObjectURL(blob), a = document.createElement('a'); a.href = url; a.download = `Meeting_Attendance_Analysis_${new Date().toISOString().slice(0, 10)}.xlsx`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000); showLoading(true, bi('分析结果导出完成', 'Analysis export complete'), 100); await nextPaint(); toast(bi('已导出 Attendance Summary 和 Attendance People List', 'Attendance Summary and Attendance People List exported'));
+          showLoading(true, bi('正在准备分析结果…', 'Preparing analysis results…'), 15); await nextPaint(); const cache = await ensurePeopleCache(); showLoading(true, bi('正在生成分析结果表格…', 'Building analysis result sheets…'), 60); await nextPaint();
+          const exportRows = (state.selectedSession && state.selectedSession !== 'all') ? getSessionPeopleRows(cache.all, state.selectedSession) : cache.all;
+          const bytes = buildAnalysisWorkbook(exportRows); showLoading(true, bi('正在下载 Excel 文件…', 'Downloading Excel file…'), 90); await nextPaint(); const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), url = URL.createObjectURL(blob), a = document.createElement('a'); a.href = url; a.download = `Meeting_Attendance_Analysis_${new Date().toISOString().slice(0, 10)}.xlsx`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000); showLoading(true, bi('分析结果导出完成', 'Analysis export complete'), 100); await nextPaint();
+          const hasMulti = cache.sessions && cache.sessions.length > 1;
+          toast(hasMulti ? bi('已导出 Attendance Summary、People List 及多场次对比大表', 'Attendance Summary, People List and Multi-Session Comparison exported') : bi('已导出 Attendance Summary 和 Attendance People List', 'Attendance Summary and Attendance People List exported'));
         } catch (err) { console.error(err); toast(`${bi('导出失败', 'Export failed')}：${err.message}`, 'error', 6000); } finally { showLoading(false); }
       }
       function showLoading(on, text, percent) { $('#loading').classList.toggle('hidden', !on); if (text) $('#loadingText').textContent = text; if (percent != null) { const p = Math.max(0, Math.min(100, Math.round(percent))); $('#loadingBar').style.width = p + '%'; $('#loadingPercent').textContent = p + '%'; } }
       function nextPaint() { return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); }
       function toast(msg, type = '', duration = 2800) { const host = $('#toasts'); if (!host || typeof host.appendChild !== 'function') return; const t = document.createElement('div'); t.className = 'toast ' + type; t.textContent = msg; host.appendChild(t); setTimeout(() => t.remove?.(), duration); }
-      window.__meetingAttendance = { state, CATEGORIES, DEFAULT_COLUMNS, DEFAULT_CUSTOMER_MAPPINGS, DEFAULT_ATTENDANCE_RULES, PRESET_EXEMPTIONS, isInvalidStaffId, activeExemptions, handleDeveloperUnlock, disableDeveloperMode, parseDelimited, normalizeRows, classifySheet, defaultColumnIndices, getDisplayColumns, parsePeopleCell, parseQrPairedPeople, parseCreateTime, parseAttendanceMinute, beijingToCairoAttendance, buildAttendanceIndex, getAttendanceRecord, getExemption, determineAttendance, extractQrPeople, extractRfcPeople, extractWfmPeople, extractAllPeople, mapCustomerGroup, resolveSearchIdentities, searchRequiredRows, searchAttendanceRows, validBusinessTimes, formatDateRange, roleCounts, roleLabel, sheetFingerprint, removeDuplicateSheets, renderAttendanceDashboard, renderCombinedPeopleCard, renderPeopleCard, renderPersonSearchPanel, renderPersonSearchResults, buildAnalysisTables, buildAnalysisWorkbook, buildSnapshotPayload, restoreMeetingSnapshot, openSaveSnapshotModal, closeSaveSnapshotModal, openSnapshotManagerModal, closeSnapshotManagerModal, filterSnapshotCards };
+      window.__meetingAttendance = { state, CATEGORIES, DEFAULT_COLUMNS, DEFAULT_CUSTOMER_MAPPINGS, DEFAULT_ATTENDANCE_RULES, PRESET_EXEMPTIONS, isInvalidStaffId, activeExemptions, handleDeveloperUnlock, disableDeveloperMode, parseDelimited, normalizeRows, classifySheet, defaultColumnIndices, getDisplayColumns, parsePeopleCell, parseQrPairedPeople, parseCreateTime, parseAttendanceMinute, beijingToCairoAttendance, buildAttendanceIndex, getAttendanceRecord, getExemption, determineAttendance, extractQrPeople, extractRfcPeople, extractWfmPeople, extractAttendanceSourcePeople, extractAllPeople, ensurePeopleCache, invalidatePeopleCache, cleanSessionTitle, isGenericTitle, getSheetRowSessionNames, getSheetDefaultSessionName, getSheetSessionName, getRowSessionName, getMeetingSessions, getSessionPeopleRows, renderSessionSwitcher, renderSessionNoticeBar, renderMultiSessionOverview, renderMultiSessionBuTable, renderMultiSessionMatrixCard, mapCustomerGroup, resolveSearchIdentities, searchRequiredRows, searchAttendanceRows, validBusinessTimes, formatDateRange, roleCounts, roleLabel, sheetFingerprint, removeDuplicateSheets, renderAttendanceDashboard, renderCombinedPeopleCard, renderPeopleCard, renderPersonSearchPanel, renderPersonSearchResults, buildAnalysisTables, buildAnalysisWorkbook, buildSnapshotPayload, restoreMeetingSnapshot, openSaveSnapshotModal, closeSaveSnapshotModal, openSnapshotManagerModal, closeSnapshotManagerModal, filterSnapshotCards };
       init();
     })();
   </script>
