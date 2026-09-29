@@ -1574,3 +1574,382 @@ th.drag-over { border-left: 4px solid #ff9800 !important; background-color: #fff
     .section-rule-config-footer { align-items: flex-start; flex-direction: column; }
     #section-rule-config-actions { width: 100%; flex-wrap: wrap; }
 }
+
+/* ============================================================
+   双击行竖排紧凑字段详情 & 常用复制字段高亮与记忆
+   ============================================================ */
+tbody tr.sla-data-row {
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+tbody tr.sla-data-row:hover td {
+    background-color: rgba(59, 130, 246, 0.08) !important;
+}
+tbody tr.danger-row.sla-data-row:hover td {
+    background-color: #ffd6d6 !important;
+}
+tbody tr.warning-row.sla-data-row:hover td {
+    background-color: #ffecb3 !important;
+}
+
+/* 常用复制列表头稍微突出显示 */
+th.frequent-copied-col {
+    background-color: #fefce8 !important;
+    border-bottom: 2px solid #eab308 !important;
+}
+.th-frequent-star {
+    font-size: 11px;
+    margin-right: 2px;
+    vertical-align: middle;
+}
+td.frequent-copied-cell {
+    background-color: #fffef2;
+}
+
+/* 竖排紧凑字段详情弹窗 */
+.sla-row-detail-overlay {
+    backdrop-filter: blur(5px);
+    z-index: 100000;
+}
+.sla-row-detail-content {
+    width: min(780px, 94vw);
+    max-height: 88vh;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 20px 60px rgba(15, 23, 42, 0.25);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.sla-row-detail-header {
+    padding: 12px 18px;
+    background: #1e293b;
+    color: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.sla-row-detail-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.sla-row-detail-title-wrap h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: #f8fafc;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.sla-detail-meta-tags {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.sla-detail-badge-pill {
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.15);
+    color: #e2e8f0;
+}
+.sla-detail-badge-pill.sla-status-pill {
+    background: #ef4444;
+    color: #fff;
+}
+.sla-detail-badge-pill.sla-status-pill.warning-row {
+    background: #f59e0b;
+    color: #fff;
+}
+.sla-detail-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.sla-detail-nav-btn {
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    background: rgba(255, 255, 255, 0.1);
+    color: #f1f5f9;
+    border-radius: 6px;
+    padding: 4px 9px;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.sla-detail-nav-btn:hover {
+    background: rgba(255, 255, 255, 0.22);
+}
+
+/* 工具栏 */
+.sla-row-detail-toolbar {
+    padding: 10px 16px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+.sla-detail-search-box {
+    display: flex;
+    align-items: center;
+    position: relative;
+    flex: 1;
+    min-width: 220px;
+    max-width: 320px;
+}
+.sla-search-icon {
+    position: absolute;
+    left: 8px;
+    font-size: 12px;
+    color: #94a3b8;
+    pointer-events: none;
+}
+.sla-detail-search-input {
+    width: 100%;
+    height: 30px;
+    padding: 0 24px 0 28px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 11.5px;
+    outline: none;
+    background: #fff;
+    color: #0f172a;
+}
+.sla-detail-search-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+.sla-detail-search-clear {
+    position: absolute;
+    right: 6px;
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 2px 4px;
+}
+.sla-detail-search-clear:hover {
+    color: #475569;
+}
+.sla-detail-toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.sla-detail-tool-btn {
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: #475569;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.sla-detail-tool-btn:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+}
+.sla-detail-tool-btn.active {
+    background: #eff6ff;
+    border-color: #3b82f6;
+    color: #1d4ed8;
+}
+.sla-detail-tool-btn.copy-all-btn {
+    background: #ecfdf5;
+    border-color: #86efac;
+    color: #15803d;
+}
+.sla-detail-tool-btn.copy-all-btn:hover {
+    background: #dcfce7;
+}
+.sla-detail-tool-btn.sync-table-btn {
+    background: #fdf4ff;
+    border-color: #f0abfc;
+    color: #a21caf;
+}
+.sla-detail-tool-btn.sync-table-btn:hover {
+    background: #fae8ff;
+}
+
+/* 提示条 */
+.sla-detail-frequent-hint {
+    padding: 6px 16px;
+    background: #fffbeb;
+    border-bottom: 1px solid #fef3c7;
+    color: #b45309;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+/* 竖排紧凑小字字段内容区域 */
+.sla-row-detail-body {
+    padding: 12px 16px;
+    background: #f8fafc;
+    overflow-y: auto;
+    flex: 1;
+}
+.sla-detail-fields-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* 单个字段卡片（竖排紧凑小字） */
+.sla-detail-field-item {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    padding: 6px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition: all 0.15s ease;
+}
+.sla-detail-field-item:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+}
+
+/* 常用复制字段稍微突出显示 */
+.sla-detail-field-item.is-frequent {
+    border-left: 3.5px solid #f59e0b;
+    border-color: #fde68a;
+    background: #fffdf5;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.06);
+}
+.sla-detail-field-item.is-frequent:hover {
+    border-color: #fbbf24;
+    background: #fffbeb;
+}
+
+.sla-detail-field-item.is-empty {
+    opacity: 0.6;
+    background: #f8fafc;
+}
+
+.sla-detail-field-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+.sla-detail-field-title-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+.sla-detail-field-name {
+    font-size: 11px;
+    font-weight: 700;
+    color: #475569;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.sla-detail-field-item.is-frequent .sla-detail-field-name {
+    color: #92400e;
+}
+.sla-detail-frequent-badge {
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: #fef3c7;
+    border: 1px solid #fcd34d;
+    color: #b45309;
+    font-size: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+    letter-spacing: 0.1px;
+}
+
+/* 一键复制按钮 */
+.sla-detail-copy-btn {
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    color: #475569;
+    border-radius: 5px;
+    padding: 2px 8px;
+    font-size: 10.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    line-height: 1.4;
+}
+.sla-detail-copy-btn:hover {
+    background: #e2e8f0;
+    border-color: #94a3b8;
+    color: #1e293b;
+}
+.sla-detail-copy-btn.copied {
+    background: #dcfce7 !important;
+    border-color: #86efac !important;
+    color: #166534 !important;
+    font-weight: 700;
+}
+
+/* 竖排紧凑字段值展示 */
+.sla-detail-field-value {
+    font-size: 11.5px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    color: #0f172a;
+    line-height: 1.45;
+    word-break: break-all;
+    white-space: pre-wrap;
+    padding: 3px 6px;
+    border-radius: 4px;
+    background: rgba(241, 245, 249, 0.45);
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+.sla-detail-field-value:hover {
+    background: rgba(59, 130, 246, 0.08);
+}
+.sla-detail-field-value.empty-val {
+    color: #94a3b8;
+    font-style: italic;
+    background: transparent;
+}
+
+/* 底部状态 */
+.sla-row-detail-footer {
+    padding: 10px 16px;
+    background: #fff;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.sla-detail-footer-stats {
+    font-size: 11.5px;
+    color: #64748b;
+}
+.sla-detail-footer-stats b {
+    color: #1e293b;
+}
+.sla-detail-close-btn {
+    padding: 6px 16px;
+    font-size: 12.5px;
+}
+.sla-detail-empty-state {
+    text-align: center;
+    padding: 30px 10px;
+    color: #94a3b8;
+    font-size: 12px;
+}
+

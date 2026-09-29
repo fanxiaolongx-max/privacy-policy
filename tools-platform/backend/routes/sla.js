@@ -8,6 +8,7 @@ const zlib = require('zlib');
 const crypto = require('crypto');
 const targetsRepo = require('../models/sla-targets-repository');
 const prefsRepo = require('../models/sla-prefs-repository');
+const copiedFieldsRepo = require('../models/sla-copied-fields-repository');
 const categoriesRepo = require('../models/sla-categories-repository');
 const categoryCascadeRepo = require('../models/sla-category-cascade-repository');
 const groupsRepo = require('../models/sla-groups-repository');
@@ -659,10 +660,56 @@ router.put('/prefs/:schemaHash', async (req, res) => {
 });
 
 // ──────────────────────────────────────────────────────────
+// 详单常用复制字段记忆与统计（双击行竖排紧凑详情一键复制并记住）
+// ──────────────────────────────────────────────────────────
+
+// GET /api/sla/copied-fields
+router.get('/copied-fields', async (req, res) => {
+    try {
+        const result = await copiedFieldsRepo.getCopiedFieldStats(req.query.tableType || null);
+        res.json({ success: true, ...result });
+    } catch (err) {
+        console.error('[GET /api/sla/copied-fields] failed:', err);
+        res.status(500).json({ error: '获取常用复制字段统计失败' });
+    }
+});
+
+// POST /api/sla/copied-fields
+router.post('/copied-fields', async (req, res) => {
+    try {
+        const { tableType, fieldName } = req.body || {};
+        if (!fieldName) {
+            return res.status(400).json({ error: 'fieldName 为必填参数' });
+        }
+        const record = await copiedFieldsRepo.recordFieldCopy(tableType, fieldName);
+        res.json({ success: true, record });
+    } catch (err) {
+        console.error('[POST /api/sla/copied-fields] failed:', err);
+        res.status(500).json({ error: '记录复制字段失败' });
+    }
+});
+
+// DELETE /api/sla/copied-fields
+router.delete('/copied-fields', async (req, res) => {
+    try {
+        const tableType = req.query.tableType || req.body?.tableType;
+        const fieldName = req.query.fieldName || req.body?.fieldName;
+        if (!tableType) {
+            return res.status(400).json({ error: 'tableType 为必填参数' });
+        }
+        await copiedFieldsRepo.deleteCopiedField(tableType, fieldName);
+        res.json({ success: true });
+    } catch (err) {
+        console.error('[DELETE /api/sla/copied-fields] failed:', err);
+        res.status(500).json({ error: '删除常用复制字段记录失败' });
+    }
+});
+
+// ──────────────────────────────────────────────────────────
 // 全量配置导出 / 导入
 // ──────────────────────────────────────────────────────────
 
-// GET /api/sla/config  → 导出全量配置（targets + prefs）
+// GET /api/sla/config  → 导出全量配置（targets + prefs + copiedFields）
 router.get('/config', async (req, res) => {
     try {
         const { items: targets, source: targetsSource } = await targetsRepo.getTargets({
@@ -671,11 +718,12 @@ router.get('/config', async (req, res) => {
         const { items: prefs, source: prefsSource } = await prefsRepo.getPrefsObject({
             mode: req.query.mode || 'auto'
         });
+        const copiedFields = await copiedFieldsRepo.getAllForExport();
         res.setHeader('X-Data-Source', prefsSource);
         res.setHeader('X-Data-Source-Targets', targetsSource);
         res.setHeader('X-Data-Source-Prefs', prefsSource);
         console.log(`[DATA SOURCE] GET /api/sla/config -> PREFS ${prefsSource.toUpperCase()}, TARGETS ${targetsSource.toUpperCase()}`);
-        res.json({ targets, prefs, exportDate: new Date().toISOString() });
+        res.json({ targets, prefs, copiedFields, exportDate: new Date().toISOString() });
     } catch (err) {
         console.error('[GET /api/sla/config] failed:', err);
         res.status(500).json({ error: '导出配置失败' });
@@ -730,6 +778,10 @@ router.post('/config', async (req, res) => {
         if (prefs) {
             await prefsRepo.replacePrefs(prefs);
             console.log(`[POST /config] Wrote prefs successfully, keys count:`, Object.keys(prefs).length);
+        }
+        if (req.body.copiedFields) {
+            await copiedFieldsRepo.replaceCopiedFields(req.body.copiedFields);
+            console.log(`[POST /config] Restored copiedFields successfully`);
         }
         await writeAudit(req, 'sla.config.replace', {
             confirmed,

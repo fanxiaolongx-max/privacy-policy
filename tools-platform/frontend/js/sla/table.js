@@ -25,7 +25,7 @@ function updateView(secId) {
     }
     state.currentDisplayData = displayData;
     const rowBadge = document.getElementById(`row-count-badge-${secId}`);
-    if (rowBadge) rowBadge.innerText = `(展示 ${displayData.length} 行)`;
+    if (rowBadge) rowBadge.innerHTML = `(展示 ${displayData.length} 行 · <span style="color:#64748b;font-weight:normal;" title="双击表格中任意数据行，可竖排紧凑查看字段详情、自动隐藏空字段并一键复制">💡 双击行看详情</span>)`;
     updateDashboard(secId);
     if (state.tableRenderSuspended) {
         const container = document.getElementById(`table-container-${secId}`);
@@ -312,6 +312,8 @@ function renderTable(secId) {
     const targetP = state.mode==='rectification'?RECT_P:(state.mode==='risk'?RISK_P:(state.mode==='special'?SPEC_P:(state.mode==='sr'?SR_P:(state.mode==='vulnerability'?VULN_P:[]))));
     const highlightColumnMeta = getHighlightColumnMeta(secId, getBuiltInRuleColumns(state.mode, state.sectionRuleConfig));
     const metricCellMeta = buildMetricCellHighlightMeta(secId);
+    const tableType = state.mode || secId;
+    const frequentCols = window.SLARowDetail ? window.SLARowDetail.getCachedFrequentFields(tableType) : [];
     let html = `<table id="table-${secId}"><thead><tr>`;
     if (state.mode !== 'other') {
         const sw = state.columnWidths['_SLA_'] ? `style="width:${state.columnWidths['_SLA_']}px;min-width:${state.columnWidths['_SLA_']}px;max-width:${state.columnWidths['_SLA_']}px;"` : '';
@@ -323,16 +325,20 @@ function renderTable(secId) {
         const thClasses = [];
         if (targetP.includes(header)) thClasses.push(pClass);
         if (highlightColumnMeta.has(header)) thClasses.push('metric-involved-col');
+        const isFrequent = frequentCols.includes(header);
+        if (isFrequent) thClasses.push('frequent-copied-col');
         const classAttr = buildClassAttr(thClasses);
-        const titleAttr = highlightColumnMeta.has(header)
-            ? `title="${escapeHTML(Array.from(highlightColumnMeta.get(header)).join('；'))}"`
-            : '';
+        const titleParts = [];
+        if (highlightColumnMeta.has(header)) titleParts.push(Array.from(highlightColumnMeta.get(header)).join('；'));
+        if (isFrequent) titleParts.push('⭐ 常用复制列（双击数据行弹窗已优先置顶）');
+        const titleAttr = titleParts.length ? `title="${escapeHTML(titleParts.join('\n'))}"` : '';
         const wStyle = state.columnWidths[header] ? `style="width:${state.columnWidths[header]}px;min-width:${state.columnWidths[header]}px;max-width:${state.columnWidths[header]}px;"` : '';
-        html += `<th draggable="true" data-header="${safe.replace(/"/g,'&quot;')}" ${wStyle} ${classAttr} ${titleAttr} onclick="handleSortClick('${secId}', '${safe.replace(/'/g,"\\'")}')">${safe} ${getIcon(header)}</th>`;
+        const headerDisplay = isFrequent ? `<span class="th-frequent-star" title="常用复制列">⭐</span>${safe}` : safe;
+        html += `<th draggable="true" data-header="${safe.replace(/"/g,'&quot;')}" ${wStyle} ${classAttr} ${titleAttr} onclick="handleSortClick('${secId}', '${safe.replace(/'/g,"\\'")}')">${headerDisplay} ${getIcon(header)}</th>`;
     });
     html += '</tr></thead><tbody>';
-    data.forEach(row => {
-        html += `<tr class="${row._rowClass}">`;
+    data.forEach((row, rowIndex) => {
+        html += `<tr class="${row._rowClass || ''} sla-data-row" data-sec="${secId}" data-row-idx="${rowIndex}" ondblclick="window.SLARowDetail && window.SLARowDetail.open('${secId}', ${rowIndex})" title="💡 双击可竖排紧凑查看字段详情并一键复制">`;
         if (state.mode !== 'other') {
             const slaW = state.columnWidths['_SLA_'] ? `style="width:${state.columnWidths['_SLA_']}px;min-width:${state.columnWidths['_SLA_']}px;max-width:${state.columnWidths['_SLA_']}px;"` : '';
             html += `<td ${slaW}>${row._slaText}</td>`;
@@ -345,6 +351,7 @@ function renderTable(secId) {
             const tdClasses = [];
             if (highlightColumnMeta.has(header)) tdClasses.push('metric-involved-col-cell');
             if (cellHighlight) tdClasses.push(...Array.from(cellHighlight.classes));
+            if (frequentCols.includes(header)) tdClasses.push('frequent-copied-cell');
             const classAttr = buildClassAttr(tdClasses);
             const titleParts = [safe];
             if (cellHighlight) titleParts.push(Array.from(cellHighlight.reasons).join('；'));
@@ -359,6 +366,19 @@ function renderTable(secId) {
     container.innerHTML = html;
     attachResizers(secId);
     attachDragAndDrop(secId);
+    const tableEl = document.getElementById(`table-${secId}`);
+    if (tableEl && !tableEl._dblclickBound) {
+        tableEl._dblclickBound = true;
+        tableEl.addEventListener('dblclick', function(e) {
+            const tr = e.target.closest('tr.sla-data-row');
+            if (tr && tr.dataset.rowIdx !== undefined) {
+                const idx = parseInt(tr.dataset.rowIdx, 10);
+                if (!isNaN(idx) && window.SLARowDetail) {
+                    window.SLARowDetail.open(secId, idx);
+                }
+            }
+        });
+    }
 }
 
 window.handleSortClick = function(secId, key) {

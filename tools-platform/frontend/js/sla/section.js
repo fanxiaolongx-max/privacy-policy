@@ -372,7 +372,16 @@ async function initSection(secId, mode, title, rawData, themeColor, baseName = '
         foundPriorityCols.unshift('版本标识');
         const idx = otherCols.indexOf('版本标识'); if (idx > -1) otherCols.splice(idx, 1);
     }
-    const orderedHeadersLocal = [...foundPriorityCols, ...otherCols];
+    if (window.SLARowDetail && typeof window.SLARowDetail.fetchCopiedFields === 'function') {
+        try { await window.SLARowDetail.fetchCopiedFields(mode || secId); } catch (e) {}
+    }
+    let frequentCols = [];
+    if (window.SLARowDetail && typeof window.SLARowDetail.getCachedFrequentFields === 'function') {
+        const cached = window.SLARowDetail.getCachedFrequentFields(mode || secId);
+        frequentCols = (cached || []).filter(col => otherCols.includes(col));
+    }
+    const nonFrequentOtherCols = otherCols.filter(col => !frequentCols.includes(col));
+    const orderedHeadersLocal = [...foundPriorityCols, ...frequentCols, ...nonFrequentOtherCols];
     const schemaHashStr = (mode === 'other' && baseName) ? 'sla_prefs_other_' + SLAUpload.generateSchemaHash(baseName) : 'sla_prefs_' + mode + '_' + SLAUpload.generateSchemaHash(orderedHeadersLocal.slice().sort().join('|'));
 
     AppState[secId] = {
