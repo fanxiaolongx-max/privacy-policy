@@ -326,3 +326,160 @@ test('manual mandatory attendees list (其他必选参会名单) correctly force
     assert.equal(state.mandatoryAttendees[0].account, 'm9999999');
     assert.equal(state.attendanceRules.orderWindowMonths, 1);
 });
+
+test('multi-session imports correctly handle spanning window, per-session night WFM exemption, and mandatory attendees', async () => {
+    const api = loadMeetingAttendance();
+    const { state } = api;
+
+    // Multi-day sessions: Session 1 on 2026-08-01, Session 2 on 2026-08-05
+    state.attendanceRules.meetingDate = '';
+    state.attendanceRules.orderWindowMonths = 1;
+    state.attendanceRules.nightWfmExempt = true;
+
+    state.sheets = [
+        {
+            id: 'qr1',
+            category: 'qr',
+            fileName: 'QR_Orders.xlsx',
+            headers: ['Apply Fullname', 'Apply Accountid', 'BU', 'Customer Group', 'Task ID', 'Create Time'],
+            rows: [
+                ['Engineer Alpha', 'a1111111', 'Cloud BU', 'Core-Network', 'QR20260715001234', '2026-07-15 10:00:00']
+            ]
+        },
+        {
+            id: 'wfm1',
+            category: 'wfm',
+            fileName: 'WFM_Tasks.xlsx',
+            headers: ['实施任务单号', '创建时间', '实施人/Operator', 'BU', '客户群/Customer Group', '任务结束时间'],
+            rows: [
+                ['TK20260731000888', '2026-07-31 23:15:00', 'Engineer NightBeta b2222222', 'Core BU', 'Bank-Net', '2026-08-01 02:00:00']
+            ]
+        },
+        {
+            id: 'off_sess1',
+            category: 'offline',
+            fileName: 'Meeting_2026-08-01_Session1.xlsx',
+            sessionName: '8月1日例会',
+            headers: ['工号', '姓名', 'BU', '签到时间'],
+            rows: [
+                ['a1111111', 'Engineer Alpha', 'Cloud BU', '2026-08-01 08:50:00']
+            ]
+        },
+        {
+            id: 'off_sess2',
+            category: 'offline',
+            fileName: 'Meeting_2026-08-05_Session2.xlsx',
+            sessionName: '8月5日例会',
+            headers: ['工号', '姓名', 'BU', '签到时间'],
+            rows: [
+                ['g3333333', 'Engineer MandatoryGamma', 'Management', '2026-08-05 08:55:00']
+            ]
+        }
+    ];
+
+    state.mandatoryAttendees = [
+        { name: 'Engineer MandatoryGamma', account: 'g3333333', role: '质量督导', bu: '管理部', customer: '重点保障' }
+    ];
+
+    // Check detected meeting dates
+    const allDates = api.getAllMeetingDates();
+    assert.equal([...allDates].sort().join(','), '2026-08-01,2026-08-05');
+
+    // Check window spans from 1 month before 2026-08-01 to 2026-08-05
+    const windowRange = api.getWindowDateRange(allDates, 1);
+    assert.equal(windowRange.startDateStr, '2026-07-01');
+    assert.equal(windowRange.endDateStr, '2026-08-05');
+
+    // Run cache calculation
+    api.invalidatePeopleCache();
+    const cache = await api.ensurePeopleCache();
+    assert.equal(cache.sessions.length, 2);
+
+    // Verify all 3 engineers are in the list
+    assert.equal(cache.all.length, 3);
+    const alpha = cache.all.find(p => p.account === 'a1111111');
+    const beta = cache.all.find(p => p.account === 'b2222222');
+    const gamma = cache.all.find(p => p.account === 'g3333333');
+
+    assert.ok(alpha, 'Alpha should be present');
+    assert.ok(beta, 'NightBeta should be present');
+    assert.ok(gamma, 'MandatoryGamma should be present');
+
+    // Alpha: Attended Sess 1, Absent from Sess 2
+    assert.equal(alpha.sessionRecords['8月1日例会'].attendance, 'Attend on Time');
+    assert.equal(alpha.sessionRecords['8月5日例会'].attendance, 'Absent');
+    assert.equal(alpha.multiSessionStatusTag, 'partial');
+
+    // NightBeta: Night shift before 2026-08-01 -> Exempt in Sess 1!
+    // But NOT night shift before 2026-08-05 -> Absent in Sess 2!
+    assert.equal(beta.sessionRecords['8月1日例会'].attendance, 'Attend on Time');
+    assert.equal(beta.sessionRecords['8月1日例会'].attendanceMethod, '前夜WFM豁免');
+    assert.equal(beta.sessionRecords['8月5日例会'].attendance, 'Absent');
+    assert.equal(beta.multiSessionStatusTag, 'partial');
+
+    // MandatoryGamma: Marked mandatory, Absent from Sess 1, Attended Sess 2
+    assert.equal(gamma.isManualMandatory, true);
+    assert.equal(gamma.sessionRecords['8月1日例会'].attendance, 'Absent');
+    assert.equal(gamma.sessionRecords['8月5日例会'].attendance, 'Attend on Time');
+    assert.equal(gamma.multiSessionStatusTag, 'partial');
+
+    // Single session view drilldown
+    const sess1Rows = api.getSessionPeopleRows(cache.all, '8月1日例会');
+    const betaInSess1 = sess1Rows.find(p => p.account === 'b2222222');
+    assert.equal(betaInSess1.attendance, 'Attend on Time');
+    assert.equal(betaInSess1.attendanceMethod, '前夜WFM豁免');
+
+    const sess2Rows = api.getSessionPeopleRows(cache.all, '8月5日例会');
+    const betaInSess2 = sess2Rows.find(p => p.account === 'b2222222');
+    assert.equal(betaInSess2.attendance, 'Absent');
+
+    // Test Same-Day Multi-Session (Morning + Afternoon)
+    state.sheets = [
+        {
+            id: 'wfm2',
+            category: 'wfm',
+            fileName: 'WFM_Tasks.xlsx',
+            headers: ['实施任务单号', '创建时间', '实施人/Operator', 'BU', '客户群/Customer Group', '任务结束时间'],
+            rows: [
+                ['TK20260804000905', '2026-08-04 22:30:00', 'NightEngineer n8888888', 'Network BU', 'Bank-A', '2026-08-05 03:00:00']
+            ]
+        },
+        {
+            id: 'off_am',
+            category: 'offline',
+            fileName: 'Meeting_2026-08-05_AM.xlsx',
+            sessionName: '2026-08-05 上午场',
+            headers: ['工号', '姓名', 'BU', '签到时间'],
+            rows: []
+        },
+        {
+            id: 'off_pm',
+            category: 'offline',
+            fileName: 'Meeting_2026-08-05_PM.xlsx',
+            sessionName: '2026-08-05 下午场',
+            headers: ['工号', '姓名', 'BU', '签到时间'],
+            rows: []
+        }
+    ];
+    state.mandatoryAttendees = [];
+
+    api.invalidatePeopleCache();
+    const sameDayCache = await api.ensurePeopleCache();
+    assert.equal(sameDayCache.sessions.length, 2);
+    const nightEng = sameDayCache.all.find(p => p.account === 'n8888888');
+    assert.ok(nightEng);
+    // Since both sessions are on 2026-08-05, Night WFM on 2026-08-04 grants exemption for BOTH sessions!
+    assert.equal(nightEng.sessionRecords['2026-08-05 上午场'].attendance, 'Attend on Time');
+    assert.equal(nightEng.sessionRecords['2026-08-05 上午场'].attendanceMethod, '前夜WFM豁免');
+    assert.equal(nightEng.sessionRecords['2026-08-05 下午场'].attendance, 'Attend on Time');
+    assert.equal(nightEng.sessionRecords['2026-08-05 下午场'].attendanceMethod, '前夜WFM豁免');
+    assert.equal(nightEng.multiSessionStatusTag, 'full-ontime');
+
+    // Check Excel export analysis tables output
+    const tables = api.buildAnalysisTables();
+    assert.ok(tables.multiMatrix);
+    const matrixRow = tables.multiMatrix.find(r => r[1] === 'n8888888');
+    assert.ok(matrixRow);
+    assert.ok(matrixRow[4].includes('(Night WFM Exempt)'));
+    assert.ok(matrixRow[5].includes('(Night WFM Exempt)'));
+});

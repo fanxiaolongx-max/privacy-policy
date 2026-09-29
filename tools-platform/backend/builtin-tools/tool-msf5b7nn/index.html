@@ -3110,13 +3110,16 @@
         if (sessions.length > 1) {
           sessions.forEach(sess => {
             const sIndex = buildAttendanceIndex(sess.name);
+            const sessDate = detectMeetingDate(sess.name);
+            const allMeetingDates = getAllMeetingDates();
             sessionIndexes[sess.name] = sIndex;
             const sCounts = { Absent: 0, 'Attend on Time': 0, Delay: 0, 'Fake Attendance': 0 };
             const sByBu = new Map();
             all.forEach(p => {
               if (!p.sessionRecords) p.sessionRecords = {};
               const exemption = getExemption(p);
-              const nightExempt = (state.attendanceRules.nightWfmExempt !== false) && p.isNightWfmExempt;
+              const isNightForSession = isPersonNightExemptForDate(p, sessDate) || (p.isNightWfmExempt && allMeetingDates.length <= 1);
+              const nightExempt = (state.attendanceRules.nightWfmExempt !== false) && isNightForSession;
               const record = (exemption || nightExempt) ? null : getAttendanceRecord(p.account, sIndex);
               let attendance, attendanceMethod, attendanceTime;
               if (nightExempt) {
@@ -3561,9 +3564,9 @@
       };
       function searchRequiredRows(category, queryLower, ids) {
         const found = [];
-        const meetingDateStr = detectMeetingDate();
+        const allMeetingDates = getAllMeetingDates();
         const windowMonths = state.attendanceRules.orderWindowMonths !== undefined ? state.attendanceRules.orderWindowMonths : 1;
-        const windowRange = getWindowDateRange(meetingDateStr, windowMonths);
+        const windowRange = getWindowDateRange(allMeetingDates, windowMonths);
 
         state.sheets.filter(s => s.category === category).forEach(s => {
           let roleReaders, timeIndex, taskIdIndex;
@@ -3591,7 +3594,7 @@
               const ticketId = taskIdIndex >= 0 ? cellAt(row, taskIdIndex) : '';
               const orderDate = extractTicketDate(ticketId, rawTime);
               const inWindow = isOrderInWindow(orderDate, windowRange);
-              const nightInfo = category === 'wfm' ? isNightWfmTask(s, row, meetingDateStr) : null;
+              const nightInfo = category === 'wfm' ? isNightWfmTask(s, row, allMeetingDates) : null;
               found.push({
                 category,
                 fileName: s.fileName,
@@ -3742,30 +3745,58 @@
         }
         return null;
       }
-      function detectMeetingDate() {
-        if (state.attendanceRules?.meetingDate) return state.attendanceRules.meetingDate;
+      function parseDateFromString(str) {
+        if (!str) return null;
+        const s = String(str).trim();
+        let m = s.match(/(?:^|[^0-9])(20\d{2})[-_/.年](0?[1-9]|1[0-2])[-_/.月](0?[1-9]|[12]\d|3[01])日?(?:[^0-9]|$)/);
+        if (m) return `${m[1]}-${String(m[2]).padStart(2, '0')}-${String(m[3]).padStart(2, '0')}`;
+        m = s.match(/(?:^|[^0-9])(20\d{2})(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])(?:[^0-9]|$)/);
+        if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+        return null;
+      }
+      function detectMeetingDate(targetSessionName) {
+        if (state.attendanceRules?.meetingDate && !targetSessionName) return state.attendanceRules.meetingDate;
+        if (targetSessionName) {
+          const directDate = parseDateFromString(targetSessionName);
+          if (directDate) return directDate;
+          for (const s of state.sheets.filter(s => s.category === 'offline' || s.category === 'online')) {
+            const timeCol = headerIndex(s.headers, '签到时间', 'join_time', 'time', '时间');
+            if (timeCol >= 0) {
+              for (const row of s.rows) {
+                if (getRowSessionName(s, row) === targetSessionName) {
+                  const d = parseDateFromString(cellAt(row, timeCol));
+                  if (d) return d;
+                }
+              }
+            }
+            if (s.sessionName === targetSessionName || getSheetDefaultSessionName(s) === targetSessionName) {
+              const d = parseDateFromString(s.fileName) || parseDateFromString(s.sheetName);
+              if (d) return d;
+            }
+          }
+        }
         for (const s of state.sheets.filter(s => s.category === 'offline' || s.category === 'online')) {
           const timeCol = headerIndex(s.headers, '签到时间', 'join_time', 'time', '时间');
           if (timeCol >= 0) {
             for (const row of s.rows) {
-              const val = cellAt(row, timeCol);
-              const m = val && val.match(/\b(20\d\d)[-_/.](0?[1-9]|1[0-2])[-_/.](0?[1-9]|[12]\d|3[01])\b/);
-              if (m) return `${m[1]}-${String(m[2]).padStart(2, '0')}-${String(m[3]).padStart(2, '0')}`;
+              const d = parseDateFromString(cellAt(row, timeCol));
+              if (d) return d;
             }
           }
+          const sheetDate = parseDateFromString(s.sessionName) || parseDateFromString(s.fileName) || parseDateFromString(s.sheetName);
+          if (sheetDate) return sheetDate;
         }
         for (const s of state.sheets) {
-          const m = s.fileName && s.fileName.match(/\b(20\d\d)[-_/.](0?[1-9]|1[0-2])[-_/.](0?[1-9]|[12]\d|3[01])\b/);
-          if (m) return `${m[1]}-${String(m[2]).padStart(2, '0')}-${String(m[3]).padStart(2, '0')}`;
+          const d = parseDateFromString(s.fileName) || parseDateFromString(s.sheetName);
+          if (d) return d;
         }
         for (const s of state.sheets) {
           if (Array.isArray(s.rows)) {
             for (const row of s.rows) {
               if (Array.isArray(row)) {
                 for (const cell of row) {
-                  const str = String(cell || '').trim();
-                  const m = str.match(/\b(20\d\d)[-_/.](0?[1-9]|1[0-2])[-_/.](0?[1-9]|[12]\d|3[01])\b/);
-                  if (m) return `${m[1]}-${String(m[2]).padStart(2, '0')}-${String(m[3]).padStart(2, '0')}`;
+                  const d = parseDateFromString(cell);
+                  if (d) return d;
                 }
               }
             }
@@ -3773,25 +3804,60 @@
         }
         return new Date().toISOString().slice(0, 10);
       }
-      function getWindowDateRange(meetingDateStr, months) {
+      function getAllMeetingDates() {
+        const dates = new Set();
+        if (state.attendanceRules?.meetingDate) dates.add(state.attendanceRules.meetingDate);
+        for (const s of state.sheets.filter(s => s.category === 'offline' || s.category === 'online')) {
+          const timeCol = headerIndex(s.headers, '签到时间', 'join_time', 'time', '时间');
+          if (timeCol >= 0) {
+            for (const row of s.rows) {
+              const d = parseDateFromString(cellAt(row, timeCol));
+              if (d) dates.add(d);
+            }
+          }
+          const sheetDate = parseDateFromString(s.sessionName) || parseDateFromString(s.fileName) || parseDateFromString(s.sheetName);
+          if (sheetDate) dates.add(sheetDate);
+        }
+        if (!dates.size) {
+          dates.add(detectMeetingDate());
+        }
+        return [...dates].sort();
+      }
+      function getWindowDateRange(meetingDateInput, months) {
         if (months === 0 || months === 'all' || !months) return null;
-        const m = String(meetingDateStr || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
-        if (!m) return null;
-        const y = +m[1], mon = +m[2], d = +m[3];
-        let targetYear = y, targetMonth = mon - months;
+        const dates = Array.isArray(meetingDateInput) ? meetingDateInput : [meetingDateInput];
+        const validDates = dates.map(d => String(d || '').match(/^(\d{4})-(\d{2})-(\d{2})$/)).filter(Boolean);
+        if (!validDates.length) return null;
+
+        let earliestYear = Infinity, earliestMonth = Infinity, earliestDay = Infinity;
+        let latestYear = -Infinity, latestMonth = -Infinity, latestDay = -Infinity;
+
+        validDates.forEach(m => {
+          const y = +m[1], mon = +m[2], d = +m[3];
+          const val = y * 10000 + mon * 100 + d;
+          if (val < (earliestYear * 10000 + earliestMonth * 100 + earliestDay)) {
+            earliestYear = y; earliestMonth = mon; earliestDay = d;
+          }
+          if (val > (latestYear * 10000 + latestMonth * 100 + latestDay)) {
+            latestYear = y; latestMonth = mon; latestDay = d;
+          }
+        });
+
+        let targetYear = earliestYear, targetMonth = earliestMonth - months;
         while (targetMonth <= 0) {
           targetYear--;
           targetMonth += 12;
         }
         const maxDays = new Date(Date.UTC(targetYear, targetMonth, 0)).getUTCDate();
-        const clampedDay = Math.min(d, maxDays);
+        const clampedDay = Math.min(earliestDay, maxDays);
         const startDt = new Date(Date.UTC(targetYear, targetMonth - 1, clampedDay, 0, 0, 0));
-        const endDt = new Date(Date.UTC(y, mon - 1, d, 23, 59, 59, 999));
+        const endDt = new Date(Date.UTC(latestYear, latestMonth - 1, latestDay, 23, 59, 59, 999));
+
         return {
           startMs: startDt.getTime(),
           endMs: endDt.getTime(),
           startDateStr: `${targetYear}-${String(targetMonth).padStart(2, '0')}-${String(clampedDay).padStart(2, '0')}`,
-          endDateStr: `${y}-${String(mon).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+          endDateStr: `${latestYear}-${String(latestMonth).padStart(2, '0')}-${String(latestDay).padStart(2, '0')}`
         };
       }
       function isOrderInWindow(orderDate, windowRange) {
@@ -3807,7 +3873,10 @@
       }
       function parseRowTimestamp(str) {
         if (!str) return null;
-        const m = String(str).match(/\b(20\d{2})[-/._年](0?[1-9]|1[0-2])[-/._月](0?[1-9]|[12]\d|3[01])日?(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?\b/);
+        let m = String(str).match(/(?:^|[^0-9])(20\d{2})[-/._年](0?[1-9]|1[0-2])[-/._月](0?[1-9]|[12]\d|3[01])日?(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?(?:[^0-9]|$)/);
+        if (!m) {
+          m = String(str).match(/(?:^|[^0-9])(20\d{2})(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?(?:[^0-9]|$)/);
+        }
         if (!m) return null;
         const year = +m[1], month = +m[2], day = +m[3];
         const hour = m[4] != null ? +m[4] : null;
@@ -3817,17 +3886,13 @@
         const timeMs = hour != null ? Date.UTC(year, month - 1, day, hour, min, sec) : Date.UTC(year, month - 1, day);
         return { dateStr, hour, min, sec, timeMs };
       }
-      function isNightWfmTask(s, row, meetingDateStr) {
-        if (!meetingDateStr) return { isNight: false };
-        const prevDayStr = getPreviousDayDateString(meetingDateStr);
-        if (!prevDayStr) return { isNight: false };
-        const [mY, mM, mD] = meetingDateStr.split('-').map(Number);
-        const [pY, pM, pD] = prevDayStr.split('-').map(Number);
-        const nightWindowStartMs = Date.UTC(pY, pM - 1, pD, 18, 0, 0);
-        const nightWindowEndMs = Date.UTC(mY, mM - 1, mD, 8, 0, 0);
+      function isNightWfmTask(s, row, meetingDateInput) {
+        const dates = Array.isArray(meetingDateInput) ? meetingDateInput : [meetingDateInput];
+        const validDates = dates.map(d => String(d || '').trim()).filter(Boolean);
+        if (!validDates.length) return { isNight: false };
 
         const taskIdCol = headerIndex(s.headers, 'Task ID', '实施任务单号/Implementation Task No', '实施任务单号', 'Implementation Task No', '实施任务单', '任务单号', 'Task No');
-        const ticketId = cellAt(row, taskIdCol);
+        const ticketId = taskIdCol >= 0 ? cellAt(row, taskIdCol) : '';
         const ticketDate = extractTicketDate(ticketId);
 
         const timeCols = [
@@ -3839,6 +3904,9 @@
 
         let matchedTimeStr = '';
         let isNight = false;
+        let matchedPrevDayStr = '';
+        let matchedMeetingDateStr = '';
+        let parsedTaskTime = null;
 
         for (const alias of timeCols) {
           const colIdx = headerIndex(s.headers, alias);
@@ -3847,25 +3915,47 @@
             if (val) {
               const parsed = parseRowTimestamp(val);
               if (parsed) {
-                if (parsed.hour != null) {
-                  if (parsed.timeMs >= nightWindowStartMs && parsed.timeMs <= nightWindowEndMs) {
+                parsedTaskTime = parsed;
+                for (const mDate of validDates) {
+                  const pDate = getPreviousDayDateString(mDate);
+                  if (!pDate) continue;
+                  const [mY, mM, mD] = mDate.split('-').map(Number);
+                  const [pY, pM, pD] = pDate.split('-').map(Number);
+                  const nightStartMs = Date.UTC(pY, pM - 1, pD, 18, 0, 0);
+                  const nightEndMs = Date.UTC(mY, mM - 1, mD, 8, 0, 0);
+                  if (parsed.hour != null) {
+                    if (parsed.timeMs >= nightStartMs && parsed.timeMs <= nightEndMs) {
+                      isNight = true;
+                      matchedTimeStr = val;
+                      matchedPrevDayStr = pDate;
+                      matchedMeetingDateStr = mDate;
+                      break;
+                    }
+                  } else if (parsed.dateStr === pDate) {
                     isNight = true;
                     matchedTimeStr = val;
+                    matchedPrevDayStr = pDate;
+                    matchedMeetingDateStr = mDate;
                     break;
                   }
-                } else if (parsed.dateStr === prevDayStr) {
-                  isNight = true;
-                  matchedTimeStr = val;
-                  break;
                 }
+                if (isNight) break;
               }
             }
           }
         }
 
-        if (!isNight && ticketDate && ticketDate.dateStr === prevDayStr) {
-          isNight = true;
-          matchedTimeStr = ticketDate.dateStr;
+        if (!isNight && ticketDate) {
+          for (const mDate of validDates) {
+            const pDate = getPreviousDayDateString(mDate);
+            if (ticketDate.dateStr === pDate) {
+              isNight = true;
+              matchedTimeStr = ticketDate.dateStr;
+              matchedPrevDayStr = pDate;
+              matchedMeetingDateStr = mDate;
+              break;
+            }
+          }
         }
 
         return {
@@ -3873,14 +3963,34 @@
           ticketId,
           ticketDate: ticketDate?.dateStr || '',
           matchedTimeStr,
-          prevDayStr
+          prevDayStr: matchedPrevDayStr || getPreviousDayDateString(validDates[0] || ''),
+          meetingDateStr: matchedMeetingDateStr || validDates[0] || '',
+          taskTimestamp: parsedTaskTime?.timeMs || null,
+          taskDateStr: parsedTaskTime?.dateStr || ticketDate?.dateStr || ''
         };
+      }
+      function isPersonNightExemptForDate(p, targetMeetingDateStr) {
+        if (!p || !p.nightWfmTasks || !p.nightWfmTasks.length) return false;
+        if (!targetMeetingDateStr) return !!p.isNightWfmExempt;
+        const prevDayStr = getPreviousDayDateString(targetMeetingDateStr);
+        if (!prevDayStr) return false;
+        const [mY, mM, mD] = targetMeetingDateStr.split('-').map(Number);
+        const [pY, pM, pD] = prevDayStr.split('-').map(Number);
+        const nightStartMs = Date.UTC(pY, pM - 1, pD, 18, 0, 0);
+        const nightEndMs = Date.UTC(mY, mM - 1, mD, 8, 0, 0);
+
+        return p.nightWfmTasks.some(t => {
+          if (t.taskTimestamp && t.taskTimestamp >= nightStartMs && t.taskTimestamp <= nightEndMs) return true;
+          if (t.taskDateStr === prevDayStr || t.date === prevDayStr) return true;
+          if (t.ticketDate === prevDayStr) return true;
+          return false;
+        });
       }
       function extractQrPeople() {
         const map = new Map(); let sequence = 0;
-        const meetingDateStr = detectMeetingDate();
+        const allMeetingDates = getAllMeetingDates();
         const windowMonths = state.attendanceRules.orderWindowMonths !== undefined ? state.attendanceRules.orderWindowMonths : 1;
-        const windowRange = getWindowDateRange(meetingDateStr, windowMonths);
+        const windowRange = getWindowDateRange(allMeetingDates, windowMonths);
 
         state.sheets.filter(s => s.category === 'qr').forEach(s => {
           const ix = {
@@ -3930,9 +4040,9 @@
           { role: 'L1 Solution Reviewer', aliases: ['L1评审人/L1 Solution Reviewer', 'L1评审人', 'L1 Solution Reviewer'] }
         ];
         const map = new Map(); let sequence = 0;
-        const meetingDateStr = detectMeetingDate();
+        const allMeetingDates = getAllMeetingDates();
         const windowMonths = state.attendanceRules.orderWindowMonths !== undefined ? state.attendanceRules.orderWindowMonths : 1;
-        const windowRange = getWindowDateRange(meetingDateStr, windowMonths);
+        const windowRange = getWindowDateRange(allMeetingDates, windowMonths);
 
         state.sheets.filter(s => s.category === 'rfc').forEach(s => {
           const buIndex = headerIndex(s.headers, 'BU', 'BU/Service Type'),
@@ -3961,9 +4071,9 @@
           { role: 'PM', aliases: ['PM', 'Pm'] }
         ];
         const map = new Map(); let sequence = 0;
-        const meetingDateStr = detectMeetingDate();
+        const allMeetingDates = getAllMeetingDates();
         const windowMonths = state.attendanceRules.orderWindowMonths !== undefined ? state.attendanceRules.orderWindowMonths : 1;
-        const windowRange = getWindowDateRange(meetingDateStr, windowMonths);
+        const windowRange = getWindowDateRange(allMeetingDates, windowMonths);
 
         state.sheets.filter(s => s.category === 'wfm').forEach(s => {
           const buIndex = headerIndex(s.headers, 'BU', 'BU/Service Type'),
@@ -3980,7 +4090,7 @@
             const orderDate = extractTicketDate(ticketId, rawTime);
             const inWindow = isOrderInWindow(orderDate, windowRange);
             const explicitRole = cellAt(row, roleColIndex);
-            const nightInfo = isNightWfmTask(s, row, meetingDateStr);
+            const nightInfo = isNightWfmTask(s, row, allMeetingDates);
 
             const seenInRow = new Set();
             roleIndexes.forEach(cfg => {
@@ -4001,7 +4111,9 @@
                   ticketId,
                   isNightWfmExempt: isNightExempt,
                   nightWfmDate: nightInfo.prevDayStr,
-                  nightWfmTime: nightInfo.matchedTimeStr
+                  nightWfmTime: nightInfo.matchedTimeStr,
+                  taskTimestamp: nightInfo.taskTimestamp,
+                  taskDateStr: nightInfo.taskDateStr
                 });
               });
             });
@@ -4284,7 +4396,9 @@
           x.nightWfmTasks.push({
             ticketId: p.ticketId || '',
             date: p.nightWfmDate || '',
-            time: p.nightWfmTime || ''
+            time: p.nightWfmTime || '',
+            taskTimestamp: p.taskTimestamp || null,
+            taskDateStr: p.taskDateStr || ''
           });
         }
       }
@@ -4452,14 +4566,14 @@
           files.set(name, content); p += 46 + nlen + elen + clen;
         } return files;
       }
-      function buildAnalysisTables(rows) {
+      function buildAnalysisTables(rows = state.peopleCache?.all || []) {
         const statuses = ['Absent', 'Attend on Time', 'Delay', 'Fake Attendance'], counts = Object.fromEntries(statuses.map(s => [s, 0])), byBu = new Map();
         rows.forEach(r => { counts[r.attendance] = (counts[r.attendance] || 0) + 1; const bu = normalizeName(r.bu) || 'Unidentified BU'; if (!byBu.has(bu)) byBu.set(bu, { total: 0, Absent: 0, 'Attend on Time': 0, Delay: 0, 'Fake Attendance': 0 }); const x = byBu.get(bu); x.total++; x[r.attendance] = (x[r.attendance] || 0) + 1; });
         const rate = (n, total) => total ? `${(n / total * 100).toFixed(1)}%` : '0.0%', summary = [['BU', 'Total People', 'Absent', 'Attend on Time', 'Delay', 'Fake Attendance', 'On-time Attendance Rate']];
         [...byBu.entries()].sort((a, b) => b[1].total - a[1].total || a[0].localeCompare(b[0])).forEach(([bu, x]) => summary.push([bu, x.total, x.Absent, x['Attend on Time'], x.Delay, x['Fake Attendance'], rate(x['Attend on Time'], x.total)]));
         summary.push(['Total', rows.length, counts.Absent, counts['Attend on Time'], counts.Delay, counts['Fake Attendance'], rate(counts['Attend on Time'], rows.length)]);
         const people = [['Name', 'Employee ID / Account', 'BU', 'Customer Group', 'Attendance Status', 'Meeting / Scan Time (Cairo)', 'Decision Source', 'Related Records']];
-        [...rows].sort((a, b) => (b.count || 0) - (a.count || 0) || (a.name || a.account).localeCompare(b.name || b.account, 'en')).forEach(r => people.push([r.name, r.account, r.bu, r.customer, r.attendance, r.attendanceTime || '', r.attendanceMethod === '豁免名单' ? 'Exemption List' : r.attendanceMethod === '现场扫码' ? 'On-site Scan' : r.attendanceMethod === '线上会议' ? 'Online Meeting' : 'No Record', r.count || 0]));
+        [...rows].sort((a, b) => (b.count || 0) - (a.count || 0) || (a.name || a.account).localeCompare(b.name || b.account, 'en')).forEach(r => people.push([r.name, r.account, r.bu, r.customer, r.attendance, r.attendanceTime || '', r.attendanceMethod === '豁免名单' ? 'Exemption List' : r.attendanceMethod === '前夜WFM豁免' ? 'Night WFM Exempt' : r.attendanceMethod === '现场扫码' ? 'On-site Scan' : r.attendanceMethod === '线上会议' ? 'Online Meeting' : 'No Record', r.count || 0]));
 
         let multiMatrix = null;
         if (state.peopleCache?.sessions?.length > 1) {
@@ -4471,7 +4585,7 @@
             const sessStatuses = sessions.map(s => {
               const rec = r.sessionRecords?.[s.name];
               if (!rec || rec.attendance === 'Absent') return 'Absent';
-              return `${rec.attendance}${rec.attendanceTime ? ` (${rec.attendanceTime})` : ''}`;
+              return `${rec.attendance}${rec.attendanceMethod === '前夜WFM豁免' ? ' (Night WFM Exempt)' : ''}${rec.attendanceTime ? ` (${rec.attendanceTime})` : ''}`;
             });
             multiMatrix.push([
               r.name,
@@ -5072,7 +5186,7 @@
       function showLoading(on, text, percent) { $('#loading').classList.toggle('hidden', !on); if (text) $('#loadingText').textContent = text; if (percent != null) { const p = Math.max(0, Math.min(100, Math.round(percent))); $('#loadingBar').style.width = p + '%'; $('#loadingPercent').textContent = p + '%'; } }
       function nextPaint() { return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); }
       function toast(msg, type = '', duration = 2800) { const host = $('#toasts'); if (!host || typeof host.appendChild !== 'function') return; const t = document.createElement('div'); t.className = 'toast ' + type; t.textContent = msg; host.appendChild(t); setTimeout(() => t.remove?.(), duration); }
-      window.__meetingAttendance = { state, CATEGORIES, DEFAULT_COLUMNS, DEFAULT_CUSTOMER_MAPPINGS, DEFAULT_ATTENDANCE_RULES, PRESET_EXEMPTIONS, isInvalidStaffId, activeExemptions, handleDeveloperUnlock, disableDeveloperMode, parseDelimited, normalizeRows, classifySheet, defaultColumnIndices, getDisplayColumns, parsePeopleCell, parseQrPairedPeople, parseCreateTime, parseAttendanceMinute, beijingToCairoAttendance, buildAttendanceIndex, getAttendanceRecord, getExemption, determineAttendance, extractTicketDate, detectMeetingDate, getWindowDateRange, isOrderInWindow, getPreviousDayDateString, parseRowTimestamp, isNightWfmTask, normalizeMandatoryEntries, loadMandatoryAttendees, saveMandatoryAttendees, openMandatoryModal, closeMandatoryModal, renderMandatoryRows, appendMandatoryRow, updateMandatoryBadge, applyBatchMandatoryText, extractQrPeople, extractRfcPeople, extractWfmPeople, extractAttendanceSourcePeople, extractAllPeople, ensurePeopleCache, invalidatePeopleCache, cleanSessionTitle, isGenericTitle, getSheetRowSessionNames, getSheetDefaultSessionName, getSheetSessionName, getRowSessionName, getMeetingSessions, getSessionPeopleRows, renderSessionSwitcher, renderSessionNoticeBar, renderMultiSessionOverview, renderMultiSessionBuTable, renderMultiSessionMatrixCard, mapCustomerGroup, resolveSearchIdentities, searchRequiredRows, searchAttendanceRows, validBusinessTimes, formatDateRange, roleCounts, roleLabel, sheetFingerprint, removeDuplicateSheets, renderAttendanceDashboard, renderCombinedPeopleCard, renderPeopleCard, renderPersonSearchPanel, renderPersonSearchResults, buildAnalysisTables, buildAnalysisWorkbook, buildSnapshotPayload, restoreMeetingSnapshot, openSaveSnapshotModal, closeSaveSnapshotModal, openSnapshotManagerModal, closeSnapshotManagerModal, filterSnapshotCards };
+      window.__meetingAttendance = { state, CATEGORIES, DEFAULT_COLUMNS, DEFAULT_CUSTOMER_MAPPINGS, DEFAULT_ATTENDANCE_RULES, PRESET_EXEMPTIONS, isInvalidStaffId, activeExemptions, handleDeveloperUnlock, disableDeveloperMode, parseDelimited, normalizeRows, classifySheet, defaultColumnIndices, getDisplayColumns, parsePeopleCell, parseQrPairedPeople, parseCreateTime, parseAttendanceMinute, beijingToCairoAttendance, buildAttendanceIndex, getAttendanceRecord, getExemption, determineAttendance, extractTicketDate, parseDateFromString, detectMeetingDate, getAllMeetingDates, getWindowDateRange, isOrderInWindow, getPreviousDayDateString, parseRowTimestamp, isNightWfmTask, isPersonNightExemptForDate, normalizeMandatoryEntries, loadMandatoryAttendees, saveMandatoryAttendees, openMandatoryModal, closeMandatoryModal, renderMandatoryRows, appendMandatoryRow, updateMandatoryBadge, applyBatchMandatoryText, extractQrPeople, extractRfcPeople, extractWfmPeople, extractAttendanceSourcePeople, extractAllPeople, ensurePeopleCache, invalidatePeopleCache, cleanSessionTitle, isGenericTitle, getSheetRowSessionNames, getSheetDefaultSessionName, getSheetSessionName, getRowSessionName, getMeetingSessions, getSessionPeopleRows, renderSessionSwitcher, renderSessionNoticeBar, renderMultiSessionOverview, renderMultiSessionBuTable, renderMultiSessionMatrixCard, mapCustomerGroup, resolveSearchIdentities, searchRequiredRows, searchAttendanceRows, validBusinessTimes, formatDateRange, roleCounts, roleLabel, sheetFingerprint, removeDuplicateSheets, renderAttendanceDashboard, renderCombinedPeopleCard, renderPeopleCard, renderPersonSearchPanel, renderPersonSearchResults, buildAnalysisTables, buildAnalysisWorkbook, buildSnapshotPayload, restoreMeetingSnapshot, openSaveSnapshotModal, closeSaveSnapshotModal, openSnapshotManagerModal, closeSnapshotManagerModal, filterSnapshotCards };
       init();
     })();
   </script>
