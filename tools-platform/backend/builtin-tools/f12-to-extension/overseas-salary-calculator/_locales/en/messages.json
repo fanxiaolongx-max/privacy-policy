@@ -1,0 +1,14 @@
+{
+  "appName": {
+    "message": "Overseas Salary Currency Calculator",
+    "description": "Extension application name"
+  },
+  "appDesc": {
+    "message": "Expat salary FX & profit calculator. Track real-time exchange rates and compute USD → EGP → CNY net returns.",
+    "description": "Extension description"
+  },
+  "actionTitle": {
+    "message": "Overseas Salary Currency Calculator",
+    "description": "Toolbar action title"
+  }
+}

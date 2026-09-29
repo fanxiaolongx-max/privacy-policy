@@ -755,9 +755,14 @@ initializePopup();`;
   function transformChromeCaptureManifest(manifestJson, options) {
     const manifest = typeof manifestJson === "string" ? JSON.parse(manifestJson) : { ...manifestJson };
     const settings = normalizeOptions(options);
-    if (settings.name) manifest.name = settings.name;
+    const preservesI18nName = Boolean(manifest.default_locale && String(manifest.name || '').startsWith('__MSG_')
+      && (!options || !options.name || options.name === BUILTIN_TEMPLATES['overseas-salary-calculator']?.name || options.name === '__MSG_appName__'));
+    const preservesI18nDesc = Boolean(manifest.default_locale && String(manifest.description || '').startsWith('__MSG_')
+      && (!options || !options.description || options.description === BUILTIN_TEMPLATES['overseas-salary-calculator']?.description || options.description === '__MSG_appDesc__'));
+
+    if (!preservesI18nName && settings.name) manifest.name = settings.name;
     if (settings.version) manifest.version = settings.version;
-    if (settings.description) manifest.description = settings.description;
+    if (!preservesI18nDesc && settings.description) manifest.description = settings.description;
     if (settings.packageTarget === "store") {
       delete manifest.key;
     } else if (settings.packageTarget === "local" && settings.extensionKey) {

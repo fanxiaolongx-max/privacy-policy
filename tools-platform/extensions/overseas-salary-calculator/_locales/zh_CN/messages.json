@@ -1,0 +1,14 @@
+{
+  "appName": {
+    "message": "驻外薪资换汇计算器",
+    "description": "扩展应用名称"
+  },
+  "appDesc": {
+    "message": "专为驻外员工打造的薪资换汇与盈亏核算工具，实时官方汇率跟踪，精准测算 USD → EGP → CNY 汇差盈亏与最终到手收益。",
+    "description": "扩展功能描述"
+  },
+  "actionTitle": {
+    "message": "驻外薪资换汇计算器",
+    "description": "工具栏图标标题"
+  }
+}

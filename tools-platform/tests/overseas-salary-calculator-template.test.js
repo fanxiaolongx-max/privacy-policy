@@ -15,6 +15,7 @@ test('overseas salary calculator template appears as a complete built-in templat
     const zip = await JSZip.loadAsync(fs.readFileSync(path.join(toolDir, 'overseas-salary-calculator.template.zip')));
     const manifest = JSON.parse(await zip.file('manifest.json').async('string'));
     assert.equal(manifest.manifest_version, 3);
+    assert.equal(manifest.default_locale, 'zh_CN');
     assert.equal(manifest.action.default_popup, 'popup.html');
     for (const file of [
         'popup.html',
@@ -24,10 +25,17 @@ test('overseas salary calculator template appears as a complete built-in templat
         'icons/icon128.png',
         'icons/icon48.png',
         'icons/icon32.png',
-        'icons/icon16.png'
+        'icons/icon16.png',
+        '_locales/zh_CN/messages.json',
+        '_locales/en/messages.json'
     ]) {
         assert.ok(zip.file(file), `Salary calculator template is missing ${file}`);
     }
+
+    const zhMessages = JSON.parse(await zip.file('_locales/zh_CN/messages.json').async('string'));
+    const enMessages = JSON.parse(await zip.file('_locales/en/messages.json').async('string'));
+    assert.equal(zhMessages.appName.message, '驻外薪资换汇计算器');
+    assert.equal(enMessages.appName.message, 'Overseas Salary Currency Calculator');
 
     const updatedStore = packer.transformChromeCaptureManifest(manifest, {
         name: '驻外薪资换汇计算器',
@@ -37,6 +45,8 @@ test('overseas salary calculator template appears as a complete built-in templat
     });
     assert.equal(updatedStore.version, '1.0.1');
     assert.equal(updatedStore.key, undefined, 'Store package must not contain manifest.key');
+    assert.equal(updatedStore.name, '__MSG_appName__', 'Store package must preserve i18n name placeholder');
+    assert.equal(updatedStore.default_locale, 'zh_CN');
 
     const updatedLocal = packer.transformChromeCaptureManifest(manifest, {
         name: '驻外薪资换汇计算器',
@@ -46,6 +56,7 @@ test('overseas salary calculator template appears as a complete built-in templat
         extensionKey: 'test-local-key'
     });
     assert.equal(updatedLocal.key, 'test-local-key');
+    assert.equal(updatedLocal.name, '__MSG_appName__');
 });
 
 test('overseas salary calculator popup supports bilingual Chinese and English translation', async () => {

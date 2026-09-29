@@ -449,7 +449,10 @@
     if (saved.preferredLang && (saved.preferredLang === 'en' || saved.preferredLang === 'zh')) {
       applyLanguage(saved.preferredLang);
     } else {
-      applyLanguage('zh');
+      const uiLang = (typeof chrome !== 'undefined' && chrome.i18n && typeof chrome.i18n.getUILanguage === 'function')
+        ? chrome.i18n.getUILanguage()
+        : (navigator.language || 'zh');
+      applyLanguage(uiLang.toLowerCase().startsWith('zh') ? 'zh' : 'en');
     }
 
     const dict = I18N[currentLanguage] || I18N.zh;

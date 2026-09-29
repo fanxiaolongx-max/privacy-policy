@@ -60,48 +60,69 @@
 
 ### 三、详细信息（Store Listings - 英语 / 中文）
 
-#### 1. 描述 *（Description，英文美国）
-> **直接复制并粘贴：**
-> 
-> ```text
-> Overseas Salary Currency Exchange Calculator is an essential financial productivity tool designed specifically for expatriates, cross-border professionals, and international remote teams.
-> 
-> Key Features:
-> 1. Live & Historical Official FX Rates: Automatically tracks daily official benchmark exchange rates for USD/EGP and USD/CNY via public open-source currency APIs. Supports historical rate retrospective for up to 45 company settlement days.
-> 2. Dual Payroll Conversion (USD → EGP → CNY): Enter your base USD salary, select your company settlement date to calculate actual local EGP received, and calculate the exact CNY converted back with one-click full payout (Max All).
-> 3. Real-Time Profit / Loss Audit: Compare your final received CNY against the payday benchmark value with instant visual badges (FX Gain, FX Loss, or Break-even).
-> 4. Full Bilingual Support (English & Chinese): Instant one-click toggle between English and Chinese across all labels, dropdowns, and status badges.
-> 5. Privacy & Offline Safe: All calculations and user inputs (salary, deal rates, language preference) are saved strictly inside your local browser storage. No user data is ever uploaded to any remote server.
-> 6. Flexible View Modes: Instant popup under your extension toolbar, plus one-click expansion to a full-screen desktop tab.
-> ```
+> 💡 **重点说明**：程序包已内置 Chromium 官方 `_locales` 原生国际化规范（包含 `zh_CN` 与 `en`）。重新上传 `overseas-salary-calculator-v1.0.0-store.zip` 后，Edge Partner Center 的 Store Listings 会**自动识别并列出两大语言条目**：
+> 1. **`Chinese (Simplified) / 中文(简体)`**：扩展名称自动抓取为 `驻外薪资换汇计算器`；
+> 2. **`English (United States) / 英语(美国)`**：扩展名称自动抓取为 `Overseas Salary Currency Calculator`（已彻底解决被锁死为中文的问题！）。
+>
+> *(根据商店要求，至少填写其中 1 种语言即可提交；推荐将中英两种语言都填写完整，以获得全球与国内最佳曝光)*
 
-*(若添加了中文版面，中文描述可使用：)*
-> ```text
-> 【驻外薪资换汇计算器 - 专为驻外与跨国出海员工定制的薪资核算工具】
-> 
-> 核心功能：
-> 1. 实时与历史官方牌价同步：自动追踪 USD/EGP 与 USD/CNY 官方收盘汇率，支持回溯过去 45 天发薪结算日历史汇率。
-> 2. 双重换汇智能测算：美元工资设定、实际到手埃镑折算、一键全额换回与成交汇率填报。
-> 3. 精准盈亏对账：全流程展示发薪日基准价值、实际到手人民币与最终盈亏差额（赚回汇差 / 汇兑损失 / 无亏无赚）。
-> 4. 全界面中英双语切换：右上角一键在中文与英文之间秒切，无缝适配多语言办公场景。
-> 5. 纯本地隐私安全：数据仅保存在浏览器本地，自动记忆上次输入，不上传任何服务器。
-> ```
+---
 
-#### 2. 上传图像资源（拖拽上传）
-- **扩展徽标 \***：上传 `store-assets/logo_300x300.png`
-- **屏幕截图 \***：上传 `store-assets/screenshot_1280x800.png`
-- **小促销磁贴**（选填）：上传 `store-assets/small_promo_440x280.png`
-- **大促销磁贴**（选填）：上传 `store-assets/large_promo_1400x560.png`
+#### 1. 英语 (美国) - English (United States) 填写内容
 
-#### 3. 搜索词（Search terms，最多 7 个）
-依次添加以下关键词：
-1. `salary calculator`
-2. `currency exchange`
-3. `forex calculator`
-4. `expat salary`
-5. `exchange rate`
-6. `egp to cny`
-7. `驻外薪资换汇`
+- **扩展名**：自动显示 `Overseas Salary Currency Calculator`（由清单提供）
+- **描述 \*（Description）**：直接复制粘贴以下英文：
+```text
+Overseas Salary Currency Exchange Calculator is an essential financial productivity tool designed specifically for expatriates, cross-border professionals, and international remote teams.
+
+Key Features:
+1. Live & Historical Official FX Rates: Automatically tracks daily official benchmark exchange rates for USD/EGP and USD/CNY via public open-source currency APIs. Supports historical rate retrospective for up to 45 company settlement days.
+2. Dual Payroll Conversion (USD → EGP → CNY): Enter your base USD salary, select your company settlement date to calculate actual local EGP received, and calculate the exact CNY converted back with one-click full payout (Max All).
+3. Real-Time Profit / Loss Audit: Compare your final received CNY against the payday benchmark value with instant visual badges (FX Gain, FX Loss, or Break-even).
+4. Full Bilingual Support (English & Chinese): Instant one-click toggle between English and Chinese across all labels, dropdowns, and status badges.
+5. Privacy & Offline Safe: All calculations and user inputs (salary, deal rates, language preference) are saved strictly inside your local browser storage. No user data is ever uploaded to any remote server.
+6. Flexible View Modes: Instant popup under your extension toolbar, plus one-click expansion to a full-screen desktop tab.
+```
+- **搜索词（Search terms，最多 7 个）**：
+  1. `salary calculator`
+  2. `currency exchange`
+  3. `forex calculator`
+  4. `expat salary`
+  5. `exchange rate`
+  6. `egp to cny`
+  7. `currency converter`
+- **上传图像**：
+  - 扩展徽标 \*：上传 `store-assets/logo_300x300.png`
+  - 屏幕截图 \*：上传 `store-assets/screenshot_1280x800.png`
+  - 小促销磁贴（选填）：上传 `store-assets/small_promo_440x280.png`
+  - 大促销磁贴（选填）：上传 `store-assets/large_promo_1400x560.png`
+
+---
+
+#### 2. 中文 (简体) - Chinese (Simplified) 填写内容
+
+- **扩展名**：自动显示 `驻外薪资换汇计算器`（由清单提供）
+- **描述 \*（Description）**：直接复制粘贴以下中文：
+```text
+【驻外薪资换汇计算器 - 专为驻外与跨国出海员工定制的薪资核算工具】
+
+核心功能：
+1. 实时与历史官方牌价同步：自动追踪 USD/EGP 与 USD/CNY 官方收盘汇率，支持回溯过去 45 天发薪结算日历史汇率。
+2. 双重换汇智能测算：美元工资设定、实际到手埃镑折算、一键全额换回与成交汇率填报。
+3. 精准盈亏对账：全流程展示发薪日基准价值、实际到手人民币与最终盈亏差额（赚回汇差 / 汇兑损失 / 无亏无赚）。
+4. 全界面中英双语切换：右上角一键在中文与英文之间秒切，无缝适配多语言办公场景。
+5. 纯本地隐私安全：数据仅保存在浏览器本地，自动记忆上次输入，不上传任何服务器。
+6. 弹窗与全屏双重视图：浏览器右上角轻量唤起，或一键在新标签页全屏使用。
+```
+- **搜索词（Search terms，最多 7 个）**：
+  1. `驻外薪资`
+  2. `汇率计算器`
+  3. `换汇计算`
+  4. `埃及镑汇率`
+  5. `外汇换算`
+  6. `薪资核算`
+  7. `出海工具`
+- **上传图像**：直接使用相同的 `store-assets/` 下的各尺寸图片即可。
 
 ---
 
