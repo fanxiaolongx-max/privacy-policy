@@ -6,6 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>登录 - Tools Platform</title>
+    <script src="/js/shared/i18n.js?v=20260929-01"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
 
@@ -510,45 +511,98 @@
         .btn-close-game:hover {
             background: rgba(255, 255, 255, 0.2);
         }
+
+        /* 语言切换按钮 Glassmorphism */
+        .login-lang-switch {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10;
+        }
+
+        .btn-lang-toggle {
+            height: 34px;
+            min-width: 82px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            padding: 0 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            color: #e2e8f0;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            transition: all 0.25s ease;
+        }
+
+        .btn-lang-toggle:hover {
+            transform: translateY(-1px);
+            border-color: rgba(165, 180, 252, 0.5);
+            background: rgba(30, 41, 59, 0.7);
+            color: #ffffff;
+            box-shadow: 0 6px 16px rgba(99, 102, 241, 0.25);
+        }
+
+        .btn-lang-icon {
+            font-size: 15px;
+            line-height: 1;
+        }
+
+        .btn-lang-current {
+            letter-spacing: 0.5px;
+        }
     </style>
 </head>
 
 <body>
+    <div class="login-lang-switch">
+        <button type="button" class="btn-lang-toggle" id="loginLangBtn" onclick="toggleLoginLanguage()" title="切换语言 / Switch Language" data-i18n-title="login.langToggleTitle" aria-label="切换语言 / Switch Language" data-i18n-aria-label="login.langToggleTitle">
+            <span class="btn-lang-icon">🌐</span>
+            <span class="btn-lang-current" id="loginLangCurrent">中文</span>
+        </button>
+    </div>
+
     <canvas id="spaceCanvas"></canvas>
     <canvas id="dissolveCanvas" aria-hidden="true"></canvas>
 
     <div class="login-wrapper">
         <div class="glass-panel" id="loginPanel">
             <h2>🛠️ Tools Platform <span class="version-badge" id="appVersionBadge">v...</span></h2>
-            <div class="subtitle">默认账号：admin / admin123</div>
+            <div class="subtitle" data-i18n="login.subtitle">默认账号：admin / admin123</div>
 
             <div class="input-group">
-                <label>用户名</label>
-                <input type="text" id="username" placeholder="请输入账号" onkeydown="handleEnter(event)">
+                <label data-i18n="login.usernameLabel">用户名</label>
+                <input type="text" id="username" placeholder="请输入账号" data-i18n-placeholder="login.usernamePlaceholder" onkeydown="handleEnter(event)">
             </div>
             <div class="input-group">
-                <label>密码</label>
-                <input type="password" id="password" placeholder="请输入密码" onkeydown="handleEnter(event)">
+                <label data-i18n="login.passwordLabel">密码</label>
+                <input type="password" id="password" placeholder="请输入密码" data-i18n-placeholder="login.passwordPlaceholder" onkeydown="handleEnter(event)">
             </div>
 
-            <button class="btn-login" id="loginBtn" onclick="doLogin()">登 录</button>
-            <button class="btn-play-game" onclick="toggleGame(true)">♨️ 休息一下</button>
-            <button class="btn-cinema" onclick="window.location.href='/cinema'">🎬 影视作品</button>
+            <button class="btn-login" id="loginBtn" data-i18n="login.submit" onclick="doLogin()">登 录</button>
+            <button class="btn-play-game" data-i18n="login.playGame" onclick="toggleGame(true)">♨️ 休息一下</button>
+            <button class="btn-cinema" data-i18n="login.cinema" onclick="window.location.href='/cinema'">🎬 影视作品</button>
             <div id="error-msg"></div>
         </div>
 
         <div class="footer-links">
-            <a href="/privacy" onclick="openLegalModal('privacy'); return false;">隐私政策</a>
+            <a href="/privacy" data-i18n="login.privacy" onclick="openLegalModal('privacy'); return false;">隐私政策</a>
             <span style="color:rgba(255,255,255,0.2);">|</span>
-            <a href="/terms" onclick="openLegalModal('terms'); return false;">服务条款</a>
+            <a href="/terms" data-i18n="login.terms" onclick="openLegalModal('terms'); return false;">服务条款</a>
         </div>
     </div>
 
     <div class="legal-modal" id="legalModal" aria-hidden="true" onclick="handleLegalBackdrop(event)">
         <div class="legal-dialog" role="dialog" aria-modal="true" aria-labelledby="legalModalTitle">
             <div class="legal-head">
-                <h3 id="legalModalTitle">隐私政策</h3>
-                <button type="button" class="legal-close" onclick="closeLegalModal()" aria-label="关闭">×</button>
+                <h3 id="legalModalTitle" data-i18n="login.privacyTitle">隐私政策</h3>
+                <button type="button" class="legal-close" onclick="closeLegalModal()" data-i18n-aria-label="login.close" aria-label="关闭">×</button>
             </div>
             <div class="legal-body" id="legalModalBody"></div>
         </div>
@@ -556,7 +610,7 @@
 
     <!-- Mini Game Container -->
     <div class="game-wrapper" id="gameWrapper">
-        <button class="btn-close-game" onclick="toggleGame(false)">退出游戏</button>
+        <button class="btn-close-game" data-i18n="login.exitGame" onclick="toggleGame(false)">退出游戏</button>
         <iframe id="gameIframe" src="" frameborder="0" style="width: 100%; height: 100%; display: block;"></iframe>
     </div>
 
@@ -672,7 +726,11 @@
             const title = document.getElementById('legalModalTitle');
             const body = document.getElementById('legalModalBody');
             if (!modal || !title || !body) return;
-            title.textContent = item.title;
+            const lang = window.ToolsI18n?.getLanguage?.() || 'zh-CN';
+            title.textContent = lang === 'en-US'
+                ? (type === 'terms' ? 'Terms of Service (服务条款)' : 'Privacy Policy (隐私政策)')
+                : (type === 'terms' ? '服务条款 (Terms of Service)' : '隐私政策 (Privacy Policy)');
+            title.setAttribute('data-legal-type', type);
             body.innerHTML = item.html;
             body.scrollTop = 0;
             modal.classList.add('open');
@@ -925,17 +983,16 @@
             if (btn.disabled) return;
 
             if (!u || !p) {
-                errDiv.textContent = '用户名和密码不能为空';
+                errDiv.textContent = window.ToolsI18n ? window.ToolsI18n.t('login.emptyFields') : '用户名和密码不能为空';
                 return;
             }
 
             errDiv.textContent = '';
 
             // 触发跃迁动画
-            const originalText = btn.innerHTML;
             btn.disabled = true;
             btn.setAttribute('aria-busy', 'true');
-            btn.innerHTML = '正在登录 <span class="loader"></span>';
+            btn.innerHTML = `${window.ToolsI18n ? window.ToolsI18n.t('login.submitting') : '正在登录'} <span class="loader"></span>`;
             btn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
             btn.style.boxShadow = '0 10px 25px -5px rgba(16, 185, 129, 0.5)';
             panel.style.transform = 'scale(0.95)';
@@ -950,7 +1007,7 @@
 
                 const data = await res.json();
                 if (!res.ok) {
-                    throw new Error(data.error || '登录失败');
+                    throw new Error(data.error || (window.ToolsI18n ? window.ToolsI18n.t('login.failed') : '登录失败'));
                 }
 
                 localStorage.setItem('tools_token', data.token);
@@ -958,7 +1015,7 @@
                 localStorage.setItem('tools_role', data.role);
                 localStorage.setItem('tools_tenant_id', data.tenantId || 'default');
 
-                btn.innerHTML = '登录成功';
+                btn.innerHTML = window.ToolsI18n ? window.ToolsI18n.t('login.success') : '登录成功';
                 btn.removeAttribute('aria-busy');
                 playGaussianDissolve();
 
@@ -971,7 +1028,7 @@
                 // 恢复原状
                 setTimeout(() => {
                     targetSpeed = baseSpeed;
-                    btn.innerHTML = originalText;
+                    btn.innerHTML = window.ToolsI18n ? window.ToolsI18n.t('login.submit') : '登 录';
                     btn.disabled = false;
                     btn.removeAttribute('aria-busy');
                     btn.style.background = '';
@@ -980,6 +1037,83 @@
                     errDiv.textContent = e.message;
                 }, 500);
             }
+        }
+
+        // --- 多语言国际化 (i18n) ---
+        const LOGIN_I18N = {
+            'zh-CN': {
+                'login.pageTitle': '登录 - Tools Platform',
+                'login.subtitle': '默认账号：admin / admin123',
+                'login.usernameLabel': '用户名',
+                'login.usernamePlaceholder': '请输入账号',
+                'login.passwordLabel': '密码',
+                'login.passwordPlaceholder': '请输入密码',
+                'login.submit': '登 录',
+                'login.submitting': '正在登录',
+                'login.success': '登录成功',
+                'login.failed': '登录失败',
+                'login.emptyFields': '用户名和密码不能为空',
+                'login.playGame': '♨️ 休息一下',
+                'login.cinema': '🎬 影视作品',
+                'login.privacy': '隐私政策',
+                'login.terms': '服务条款',
+                'login.exitGame': '退出游戏',
+                'login.close': '关闭',
+                'login.langToggleTitle': '切换语言 / Switch Language',
+                'login.privacyTitle': '隐私政策 (Privacy Policy)',
+                'login.termsTitle': '服务条款 (Terms of Service)'
+            },
+            'en-US': {
+                'login.pageTitle': 'Sign In - Tools Platform',
+                'login.subtitle': 'Default credentials: admin / admin123',
+                'login.usernameLabel': 'Username',
+                'login.usernamePlaceholder': 'Enter username',
+                'login.passwordLabel': 'Password',
+                'login.passwordPlaceholder': 'Enter password',
+                'login.submit': 'Sign In',
+                'login.submitting': 'Signing in',
+                'login.success': 'Signed in successfully',
+                'login.failed': 'Sign in failed',
+                'login.emptyFields': 'Username and password cannot be empty',
+                'login.playGame': '♨️ Take a Break',
+                'login.cinema': '🎬 Cinema & Films',
+                'login.privacy': 'Privacy Policy',
+                'login.terms': 'Terms of Service',
+                'login.exitGame': 'Exit Game',
+                'login.close': 'Close',
+                'login.langToggleTitle': 'Switch Language / 切换语言',
+                'login.privacyTitle': 'Privacy Policy (隐私政策)',
+                'login.termsTitle': 'Terms of Service (服务条款)'
+            }
+        };
+
+        function updateLoginLanguageUI() {
+            const lang = window.ToolsI18n?.getLanguage?.() || 'zh-CN';
+            document.title = window.ToolsI18n?.t('login.pageTitle') || '登录 - Tools Platform';
+            const currentSpan = document.getElementById('loginLangCurrent');
+            if (currentSpan) currentSpan.textContent = lang === 'en-US' ? 'EN' : '中文';
+            const modal = document.getElementById('legalModal');
+            if (modal && modal.classList.contains('open')) {
+                const title = document.getElementById('legalModalTitle');
+                if (title) {
+                    const legalType = title.getAttribute('data-legal-type') || 'privacy';
+                    title.textContent = window.ToolsI18n?.t(legalType === 'terms' ? 'login.termsTitle' : 'login.privacyTitle');
+                }
+            }
+        }
+
+        function toggleLoginLanguage() {
+            if (window.ToolsI18n) {
+                window.ToolsI18n.toggleLanguage();
+            }
+        }
+
+        if (window.ToolsI18n) {
+            window.ToolsI18n.register('login', LOGIN_I18N);
+            window.addEventListener('tools:languagechange', () => {
+                updateLoginLanguageUI();
+            });
+            updateLoginLanguageUI();
         }
     </script>
     <script src="/js/shared/desktop-license-badge.js?v=20260805-01"></script>

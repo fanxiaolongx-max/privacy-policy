@@ -180,6 +180,8 @@ function navLocaleText(zh, en) {
     return window.ToolsI18n?.getLanguage?.() === 'en-US' ? en : zh;
 }
 
+let lastBuiltinToolsSyncPreview = null;
+
 function getNavLabel(item) {
     if (window.ToolsI18n?.getLanguage?.() === 'en-US' && item.labelEn) return item.labelEn;
     return item.labelKey && window.ToolsI18n ? navT(item.labelKey) : item.label;
@@ -1943,6 +1945,14 @@ window.addEventListener('tools:languagechange', () => {
     if (modal && modal.style.display !== 'none') {
         renderNavSettingsSidebar();
         renderNavSettingsContent();
+    }
+
+    const syncModal = document.getElementById('builtinToolsSyncModal');
+    if (syncModal && lastBuiltinToolsSyncPreview) {
+        const selectedSlugs = new Set(
+            [...syncModal.querySelectorAll('.builtin-sync-choice:checked')].map(input => input.dataset.syncSlug)
+        );
+        openBuiltinToolsSyncModal(lastBuiltinToolsSyncPreview, selectedSlugs);
     }
 });
 
@@ -7836,20 +7846,20 @@ function formatBuiltinToolBytes(bytes) {
 
 function builtinToolStatusMeta(status) {
     return {
-        missing: { label: '新增系统工具', tone: 'new' },
-        adopt: { label: '接管同版工具', tone: 'adopt' },
-        update: { label: '发现新版本', tone: 'update' },
-        conflict: { label: '同名工具冲突', tone: 'conflict' }
-    }[status] || { label: '存在差异', tone: 'update' };
+        missing: { label: navLocaleText('新增系统工具', 'New System Tool'), tone: 'new' },
+        adopt: { label: navLocaleText('接管同版工具', 'Adopt Identical Version'), tone: 'adopt' },
+        update: { label: navLocaleText('发现新版本', 'New Version Found'), tone: 'update' },
+        conflict: { label: navLocaleText('同名工具冲突', 'Name Conflict'), tone: 'conflict' }
+    }[status] || { label: navLocaleText('存在差异', 'Has Differences'), tone: 'update' };
 }
 
 function builtinToolChangeLabel(type) {
     return {
-        added: '新增',
-        modified: '修改',
-        removed: '删除',
-        preserved: '保留',
-        unchanged: '未变'
+        added: navLocaleText('新增', 'Added'),
+        modified: navLocaleText('修改', 'Modified'),
+        removed: navLocaleText('删除', 'Deleted'),
+        preserved: navLocaleText('保留', 'Preserved'),
+        unchanged: navLocaleText('未变', 'Unchanged')
     }[type] || type;
 }
 
@@ -7858,13 +7868,13 @@ function renderBuiltinToolDiff(tool) {
     const unchangedCount = tool.counts && tool.counts.unchanged || 0;
     const metadataRow = tool.metadataChanged
         ? `<div class="builtin-sync-file-row is-metadata">
-            <span class="builtin-sync-change is-modified">版本</span>
-            <code title="系统工具版本标识">系统工具版本标识</code>
-            <span class="builtin-sync-file-size">需要同步</span>
+            <span class="builtin-sync-change is-modified">${navEscape(navLocaleText('版本', 'Version'))}</span>
+            <code title="${navEscape(navLocaleText('系统工具版本标识', 'System tool version metadata'))}">${navEscape(navLocaleText('系统工具版本标识', 'System tool version metadata'))}</code>
+            <span class="builtin-sync-file-size">${navEscape(navLocaleText('需要同步', 'Sync required'))}</span>
         </div>`
         : '';
     if (!visibleChanges.length && !unchangedCount && !metadataRow) {
-        return '<div class="builtin-sync-empty-diff">仅更新系统工具标识，不改动工具文件。</div>';
+        return `<div class="builtin-sync-empty-diff">${navEscape(navLocaleText('仅更新系统工具标识，不改动工具文件。', 'Only updates tool metadata; tool files are unchanged.'))}</div>`;
     }
     const rows = visibleChanges.map(item => `
         <div class="builtin-sync-file-row">
@@ -7874,7 +7884,7 @@ function renderBuiltinToolDiff(tool) {
         </div>
     `).join('');
     const unchanged = unchangedCount
-        ? `<div class="builtin-sync-unchanged">${unchangedCount} 个相同文件不会重复说明</div>`
+        ? `<div class="builtin-sync-unchanged">${navEscape(navLocaleText(`${unchangedCount} 个相同文件不会重复说明`, `${unchangedCount} identical file(s) omitted`))}</div>`
         : '';
     return rows + metadataRow + unchanged;
 }
@@ -7884,10 +7894,11 @@ function closeBuiltinToolsSyncModal() {
     if (modal) modal.remove();
 }
 
-function openBuiltinToolsSyncModal(preview) {
+function openBuiltinToolsSyncModal(preview, selectedSlugs) {
     closeBuiltinToolsSyncModal();
-    const tools = Array.isArray(preview.pending) ? preview.pending : [];
+    const tools = Array.isArray(preview?.pending) ? preview.pending : [];
     if (!tools.length) return;
+    lastBuiltinToolsSyncPreview = preview;
 
     const modal = document.createElement('div');
     modal.id = 'builtinToolsSyncModal';
@@ -7900,39 +7911,42 @@ function openBuiltinToolsSyncModal(preview) {
         const counts = tool.counts || {};
         const diffCount = (counts.added || 0) + (counts.modified || 0) + (counts.removed || 0) + (counts.preserved || 0);
         const diffSummary = diffCount
-            ? `${diffCount} 项文件差异`
-            : tool.metadataChanged ? '仅版本标识不同' : '无文件差异';
+            ? navLocaleText(`${diffCount} 项文件差异`, `${diffCount} file difference(s)`)
+            : tool.metadataChanged
+                ? navLocaleText('仅版本标识不同', 'Only version metadata differs')
+                : navLocaleText('无文件差异', 'No file differences');
         const conflictNotice = tool.status === 'conflict'
-            ? '<div class="builtin-sync-conflict-note">此目录不是系统管理版本，可能是您的同名自定义工具，已默认不覆盖。</div>'
+            ? `<div class="builtin-sync-conflict-note">${navEscape(navLocaleText('此目录不是系统管理版本，可能是您的同名自定义工具，已默认不覆盖。', 'This directory is not managed by the system and may be your custom tool with the same name. Overwrite is unchecked by default.'))}</div>`
             : '';
         const toolInfoDiff = tool.toolInfoChanged && tool.oldTool && tool.newTool
             ? `<div class="builtin-sync-info-diff">
-                <span>旧信息：${navEscape(tool.oldTool.icon)} ${navEscape(tool.oldTool.name)}</span>
+                <span>${navEscape(navLocaleText('旧信息', 'Old'))}：${navEscape(tool.oldTool.icon)} ${navEscape(tool.oldTool.name)}</span>
                 <span>→</span>
-                <span>新信息：${navEscape(tool.newTool.icon)} ${navEscape(tool.newTool.name)}</span>
+                <span>${navEscape(navLocaleText('新信息', 'New'))}：${navEscape(tool.newTool.icon)} ${navEscape(tool.newTool.name)}</span>
             </div>`
             : '';
+        const isChecked = selectedSlugs ? selectedSlugs.has(tool.slug) : Boolean(tool.recommended);
         return `
             <article class="builtin-sync-card ${tool.status === 'conflict' ? 'is-conflict' : ''}" data-sync-slug="${navEscape(tool.slug)}">
                 <label class="builtin-sync-tool-head">
-                    <input type="checkbox" class="builtin-sync-choice" data-sync-slug="${navEscape(tool.slug)}" ${tool.recommended ? 'checked' : ''}>
+                    <input type="checkbox" class="builtin-sync-choice" data-sync-slug="${navEscape(tool.slug)}" ${isChecked ? 'checked' : ''}>
                     <span class="builtin-sync-icon">${navEscape(tool.icon)}</span>
                     <span class="builtin-sync-tool-copy">
                         <strong>${navEscape(tool.name)}</strong>
                         <small>${navEscape(tool.slug)}</small>
                     </span>
-                    <span class="builtin-sync-status is-${status.tone}">${status.label}</span>
+                    <span class="builtin-sync-status is-${status.tone}">${navEscape(status.label)}</span>
                 </label>
                 ${conflictNotice}
                 ${toolInfoDiff}
                 <div class="builtin-sync-metrics">
-                    <span>旧版 <b>${formatBuiltinToolBytes(tool.oldBytes)}</b></span>
+                    <span>${navEscape(navLocaleText('旧版', 'Old'))} <b>${formatBuiltinToolBytes(tool.oldBytes)}</b></span>
                     <span class="builtin-sync-arrow">→</span>
-                    <span>内置新版 <b>${formatBuiltinToolBytes(tool.newBytes)}</b></span>
-                    <span class="builtin-sync-counts">+${counts.added || 0} / ~${counts.modified || 0} / −${counts.removed || 0} / 保留 ${counts.preserved || 0}</span>
+                    <span>${navEscape(navLocaleText('内置新版', 'Built-in'))} <b>${formatBuiltinToolBytes(tool.newBytes)}</b></span>
+                    <span class="builtin-sync-counts">+${counts.added || 0} / ~${counts.modified || 0} / −${counts.removed || 0} / ${navEscape(navLocaleText('保留', 'Preserved'))} ${counts.preserved || 0}</span>
                 </div>
                 <details class="builtin-sync-details" ${tool.status === 'conflict' ? 'open' : ''}>
-                    <summary>查看旧版与新版比对（${diffSummary}）</summary>
+                    <summary>${navEscape(navLocaleText(`查看旧版与新版比对（${diffSummary}）`, `View comparison with old version (${diffSummary})`))}</summary>
                     <div class="builtin-sync-file-list">${renderBuiltinToolDiff(tool)}</div>
                 </details>
             </article>
@@ -7944,26 +7958,26 @@ function openBuiltinToolsSyncModal(preview) {
             <header class="builtin-sync-head">
                 <div>
                     <div class="builtin-sync-kicker">SYSTEM TOOLS UPDATE</div>
-                    <h2 id="builtinToolsSyncTitle">发现系统内置工具差异</h2>
-                    <p>请选择要覆盖或安装的工具。未勾选项会保留现状，并在该内置版本不变时不再提醒。</p>
+                    <h2 id="builtinToolsSyncTitle">${navEscape(navLocaleText('发现系统内置工具差异', 'Built-in System Tools Updates Available'))}</h2>
+                    <p>${navEscape(navLocaleText('请选择要覆盖或安装的工具。未勾选项会保留现状，并在该内置版本不变时不再提醒。', 'Select tools to update or install. Unselected tools will remain as-is and won\'t prompt again unless updated.'))}</p>
                 </div>
-                <button type="button" class="builtin-sync-close" aria-label="稍后处理">×</button>
+                <button type="button" class="builtin-sync-close" aria-label="${navEscape(navLocaleText('稍后处理', 'Dismiss'))}">×</button>
             </header>
             <div class="builtin-sync-safe-note">
                 <span>🛡️</span>
-                <div><strong>工具业务数据不会被覆盖</strong><br>仅同步工具程序文件；用户额外文件会保留，被替换的旧目录也会备份到数据目录。</div>
+                <div><strong>${navEscape(navLocaleText('工具业务数据不会被覆盖', 'Tool business data will not be overwritten'))}</strong><br>${navEscape(navLocaleText('仅同步工具程序文件；用户额外文件会保留，被替换的旧目录也会备份到数据目录。', 'Only tool application files are synced. Custom user files are preserved, and replaced folders are backed up to the data directory.'))}</div>
             </div>
             <div class="builtin-sync-toolbar">
-                <span>共 ${tools.length} 个待处理工具</span>
-                <button type="button" data-sync-select="recommended">选择建议项</button>
-                <button type="button" data-sync-select="none">全部取消</button>
+                <span>${navEscape(navLocaleText(`共 ${tools.length} 个待处理工具`, `${tools.length} pending tool(s)`))}</span>
+                <button type="button" data-sync-select="recommended">${navEscape(navLocaleText('选择建议项', 'Select Recommended'))}</button>
+                <button type="button" data-sync-select="none">${navEscape(navLocaleText('全部取消', 'Deselect All'))}</button>
             </div>
             <div class="builtin-sync-list">${toolCards}</div>
             <footer class="builtin-sync-footer">
-                <span class="builtin-sync-result" aria-live="polite">冲突项默认保留旧版，您仍可手动勾选覆盖。</span>
-                <button type="button" class="builtin-sync-later">稍后提醒</button>
-                <button type="button" class="builtin-sync-today">今天不再提醒</button>
-                <button type="button" class="builtin-sync-apply">按选择处理</button>
+                <span class="builtin-sync-result" aria-live="polite">${navEscape(navLocaleText('冲突项默认保留旧版，您仍可手动勾选覆盖。', 'Conflicts keep old version by default. You can manually select to overwrite.'))}</span>
+                <button type="button" class="builtin-sync-later">${navEscape(navLocaleText('稍后提醒', 'Remind Later'))}</button>
+                <button type="button" class="builtin-sync-today">${navEscape(navLocaleText('今天不再提醒', 'Don\'t Remind Today'))}</button>
+                <button type="button" class="builtin-sync-apply">${navEscape(navLocaleText('按选择处理', 'Apply Selected'))}</button>
             </footer>
         </div>
     `;
@@ -8001,7 +8015,7 @@ function openBuiltinToolsSyncModal(preview) {
         button.disabled = true;
         modal.querySelector('.builtin-sync-later').disabled = true;
         modal.querySelector('.builtin-sync-today').disabled = true;
-        resultNode.textContent = '正在备份旧版并按选择处理…';
+        resultNode.textContent = navLocaleText('正在备份旧版并按选择处理…', 'Backing up old versions and applying changes…');
         try {
             const result = await API.post('/api/custom-tools/builtin-sync/apply', {
                 applySlugs,
@@ -8011,8 +8025,14 @@ function openBuiltinToolsSyncModal(preview) {
             const changed = result.installed.length + result.adopted.length + result.updated.length;
             const failed = Array.isArray(result.invalid) ? result.invalid : [];
             resultNode.textContent = failed.length
-                ? `部分处理失败：${failed.map(item => `${item.slug}（${item.error}）`).join('；')}。成功 ${changed} 个，保留 ${result.skipped.length} 个。`
-                : `处理完成：更新/安装 ${changed} 个，保留 ${result.skipped.length} 个。`;
+                ? navLocaleText(
+                    `部分处理失败：${failed.map(item => `${item.slug}（${item.error}）`).join('；')}。成功 ${changed} 个，保留 ${result.skipped.length} 个。`,
+                    `Partial failure: ${failed.map(item => `${item.slug} (${item.error})`).join('; ')}. Succeeded: ${changed}, Kept: ${result.skipped.length}.`
+                )
+                : navLocaleText(
+                    `处理完成：更新/安装 ${changed} 个，保留 ${result.skipped.length} 个。`,
+                    `Complete: updated/installed ${changed}, kept ${result.skipped.length}.`
+                );
             if (changed) {
                 setTimeout(() => window.location.reload(), failed.length ? 1800 : 650);
             } else if (failed.length) {
@@ -8023,7 +8043,7 @@ function openBuiltinToolsSyncModal(preview) {
                 setTimeout(close, 650);
             }
         } catch (error) {
-            resultNode.textContent = `处理失败：${error.message || '未知错误'}`;
+            resultNode.textContent = navLocaleText(`处理失败：${error.message || '未知错误'}`, `Processing failed: ${error.message || 'Unknown error'}`);
             button.disabled = false;
             modal.querySelector('.builtin-sync-later').disabled = false;
             modal.querySelector('.builtin-sync-today').disabled = false;

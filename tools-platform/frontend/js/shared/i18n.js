@@ -8,10 +8,32 @@
     const SUPPORTED_LANGS = ['zh-CN', 'en-US'];
     const dictionaries = {};
 
-    function getStoredLang() {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (SUPPORTED_LANGS.includes(saved)) return saved;
+    function detectBrowserLang() {
+        try {
+            const candidates = [];
+            if (Array.isArray(navigator.languages)) {
+                candidates.push(...navigator.languages);
+            }
+            if (navigator.language) candidates.push(navigator.language);
+            if (navigator.userLanguage) candidates.push(navigator.userLanguage);
+            for (const lang of candidates) {
+                if (!lang || typeof lang !== 'string') continue;
+                const l = lang.trim().toLowerCase();
+                if (l.startsWith('zh')) return 'zh-CN';
+                if (l.startsWith('en')) return 'en-US';
+            }
+            const primary = candidates[0] ? String(candidates[0]).trim().toLowerCase() : '';
+            if (primary && !primary.startsWith('zh')) {
+                return 'en-US';
+            }
+        } catch (e) {}
         return DEFAULT_LANG;
+    }
+
+    function getStoredLang() {
+        const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('tools_language');
+        if (SUPPORTED_LANGS.includes(saved)) return saved;
+        return detectBrowserLang();
     }
 
     function interpolate(template, params = {}) {
@@ -56,11 +78,16 @@
             const key = el.dataset.i18nValue;
             if (hasTranslation(key, lang)) el.value = translate(key, {}, lang);
         });
+        root.querySelectorAll('[data-i18n-aria-label]').forEach(el => {
+            const key = el.dataset.i18nAriaLabel;
+            if (hasTranslation(key, lang)) el.setAttribute('aria-label', translate(key, {}, lang));
+        });
     }
 
     function setLanguage(lang) {
         if (!SUPPORTED_LANGS.includes(lang)) return;
         localStorage.setItem(STORAGE_KEY, lang);
+        try { localStorage.setItem('tools_language', lang); } catch (e) {}
         applyI18n(document);
         window.dispatchEvent(new CustomEvent('tools:languagechange', { detail: { lang } }));
     }

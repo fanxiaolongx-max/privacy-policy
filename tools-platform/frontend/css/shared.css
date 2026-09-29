@@ -4778,7 +4778,7 @@ body.service-status-open { overflow: hidden; }
 
 .builtin-sync-file-row {
     display: grid;
-    grid-template-columns: 42px minmax(0, 1fr) auto;
+    grid-template-columns: minmax(42px, max-content) minmax(0, 1fr) auto;
     align-items: center;
     gap: 8px;
     min-height: 28px;
@@ -4870,7 +4870,7 @@ body.service-status-open { overflow: hidden; }
     .builtin-sync-list { padding: 0 12px 12px; }
     .builtin-sync-metrics { margin-left: 15px; }
     .builtin-sync-counts { width: 100%; margin-left: 0; }
-    .builtin-sync-file-row { grid-template-columns: 42px minmax(0, 1fr); }
+    .builtin-sync-file-row { grid-template-columns: minmax(42px, max-content) minmax(0, 1fr); }
     .builtin-sync-file-size { grid-column: 2; }
     .builtin-sync-footer { flex-wrap: wrap; padding: 11px 12px; }
     .builtin-sync-result { width: 100%; }
