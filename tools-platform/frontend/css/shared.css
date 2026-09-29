@@ -139,22 +139,42 @@ html.is-page-scrolling::-webkit-scrollbar-thumb {
     white-space: nowrap;
 }
 
+.nav-tool-badges {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    gap: 3px;
+    margin-left: auto;
+}
+
+.nav-tool-badges--stacked {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+}
+
 .tool-kind-badge {
     display: inline-flex;
     align-items: center;
-    min-height: 16px;
-    margin-left: 6px;
-    padding: 1px 5px;
+    justify-content: center;
+    min-height: 14px;
+    padding: 0 5px;
     border: 1px solid rgba(125, 211, 252, 0.38);
     border-radius: 999px;
     background: rgba(14, 165, 233, 0.13);
     color: #7dd3fc;
-    font-size: 9px;
+    font-size: 8.5px;
     font-weight: 750;
     line-height: 1.2;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.01em;
     vertical-align: middle;
     white-space: nowrap;
+}
+
+.tool-kind-badge--custom {
+    border-color: rgba(196, 181, 253, 0.42);
+    background: rgba(139, 92, 246, 0.15);
+    color: #d8b4fe;
 }
 
 @keyframes new-pulse {
@@ -487,6 +507,8 @@ html.is-page-scrolling::-webkit-scrollbar-thumb {
 }
 
 .nav-more-item-label {
+    flex: 1;
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
 }

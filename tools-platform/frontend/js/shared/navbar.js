@@ -65,6 +65,30 @@ const NAV_DEFAULT_SETTINGS = {
 const NAV_BOOTSTRAP_CACHE_KEY = 'tools_nav_bootstrap_v3';
 const NAV_BOOTSTRAP_CACHE_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
 const NAV_NEW_BADGE_MAX_AGE = 3 * 24 * 60 * 60 * 1000;
+// Verified pages that process data in the browser without business API/database calls.
+const NAV_LOCAL_ONLY_TOOLS = new Set([
+    'nis_2026h1_summary', 'particle-effects', 'pr', 'pr-2',
+    'question-bank-assistant-privacy', 'question-bank-study',
+    'supplier-quotation-comparison', 'tool-mr0vvmyi', 'tool-mr87218d',
+    'tool-mr88gv9x', 'tool-mrlpwjk3', 'tool-mro1gt5o',
+    'tool-mrrgpqy4', 'tool-mrrn48dc', 'tool-ms1saxuh',
+    'tool-msbmscxd', 'tool-msbmu55i', 'tool-msh8aro4', 'tool-mtpx4vtr',
+    'tool-msqfmv82', 'tool-msqfplq0', 'tool-mu2t8wi3', 'tool-mumxi3px'
+]);
+
+function isLocalOnlyNavTool(item) {
+    return item?.id?.startsWith('custom:') && NAV_LOCAL_ONLY_TOOLS.has(item.id.slice('custom:'.length));
+}
+
+function renderNavToolBadges(item) {
+    const localOnly = isLocalOnlyNavTool(item);
+    const custom = item?.id?.startsWith('custom:') && item.builtIn === false;
+    if (!localOnly && !custom) return '';
+    return `<span class="nav-tool-badges${localOnly && custom ? ' nav-tool-badges--stacked' : ''}">
+        ${localOnly ? `<span class="tool-kind-badge tool-kind-badge--local" title="${navEscape(navLocaleText('仅在浏览器中处理，不调用业务数据接口', 'Processed in the browser without business data APIs'))}">${navEscape(navLocaleText('纯 HTML', 'HTML'))}</span>` : ''}
+        ${custom ? `<span class="tool-kind-badge tool-kind-badge--custom" title="${navEscape(navLocaleText('用户添加的自定义工具', 'User-added custom tool'))}">${navEscape(navLocaleText('自定义', 'CUSTOM'))}</span>` : ''}
+    </span>`;
+}
 
 function isRecentlyChangedTool(tool, now = Date.now()) {
     const timestamps = [tool?.createdAt, tool?.updatedAt]
@@ -1417,18 +1441,10 @@ function renderNavRecentSection(recentItems) {
     const path = window.location.pathname;
     const itemsHtml = recentItems.map(item => {
         const label = navEscape(getNavLabel(item));
-        let badges = '';
-        if (isRecentlyChangedTool(item)) {
-            badges += `<span class="new-badge">NEW!</span>`;
-        }
-        if (item.id.startsWith('custom:') && item.builtIn === false) {
-            badges += `<span class="tool-kind-badge">${navEscape(navLocaleText('自定义', 'CUSTOM'))}</span>`;
-        }
         return `
             <a href="${item.href}" class="nav-more-recent-item ${item.match(path) ? 'active' : ''}" data-nav-item-id="${navEscape(item.id)}" data-nav-search="${navEscape(buildNavSearchIndex(item))}" title="${label}">
                 <span class="nav-more-recent-item-icon">${item.icon}</span>
                 <span class="nav-more-recent-item-label">${label}</span>
-                ${badges}
             </a>
         `;
     }).join('');
@@ -1483,11 +1499,9 @@ function renderNavItem(item, className) {
     if (isRecentlyChangedTool(item)) {
         content += `<span class="new-badge">NEW!</span>`;
     }
-    if (item.id.startsWith('custom:') && item.builtIn === false) {
-        content += `<span class="tool-kind-badge">${navEscape(navLocaleText('自定义', 'CUSTOM'))}</span>`;
-    }
+    content += renderNavToolBadges(item);
 
-    return `<a href="${item.href}" class="${className} ${item.match(path) ? 'active' : ''}" data-nav-item-id="${navEscape(item.id)}" data-nav-search="${navEscape(buildNavSearchIndex(item))}">${content}</a>`;
+    return `<a href="${item.href}" class="${className} ${item.match(path) ? 'active' : ''}" data-nav-item-id="${navEscape(item.id)}" data-nav-search="${navEscape(buildNavSearchIndex(item))}" title="${label}">${content}</a>`;
 }
 
 function renderNavLinksFromState() {

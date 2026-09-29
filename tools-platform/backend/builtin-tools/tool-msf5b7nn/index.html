@@ -331,6 +331,34 @@
       color: var(--muted)
     }
 
+    .page-title-block { flex: 1; min-width: 0 }
+    .page-title-row { display: flex; align-items: center; gap: 9px; flex-wrap: wrap }
+    .page-title-row h2 { margin-bottom: 5px }
+    .coverage-trigger { border: 1px solid #ead09a; border-radius: 8px; background: #fff8e8; color: #865600; padding: 3px 8px; font-size: 15px; cursor: pointer; line-height: 1.3 }
+    .coverage-trigger:hover, .coverage-trigger[aria-expanded="true"] { background: #fff0c9; border-color: #d8a548 }
+    .coverage-trigger.coverage-ok { border-color: #c6d9ea; background: #f2f8ff; color: #35607f }
+    .coverage-detail { margin: -8px 0 16px; width: 100%; box-sizing: border-box; border: 1px solid #ead09a; border-radius: 10px; background: #fffaf0; padding: 15px 17px; color: #594522; font-size: 12px; box-shadow: var(--shadow) }
+    .coverage-detail h3 { margin: 0 0 8px; font-size: 14px }
+    .coverage-detail p { margin: 8px 0; color: inherit }
+    .coverage-detail ul { margin: 6px 0 10px; padding-left: 20px }
+    .coverage-table-wrap { overflow-x: auto; max-height: 420px; overflow-y: auto; background: #fff; border: 1px solid #eee1c5; border-radius: 7px }
+    .coverage-table { width: 100%; border-collapse: collapse; font-size: 12px }
+    .coverage-table th, .coverage-table td { padding: 7px 9px; border-bottom: 1px solid #eee9de; text-align: left; white-space: nowrap }
+    .coverage-table thead th { background: #fff6e2 }
+    .coverage-table td:nth-child(2) { white-space: normal; min-width: 240px; overflow-wrap: anywhere }
+    .coverage-table td:nth-child(3) { white-space: normal; min-width: 150px; overflow-wrap: anywhere }
+    .coverage-table td:nth-child(4) { white-space: normal; min-width: 240px }
+    .coverage-table td:nth-child(5) { min-width: 115px }
+    .coverage-table tbody tr.coverage-row-offline { --coverage-row: #f3f9ff; --coverage-head: #e6f2ff; --coverage-accent: #5c9fdb }
+    .coverage-table tbody tr.coverage-row-online { --coverage-row: #f0faf8; --coverage-head: #e1f4ef; --coverage-accent: #4da890 }
+    .coverage-table tbody tr.coverage-row-qr { --coverage-row: #f8f6ff; --coverage-head: #eeeaff; --coverage-accent: #9277ce }
+    .coverage-table tbody tr.coverage-row-rfc { --coverage-row: #fff8f1; --coverage-head: #fff0df; --coverage-accent: #da9a53 }
+    .coverage-table tbody tr.coverage-row-wfm { --coverage-row: #f6f8f0; --coverage-head: #ecf1df; --coverage-accent: #94a862 }
+    .coverage-table tbody tr[class*="coverage-row-"] > * { background: var(--coverage-row) }
+    .coverage-table tbody tr.coverage-summary > * { background: var(--coverage-head); font-weight: 600 }
+    .coverage-table tbody tr.coverage-summary > :first-child { box-shadow: inset 4px 0 var(--coverage-accent) }
+    .coverage-month-gap { display: inline-block; margin: 3px 0 3px 7px; padding: 2px 6px; border-radius: 5px; background: #fff0cc; color: #805000; font-weight: 600; white-space: normal }
+
     .settings {
       display: flex;
       align-items: center;
@@ -1078,6 +1106,11 @@
       background: #f2ebfb
     }
 
+    .status-pill.pending {
+      color: #475467;
+      background: #eef2f6
+    }
+
     .result-details>summary {
       list-style: none;
       cursor: pointer
@@ -1229,6 +1262,12 @@
       table-layout: fixed;
       font-size: 12px
     }
+
+    .multi-session-bu-table { table-layout: auto; }
+    .multi-session-bu-table th:first-child,
+    .multi-session-bu-table td:first-child { width: 140px; min-width: 140px; }
+    .multi-session-bu-table th:not(:first-child) { min-width: 94px; }
+    .multi-session-bu-table small { color: #64748b; font-weight: 400; }
 
     .bu-summary-table th,
     .bu-summary-table td {
@@ -1507,6 +1546,8 @@
     }
 
     @media(max-width:600px) {
+      .page-head { flex-wrap: wrap }
+      .coverage-detail { width: 100% }
       .person-search-head {
         display: block
       }
@@ -1864,15 +1905,20 @@
       user-select: none;
     }
     .session-tab-btn:hover {
-      border-color: var(--primary);
-      color: var(--primary);
+      border-color: var(--red);
+      color: var(--red);
       background: #fff8f8;
     }
     .session-tab-btn.active {
-      background: var(--primary);
+      background: var(--red);
       color: #fff;
-      border-color: var(--primary);
+      border-color: var(--red);
       box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2);
+    }
+    .session-tab-btn.active:hover {
+      background: var(--red2);
+      color: #fff;
+      border-color: var(--red2);
     }
     .session-tab-badge {
       font-size: 11px;
@@ -1905,6 +1951,7 @@
       margin-bottom: 16px;
     }
     .session-card {
+      position: relative;
       background: #fff;
       border: 1px solid var(--line);
       border-radius: 10px;
@@ -1914,6 +1961,52 @@
       gap: 10px;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     }
+    .session-card.coverage-warning {
+      border-color: #e99393;
+      animation: session-coverage-pulse 2.8s ease-in-out infinite;
+    }
+    @keyframes session-coverage-pulse {
+      0%, 100% { box-shadow: 0 0 0 1px rgba(212, 63, 63, .14), 0 2px 8px rgba(180, 44, 44, .08) }
+      50% { box-shadow: 0 0 0 3px rgba(212, 63, 63, .28), 0 4px 15px rgba(180, 44, 44, .16) }
+    }
+    .session-card-coverage-note {
+      align-self: flex-start;
+      padding: 3px 7px;
+      border-radius: 6px;
+      background: #fff1f1;
+      color: #b4232d;
+      font-size: 11px;
+      line-height: 1.35;
+      font-weight: 650;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .session-card.coverage-warning { animation: none; box-shadow: 0 0 0 2px rgba(212, 63, 63, .22) }
+    }
+    .session-card:hover,
+    .session-card:focus-within { z-index: 5; }
+    .session-card-source-tooltip {
+      display: none;
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 8px;
+      right: 8px;
+      max-height: 240px;
+      overflow: auto;
+      padding: 11px 13px;
+      border: 1px solid #cbd5e1;
+      border-radius: 9px;
+      background: #fff;
+      box-shadow: 0 10px 28px rgba(15, 23, 42, .18);
+      color: #334155;
+      font-size: 12px;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+    .session-card:hover .session-card-source-tooltip,
+    .session-card:focus-within .session-card-source-tooltip { display: block; }
+    .session-card-source-tooltip strong { display: block; margin-bottom: 5px; color: #0f172a; }
+    .session-card-source-tooltip ul { margin: 0; padding-left: 18px; }
+    .session-card-source-tooltip li + li { margin-top: 4px; }
     .session-card-head {
       display: flex;
       justify-content: space-between;
@@ -1933,6 +2026,28 @@
       gap: 6px;
       flex-wrap: wrap;
     }
+    .session-card-bottom {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: auto;
+      padding-top: 8px;
+      border-top: 1px solid var(--line);
+    }
+    .session-card-month {
+      flex: none;
+      padding: 3px 9px;
+      border: 1px solid #fecaca;
+      border-radius: 9px;
+      background: #fff1f2;
+      color: #b91c1c;
+      font-size: 22px;
+      font-weight: 750;
+      line-height: 1.2;
+      font-variant-numeric: tabular-nums;
+    }
+    .session-card-month small { font-size: 13px; font-weight: 700; }
     .session-badge {
       display: inline-flex;
       align-items: center;
@@ -2006,6 +2121,25 @@
       color: #0369a1;
       border: 1px solid #bae6fd;
     }
+    .mandatory-modal-card {
+      width: min(1120px, 96vw);
+    }
+    .mandatory-field-help {
+      margin: 12px 20px 0;
+      padding: 9px 12px;
+      border: 1px solid #dbeafe;
+      border-radius: 8px;
+      background: #f8fbff;
+      color: #475569;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .mandatory-list-wrap {
+      overflow: auto;
+    }
+    .mandatory-list-wrap .data-table {
+      min-width: 1000px;
+    }
     .mandatory-row input {
       width: 100%;
       padding: 6px 8px;
@@ -2056,8 +2190,8 @@
     </aside>
     <main>
       <div class="page-head">
-        <div>
-          <h2 id="pageTitle"></h2>
+        <div class="page-title-block">
+          <div class="page-title-row"><h2 id="pageTitle"></h2><button type="button" id="coverageTrigger" class="coverage-trigger hidden" aria-expanded="false" aria-controls="coverageDetail"></button></div>
           <p id="pageDesc"></p>
         </div><label class="settings"><span id="pageSizeText">每页行数</span> <select id="pageSize">
             <option>20</option>
@@ -2066,6 +2200,7 @@
             <option selected>200</option>
           </select></label>
       </div>
+      <div id="coverageDetail" class="coverage-detail hidden"></div>
       <div class="quality-notice" id="qualityNotice"></div>
       <div class="section-note"><span class="dot"></span><span id="listLabel">已导入表格</span></div>
       <div id="sheetList"></div>
@@ -2119,7 +2254,7 @@
       <div class="modal-head">
         <div>
           <h3 id="attendanceModalTitle">考勤与单据规则设置</h3>
-          <p id="attendanceModalSub">设置签到准时/迟到时间阈值、RFC/QR/WFM单据有效核查时间窗口以及特殊豁免策略。</p>
+          <p id="attendanceModalSub">设置签到时间、单据核查窗口、场次最少记录数及特殊豁免策略。</p>
         </div><button class="modal-close" id="attendanceModalClose">×</button>
       </div>
       <div style="padding:18px 20px 10px;display:grid;grid-template-columns:1fr 1fr;gap:14px">
@@ -2141,11 +2276,16 @@
           </select>
         </label>
         <label class="settings" style="display:grid;gap:6px;white-space:normal">
-          <span id="meetingDateLabel">会议基准日期</span>
+          <span id="meetingDateLabel">无法识别日期时的备用会议日期</span>
           <input id="meetingDateInput" type="date" style="border:1px solid #d8dce4;border-radius:8px;padding:7px 10px;font-size:13px">
         </label>
       </div>
       <div style="padding:0 20px 14px">
+        <label class="settings" style="display:grid;gap:6px;white-space:normal;margin-bottom:14px">
+          <span id="minSessionRecordsLabel">场次最少签到记录数</span>
+          <input id="minSessionRecordsInput" type="number" min="0" max="100000" step="1" value="10" style="border:1px solid #d8dce4;border-radius:8px;padding:8px 10px;font-size:13px">
+          <small id="minSessionRecordsHint" style="color:#64748b">同一场次现场与线上记录行数合计少于此值时忽略统计；设为 0 则不按记录数过滤。</small>
+        </label>
         <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;background:#f8fafc;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px">
           <input id="nightWfmToggle" type="checkbox" checked style="margin-top:3px;cursor:pointer">
           <span style="font-size:13px;color:#1e293b"><strong id="nightWfmTitle">🌙 参会前夜 WFM 工程师免参会</strong><br><small id="nightWfmDesc" style="color:#64748b">会议前一天晚上（18:00至次日清晨）有 WFM 实施任务的工程师，自动免除参会要求并按 Attend on Time 予以特殊提示与标识豁免。</small></span>
@@ -2162,7 +2302,7 @@
   </div>
 
   <div class="modal hidden" id="mandatoryModal">
-    <div class="modal-card" style="width:min(760px,96vw)">
+    <div class="modal-card mandatory-modal-card">
       <div class="modal-head">
         <div>
           <h3 id="mandatoryModalTitle">👤 其他必选参会人员名单</h3>
@@ -2176,6 +2316,7 @@
         </div>
         <button class="btn" id="mandatoryClearAllBtn" style="color:#ef4444">清空名单</button>
       </div>
+      <div class="mandatory-field-help" id="mandatoryFieldHelp">姓名或工号至少填一项；BU、客户群、角色/备注均可留空。BU 用于部门统计和筛选，客户群用于明细与导出，角色/备注用于标明参会身份；留空按“其他必选”处理。</div>
       <div id="mandatoryBatchBox" class="hidden" style="margin:12px 20px 0;padding:12px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px">
         <p style="margin:0 0 6px;font-size:12px;color:#475569">每行一人，可使用制表符（Excel复制）、逗号或空格分隔：<b>姓名 工号 BU 客户群 角色/备注</b></p>
         <textarea id="mandatoryBatchText" style="width:100%;height:90px;font-size:12px;border:1px solid #cbd5e1;border-radius:6px;padding:6px;box-sizing:border-box" placeholder="例如：
@@ -2186,7 +2327,7 @@
           <button class="btn btn-primary" id="mandatoryBatchApplyBtn">解析并添加</button>
         </div>
       </div>
-      <div class="mandatory-list-wrap" style="max-height:50vh;overflow-y:auto;padding:12px 20px">
+      <div class="mandatory-list-wrap" style="max-height:50vh;padding:12px 20px">
         <table class="data-table" style="font-size:13px">
           <thead>
             <tr>
@@ -2202,7 +2343,7 @@
           <tbody id="mandatoryListBody"></tbody>
         </table>
       </div>
-      <div style="padding:0 20px 14px;color:#667085;font-size:12px">💡 姓名或工号至少填写一项；修改后点击“保存并应用”将自动重算考勤结果并持久化存储。</div>
+      <div id="mandatorySaveHint" style="padding:0 20px 14px;color:#667085;font-size:12px">💡 修改后点击“保存并应用”，将自动重算考勤结果并保存名单。</div>
       <div class="modal-foot">
         <button class="btn" id="mandatoryCancelBtn">取消</button>
         <button class="btn btn-primary" id="mandatorySaveBtn">保存并应用</button>
@@ -2310,8 +2451,8 @@
       'use strict';
       const CATEGORIES = [
         { id: 'qr', name: 'QR 必须参会名单', enName: 'QR Required Attendees', short: 'QR', type: 'required', desc: '系统根据 Task ID 列中的 QR 编号自动识别。', enDesc: 'Detected by QR-prefixed values in the Task ID column.' },
-        { id: 'rfc', name: 'RFC 必须参会名单', enName: 'RFC Required Attendees', short: 'RFC', type: 'required', desc: '系统根据作业单号或 Ticket ID 列中的 NC 编号自动识别。', enDesc: 'Detected by NC-prefixed values in the Ticket ID column.' },
-        { id: 'wfm', name: 'WFM 必须参会名单', enName: 'WFM Required Attendees', short: 'WFM', type: 'required', desc: '系统根据 Task ID 或实施任务单号列中的 TK 编号自动识别。', enDesc: 'Detected by TK-prefixed values in Task ID or Implementation Task No columns.' },
+        { id: 'rfc', name: 'RFC 必须参会名单', enName: 'RFC Required Attendees', short: 'RFC', type: 'required', desc: '系统根据作业单号或 Ticket ID 列中的 NC、NE 编号自动识别。', enDesc: 'Detected by NC- or NE-prefixed values in the Ticket ID column.' },
+        { id: 'wfm', name: 'WFM 必须参会名单', enName: 'WFM Required Attendees', short: 'WFM', type: 'required', desc: '系统根据 Task ID 或实施任务单号列中的 TK、TE 编号自动识别。', enDesc: 'Detected by TK- or TE-prefixed values in Task ID or Implementation Task No columns.' },
         { id: 'offline', name: '离线扫描签到', enName: 'On-site Scan Records', short: '离线签到', type: 'offline', desc: '系统根据“工号、姓名、签到时间”三列自动识别。', enDesc: 'Detected by Employee ID, Name and Check-in Time columns.' },
         { id: 'online', name: '在线参会记录', enName: 'Online Meeting Records', short: '在线参会', type: 'online', desc: '系统根据 meeting_title、user_id、join_time 三列自动识别，并且只保留“入会记录”Sheet。', enDesc: 'Detected by meeting_title, user_id and join_time; only the 入会记录 sheet is used.' }
       ];
@@ -2335,7 +2476,7 @@
         { from: 'EG-Egypt Telecom', to: 'TE' }, { from: 'Telecom Egypt', to: 'TE' }, { from: 'Single-country Account', to: 'TE' }, { from: 'Orange', to: 'ORG' }
       ];
       const MAPPING_STORAGE_KEY = 'meetingAttendance.customerGroupMappings.v1';
-      const DEFAULT_ATTENDANCE_RULES = { onTime: '10:00', fake: '11:00', orderWindowMonths: 1, nightWfmExempt: true, meetingDate: '' };
+      const DEFAULT_ATTENDANCE_RULES = { onTime: '10:00', fake: '11:00', orderWindowMonths: 1, nightWfmExempt: true, meetingDate: '', minSessionRecords: 10 };
       // ===== 代码预置豁免名单：请在这里直接增删人员 =====
       // 姓名或工号至少填写一项；为避免重名，建议优先填写 account（工号）。
       // 示例：{name:'张三',account:'U123456'} 或 {name:'李四',account:''}
@@ -2381,7 +2522,7 @@
         } catch (e) { }
         return [];
       }
-      const state = { active: 'qr', lang: loadLanguage(), sidebarCollapsed: loadSidebarCollapsed(), pageSize: 200, sheets: [], seq: 0, editingSheet: null, peoplePages: { all: 1, qr: 1, rfc: 1, wfm: 1 }, buFilter: '', selectedSession: 'all', personSearch: { query: '', result: null, pages: { qr: 1, rfc: 1, wfm: 1, offline: 1, online: 1 } }, dataVersion: 0, peopleCache: null, qualityCache: null, peopleBuildId: 0, customerMappings: loadCustomerMappings(), attendanceRules: loadAttendanceRules(), exemptions: loadExemptions(), mandatoryAttendees: loadMandatoryAttendees(), developerMode: loadDeveloperMode(), developerClicks: [], openPeopleCards: new Set(), snapshotsList: [] };
+      const state = { active: 'qr', lang: loadLanguage(), sidebarCollapsed: loadSidebarCollapsed(), pageSize: 200, sheets: [], seq: 0, editingSheet: null, peoplePages: { all: 1, qr: 1, rfc: 1, wfm: 1 }, buFilter: '', selectedSession: 'all', personSearch: { query: '', result: null, pages: { qr: 1, rfc: 1, wfm: 1, offline: 1, online: 1 } }, dataVersion: 0, peopleCache: null, qualityCache: null, coverageCache: null, coverageDetailsOpen: false, peopleBuildId: 0, customerMappings: loadCustomerMappings(), attendanceRules: loadAttendanceRules(), exemptions: loadExemptions(), mandatoryAttendees: loadMandatoryAttendees(), developerMode: loadDeveloperMode(), developerClicks: [], openPeopleCards: new Set(), snapshotsList: [] };
       const $ = s => document.querySelector(s);
       const t = key => UI[state.lang][key] || UI.zh[key] || key;
       const bi = (zh, en) => state.lang === 'en' ? (en || I18N_DICT[zh] || zh) : zh;
@@ -2529,6 +2670,7 @@
           if (!$('#personSearchModal').classList.contains('hidden')) renderPersonSearchModal();
         };
         $('#globalSearchBtn').onclick = openPersonSearchModal;
+        $('#coverageTrigger').onclick = () => { state.coverageDetailsOpen = !state.coverageDetailsOpen; renderBusinessCoverageNotice(); };
         $('#saveSnapshotBtn').onclick = openSaveSnapshotModal;
         $('#manageSnapshotsBtn').onclick = openSnapshotManagerModal;
         $('#exportBtn').onclick = exportAnalysis;
@@ -2566,7 +2708,8 @@
           $('#onTimeInput').value = DEFAULT_ATTENDANCE_RULES.onTime;
           $('#fakeTimeInput').value = DEFAULT_ATTENDANCE_RULES.fake;
           if ($('#orderWindowSelect')) $('#orderWindowSelect').value = '1';
-          if ($('#meetingDateInput')) $('#meetingDateInput').value = detectMeetingDate();
+          if ($('#minSessionRecordsInput')) $('#minSessionRecordsInput').value = String(DEFAULT_ATTENDANCE_RULES.minSessionRecords);
+          if ($('#meetingDateInput')) $('#meetingDateInput').value = '';
           if ($('#nightWfmToggle')) $('#nightWfmToggle').checked = true;
         };
         $('#attendanceSaveBtn').onclick = saveAttendanceRules; $('#attendanceModal').addEventListener('click', e => { if (e.target === $('#attendanceModal')) closeAttendanceModal(); });
@@ -2613,7 +2756,7 @@
       function personSearchResultCount() { const r = state.personSearch.result; return r ? r.qr.length + r.rfc.length + r.wfm.length + r.offline.length + r.online.length : 0; }
       function updateGlobalSearchButton() { const count = personSearchResultCount(); $('#globalSearchText').textContent = `${bi('人员搜索', 'People Search')}${count ? ` · ${count}` : ''}`; $('#globalSearchBtn').title = bi('随时按姓名或工号搜索完整记录', 'Search complete records by name or employee ID at any time'); }
       function renderToolIntro() {
-        $('#toolIntro').innerHTML = state.lang === 'en' ? `<b>About this tool</b><p>Batch-import five table types, extract required attendees, deduplicate people and determine attendance.</p><b>Recognition</b><ul class="intro-list"><li>QR: Task ID starts with QR</li><li>RFC: Ticket ID starts with NC</li><li>WFM: Task ID / Implementation Task No starts with TK</li><li>On-site: Employee ID + Name + Check-in Time</li><li>Online: meeting_title + user_id + join_time; only 入会记录</li></ul><div class="intro-note">On-site Beijing time is converted to Cairo time; the earliest on-site/online record is used.</div>` : `<b>工具简介</b><p>批量导入五类表；自动提取必参人员、合并去重并判断考勤。</p><b>识别逻辑</b><ul class="intro-list"><li>QR：Task ID 以 QR 开头</li><li>RFC：Ticket ID 以 NC 开头</li><li>WFM：Task ID 或实施任务单号以 TK 开头</li><li>现场：工号＋姓名＋签到时间</li><li>线上：meeting_title＋user_id＋join_time；仅取“入会记录”</li></ul><div class="intro-note">现场北京时间自动转开罗时间；现场与线上取最早有效记录。</div>`;
+        $('#toolIntro').innerHTML = state.lang === 'en' ? `<b>About this tool</b><p>Batch-import five table types, extract required attendees, deduplicate people and determine attendance.</p><b>Recognition</b><ul class="intro-list"><li>QR: Task ID starts with QR</li><li>RFC: Ticket ID starts with NC or NE</li><li>WFM: Task ID / Implementation Task No starts with TK or TE</li><li>On-site: Employee ID + Name + Check-in Time</li><li>Online: meeting_title + user_id + join_time; only 入会记录</li></ul><div class="intro-note">On-site Beijing time is converted to Cairo time; the earliest on-site/online record is used.</div>` : `<b>工具简介</b><p>批量导入五类表；自动提取必参人员、合并去重并判断考勤。</p><b>识别逻辑</b><ul class="intro-list"><li>QR：Task ID 以 QR 开头</li><li>RFC：Ticket ID 以 NC 或 NE 开头</li><li>WFM：Task ID 或实施任务单号以 TK 或 TE 开头</li><li>现场：工号＋姓名＋签到时间</li><li>线上：meeting_title＋user_id＋join_time；仅取“入会记录”</li></ul><div class="intro-note">现场北京时间自动转开罗时间；现场与线上取最早有效记录。</div>`;
       }
       function applyStaticLanguage() {
         document.documentElement.lang = state.lang === 'en' ? 'en' : 'zh-CN'; document.title = t('brand'); $('#brandTitle').textContent = t('brand'); $('#langBtn').textContent = state.lang === 'en' ? '中文' : 'English'; $('#clearAllBtn').textContent = t('clear'); $('#chooseBtn').textContent = t('import'); $('#exportBtn').textContent = bi('⇩ 一键导出分析结果', '⇩ Export Analysis'); $('#dataInputTitle').textContent = t('dataInput'); $('#pageSizeText').textContent = t('pageSize'); updateGlobalSearchButton(); applyDeveloperMode(); updateMandatoryBadge(); renderToolIntro();
@@ -2638,16 +2781,20 @@
         set('#mappingModal .modal-head h3', bi('Customer Group 映射设置', 'Customer Group Mapping')); set('#mappingModal .modal-head p', bi('仅应用于“三类合并人员备用名单”，匹配时忽略大小写和首尾空格。', 'Applies to the combined list; matching ignores case and surrounding spaces.')); set('#mappingAddBtn', bi('＋ 新增映射', '＋ Add Mapping')); set('#mappingDefaultBtn', bi('恢复默认', 'Restore Defaults')); set('#mappingCancelBtn', bi('取消', 'Cancel')); set('#mappingSaveBtn', bi('保存并应用', 'Save & Apply'));
         set('#mappingFromHead', bi('原始名称', 'Original Name')); set('#mappingToHead', bi('映射为', 'Map To'));
         set('#attendanceModalTitle', bi('考勤与单据规则设置', 'Attendance & Order Rules'));
-        set('#attendanceModalSub', bi('设置签到准时/迟到时间阈值、RFC/QR/WFM单据有效核查时间窗口以及特殊豁免策略。', 'Configure check-in cutoffs, order verification window, and special exemption rules.'));
+        set('#attendanceModalSub', bi('设置签到时间、单据核查窗口、场次最少记录数及特殊豁免策略。', 'Configure check-in cutoffs, order window, minimum session records, and exemptions.'));
         set('#onTimeLabel', bi('准时截止时间', 'On-time Cutoff'));
         set('#fakeTimeLabel', bi('虚假签到起始时间', 'Fake-attendance Start'));
         set('#orderWindowLabel', bi('单据考勤有效窗口', 'Order Verification Window'));
-        set('#meetingDateLabel', bi('会议基准日期', 'Base Meeting Date'));
+        set('#meetingDateLabel', bi('无法识别日期时的备用会议日期', 'Fallback Meeting Date'));
+        set('#minSessionRecordsLabel', bi('场次最少签到记录数', 'Minimum Check-in Records per Session'));
+        set('#minSessionRecordsHint', bi('同一场次现场与线上记录行数合计少于此值时忽略统计；设为 0 则不按记录数过滤。', 'Sessions with fewer combined on-site and online rows are excluded from statistics. Set 0 to disable this filter.'));
         set('#nightWfmTitle', `🌙 ${bi('参会前夜 WFM 工程师免参会', 'Exempt Night-before WFM Engineers')}`);
         set('#nightWfmDesc', bi('会议前一天晚上（18:00至次日清晨）有 WFM 实施任务的工程师，自动免除参会要求并按 Attend on Time 予以特殊提示与标识豁免。', 'Engineers with WFM tasks on the night before (18:00 to next morning) are automatically exempt with Attend on Time status.'));
         set('#linkToMandatoryModal', `👤 ${bi('管理其他必选参会人员名单 →', 'Manage Mandatory Attendees →')}`);
         set('#mandatoryModalTitle', `👤 ${bi('其他必选参会人员名单', 'Additional Mandatory Attendees')}`);
         set('#mandatoryModalSub', bi('除 RFC/QR/WFM 任务单中提取的人员外，可在此手动添加其他必须参会的人员。即使其无近期任务单也将纳入考勤考核。', 'Configure additional personnel who must attend. Even without recent RFC/QR/WFM tickets, they will be required to attend.'));
+        set('#mandatoryFieldHelp', bi('姓名或工号至少填一项；BU、客户群、角色/备注均可留空。BU 用于部门统计和筛选，客户群用于明细与导出，角色/备注用于标明参会身份；留空按“其他必选”处理。', 'Enter a name or employee ID. BU, customer group, and role/note are optional. BU is used for group statistics and filtering; customer group appears in details and exports; role/note identifies the attendee and defaults to “Additional Mandatory”.'));
+        set('#mandatorySaveHint', bi('💡 修改后点击“保存并应用”，将自动重算考勤结果并保存名单。', '💡 Click Save & Apply to recalculate attendance and save the list.'));
         set('#mandatoryAddBtn', `＋ ${bi('新增人员', 'Add Person')}`);
         set('#mandatoryBatchBtn', `📋 ${bi('批量粘贴导入', 'Batch Paste')}`);
         set('#mandatoryClearAllBtn', bi('清空名单', 'Clear All'));
@@ -2683,9 +2830,11 @@
         document.querySelectorAll('.nav-item').forEach(x => x.classList.toggle('active', x.dataset.id === state.active));
         if (state.active === 'people') {
           $('#pageTitle').textContent = t('peopleTitle'); $('#pageDesc').textContent = t('peopleDesc');
+          renderBusinessCoverageNotice();
           document.querySelector('.section-note').classList.add('hidden');
           renderSummary(); renderPeopleViewAsync(); return;
         }
+        $('#coverageTrigger').classList.add('hidden'); $('#coverageDetail').classList.add('hidden');
         const c = activeCategory();
         document.querySelector('.section-note').classList.remove('hidden');
         $('#pageTitle').textContent = categoryName(c); $('#pageDesc').textContent = state.lang === 'en' ? c.enDesc : c.desc;
@@ -2705,9 +2854,142 @@
       }
       function renderDataQualityNotice() {
         const host = $('#qualityNotice'); if (!host) return; const issues = invalidAttendanceRows();
-        const tip = bi('使用提示：请确保一次只导入同一场会议的数据。', 'Usage note: import data for one meeting only each time.');
+        const tip = bi('使用提示：支持同时导入多场会议；同日且签到时间相近的现场或线上签到表会自动合并为一场。', 'Usage note: multiple meetings can be imported together. Check-in sheets from the same date and around the same time are grouped into one session.');
         const warning = issues.length ? `<details class="quality-warning"><summary>${bi(`检测到 ${issues.length} 行未识别到签到时间，点击查看详情数据`, `${issues.length} rows have unrecognized attendance times; click to view details`)}</summary><div class="quality-detail"><table class="quality-table"><thead><tr><th>${bi('来源', 'Source')}</th><th>${bi('文件', 'File')}</th><th>Sheet</th><th>${bi('数据行', 'Data Row')}</th><th>${bi('工号', 'Employee ID')}</th><th>${bi('原始时间', 'Raw Time')}</th></tr></thead><tbody>${issues.map(x => `<tr><td>${x.category === 'offline' ? bi('现场签到', 'On-site Scan') : bi('线上参会', 'Online Meeting')}</td><td title="${esc(x.fileName)}">${esc(x.fileName)}</td><td>${esc(x.sheetName)}</td><td>${x.row}</td><td>${esc(x.id || '—')}</td><td>${esc(x.rawTime || bi('空值', 'Empty'))}</td></tr>`).join('')}</tbody></table></div></details>` : '';
         host.innerHTML = `<div class="quality-tip">${tip}</div>${warning}`;
+      }
+      function missingBusinessCoverage(windowRange, sheetRanges) {
+        if (!windowRange) return [];
+        const dayMs = 86400000;
+        const end = Date.parse(windowRange.endDateStr + 'T00:00:00Z');
+        let cursor = Date.parse(windowRange.startDateStr + 'T00:00:00Z');
+        const missing = [];
+        sheetRanges.filter(x => x.startMs !== null).sort((a, b) => a.startMs - b.startMs).forEach(range => {
+          if (range.endMs < cursor || cursor > end) return;
+          if (range.startMs > cursor) missing.push({ startMs: cursor, endMs: Math.min(end, range.startMs - dayMs) });
+          cursor = Math.max(cursor, range.endMs + dayMs);
+        });
+        if (cursor <= end) missing.push({ startMs: cursor, endMs: end });
+        return missing;
+      }
+      function missingCoverageMonths(startMs, endMs, observedMonths) {
+        if (startMs === null || endMs === null) return [];
+        const present = new Set(observedMonths);
+        const start = new Date(startMs), end = new Date(endMs);
+        const missing = [];
+        for (let month = start.getUTCFullYear() * 12 + start.getUTCMonth(); month <= end.getUTCFullYear() * 12 + end.getUTCMonth(); month++) {
+          const key = `${Math.floor(month / 12)}-${String(month % 12 + 1).padStart(2, '0')}`;
+          if (!present.has(key)) missing.push(key);
+        }
+        return missing;
+      }
+      function buildBusinessCoverageReport() {
+        const months = state.attendanceRules.orderWindowMonths !== undefined ? state.attendanceRules.orderWindowMonths : 1;
+        const key = `${state.dataVersion}|${months}|${state.attendanceRules.minSessionRecords}`;
+        if (state.coverageCache?.key === key) return state.coverageCache.report;
+        const sessions = getMeetingSessions();
+        const configs = {
+          qr: { ticket: ['Task ID', '任务单号', 'Task No'], time: ['Create Time', '创建时间/Create Time', '创建时间'] },
+          rfc: { ticket: ['作业单号/Ticket ID', '作业单号', 'Ticket ID', 'Task ID'], time: ['创建时间/Create Time', '创建时间', 'Create Time'] },
+          wfm: { ticket: ['Task ID', '实施任务单号/Implementation Task No', '实施任务单号', 'Implementation Task No', '实施任务单', '任务单号', 'Task No'], time: ['Task Create Time', 'Create Time', '创建时间/Create Time', '创建时间'] }
+        };
+        const categories = Object.entries(configs).map(([category, cfg]) => {
+          const sheets = state.sheets.filter(s => s.category === category).map(s => {
+            const ticketIndex = headerIndex(s.headers, ...cfg.ticket), timeIndex = headerIndex(s.headers, ...cfg.time);
+            let startMs = null, endMs = null, datedRows = 0;
+            const observedMonths = new Set();
+            (s.rows || []).forEach(row => {
+              const date = extractTicketDate(cellAt(row, ticketIndex), cellAt(row, timeIndex));
+              if (!date) return;
+              datedRows++;
+              startMs = startMs === null ? date.timestamp : Math.min(startMs, date.timestamp);
+              endMs = endMs === null ? date.timestamp : Math.max(endMs, date.timestamp);
+              observedMonths.add(new Date(date.timestamp).toISOString().slice(0, 7));
+            });
+            return { fileName: s.fileName, sheetName: s.sheetName, totalRows: s.rows?.length || 0, datedRows, startMs, endMs, observedMonths: [...observedMonths].sort(), missingMonths: missingCoverageMonths(startMs, endMs, observedMonths) };
+          }).sort((a, b) => (a.startMs ?? Infinity) - (b.startMs ?? Infinity) || (a.endMs ?? Infinity) - (b.endMs ?? Infinity) || (a.fileName || '').localeCompare(b.fileName || '', 'zh-CN'));
+          const dated = sheets.filter(s => s.startMs !== null);
+          const startMs = dated.length ? Math.min(...dated.map(s => s.startMs)) : null;
+          const endMs = dated.length ? Math.max(...dated.map(s => s.endMs)) : null;
+          const observedMonths = new Set(sheets.flatMap(s => s.observedMonths));
+          const gaps = sessions.flatMap(session => {
+            const windowRange = getWindowDateRange(session.date || detectMeetingDate(session.name), months);
+            if (!windowRange) return sheets.length && dated.length ? [] : [{ session: session.name, windowRange: null, missing: [] }];
+            const missing = missingBusinessCoverage(windowRange, dated);
+            return missing.length ? [{ session: session.name, windowRange, missing }] : [];
+          });
+          return { category, sheets, startMs, endMs, observedMonths: [...observedMonths].sort(), missingMonths: missingCoverageMonths(startMs, endMs, observedMonths), gaps };
+        });
+        const attendanceCategories = ['offline', 'online'].map(category => {
+          const sheets = state.sheets.filter(s => s.category === category).map(s => {
+            const timeIndex = headerIndex(s.headers, category === 'offline' ? '签到时间' : 'join_time');
+            let startMs = null, endMs = null, datedRows = 0;
+            const sessionNames = new Set(), observedMonths = new Set();
+            (s.rows || []).forEach(row => {
+              sessionNames.add(getRowSessionName(s, row));
+              const rawTime = cellAt(row, timeIndex);
+              const displayTime = category === 'offline' ? beijingToCairoAttendance(rawTime).displayTime : rawTime;
+              const dateStr = parseDateFromString(displayTime);
+              if (!dateStr) return;
+              const dateMs = Date.parse(`${dateStr}T00:00:00Z`);
+              if (!Number.isFinite(dateMs)) return;
+              datedRows++;
+              startMs = startMs === null ? dateMs : Math.min(startMs, dateMs);
+              endMs = endMs === null ? dateMs : Math.max(endMs, dateMs);
+              observedMonths.add(dateStr.slice(0, 7));
+            });
+            return { fileName: s.fileName, sheetName: s.sheetName, totalRows: s.rows?.length || 0, datedRows, startMs, endMs, sessionNames: [...sessionNames], observedMonths: [...observedMonths].sort(), missingMonths: missingCoverageMonths(startMs, endMs, observedMonths) };
+          }).sort((a, b) => (a.startMs ?? Infinity) - (b.startMs ?? Infinity) || (a.endMs ?? Infinity) - (b.endMs ?? Infinity) || (a.fileName || '').localeCompare(b.fileName || '', 'zh-CN'));
+          const dated = sheets.filter(s => s.startMs !== null);
+          const startMs = dated.length ? Math.min(...dated.map(s => s.startMs)) : null;
+          const endMs = dated.length ? Math.max(...dated.map(s => s.endMs)) : null;
+          const observedMonths = new Set(sheets.flatMap(s => s.observedMonths));
+          return { category, sheets, startMs, endMs, observedMonths: [...observedMonths].sort(), missingMonths: missingCoverageMonths(startMs, endMs, observedMonths) };
+        });
+        const [offlineCoverage, onlineCoverage] = attendanceCategories;
+        if (offlineCoverage.observedMonths.length && onlineCoverage.observedMonths.length) {
+          offlineCoverage.comparisonMissingMonths = onlineCoverage.observedMonths.filter(month => !offlineCoverage.observedMonths.includes(month));
+          onlineCoverage.comparisonMissingMonths = offlineCoverage.observedMonths.filter(month => !onlineCoverage.observedMonths.includes(month));
+        } else {
+          attendanceCategories.forEach(item => { item.comparisonMissingMonths = []; });
+        }
+        const report = { sessions, categories, attendanceCategories, hasWarning: categories.some(x => x.gaps.length || x.missingMonths.length) || attendanceCategories.some(x => x.comparisonMissingMonths.length) };
+        state.coverageCache = { key, report };
+        return report;
+      }
+      function renderBusinessCoverageNotice() {
+        const trigger = $('#coverageTrigger'), detail = $('#coverageDetail');
+        if (state.active !== 'people') { trigger.classList.add('hidden'); detail.classList.add('hidden'); return; }
+        const report = buildBusinessCoverageReport();
+        if (!report.sessions.length) { trigger.classList.add('hidden'); detail.classList.add('hidden'); return; }
+        const fmt = ms => ms === null ? bi('无可识别日期', 'No recognized dates') : new Date(ms).toISOString().slice(0, 10);
+        const span = (startMs, endMs) => startMs === null ? bi('无可识别日期', 'No recognized dates') : `${fmt(startMs)} ${bi('至', 'to')} ${fmt(endMs)} (${formatSearchWindowMonths({ startDateStr: fmt(startMs), endDateStr: fmt(endMs) })})`;
+        trigger.classList.remove('hidden'); trigger.classList.toggle('coverage-ok', !report.hasWarning);
+        trigger.textContent = report.hasWarning ? `⚠️ ${bi('数据覆盖提醒', 'Coverage alert')}` : `ⓘ ${bi('数据覆盖范围', 'Data coverage')}`;
+        trigger.title = bi('点击查看签到、在线会议、QR、RFC、WFM 各表的记录日期范围', 'Click to view record date ranges for check-in, online meeting, QR, RFC, and WFM sheets');
+        trigger.setAttribute('aria-expanded', String(state.coverageDetailsOpen));
+        detail.classList.toggle('hidden', !state.coverageDetailsOpen);
+        if (!state.coverageDetailsOpen) return;
+        const issues = report.categories.flatMap(item => item.gaps.map(gap => {
+          const expected = gap.windowRange ? `${gap.windowRange.startDateStr} ${bi('至', 'to')} ${gap.windowRange.endDateStr} (${formatSearchWindowMonths(gap.windowRange)})` : bi('不限时间', 'All dates');
+          const missing = gap.missing.length ? gap.missing.map(x => span(x.startMs, x.endMs)).join('、') : bi('未导入或日期无法识别', 'Not imported or dates unrecognized');
+          const sources = item.sheets.length ? item.sheets.map(s => `${esc(s.fileName)} / ${esc(s.sheetName)}`).join('、') : bi('未导入', 'Not imported');
+          return `<li><b>${item.category.toUpperCase()}</b> · ${esc(gap.session)}：${bi('会议所需窗口', 'Required meeting window')} ${expected}；${bi('可能缺少', 'Possibly missing')} ${missing}；${bi('相关输入表', 'Source sheets')}：${sources}</li>`;
+        }));
+        const label = category => category === 'offline' ? bi('现场签到', 'On-site Check-in') : category === 'online' ? bi('在线会议', 'Online Meeting') : category.toUpperCase();
+        const monthText = month => state.lang === 'en' ? month : month.replace(/^(\d{4})-(\d{2})$/, (_, year, value) => `${year}年${Number(value)}月`);
+        const monthGapBadge = months => months?.length ? `<span class="coverage-month-gap" title="${bi('该月没有可识别日期的记录，请核对是否需要补充原始表', 'No dated records were found in this month; check whether a source sheet is missing')}">⚠ ${bi('疑似缺失月份', 'Months without records')}：${months.map(monthText).join('、')}</span>` : '';
+        const comparisonBadge = item => item.comparisonMissingMonths?.length ? `<span class="coverage-month-gap" title="${bi('另一类签到表有该月记录，本类没有；现场与在线签到可任选其一，此处仅供核对', 'The other attendance source has records for these months. Either check-in method can be used; this is for review only')}">⚠ ${bi('与', 'vs. ')}${label(item.category === 'offline' ? 'online' : 'offline')}${bi('比对疑似缺失', ' months without records')}：${item.comparisonMissingMonths.map(monthText).join('、')}</span>` : '';
+        const businessMonthGaps = report.categories.filter(item => item.missingMonths.length);
+        const monthGapNotice = businessMonthGaps.length ? `<p><b>${bi('跨月记录空档', 'Month gaps within date ranges')}：</b>${businessMonthGaps.map(item => `${item.category.toUpperCase()} ${item.missingMonths.map(monthText).join('、')}`).join('；')}。${bi('这些月份在对应业务表中没有可识别日期的记录，请与原始导出数据核对。', 'These months have no dated records in the corresponding business sheets; compare them with the source exports.')}</p>` : '';
+        const attendanceMonthGaps = report.attendanceCategories.filter(item => item.comparisonMissingMonths.length);
+        const attendanceGapNotice = attendanceMonthGaps.length ? `<p><b>${bi('现场 / 在线月份对照', 'On-site / online month comparison')}：</b>${attendanceMonthGaps.map(item => `${label(item.category)} ${bi('疑似缺失', 'without records in')} ${item.comparisonMissingMonths.map(monthText).join('、')}`).join('；')}。${bi('这是两类签到来源的对照提示；每场会议可以只使用其中一种签到方式。', 'This compares the two attendance sources; each meeting may use either check-in method.')}</p>` : '';
+        const rows = [...report.attendanceCategories, ...report.categories].flatMap(item => {
+          const rowClass = `coverage-row-${item.category}`;
+          const summary = `<tr class="${rowClass} coverage-summary"><th>${label(item.category)}</th><td>${bi('该类合计', 'Category total')}</td><td>—</td><td>${span(item.startMs, item.endMs)}${monthGapBadge(item.missingMonths)}${comparisonBadge(item)}</td><td>${item.sheets.reduce((sum, s) => sum + s.datedRows, 0)} / ${item.sheets.reduce((sum, s) => sum + s.totalRows, 0)}</td></tr>`;
+          return [summary, ...item.sheets.map(s => `<tr class="${rowClass}"><td>${label(item.category)}</td><td title="${esc(s.fileName)} / ${esc(s.sheetName)}">${esc(s.fileName)} / ${esc(s.sheetName)}</td><td>${s.sessionNames?.length ? s.sessionNames.map(esc).join('、') : '—'}</td><td>${span(s.startMs, s.endMs)}${monthGapBadge(s.missingMonths)}</td><td>${s.datedRows} / ${s.totalRows}</td></tr>`)];
+        });
+        detail.innerHTML = `<h3>${report.hasWarning ? bi('⚠️ 数据覆盖范围有待核对', '⚠️ Data coverage needs review') : bi('签到与业务表数据日期范围', 'Attendance and business record date ranges')}</h3>${issues.length ? `<ul>${issues.join('')}</ul><p><b>${bi('建议补全对应业务表数据后重新一键上传分析；此提示不会阻止当前分析。', 'Complete the relevant source exports and upload all files again. This reminder does not block analysis.')}</b></p>` : !businessMonthGaps.length ? `<p>${bi('按已识别记录的起止日期，三类业务表均跨越了当前会议窗口。', 'The recognized date ranges of all three source categories span the current meeting windows.')}</p>` : ''}${monthGapNotice}${attendanceGapNotice}<div class="coverage-table-wrap"><table class="coverage-table"><thead><tr><th>${bi('类别', 'Category')}</th><th>${bi('来源文件 / 工作表', 'Source File / Sheet')}</th><th>${bi('所属场次', 'Meeting Session')}</th><th>${bi('已识别记录日期范围', 'Recognized record date range')}</th><th>${bi('可识别日期行 / 总行数', 'Dated / Total Rows')}</th></tr></thead><tbody>${rows.join('')}</tbody></table></div><p>${bi('业务表日期来自单号或创建时间；现场签到日期来自签到时间（换算为开罗时间），在线会议日期来自入会时间。跨月提示只表示该月没有可识别日期的记录，起止日期跨越窗口也不代表中间每天的数据齐全。', 'Business dates come from ticket IDs or create times; on-site dates come from check-in times converted to Cairo time, and online dates from join times. A month gap means no dated records were found in that month, and spanning a window does not prove daily completeness.')}</p>`;
       }
       function renderSummary() {
         CATEGORIES.forEach(c => {
@@ -2748,11 +3030,10 @@
         });
         return [...set];
       }
-      function getSheetDefaultSessionName(s) {
+      function getSheetDefaultSessionName(s, rowSessions = getSheetRowSessionNames(s)) {
         if (!s) return '默认场次';
         if (s.sessionName) return s.sessionName;
         const fileClean = cleanSessionTitle(s.fileName);
-        const rowSessions = getSheetRowSessionNames(s);
         if (rowSessions.length === 1 && isGenericTitle(fileClean)) {
           return rowSessions[0];
         }
@@ -2767,55 +3048,151 @@
       }
       function getSheetSessionName(s) {
         if (!s) return '默认场次';
-        if (s.sessionName) return s.sessionName;
         const rowSessions = getSheetRowSessionNames(s);
         if (rowSessions.length > 1) {
           return bi(`多场次 (${rowSessions.length} 场)`, `Multiple Sessions (${rowSessions.length})`);
         }
-        return getSheetDefaultSessionName(s);
+        return s.rows?.length ? getRowSessionName(s, s.rows[0]) : getSheetDefaultSessionName(s);
       }
-      function getRowSessionName(s, row) {
+      function getRawRowSessionName(s, row, rowSessions = getSheetRowSessionNames(s)) {
         if (!s) return '默认场次';
         if (s.sessionName) return s.sessionName;
         const titleCol = headerIndex(s.headers, 'meeting_title', '会议名称', '会议主题', '场次', '会议');
         if (titleCol >= 0) {
-          const rowSessions = getSheetRowSessionNames(s);
           if (rowSessions.length > 1) {
             const val = cleanSessionTitle(cellAt(row, titleCol));
             if (val) return val;
           }
         }
-        return getSheetDefaultSessionName(s);
+        return getSheetDefaultSessionName(s, rowSessions);
       }
-      function getMeetingSessions() {
-        const sessionMap = new Map();
-        const attSheets = state.sheets.filter(s => s.category === 'offline' || s.category === 'online');
-        attSheets.forEach(s => {
+      function getSessionRowEvidence(s, row, rawName) {
+        const timeIndex = headerIndex(s.headers, s.category === 'offline' ? '签到时间' : 'join_time');
+        const rawTime = cellAt(row, timeIndex);
+        const converted = s.category === 'offline'
+          ? beijingToCairoAttendance(rawTime)
+          : { displayTime: rawTime, minute: parseAttendanceMinute(rawTime) };
+        return {
+          date: parseDateFromString(converted.displayTime) || parseDateFromString(rawName) || parseDateFromString(s.fileName) || parseDateFromString(s.sheetName) || '',
+          minute: converted.minute
+        };
+      }
+      function getSessionResolution() {
+        if (state.sessionResolution?.version === state.dataVersion) return state.sessionResolution;
+        const groups = new Map();
+        const rowKeys = new WeakMap();
+        state.sheets.forEach((s, sheetIndex) => {
+          if (s.category !== 'offline' && s.category !== 'online') return;
           const rowSessions = getSheetRowSessionNames(s);
-          if (!s.sessionName && rowSessions.length > 1) {
-            const titleCol = headerIndex(s.headers, 'meeting_title', '会议名称', '会议主题', '场次', '会议');
-            s.rows.forEach(r => {
-              const sessName = cleanSessionTitle(cellAt(r, titleCol)) || getSheetDefaultSessionName(s);
-              if (!sessionMap.has(sessName)) {
-                sessionMap.set(sessName, { name: sessName, offlineSheets: 0, onlineSheets: 0, rowCount: 0 });
-              }
-              const item = sessionMap.get(sessName);
-              item.rowCount++;
-              if (s.category === 'offline') item.offlineSheets++;
-              else item.onlineSheets++;
+          if (!s.rows?.length) {
+            const rawName = getSheetDefaultSessionName(s);
+            const date = parseDateFromString(rawName) || parseDateFromString(s.fileName) || '';
+            const key = JSON.stringify([rawName, date]);
+            if (!groups.has(key)) groups.set(key, {
+              key, rawName, date, times: [], categories: new Set(),
+              explicit: false, rows: [], offlineSheetIds: new Set(), onlineSheetIds: new Set()
             });
-          } else {
-            const sessName = s.sessionName || getSheetDefaultSessionName(s);
-            if (!sessionMap.has(sessName)) {
-              sessionMap.set(sessName, { name: sessName, offlineSheets: 0, onlineSheets: 0, rowCount: 0 });
-            }
-            const item = sessionMap.get(sessName);
-            item.rowCount += s.rows.length;
-            if (s.category === 'offline') item.offlineSheets++;
-            else item.onlineSheets++;
+            const group = groups.get(key);
+            group.categories.add(s.category);
+            group.explicit ||= !!s.sessionName || rowSessions.length > 1;
+            (s.category === 'offline' ? group.offlineSheetIds : group.onlineSheetIds).add(sheetIndex);
+          }
+          (s.rows || []).forEach(row => {
+            const rawName = getRawRowSessionName(s, row, rowSessions);
+            const evidence = getSessionRowEvidence(s, row, rawName);
+            const key = JSON.stringify([rawName, evidence.date]);
+            if (!groups.has(key)) groups.set(key, {
+              key, rawName, date: evidence.date, times: [], categories: new Set(),
+              explicit: false, rows: [], offlineSheetIds: new Set(), onlineSheetIds: new Set()
+            });
+            const group = groups.get(key);
+            if (evidence.minute != null) group.times.push(evidence.minute);
+            group.categories.add(s.category);
+            group.explicit ||= !!s.sessionName || rowSessions.length > 1;
+            group.rows.push(row);
+            (s.category === 'offline' ? group.offlineSheetIds : group.onlineSheetIds).add(sheetIndex);
+            rowKeys.set(row, key);
+          });
+        });
+        const items = [...groups.values()];
+        const median = values => {
+          if (!values.length) return null;
+          const sorted = [...values].sort((a, b) => a - b);
+          return sorted[Math.floor(sorted.length / 2)];
+        };
+        const medianMinutes = items.map(item => median(item.times));
+        const timeRanges = medianMinutes.map(minute => ({ min: minute, max: minute }));
+        const parent = items.map((_, i) => i);
+        const root = i => { while (parent[i] !== i) i = parent[i] = parent[parent[i]]; return i; };
+        for (let i = 0; i < items.length; i++) {
+          for (let j = i + 1; j < items.length; j++) {
+            const a = items[i], b = items[j];
+            const aRoot = root(i), bRoot = root(j);
+            if (aRoot === bRoot) continue;
+            if (a.date && b.date && a.date !== b.date) continue;
+            const sameName = a.rawName === b.rawName;
+            if (!sameName && (!a.date || !b.date || (a.explicit && b.explicit))) continue;
+            const rangeValues = [timeRanges[aRoot].min, timeRanges[aRoot].max, timeRanges[bRoot].min, timeRanges[bRoot].max].filter(value => value != null);
+            if (!sameName && (medianMinutes[i] == null || medianMinutes[j] == null || !rangeValues.length || Math.max(...rangeValues) - Math.min(...rangeValues) > 120)) continue;
+            parent[bRoot] = aRoot;
+            timeRanges[aRoot] = { min: rangeValues.length ? Math.min(...rangeValues) : null, max: rangeValues.length ? Math.max(...rangeValues) : null };
+          }
+        }
+        const clusters = new Map();
+        items.forEach((item, i) => {
+          const key = root(i);
+          if (!clusters.has(key)) clusters.set(key, []);
+          clusters.get(key).push(item);
+        });
+        const namesByKey = new Map(), sessions = [], usedNames = new Set();
+        clusters.forEach(cluster => {
+          const preferred = [...cluster].sort((a, b) => {
+            const score = x => (x.explicit ? 4 : 0) + (x.categories.has('online') ? 2 : 0) + (parseDateFromString(x.rawName) ? 1 : 0);
+            return score(b) - score(a);
+          })[0];
+          let name = preferred.rawName;
+          if (usedNames.has(name)) name = `${name} (${preferred.date || sessions.length + 1})`;
+          usedNames.add(name);
+          const offlineSheets = new Set(), onlineSheets = new Set();
+          let rowCount = 0;
+          cluster.forEach(item => {
+            namesByKey.set(item.key, name);
+            rowCount += item.rows.length;
+            item.offlineSheetIds.forEach(id => offlineSheets.add(id));
+            item.onlineSheetIds.forEach(id => onlineSheets.add(id));
+          });
+          const sourceSheetIds = [...new Set([...offlineSheets, ...onlineSheets])].sort((a, b) => a - b);
+          const sourceSheets = sourceSheetIds.map(id => {
+            const sheet = state.sheets[id];
+            return { category: sheet.category, fileName: sheet.fileName || '', sheetName: sheet.sheetName || '' };
+          });
+          sessions.push({ name, date: preferred.date || cluster.find(item => item.date)?.date || '', timeMinute: median(cluster.flatMap(item => item.times)), offlineSheets: offlineSheets.size, onlineSheets: onlineSheets.size, rowCount, sourceSheets });
+        });
+        sessions.sort((a, b) => {
+          const dateOrder = (a.date || '9999-12-31').localeCompare(b.date || '9999-12-31');
+          if (dateOrder) return dateOrder;
+          const timeOrder = (a.timeMinute ?? Infinity) - (b.timeMinute ?? Infinity);
+          return timeOrder || a.name.localeCompare(b.name, 'zh-CN');
+        });
+        const rowNames = new WeakMap();
+        state.sheets.forEach(s => {
+          if (s.category === 'offline' || s.category === 'online') {
+            (s.rows || []).forEach(row => rowNames.set(row, namesByKey.get(rowKeys.get(row)) || getSheetDefaultSessionName(s)));
           }
         });
-        return [...sessionMap.values()];
+        state.sessionResolution = { version: state.dataVersion, rowNames, sessions };
+        return state.sessionResolution;
+      }
+      function getRowSessionName(s, row) {
+        return getSessionResolution().rowNames.get(row) || getRawRowSessionName(s, row);
+      }
+      function getMeetingSessions() {
+        const minimum = normalizeMinSessionRecords(state.attendanceRules.minSessionRecords);
+        return getSessionResolution().sessions.filter(session => session.rowCount >= minimum);
+      }
+      function getIgnoredMeetingSessions() {
+        const minimum = normalizeMinSessionRecords(state.attendanceRules.minSessionRecords);
+        return getSessionResolution().sessions.filter(session => session.rowCount < minimum);
       }
       function renderSheetCard(s) {
         const total = Math.max(1, Math.ceil(s.rows.length / state.pageSize)); s.page = Math.min(Math.max(1, s.page || 1), total);
@@ -2940,7 +3317,8 @@
               ...saved,
               orderWindowMonths: saved.orderWindowMonths !== undefined ? (saved.orderWindowMonths === 0 || saved.orderWindowMonths === '0' ? 0 : Number(saved.orderWindowMonths) || 1) : 1,
               nightWfmExempt: saved.nightWfmExempt !== undefined ? !!saved.nightWfmExempt : true,
-              meetingDate: saved.meetingDate || ''
+              meetingDate: saved.meetingDate || '',
+              minSessionRecords: normalizeMinSessionRecords(saved.minSessionRecords)
             };
           }
         } catch (e) { }
@@ -2953,14 +3331,19 @@
           $('#orderWindowSelect').value = String(state.attendanceRules.orderWindowMonths !== undefined ? state.attendanceRules.orderWindowMonths : 1);
         }
         if ($('#meetingDateInput')) {
-          $('#meetingDateInput').value = state.attendanceRules.meetingDate || detectMeetingDate();
+          $('#meetingDateInput').value = state.attendanceRules.meetingDate || '';
         }
+        if ($('#minSessionRecordsInput')) $('#minSessionRecordsInput').value = String(normalizeMinSessionRecords(state.attendanceRules.minSessionRecords));
         if ($('#nightWfmToggle')) {
           $('#nightWfmToggle').checked = state.attendanceRules.nightWfmExempt !== false;
         }
         $('#attendanceModal').classList.remove('hidden');
       }
       function closeAttendanceModal() { $('#attendanceModal').classList.add('hidden'); }
+      function normalizeMinSessionRecords(value) {
+        const n = Number(value);
+        return value !== undefined && value !== null && value !== '' && Number.isInteger(n) && n >= 0 && n <= 100000 ? n : DEFAULT_ATTENDANCE_RULES.minSessionRecords;
+      }
       function timeInputMinutes(v) { const m = String(v || '').match(/^(\d{1,2}):(\d{2})$/); return m ? +m[1] * 60 + +m[2] : NaN; }
       async function saveAttendanceRules() {
         const onTime = $('#onTimeInput').value, fake = $('#fakeTimeInput').value, onMinute = timeInputMinutes(onTime), fakeMinute = timeInputMinutes(fake);
@@ -2969,11 +3352,15 @@
         const orderWindowMonths = (rawWin === '0' || rawWin === 0) ? 0 : (Number(rawWin) || 1);
         const nightWfmExempt = $('#nightWfmToggle') ? $('#nightWfmToggle').checked : true;
         const meetingDate = ($('#meetingDateInput')?.value || '').trim();
+        const minSessionRecordsRaw = $('#minSessionRecordsInput')?.value;
+        const minSessionRecords = Number(minSessionRecordsRaw);
+        if (minSessionRecordsRaw === '' || !Number.isInteger(minSessionRecords) || minSessionRecords < 0 || minSessionRecords > 100000) {
+          toast(bi('场次最少签到记录数须为 0 至 100000 的整数', 'Minimum session records must be an integer from 0 to 100000'), 'error'); return;
+        }
 
-        state.attendanceRules = { onTime, fake, orderWindowMonths, nightWfmExempt, meetingDate };
+        state.attendanceRules = { onTime, fake, orderWindowMonths, nightWfmExempt, meetingDate, minSessionRecords };
         try { localStorage.setItem(ATTENDANCE_STORAGE_KEY, JSON.stringify(state.attendanceRules)); } catch (e) { console.warn('考勤规则保存失败', e); }
         closeAttendanceModal();
-        invalidatePeopleCache();
         const refreshed = await refreshCalculatedResults(bi('正在重新匹配时间与单据窗口并计算考勤状态…', 'Rematching times and recalculating attendance…'));
         if (refreshed) {
           const winStr = orderWindowMonths ? `${orderWindowMonths} 个月` : '全部（不限时间）';
@@ -3020,7 +3407,6 @@
         try { localStorage.setItem(MANDATORY_STORAGE_KEY, JSON.stringify(rows)); } catch (e) { console.warn('必选名单保存失败', e); }
         updateMandatoryBadge();
         closeMandatoryModal();
-        invalidatePeopleCache();
         const refreshed = await refreshCalculatedResults(bi('正在应用必选参会名单并重新计算考勤…', 'Applying mandatory roster and recalculating…'));
         if (refreshed) toast(bi(`已保存 ${rows.length} 名其他必选参会人员，考勤结果已刷新`, `${rows.length} mandatory attendees saved; results refreshed`));
       }
@@ -3079,9 +3465,8 @@
       }
       async function refreshCalculatedResults(message) {
         try {
+          invalidatePeopleCache();
           showLoading(true, message, 12); await nextPaint(); const cache = await ensurePeopleCache();
-          showLoading(true, bi('正在重新比较现场扫码与线上参会的最早时间…', 'Comparing earliest on-site and online times…'), 45); await nextPaint(); const attendanceIndex = buildAttendanceIndex();
-          showLoading(true, bi('正在重新计算人员状态和 BU 统计…', 'Recalculating people status and BU statistics…'), 78); await nextPaint(); cache.attendanceIndex = attendanceIndex; cache.all = extractAllPeople(cache.qr, cache.rfc, cache.wfm, attendanceIndex); cache.version = state.dataVersion;
           if (state.buFilter && !cache.all.some(r => (normalizeName(r.bu) || '未识别 BU') === state.buFilter)) state.buFilter = ''; state.peoplePages.all = 1;
           renderSummary(); if (state.active === 'people') renderPeopleResults(cache); showLoading(true, bi('数据判断结果刷新完成', 'Results refreshed'), 100); await nextPaint(); return true;
         } catch (err) { console.error(err); toast(`${bi('自动刷新失败', 'Auto-refresh failed')}：${err.message}`, 'error', 6000); return false; } finally { showLoading(false); }
@@ -3093,6 +3478,17 @@
           renderSummary(); renderPeopleResults(data);
         } catch (err) { console.error(err); toast(`${bi('人员汇总失败', 'People summary failed')}：${err.message}`, 'error', 6000); }
         finally { if (buildId === state.peopleBuildId) showLoading(false); }
+      }
+      function isRequiredForSession(person, sessionDate, sessionIndex) {
+        if (person.isManualMandatory) return true;
+        if (person.fromAttendanceOnly) return determineAttendance(person.account, sessionIndex, person.name) !== 'Absent';
+        const months = state.attendanceRules.orderWindowMonths !== undefined ? state.attendanceRules.orderWindowMonths : 1;
+        if (months === 0 || months === '0' || months === 'all' || !sessionDate) return true;
+        if (person.hasUndatedOrder) return true;
+        const dates = person.orderDates || [];
+        if (!dates.length) return true;
+        const window = getWindowDateRange(sessionDate, Number(months));
+        return dates.some(date => isOrderInWindow(extractTicketDate(date), window));
       }
       async function ensurePeopleCache() {
         if (state.peopleCache && state.peopleCache.version === state.dataVersion) return state.peopleCache;
@@ -3110,13 +3506,20 @@
         if (sessions.length > 1) {
           sessions.forEach(sess => {
             const sIndex = buildAttendanceIndex(sess.name);
-            const sessDate = detectMeetingDate(sess.name);
+            const sessDate = sess.date || detectMeetingDate(sess.name);
             const allMeetingDates = getAllMeetingDates();
             sessionIndexes[sess.name] = sIndex;
             const sCounts = { Absent: 0, 'Attend on Time': 0, Delay: 0, 'Fake Attendance': 0 };
             const sByBu = new Map();
+            let requiredTotal = 0;
             all.forEach(p => {
               if (!p.sessionRecords) p.sessionRecords = {};
+              const required = isRequiredForSession(p, sessDate, sIndex);
+              if (!required) {
+                p.sessionRecords[sess.name] = { required: false, attendance: 'Not Required', attendanceTime: '', attendanceMethod: '' };
+                return;
+              }
+              requiredTotal++;
               const exemption = getExemption(p);
               const isNightForSession = isPersonNightExemptForDate(p, sessDate) || (p.isNightWfmExempt && allMeetingDates.length <= 1);
               const nightExempt = (state.attendanceRules.nightWfmExempt !== false) && isNightForSession;
@@ -3125,7 +3528,7 @@
               if (nightExempt) {
                 attendance = 'Attend on Time';
                 attendanceMethod = '前夜WFM豁免';
-                attendanceTime = p.nightWfmTasks?.[0]?.time || bi('前夜保障任务', 'Night maintenance task');
+                attendanceTime = '';
               } else if (exemption) {
                 attendance = 'Attend on Time';
                 attendanceMethod = '豁免名单';
@@ -3136,6 +3539,7 @@
                 attendanceTime = record?.displayTime || '';
               }
               p.sessionRecords[sess.name] = {
+                required: true,
                 attendance,
                 attendanceTime,
                 attendanceMethod
@@ -3147,16 +3551,17 @@
               b.total++;
               b[attendance] = (b[attendance] || 0) + 1;
             });
-            sessionStats[sess.name] = { counts: sCounts, byBu: sByBu, total: all.length };
+            sessionStats[sess.name] = { counts: sCounts, byBu: sByBu, total: requiredTotal };
           });
 
           all.forEach(p => {
-            const attendedCount = sessions.filter(s => p.sessionRecords?.[s.name]?.attendance && p.sessionRecords[s.name].attendance !== 'Absent').length;
-            const onTimeCount = sessions.filter(s => p.sessionRecords?.[s.name]?.attendance === 'Attend on Time').length;
+            const requiredSessions = sessions.filter(s => p.sessionRecords?.[s.name]?.required);
+            const attendedCount = requiredSessions.filter(s => ['Attend on Time', 'Delay'].includes(p.sessionRecords[s.name].attendance)).length;
+            const onTimeCount = requiredSessions.filter(s => p.sessionRecords[s.name].attendance === 'Attend on Time').length;
             let statusText = '';
             let statusTag = '';
-            if (attendedCount === sessions.length) {
-              if (onTimeCount === sessions.length) {
+            if (requiredSessions.length && attendedCount === requiredSessions.length) {
+              if (onTimeCount === requiredSessions.length) {
                 statusText = bi('全勤 (全准时)', 'Full (All On-time)');
                 statusTag = 'full-ontime';
               } else {
@@ -3164,15 +3569,16 @@
                 statusTag = 'full-delay';
               }
             } else if (attendedCount > 0) {
-              statusText = bi(`部分出席 (${attendedCount}/${sessions.length})`, `Partial (${attendedCount}/${sessions.length})`);
+              statusText = bi(`部分出席 (${attendedCount}/${requiredSessions.length})`, `Partial (${attendedCount}/${requiredSessions.length})`);
               statusTag = 'partial';
             } else {
-              statusText = bi('全部缺席', 'All Absent');
+              statusText = requiredSessions.length ? bi('全部缺席', 'All Absent') : bi('无需出席', 'Not Required');
               statusTag = 'none';
             }
             p.multiSessionStatus = statusText;
             p.multiSessionStatusTag = statusTag;
             p.attendedSessionsCount = attendedCount;
+            p.requiredSessionsCount = requiredSessions.length;
           });
         }
 
@@ -3184,6 +3590,7 @@
       function invalidatePeopleCache() {
         state.dataVersion++;
         state.peopleCache = null;
+        state.sessionResolution = null;
         state.qualityCache = null;
         state.peoplePages = { all: 1, qr: 1, rfc: 1, wfm: 1 };
         state.buFilter = '';
@@ -3191,7 +3598,7 @@
         state.personSearch = { query: '', result: null, pages: { qr: 1, rfc: 1, wfm: 1, offline: 1, online: 1 } };
       }
       function getSessionPeopleRows(all, sessionName) {
-        return all.map(p => {
+        return all.filter(p => p.sessionRecords?.[sessionName]?.required).map(p => {
           const rec = p.sessionRecords?.[sessionName] || { attendance: 'Absent', attendanceTime: '', attendanceMethod: '无记录' };
           return {
             ...p,
@@ -3201,9 +3608,23 @@
           };
         });
       }
+      function getSessionDisplayLabels(sessions) {
+        const counts = new Map();
+        return sessions.map(sess => {
+          const date = sess.date || parseDateFromString(sess.name) || '';
+          const source = sess.offlineSheets && sess.onlineSheets
+            ? bi('现场/在线签到', 'On-site/Online')
+            : sess.offlineSheets ? bi('现场签到', 'On-site') : bi('在线签到', 'Online');
+          const base = `${/^\d{4}-\d{2}-\d{2}$/.test(date) ? date : sess.name}-${source}`;
+          const count = (counts.get(base) || 0) + 1;
+          counts.set(base, count);
+          return count > 1 ? `${base} · ${count}` : base;
+        });
+      }
       function renderSessionSwitcher(sessions, selectedSession) {
         if (!sessions || sessions.length <= 1) return '';
         const isAll = selectedSession === 'all';
+        const displayLabels = getSessionDisplayLabels(sessions);
         const allTab = `
           <button class="session-tab-btn ${isAll ? 'active' : ''}" data-action="switch-session" data-session="all">
             <span style="font-size:14px">🌐</span>
@@ -3220,7 +3641,7 @@
           return `
             <button class="session-tab-btn ${active ? 'active' : ''}" data-action="switch-session" data-session="${esc(sess.name)}" title="${esc(sess.name)}">
               <span style="font-size:14px">📅</span>
-              <span>${bi(`场次 ${idx + 1}`, `Session ${idx + 1}`)}: ${esc(sess.name)}</span>
+              <span>${esc(displayLabels[idx])}</span>
               ${rate ? `<span class="session-tab-badge" title="${bi('按时出席率', 'On-time rate')}">${rate}</span>` : ''}
             </button>
           `;
@@ -3240,6 +3661,8 @@
         `;
       }
       function renderSessionNoticeBar(sessionName, sessions, sessionPeople) {
+        const index = sessions.findIndex(sess => sess.name === sessionName);
+        const displayName = index >= 0 ? getSessionDisplayLabels(sessions)[index] : sessionName;
         const onTimeCount = sessionPeople.filter(p => p.attendance === 'Attend on Time').length;
         const rate = sessionPeople.length ? `${(onTimeCount / sessionPeople.length * 100).toFixed(1)}%` : '0.0%';
         return `
@@ -3247,7 +3670,7 @@
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
               <span style="font-size:18px">📌</span>
               <div>
-                <strong style="font-size:14px;color:#1e3a8a">${bi('当前查看单场会议', 'Current Session View')}：${esc(sessionName)}</strong>
+                <strong style="font-size:14px;color:#1e3a8a">${bi('当前查看单场会议', 'Current Session View')}：${esc(displayName)}</strong>
                 <span style="font-size:12px;color:#3b82f6;margin-left:8px">${sessionPeople.length} ${t('peopleUnit')} · ${bi('准时率', 'On-time Rate')}: <strong>${rate}</strong></span>
               </div>
             </div>
@@ -3259,31 +3682,48 @@
       }
       function renderMultiSessionOverview(sessions, data) {
         const rate = (onTime, total) => total ? `${(onTime / total * 100).toFixed(1)}%` : '0.0%';
+        const displayLabels = getSessionDisplayLabels(sessions);
+        const attendanceCoverage = buildBusinessCoverageReport().attendanceCategories;
         const cards = sessions.map((sess, idx) => {
           const stats = data.sessionStats?.[sess.name] || { counts: { 'Attend on Time': 0, Delay: 0, Absent: 0, 'Fake Attendance': 0 }, total: data.all.length };
           const counts = stats.counts;
-          const total = data.all.length;
+          const total = stats.total;
           const onTimeRate = rate(counts['Attend on Time'], total);
+          const sourceCounts = [data.qr, data.rfc, data.wfm].map(rows => rows.filter(p => isRequiredForSession(p, sess.date || detectMeetingDate(sess.name), data.sessionIndexes?.[sess.name])).length);
+          const month = /^\d{4}-(0?[1-9]|1[0-2])/.exec(sess.date || '')?.[1];
+          const monthLabel = month ? bi(`${Number(month)}月`, new Date(Date.UTC(2020, Number(month) - 1, 1)).toLocaleString('en', { month: 'short', timeZone: 'UTC' })) : '';
+          const sessionMonth = (sess.date || detectMeetingDate(sess.name)).slice(0, 7);
+          const missingSources = attendanceCoverage.filter(item => item.missingMonths.includes(sessionMonth) || item.comparisonMissingMonths.includes(sessionMonth));
+          const coverageNote = missingSources.length ? `<div class="session-card-coverage-note" title="${bi('根据现场签到与在线会议的月份覆盖范围提示，仅供核对；每场可任选一种签到方式', 'Based on attendance month coverage, for review only; each meeting may use either check-in method')}">⚠ ${missingSources.map(item => item.category === 'offline' ? bi('现场签到', 'On-site check-in') : bi('在线会议', 'Online meeting')).join('、')}${bi('数据疑似缺失', ' data may be missing')}</div>` : '';
+          const sourceSheets = sess.sourceSheets || [];
+          const sourceTooltip = `<div class="session-card-source-tooltip" role="tooltip"><strong>${bi('本场来源表格', 'Source Sheets')} · ${sourceSheets.length}</strong><ul>${sourceSheets.map(sheet => `<li>${esc(sheet.fileName || sheet.sheetName || bi('未命名表格', 'Unnamed sheet'))}${sheet.sheetName ? ` · ${esc(sheet.sheetName)}` : ''} <small>(${bi(sheet.category === 'offline' ? '现场签到' : '在线签到', sheet.category === 'offline' ? 'On-site' : 'Online')})</small></li>`).join('')}</ul></div>`;
           return `
-            <div class="session-card">
+            <div class="session-card${missingSources.length ? ' coverage-warning' : ''}">
               <div class="session-card-head">
                 <div class="session-card-title">
                   <span style="color:var(--primary);margin-right:4px">#${idx + 1}</span>
-                  <span title="${esc(sess.name)}">${esc(sess.name)}</span>
+                  <span title="${esc(sess.name)}">${esc(displayLabels[idx])}</span>
                 </div>
                 <button class="btn btn-sm" data-action="switch-session" data-session="${esc(sess.name)}" style="padding:3px 8px;font-size:12px;cursor:pointer">
                   ${bi('查看该场 ➜', 'View Session ➜')}
                 </button>
               </div>
               <div class="session-card-stats">
+                <div class="snap-chip" title="${bi('三类名单可能有重叠，应出席人数已合并去重', 'Source rosters may overlap; required count is deduplicated')}">${bi('应出席', 'Required')}: ${total}</div>
                 <div class="snap-chip rate" title="${bi('按时出席', 'Attend on Time')}">${bi('准时', 'On-time')}: ${counts['Attend on Time']} (${onTimeRate})</div>
                 <div class="snap-chip delay" title="${bi('迟到', 'Delay')}">${bi('迟到', 'Delay')}: ${counts.Delay}</div>
                 <div class="snap-chip fake" title="${bi('虚假签到', 'Fake Attendance')}">${bi('虚假', 'Fake')}: ${counts['Fake Attendance']}</div>
                 <div class="snap-chip absent" title="${bi('缺席', 'Absent')}">${bi('缺席', 'Absent')}: ${counts.Absent}</div>
               </div>
-              <div class="session-card-footer" style="font-size:11px;color:#64748b;margin-top:2px">
-                ${sess.offlineSheets ? `${bi('现场扫码', 'On-site')}: ${sess.offlineSheets} ${bi('表', 'sheet(s)')} · ` : ''}${sess.onlineSheets ? `${bi('在线记录', 'Online')}: ${sess.onlineSheets} ${bi('表', 'sheet(s)')} · ` : ''}${bi('共', 'total')} ${sess.rowCount} ${bi('行记录', 'records')}
+              ${coverageNote}
+              <div class="session-card-bottom">
+                <div class="session-card-footer" style="font-size:11px;color:#64748b">
+                  QR ${sourceCounts[0]} · RFC ${sourceCounts[1]} · WFM ${sourceCounts[2]} <span title="${bi('名单可能重叠，合并去重后为上方应出席人数', 'Rosters may overlap; required count above is deduplicated')}">ⓘ</span><br>
+                  ${sess.offlineSheets ? `${bi('现场扫码', 'On-site')}: ${sess.offlineSheets} ${bi('表', 'sheet(s)')} · ` : ''}${sess.onlineSheets ? `${bi('在线记录', 'Online')}: ${sess.onlineSheets} ${bi('表', 'sheet(s)')} · ` : ''}${bi('共', 'total')} ${sess.rowCount} ${bi('行记录', 'records')}
+                </div>
+                ${monthLabel ? `<span class="session-card-month" title="${esc(sess.date)}">${esc(monthLabel)}</span>` : ''}
               </div>
+              ${sourceTooltip}
             </div>
           `;
         }).join('');
@@ -3292,50 +3732,45 @@
       }
       function renderMultiSessionBuTable(sessions, all) {
         const byBu = new Map();
-        const rate = (n, total) => total ? `${(n / total * 100).toFixed(1)}%` : '0.0%';
-
+        const rate = (n, total) => total ? `${(n / total * 100).toFixed(1)}%` : '—';
+        const displayLabels = getSessionDisplayLabels(sessions);
+        const totals = { eligible: 0, full: 0, sessions: {} };
+        sessions.forEach(s => totals.sessions[s.name] = { required: 0, onTime: 0, attended: 0 });
         all.forEach(p => {
+          const requiredSessions = sessions.filter(s => p.sessionRecords?.[s.name]?.required);
+          if (!requiredSessions.length) return;
           const bu = normalizeName(p.bu) || '未识别 BU';
           if (!byBu.has(bu)) {
-            const init = { total: 0, fullAttend: 0, sessions: {} };
-            sessions.forEach(s => init.sessions[s.name] = { onTime: 0, attended: 0 });
+            const init = { eligible: 0, full: 0, sessions: {} };
+            sessions.forEach(s => init.sessions[s.name] = { required: 0, onTime: 0, attended: 0 });
             byBu.set(bu, init);
           }
           const item = byBu.get(bu);
-          item.total++;
-          let isFull = true;
-          sessions.forEach(s => {
-            const att = p.sessionRecords?.[s.name]?.attendance;
-            if (att === 'Attend on Time') item.sessions[s.name].onTime++;
-            if (att && att !== 'Absent') item.sessions[s.name].attended++;
-            else isFull = false;
+          item.eligible++;
+          totals.eligible++;
+          const isFull = requiredSessions.every(s => ['Attend on Time', 'Delay'].includes(p.sessionRecords[s.name].attendance));
+          if (isFull) { item.full++; totals.full++; }
+          requiredSessions.forEach(s => {
+            const att = p.sessionRecords[s.name].attendance;
+            item.sessions[s.name].required++;
+            totals.sessions[s.name].required++;
+            if (att === 'Attend on Time') { item.sessions[s.name].onTime++; totals.sessions[s.name].onTime++; }
+            if (att === 'Attend on Time' || att === 'Delay') { item.sessions[s.name].attended++; totals.sessions[s.name].attended++; }
           });
-          if (isFull) item.fullAttend++;
         });
-
-        const buRows = [...byBu.entries()].sort((a, b) => b[1].total - a[1].total).map(([bu, x]) => {
-          const sessionCols = sessions.map(s => {
-            const onTime = x.sessions[s.name]?.onTime || 0;
-            return `<td class="num rate">${rate(onTime, x.total)} <small style="color:#64748b;font-weight:normal">(${onTime}/${x.total})</small></td>`;
-          }).join('');
-          const fullRate = rate(x.fullAttend, x.total);
+        const renderSessionCells = x => sessions.map(s => {
+          const y = x.sessions[s.name];
+          return `<td class="num">${y.required}</td><td class="num rate">${rate(y.onTime, y.required)} <small>(${y.onTime}/${y.required})</small></td><td class="num rate">${rate(y.attended, y.required)} <small>(${y.attended}/${y.required})</small></td>`;
+        }).join('');
+        const buRows = [...byBu.entries()].sort((a, b) => b[1].eligible - a[1].eligible).map(([bu, x]) => {
           const selected = state.buFilter === bu ? 'selected' : '';
           return `
             <tr class="${selected}" data-action="bu-filter" data-bu="${esc(bu)}" title="${state.buFilter === bu ? bi('点击取消筛选', 'Click to clear filter') : bi('点击筛选下方人员名单', 'Click to filter people list')}">
               <td title="${esc(bu)}"><strong>${esc(bu)}</strong></td>
-              <td class="num">${x.total}</td>
-              ${sessionCols}
-              <td class="num ontime">${x.fullAttend}</td>
-              <td class="num rate" style="font-weight:700">${fullRate}</td>
+              ${renderSessionCells(x)}
+              <td class="num rate" style="font-weight:700">${rate(x.full, x.eligible)} <small>(${x.full}/${x.eligible})</small></td>
             </tr>
           `;
-        }).join('');
-
-        const totalPeople = all.length;
-        const totalFull = all.filter(p => sessions.every(s => p.sessionRecords?.[s.name]?.attendance && p.sessionRecords[s.name].attendance !== 'Absent')).length;
-        const totalSessionCols = sessions.map(s => {
-          const onTimeTotal = all.filter(p => p.sessionRecords?.[s.name]?.attendance === 'Attend on Time').length;
-          return `<td class="num rate">${rate(onTimeTotal, totalPeople)} <small style="color:#64748b;font-weight:normal">(${onTimeTotal}/${totalPeople})</small></td>`;
         }).join('');
 
         return `
@@ -3343,28 +3778,27 @@
             <div class="chart-head" style="margin-bottom:10px">
               <div>
                 <h3>${bi('多场次 BU 达标率横向对比', 'Multi-Session BU Attendance Rate Comparison')}</h3>
-                <p>${bi('点击任意BU行筛选下方多场次比对表，再次点击取消筛选', 'Click any BU row to filter the matrix table below; click again to clear')}${state.buFilter ? `；${bi('当前筛选', 'Current filter')}：<strong>${esc(state.buFilter)}</strong>` : ''}</p>
+                <p>${bi('每场按该场日期的任务单窗口计算应出席名单；本场全勤率包含准时和迟到，总全勤率按个人所有应出席场次计算。点击 BU 行可筛选人员。', 'Required attendees use each session date and order window. Session full rate includes on-time and delayed arrivals; overall full rate covers every required session per person. Click a BU row to filter people.')}${state.buFilter ? `；${bi('当前筛选', 'Current filter')}：<strong>${esc(state.buFilter)}</strong>` : ''}</p>
               </div>
             </div>
             <div class="bu-summary-wrap">
-              <table class="bu-summary-table">
+              <table class="bu-summary-table multi-session-bu-table" style="min-width:${Math.max(760, sessions.length * 330 + 240)}px">
                 <thead>
                   <tr>
-                    <th>BU</th>
-                    <th>${bi('总人数', 'Total')}</th>
-                    ${sessions.map(s => `<th title="${esc(s.name)}">${esc(s.name)} ${bi('准时率', 'On-time')}</th>`).join('')}
-                    <th>${bi('全勤人数', 'Full Attendance')}</th>
-                    <th>${bi('综合全勤率', 'Full Rate')}</th>
+                    <th rowspan="2">BU</th>
+                    ${sessions.map((s, i) => `<th colspan="3" title="${esc(s.name)}">${esc(displayLabels[i])}</th>`).join('')}
+                    <th rowspan="2">${bi('总全勤率', 'Overall Full Rate')}</th>
+                  </tr>
+                  <tr>
+                    ${sessions.map(() => `<th>${bi('应出席人数', 'Required')}</th><th>${bi('准时率', 'On-time Rate')}</th><th>${bi('本场全勤率', 'Session Full Rate')}</th>`).join('')}
                   </tr>
                 </thead>
                 <tbody>${buRows}</tbody>
                 <tfoot>
                   <tr>
                     <td>${bi('总计', 'Total')}</td>
-                    <td class="num">${totalPeople}</td>
-                    ${totalSessionCols}
-                    <td class="num ontime">${totalFull}</td>
-                    <td class="num rate" style="font-weight:700">${rate(totalFull, totalPeople)}</td>
+                    ${renderSessionCells(totals)}
+                    <td class="num rate" style="font-weight:700">${rate(totals.full, totals.eligible)} <small>(${totals.full}/${totals.eligible})</small></td>
                   </tr>
                 </tfoot>
               </table>
@@ -3373,6 +3807,7 @@
         `;
       }
       function renderMultiSessionMatrixCard(sessions, all) {
+        const displayLabels = getSessionDisplayLabels(sessions);
         const sorted = [...all].sort((a, b) => {
           if ((b.attendedSessionsCount ?? 0) !== (a.attendedSessionsCount ?? 0)) {
             return (b.attendedSessionsCount ?? 0) - (a.attendedSessionsCount ?? 0);
@@ -3390,6 +3825,7 @@
         const body = items.length ? items.map((r, i) => {
           const sessionCells = sessions.map(s => {
             const rec = r.sessionRecords?.[s.name] || { attendance: 'Absent', attendanceTime: '', attendanceMethod: '无记录' };
+            if (!rec.required) return `<td><span class="status-pill" style="background:#f1f5f9;color:#64748b">${bi('无需出席', 'Not Required')}</span></td>`;
             return `
               <td>
                 <div style="display:flex;flex-direction:column;align-items:flex-start;gap:2px">
@@ -3441,7 +3877,7 @@
                     <th>${bi('工号 / Account', 'Employee ID / Account')}</th>
                     <th>BU</th>
                     <th>Customer Group</th>
-                    ${sessions.map(s => `<th title="${esc(s.name)}">${esc(s.name)}</th>`).join('')}
+                    ${sessions.map((s, i) => `<th title="${esc(s.name)}">${esc(displayLabels[i])}</th>`).join('')}
                     <th>${bi('综合出勤', 'Overall Status')}</th>
                     <th>${bi('关联记录数', 'Related Records')}</th>
                   </tr>
@@ -3465,15 +3901,20 @@
       function renderPeopleResults(data = state.peopleCache) {
         if (!data) return;
         const { qr, rfc, wfm, all, sessions = [] } = data;
-        let contentHtml = '';
+        if (!sessions.length) state.selectedSession = 'all';
+        const ignoredSessions = getIgnoredMeetingSessions();
+        const ignoredNotice = ignoredSessions.length ? `<div class="section-note" style="margin-bottom:14px"><span class="dot"></span><span>${bi('已忽略', 'Excluded')} ${ignoredSessions.length} ${bi('个签到记录不足', 'session(s) below')} ${normalizeMinSessionRecords(state.attendanceRules.minSessionRecords)} ${bi('条的场次', 'check-in records')}：${ignoredSessions.map(s => `${esc(s.name)} (${s.rowCount})`).join('、')}。${bi('可在“考勤规则”中调整阈值。', 'Adjust the threshold in Attendance Rules.')}</span></div>` : '';
+        let contentHtml = ignoredNotice;
 
-        if (sessions.length > 1) {
+        if (!sessions.length && state.sheets.some(s => s.category === 'offline' || s.category === 'online')) {
+          contentHtml += `<div class="empty" style="padding:24px;text-align:center">${bi('所有识别到的签到场次均低于最少记录数，暂无可统计的会议。', 'All detected sessions are below the minimum record count; no meeting is eligible for statistics.')}</div>`;
+        } else if (sessions.length > 1) {
           if (state.selectedSession !== 'all' && !sessions.some(s => s.name === state.selectedSession)) {
             state.selectedSession = 'all';
           }
           const switcherHtml = renderSessionSwitcher(sessions, state.selectedSession);
           if (state.selectedSession === 'all') {
-            contentHtml = `
+            contentHtml += `
               ${switcherHtml}
               ${renderMultiSessionOverview(sessions, data)}
               ${renderMultiSessionBuTable(sessions, all)}
@@ -3484,20 +3925,23 @@
             `;
           } else {
             const sessionRows = getSessionPeopleRows(all, state.selectedSession);
-            contentHtml = `
+            const session = sessions.find(s => s.name === state.selectedSession);
+            const sessionDate = session?.date || detectMeetingDate(state.selectedSession);
+            const sessionSources = [qr, rfc, wfm].map(rows => rows.filter(p => isRequiredForSession(p, sessionDate, data.sessionIndexes?.[state.selectedSession])));
+            contentHtml += `
               ${switcherHtml}
               ${renderSessionNoticeBar(state.selectedSession, sessions, sessionRows)}
               ${renderAttendanceDashboard(sessionRows)}
               <div class="section-note"><span class="dot"></span><span>${bi(`当前为场次【${state.selectedSession}】的单场考勤结果，名单共 ${sessionRows.length} 人。`, `Showing single-session attendance for [${state.selectedSession}], total ${sessionRows.length} people.`)}</span></div>
               ${renderCombinedPeopleCard(sessionRows)}
-              ${renderPeopleCard('qr', bi('QR 人员备用名单', 'QR People List'), qr)}
-              ${renderPeopleCard('rfc', bi('RFC 人员备用名单', 'RFC People List'), rfc)}
-              ${renderPeopleCard('wfm', bi('WFM 人员备用名单', 'WFM People List'), wfm)}
+              ${renderPeopleCard('qr', bi('本场 QR 应出席名单', 'QR Required for This Session'), sessionSources[0])}
+              ${renderPeopleCard('rfc', bi('本场 RFC 应出席名单', 'RFC Required for This Session'), sessionSources[1])}
+              ${renderPeopleCard('wfm', bi('本场 WFM 应出席名单', 'WFM Required for This Session'), sessionSources[2])}
             `;
           }
         } else {
-          contentHtml = `
-            ${renderAttendanceDashboard(all)}
+          contentHtml += `
+            ${sessions.length ? renderAttendanceDashboard(all) : `<div class="section-note"><span class="dot"></span><span>${bi('尚未导入有效的现场签到或在线入会场次；当前仅展示人员备用名单，考勤和前夜 WFM 豁免暂不判断。', 'No eligible on-site or online meeting session has been imported. People lists are shown, while attendance and night WFM exemptions are pending.')}</span></div>`}
             <div class="section-note"><span class="dot"></span><span>${bi(`三类备用名单再次合并去重后共 ${all.length} 人；合并名单不保留角色列`, `The three source lists are merged and deduplicated into ${all.length} people; roles are omitted from the combined list.`)}</span></div>
             ${renderCombinedPeopleCard(all)}
             ${renderPeopleCard('qr', bi('QR 人员备用名单', 'QR People List'), qr)}
@@ -3511,14 +3955,39 @@
         document.querySelectorAll('.result-details').forEach(d => d.addEventListener('toggle', () => { d.open ? state.openPeopleCards.add(d.dataset.people) : state.openPeopleCards.delete(d.dataset.people); }));
       }
       function renderPersonSearchPanel() {
-        const hasResult = !!state.personSearch.result;
+        const hasResult = !!state.personSearch.result && state.personSearch.result.scopeKey === getPersonSearchScopeKey();
         const found = hasResult ? state.personSearch.result.qr.length + state.personSearch.result.rfc.length + state.personSearch.result.wfm.length + state.personSearch.result.offline.length + state.personSearch.result.online.length : 0;
         return `<section class="search-launchbar"><div><h3>${bi('人员全记录搜索', 'Person Record Search')}</h3><p>${hasResult ? bi(`上次搜索：${state.personSearch.result.query} · ${found} 条记录`, `Last query: ${state.personSearch.result.query} · ${found} records`) : bi('按姓名或工号查看五类原始记录与角色统计', 'View five source records and role statistics by name or employee ID')}</p></div><button class="btn btn-primary" data-action="person-search-open">${bi('打开搜索', 'Open Search')}</button></section>`;
       }
-      function openPersonSearchModal() { $('#personSearchModal').classList.remove('hidden'); renderPersonSearchModal(); setTimeout(() => $('#personSearchInput')?.focus(), 0); }
+      async function openPersonSearchModal() {
+        $('#personSearchModal').classList.remove('hidden');
+        if (state.personSearch.query && state.personSearch.result?.scopeKey !== getPersonSearchScopeKey()) {
+          state.personSearch.result = null;
+          renderPersonSearchModal();
+          await runPersonSearch();
+        } else renderPersonSearchModal();
+        setTimeout(() => $('#personSearchInput')?.focus(), 0);
+      }
       function closePersonSearchModal() { $('#personSearchModal').classList.add('hidden'); }
+      function getPersonSearchScope() {
+        return state.selectedSession === 'all' ? null : getMeetingSessions().find(session => session.name === state.selectedSession) || null;
+      }
+      function getPersonSearchScopeKey() {
+        return `${getPersonSearchScope()?.name || 'all'}|${state.dataVersion}|${state.attendanceRules.orderWindowMonths}`;
+      }
+      function formatSearchWindowMonths(range) {
+        if (!range) return bi('不限时间', 'All dates');
+        const start = range.startDateStr.match(/^(\d{4})-(\d{2})/), end = range.endDateStr.match(/^(\d{4})-(\d{2})/);
+        if (!start || !end) return bi('时间窗口', 'Date window');
+        if (start[1] === end[1]) return bi(`${+start[2]}-${+end[2]}月`, `${+start[2]}–${+end[2]} month`);
+        return bi(`${start[1]}年${+start[2]}月-${end[1]}年${+end[2]}月`, `${start[1]}/${+start[2]}–${end[1]}/${+end[2]}`);
+      }
       function renderPersonSearchModal() {
-        const input = $('#personSearchInput'); if (!input) return; input.value = state.personSearch.query; $('#personSearchClearBtn').classList.toggle('hidden', !state.personSearch.result); $('#personSearchModalResult').innerHTML = state.personSearch.result ? `<div class="search-identity" style="margin:0 0 12px">${bi('本次搜索', 'Query')}：${esc(state.personSearch.result.query)}；${bi('已关联工号', 'Linked IDs')}：${state.personSearch.result.ids.length ? state.personSearch.result.ids.map(esc).join('、') : bi('未从名单中解析到工号，将按姓名匹配', 'No linked ID found; matching by name')}</div>${renderPersonSearchResults(state.personSearch.result)}` : `<div class="search-empty" style="margin-top:4px">${bi('输入姓名或工号后点击搜索，结果将在此处显示。', 'Enter a name or employee ID, then click Search. Results will appear here.')}</div>`;
+        const input = $('#personSearchInput'); if (!input) return;
+        const scope = getPersonSearchScope();
+        const scopeWindow = scope ? getWindowDateRange(scope.date, state.attendanceRules.orderWindowMonths) : null;
+        $('#personSearchModalSub').textContent = scope ? bi(`当前场次：${scope.name}；仅显示本场签到及${scopeWindow ? `${formatSearchWindowMonths(scopeWindow)}窗口内` : '不限时间'}的单据。`, `Current session: ${scope.name}; showing its attendance and tasks ${scopeWindow ? `in the ${formatSearchWindowMonths(scopeWindow)} window` : 'from all dates'}.`) : bi('按姓名或工号关联五类完整原始记录及角色统计。', 'Link five source records and role statistics by name or employee ID.');
+        input.value = state.personSearch.query; $('#personSearchClearBtn').classList.toggle('hidden', !state.personSearch.result); $('#personSearchModalResult').innerHTML = state.personSearch.result ? `<div class="search-identity" style="margin:0 0 12px">${bi('本次搜索', 'Query')}：${esc(state.personSearch.result.query)}；${bi('已关联工号', 'Linked IDs')}：${state.personSearch.result.ids.length ? state.personSearch.result.ids.map(esc).join('、') : bi('未从名单中解析到工号，将按姓名匹配', 'No linked ID found; matching by name')}</div>${renderPersonSearchResults(state.personSearch.result)}` : `<div class="search-empty" style="margin-top:4px">${bi('输入姓名或工号后点击搜索，结果将在此处显示。', 'Enter a name or employee ID, then click Search. Results will appear here.')}</div>`;
         input.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); runPersonSearch(); } };
       }
       function isOrderNumber(str) {
@@ -3564,9 +4033,11 @@
       };
       function searchRequiredRows(category, queryLower, ids) {
         const found = [];
-        const allMeetingDates = getAllMeetingDates();
+        const scope = getPersonSearchScope();
+        const allMeetingDates = scope ? [scope.date || detectMeetingDate(scope.name)] : getAllMeetingDates();
+        const nightMeetingDates = scope ? allMeetingDates : getMeetingSessions().map(session => session.date || detectMeetingDate(session.name));
         const windowMonths = state.attendanceRules.orderWindowMonths !== undefined ? state.attendanceRules.orderWindowMonths : 1;
-        const windowRange = getWindowDateRange(allMeetingDates, windowMonths);
+        const windows = allMeetingDates.map(date => getWindowDateRange(date, windowMonths));
 
         state.sheets.filter(s => s.category === category).forEach(s => {
           let roleReaders, timeIndex, taskIdIndex;
@@ -3593,8 +4064,10 @@
               const rawTime = cellAt(row, timeIndex);
               const ticketId = taskIdIndex >= 0 ? cellAt(row, taskIdIndex) : '';
               const orderDate = extractTicketDate(ticketId, rawTime);
-              const inWindow = isOrderInWindow(orderDate, windowRange);
-              const nightInfo = category === 'wfm' ? isNightWfmTask(s, row, allMeetingDates) : null;
+              const matchedWindowIndex = windows.findIndex(range => isOrderInWindow(orderDate, range));
+              const inWindow = !orderDate || matchedWindowIndex >= 0;
+              if (scope && !inWindow) return;
+              const nightInfo = category === 'wfm' ? isNightWfmTask(s, row, nightMeetingDates) : null;
               found.push({
                 category,
                 fileName: s.fileName,
@@ -3607,6 +4080,7 @@
                 ticketId,
                 ticketDate: orderDate?.dateStr || '',
                 inWindow,
+                windowRange: windows[Math.max(0, matchedWindowIndex)] || null,
                 isNightWfm: nightInfo ? nightInfo.isNight : false
               });
             }
@@ -3615,9 +4089,10 @@
         return found;
       }
       function searchAttendanceRows(category, queryLower, ids) {
+        const scope = getPersonSearchScope();
         const found = []; state.sheets.filter(s => s.category === category).forEach(s => {
           const idIndex = headerIndex(s.headers, category === 'offline' ? '工号' : 'user_id'), nameIndex = category === 'offline' ? headerIndex(s.headers, '姓名') : -1;
-          s.rows.forEach((row, rowIndex) => { const id = cellAt(row, idIndex), name = cellAt(row, nameIndex); if (idsOverlap(id, ids) || normalizeAttendanceId(id) === normalizeAttendanceId(state.personSearch.query) || (name && name.toLowerCase().includes(queryLower))) found.push({ category, fileName: s.fileName, sheetName: s.sheetName, headers: s.headers, row, rowIndex, roles: [], time: Number.MIN_SAFE_INTEGER }); });
+          s.rows.forEach((row, rowIndex) => { if (scope && getRowSessionName(s, row) !== scope.name) return; const id = cellAt(row, idIndex), name = cellAt(row, nameIndex); if (idsOverlap(id, ids) || normalizeAttendanceId(id) === normalizeAttendanceId(state.personSearch.query) || (name && name.toLowerCase().includes(queryLower))) found.push({ category, fileName: s.fileName, sheetName: s.sheetName, headers: s.headers, row, rowIndex, roles: [], time: Number.MIN_SAFE_INTEGER }); });
         }); return found;
       }
       async function runPersonSearch() {
@@ -3631,7 +4106,7 @@
           showLoading(true, bi('正在搜索离线扫码记录…', 'Searching on-site scan records…'), 72); await nextPaint(); const offline = searchAttendanceRows('offline', lower, identity.ids);
           showLoading(true, bi('正在搜索在线参会记录…', 'Searching online meeting records…'), 86); await nextPaint(); const online = searchAttendanceRows('online', lower, identity.ids);
           showLoading(true, bi('正在生成角色统计与时间范围…', 'Building role summary and date range…'), 96); await nextPaint();
-          state.personSearch.result = { query, ids: [...identity.ids].sort(), names: [...identity.names], qr, rfc, wfm, offline, online };
+          state.personSearch.result = { query, scopeKey: getPersonSearchScopeKey(), ids: [...identity.ids].sort(), names: [...identity.names], qr, rfc, wfm, offline, online };
           renderPersonSearchModal(); renderSummary(); updateGlobalSearchButton(); if (state.active === 'people') renderPeopleResults(); showLoading(true, bi('搜索完成', 'Search complete'), 100); await nextPaint(); $('#personSearchModalResult')?.scrollTo({ top: 0, behavior: 'smooth' });
         } catch (err) { console.error(err); toast(`${bi('搜索失败', 'Search failed')}：${err.message}`, 'error', 6000); } finally { showLoading(false); }
       }
@@ -3656,7 +4131,7 @@
           rec.headers.forEach((h, ix) => values.set(headerKey(h || `${bi('列', 'Column')} ${ix + 1}`), rec.row[ix] ?? ''));
           const businessExtra = ['qr', 'rfc', 'wfm'].includes(kind) ? `
             <td>${esc(rec.roles.map(roleLabel).join(' / '))}</td>
-            <td>${rec.ticketDate ? `<span class="order-window-tag ${rec.inWindow ? 'in-window' : 'out-window'}">${rec.ticketDate} (${rec.inWindow ? bi('窗口内', 'In Window') : bi('超出窗口', 'Out of Window')})</span>` : '—'}${rec.isNightWfm ? ` <span class="order-window-tag night-wfm">${bi('🌙 前夜WFM', '🌙 Night WFM')}</span>` : ''}</td>
+            <td>${rec.ticketDate ? `<span class="order-window-tag ${rec.inWindow ? 'in-window' : 'out-window'}">${rec.ticketDate} (${rec.inWindow ? (rec.windowRange ? bi(`${formatSearchWindowMonths(rec.windowRange)}窗口内`, `${formatSearchWindowMonths(rec.windowRange)} window`) : bi('不限时间', 'All dates')) : bi('超出窗口', 'Out of Window')})</span>` : '—'}${rec.isNightWfm ? ` <span class="order-window-tag night-wfm">${bi('🌙 前夜WFM', '🌙 Night WFM')}</span>` : ''}</td>
           ` : '';
           return `<tr><td>${start + i + 1}</td><td title="${esc(rec.fileName)}">${esc(rec.fileName)}</td><td>${esc(rec.sheetName)}</td>${businessExtra}${headers.map(h => `<td title="${esc(values.get(h.key) || '')}">${esc(values.get(h.key) || '')}</td>`).join('')}</tr>`;
         }).join('') : `<tr><td></td><td colspan="${headers.length + (['qr', 'rfc', 'wfm'].includes(kind) ? 5 : 3)}">${bi(`没有相关${label}记录`, `No related ${label} records`)}</td></tr>`;
@@ -3666,7 +4141,7 @@
         const result = state.personSearch.result; if (!result) return; const total = Math.max(1, Math.ceil(result[kind].length / state.pageSize)); let page = state.personSearch.pages[kind] || 1;
         if (action === 'first') page = 1; if (action === 'prev') page--; if (action === 'next') page++; if (action === 'last') page = total; state.personSearch.pages[kind] = Math.min(Math.max(1, page), total); renderPersonSearchModal(); document.querySelector(`#personSearchModal [data-search-category="${kind}"]`)?.scrollIntoView({ block: 'nearest' });
       }
-      function statusClass(status) { return status === 'Attend on Time' ? 'ontime' : status === 'Delay' ? 'delay' : status === 'Fake Attendance' ? 'fake' : 'absent'; }
+      function statusClass(status) { return status === 'Attend on Time' ? 'ontime' : status === 'Delay' ? 'delay' : status === 'Fake Attendance' ? 'fake' : status === 'Not Evaluated' ? 'pending' : 'absent'; }
       function renderAttendanceDashboard(rows) {
         const statuses = ['Absent', 'Attend on Time', 'Delay', 'Fake Attendance'], counts = Object.fromEntries(statuses.map(s => [s, 0])); rows.forEach(r => counts[r.attendance] = (counts[r.attendance] || 0) + 1);
         const rate = (onTime, total) => total ? `${(onTime / total * 100).toFixed(1)}%` : '0.0%';
@@ -3678,15 +4153,16 @@
       }
       function renderCombinedPeopleCard(rows) {
         const kind = 'all', sortedRows = [...rows].sort((a, b) => (b.count || 0) - (a.count || 0) || (a.name || a.account).localeCompare(b.name || b.account, 'zh-CN')), filteredRows = state.buFilter ? sortedRows.filter(r => (normalizeName(r.bu) || '未识别 BU') === state.buFilter) : sortedRows, total = Math.max(1, Math.ceil(filteredRows.length / state.pageSize)); state.peoplePages[kind] = Math.min(Math.max(1, state.peoplePages[kind] || 1), total);
-        const page = state.peoplePages[kind], start = (page - 1) * state.pageSize, items = filteredRows.slice(start, start + state.pageSize), headers = [bi('姓名', 'Name'), bi('工号 / Account', 'Employee ID / Account'), 'BU', 'Customer Group', 'Attendance Status', bi('参会 / 扫码时间（开罗）', 'Meeting / Scan Time (Cairo)'), bi('判断方式', 'Decision Source'), bi('关联记录数', 'Related Records')];
-        const body = items.length ? items.map((r, i) => `<tr><td>${start + i + 1}</td><td>${esc(r.name)}${r.isManualMandatory ? ` <span class="badge" style="background:#e0f2fe;color:#0369a1;font-size:11px;padding:1px 5px;border-radius:4px">${bi('必选', 'Mandatory')}</span>` : ''}</td><td>${esc(r.account)}</td><td>${esc(r.bu)}</td><td>${esc(r.customer)}</td><td><span class="status-pill ${statusClass(r.attendance)} ${r.attendanceMethod === '前夜WFM豁免' ? 'exempt' : ''}">${r.attendanceMethod === '前夜WFM豁免' ? bi('🌙 前夜WFM豁免', '🌙 Night WFM Exempt') : r.attendance}</span></td><td>${esc(r.attendanceTime || '—')}</td><td>${esc(r.attendanceMethod === '豁免名单' ? bi('豁免名单', 'Exemption List') : r.attendanceMethod === '前夜WFM豁免' ? bi('前夜WFM豁免', 'Night WFM Exempt') : r.attendanceMethod === '现场扫码' ? bi('现场扫码', 'On-site Scan') : r.attendanceMethod === '线上会议' ? bi('线上会议', 'Online Meeting') : bi('无记录', 'No Record'))}</td><td class="attention-count">${r.count}</td></tr>`).join('') : `<tr><td></td><td colspan="8">${state.buFilter ? bi('该 BU 暂无人员', 'No people in this BU') : bi('尚未导入可合并的人员数据', 'No mergeable people data')}</td></tr>`;
+        const page = state.peoplePages[kind], start = (page - 1) * state.pageSize, items = filteredRows.slice(start, start + state.pageSize), headers = [bi('姓名', 'Name'), bi('工号 / Account', 'Employee ID / Account'), 'BU', 'Customer Group', 'Attendance Status', bi('现场签到 / 在线入会时间（开罗）', 'On-site Check-in / Online Join Time (Cairo)'), bi('判断方式', 'Decision Source'), bi('关联记录数', 'Related Records')];
+        const body = items.length ? items.map((r, i) => `<tr><td>${start + i + 1}</td><td>${esc(r.name)}${r.isManualMandatory ? ` <span class="badge" style="background:#e0f2fe;color:#0369a1;font-size:11px;padding:1px 5px;border-radius:4px">${bi('必选', 'Mandatory')}</span>` : ''}</td><td>${esc(r.account)}</td><td>${esc(r.bu)}</td><td>${esc(r.customer)}</td><td><span class="status-pill ${statusClass(r.attendance)} ${r.attendanceMethod === '前夜WFM豁免' ? 'exempt' : ''}">${r.attendance === 'Not Evaluated' ? bi('待导入签到数据', 'Awaiting Check-in Data') : r.attendanceMethod === '前夜WFM豁免' ? bi('🌙 前夜WFM豁免', '🌙 Night WFM Exempt') : r.attendance}</span></td><td>${esc(r.attendanceTime || '—')}</td><td>${r.attendance === 'Not Evaluated' ? '—' : esc(r.attendanceMethod === '豁免名单' ? bi('豁免名单', 'Exemption List') : r.attendanceMethod === '前夜WFM豁免' ? bi('前夜WFM豁免', 'Night WFM Exempt') : r.attendanceMethod === '现场扫码' ? bi('现场扫码', 'On-site Scan') : r.attendanceMethod === '线上会议' ? bi('线上会议', 'Online Meeting') : bi('无记录', 'No Record'))}</td><td class="attention-count">${r.count}</td></tr>`).join('') : `<tr><td></td><td colspan="8">${state.buFilter ? bi('该 BU 暂无人员', 'No people in this BU') : bi('尚未导入可合并的人员数据', 'No mergeable people data')}</td></tr>`;
         return `<article class="sheet-card" data-people="all"><div class="sheet-head"><div class="sheet-title"><h3>${bi('三类合并人员备用名单', 'Combined QR / RFC / WFM People List')}${state.buFilter ? ` · ${esc(state.buFilter)}` : ''}</h3><div class="sheet-meta">${state.buFilter ? `${bi('筛选后', 'Filtered')} ${filteredRows.length.toLocaleString()} / ${rows.length.toLocaleString()} ${t('peopleUnit')}` : `${rows.length.toLocaleString()} ${t('peopleUnit')}`} · ${bi('按关联记录数从高到低排列', 'Sorted by related records, highest first')} · ${bi('当前规则：准时', 'Rules: on time')}≤${state.attendanceRules.onTime}，${bi('虚假签到', 'fake attendance')}≥${state.attendanceRules.fake}</div></div><div class="sheet-actions"><button class="icon-btn" data-action="mandatory-people">👤 ${bi('其他必选名单', 'Mandatory Attendees')}</button><button class="icon-btn" data-action="attendance-rules">⚙ ${bi('考勤规则', 'Attendance Rules')}</button><button class="icon-btn" data-action="mapping">⚙ ${bi('映射设置', 'Mapping')}</button></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>#</th>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table></div><div class="pager"><span>${bi('显示', 'Showing')} ${filteredRows.length ? start + 1 : 0}–${Math.min(start + state.pageSize, filteredRows.length)} / ${filteredRows.length.toLocaleString()} ${t('peopleUnit')}</span><div class="pager-controls"><button class="page-btn" data-action="first" ${page === 1 ? 'disabled' : ''}>«</button><button class="page-btn" data-action="prev" ${page === 1 ? 'disabled' : ''}>‹</button><span class="page-current">${page} / ${total}</span><button class="page-btn" data-action="next" ${page === total ? 'disabled' : ''}>›</button><button class="page-btn" data-action="last" ${page === total ? 'disabled' : ''}>»</button></div></div></article>`;
       }
       function renderPeopleCard(kind, title, rows) {
         const total = Math.max(1, Math.ceil(rows.length / state.pageSize)); state.peoplePages[kind] = Math.min(Math.max(1, state.peoplePages[kind] || 1), total);
         const page = state.peoplePages[kind], start = (page - 1) * state.pageSize, items = rows.slice(start, start + state.pageSize);
-        const headers = [bi('角色', 'Role'), bi('姓名', 'Name'), bi('工号 / Account', 'Employee ID / Account'), 'BU', 'Customer Group', bi('关联记录数', 'Related Records')];
-        const body = items.length ? items.map((r, i) => `<tr><td>${start + i + 1}</td><td>${esc(roleLabel(r.role))}</td><td>${esc(r.name)}</td><td>${esc(r.account)}</td><td>${esc(r.bu)}</td><td>${esc(r.customer)}</td><td>${r.count}</td></tr>`).join('') : `<tr><td></td><td colspan="6">${bi(`尚未导入可提取的 ${kind.toUpperCase()} 数据`, `No extractable ${kind.toUpperCase()} data imported`)}</td></tr>`;
+        const headers = [bi('角色', 'Role'), bi('姓名', 'Name'), bi('工号 / Account', 'Employee ID / Account'), 'BU', 'Customer Group', bi('工单号日期', 'Ticket ID Date'), bi('原表创建时间', 'Source Create Time'), bi('关联记录数', 'Related Records')];
+        const compactValues = values => { const list = [...new Set(values || [])].filter(Boolean).sort(); return { full: list.join('、'), shown: list.length > 3 ? `${list[0]} … ${list[list.length - 1]} (${list.length})` : list.join('、') }; };
+        const body = items.length ? items.map((r, i) => { const ticketDates = compactValues(r.ticketDates), createTimes = compactValues(r.createTimes); return `<tr><td>${start + i + 1}</td><td>${esc(roleLabel(r.role))}</td><td>${esc(r.name)}</td><td>${esc(r.account)}</td><td>${esc(r.bu)}</td><td>${esc(r.customer)}</td><td title="${esc(ticketDates.full)}">${esc(ticketDates.shown || '—')}</td><td title="${esc(createTimes.full)}">${esc(createTimes.shown || '—')}</td><td>${r.count}</td></tr>`; }).join('') : `<tr><td></td><td colspan="8">${bi(`尚未导入可提取的 ${kind.toUpperCase()} 数据`, `No extractable ${kind.toUpperCase()} data imported`)}</td></tr>`;
         return `<details class="sheet-card result-details" data-people="${kind}" ${state.openPeopleCards.has(kind) ? 'open' : ''}><summary class="sheet-head"><div class="sheet-title"><h3>${title}</h3><div class="sheet-meta">${rows.length.toLocaleString()} ${t('peopleUnit')} · ${bi('已按工号优先去重', 'Deduplicated by employee ID first')}</div></div><span class="detail-toggle">${bi('展开 / 收起', 'Expand / Collapse')}</span></summary><div class="table-wrap"><table class="data-table"><thead><tr><th>#</th>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table></div><div class="pager"><span>${bi('显示', 'Showing')} ${rows.length ? start + 1 : 0}–${Math.min(start + state.pageSize, rows.length)} / ${rows.length.toLocaleString()} ${t('peopleUnit')}</span><div class="pager-controls"><button class="page-btn" data-action="first" ${page === 1 ? 'disabled' : ''}>«</button><button class="page-btn" data-action="prev" ${page === 1 ? 'disabled' : ''}>‹</button><span class="page-current">${page} / ${total}</span><button class="page-btn" data-action="next" ${page === total ? 'disabled' : ''}>›</button><button class="page-btn" data-action="last" ${page === total ? 'disabled' : ''}>»</button></div></div></details>`;
       }
       function handlePeoplePager(action, kind) {
@@ -3755,16 +4231,13 @@
         return null;
       }
       function detectMeetingDate(targetSessionName) {
-        if (state.attendanceRules?.meetingDate && !targetSessionName) return state.attendanceRules.meetingDate;
         if (targetSessionName) {
-          const directDate = parseDateFromString(targetSessionName);
-          if (directDate) return directDate;
           for (const s of state.sheets.filter(s => s.category === 'offline' || s.category === 'online')) {
             const timeCol = headerIndex(s.headers, '签到时间', 'join_time', 'time', '时间');
             if (timeCol >= 0) {
               for (const row of s.rows) {
                 if (getRowSessionName(s, row) === targetSessionName) {
-                  const d = parseDateFromString(cellAt(row, timeCol));
+                  const d = getSessionRowEvidence(s, row, targetSessionName).date;
                   if (d) return d;
                 }
               }
@@ -3774,18 +4247,21 @@
               if (d) return d;
             }
           }
+          return parseDateFromString(targetSessionName) || state.attendanceRules?.meetingDate || '';
         }
         for (const s of state.sheets.filter(s => s.category === 'offline' || s.category === 'online')) {
           const timeCol = headerIndex(s.headers, '签到时间', 'join_time', 'time', '时间');
+          const rowSessions = getSheetRowSessionNames(s);
           if (timeCol >= 0) {
             for (const row of s.rows) {
-              const d = parseDateFromString(cellAt(row, timeCol));
+              const d = getSessionRowEvidence(s, row, getRawRowSessionName(s, row, rowSessions)).date;
               if (d) return d;
             }
           }
           const sheetDate = parseDateFromString(s.sessionName) || parseDateFromString(s.fileName) || parseDateFromString(s.sheetName);
           if (sheetDate) return sheetDate;
         }
+        if (state.attendanceRules?.meetingDate) return state.attendanceRules.meetingDate;
         for (const s of state.sheets) {
           const d = parseDateFromString(s.fileName) || parseDateFromString(s.sheetName);
           if (d) return d;
@@ -3802,26 +4278,16 @@
             }
           }
         }
-        return new Date().toISOString().slice(0, 10);
+        return state.attendanceRules?.meetingDate || new Date().toISOString().slice(0, 10);
       }
       function getAllMeetingDates() {
-        const dates = new Set();
-        if (state.attendanceRules?.meetingDate) dates.add(state.attendanceRules.meetingDate);
-        for (const s of state.sheets.filter(s => s.category === 'offline' || s.category === 'online')) {
-          const timeCol = headerIndex(s.headers, '签到时间', 'join_time', 'time', '时间');
-          if (timeCol >= 0) {
-            for (const row of s.rows) {
-              const d = parseDateFromString(cellAt(row, timeCol));
-              if (d) dates.add(d);
-            }
-          }
-          const sheetDate = parseDateFromString(s.sessionName) || parseDateFromString(s.fileName) || parseDateFromString(s.sheetName);
-          if (sheetDate) dates.add(sheetDate);
-        }
-        if (!dates.size) {
-          dates.add(detectMeetingDate());
-        }
-        return [...dates].sort();
+        const hasAttendanceSheets = state.sheets.some(s => s.category === 'offline' || s.category === 'online');
+        if (!hasAttendanceSheets) return [detectMeetingDate()];
+        return [...new Set(getMeetingSessions().map(s => s.date || detectMeetingDate(s.name)).filter(Boolean))].sort();
+      }
+      function isOrderInMeetingWindows(orderDate, meetingDates, months) {
+        if (!orderDate) return true;
+        return meetingDates.some(date => isOrderInWindow(orderDate, getWindowDateRange(date, months)));
       }
       function getWindowDateRange(meetingDateInput, months) {
         if (months === 0 || months === 'all' || !months) return null;
@@ -3990,7 +4456,6 @@
         const map = new Map(); let sequence = 0;
         const allMeetingDates = getAllMeetingDates();
         const windowMonths = state.attendanceRules.orderWindowMonths !== undefined ? state.attendanceRules.orderWindowMonths : 1;
-        const windowRange = getWindowDateRange(allMeetingDates, windowMonths);
 
         state.sheets.filter(s => s.category === 'qr').forEach(s => {
           const ix = {
@@ -4010,11 +4475,11 @@
             const orderTime = parseCreateTime(rawTime, ++sequence);
             const ticketId = cellAt(row, ix.taskId);
             const orderDate = extractTicketDate(ticketId, rawTime);
-            const inWindow = isOrderInWindow(orderDate, windowRange);
+            const inWindow = isOrderInMeetingWindows(orderDate, allMeetingDates, windowMonths);
             const explicitRole = cellAt(row, ix.role);
 
-            parseQrPairedPeople(cellAt(row, ix.applyName), cellAt(row, ix.applyId)).forEach(p => addPerson(map, { role: explicitRole || '申请人', name: p.name, account: p.account, bu, customer, orderTime, orderDate, inWindow, ticketId }));
-            parseQrPairedPeople(cellAt(row, ix.tdName), cellAt(row, ix.tdId)).forEach(p => addPerson(map, { role: explicitRole || 'TD', name: p.name, account: p.account, bu, customer, orderTime, orderDate, inWindow, ticketId }));
+            parseQrPairedPeople(cellAt(row, ix.applyName), cellAt(row, ix.applyId)).forEach(p => addPerson(map, { role: explicitRole || '申请人', name: p.name, account: p.account, bu, customer, orderTime, orderDate, createTime: rawTime, inWindow, ticketId }));
+            parseQrPairedPeople(cellAt(row, ix.tdName), cellAt(row, ix.tdId)).forEach(p => addPerson(map, { role: explicitRole || 'TD', name: p.name, account: p.account, bu, customer, orderTime, orderDate, createTime: rawTime, inWindow, ticketId }));
           });
         }); return finalizePeople(map);
       }
@@ -4042,7 +4507,6 @@
         const map = new Map(); let sequence = 0;
         const allMeetingDates = getAllMeetingDates();
         const windowMonths = state.attendanceRules.orderWindowMonths !== undefined ? state.attendanceRules.orderWindowMonths : 1;
-        const windowRange = getWindowDateRange(allMeetingDates, windowMonths);
 
         state.sheets.filter(s => s.category === 'rfc').forEach(s => {
           const buIndex = headerIndex(s.headers, 'BU', 'BU/Service Type'),
@@ -4057,9 +4521,9 @@
             const orderTime = parseCreateTime(rawTime, ++sequence);
             const ticketId = cellAt(row, taskIdIndex);
             const orderDate = extractTicketDate(ticketId, rawTime);
-            const inWindow = isOrderInWindow(orderDate, windowRange);
+            const inWindow = isOrderInMeetingWindows(orderDate, allMeetingDates, windowMonths);
             const explicitRole = cellAt(row, roleColIndex);
-            roleIndexes.forEach(cfg => { parsePeopleCell(cellAt(row, cfg.index)).forEach(p => addPerson(map, { role: explicitRole || cfg.role, name: p.name, account: p.account, bu, customer, orderTime, orderDate, inWindow, ticketId })); });
+            roleIndexes.forEach(cfg => { parsePeopleCell(cellAt(row, cfg.index)).forEach(p => addPerson(map, { role: explicitRole || cfg.role, name: p.name, account: p.account, bu, customer, orderTime, orderDate, createTime: rawTime, inWindow, ticketId })); });
           });
         }); return finalizePeople(map);
       }
@@ -4072,8 +4536,8 @@
         ];
         const map = new Map(); let sequence = 0;
         const allMeetingDates = getAllMeetingDates();
+        const nightMeetingDates = getMeetingSessions().map(session => session.date || detectMeetingDate(session.name));
         const windowMonths = state.attendanceRules.orderWindowMonths !== undefined ? state.attendanceRules.orderWindowMonths : 1;
-        const windowRange = getWindowDateRange(allMeetingDates, windowMonths);
 
         state.sheets.filter(s => s.category === 'wfm').forEach(s => {
           const buIndex = headerIndex(s.headers, 'BU', 'BU/Service Type'),
@@ -4088,9 +4552,9 @@
             const orderTime = parseCreateTime(rawTime, ++sequence);
             const ticketId = cellAt(row, taskIdIndex);
             const orderDate = extractTicketDate(ticketId, rawTime);
-            const inWindow = isOrderInWindow(orderDate, windowRange);
+            const inWindow = isOrderInMeetingWindows(orderDate, allMeetingDates, windowMonths);
             const explicitRole = cellAt(row, roleColIndex);
-            const nightInfo = isNightWfmTask(s, row, allMeetingDates);
+            const nightInfo = isNightWfmTask(s, row, nightMeetingDates);
 
             const seenInRow = new Set();
             roleIndexes.forEach(cfg => {
@@ -4107,6 +4571,7 @@
                   customer,
                   orderTime,
                   orderDate,
+                  createTime: rawTime,
                   inWindow,
                   ticketId,
                   isNightWfmExempt: isNightExempt,
@@ -4122,12 +4587,14 @@
       }
       function extractAttendanceSourcePeople() {
         const map = new Map();
+        const acceptedSessions = new Set(getMeetingSessions().map(s => s.name));
         state.sheets.filter(s => s.category === 'offline').forEach(s => {
           const idIndex = headerIndex(s.headers, '工号', '用户id', 'user_id', '账号', '工号/账号');
           const nameIndex = headerIndex(s.headers, '姓名', 'name', '人员', '姓名/name');
           const buIndex = headerIndex(s.headers, 'BU', '部门', '一级部门', '二级部门', 'bu');
           const customerIndex = headerIndex(s.headers, '客户群/Customer Group', '客户群', 'Customer Group', 'Customer Name', '客户名称', 'Customer', '客户');
           s.rows.forEach(r => {
+            if (!acceptedSessions.has(getRowSessionName(s, r))) return;
             const id = cellAt(r, idIndex);
             const name = cellAt(r, nameIndex);
             const bu = cellAt(r, buIndex);
@@ -4152,6 +4619,7 @@
           const buIndex = headerIndex(s.headers, 'bu', 'BU', '部门');
           const customerIndex = headerIndex(s.headers, 'customer', '客户群', 'Customer Group');
           s.rows.forEach(r => {
+            if (!acceptedSessions.has(getRowSessionName(s, r))) return;
             const id = cellAt(r, idIndex);
             const name = cellAt(r, nameIndex);
             const bu = cellAt(r, buIndex);
@@ -4184,18 +4652,21 @@
         }));
       }
       function extractAllPeople(qr = extractQrPeople(), rfc = extractRfcPeople(), wfm = extractWfmPeople(), attendanceIndex = buildAttendanceIndex()) {
+        const hasEligibleSession = getMeetingSessions().length > 0;
         const basePeople = [...(qr || []), ...(rfc || []), ...(wfm || [])];
         const sourceList = basePeople.length ? basePeople : extractAttendanceSourcePeople();
         const map = new Map();
         sourceList.forEach(p => {
           const key = p.account ? `id:${p.account.replace(/\s+/g, '').toLowerCase()}` : `name:${p.name.toLowerCase()}`;
-          if (!map.has(key)) map.set(key, { names: new Set(), accounts: new Set(), roles: new Set(), role: '', roleTime: -Infinity, bu: '', buTime: -Infinity, customer: '', customerTime: -Infinity, count: 0, inWindowCount: 0, isNightWfmExempt: false, nightWfmTasks: [], isManualMandatory: false, notes: new Set() });
+          if (!map.has(key)) map.set(key, { names: new Set(), accounts: new Set(), roles: new Set(), role: '', roleTime: -Infinity, bu: '', buTime: -Infinity, customer: '', customerTime: -Infinity, count: 0, inWindowCount: 0, orderDates: new Set(), hasUndatedOrder: false, isNightWfmExempt: false, nightWfmTasks: [], isManualMandatory: false, notes: new Set() });
           const x = map.get(key); if (p.name) x.names.add(p.name); if (p.account) x.accounts.add(p.account);
           if (p.role) { x.roles.add(p.role); if ((p._roleTime || 0) >= x.roleTime) { x.role = p.role; x.roleTime = p._roleTime || 0; } }
           if (p.bu && p._buTime >= x.buTime) { x.bu = p.bu; x.buTime = p._buTime; } if (p.customer && p._customerTime >= x.customerTime) { x.customer = p.customer; x.customerTime = p._customerTime; }
           x.count += p.count || 0;
           if (p.inWindowCount !== undefined) x.inWindowCount += p.inWindowCount;
           else x.inWindowCount += (p.count || 1);
+          if (Array.isArray(p.orderDates)) p.orderDates.forEach(date => x.orderDates.add(date));
+          if (p.hasUndatedOrder) x.hasUndatedOrder = true;
           if (p.isNightWfmExempt) {
             x.isNightWfmExempt = true;
             if (Array.isArray(p.nightWfmTasks)) p.nightWfmTasks.forEach(t => x.nightWfmTasks.push(t));
@@ -4210,7 +4681,7 @@
             if (!m.name && !m.account) return;
             const key = m.account ? `id:${m.account.replace(/\s+/g, '').toLowerCase()}` : `name:${m.name.toLowerCase()}`;
             if (!map.has(key)) {
-              map.set(key, { names: new Set(), accounts: new Set(), roles: new Set(), role: m.role || '其他必选', roleTime: Infinity, bu: m.bu || '未识别 BU', buTime: Infinity, customer: m.customer || '—', customerTime: Infinity, count: 0, inWindowCount: 1, isNightWfmExempt: false, nightWfmTasks: [], isManualMandatory: true, notes: new Set() });
+              map.set(key, { names: new Set(), accounts: new Set(), roles: new Set(), role: m.role || '其他必选', roleTime: Infinity, bu: m.bu || '未识别 BU', buTime: Infinity, customer: m.customer || '—', customerTime: Infinity, count: 0, inWindowCount: 1, orderDates: new Set(), hasUndatedOrder: false, isNightWfmExempt: false, nightWfmTasks: [], isManualMandatory: true, notes: new Set() });
             }
             const x = map.get(key);
             if (m.name) x.names.add(m.name);
@@ -4225,6 +4696,7 @@
 
         const windowMonths = state.attendanceRules.orderWindowMonths !== undefined ? state.attendanceRules.orderWindowMonths : 1;
         const filteredList = [...map.values()].filter(x => {
+          if (!hasEligibleSession) return true;
           if (windowMonths === 0 || windowMonths === '0' || windowMonths === 'all') return true;
           if (!basePeople.length) return true;
           if (x.isManualMandatory) return true;
@@ -4240,6 +4712,9 @@
           customerGroup: mapCustomerGroup(x.customer),
           count: x.count,
           inWindowCount: x.inWindowCount,
+          orderDates: [...x.orderDates],
+          hasUndatedOrder: x.hasUndatedOrder,
+          fromAttendanceOnly: !basePeople.length && !x.isManualMandatory,
           isNightWfmExempt: x.isNightWfmExempt,
           nightWfmTasks: x.nightWfmTasks,
           isManualMandatory: x.isManualMandatory,
@@ -4248,18 +4723,22 @@
           _buTime: x.buTime,
           _customerTime: x.customerTime
         })).map(p => {
-          const exemption = getExemption(p);
-          const nightExempt = (state.attendanceRules.nightWfmExempt !== false) && p.isNightWfmExempt;
+          const exemption = hasEligibleSession ? getExemption(p) : null;
+          const nightExempt = hasEligibleSession && (state.attendanceRules.nightWfmExempt !== false) && p.isNightWfmExempt;
           const record = (exemption || nightExempt) ? null : getAttendanceRecord(p.account, attendanceIndex);
 
           let attendance;
           let attendanceMethod;
           let attendanceTime;
 
-          if (nightExempt) {
+          if (!hasEligibleSession) {
+            attendance = 'Not Evaluated';
+            attendanceMethod = '';
+            attendanceTime = '';
+          } else if (nightExempt) {
             attendance = 'Attend on Time';
             attendanceMethod = '前夜WFM豁免';
-            attendanceTime = p.nightWfmTasks?.[0]?.time || bi('前夜保障任务', 'Night maintenance task');
+            attendanceTime = '';
           } else if (exemption) {
             attendance = 'Attend on Time';
             attendanceMethod = '豁免名单';
@@ -4305,8 +4784,9 @@
       }
       function buildAttendanceIndex(targetSessionName) {
         const index = new Map(), add = (rawId, rawTime, source) => { const ids = idVariants(rawId); if (!ids.size) return; const converted = source === 'offline' ? beijingToCairoAttendance(rawTime) : { minute: parseAttendanceMinute(rawTime), displayTime: normalizeName(rawTime) }, record = { minute: converted.minute, displayTime: converted.displayTime, method: source === 'offline' ? '现场扫码' : '线上会议' }; ids.forEach(id => { const old = index.get(id); if (!old || (record.minute != null && (old.minute == null || record.minute < old.minute))) index.set(id, record); }); };
-        state.sheets.filter(s => s.category === 'offline').forEach(s => { const idIndex = headerIndex(s.headers, '工号'), timeIndex = headerIndex(s.headers, '签到时间'); s.rows.forEach(row => { if (targetSessionName && getRowSessionName(s, row) !== targetSessionName) return; add(cellAt(row, idIndex), cellAt(row, timeIndex), 'offline'); }); });
-        state.sheets.filter(s => s.category === 'online').forEach(s => { const idIndex = headerIndex(s.headers, 'user_id'), timeIndex = headerIndex(s.headers, 'join_time'); s.rows.forEach(row => { if (targetSessionName && getRowSessionName(s, row) !== targetSessionName) return; add(cellAt(row, idIndex), cellAt(row, timeIndex), 'online'); }); });
+        const acceptedSessions = new Set(getMeetingSessions().map(s => s.name));
+        state.sheets.filter(s => s.category === 'offline').forEach(s => { const idIndex = headerIndex(s.headers, '工号'), timeIndex = headerIndex(s.headers, '签到时间'); s.rows.forEach(row => { const name = getRowSessionName(s, row); if (!acceptedSessions.has(name) || (targetSessionName && name !== targetSessionName)) return; add(cellAt(row, idIndex), cellAt(row, timeIndex), 'offline'); }); });
+        state.sheets.filter(s => s.category === 'online').forEach(s => { const idIndex = headerIndex(s.headers, 'user_id'), timeIndex = headerIndex(s.headers, 'join_time'); s.rows.forEach(row => { const name = getRowSessionName(s, row); if (!acceptedSessions.has(name) || (targetSessionName && name !== targetSessionName)) return; add(cellAt(row, idIndex), cellAt(row, timeIndex), 'online'); }); });
         return index;
       }
       function getAttendanceRecord(account, index) { let best = null; for (const id of idVariants(account)) { const record = index.get(id); if (record && (!best || (record.minute != null && (best.minute == null || record.minute < best.minute)))) best = record; } return best; }
@@ -4369,6 +4849,9 @@
           count: 0,
           inWindowCount: 0,
           orderDates: new Set(),
+          ticketDates: new Set(),
+          createTimes: new Set(),
+          hasUndatedOrder: false,
           isNightWfmExempt: false,
           nightWfmTasks: []
         });
@@ -4387,7 +4870,9 @@
         x.count++;
         if (p.orderDate && p.orderDate.dateStr) {
           x.orderDates.add(p.orderDate.dateStr);
-        }
+          if (p.orderDate.source === 'ticket_id') x.ticketDates.add(p.orderDate.dateStr);
+        } else x.hasUndatedOrder = true;
+        if (p.createTime) x.createTimes.add(p.createTime);
         if (p.inWindow !== false) {
           x.inWindowCount = (x.inWindowCount || 0) + 1;
         }
@@ -4414,6 +4899,9 @@
           count: x.count, 
           inWindowCount: x.inWindowCount !== undefined ? x.inWindowCount : x.count,
           orderDates: [...(x.orderDates || [])],
+          ticketDates: [...(x.ticketDates || [])],
+          createTimes: [...(x.createTimes || [])],
+          hasUndatedOrder: !!x.hasUndatedOrder,
           isNightWfmExempt: !!x.isNightWfmExempt,
           nightWfmTasks: x.nightWfmTasks || [],
           _roleTime: x.roleTime, 
@@ -4469,22 +4957,22 @@
         const headers = sheet.headers.map(normalizeHeader), indexOf = (...names) => headers.findIndex(h => names.map(normalizeHeader).includes(h));
         const has = (...names) => indexOf(...names) >= 0;
         if (has('meeting_title') && has('user_id') && has('join_time') && normalizeName(sheet.name) === '入会记录') return 'online';
-        if (has('工号') && has('姓名') && has('签到时间')) return 'offline';
-        const ticketIndex = indexOf('作业单号', 'Ticket ID', '作业单号/Ticket ID');
-        if (ticketIndex >= 0 && columnHasPrefix(sheet.rows, ticketIndex, 'NC')) return 'rfc';
-        const qrTaskIndex = indexOf('Task ID');
-        if (qrTaskIndex >= 0 && columnHasPrefix(sheet.rows, qrTaskIndex, 'QR')) return 'qr';
         const wfmTaskIndex = headers.findIndex(h => {
           const norm = normalizeHeader(h);
           return ['task id', '实施任务单号/implementation task no', '实施任务单号', 'implementation task no', '实施任务单', '任务单号', 'task no'].includes(norm) ||
             (norm.includes('实施任务') && norm.includes('单号')) ||
             (norm.includes('implementation') && norm.includes('task'));
         });
-        if (wfmTaskIndex >= 0 && columnHasPrefix(sheet.rows, wfmTaskIndex, 'TK')) return 'wfm';
+        if (wfmTaskIndex >= 0 && columnHasPrefix(sheet.rows, wfmTaskIndex, ['TK', 'TE'])) return 'wfm';
+        const ticketIndex = indexOf('作业单号', 'Ticket ID', '作业单号/Ticket ID');
+        if (ticketIndex >= 0 && columnHasPrefix(sheet.rows, ticketIndex, ['NC', 'NE'])) return 'rfc';
+        const qrTaskIndex = indexOf('Task ID');
+        if (qrTaskIndex >= 0 && columnHasPrefix(sheet.rows, qrTaskIndex, 'QR')) return 'qr';
+        if (has('工号') && has('姓名') && has('签到时间')) return 'offline';
         return null;
       }
-      function columnHasPrefix(rows, index, prefix) {
-        const re = new RegExp(`^${prefix}\\d+`, 'i');
+      function columnHasPrefix(rows, index, prefixes) {
+        const re = new RegExp(`^(?:${(Array.isArray(prefixes) ? prefixes : [prefixes]).join('|')})[\\s_-]*\\d+`, 'i');
         return rows.some(r => re.test(normalizeName(r[index])));
       }
       async function parseFile(file) {
@@ -4567,13 +5055,14 @@
         } return files;
       }
       function buildAnalysisTables(rows = state.peopleCache?.all || []) {
-        const statuses = ['Absent', 'Attend on Time', 'Delay', 'Fake Attendance'], counts = Object.fromEntries(statuses.map(s => [s, 0])), byBu = new Map();
-        rows.forEach(r => { counts[r.attendance] = (counts[r.attendance] || 0) + 1; const bu = normalizeName(r.bu) || 'Unidentified BU'; if (!byBu.has(bu)) byBu.set(bu, { total: 0, Absent: 0, 'Attend on Time': 0, Delay: 0, 'Fake Attendance': 0 }); const x = byBu.get(bu); x.total++; x[r.attendance] = (x[r.attendance] || 0) + 1; });
-        const rate = (n, total) => total ? `${(n / total * 100).toFixed(1)}%` : '0.0%', summary = [['BU', 'Total People', 'Absent', 'Attend on Time', 'Delay', 'Fake Attendance', 'On-time Attendance Rate']];
-        [...byBu.entries()].sort((a, b) => b[1].total - a[1].total || a[0].localeCompare(b[0])).forEach(([bu, x]) => summary.push([bu, x.total, x.Absent, x['Attend on Time'], x.Delay, x['Fake Attendance'], rate(x['Attend on Time'], x.total)]));
-        summary.push(['Total', rows.length, counts.Absent, counts['Attend on Time'], counts.Delay, counts['Fake Attendance'], rate(counts['Attend on Time'], rows.length)]);
-        const people = [['Name', 'Employee ID / Account', 'BU', 'Customer Group', 'Attendance Status', 'Meeting / Scan Time (Cairo)', 'Decision Source', 'Related Records']];
-        [...rows].sort((a, b) => (b.count || 0) - (a.count || 0) || (a.name || a.account).localeCompare(b.name || b.account, 'en')).forEach(r => people.push([r.name, r.account, r.bu, r.customer, r.attendance, r.attendanceTime || '', r.attendanceMethod === '豁免名单' ? 'Exemption List' : r.attendanceMethod === '前夜WFM豁免' ? 'Night WFM Exempt' : r.attendanceMethod === '现场扫码' ? 'On-site Scan' : r.attendanceMethod === '线上会议' ? 'Online Meeting' : 'No Record', r.count || 0]));
+        const pending = !getMeetingSessions().length;
+        const statuses = pending ? ['Not Evaluated'] : ['Absent', 'Attend on Time', 'Delay', 'Fake Attendance'], counts = Object.fromEntries(statuses.map(s => [s, 0])), byBu = new Map();
+        rows.forEach(r => { counts[r.attendance] = (counts[r.attendance] || 0) + 1; const bu = normalizeName(r.bu) || 'Unidentified BU'; if (!byBu.has(bu)) byBu.set(bu, { total: 0, ...Object.fromEntries(statuses.map(s => [s, 0])) }); const x = byBu.get(bu); x.total++; x[r.attendance] = (x[r.attendance] || 0) + 1; });
+        const rate = (n, total) => total ? `${(n / total * 100).toFixed(1)}%` : '0.0%', summary = pending ? [['BU', 'Total People', 'Awaiting Check-in Data']] : [['BU', 'Total People', 'Absent', 'Attend on Time', 'Delay', 'Fake Attendance', 'On-time Attendance Rate']];
+        [...byBu.entries()].sort((a, b) => b[1].total - a[1].total || a[0].localeCompare(b[0])).forEach(([bu, x]) => summary.push(pending ? [bu, x.total, x['Not Evaluated']] : [bu, x.total, x.Absent, x['Attend on Time'], x.Delay, x['Fake Attendance'], rate(x['Attend on Time'], x.total)]));
+        summary.push(pending ? ['Total', rows.length, counts['Not Evaluated']] : ['Total', rows.length, counts.Absent, counts['Attend on Time'], counts.Delay, counts['Fake Attendance'], rate(counts['Attend on Time'], rows.length)]);
+        const people = [['Name', 'Employee ID / Account', 'BU', 'Customer Group', 'Attendance Status', 'Check-in / Join Time (Cairo)', 'Decision Source', 'Related Records']];
+        [...rows].sort((a, b) => (b.count || 0) - (a.count || 0) || (a.name || a.account).localeCompare(b.name || b.account, 'en')).forEach(r => people.push([r.name, r.account, r.bu, r.customer, r.attendance === 'Not Evaluated' ? 'Awaiting Check-in Data' : r.attendance, r.attendanceTime || '', r.attendance === 'Not Evaluated' ? '' : r.attendanceMethod === '豁免名单' ? 'Exemption List' : r.attendanceMethod === '前夜WFM豁免' ? 'Night WFM Exempt' : r.attendanceMethod === '现场扫码' ? 'On-site Scan' : r.attendanceMethod === '线上会议' ? 'Online Meeting' : 'No Record', r.count || 0]));
 
         let multiMatrix = null;
         if (state.peopleCache?.sessions?.length > 1) {
@@ -4584,6 +5073,7 @@
           [...allPeople].sort((a, b) => (b.attendedSessionsCount ?? 0) - (a.attendedSessionsCount ?? 0) || (b.count || 0) - (a.count || 0)).forEach(r => {
             const sessStatuses = sessions.map(s => {
               const rec = r.sessionRecords?.[s.name];
+              if (rec && !rec.required) return 'Not Required';
               if (!rec || rec.attendance === 'Absent') return 'Absent';
               return `${rec.attendance}${rec.attendanceMethod === '前夜WFM豁免' ? ' (Night WFM Exempt)' : ''}${rec.attendanceTime ? ` (${rec.attendanceTime})` : ''}`;
             });
@@ -4620,12 +5110,13 @@
       }
       function buildAnalysisWorkbook(rows) {
         const { summary, people, multiMatrix } = buildAnalysisTables(rows);
+        const pending = !getMeetingSessions().length;
         const contentTypesSheets = multiMatrix
           ? `<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet3.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`
           : `<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`;
         const workbookSheets = multiMatrix
           ? `<sheets><sheet name="Attendance Summary" sheetId="1" r:id="rId1"/><sheet name="Attendance People List" sheetId="2" r:id="rId2"/><sheet name="Multi-Session Comparison" sheetId="3" r:id="rId3"/></sheets>`
-          : `<sheets><sheet name="Attendance Summary" sheetId="1" r:id="rId1"/><sheet name="Attendance People List" sheetId="2" r:id="rId2"/></sheets>`;
+          : pending ? `<sheets><sheet name="Roster Status" sheetId="1" r:id="rId1"/><sheet name="Pending People List" sheetId="2" r:id="rId2"/></sheets>` : `<sheets><sheet name="Attendance Summary" sheetId="1" r:id="rId1"/><sheet name="Attendance People List" sheetId="2" r:id="rId2"/></sheets>`;
         const relsSheets = multiMatrix
           ? `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet3.xml"/><Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`
           : `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`;
@@ -4647,6 +5138,11 @@
         return zipStore(files);
       }
       async function buildSnapshotPayload(customTitle, customDate) {
+        if (!getMeetingSessions().length) {
+          throw new Error(state.sheets.some(s => s.category === 'offline' || s.category === 'online')
+            ? bi('没有达到最少签到记录数的会议场次，无法生成考勤快照', 'No session meets the minimum check-in record count')
+            : bi('请先导入现场签到或在线入会表，再生成考勤快照', 'Import on-site check-in or online join records before creating an attendance snapshot'));
+        }
         const cache = await ensurePeopleCache();
         const allPeople = cache ? (cache.all || []) : [];
         let meetingDate = customDate;
@@ -4696,6 +5192,19 @@
           date: r.date || (r.attendanceTime && r.attendanceTime.match(/\d{4}-\d{2}-\d{2}/)?.[0]) || meetingDate,
           attendanceTime: r.attendanceTime || ''
         }));
+        const sessionAttendees = cache.sessions?.length > 1 ? cache.sessions.flatMap(sess => {
+          const date = sess.date || detectMeetingDate(sess.name);
+          return allPeople.map(r => {
+            const record = r.sessionRecords?.[sess.name] || { attendance: 'Absent', attendanceTime: '' };
+            if (!record.required) return [];
+            return {
+              account: r.account || '', name: r.name || '', bu: normalizeName(r.bu) || '',
+              customerGroup: r.customerGroup || r.customer || '', role: r.role || '',
+              sessionName: sess.name, date,
+              attendance: record.attendance, attendanceTime: record.attendanceTime || ''
+            };
+          }).flat();
+        }) : undefined;
         const anomalies = attendees.filter(r => r.attendance && r.attendance !== 'Attend on Time');
 
         const summary = {
@@ -4707,8 +5216,9 @@
           counts,
           byBu,
           attendees,
+          sessionAttendees,
           anomalies,
-          sessions: (cache.sessions && cache.sessions.length > 1) ? cache.sessions.map(s => ({ name: s.name, rowCount: s.rowCount, counts: cache.sessionStats?.[s.name]?.counts })) : undefined,
+          sessions: (cache.sessions && cache.sessions.length > 1) ? cache.sessions.map(s => ({ name: s.name, date: s.date, rowCount: s.rowCount, required: cache.sessionStats?.[s.name]?.total, counts: cache.sessionStats?.[s.name]?.counts })) : undefined,
           savedAt: new Date().toISOString()
         };
 
@@ -4740,6 +5250,12 @@
       function openSaveSnapshotModal() {
         if (!state.sheets.length) {
           toast(bi('当前工作区还没有导入任何表格，无法保存快照', 'No tables imported in current workspace to snapshot'), 'error');
+          return;
+        }
+        if (!getMeetingSessions().length) {
+          toast(state.sheets.some(s => s.category === 'offline' || s.category === 'online')
+            ? bi('没有达到最少签到记录数的会议场次，请调整阈值后再保存快照', 'No session meets the minimum check-in count; adjust the threshold before saving')
+            : bi('请先导入现场签到或在线入会表，再保存考勤快照', 'Import on-site check-in or online join records before saving an attendance snapshot'), 'error');
           return;
         }
         let meetingDate = '';
@@ -5149,7 +5665,7 @@
           try { localStorage.setItem(MAPPING_STORAGE_KEY, JSON.stringify(state.customerMappings)); } catch (e) { }
         }
         if (p.attendanceRules) {
-          state.attendanceRules = p.attendanceRules;
+          state.attendanceRules = { ...DEFAULT_ATTENDANCE_RULES, ...p.attendanceRules, minSessionRecords: normalizeMinSessionRecords(p.attendanceRules.minSessionRecords) };
           try { localStorage.setItem(ATTENDANCE_STORAGE_KEY, JSON.stringify(state.attendanceRules)); } catch (e) { }
         }
         if (Array.isArray(p.exemptions) && p.exemptions.length) {
@@ -5177,16 +5693,16 @@
         if (!state.sheets.some(s => ['qr', 'rfc', 'wfm', 'offline', 'online'].includes(s.category))) { toast(bi('请先导入考勤或名单表格', 'Import attendance or roster tables first'), 'error'); return; }
         try {
           showLoading(true, bi('正在准备分析结果…', 'Preparing analysis results…'), 15); await nextPaint(); const cache = await ensurePeopleCache(); showLoading(true, bi('正在生成分析结果表格…', 'Building analysis result sheets…'), 60); await nextPaint();
-          const exportRows = (state.selectedSession && state.selectedSession !== 'all') ? getSessionPeopleRows(cache.all, state.selectedSession) : cache.all;
-          const bytes = buildAnalysisWorkbook(exportRows); showLoading(true, bi('正在下载 Excel 文件…', 'Downloading Excel file…'), 90); await nextPaint(); const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), url = URL.createObjectURL(blob), a = document.createElement('a'); a.href = url; a.download = `Meeting_Attendance_Analysis_${new Date().toISOString().slice(0, 10)}.xlsx`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000); showLoading(true, bi('分析结果导出完成', 'Analysis export complete'), 100); await nextPaint();
+          const exportRows = cache.sessions?.some(session => session.name === state.selectedSession) ? getSessionPeopleRows(cache.all, state.selectedSession) : cache.all;
+          const bytes = buildAnalysisWorkbook(exportRows); showLoading(true, bi('正在下载 Excel 文件…', 'Downloading Excel file…'), 90); await nextPaint(); const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), url = URL.createObjectURL(blob), a = document.createElement('a'); a.href = url; a.download = `${cache.sessions?.length ? 'Meeting_Attendance_Analysis' : 'Meeting_Roster_Pending_Attendance'}_${new Date().toISOString().slice(0, 10)}.xlsx`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000); showLoading(true, bi('分析结果导出完成', 'Analysis export complete'), 100); await nextPaint();
           const hasMulti = cache.sessions && cache.sessions.length > 1;
-          toast(hasMulti ? bi('已导出 Attendance Summary、People List 及多场次对比大表', 'Attendance Summary, People List and Multi-Session Comparison exported') : bi('已导出 Attendance Summary 和 Attendance People List', 'Attendance Summary and Attendance People List exported'));
+          toast(!cache.sessions?.length ? bi('已导出待考勤人员名单，尚未生成考勤结论', 'Pending roster exported; attendance has not been evaluated') : hasMulti ? bi('已导出 Attendance Summary、People List 及多场次对比大表', 'Attendance Summary, People List and Multi-Session Comparison exported') : bi('已导出 Attendance Summary 和 Attendance People List', 'Attendance Summary and Attendance People List exported'));
         } catch (err) { console.error(err); toast(`${bi('导出失败', 'Export failed')}：${err.message}`, 'error', 6000); } finally { showLoading(false); }
       }
       function showLoading(on, text, percent) { $('#loading').classList.toggle('hidden', !on); if (text) $('#loadingText').textContent = text; if (percent != null) { const p = Math.max(0, Math.min(100, Math.round(percent))); $('#loadingBar').style.width = p + '%'; $('#loadingPercent').textContent = p + '%'; } }
       function nextPaint() { return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); }
       function toast(msg, type = '', duration = 2800) { const host = $('#toasts'); if (!host || typeof host.appendChild !== 'function') return; const t = document.createElement('div'); t.className = 'toast ' + type; t.textContent = msg; host.appendChild(t); setTimeout(() => t.remove?.(), duration); }
-      window.__meetingAttendance = { state, CATEGORIES, DEFAULT_COLUMNS, DEFAULT_CUSTOMER_MAPPINGS, DEFAULT_ATTENDANCE_RULES, PRESET_EXEMPTIONS, isInvalidStaffId, activeExemptions, handleDeveloperUnlock, disableDeveloperMode, parseDelimited, normalizeRows, classifySheet, defaultColumnIndices, getDisplayColumns, parsePeopleCell, parseQrPairedPeople, parseCreateTime, parseAttendanceMinute, beijingToCairoAttendance, buildAttendanceIndex, getAttendanceRecord, getExemption, determineAttendance, extractTicketDate, parseDateFromString, detectMeetingDate, getAllMeetingDates, getWindowDateRange, isOrderInWindow, getPreviousDayDateString, parseRowTimestamp, isNightWfmTask, isPersonNightExemptForDate, normalizeMandatoryEntries, loadMandatoryAttendees, saveMandatoryAttendees, openMandatoryModal, closeMandatoryModal, renderMandatoryRows, appendMandatoryRow, updateMandatoryBadge, applyBatchMandatoryText, extractQrPeople, extractRfcPeople, extractWfmPeople, extractAttendanceSourcePeople, extractAllPeople, ensurePeopleCache, invalidatePeopleCache, cleanSessionTitle, isGenericTitle, getSheetRowSessionNames, getSheetDefaultSessionName, getSheetSessionName, getRowSessionName, getMeetingSessions, getSessionPeopleRows, renderSessionSwitcher, renderSessionNoticeBar, renderMultiSessionOverview, renderMultiSessionBuTable, renderMultiSessionMatrixCard, mapCustomerGroup, resolveSearchIdentities, searchRequiredRows, searchAttendanceRows, validBusinessTimes, formatDateRange, roleCounts, roleLabel, sheetFingerprint, removeDuplicateSheets, renderAttendanceDashboard, renderCombinedPeopleCard, renderPeopleCard, renderPersonSearchPanel, renderPersonSearchResults, buildAnalysisTables, buildAnalysisWorkbook, buildSnapshotPayload, restoreMeetingSnapshot, openSaveSnapshotModal, closeSaveSnapshotModal, openSnapshotManagerModal, closeSnapshotManagerModal, filterSnapshotCards };
+      window.__meetingAttendance = { state, CATEGORIES, DEFAULT_COLUMNS, DEFAULT_CUSTOMER_MAPPINGS, DEFAULT_ATTENDANCE_RULES, PRESET_EXEMPTIONS, isInvalidStaffId, activeExemptions, handleDeveloperUnlock, disableDeveloperMode, parseDelimited, normalizeRows, classifySheet, defaultColumnIndices, getDisplayColumns, parsePeopleCell, parseQrPairedPeople, parseCreateTime, parseAttendanceMinute, beijingToCairoAttendance, buildAttendanceIndex, getAttendanceRecord, getExemption, determineAttendance, extractTicketDate, parseDateFromString, detectMeetingDate, getAllMeetingDates, getWindowDateRange, isOrderInWindow, isOrderInMeetingWindows, getPreviousDayDateString, parseRowTimestamp, isNightWfmTask, isPersonNightExemptForDate, normalizeMandatoryEntries, loadMandatoryAttendees, saveMandatoryAttendees, openMandatoryModal, closeMandatoryModal, renderMandatoryRows, appendMandatoryRow, updateMandatoryBadge, applyBatchMandatoryText, extractQrPeople, extractRfcPeople, extractWfmPeople, extractAttendanceSourcePeople, extractAllPeople, ensurePeopleCache, refreshCalculatedResults, invalidatePeopleCache, cleanSessionTitle, isGenericTitle, getSheetRowSessionNames, getSheetDefaultSessionName, getSheetSessionName, getRowSessionName, getMeetingSessions, getIgnoredMeetingSessions, getSessionPeopleRows, getSessionDisplayLabels, renderSessionSwitcher, renderSessionNoticeBar, renderMultiSessionOverview, renderMultiSessionBuTable, renderMultiSessionMatrixCard, mapCustomerGroup, resolveSearchIdentities, getPersonSearchScope, getPersonSearchScopeKey, formatSearchWindowMonths, searchRequiredRows, searchAttendanceRows, renderSearchDetailCard, buildBusinessCoverageReport, missingBusinessCoverage, validBusinessTimes, formatDateRange, roleCounts, roleLabel, sheetFingerprint, removeDuplicateSheets, renderAttendanceDashboard, renderCombinedPeopleCard, renderPeopleCard, renderPersonSearchPanel, renderPersonSearchResults, buildAnalysisTables, buildAnalysisWorkbook, buildSnapshotPayload, restoreMeetingSnapshot, openSaveSnapshotModal, closeSaveSnapshotModal, openSnapshotManagerModal, filterSnapshotCards };
       init();
     })();
   </script>

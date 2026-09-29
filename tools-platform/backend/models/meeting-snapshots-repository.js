@@ -1104,12 +1104,44 @@ function isAttendanceAnomaly(att) {
     return s.includes('absent') || s.includes('delay') || s.includes('fake') || s.includes('缺席') || s.includes('迟到') || s.includes('假打卡');
 }
 
+function getSnapshotAttendanceRecords(snapshot) {
+    const perSession = snapshot.summary?.sessionAttendees;
+    return Array.isArray(perSession) && perSession.length ? perSession : getSnapshotAttendees(snapshot);
+}
+
+function makeAttendanceCheckItem(snapshot, match, queryId, queryName) {
+    const rawAtt = match.attendance || match.status || 'Attend on Time';
+    const attLower = String(rawAtt).toLowerCase();
+    const issueType = (attLower.includes('absent') || rawAtt.includes('缺席')) ? 'absent' : 'delay';
+    const snapshotDate = snapshot.meetingDate || snapshot.meeting_date || '';
+    const actualDate = match.date || match.actualDate || (match.attendanceTime && match.attendanceTime.match(/\d{4}-\d{2}-\d{2}/)?.[0]) || (match.reason && match.reason.match(/\d{4}-\d{2}-\d{2}/)?.[0]) || (snapshot.title && snapshot.title.match(/\b(20\d\d[-_/.](?:0?[1-9]|1[0-2])[-_/.](?:0?[1-9]|[12]\d|3[01]))\b/)?.[1]?.replace(/[/_.]/g, '-')) || snapshotDate;
+    return {
+        snapshotId: snapshot.id || snapshot.snapshotId,
+        title: snapshot.title,
+        meetingTitle: snapshot.title,
+        snapshotTitle: snapshot.title,
+        sessionName: match.sessionName || '',
+        meetingDate: actualDate || snapshotDate,
+        actualDate: actualDate || snapshotDate,
+        attendanceDate: actualDate || snapshotDate,
+        attendanceTime: match.attendanceTime || '',
+        attendance: rawAtt,
+        type: issueType,
+        name: match.name || queryName,
+        account: match.account || match.staffId || queryId,
+        staffId: match.account || match.staffId || queryId,
+        bu: match.bu || match.businessUnit || '',
+        businessUnit: match.bu || match.businessUnit || '',
+        customerGroup: match.customerGroup || ''
+    };
+}
+
 async function checkPersonAttendance({ staffId, name }) {
     await ensureReady();
     const queryId = String(staffId || '').trim();
     const queryName = String(name || '').trim();
     if (!queryId && !queryName) {
-        return { found: false, hasAnomaly: false, records: [], anomalies: [], cleanCount: 0, anomalyCount: 0, totalMeetingsChecked: 0 };
+        return { found: false, hasRecords: false, hasAnomaly: false, records: [], anomalies: [], cleanCount: 0, anomalyCount: 0, totalMeetingsChecked: 0 };
     }
 
     const snapshots = await listSnapshots({ includePayload: true });
@@ -1119,32 +1151,11 @@ async function checkPersonAttendance({ staffId, name }) {
     let anomalyCount = 0;
 
     for (const snap of snapshots) {
-        const attendees = getSnapshotAttendees(snap);
-        const match = attendees.find(p => matchPerson(p, queryId, queryName));
-        if (match) {
-            const rawAtt = match.attendance || match.status || 'Attend on Time';
-            const isAnomaly = isAttendanceAnomaly(rawAtt);
-            const attLower = String(rawAtt).toLowerCase();
-            const issueType = (attLower.includes('absent') || rawAtt.includes('缺席')) ? 'absent' : 'delay';
-            const actualDate = match.date || match.actualDate || (match.attendanceTime && match.attendanceTime.match(/\d{4}-\d{2}-\d{2}/)?.[0]) || (match.reason && match.reason.match(/\d{4}-\d{2}-\d{2}/)?.[0]) || (snap.title && snap.title.match(/\b(20\d\d[-_/.](?:0?[1-9]|1[0-2])[-_/.](?:0?[1-9]|[12]\d|3[01]))\b/)?.[1]?.replace(/[/_.]/g, '-')) || snap.meetingDate || snap.meeting_date || '';
-            const item = {
-                snapshotId: snap.id,
-                title: snap.title,
-                meetingDate: actualDate || snap.meetingDate || snap.meeting_date || '',
-                actualDate: actualDate || snap.meetingDate || snap.meeting_date || '',
-                attendanceDate: actualDate || snap.meetingDate || snap.meeting_date || '',
-                attendanceTime: match.attendanceTime || '',
-                attendance: rawAtt,
-                type: issueType,
-                name: match.name || queryName,
-                account: match.account || match.staffId || queryId,
-                staffId: match.account || match.staffId || queryId,
-                bu: match.bu || match.businessUnit || '',
-                businessUnit: match.bu || match.businessUnit || '',
-                customerGroup: match.customerGroup || ''
-            };
+        const matches = getSnapshotAttendanceRecords(snap).filter(p => matchPerson(p, queryId, queryName));
+        for (const match of matches) {
+            const item = makeAttendanceCheckItem(snap, match, queryId, queryName);
             records.push(item);
-            if (isAnomaly) {
+            if (isAttendanceAnomaly(item.attendance)) {
                 anomalies.push(item);
                 anomalyCount++;
             } else {
@@ -1155,6 +1166,7 @@ async function checkPersonAttendance({ staffId, name }) {
 
     return {
         found: records.length > 0,
+        hasRecords: records.length > 0,
         hasAnomaly: anomalies.length > 0,
         cleanCount,
         anomalyCount,
@@ -1183,22 +1195,24 @@ async function batchCheckAttendance(persons = []) {
                 if (full) snapToUse = full;
             } catch (_) {}
         }
-        const attendees = getSnapshotAttendees(snapToUse);
+        const attendees = getSnapshotAttendanceRecords(snapToUse);
         const attById = new Map();
         const attByName = new Map();
+        const addToIndex = (index, key, attendee) => {
+            if (!key) return;
+            if (!index.has(key)) index.set(key, []);
+            index.get(key).push(attendee);
+        };
         for (const a of attendees) {
             const aid = String(a.account || a.staffId || a.id || '').trim().toLowerCase();
             const aname = String(a.name || '').trim().toLowerCase();
             if (aid) {
-                attById.set(aid, a);
-                if (aid.startsWith('m')) attById.set(aid.slice(1), a);
+                addToIndex(attById, aid, a);
+                if (aid.startsWith('m')) addToIndex(attById, aid.slice(1), a);
                 const digits = getDigits(aid);
-                if (digits) attById.set(digits, a);
+                if (digits && digits !== aid) addToIndex(attById, digits, a);
             }
-            if (aname) {
-                if (!attByName.has(aname)) attByName.set(aname, []);
-                attByName.get(aname).push(a);
-            }
+            addToIndex(attByName, aname, a);
         }
         snapshotAttendeesList.push({
             snapshotId: snapToUse.id,
@@ -1216,7 +1230,7 @@ async function batchCheckAttendance(persons = []) {
         const queryId = String(p.staffId || '').trim();
         const queryName = String(p.name || '').trim();
         if (!queryId && !queryName) {
-            result[key] = { found: false, hasAnomaly: false, cleanCount: 0, anomalyCount: 0, anomalies: [], records: [] };
+            result[key] = { found: false, hasRecords: false, hasAnomaly: false, cleanCount: 0, anomalyCount: 0, anomalies: [], records: [] };
             continue;
         }
 
@@ -1226,58 +1240,23 @@ async function batchCheckAttendance(persons = []) {
         let anomalyCount = 0;
 
         for (const snap of snapshotAttendeesList) {
-            let match = null;
+            const candidates = new Set();
             if (queryId) {
                 const qId = queryId.toLowerCase();
-                match = snap.attById.get(qId);
-                if (!match && qId.startsWith('m')) match = snap.attById.get(qId.slice(1));
-                if (!match) match = snap.attById.get('m' + qId);
-                if (!match) {
-                    const digits = getDigits(qId);
-                    if (digits) match = snap.attById.get(digits);
+                for (const id of [qId, qId.startsWith('m') ? qId.slice(1) : 'm' + qId, getDigits(qId)]) {
+                    for (const attendee of snap.attById.get(id) || []) candidates.add(attendee);
                 }
             }
-            if (!match && queryName) {
-                const qName = queryName.toLowerCase();
-                const list = snap.attByName.get(qName);
-                if (list && list.length) {
-                    for (const a of list) {
-                        const aid = String(a.account || a.staffId || a.id || '').trim();
-                        if (!queryId || !aid || areStaffIdsEquivalent(queryId, aid)) {
-                            match = a;
-                            break;
-                        }
-                    }
-                }
+            if (queryName) {
+                for (const attendee of snap.attByName.get(queryName.toLowerCase()) || []) candidates.add(attendee);
             }
-            if (!match) {
-                match = snap.attendees.find(a => matchPerson(a, queryId, queryName));
-            }
+            const indexedMatches = [...candidates].filter(a => matchPerson(a, queryId, queryName));
+            const matches = indexedMatches.length ? indexedMatches : snap.attendees.filter(a => matchPerson(a, queryId, queryName));
 
-            if (match) {
-                const rawAtt = match.attendance || match.status || 'Attend on Time';
-                const isAnomaly = isAttendanceAnomaly(rawAtt);
-                const attLower = String(rawAtt).toLowerCase();
-                const issueType = (attLower.includes('absent') || rawAtt.includes('缺席')) ? 'absent' : 'delay';
-                const actualDate = match.date || match.actualDate || (match.attendanceTime && match.attendanceTime.match(/\d{4}-\d{2}-\d{2}/)?.[0]) || (match.reason && match.reason.match(/\d{4}-\d{2}-\d{2}/)?.[0]) || (snap.title && snap.title.match(/\b(20\d\d[-_/.](?:0?[1-9]|1[0-2])[-_/.](?:0?[1-9]|[12]\d|3[01]))\b/)?.[1]?.replace(/[/_.]/g, '-')) || snap.meetingDate || snap.meeting_date || '';
-                const item = {
-                    snapshotId: snap.snapshotId,
-                    title: snap.title,
-                    meetingDate: actualDate || snap.meetingDate || '',
-                    actualDate: actualDate || snap.meetingDate || '',
-                    attendanceDate: actualDate || snap.meetingDate || '',
-                    attendanceTime: match.attendanceTime || '',
-                    attendance: rawAtt,
-                    type: issueType,
-                    name: match.name || queryName,
-                    account: match.account || match.staffId || queryId,
-                    staffId: match.account || match.staffId || queryId,
-                    bu: match.bu || match.businessUnit || '',
-                    businessUnit: match.bu || match.businessUnit || '',
-                    customerGroup: match.customerGroup || ''
-                };
+            for (const match of matches) {
+                const item = makeAttendanceCheckItem(snap, match, queryId, queryName);
                 records.push(item);
-                if (isAnomaly) {
+                if (isAttendanceAnomaly(item.attendance)) {
                     anomalies.push(item);
                     anomalyCount++;
                 } else {
@@ -1288,6 +1267,7 @@ async function batchCheckAttendance(persons = []) {
 
         result[key] = {
             found: records.length > 0,
+            hasRecords: records.length > 0,
             hasAnomaly: anomalies.length > 0,
             cleanCount,
             anomalyCount,

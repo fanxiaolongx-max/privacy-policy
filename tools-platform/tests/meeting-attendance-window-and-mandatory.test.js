@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-function loadMeetingAttendance() {
+function loadMeetingAttendance(minSessionRecords = 1) {
     const htmlPath = path.resolve(__dirname, '../backend/builtin-tools/tool-msf5b7nn/index.html');
     const html = fs.readFileSync(htmlPath, 'utf8');
     const scriptMatch = html.match(/<script>([\s\S]*?)<\/script>/);
@@ -30,6 +30,7 @@ function loadMeetingAttendance() {
         querySelectorAll: () => [],
         querySelector: () => null,
         addEventListener: () => {},
+        setAttribute: () => {},
         style: {},
         innerHTML: '',
         textContent: '',
@@ -69,10 +70,12 @@ function loadMeetingAttendance() {
 
     vm.createContext(sandbox);
     vm.runInContext(scriptContent, sandbox);
-    return sandbox.window.__meetingAttendance;
+    const api = sandbox.window.__meetingAttendance;
+    if (minSessionRecords !== null) api.state.attendanceRules.minSessionRecords = minSessionRecords;
+    return api;
 }
 
-test('extractTicketDate recognizes RFC (NC), QR, and WFM (TK) ticket dates correctly', () => {
+test('extractTicketDate recognizes RFC (NC/NE), QR, and WFM (TK/TE) ticket dates correctly', () => {
     const api = loadMeetingAttendance();
 
     // RFC: NC20260422002126 -> 2026-04-22
@@ -82,6 +85,7 @@ test('extractTicketDate recognizes RFC (NC), QR, and WFM (TK) ticket dates corre
     assert.equal(rfcDate.year, 2026);
     assert.equal(rfcDate.month, 4);
     assert.equal(rfcDate.day, 22);
+    assert.equal(api.extractTicketDate('NE20260423002126').dateStr, '2026-04-23');
 
     // QR: QR20260804002864 -> 2026-08-04
     const qrDate = api.extractTicketDate('QR20260804002864');
@@ -98,6 +102,7 @@ test('extractTicketDate recognizes RFC (NC), QR, and WFM (TK) ticket dates corre
     assert.equal(wfmDate.year, 2026);
     assert.equal(wfmDate.month, 8);
     assert.equal(wfmDate.day, 4);
+    assert.equal(api.extractTicketDate('TE20260805000905').dateStr, '2026-08-05');
 
     // Standard date delimiter in ticket or fallback
     const delimited = api.extractTicketDate('INC-2026-05-15-999');
@@ -184,8 +189,34 @@ test('attendance verification window filters out older orders and keeps in-windo
     assert.equal(engineerA.attendance, 'Absent');
 });
 
-test('night-before WFM engineers are exempt, granted Attend on Time with 前夜WFM豁免', () => {
+test('multiple meeting dates use separate order windows and ignore a saved fallback date', () => {
     const api = loadMeetingAttendance();
+    api.state.attendanceRules.meetingDate = '2026-01-01';
+    api.state.attendanceRules.orderWindowMonths = 1;
+    api.state.sheets = [
+        { id: 'early', category: 'offline', sessionName: 'Early', fileName: 'early.xlsx', headers: ['工号', '签到时间'], rows: [['a1111111', '2026-03-01 09:00:00']] },
+        { id: 'late', category: 'offline', sessionName: 'Late', fileName: 'late.xlsx', headers: ['工号', '签到时间'], rows: [['b2222222', '2026-08-01 09:00:00']] },
+        { id: 'qr', category: 'qr', fileName: 'orders.xlsx', headers: ['Apply Fullname', 'Apply Accountid', 'Task ID', 'Create Time'], rows: [
+            ['Between meetings', 'c3333333', 'QR20260501000001', '2026-05-01 10:00:00'],
+            ['Before late meeting', 'd4444444', 'QR20260715000001', '2026-07-15 10:00:00']
+        ] }
+    ];
+
+    assert.equal(api.detectMeetingDate('Early'), '2026-03-01');
+    assert.equal(api.detectMeetingDate('Late'), '2026-08-01');
+    assert.equal(api.getAllMeetingDates().join(','), '2026-03-01,2026-08-01');
+    assert.equal(api.isOrderInMeetingWindows(api.extractTicketDate('QR20260501000001'), api.getAllMeetingDates(), 1), false);
+    assert.equal(api.isOrderInMeetingWindows(api.extractTicketDate('QR20260715000001'), api.getAllMeetingDates(), 1), true);
+    const people = api.extractAllPeople();
+    assert.equal(people.some(person => person.account === 'c3333333'), false);
+    assert.equal(people.some(person => person.account === 'd4444444'), true);
+
+    api.state.sheets = api.state.sheets.filter(sheet => sheet.category === 'qr');
+    assert.equal(api.getAllMeetingDates().join(','), '2026-01-01');
+});
+
+test('night-before WFM engineers are exempt, granted Attend on Time with 前夜WFM豁免', () => {
+    const api = loadMeetingAttendance(0);
     const { state } = api;
 
     // Meeting is on 2026-08-05
@@ -230,6 +261,7 @@ test('night-before WFM engineers are exempt, granted Attend on Time with 前夜W
     assert.equal(p.isNightWfmExempt, true);
     assert.equal(p.attendance, 'Attend on Time');
     assert.equal(p.attendanceMethod, '前夜WFM豁免');
+    assert.equal(p.attendanceTime, '', 'WFM task time must not appear as a meeting scan time');
 
     // Multi-session check
     state.sheets.push({
@@ -249,6 +281,7 @@ test('night-before WFM engineers are exempt, granted Attend on Time with 前夜W
         assert.ok(engineerInCache);
         assert.equal(engineerInCache.attendance, 'Attend on Time');
         assert.equal(engineerInCache.attendanceMethod, '前夜WFM豁免');
+        assert.equal(engineerInCache.attendanceTime, '');
     });
 });
 
@@ -325,6 +358,48 @@ test('manual mandatory attendees list (其他必选参会名单) correctly force
     assert.equal(state.mandatoryAttendees.length, 1);
     assert.equal(state.mandatoryAttendees[0].account, 'm9999999');
     assert.equal(state.attendanceRules.orderWindowMonths, 1);
+});
+
+test('refresh after import keeps per-session requirements and applies saved and preset exemptions', async () => {
+    const api = loadMeetingAttendance();
+    const { state } = api;
+    state.attendanceRules.orderWindowMonths = 1;
+    state.sheets = [
+        { id: 'qr', category: 'qr', fileName: 'QR.xlsx', sheetName: 'Sheet1',
+          headers: ['Task ID', 'Create Time', 'Apply Fullname', 'Apply Accountid', 'BU'],
+          rows: [
+              ['QR20260727A', '', 'liqiyan', 'U10001', 'NIS'],
+              ['QR20260727B', '', 'Alice', 'U10002', 'NIS']
+          ] },
+        { id: 'july', category: 'online', fileName: 'July.xlsx', sheetName: 'Join',
+          headers: ['meeting_title', 'user_id', 'join_time'], rows: [['July meeting', 'U99991', '2026-07-28 09:00:00']] },
+        { id: 'august', category: 'online', fileName: 'August.xlsx', sheetName: 'Join',
+          headers: ['meeting_title', 'user_id', 'join_time'], rows: [['August meeting', 'U99992', '2026-08-05 09:00:00']] }
+    ];
+    const before = await api.ensurePeopleCache();
+    assert.equal(before.sessions.length, 2);
+    assert.equal(before.all.length, 2);
+
+    state.mandatoryAttendees = [{ name: 'Manual', account: 'U10003', bu: 'NIS' }];
+    state.exemptions = [{ name: 'Alice', account: 'U10002' }];
+    assert.equal(await api.refreshCalculatedResults('Refreshing'), true);
+
+    const after = state.peopleCache;
+    assert.equal(after.all.length, 3);
+    for (const session of after.sessions) {
+        const records = after.all.map(person => person.sessionRecords?.[session.name]);
+        assert.ok(records.every(record => record?.required), 'the refreshed list must retain each session requirement');
+        assert.equal(after.sessionStats[session.name].total, 3);
+        assert.equal(api.getSessionPeopleRows(after.all, session.name).length, 3);
+    }
+    const preset = after.all.find(person => person.account === 'U10001');
+    const saved = after.all.find(person => person.account === 'U10002');
+    const manual = after.all.find(person => person.account === 'U10003');
+    assert.ok(preset && saved && manual);
+    assert.ok(after.sessions.every(session => preset.sessionRecords[session.name].attendanceMethod === '豁免名单'));
+    assert.ok(after.sessions.every(session => saved.sessionRecords[session.name].attendanceMethod === '豁免名单'));
+    assert.ok(after.sessions.every(session => manual.sessionRecords[session.name].attendance === 'Absent'));
+    assert.equal(manual.requiredSessionsCount, 2);
 });
 
 test('multi-session imports correctly handle spanning window, per-session night WFM exemption, and mandatory attendees', async () => {
@@ -462,6 +537,7 @@ test('multi-session imports correctly handle spanning window, per-session night 
         }
     ];
     state.mandatoryAttendees = [];
+    state.attendanceRules.minSessionRecords = 0;
 
     api.invalidatePeopleCache();
     const sameDayCache = await api.ensurePeopleCache();

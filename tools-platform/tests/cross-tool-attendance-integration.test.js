@@ -22,6 +22,42 @@ test('snapshot roster IDs remove one import prefix and preserve the WX family', 
     assert.equal(normalizeStaffId('T8801'), 'T8801');
 });
 
+test('multi-session snapshot exposes each meeting to attendance queries without duplicating roster', async (t) => {
+    await meetingRepo.ensureReady();
+    const id = `snap_multi_query_${Date.now()}`;
+    await meetingRepo.saveSnapshot({
+        id,
+        title: '多场次会议考勤',
+        meetingDate: '2026-09-22',
+        summary: {
+            attendees: [{ account: 'T99101', name: '跨场次测试人员', attendance: 'Attend on Time', bu: 'NIS' }],
+            sessionAttendees: [
+                { account: 'T99101', name: '跨场次测试人员', sessionName: '第一场', date: '2026-09-22', attendance: 'Attend on Time', bu: 'NIS' },
+                { account: 'T99101', name: '跨场次测试人员', sessionName: '第二场', date: '2026-09-29', attendance: 'Absent', bu: 'NIS' }
+            ]
+        },
+        payload: { sheets: [] }
+    });
+    t.after(() => meetingRepo.deleteSnapshot(id));
+
+    const single = await meetingRepo.checkPersonAttendance({ staffId: 'T99101' });
+    const singleRecords = single.records.filter(item => item.snapshotId === id);
+    assert.equal(single.hasRecords, true);
+    assert.equal(singleRecords.length, 2);
+    assert.equal(singleRecords.find(item => item.sessionName === '第二场').type, 'absent');
+    assert.equal(singleRecords.find(item => item.sessionName === '第二场').meetingDate, '2026-09-29');
+    assert.equal(singleRecords[0].meetingTitle, '多场次会议考勤');
+
+    const batch = await meetingRepo.batchCheckAttendance([{ staffId: 'T99101' }]);
+    const batchRecords = batch['T99101|'].records.filter(item => item.snapshotId === id);
+    assert.equal(batchRecords.length, 2);
+    assert.equal(batch['T99101|'].hasRecords, true);
+    assert.equal(batchRecords.filter(item => item.type === 'absent').length, 1);
+
+    const roster = await meetingRepo.extractRoster();
+    assert.equal(roster.filter(item => item.name === '跨场次测试人员').length, 1);
+});
+
 test('Cross-tool attendance check & roster extraction integration test', async (t) => {
     await meetingRepo.ensureReady();
     await incentiveRepo.ensureReady();
@@ -165,6 +201,7 @@ test('Cross-tool attendance check & roster extraction integration test', async (
             assert.equal(res1.status, 200);
             const data1 = await res1.json();
             assert.equal(data1.found, true);
+            assert.equal(data1.hasRecords, true);
             assert.equal(data1.hasAnomaly, true);
 
             // POST /batch-attendance-check
