@@ -24,6 +24,14 @@
     }
 
     /**
+     * 剥除文本中的 HTML 标签，返回干净的纯文本
+     */
+    function stripHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+
+    /**
      * 判断字段是否为内部保留字段（不作为业务字段直接平铺）
      */
     function isInternalField(key) {
@@ -351,9 +359,12 @@
         // SLA 状态标签
         const slaStatusEl = document.getElementById('sla-detail-sla-status');
         if (slaStatusEl) {
-            if (row._slaText && row._slaText !== '-') {
+            const cleanSla = (row._slaCleanText && row._slaCleanText !== '-')
+                ? row._slaCleanText
+                : stripHtml(row._slaText);
+            if (cleanSla && cleanSla !== '-') {
                 slaStatusEl.style.display = 'inline-flex';
-                slaStatusEl.innerHTML = `🚨 ${escapeHTML(row._slaText)}`;
+                slaStatusEl.textContent = `🚨 ${cleanSla}`;
                 slaStatusEl.className = 'sla-detail-badge-pill sla-status-pill ' + (row._rowClass || '');
             } else {
                 slaStatusEl.style.display = 'none';
@@ -457,32 +468,30 @@
             displayedCount++;
 
             const displayVal = isEmpty ? '(空)' : String(val);
+            const isLong = !isEmpty && (displayVal.length > 55 || displayVal.includes('\n'));
             const rowClass = [
                 'sla-detail-field-item',
                 isFrequent ? 'is-frequent' : '',
-                isEmpty ? 'is-empty' : ''
+                isEmpty ? 'is-empty' : '',
+                isLong ? 'is-long-content' : ''
             ].filter(Boolean).join(' ');
 
             html += `
                 <div class="${rowClass}" data-field="${escapeHTML(key)}">
-                    <div class="sla-detail-field-header">
-                        <div class="sla-detail-field-title-group">
-                            ${isFrequent ? `<span class="sla-detail-frequent-badge" title="服务端已记住：该字段已累计复制 ${copyCount} 次">⭐ 常用 (${copyCount}次)</span>` : ''}
-                            <span class="sla-detail-field-name" title="${escapeHTML(key)}">${escapeHTML(key)}</span>
-                        </div>
-                        <div class="sla-detail-field-actions">
-                            <button type="button" class="sla-detail-copy-btn" 
-                                onclick="window.SLARowDetail.handleCopy('${escapeHTML(key)}', this)" 
-                                title="点击一键复制该字段内容">
-                                📋 复制
-                            </button>
-                        </div>
+                    <div class="sla-detail-field-label-col" title="${escapeHTML(key)}">
+                        ${isFrequent ? `<span class="sla-detail-frequent-badge" title="服务端已记住：该字段已累计复制 ${copyCount} 次">⭐ 常用 (${copyCount}次)</span>` : ''}
+                        <span class="sla-detail-field-name">${escapeHTML(key)}</span>
                     </div>
-                    <div class="sla-detail-field-value ${isEmpty ? 'empty-val' : ''}" 
-                        onclick="window.SLARowDetail.handleCopy('${escapeHTML(key)}', this.previousElementSibling.querySelector('.sla-detail-copy-btn'))"
-                        title="点击快速复制">
+                    <div class="sla-detail-field-value-col ${isEmpty ? 'empty-val' : ''}" 
+                        onclick="window.SLARowDetail.handleCopy('${escapeHTML(key)}', this.parentElement.querySelector('.sla-detail-copy-btn'))"
+                        title="点击快速复制内容">
                         ${escapeHTML(displayVal)}
                     </div>
+                    <button type="button" class="sla-detail-copy-btn" 
+                        onclick="window.SLARowDetail.handleCopy('${escapeHTML(key)}', this)" 
+                        title="点击一键复制该字段内容">
+                        📋
+                    </button>
                 </div>
             `;
         });
@@ -555,7 +564,12 @@
         const lines = [`=== ${state.title || '详单明细'} (第 ${currentRowIndex + 1} 行) ===`];
 
         if (row._slaText && row._slaText !== '-') {
-            lines.push(`预警与 SLA 状态: ${row._slaText}`);
+            const cleanSla = (row._slaCleanText && row._slaCleanText !== '-')
+                ? row._slaCleanText
+                : stripHtml(row._slaText);
+            if (cleanSla && cleanSla !== '-') {
+                lines.push(`预警与 SLA 状态: ${cleanSla}`);
+            }
         }
 
         const allKeys = [];

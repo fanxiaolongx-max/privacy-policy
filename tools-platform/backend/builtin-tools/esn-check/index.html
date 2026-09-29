@@ -80,7 +80,7 @@
             background-color: var(--success-hover);
             transform: translateY(-1px);
         }
-        .notice-overlay { position: fixed; inset: 0; z-index: 1000; display: none; align-items: center; justify-content: center; padding: 10px; background: rgba(15, 23, 42, .45); }
+        .notice-overlay { position: fixed; inset: 0; z-index: 20000; display: none; align-items: center; justify-content: center; padding: 10px; background: rgba(15, 23, 42, .55); backdrop-filter: blur(2px); }
         .notice-overlay.show { display: flex; }
         .notice-panel { width: min(560px, 100%); max-height: min(80vh, 680px); display: flex; flex-direction: column; overflow: hidden; border-radius: 14px; background: #fff; box-shadow: 0 20px 50px rgba(15, 23, 42, .25); }
         .notice-panel.wide { width: min(1500px, 100%); max-height: 94vh; }
@@ -100,7 +100,7 @@
         .notice-export-status { margin-right: auto; color: #475569; font-size: 12px; }
         .notice-actions button { border: 0; border-radius: 8px; padding: 8px 22px; background: var(--primary); color: #fff; cursor: pointer; }
         .notice-actions .notice-export { background: #e8f1ff; color: #1d4ed8; }
-        .export-overlay { position: fixed; inset: 0; z-index: 1200; display: none; align-items: center; justify-content: center; padding: 16px; background: rgba(15, 23, 42, .68); }
+        .export-overlay { position: fixed; inset: 0; z-index: 21000; display: none; align-items: center; justify-content: center; padding: 16px; background: rgba(15, 23, 42, .68); }
         .export-overlay.show { display: flex; }
         .export-dialog { width: min(700px, 100%); max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; border-radius: 16px; background: #fff; box-shadow: 0 24px 70px rgba(0, 0, 0, .35); }
         .export-dialog-head { padding: 20px 24px 12px; }
