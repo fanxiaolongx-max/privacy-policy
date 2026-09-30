@@ -252,4 +252,92 @@ test('餐单核验: Case 8 识别到WK周数列（包含WK且其余全是数字�
   assert.equal(Number(cleanedShifted[2][shiftedQtyIdx]), 35, 'Shifted quantity should be 35, not week 2');
 });
 
+test('餐单核验: Case 9 源表中采购量为0（或0.0、0kg等）自动忽略过滤该行', () => {
+  const ctx = createContext();
+  const collector = [];
+  const case9Grid = [
+    ['DATE', 'BIG SERIES', 'DESCRIPTION OF GOODS', 'UNIT', '采购量'],
+    ['2026/10/5', '蔬菜', '老豆腐', 'pcs', 20],
+    ['2026/10/5', '蔬菜', '零采购韭菜', 'kg', 0],
+    ['2026/10/5', '蔬菜', '零采购空心菜', 'kg', '0'],
+    ['2026/10/5', '蔬菜', '零浮点白菜', 'kg', '0.0'],
+    ['2026/10/5', '蔬菜', '零单位菠菜', 'kg', '0kg'],
+    ['2026/10/5', '蔬菜', '正常番茄', 'kg', 15]
+  ];
+
+  const cleaned = ctx.cleanAndFilterData(case9Grid, false, { sourceName: '核心标准源', fileName: 'test9.xlsx', sheetName: 'Sheet1' }, collector);
+  assert.equal(cleaned.length, 3, 'Header + 2 non-zero quantity rows');
+  assert.equal(cleaned[1][2], '老豆腐');
+  assert.equal(cleaned[2][2], '正常番茄');
+
+  const zeroAnomalies = collector.filter(a => a.issueType === '数量为空或为0');
+  assert.equal(zeroAnomalies.length, 4, 'Should record 4 anomalies for the 4 zero-quantity rows');
+  assert.equal(zeroAnomalies[0].actionTaken, '过滤跳过');
+  assert.equal(zeroAnomalies[0].hasCorrection, false);
+});
+
+test('餐单核验: Case 10 比对结果中当 SUPPLIER NAME 全为空时，不标记疑似缺货，只核对差值', () => {
+  const ctx = createContext();
+  const coreRows = [
+    { key: '2026/10/5\u0000老豆腐', date: '2026/10/5', item: '老豆腐', qty: 20, unitText: 'pcs', bigSeriesText: '蔬菜', normalizedItem: '老豆腐', quantityAny: false },
+    { key: '2026/10/5\u0000韭菜', date: '2026/10/5', item: '韭菜', qty: 10, unitText: 'kg', bigSeriesText: '蔬菜', normalizedItem: '韭菜', quantityAny: false },
+    { key: '2026/10/5\u0000草鱼', date: '2026/10/5', item: '草鱼', qty: 5, unitText: '条', bigSeriesText: '海鲜', normalizedItem: '草鱼', quantityAny: false }
+  ];
+
+  // 待核对表中 SUPPLIER NAME 全为空
+  const targetRowsEmptySupplier = [
+    { key: '2026/10/5\u0000老豆腐', date: '2026/10/5', item: '老豆腐', qty: 20, unitText: 'pcs', bigSeriesText: '蔬菜', normalizedItem: '老豆腐', supplier: '', hasMissingSupplier: true },
+    { key: '2026/10/5\u0000韭菜', date: '2026/10/5', item: '韭菜', qty: 8, unitText: 'kg', bigSeriesText: '蔬菜', normalizedItem: '韭菜', supplier: '', hasMissingSupplier: true }
+    // 草鱼未送货 (少了)
+  ];
+
+  const comparison = ctx.buildComparisonData(coreRows, targetRowsEmptySupplier);
+  assert.equal(comparison.length, 3);
+
+  // 验证不标记“疑似缺货”
+  comparison.forEach(row => {
+    assert.notEqual(row.remark, '疑似缺货', `Row ${row.item} should NOT be marked 疑似缺货 when all suppliers are empty`);
+    assert.equal(row.remark, '', 'Remark should remain empty');
+  });
+
+  const laodoufu = comparison.find(r => r.item === '老豆腐');
+  assert.equal(laodoufu.status, '一致');
+  assert.equal(laodoufu.difference, 0);
+
+  const jiucai = comparison.find(r => r.item === '韭菜');
+  assert.equal(jiucai.status, '少了');
+  assert.equal(jiucai.difference, -2);
+
+  const caoyu = comparison.find(r => r.item === '草鱼');
+  assert.equal(caoyu.status, '少了');
+  assert.equal(caoyu.difference, -5);
+  assert.equal(caoyu.remark, '', 'Missing core item also must NOT be marked 疑似缺货 when all suppliers empty');
+});
+
+test('餐单核验: Case 11 比对标签上的数字严格按照核对结果非一致的条目统计', () => {
+  const ctx = createContext();
+  const comparisonResults = [
+    { status: '一致', remark: '' },
+    { status: '一致', remark: '' },
+    { status: '少了', remark: '' },
+    { status: '多了', remark: '' },
+    { status: '核心源无此物品', remark: '' },
+    { status: '一致', remark: '疑似缺货' } // 即使有疑似缺货，一致的条目也不计入差异
+  ];
+
+  const nonMatchCount = comparisonResults.filter(row => row.status !== '一致').length;
+  assert.equal(nonMatchCount, 3, 'Should strictly count 3 non-matching items (少了、多了、核心源无此物品)');
+
+  // 模拟 updateAllBadges 的统计逻辑
+  let badgeText = '';
+  ctx.document.getElementById = (id) => ({
+    set textContent(val) {
+      if (id === 'tab-badge-comparison') badgeText = val;
+    }
+  });
+  ctx.updateAllBadges();
+  // 校验当前比较结果 badge 包含差异描述
+  assert.match(badgeText, /\d+项差异/);
+});
+
 

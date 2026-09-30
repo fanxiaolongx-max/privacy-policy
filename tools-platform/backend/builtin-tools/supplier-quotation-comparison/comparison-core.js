@@ -732,6 +732,10 @@
       const quantityRaw = cellAt(row, config.columns.quantity);
       const unitRaw = cellAt(row, config.columns.unit);
       const parsedQty = parseQuantityUnit(quantityRaw, unitRaw);
+      if (config.role === 'base' && config.columns.quantity !== undefined && parsedQty.quantity === 0) {
+        // 如果源表采购量为0，自动忽略该数据行
+        continue;
+      }
       const record = {
         id: `${config.name}:${rowIndex + 1}`,
         sheet: config.name,

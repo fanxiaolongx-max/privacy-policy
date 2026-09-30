@@ -354,6 +354,27 @@ test('automatically ignores WK reserved week columns and avoids picking them as 
     assert.notEqual(records[0].quantity, 1);
 });
 
+test('automatically ignores rows where purchase quantity is 0 in base sheet (Case 9)', () => {
+    const sheet = {
+        name: 'Week1 (9.5-9.9)',
+        matrix: [
+            ['DATE', 'BIG SERIES', 'DESCRIPTION OF GOODS', 'UNIT', '采购量'],
+            ['2026/10/5', '蔬菜', '老豆腐', 'pcs', 20],
+            ['2026/10/5', '蔬菜', '零采购韭菜', 'kg', 0],
+            ['2026/10/5', '蔬菜', '零采购白菜', 'kg', '0'],
+            ['2026/10/5', '蔬菜', '新鲜番茄', 'kg', 15]
+        ]
+    };
+    const configs = core.analyzeSheets([sheet]);
+    configs[0].role = 'base';
+    const records = core.recordsFromSheet(configs[0]);
+    assert.equal(records.length, 2, 'Should only contain the 2 non-zero quantity rows');
+    assert.equal(records[0].item, '老豆腐');
+    assert.equal(records[0].quantity, 20);
+    assert.equal(records[1].item, '新鲜番茄');
+    assert.equal(records[1].quantity, 15);
+});
+
 
 
 
