@@ -770,6 +770,69 @@
 
   const ORDER_FOOD_KEYWORDS_REGEX = /(?:鱼|虾|蟹|贝|鱿|螺|肚|鳝|参|蛙|鸡|鸭|鹅|牛|羊|猪|肉|排骨|爪|杂|肺|肠|翅|胗|卷|骨|鸽|菜|豆|芹|瓜|菇|茄|椒|葱|蒜|姜|萝|莲|藕|笋|苗|蓝|薯|芋|耳|菌|韭|菠|麦|芽|腐|花菜|香菜|油麦|生菜|海带|木耳|香菇|平菇|茶树菇|金针菇|草鱼|土鸡|白芷|面筋|豆腐|粉丝|粉|米|面|油|盐|糖|醋|酱|精|料酒|生抽|老抽|耗油|蚝油|八角|花椒|辣椒|孜然|咖喱|芝麻|淀粉|挂面|秋葵|大白菜|小白菜|上海青|包菜|冬瓜|豆角|香干|魔芋|鲤鱼|羊蝎子|老鸭|鸭血|毛肚|西芹|土豆|番茄|洋葱|腐竹|地皮菜|白醋)/;
 
+  function cleanOrderBrackets(value) {
+    if (value === null || value === undefined) return '';
+    let str = String(value).trim();
+    if (!str) return '';
+
+    // 1. 如果整个字符串被括号包裹，如 "(瓶)"、"（件）"、"[kg]"、"【包】"，去除外层包裹括号（支持多层）
+    while (/^[（(\[【{]\s*.*?\s*[)）\]】}]$/.test(str)) {
+      const wrappedMatch = str.match(/^[（(\[【{]\s*(.*?)\s*[)）\]】}]$/);
+      if (wrappedMatch) {
+        str = wrappedMatch[1].trim();
+      } else {
+        break;
+      }
+    }
+
+    // 2. 清除末尾残留的未配对开括号，例如 "黄豆酱2件("、"老豆腐（"
+    str = str.replace(/[（(\[【{]+\s*$/, '').trim();
+
+    // 3. 清除开头残留的未配对闭括号，例如 ")瓶"、"）件"
+    str = str.replace(/^\s*[)）\]】}]+/, '').trim();
+
+    // 4. 清除空括号对，如 "黄豆酱()"、"生抽（ ）"
+    str = str.replace(/[（(\[【{]\s*[)）\]】}]/g, '').trim();
+
+    // 5. 计算开闭括号数量，清理孤立/未配对的多余括号
+    const openMatches = str.match(/[（(\[【{]/g) || [];
+    const closeMatches = str.match(/[)）\]】}]/g) || [];
+    if (openMatches.length < closeMatches.length && /[)）\]】}]$/.test(str)) {
+      const diff = closeMatches.length - openMatches.length;
+      for (let k = 0; k < diff; k++) {
+        str = str.replace(/[)）\]】}]$/, '').trim();
+      }
+    } else if (openMatches.length > closeMatches.length && /[（(\[【{]$/.test(str)) {
+      const diff = openMatches.length - closeMatches.length;
+      for (let k = 0; k < diff; k++) {
+        str = str.replace(/[（(\[【{]$/, '').trim();
+      }
+    } else if (openMatches.length > closeMatches.length && /^[（(\[【{]/.test(str)) {
+      const diff = openMatches.length - closeMatches.length;
+      for (let k = 0; k < diff; k++) {
+        str = str.replace(/^[（(\[【{]/, '').trim();
+      }
+    } else if (openMatches.length < closeMatches.length && /^[)）\]】}]/.test(str)) {
+      const diff = closeMatches.length - openMatches.length;
+      for (let k = 0; k < diff; k++) {
+        str = str.replace(/^[)）\]】}]/, '').trim();
+      }
+    }
+
+    // 6. 兜底清理孤立闭括号（若字符串内没有开括号，但末尾有闭括号），例如 "瓶)"、"瓶）"
+    if (!/[（(\[【{]/.test(str)) {
+      str = str.replace(/[)）\]】}]+$/, '').trim();
+    }
+
+    // 7. 兜底清理孤立开括号（若字符串内没有闭括号，但开头有开括号），例如 "(黄豆酱"
+    if (!/[)）\]】}]/.test(str)) {
+      str = str.replace(/^[（(\[【{]+/, '').trim();
+    }
+
+    // 8. 去除连续多余空格
+    return str.replace(/\s+/g, ' ');
+  }
+
   function compactOrderText(value) {
     if (value === null || value === undefined) return '';
     return String(value).toLowerCase().replace(/[‘’“”'"`~!@#$%^&*+=|\\/:;,.?，。：；！？（）()\[\]{}、·—_\s-]+/g, '');
@@ -1339,6 +1402,7 @@
           continue;
         }
 
+        const purchaseQtyIdx = colMap['采购量'];
         const descLower = descriptionValue.toLowerCase();
         const isHeaderDesc = descLower === '采购量' || descLower === 'description of goods' || descLower === '品名' || descLower === '商品名称';
         const isHeaderBigSeries = combinedBigSeries.toLowerCase() === 'big series' || combinedBigSeries.toLowerCase() === '大分类';
@@ -1347,7 +1411,6 @@
           continue;
         }
 
-        const purchaseQtyIdx = colMap['采购量'];
         if (purchaseQtyIdx !== undefined) {
           const qty = String(row[purchaseQtyIdx] ?? '').trim();
           const parsedQty = parseOrderNumber(qty);
@@ -1373,6 +1436,24 @@
           }
         }
 
+        if (descIdx !== undefined) {
+          const rawDesc = String(row[descIdx] ?? '').trim();
+          const cleanedDesc = cleanOrderBrackets(rawDesc);
+          if (cleanedDesc && cleanedDesc !== rawDesc) {
+            row[descIdx] = cleanedDesc;
+            logAnomaly(i + 1, 'DESCRIPTION OF GOODS (品名)', rawDesc, '品名括号冗余自动清洗', `检测到品名中包含多余或未闭合的括号字符 "${rawDesc}"`, true, `已自动去除括号规范化为 "${cleanedDesc}"`, '去除括号', row);
+          }
+        }
+
+        if (unitIdx !== undefined) {
+          const rawUnit = String(row[unitIdx] ?? '').trim();
+          const cleanedUnit = cleanOrderBrackets(rawUnit);
+          if (cleanedUnit && cleanedUnit !== rawUnit) {
+            row[unitIdx] = cleanedUnit;
+            logAnomaly(i + 1, 'UNIT (单位)', rawUnit, '单位括号冗余自动清洗', `检测到单位中包含多余或未闭合的括号字符 "${rawUnit}"`, true, `已自动去除括号规范化为 "${cleanedUnit}"`, '去除括号', row);
+          }
+        }
+
         let correctedQty;
         let correctedUnit;
         if (isTarget && purchaseQtyIdx !== undefined) {
@@ -1382,7 +1463,7 @@
           const combined = rawQty.match(/^([+-]?\d+(?:\.\d+)?)\s*([^\d\s].*?)\s*[,，;；。]?$/);
           if (combined) {
             correctedQty = combined[1];
-            correctedUnit = combined[2].trim();
+            correctedUnit = cleanOrderBrackets(combined[2].trim());
             logAnomaly(i + 1, '采购量', rawQty, '数量含单位混写', `采购量中混入了文本字符 "${rawQty}"`, true, `已自动正则拆解：采购量提取为 "${correctedQty}"，单位自动识别为 "${correctedUnit}"`, '拆解数值与单位', row);
           } else {
             correctedQty = rawQty;
@@ -1511,14 +1592,27 @@
       const lines = text.split('\n').map(l => l.trim().replace(/[，。,.;；\s]+$/, '')).filter(l => l.length > 0);
       const parsedData = [];
       lines.forEach(line => {
+        // 先检查是否有括号包裹数字与单位的形式，例如 "黄豆酱2件(12瓶)" 或 "黄豆酱2件（12瓶）"
+        const bracketNumMatch = line.match(/^(.*?)[(（\[【]\s*(\d+(?:\.\d+)?)\s*([a-zA-Z\u4e00-\u9fa5]*)\s*[)）\]】]$/);
+        if (bracketNumMatch) {
+          const num = Number(bracketNumMatch[2].trim());
+          if (num === 0) return;
+          const item = cleanOrderBrackets(bracketNumMatch[1].trim());
+          const unit = cleanOrderBrackets(bracketNumMatch[3].trim());
+          parsedData.push({ item, qty: bracketNumMatch[2].trim(), unit, quantityAny: false });
+          return;
+        }
+
         const regex = /^(.*?)(\d+(?:\.\d+)?)\s*([a-zA-Z\u4e00-\u9fa5（）\(\)]*)$/;
         const match = line.match(regex);
         if (match) {
           const num = Number(match[2].trim());
           if (num === 0) return;
-          parsedData.push({ item: match[1].trim(), qty: match[2].trim(), unit: match[3].trim(), quantityAny: false });
+          const item = cleanOrderBrackets(match[1].trim());
+          const unit = cleanOrderBrackets(match[3].trim());
+          parsedData.push({ item, qty: match[2].trim(), unit, quantityAny: false });
         } else {
-          parsedData.push({ item: line, qty: '', unit: '', quantityAny: true });
+          parsedData.push({ item: cleanOrderBrackets(line), qty: '', unit: '', quantityAny: true });
         }
       });
       return parsedData;
@@ -1840,7 +1934,7 @@
 
     // ===== 合并与核对 =====
     function normalizeItem(value) {
-      return String(value ?? '').trim().replace(/\s+/g, ' ').toLowerCase();
+      return cleanOrderBrackets(String(value ?? '')).trim().replace(/\s+/g, ' ').toLowerCase();
     }
 
     function numericQty(value) {
@@ -1875,15 +1969,18 @@
         const headers = grid[0];
         const index = name => headers.indexOf(name);
         grid.slice(1).forEach(row => {
-          const item = index('DESCRIPTION OF GOODS') === -1 ? '' : String(row[index('DESCRIPTION OF GOODS')] ?? '').trim();
+          const rawItem = index('DESCRIPTION OF GOODS') === -1 ? '' : String(row[index('DESCRIPTION OF GOODS')] ?? '').trim();
+          const item = cleanOrderBrackets(rawItem);
           if (!item) return;
+          const rawUnit = index('UNIT') === -1 ? '' : String(row[index('UNIT')] ?? '').trim();
+          const unit = cleanOrderBrackets(rawUnit);
           records.push({
             date: index('DATE') === -1 ? '' : normalizeDate(row[index('DATE')]),
             item,
             qty: index('采购量') === -1 ? 0 : numericQty(row[index('采购量')]),
             supplier: index('SUPPLIER NAME') === -1 ? '' : String(row[index('SUPPLIER NAME')] ?? '').trim(),
             bigSeries: index('BIG SERIES') === -1 ? '' : String(row[index('BIG SERIES')] ?? '').trim(),
-            unit: index('UNIT') === -1 ? '' : String(row[index('UNIT')] ?? '').trim(),
+            unit,
             quantityAny: false,
             source: `${sourceName} / ${sheetName}`
           });
@@ -1896,12 +1993,13 @@
       const map = new Map();
       records.forEach(record => {
         const date = record.date || '';
-        const normalizedItem = normalizeItem(record.item);
+        const cleanedItem = cleanOrderBrackets(record.item);
+        const normalizedItem = normalizeItem(cleanedItem);
         if (!normalizedItem) return;
         const key = `${date}\u0000${normalizedItem}`;
         if (!map.has(key)) {
           map.set(key, {
-            key, date, normalizedItem, item: record.item, qty: 0,
+            key, date, normalizedItem, item: cleanedItem, qty: 0,
             suppliers: new Set(), bigSeries: new Set(), units: new Set(), sources: new Set(),
             hasMissingSupplier: false, quantityAny: false
           });
@@ -1912,7 +2010,7 @@
         if (record.quantityAny) merged.quantityAny = true;
         addReference(merged.suppliers, record.supplier);
         addReference(merged.bigSeries, record.bigSeries);
-        addReference(merged.units, record.unit);
+        addReference(merged.units, cleanOrderBrackets(record.unit));
         addReference(merged.sources, record.source);
       });
       return [...map.values()].map(row => ({
@@ -1927,10 +2025,11 @@
     function buildMergedCoreData() {
       const records = collectExcelRecords(window.auditStore.benchmark.excel, '核心数据源');
       window.auditStore.benchmark.txt.parsedData.forEach(row => {
-        if (!row.item) return;
+        const item = cleanOrderBrackets(row.item);
+        if (!item) return;
         records.push({
-          date: WILDCARD_DATE, item: row.item, qty: numericQty(row.qty), supplier: '',
-          bigSeries: '', unit: row.unit, quantityAny: Boolean(row.quantityAny || !row.qty), source: '标准文本'
+          date: WILDCARD_DATE, item, qty: numericQty(row.qty), supplier: '',
+          bigSeries: '', unit: cleanOrderBrackets(row.unit), quantityAny: Boolean(row.quantityAny || !row.qty), source: '标准文本'
         });
       });
       return aggregateRecords(records);
@@ -1969,11 +2068,13 @@
 
         const isSuspectedOutOfStock = hasAnySupplier && (target.hasMissingSupplier || !target.supplier);
         result.push({
-          status, date: target.date, item: target.item, expected, actual: target.qty,
+          status, date: target.date,
+          item: cleanOrderBrackets(target.item),
+          expected, actual: target.qty,
           difference, quantityAny, supplier: target.supplier,
           remark: isSuspectedOutOfStock ? '疑似缺货' : '',
-          coreUnit: [exact?.unitText, wildcard?.unitText].filter(Boolean).join(' / '),
-          targetUnit: target.unitText,
+          coreUnit: cleanOrderBrackets([exact?.unitText, wildcard?.unitText].filter(Boolean).join(' / ')),
+          targetUnit: cleanOrderBrackets(target.unitText),
           bigSeries: target.bigSeriesText,
           sourceText: target.sourceText
         });
@@ -1983,14 +2084,14 @@
         result.push({
           status: '少了',
           date: core.date,
-          item: core.item,
+          item: cleanOrderBrackets(core.item),
           expected: core.qty,
           actual: 0,
           difference: core.quantityAny ? 0 : -core.qty,
           quantityAny: core.quantityAny,
           supplier: '',
           remark: hasAnySupplier ? '疑似缺货' : '',
-          coreUnit: core.unitText,
+          coreUnit: cleanOrderBrackets(core.unitText),
           targetUnit: '',
           bigSeries: core.bigSeriesText,
           sourceText: ''
@@ -2000,14 +2101,14 @@
         result.push({
           status: '少了',
           date: WILDCARD_DATE,
-          item: core.item,
+          item: cleanOrderBrackets(core.item),
           expected: core.qty,
           actual: 0,
           difference: core.quantityAny ? 0 : -core.qty,
           quantityAny: core.quantityAny,
           supplier: '',
           remark: hasAnySupplier ? '疑似缺货' : '',
-          coreUnit: core.unitText,
+          coreUnit: cleanOrderBrackets(core.unitText),
           targetUnit: '',
           bigSeries: core.bigSeriesText,
           sourceText: ''

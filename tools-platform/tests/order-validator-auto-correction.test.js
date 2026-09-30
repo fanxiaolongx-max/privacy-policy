@@ -380,4 +380,82 @@ test('餐单核验: Case 12 比对结果中应有数量、实际数量、差值�
   assert.equal(caoyu.status, '少了');
 });
 
+test('餐单核验: Case 13 自动去除品名和单位中的残留括号并完成准确比对', () => {
+  const ctx = createContext();
+
+  // 1. 验证 cleanOrderBrackets 基础函数对各种残余、包裹、未闭合括号的处理
+  assert.equal(ctx.cleanOrderBrackets('黄豆酱2件('), '黄豆酱2件', 'Trailing unclosed ( should be stripped');
+  assert.equal(ctx.cleanOrderBrackets('老豆腐（'), '老豆腐', 'Trailing unclosed （ should be stripped');
+  assert.equal(ctx.cleanOrderBrackets('瓶)'), '瓶', 'Trailing stray ) should be stripped');
+  assert.equal(ctx.cleanOrderBrackets('瓶）'), '瓶', 'Trailing stray ） should be stripped');
+  assert.equal(ctx.cleanOrderBrackets('(瓶)'), '瓶', 'Outer () should be stripped');
+  assert.equal(ctx.cleanOrderBrackets('（瓶）'), '瓶', 'Outer （） should be stripped');
+  assert.equal(ctx.cleanOrderBrackets('[kg]'), 'kg', 'Outer [] should be stripped');
+  assert.equal(ctx.cleanOrderBrackets('【袋】'), '袋', 'Outer 【】 should be stripped');
+  assert.equal(ctx.cleanOrderBrackets('）件'), '件', 'Leading stray ） should be stripped');
+  assert.equal(ctx.cleanOrderBrackets('(黄豆酱'), '黄豆酱', 'Leading stray ( should be stripped');
+  assert.equal(ctx.cleanOrderBrackets('黄豆酱()'), '黄豆酱', 'Empty brackets should be stripped');
+  assert.equal(ctx.cleanOrderBrackets('生抽（  ）'), '生抽', 'Empty fullwidth brackets should be stripped');
+  assert.equal(ctx.cleanOrderBrackets('可口可乐(罐装)'), '可口可乐(罐装)', 'Valid specification inside brackets should be preserved');
+  assert.equal(ctx.cleanOrderBrackets('可口可乐(罐装))'), '可口可乐(罐装)', 'Extra closing bracket on spec should be cleaned');
+
+  // 2. 验证标准文本解析 parseTextToTable 支持形如 "黄豆酱2件(12瓶)" 的解析
+  const parsed = ctx.parseTextToTable("黄豆酱2件(12瓶)\n老豆腐（10块）\n可乐24听");
+  assert.equal(parsed.length, 3);
+  assert.equal(parsed[0].item, '黄豆酱2件');
+  assert.equal(parsed[0].qty, '12');
+  assert.equal(parsed[0].unit, '瓶');
+  assert.equal(parsed[1].item, '老豆腐');
+  assert.equal(parsed[1].qty, '10');
+  assert.equal(parsed[1].unit, '块');
+  assert.equal(parsed[2].item, '可乐');
+  assert.equal(parsed[2].qty, '24');
+  assert.equal(parsed[2].unit, '听');
+
+  // 3. 验证 cleanAndFilterData 自动检测并清洗表格中的残存括号
+  const collector = [];
+  const rawExcelGrid = [
+    ["DATE", "DESCRIPTION OF GOODS", "采购量", "UNIT"],
+    ["2026/10/5", "黄豆酱2件(", "12", "瓶)"],
+    ["2026/10/5", "老豆腐（", "10", "（块）"]
+  ];
+  const cleanedGrid = ctx.cleanAndFilterData(rawExcelGrid, false, { sourceName: '核心表', fileName: 'test.xlsx', sheetName: 'Sheet1' }, collector);
+  assert.equal(cleanedGrid[1][1], '黄豆酱2件', 'Item name should be cleaned of trailing bracket');
+  assert.equal(cleanedGrid[1][2], '瓶', 'Unit should be cleaned of trailing bracket');
+  assert.equal(cleanedGrid[1][3], '12');
+  assert.equal(cleanedGrid[2][1], '老豆腐');
+  assert.equal(cleanedGrid[2][2], '块');
+  assert.equal(cleanedGrid[2][3], '10');
+
+  const bracketAnomalies = collector.filter(a => a.issueType.includes('括号冗余自动清洗'));
+  assert.ok(bracketAnomalies.length >= 2, 'Should record bracket cleanup anomalies in audit log');
+
+  // 4. 验证比对数据构建 buildComparisonData：
+  // 核心源带残余括号 "黄豆酱2件(" 与 "瓶)"，待核对源为 "黄豆酱2件" 与 "瓶"
+  const coreRows = [
+    { key: '2026/10/5\u0000黄豆酱2件', date: '2026/10/5', item: '黄豆酱2件(', qty: 12, unitText: '瓶)', bigSeriesText: '副食调料', normalizedItem: '黄豆酱2件', quantityAny: false }
+  ];
+  const targetRowsMatch = [
+    { key: '2026/10/5\u0000黄豆酱2件', date: '2026/10/5', item: '黄豆酱2件', qty: 12, unitText: '瓶', bigSeriesText: '副食调料', normalizedItem: '黄豆酱2件', supplier: '海纳副食' }
+  ];
+  const compMatch = ctx.buildComparisonData(coreRows, targetRowsMatch);
+  assert.equal(compMatch.length, 1);
+  assert.equal(compMatch[0].status, '一致');
+  assert.equal(compMatch[0].item, '黄豆酱2件', 'Output item must not contain dangling bracket');
+  assert.equal(compMatch[0].coreUnit, '瓶', 'Output coreUnit must not contain dangling bracket');
+  assert.equal(compMatch[0].targetUnit, '瓶');
+
+  // 如果待核对没有送该货（即原问题中的 "2 少了 黄豆酱2件( 12 0 -12 瓶)"）：
+  const targetRowsEmpty = [];
+  const compMissing = ctx.buildComparisonData(coreRows, targetRowsEmpty);
+  assert.equal(compMissing.length, 1);
+  assert.equal(compMissing[0].status, '少了');
+  assert.equal(compMissing[0].item, '黄豆酱2件', 'Missing row item must have bracket cleaned');
+  assert.equal(compMissing[0].expected, 12);
+  assert.equal(compMissing[0].actual, 0);
+  assert.equal(compMissing[0].difference, -12);
+  assert.equal(compMissing[0].coreUnit, '瓶', 'Missing row unit must have bracket cleaned');
+});
+
+
 
