@@ -671,4 +671,75 @@ test('identifies fake attendance for check-ins after cutoff time or on subsequen
     assert.equal(mBob.sessionRecords[sess2Name].attendance, 'Absent');
 });
 
+test('multi-session matrix card supports toggle fullscreen view and exit fullscreen view', async () => {
+    const api = loadMeetingAttendance(1);
+    const state = api.state;
+
+    state.sheets = [
+        {
+            id: 'rfc1',
+            category: 'rfc',
+            fileName: 'RFC_Orders.xlsx',
+            headers: ['作业单号/Ticket ID', '创建时间/Create Time', '建单人/Originator', '实施人', 'BU', '客户群'],
+            rows: [
+                ['NC20260804000001', '2026-08-04 10:00:00', 'Alice a1111111', 'Alice a1111111', 'BU-1', 'Group-A']
+            ]
+        },
+        {
+            id: 'offline_1',
+            category: 'offline',
+            fileName: 'Meeting_1.xlsx',
+            sessionName: '第1场例会',
+            headers: ['工号', '姓名', '签到时间', 'BU'],
+            rows: [['a1111111', 'Alice', '2026-08-05 13:55:00', 'BU-1']]
+        },
+        {
+            id: 'offline_2',
+            category: 'offline',
+            fileName: 'Meeting_2.xlsx',
+            sessionName: '第2场例会',
+            headers: ['工号', '姓名', '签到时间', 'BU'],
+            rows: [['a1111111', 'Alice', '2026-08-12 13:55:00', 'BU-1']]
+        }
+    ];
+
+    api.invalidatePeopleCache();
+    const cache = await api.ensurePeopleCache();
+    assert.equal(cache.sessions.length, 2);
+
+    // Initial render HTML
+    assert.equal(state.matrixFullscreen, false);
+    const initialHtml = api.renderMultiSessionMatrixCard(cache.sessions, cache.all);
+    assert.match(initialHtml, /id="multiSessionMatrixCard"/);
+    assert.match(initialHtml, /data-action="toggle-matrix-fullscreen"/);
+    assert.match(initialHtml, /全屏查看/);
+    assert.doesNotMatch(initialHtml, /is-fullscreen/);
+
+    // Toggle fullscreen to ON
+    const isFsNow = api.toggleMatrixFullscreen();
+    assert.equal(isFsNow, true);
+    assert.equal(state.matrixFullscreen, true);
+
+    // Rerender matrix card in fullscreen mode
+    const fsHtml = api.renderMultiSessionMatrixCard(cache.sessions, cache.all);
+    assert.match(fsHtml, /is-fullscreen/);
+    assert.match(fsHtml, /退出全屏/);
+
+    // Toggle fullscreen to OFF
+    const isFsOff = api.toggleMatrixFullscreen();
+    assert.equal(isFsOff, false);
+    assert.equal(state.matrixFullscreen, false);
+
+    const normalHtml = api.renderMultiSessionMatrixCard(cache.sessions, cache.all);
+    assert.doesNotMatch(normalHtml, /is-fullscreen/);
+    assert.match(normalHtml, /全屏查看/);
+
+    // Force toggleMatrixFullscreen with boolean argument
+    api.toggleMatrixFullscreen(true);
+    assert.equal(state.matrixFullscreen, true);
+    api.toggleMatrixFullscreen(false);
+    assert.equal(state.matrixFullscreen, false);
+});
+
+
 

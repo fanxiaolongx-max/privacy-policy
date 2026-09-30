@@ -2164,6 +2164,85 @@
     .mandatory-del-btn:hover {
       color: #ef4444;
     }
+    /* Multi-Session Matrix Card Fullscreen */
+    body.has-matrix-fullscreen {
+      overflow: hidden !important;
+    }
+    .sheet-card.multi-session-matrix-card.is-fullscreen {
+      position: fixed !important;
+      inset: 0 !important;
+      z-index: 900 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      max-height: 100vh !important;
+      margin: 0 !important;
+      border-radius: 0 !important;
+      border: none !important;
+      display: flex !important;
+      flex-direction: column !important;
+      background: #fff !important;
+      box-shadow: none !important;
+      animation: matrixFullscreenIn .18s ease-out;
+    }
+    @keyframes matrixFullscreenIn {
+      from { opacity: .75; transform: scale(.995); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .sheet-card.multi-session-matrix-card.is-fullscreen .sheet-head {
+      flex-shrink: 0;
+      padding: 12px 20px;
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+    }
+    .sheet-card.multi-session-matrix-card.is-fullscreen .table-wrap {
+      flex: 1 1 auto;
+      max-height: none !important;
+      height: 100% !important;
+      overflow: auto;
+      padding: 0 20px;
+    }
+    .sheet-card.multi-session-matrix-card.is-fullscreen .pager {
+      flex-shrink: 0;
+      padding: 10px 20px;
+      background: #fff;
+      border-top: 1px solid var(--line);
+    }
+    .matrix-fullscreen-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-weight: 600;
+      color: #1e293b;
+      cursor: pointer;
+      transition: all .15s ease;
+    }
+    .matrix-fullscreen-btn:hover {
+      color: #0f172a;
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+    .matrix-fullscreen-btn.active {
+      background: #e0f2fe;
+      color: #0369a1;
+      border-color: #7dd3fc;
+      font-weight: 700;
+    }
+    .matrix-fullscreen-btn.active:hover {
+      background: #bae6fd;
+      color: #0284c7;
+    }
+    body.has-matrix-fullscreen .modal {
+      z-index: 1000 !important;
+    }
+    body.has-matrix-fullscreen .custom-ui-dialog {
+      z-index: 1100 !important;
+    }
+    body.has-matrix-fullscreen .toast-wrap {
+      z-index: 1200 !important;
+    }
+    body.has-matrix-fullscreen .loading {
+      z-index: 1300 !important;
+    }
   </style>
 </head>
 
@@ -2522,7 +2601,7 @@
         } catch (e) { }
         return [];
       }
-      const state = { active: 'qr', lang: loadLanguage(), sidebarCollapsed: loadSidebarCollapsed(), pageSize: 200, sheets: [], seq: 0, editingSheet: null, peoplePages: { all: 1, qr: 1, rfc: 1, wfm: 1 }, buFilter: '', selectedSession: 'all', personSearch: { query: '', result: null, pages: { qr: 1, rfc: 1, wfm: 1, offline: 1, online: 1 } }, dataVersion: 0, peopleCache: null, qualityCache: null, coverageCache: null, coverageDetailsOpen: false, peopleBuildId: 0, customerMappings: loadCustomerMappings(), attendanceRules: loadAttendanceRules(), exemptions: loadExemptions(), mandatoryAttendees: loadMandatoryAttendees(), developerMode: loadDeveloperMode(), developerClicks: [], openPeopleCards: new Set(), snapshotsList: [] };
+      const state = { active: 'qr', lang: loadLanguage(), sidebarCollapsed: loadSidebarCollapsed(), pageSize: 200, sheets: [], seq: 0, editingSheet: null, peoplePages: { all: 1, qr: 1, rfc: 1, wfm: 1 }, buFilter: '', selectedSession: 'all', matrixFullscreen: false, personSearch: { query: '', result: null, pages: { qr: 1, rfc: 1, wfm: 1, offline: 1, online: 1 } }, dataVersion: 0, peopleCache: null, qualityCache: null, coverageCache: null, coverageDetailsOpen: false, peopleBuildId: 0, customerMappings: loadCustomerMappings(), attendanceRules: loadAttendanceRules(), exemptions: loadExemptions(), mandatoryAttendees: loadMandatoryAttendees(), developerMode: loadDeveloperMode(), developerClicks: [], openPeopleCards: new Set(), snapshotsList: [] };
       const $ = s => document.querySelector(s);
       const t = key => UI[state.lang][key] || UI.zh[key] || key;
       const bi = (zh, en) => state.lang === 'en' ? (en || I18N_DICT[zh] || zh) : zh;
@@ -2737,7 +2816,18 @@
         $('#smImportBtn').onclick = () => $('#smFileInput').click();
         $('#smFileInput').onchange = handleImportSnapshotFile;
         $('#smListContainer').addEventListener('click', handleSnapshotCardAction);
-        document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeColumnModal(); closeMappingModal(); closeAttendanceModal(); closeDeveloperModal(); closeMandatoryModal(); closePersonSearchModal(); closeSaveSnapshotModal(); closeSnapshotManagerModal(); } });
+        document.addEventListener('keydown', e => {
+          if (e.key === 'Escape') {
+            const hasOpenModal = document.querySelector('.modal:not(.hidden)') || document.querySelector('.custom-ui-dialog');
+            if (hasOpenModal) {
+              closeColumnModal(); closeMappingModal(); closeAttendanceModal(); closeDeveloperModal(); closeMandatoryModal(); closePersonSearchModal(); closeSaveSnapshotModal(); closeSnapshotManagerModal();
+              return;
+            }
+            if (state.matrixFullscreen) {
+              toggleMatrixFullscreen(false);
+            }
+          }
+        });
         updateMandatoryBadge();
         render();
       }
@@ -2834,6 +2924,7 @@
           document.querySelector('.section-note').classList.add('hidden');
           renderSummary(); renderPeopleViewAsync(); return;
         }
+        if (state.matrixFullscreen) toggleMatrixFullscreen(false);
         $('#coverageTrigger').classList.add('hidden'); $('#coverageDetail').classList.add('hidden');
         const c = activeCategory();
         document.querySelector('.section-note').classList.remove('hidden');
@@ -3259,6 +3350,9 @@
         if (btn.dataset.action === 'switch-session') {
           state.selectedSession = btn.dataset.session || 'all';
           state.peoplePages.all = 1;
+          if (state.selectedSession !== 'all' && state.matrixFullscreen) {
+            toggleMatrixFullscreen(false);
+          }
           renderPeopleResults();
           return;
         }
@@ -3288,7 +3382,14 @@
         if (btn.dataset.action === 'person-search-clear') { state.personSearch = { query: '', result: null, pages: { qr: 1, rfc: 1, wfm: 1, offline: 1, online: 1 } }; renderPersonSearchModal(); updateGlobalSearchButton(); return; }
         const searchCard = e.target.closest('[data-search-category]'); if (searchCard) { handleSearchPager(btn.dataset.action, searchCard.dataset.searchCategory); return; }
         const peopleCard = e.target.closest('[data-people]');
-        if (peopleCard) { if (btn.dataset.action === 'mandatory-people') { openMandatoryModal(); return; } if (btn.dataset.action === 'mapping') { openMappingModal(); return; } if (btn.dataset.action === 'attendance-rules') { openAttendanceModal(); return; } handlePeoplePager(btn.dataset.action, peopleCard.dataset.people); return; }
+        if (peopleCard) {
+          if (btn.dataset.action === 'toggle-matrix-fullscreen') { toggleMatrixFullscreen(); return; }
+          if (btn.dataset.action === 'mandatory-people') { openMandatoryModal(); return; }
+          if (btn.dataset.action === 'mapping') { openMappingModal(); return; }
+          if (btn.dataset.action === 'attendance-rules') { openAttendanceModal(); return; }
+          handlePeoplePager(btn.dataset.action, peopleCard.dataset.people);
+          return;
+        }
         const card = e.target.closest('[data-sheet]'); if (!card) return;
         const s = state.sheets.find(x => x.id === card.dataset.sheet); if (!s) return;
         const total = Math.max(1, Math.ceil(s.rows.length / state.pageSize));
@@ -3850,6 +3951,24 @@
           </div>
         `;
       }
+      function toggleMatrixFullscreen(next) {
+        const shouldBeFullscreen = typeof next === 'boolean' ? next : !state.matrixFullscreen;
+        state.matrixFullscreen = shouldBeFullscreen;
+        if (typeof document !== 'undefined' && document.body) {
+          document.body.classList.toggle('has-matrix-fullscreen', shouldBeFullscreen);
+          const card = $('#multiSessionMatrixCard');
+          if (card) {
+            card.classList.toggle('is-fullscreen', shouldBeFullscreen);
+            const btn = card.querySelector('.matrix-fullscreen-btn');
+            if (btn) {
+              btn.classList.toggle('active', shouldBeFullscreen);
+              btn.innerHTML = shouldBeFullscreen ? `🗗 ${bi('退出全屏', 'Exit Fullscreen')}` : `⛶ ${bi('全屏查看', 'Fullscreen')}`;
+              btn.title = shouldBeFullscreen ? bi('退出全屏查看 (Esc)', 'Exit Fullscreen (Esc)') : bi('全屏查看横向比对表', 'Fullscreen View');
+            }
+          }
+        }
+        return state.matrixFullscreen;
+      }
       function renderMultiSessionMatrixCard(sessions, all) {
         const displayLabels = getSessionDisplayLabels(sessions);
         const sorted = [...all].sort((a, b) => {
@@ -3896,7 +4015,7 @@
         }).join('') : `<tr><td></td><td colspan="${7 + sessions.length}">${state.buFilter ? bi('该 BU 暂无人员', 'No people in this BU') : bi('尚未导入人员数据', 'No people data')}</td></tr>`;
 
         return `
-          <article class="sheet-card" data-people="all">
+          <article id="multiSessionMatrixCard" class="sheet-card multi-session-matrix-card ${state.matrixFullscreen ? 'is-fullscreen' : ''}" data-people="all">
             <div class="sheet-head">
               <div class="sheet-title">
                 <h3>${bi('多场次人员考勤横向比对表', 'Multi-Session Attendance Comparison Matrix')}${state.buFilter ? ` · ${esc(state.buFilter)}` : ''}</h3>
@@ -3907,6 +4026,7 @@
                 </div>
               </div>
               <div class="sheet-actions">
+                <button class="icon-btn matrix-fullscreen-btn ${state.matrixFullscreen ? 'active' : ''}" data-action="toggle-matrix-fullscreen" title="${state.matrixFullscreen ? bi('退出全屏查看 (Esc)', 'Exit Fullscreen (Esc)') : bi('全屏查看横向比对表', 'Fullscreen View')}">${state.matrixFullscreen ? `🗗 ${bi('退出全屏', 'Exit Fullscreen')}` : `⛶ ${bi('全屏查看', 'Fullscreen')}`}</button>
                 <button class="icon-btn" data-action="mandatory-people">👤 ${bi('其他必选名单', 'Mandatory Attendees')}</button>
                 <button class="icon-btn" data-action="attendance-rules">⚙ ${bi('考勤规则', 'Attendance Rules')}</button>
                 <button class="icon-btn" data-action="mapping">⚙ ${bi('映射设置', 'Mapping')}</button>
@@ -3996,6 +4116,9 @@
 
         $('#sheetList').innerHTML = contentHtml;
         updateGlobalSearchButton();
+        if (typeof document !== 'undefined' && document.body) {
+          document.body.classList.toggle('has-matrix-fullscreen', Boolean(state.matrixFullscreen && state.selectedSession === 'all' && sessions.length > 1));
+        }
         document.querySelectorAll('.result-details').forEach(d => d.addEventListener('toggle', () => { d.open ? state.openPeopleCards.add(d.dataset.people) : state.openPeopleCards.delete(d.dataset.people); }));
       }
       function renderPersonSearchPanel() {
@@ -5831,7 +5954,7 @@
       function showLoading(on, text, percent) { $('#loading').classList.toggle('hidden', !on); if (text) $('#loadingText').textContent = text; if (percent != null) { const p = Math.max(0, Math.min(100, Math.round(percent))); $('#loadingBar').style.width = p + '%'; $('#loadingPercent').textContent = p + '%'; } }
       function nextPaint() { return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); }
       function toast(msg, type = '', duration = 2800) { const host = $('#toasts'); if (!host || typeof host.appendChild !== 'function') return; const t = document.createElement('div'); t.className = 'toast ' + type; t.textContent = msg; host.appendChild(t); setTimeout(() => t.remove?.(), duration); }
-      window.__meetingAttendance = { state, CATEGORIES, DEFAULT_COLUMNS, DEFAULT_CUSTOMER_MAPPINGS, DEFAULT_ATTENDANCE_RULES, PRESET_EXEMPTIONS, isInvalidStaffId, activeExemptions, handleDeveloperUnlock, disableDeveloperMode, parseDelimited, normalizeRows, classifySheet, defaultColumnIndices, getDisplayColumns, parsePeopleCell, parseQrPairedPeople, parseCreateTime, parseAttendanceMinute, beijingToCairoAttendance, buildAttendanceIndex, getAttendanceRecord, getExemption, determineAttendance, extractTicketDate, parseDateFromString, detectMeetingDate, getAllMeetingDates, getSheetMeetingDate, getSessionDominantDate, evaluateRecordAttendance, ATTENDANCE_RANK, getWindowDateRange, isOrderInWindow, isOrderInMeetingWindows, getPreviousDayDateString, parseRowTimestamp, isNightWfmTask, isPersonNightExemptForDate, normalizeMandatoryEntries, loadMandatoryAttendees, saveMandatoryAttendees, openMandatoryModal, closeMandatoryModal, renderMandatoryRows, appendMandatoryRow, updateMandatoryBadge, applyBatchMandatoryText, extractQrPeople, extractRfcPeople, extractWfmPeople, extractAttendanceSourcePeople, extractAllPeople, ensurePeopleCache, refreshCalculatedResults, invalidatePeopleCache, cleanSessionTitle, isGenericTitle, getSheetRowSessionNames, getSheetDefaultSessionName, getSheetSessionName, getRowSessionName, getMeetingSessions, getIgnoredMeetingSessions, getSessionPeopleRows, getSessionDisplayLabels, renderSessionSwitcher, renderSessionNoticeBar, renderMultiSessionOverview, renderMultiSessionBuTable, renderMultiSessionMatrixCard, mapCustomerGroup, resolveSearchIdentities, getPersonSearchScope, getPersonSearchScopeKey, formatSearchWindowMonths, searchRequiredRows, searchAttendanceRows, renderSearchDetailCard, buildBusinessCoverageReport, missingBusinessCoverage, validBusinessTimes, formatDateRange, roleCounts, roleLabel, sheetFingerprint, removeDuplicateSheets, renderAttendanceDashboard, renderCombinedPeopleCard, renderPeopleCard, renderPersonSearchPanel, renderPersonSearchResults, buildAnalysisTables, buildAnalysisWorkbook, buildSnapshotPayload, restoreMeetingSnapshot, openSaveSnapshotModal, closeSaveSnapshotModal, openSnapshotManagerModal, filterSnapshotCards };
+      window.__meetingAttendance = { state, CATEGORIES, DEFAULT_COLUMNS, DEFAULT_CUSTOMER_MAPPINGS, DEFAULT_ATTENDANCE_RULES, PRESET_EXEMPTIONS, isInvalidStaffId, activeExemptions, handleDeveloperUnlock, disableDeveloperMode, parseDelimited, normalizeRows, classifySheet, defaultColumnIndices, getDisplayColumns, parsePeopleCell, parseQrPairedPeople, parseCreateTime, parseAttendanceMinute, beijingToCairoAttendance, buildAttendanceIndex, getAttendanceRecord, getExemption, determineAttendance, extractTicketDate, parseDateFromString, detectMeetingDate, getAllMeetingDates, getSheetMeetingDate, getSessionDominantDate, evaluateRecordAttendance, ATTENDANCE_RANK, getWindowDateRange, isOrderInWindow, isOrderInMeetingWindows, getPreviousDayDateString, parseRowTimestamp, isNightWfmTask, isPersonNightExemptForDate, normalizeMandatoryEntries, loadMandatoryAttendees, saveMandatoryAttendees, openMandatoryModal, closeMandatoryModal, renderMandatoryRows, appendMandatoryRow, updateMandatoryBadge, applyBatchMandatoryText, extractQrPeople, extractRfcPeople, extractWfmPeople, extractAttendanceSourcePeople, extractAllPeople, ensurePeopleCache, refreshCalculatedResults, invalidatePeopleCache, cleanSessionTitle, isGenericTitle, getSheetRowSessionNames, getSheetDefaultSessionName, getSheetSessionName, getRowSessionName, getMeetingSessions, getIgnoredMeetingSessions, getSessionPeopleRows, getSessionDisplayLabels, renderSessionSwitcher, renderSessionNoticeBar, renderMultiSessionOverview, renderMultiSessionBuTable, renderMultiSessionMatrixCard, toggleMatrixFullscreen, mapCustomerGroup, resolveSearchIdentities, getPersonSearchScope, getPersonSearchScopeKey, formatSearchWindowMonths, searchRequiredRows, searchAttendanceRows, renderSearchDetailCard, buildBusinessCoverageReport, missingBusinessCoverage, validBusinessTimes, formatDateRange, roleCounts, roleLabel, sheetFingerprint, removeDuplicateSheets, renderAttendanceDashboard, renderCombinedPeopleCard, renderPeopleCard, renderPersonSearchPanel, renderPersonSearchResults, buildAnalysisTables, buildAnalysisWorkbook, buildSnapshotPayload, restoreMeetingSnapshot, openSaveSnapshotModal, closeSaveSnapshotModal, openSnapshotManagerModal, filterSnapshotCards };
       init();
     })();
   </script>
