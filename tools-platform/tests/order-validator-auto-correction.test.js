@@ -144,17 +144,22 @@ test('餐单核验: 内置示例数据兼容性测试', () => {
   const collector = [];
   const mockRawGrid1 = [
     ['无效列', 'DATE', 'BIG SERIES', 'BIG SERIES', 'DESCRIPTION OF GOODS', 'UNIT', '采购量', '厨师备注', '总价'],
-    ['-', 46002, '干货类', '南北干货', '干海带', '公斤', '4', '多重大类合并去重测试', '100'],
-    ['-', 46002, '调料类', '调料类', '', '斤', '5', '品名空缺自动以大分类补全测试', '30'],
-    ['-', 46002, '蔬菜类', '蔬菜类', '公斤', '花菜', '15', '品名与单位反转调换测试', '60'],
+    ['-', 46295, '干货类', '南北干货', '干海带', '公斤', '4', '多重大类合并去重测试', '100'],
+    ['-', 46295, '调料类', '调料类', '', '斤', '5', '品名空缺自动以大分类补全测试', '30'],
+    ['-', 46295, '蔬菜类', '蔬菜类', '公斤', '花菜', '15', '品名与单位反转调换测试', '60'],
+    ['-', 46002, '蔬菜类', '蔬菜类', '过期大白菜', '斤', '10', '历史日期偏差过大自动过滤测试(2025/12/11)', '50'],
     ['', '', '', '', '', '', '', '', ''],
-    ['-', 46002, '', '', '', '斤', '10', '品名与分类皆空不可纠错测试', '50'],
+    ['-', 46295, '', '', '', '斤', '10', '品名与分类皆空不可纠错测试', '50'],
   ];
 
   const cleaned = ctx.cleanAndFilterData(mockRawGrid1, false, { sourceName: '标准源表格', fileName: 'demo.xlsx', sheetName: 'Sheet1' }, collector);
   assert.ok(cleaned.length > 0);
   assert.deepEqual(Array.from(cleaned[0]), ["DATE", "BIG SERIES", "DESCRIPTION OF GOODS", "UNIT", "采购量", "厨师备注"]);
   assert.equal(cleaned[1][2], '干海带');
+  const hasOutdatedRow = cleaned.some(row => row.includes('过期大白菜'));
+  assert.equal(hasOutdatedRow, false, 'Row with 2025/12/11 should be filtered out');
+  const dateAnomalies = collector.filter(a => a.issueType === '过期/异常日期数据过滤');
+  assert.ok(dateAnomalies.length >= 1, 'Should log anomaly for filtered outdated date row');
 });
 
 test('餐单核验: Case 5 日期列含 Excel 序列号且表头列名错位，防止将日期识别为采购量', () => {

@@ -115,6 +115,110 @@
            /^\d{4}年\d{1,2}月\d{1,2}日/.test(s);
   }
 
+  function parseDateValue(value) {
+    if (value === null || value === undefined || value === '') return null;
+    if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+    if (typeof value === 'number' && value > 30000 && value < 60000) {
+      return new Date(Math.round((value - 25569) * 86400 * 1000));
+    }
+    const s = text(value);
+    if (!s) return null;
+    if (/^\d{5}$/.test(s)) {
+      const n = Number(s);
+      if (n > 30000 && n < 60000) {
+        return new Date(Math.round((n - 25569) * 86400 * 1000));
+      }
+    }
+    const m1 = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+    if (m1) {
+      return new Date(Date.UTC(Number(m1[1]), Number(m1[2]) - 1, Number(m1[3])));
+    }
+    const m2 = s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})/);
+    if (m2) {
+      return new Date(Date.UTC(Number(m2[3]), Number(m2[1]) - 1, Number(m2[2])));
+    }
+    const m3 = s.match(/^(\d{4})年(\d{1,2})月(\d{1,2})日/);
+    if (m3) {
+      return new Date(Date.UTC(Number(m3[1]), Number(m3[2]) - 1, Number(m3[3])));
+    }
+    const d = new Date(s);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+
+  function determineSheetReferenceDate(matrix, headerRow, dateColIdx, nowDate = new Date()) {
+    if (dateColIdx === undefined || dateColIdx < 0 || !matrix) return nowDate;
+    const start = Math.max(0, Number(headerRow || 0) + 1);
+    const dateCounts = new Map();
+    const dateObjects = [];
+
+    for (let r = start; r < matrix.length; r++) {
+      const row = matrix[r];
+      if (!row) continue;
+      const d = parseDateValue(cellAt(row, dateColIdx));
+      if (d) {
+        const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+        dateCounts.set(key, (dateCounts.get(key) || 0) + 1);
+        dateObjects.push(d);
+      }
+    }
+
+    if (!dateObjects.length) return nowDate;
+
+    let maxCount = 0;
+    let dominantDateStr = null;
+    for (const [key, count] of dateCounts.entries()) {
+      if (count > maxCount) {
+        maxCount = count;
+        dominantDateStr = key;
+      }
+    }
+
+    let bestNearDate = null;
+    let minDiffFromNow = Infinity;
+    for (const d of dateObjects) {
+      const diff = Math.abs(d.getTime() - nowDate.getTime());
+      if (diff < minDiffFromNow) {
+        minDiffFromNow = diff;
+        bestNearDate = d;
+      }
+    }
+
+    if (bestNearDate && minDiffFromNow <= 180 * 86400 * 1000) {
+      return bestNearDate;
+    }
+
+    if (dominantDateStr) {
+      const parts = dominantDateStr.split('-');
+      return new Date(Date.UTC(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])));
+    }
+
+    return nowDate;
+  }
+
+  function isDateDeviationTooFar(targetDate, sheetRefDate, nowDate = new Date()) {
+    if (!targetDate || Number.isNaN(targetDate.getTime())) return false;
+
+    // 1. 如果工作表内存在主导基准日期，优先与工作表主导日期对比
+    if (sheetRefDate && !Number.isNaN(sheetRefDate.getTime())) {
+      const diffDaysFromSheet = Math.abs(targetDate.getTime() - sheetRefDate.getTime()) / (86400 * 1000);
+      if (diffDaysFromSheet > 60) return true;
+      if (Math.abs(targetDate.getFullYear() - sheetRefDate.getFullYear()) >= 1 && diffDaysFromSheet > 30) {
+        return true;
+      }
+    }
+
+    // 2. 与当前系统真实日期对比（偏差超过 90 天，或者跨年且偏差超过 60 天）
+    if (nowDate && !Number.isNaN(nowDate.getTime())) {
+      const diffDaysFromNow = Math.abs(targetDate.getTime() - nowDate.getTime()) / (86400 * 1000);
+      if (diffDaysFromNow > 90) return true;
+      if (Math.abs(targetDate.getFullYear() - nowDate.getFullYear()) >= 1 && diffDaysFromNow > 60) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   const KNOWN_UNITS = new Set([
     'kg', 'kgs', 'g', 'gr', 'gram', 'grams', '克', '千克', '公斤', '斤',
     'l', 'lt', 'liter', 'litre', '升', 'ml', '毫升',
@@ -547,10 +651,23 @@
   function recordsFromSheet(config) {
     const rows = [];
     const start = Number(config.headerRow || 0) + 1;
+    const dateCol = config.columns.date;
+    const sheetRefDate = determineSheetReferenceDate(config.matrix, config.headerRow, dateCol);
+
     for (let rowIndex = start; rowIndex < config.matrix.length; rowIndex += 1) {
       const row = config.matrix[rowIndex] || [];
       const item = text(cellAt(row, config.columns.item));
       if (!item) continue;
+
+      if (dateCol !== undefined) {
+        const rawDate = cellAt(row, dateCol);
+        const parsedDate = parseDateValue(rawDate);
+        if (parsedDate && isDateDeviationTooFar(parsedDate, sheetRefDate, new Date())) {
+          // 该行日期与当前基准偏差过大（例如 2025/12/11），判定为历史残留无效数据自动忽略
+          continue;
+        }
+      }
+
       const quantityRaw = cellAt(row, config.columns.quantity);
       const unitRaw = cellAt(row, config.columns.unit);
       const parsedQty = parseQuantityUnit(quantityRaw, unitRaw);

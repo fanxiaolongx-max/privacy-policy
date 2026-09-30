@@ -468,6 +468,110 @@
       return grid.slice(headerRowIndex + 1).some(row => row && isRecognizableDateValue(row[columnIndex]));
     }
 
+    function parseOrderDate(value) {
+      if (value === null || value === undefined || value === '') return null;
+      if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+      if (typeof value === 'number' && value > 30000 && value < 60000) {
+        return new Date(Math.round((value - 25569) * 86400 * 1000));
+      }
+      const s = String(value).trim();
+      if (!s) return null;
+      if (/^\d{5}$/.test(s)) {
+        const n = Number(s);
+        if (n > 30000 && n < 60000) {
+          return new Date(Math.round((n - 25569) * 86400 * 1000));
+        }
+      }
+      const m1 = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+      if (m1) {
+        return new Date(Date.UTC(Number(m1[1]), Number(m1[2]) - 1, Number(m1[3])));
+      }
+      const m2 = s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})/);
+      if (m2) {
+        return new Date(Date.UTC(Number(m2[3]), Number(m2[1]) - 1, Number(m2[2])));
+      }
+      const m3 = s.match(/^(\d{4})年(\d{1,2})月(\d{1,2})日/);
+      if (m3) {
+        return new Date(Date.UTC(Number(m3[1]), Number(m3[2]) - 1, Number(m3[3])));
+      }
+      const d = new Date(s);
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+
+    function determineOrderSheetReferenceDate(grid, headerRowIndex, dateColIdx, nowDate = new Date()) {
+      if (dateColIdx === undefined || dateColIdx < 0 || !grid) return nowDate;
+      const start = Math.max(0, Number(headerRowIndex || 0) + 1);
+      const dateCounts = new Map();
+      const dateObjects = [];
+
+      for (let r = start; r < grid.length; r++) {
+        const row = grid[r];
+        if (!row) continue;
+        const d = parseOrderDate(row[dateColIdx]);
+        if (d) {
+          const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+          dateCounts.set(key, (dateCounts.get(key) || 0) + 1);
+          dateObjects.push(d);
+        }
+      }
+
+      if (!dateObjects.length) return nowDate;
+
+      let maxCount = 0;
+      let dominantDateStr = null;
+      for (const [key, count] of dateCounts.entries()) {
+        if (count > maxCount) {
+          maxCount = count;
+          dominantDateStr = key;
+        }
+      }
+
+      let bestNearDate = null;
+      let minDiffFromNow = Infinity;
+      for (const d of dateObjects) {
+        const diff = Math.abs(d.getTime() - nowDate.getTime());
+        if (diff < minDiffFromNow) {
+          minDiffFromNow = diff;
+          bestNearDate = d;
+        }
+      }
+
+      if (bestNearDate && minDiffFromNow <= 180 * 86400 * 1000) {
+        return bestNearDate;
+      }
+
+      if (dominantDateStr) {
+        const parts = dominantDateStr.split('-');
+        return new Date(Date.UTC(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])));
+      }
+
+      return nowDate;
+    }
+
+    function isOrderDateDeviationTooFar(targetDate, sheetRefDate, nowDate = new Date()) {
+      if (!targetDate || Number.isNaN(targetDate.getTime())) return false;
+
+      // 1. 如果工作表内存在主导基准日期，优先与工作表主导日期对比
+      if (sheetRefDate && !Number.isNaN(sheetRefDate.getTime())) {
+        const diffDaysFromSheet = Math.abs(targetDate.getTime() - sheetRefDate.getTime()) / (86400 * 1000);
+        if (diffDaysFromSheet > 60) return true;
+        if (Math.abs(targetDate.getFullYear() - sheetRefDate.getFullYear()) >= 1 && diffDaysFromSheet > 30) {
+          return true;
+        }
+      }
+
+      // 2. 与当前系统真实日期对比（偏差超过 90 天，或者跨年且偏差超过 60 天）
+      if (nowDate && !Number.isNaN(nowDate.getTime())) {
+        const diffDaysFromNow = Math.abs(targetDate.getTime() - nowDate.getTime()) / (86400 * 1000);
+        if (diffDaysFromNow > 90) return true;
+        if (Math.abs(targetDate.getFullYear() - nowDate.getFullYear()) >= 1 && diffDaysFromNow > 60) {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
     function getHeaderMatchScore(cell, key, grid, headerRowIndex, columnIndex, isTarget) {
       const headerText = String(cell ?? '').toUpperCase().trim();
       const normalizedHeader = headerText.replace(/[\s_]+/g, '');
@@ -961,11 +1065,35 @@
       }
       newGrid.push(outHeaders);
 
+      const sheetDateColIdx = colMap['DATE'];
+      const sheetRefDate = determineOrderSheetReferenceDate(grid, headerRowIndex, sheetDateColIdx);
+
       for (let i = headerRowIndex + 1; i < grid.length; i++) {
         const row = grid[i];
         if (!row || row.length === 0 || row.every(c => String(c ?? '').trim() === '')) {
           logAnomaly(i + 1, '整行', '', '全空行', '行内所有单元格均为空白或无内容', false, '无（自动过滤跳过空行）', '过滤跳过', row);
           continue;
+        }
+
+        // ★ 日期偏差过大校验：若本行日期与当前基准日期偏差过大（例如 2025/12/11），说明是历史残留无效数据，自动忽略过滤
+        if (sheetDateColIdx !== undefined) {
+          const rawDateVal = row[sheetDateColIdx];
+          const parsedDate = parseOrderDate(rawDateVal);
+          if (parsedDate && isOrderDateDeviationTooFar(parsedDate, sheetRefDate, new Date())) {
+            const formattedDateStr = formatExcelDate(rawDateVal);
+            logAnomaly(
+              i + 1,
+              'DATE (送货日期)',
+              String(rawDateVal ?? ''),
+              '过期/异常日期数据过滤',
+              `识别到的送货日期 (${formattedDateStr || rawDateVal}) 与当前基准日期偏差过大，判定为历史残留或无效数据，已自动过滤跳过`,
+              true,
+              '自动过滤并跳过该行无效数据',
+              '过滤跳过该行',
+              row
+            );
+            continue;
+          }
         }
 
         const bigSeriesIdx = colMap['BIG SERIES'];
@@ -2218,11 +2346,12 @@
       // 1. 标准核心源数据（包含：多重大分类去重、日期代码转换、品名空缺补全、品名单位反转、全空行过滤、品名分类皆空过滤、无表头异常表、跨天送货）
       const mockRawGrid1 = [
         ['无效列', 'DATE', 'BIG SERIES', 'BIG SERIES', 'DESCRIPTION OF GOODS', 'UNIT', '采购量', '厨师备注', '总价'],
-        ['-', 46002, '干货类', '南北干货', '干海带', '公斤', '4', '多重大类合并去重测试', '100'],
-        ['-', 46002, '调料类', '调料类', '', '斤', '5', '品名空缺自动以大分类补全测试', '30'],
-        ['-', 46002, '蔬菜类', '蔬菜类', '公斤', '花菜', '15', '品名与单位反转调换测试', '60'],
+        ['-', 46295, '干货类', '南北干货', '干海带', '公斤', '4', '多重大类合并去重测试', '100'],
+        ['-', 46295, '调料类', '调料类', '', '斤', '5', '品名空缺自动以大分类补全测试', '30'],
+        ['-', 46295, '蔬菜类', '蔬菜类', '公斤', '花菜', '15', '品名与单位反转调换测试', '60'],
+        ['-', 46002, '蔬菜类', '蔬菜类', '过期大白菜', '斤', '10', '历史日期偏差过大自动过滤测试(2025/12/11)', '50'],
         ['', '', '', '', '', '', '', '', ''],
-        ['-', 46002, '', '', '', '斤', '10', '品名与分类皆空不可纠错测试', '50'],
+        ['-', 46295, '', '', '', '斤', '10', '品名与分类皆空不可纠错测试', '50'],
       ];
 
       const mockRawGrid2 = [
