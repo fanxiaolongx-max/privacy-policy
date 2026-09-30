@@ -1339,6 +1339,14 @@
           continue;
         }
 
+        const descLower = descriptionValue.toLowerCase();
+        const isHeaderDesc = descLower === '采购量' || descLower === 'description of goods' || descLower === '品名' || descLower === '商品名称';
+        const isHeaderBigSeries = combinedBigSeries.toLowerCase() === 'big series' || combinedBigSeries.toLowerCase() === '大分类';
+        if (isHeaderDesc && (isHeaderBigSeries || purchaseQtyIdx === undefined || !row[purchaseQtyIdx] || parseOrderNumber(row[purchaseQtyIdx]) === 0)) {
+          logAnomaly(i + 1, '品名/表头', descriptionValue, '重复表头行过滤', '数据区域内检测到重复的列名或表头文字', false, '无（自动过滤数据区域内残留的表头行）', '过滤跳过', row);
+          continue;
+        }
+
         const purchaseQtyIdx = colMap['采购量'];
         if (purchaseQtyIdx !== undefined) {
           const qty = String(row[purchaseQtyIdx] ?? '').trim();
@@ -2005,7 +2013,16 @@
           sourceText: ''
         });
       });
-      return result.sort((a, b) => compareComparisonRows(a, b, true));
+      return result
+        .filter(row => {
+          const expected = Number(row.expected) || 0;
+          const actual = Number(row.actual) || 0;
+          const diff = Number(row.difference) || 0;
+          // 如果比对结果中有数据行存在 应有数量、实际数量、差值 三列数据都为0，忽略该数据行
+          const isAllThreeZero = Math.abs(expected) < 1e-9 && Math.abs(actual) < 1e-9 && Math.abs(diff) < 1e-9;
+          return !isAllThreeZero;
+        })
+        .sort((a, b) => compareComparisonRows(a, b, true));
     }
 
     function renderResultView(tabId) {

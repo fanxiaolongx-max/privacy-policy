@@ -340,4 +340,44 @@ test('餐单核验: Case 11 比对标签上的数字严格按照核对结果非�
   assert.match(badgeText, /\d+项差异/);
 });
 
+test('餐单核验: Case 12 比对结果中应有数量、实际数量、差值三列数据都为0的行自动忽略', () => {
+  const ctx = createContext();
+  const coreRows = [
+    // 正常物品
+    { key: '2026/10/5\u0000老豆腐', date: '2026/10/5', item: '老豆腐', qty: 20, unitText: 'pcs', bigSeriesText: '蔬菜', normalizedItem: '老豆腐', quantityAny: false },
+    { key: '2026/10/5\u0000草鱼', date: '2026/10/5', item: '草鱼', qty: 10, unitText: '条', bigSeriesText: '肉食禽蛋海鲜', normalizedItem: '草鱼', quantityAny: false },
+    // 异常的0数量行（如残留表头或大分类伪品名）
+    { key: '2026/10/5\u0000采购量', date: '2026/10/5', item: '采购量', qty: 0, unitText: 'UNIT (单位)', bigSeriesText: 'BIG SERIES', normalizedItem: '采购量', quantityAny: false },
+    { key: '2026/10/5\u0000肉食禽蛋海鲜', date: '2026/10/5', item: '肉食禽蛋海鲜', qty: 0, unitText: 'kg', bigSeriesText: '肉食禽蛋海鲜', normalizedItem: '肉食禽蛋海鲜', quantityAny: false },
+    { key: '2026/10/5\u0000蔬菜', date: '2026/10/5', item: '蔬菜', qty: 0, unitText: 'pcs / kg', bigSeriesText: '蔬菜', normalizedItem: '蔬菜', quantityAny: false }
+  ];
+
+  const targetRows = [
+    { key: '2026/10/5\u0000老豆腐', date: '2026/10/5', item: '老豆腐', qty: 20, unitText: 'pcs', bigSeriesText: '蔬菜', normalizedItem: '老豆腐', supplier: '', hasMissingSupplier: true },
+    { key: '2026/10/5\u0000草鱼', date: '2026/10/5', item: '草鱼', qty: 8, unitText: '条', bigSeriesText: '肉食禽蛋海鲜', normalizedItem: '草鱼', supplier: '', hasMissingSupplier: true }
+  ];
+
+  const comparison = ctx.buildComparisonData(coreRows, targetRows);
+
+  // 验证「采购量」、「肉食禽蛋海鲜」、「蔬菜」这3行全为0的行已被完全过滤
+  const itemsInResult = comparison.map(r => r.item);
+  assert.ok(!itemsInResult.includes('采购量'), '采购量 (0, 0, 0) should be filtered out');
+  assert.ok(!itemsInResult.includes('肉食禽蛋海鲜'), '肉食禽蛋海鲜 (0, 0, 0) should be filtered out');
+  assert.ok(!itemsInResult.includes('蔬菜'), '蔬菜 (0, 0, 0) should be filtered out');
+
+  // 验证正常品名依然保留
+  assert.equal(comparison.length, 2, 'Should only contain the 2 valid items (老豆腐 and 草鱼)');
+  const laodoufu = comparison.find(r => r.item === '老豆腐');
+  assert.equal(laodoufu.expected, 20);
+  assert.equal(laodoufu.actual, 20);
+  assert.equal(laodoufu.difference, 0);
+  assert.equal(laodoufu.status, '一致');
+
+  const caoyu = comparison.find(r => r.item === '草鱼');
+  assert.equal(caoyu.expected, 10);
+  assert.equal(caoyu.actual, 8);
+  assert.equal(caoyu.difference, -2);
+  assert.equal(caoyu.status, '少了');
+});
+
 
