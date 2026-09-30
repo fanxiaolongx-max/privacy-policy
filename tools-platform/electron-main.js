@@ -158,13 +158,14 @@ function createLicenseWindow() {
     }
     licenseWindow = new BrowserWindow({
         width: 640,
-        height: 540,
+        height: 560,
         minWidth: 560,
-        minHeight: 480,
+        minHeight: 500,
+        backgroundColor: '#090e17',
         show: false,
         center: true,
         autoHideMenuBar: true,
-        title: 'Tools Platform License',
+        title: 'Tools Platform - 软件授权激活 / License Activation',
         icon: getAppIconPath(),
         webPreferences: {
             preload: path.join(__dirname, 'desktop-license-preload.js'),

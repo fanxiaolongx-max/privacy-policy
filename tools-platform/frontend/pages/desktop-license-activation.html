@@ -2,31 +2,904 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Tools Platform License</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tools Platform - 软件授权激活</title>
   <style>
-    *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;font-family:Segoe UI,"Microsoft YaHei",sans-serif;color:#e5eefc;background:radial-gradient(circle at 20% 0,#243b67 0,transparent 42%),#09111f}.card{width:min(560px,calc(100vw - 32px));padding:28px;border:1px solid rgba(148,163,184,.25);border-radius:20px;background:rgba(15,23,42,.94);box-shadow:0 24px 70px #0009}.top{display:flex;align-items:center;justify-content:space-between;gap:16px}.brand{font-size:24px;font-weight:800}.lang{border:1px solid #475569;border-radius:8px;background:#111c30;color:#dbeafe;padding:7px 10px}.sub{margin:10px 0 20px;color:#9fb0c9;font-size:13px;line-height:1.6}.status{display:none;margin:0 0 14px;padding:10px 12px;border-radius:10px;font-size:13px;line-height:1.45}.status.show{display:block}.status.error{color:#fecaca;background:#451a1a;border:1px solid #7f1d1d}.status.info{color:#bae6fd;background:#0c4a6e55;border:1px solid #075985}textarea{width:100%;min-height:118px;resize:vertical;border:1px solid #42526b;border-radius:12px;padding:12px;background:#07101e;color:#dbeafe;font:12px Consolas,monospace;outline:none}textarea:focus{border-color:#38bdf8;box-shadow:0 0 0 3px #0ea5e933}.actions{display:flex;gap:10px;margin-top:16px}button{border:0;border-radius:10px;padding:11px 18px;font-weight:700;cursor:pointer}.activate{flex:1;color:white;background:linear-gradient(135deg,#2563eb,#0891b2)}.quit{color:#cbd5e1;background:#263348}.meta{margin-top:16px;color:#718198;font-size:11px;text-align:center}.busy{opacity:.6;pointer-events:none}
+    :root {
+      --bg: #090e17;
+      --card-bg: rgba(15, 23, 42, 0.92);
+      --card-border: rgba(148, 163, 184, 0.16);
+      --card-border-glow: rgba(56, 189, 248, 0.18);
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --primary: #0284c7;
+      --primary-hover: #0369a1;
+      --primary-gradient: linear-gradient(135deg, #2563eb 0%, #0284c7 100%);
+      --primary-glow: rgba(14, 165, 233, 0.28);
+      --input-bg: #070d18;
+      --input-border: #1e293b;
+      --input-border-focus: #38bdf8;
+      --danger-bg: rgba(239, 68, 68, 0.12);
+      --danger-border: rgba(239, 68, 68, 0.35);
+      --danger-text: #fca5a5;
+      --info-bg: rgba(14, 165, 233, 0.12);
+      --info-border: rgba(14, 165, 233, 0.35);
+      --info-text: #7dd3fc;
+      --success-bg: rgba(34, 197, 94, 0.12);
+      --success-border: rgba(34, 197, 94, 0.35);
+      --success-text: #86efac;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--text-main);
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(1200px circle at 50% -20%, rgba(37, 99, 235, 0.22) 0%, transparent 60%),
+        radial-gradient(800px circle at 85% 90%, rgba(2, 132, 199, 0.14) 0%, transparent 55%),
+        radial-gradient(600px circle at 15% 95%, rgba(99, 102, 241, 0.12) 0%, transparent 50%);
+      padding: 20px;
+      user-select: none;
+    }
+
+    .container {
+      width: min(600px, 100%);
+      background: var(--card-bg);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 30px 32px 26px;
+      box-shadow:
+        0 24px 60px -12px rgba(0, 0, 0, 0.8),
+        0 0 0 1px rgba(255, 255, 255, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.25s ease;
+    }
+
+    .container::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 10%;
+      right: 10%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.5), transparent);
+    }
+
+    /* Top Navigation: Brand + Language Switcher */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #1e3a8a 0%, #0284c7 100%);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      display: grid;
+      place-items: center;
+      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.3);
+    }
+
+    .brand-icon svg {
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: #e0f2fe;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .brand-text {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: #f8fafc;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      color: #38bdf8;
+      letter-spacing: 0;
+    }
+
+    /* Segmented Language Switch */
+    .lang-segment {
+      display: inline-flex;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 9px;
+      padding: 3px;
+      gap: 2px;
+    }
+
+    .lang-btn {
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.18s ease;
+      line-height: 1.2;
+    }
+
+    .lang-btn:hover {
+      color: var(--text-main);
+    }
+
+    .lang-btn.active {
+      background: #1e293b;
+      color: #38bdf8;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+    }
+
+    /* Header Section */
+    .header-section {
+      margin-bottom: 18px;
+    }
+
+    .title {
+      font-size: 21px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+      margin-bottom: 6px;
+      background: linear-gradient(180deg, #ffffff 40%, #cbd5e1 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    /* Alert / Status Bar */
+    .status-alert {
+      display: none;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 11px 14px;
+      border-radius: 11px;
+      font-size: 12.5px;
+      line-height: 1.5;
+      margin-bottom: 16px;
+      animation: fadeIn 0.2s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .status-alert.show {
+      display: flex;
+    }
+
+    .status-alert.error {
+      background: var(--danger-bg);
+      border: 1px solid var(--danger-border);
+      color: var(--danger-text);
+    }
+
+    .status-alert.info {
+      background: var(--info-bg);
+      border: 1px solid var(--info-border);
+      color: var(--info-text);
+    }
+
+    .status-alert.success {
+      background: var(--success-bg);
+      border: 1px solid var(--success-border);
+      color: var(--success-text);
+    }
+
+    .status-icon {
+      flex-shrink: 0;
+      width: 16px;
+      height: 16px;
+      margin-top: 1.5px;
+    }
+
+    .status-text {
+      flex: 1;
+      word-break: break-word;
+    }
+
+    /* Input Section */
+    .input-section {
+      margin-bottom: 18px;
+    }
+
+    .input-meta-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+
+    .input-label {
+      font-weight: 600;
+      color: #cbd5e1;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .format-hint {
+      font-size: 11px;
+      color: var(--text-dim);
+      background: rgba(30, 41, 59, 0.6);
+      padding: 1px 6px;
+      border-radius: 4px;
+      border: 1px solid rgba(148, 163, 184, 0.1);
+    }
+
+    .input-tools {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tool-btn {
+      background: transparent;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 6px;
+      padding: 3px 8px;
+      font-size: 11.5px;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .tool-btn:hover {
+      background: rgba(30, 41, 59, 0.8);
+      color: #38bdf8;
+      border-color: rgba(56, 189, 248, 0.35);
+    }
+
+    .tool-btn svg {
+      width: 12px;
+      height: 12px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    .textarea-wrapper {
+      position: relative;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 112px;
+      max-height: 180px;
+      resize: vertical;
+      border: 1px solid var(--input-border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      background: var(--input-bg);
+      color: #e2e8f0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
+      font-size: 12px;
+      line-height: 1.55;
+      outline: none;
+      transition: all 0.2s ease;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+    }
+
+    textarea:focus {
+      border-color: var(--input-border-focus);
+      box-shadow:
+        inset 0 2px 4px rgba(0, 0, 0, 0.4),
+        0 0 0 3px var(--primary-glow);
+    }
+
+    textarea::placeholder {
+      color: #475569;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 12px;
+    }
+
+    /* Actions Section */
+    .actions-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    button.btn {
+      border: none;
+      border-radius: 11px;
+      padding: 12px 20px;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      line-height: 1.2;
+    }
+
+    .btn-activate {
+      flex: 1;
+      color: #ffffff;
+      background: var(--primary-gradient);
+      box-shadow: 0 4px 16px var(--primary-glow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-activate:hover {
+      box-shadow: 0 6px 22px rgba(14, 165, 233, 0.42);
+      filter: brightness(1.06);
+    }
+
+    .btn-activate:active {
+      transform: scale(0.99);
+    }
+
+    .btn-quit {
+      color: #cbd5e1;
+      background: #1e293b;
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      padding: 12px 18px;
+    }
+
+    .btn-quit:hover {
+      background: #27354a;
+      color: #ffffff;
+      border-color: rgba(148, 163, 184, 0.3);
+    }
+
+    /* Spinner */
+    .spinner {
+      display: none;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #ffffff;
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .busy .spinner {
+      display: inline-block;
+    }
+
+    .busy .btn-icon {
+      display: none;
+    }
+
+    .busy {
+      pointer-events: none;
+      opacity: 0.8;
+    }
+
+    /* Shortcuts and Meta Footer */
+    .footer-section {
+      border-top: 1px solid rgba(148, 163, 184, 0.12);
+      padding-top: 14px;
+    }
+
+    .feature-pills {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .pill {
+      font-size: 11px;
+      color: var(--text-dim);
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      padding: 3px 9px;
+      border-radius: 9999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .pill svg {
+      width: 11px;
+      height: 11px;
+      stroke: #38bdf8;
+      fill: none;
+      stroke-width: 2;
+    }
+
+    .meta-note {
+      font-size: 11px;
+      color: var(--text-dim);
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .shortcut-hints {
+      font-size: 11px;
+      color: #475569;
+      text-align: center;
+      margin-top: 5px;
+    }
+
+    .shortcut-hints kbd {
+      background: #1e293b;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      color: #94a3b8;
+      font-family: inherit;
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-size: 10px;
+    }
   </style>
 </head>
 <body>
-  <main class="card">
-    <div class="top"><div class="brand">Tools Platform</div><select id="lang" class="lang"><option value="zh">中文</option><option value="en">English</option></select></div>
-    <h1 id="title" style="font-size:20px;margin:22px 0 0">首次启动授权</h1>
-    <p id="sub" class="sub">请输入服务器授权页面签发的 EXE License。有效期已由数字签名保护，无网络也可在本地验证。</p>
-    <div id="status" class="status"></div>
-    <textarea id="token" spellcheck="false" placeholder="DSKL1..."></textarea>
-    <div class="actions"><button id="activate" class="activate">验证并启动（支持离线）</button><button id="quit" class="quit">退出</button></div>
-    <div id="meta" class="meta">有网络时检查服务器失效状态；无网络时在本地验证数字签名和到期时间。</div>
+  <main class="container">
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <div class="brand-wrap">
+        <div class="brand-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span>Tools Platform</span>
+          <span id="brand-tag" class="brand-badge">桌面企业版</span>
+        </div>
+      </div>
+      <div class="lang-segment" role="radiogroup" aria-label="Language">
+        <button type="button" class="lang-btn" data-lang="zh" id="lang-btn-zh">中文</button>
+        <button type="button" class="lang-btn" data-lang="en" id="lang-btn-en">English</button>
+      </div>
+    </header>
+
+    <!-- Header Section -->
+    <section class="header-section">
+      <h1 id="title" class="title">首次运行授权激活</h1>
+      <p id="subtitle" class="subtitle">请输入服务器授权管理页面签发的 EXE License。有效期受非对称数字签名保护，无网络时也可在本地安全验证。</p>
+    </section>
+
+    <!-- Alert / Status Bar -->
+    <div id="status-box" class="status-alert" role="alert">
+      <svg id="status-icon" class="status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <!-- Injected via JS -->
+      </svg>
+      <div id="status-text" class="status-text"></div>
+    </div>
+
+    <!-- Input Section -->
+    <section class="input-section">
+      <div class="input-meta-bar">
+        <label for="license-token" id="input-label" class="input-label">
+          <span>许可证密钥 (License Key)</span>
+          <span class="format-hint">DSKL1...</span>
+        </label>
+        <div class="input-tools">
+          <button type="button" id="btn-paste" class="tool-btn" title="Paste from clipboard">
+            <svg viewBox="0 0 24 24">
+              <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+              <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+            </svg>
+            <span id="btn-paste-text">粘贴剪贴板</span>
+          </button>
+          <button type="button" id="btn-clear" class="tool-btn" title="Clear input">
+            <svg viewBox="0 0 24 24">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+            <span id="btn-clear-text">清空</span>
+          </button>
+        </div>
+      </div>
+      <div class="textarea-wrapper">
+        <textarea
+          id="license-token"
+          spellcheck="false"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          placeholder="请在此粘贴完整的许可证密钥（如 DSKL1.xxxx.xxxx）..."
+        ></textarea>
+      </div>
+    </section>
+
+    <!-- Action Buttons -->
+    <div class="actions-bar">
+      <button type="button" id="btn-activate" class="btn btn-activate">
+        <span class="spinner" aria-hidden="true"></span>
+        <svg class="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21.801 10A10 10 0 1 1 17 3.335"/>
+          <path d="m9 11 3 3L22 4"/>
+        </svg>
+        <span id="btn-activate-text">验证并启动（支持离线）</span>
+      </button>
+      <button type="button" id="btn-quit" class="btn btn-quit">
+        <span id="btn-quit-text">退出程序</span>
+      </button>
+    </div>
+
+    <!-- Security Badges & Meta Footer -->
+    <footer class="footer-section">
+      <div class="feature-pills">
+        <span class="pill">
+          <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span id="pill-signature">离线数字签名保护</span>
+        </span>
+        <span class="pill">
+          <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <span id="pill-offline">支持完全脱网运行</span>
+        </span>
+        <span class="pill">
+          <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span id="pill-security">椭圆曲线高防伪</span>
+        </span>
+      </div>
+      <p id="meta-note" class="meta-note">有网络时将自动校验服务器撤销状态；无网络时在本地安全验证数字签名与有效期。</p>
+      <div id="shortcut-hints" class="shortcut-hints">
+        <span>按 <kbd>Enter</kbd> 或 <kbd>Ctrl+Enter</kbd> 快速验证 · <kbd>Esc</kbd> 退出</span>
+      </div>
+    </footer>
   </main>
+
   <script>
-    const words={zh:{title:'首次启动授权',sub:'请输入服务器授权页面签发的 EXE License。有效期已由数字签名保护，无网络也可在本地验证。',activate:'验证并启动（支持离线）',quit:'退出',meta:'有网络时检查服务器失效状态；无网络时在本地验数字签名和到期时间。',required:'请输入 License 密钥',checking:'正在验证 License…',failed:'授权失败：'},en:{title:'First-run activation',sub:'Enter the EXE License issued by the server. Its signed validity period can also be verified locally without a network connection.',activate:'Verify and start (offline supported)',quit:'Quit',meta:'Online checks revocation status; offline verifies the digital signature and expiration locally.',required:'Enter a License key',checking:'Verifying License…',failed:'Activation failed: '}};
-    const reason={LICENSE_REQUIRED:'需要 License / License required',INVALID_FORMAT:'密钥格式无效 / Invalid key format',INVALID_SIGNATURE:'签名无效 / Invalid signature',PRODUCT_MISMATCH:'产品不匹配 / Wrong product',LICENSE_NOT_FOUND:'服务器无此 License / License not found',REVOKED:'License 已失效 / License revoked',ARCHIVED:'License 已归档 / License archived',EXPIRED:'License 已过期 / License expired',NOT_YET_VALID:'License 尚未生效 / License not active yet',ONLINE_REQUIRED:'需要联网验证 / Online validation required',CLOCK_ROLLBACK:'检测到本机时间回拨 / System clock rollback detected'};
-    let lang=/^zh/i.test(navigator.language)?'zh':'en';const $=id=>document.getElementById(id);$('lang').value=lang;
-    function render(){const w=words[lang];['title','sub','activate','quit','meta'].forEach(id=>$(id).textContent=w[id])}
-    function show(text,type='error'){$('status').textContent=text;$('status').className=`status show ${type}`}
-    $('lang').onchange=()=>{lang=$('lang').value;render()};$('quit').onclick=()=>window.DesktopLicense.quit();
-    $('activate').onclick=async()=>{const token=$('token').value.trim();if(!token)return show(words[lang].required);document.body.classList.add('busy');show(words[lang].checking,'info');try{const result=await window.DesktopLicense.activate(token);if(!result.valid)show(words[lang].failed+(reason[result.reasonCode]||result.reasonCode||'验证失败'));}catch(e){show(words[lang].failed+(e.message||e))}finally{document.body.classList.remove('busy')}};
-    window.DesktopLicense.getState().then(state=>{if(state&&state.reasonCode&&state.reasonCode!=='LICENSE_REQUIRED')show((reason[state.reasonCode]||state.reasonCode));});render();
+    (function () {
+      'use strict';
+
+      const I18N = {
+        zh: {
+          docTitle: 'Tools Platform - 软件授权激活',
+          brandTag: '桌面企业版',
+          title: '首次运行授权激活',
+          subtitle: '请输入服务器授权管理页面签发的 EXE License。有效期受非对称数字签名保护，无网络时也可在本地安全验证。',
+          inputLabel: '许可证密钥 (License Key)',
+          placeholder: '请在此粘贴完整的许可证密钥（如 DSKL1.xxxx.xxxx）...',
+          pasteBtn: '粘贴剪贴板',
+          clearBtn: '清空',
+          activateBtn: '验证并启动（支持离线）',
+          activateBtnBusy: '正在验证授权密钥…',
+          quitBtn: '退出程序',
+          pillSignature: '离线数字签名保护',
+          pillOffline: '支持完全脱网运行',
+          pillSecurity: '椭圆曲线高防伪',
+          metaNote: '有网络时将自动校验服务器撤销状态；无网络时在本地安全验证数字签名与有效期。',
+          shortcuts: '按 <kbd>Enter</kbd> 或 <kbd>Ctrl+Enter</kbd> 快速验证 · <kbd>Esc</kbd> 退出',
+          required: '请输入完整的 License 密钥',
+          checking: '正在验证 License 授权（含数字签名及有效期限）…',
+          failedPrefix: '授权失败：',
+          successPrefix: '授权成功！正在启动主程序…',
+          clipboardEmpty: '剪贴板为空或未包含有效文本',
+          reasons: {
+            LICENSE_REQUIRED: '需要输入 License 许可证密钥',
+            INVALID_FORMAT: '密钥格式无效，请确认已完整复制（包含 DSKL1 前缀）',
+            INVALID_SIGNATURE: '数字签名无效，密钥可能已损坏或被篡改',
+            PRODUCT_MISMATCH: '产品标识不匹配，此密钥非当前软件专用授权',
+            LICENSE_NOT_FOUND: '服务器未查询到该许可证记录',
+            REVOKED: '该许可证已被管理员吊销或停用',
+            ARCHIVED: '该许可证已被归档失效',
+            EXPIRED: '该许可证已超过有效期',
+            NOT_YET_VALID: '该许可证尚未到达生效起始日期',
+            ONLINE_REQUIRED: '首次激活或离线凭据已过期，需要连接网络进行验证',
+            CLOCK_ROLLBACK: '检测到本机系统时钟异常回拨，请校准系统时间后再试',
+            NONCE_MISMATCH: '网络校验安全凭据不匹配，请重试',
+            TOKEN_MISMATCH: '服务器校验凭据与当前提交的密钥不符',
+            VERIFICATION_FAILED: '授权验证未通过，请检查密钥是否正确',
+            ONLINE_UNAVAILABLE: '无法连接到授权服务器，且本地无有效离线缓存',
+            UNKNOWN_ERROR: '验证过程中发生未预期异常，请稍后重试'
+          }
+        },
+        en: {
+          docTitle: 'Tools Platform - License Activation',
+          brandTag: 'Enterprise Desktop',
+          title: 'First-Run License Activation',
+          subtitle: 'Please enter the EXE license key issued by your system administrator. Protected by asymmetric cryptography with full offline validation.',
+          inputLabel: 'License Key',
+          placeholder: 'Paste your complete license key here (e.g. DSKL1.xxxx.xxxx)...',
+          pasteBtn: 'Paste',
+          clearBtn: 'Clear',
+          activateBtn: 'Verify & Launch (Offline Supported)',
+          activateBtnBusy: 'Verifying license key…',
+          quitBtn: 'Quit',
+          pillSignature: 'Signed Offline Voucher',
+          pillOffline: 'Standalone Offline Run',
+          pillSecurity: 'Elliptic Curve Protected',
+          metaNote: 'Online checks revocation status; offline verifies the digital signature and expiration date locally.',
+          shortcuts: 'Press <kbd>Enter</kbd> or <kbd>Ctrl+Enter</kbd> to verify · <kbd>Esc</kbd> to quit',
+          required: 'Please enter a valid License key',
+          checking: 'Verifying license authorization (including signature & validity)…',
+          failedPrefix: 'Activation failed: ',
+          successPrefix: 'License verified successfully! Starting application…',
+          clipboardEmpty: 'Clipboard is empty or does not contain valid text',
+          reasons: {
+            LICENSE_REQUIRED: 'License key is required',
+            INVALID_FORMAT: 'Invalid key format. Please ensure you copied the complete key with DSKL1 prefix',
+            INVALID_SIGNATURE: 'Invalid digital signature. The key may be corrupted or modified',
+            PRODUCT_MISMATCH: 'Product mismatch. This key is not issued for Tools Platform Desktop',
+            LICENSE_NOT_FOUND: 'License record not found on the authorization server',
+            REVOKED: 'This license has been revoked or deactivated by administrator',
+            ARCHIVED: 'This license has been archived and is no longer valid',
+            EXPIRED: 'This license has expired',
+            NOT_YET_VALID: 'This license is not active yet (future start date)',
+            ONLINE_REQUIRED: 'First-run activation or expired offline voucher requires network connection',
+            CLOCK_ROLLBACK: 'System clock rollback detected. Please calibrate your system clock and try again',
+            NONCE_MISMATCH: 'Network validation security nonce mismatch. Please retry',
+            TOKEN_MISMATCH: 'Returned voucher does not match the submitted license key',
+            VERIFICATION_FAILED: 'License verification failed. Please check your key and try again',
+            ONLINE_UNAVAILABLE: 'Cannot connect to license server and no valid offline signature found',
+            UNKNOWN_ERROR: 'An unexpected error occurred during verification. Please try again'
+          }
+        }
+      };
+
+      // Detect & Initialize Language
+      let currentLang = 'zh';
+      try {
+        const stored = localStorage.getItem('tools_license_lang');
+        if (stored === 'zh' || stored === 'en') {
+          currentLang = stored;
+        } else {
+          currentLang = /^zh/i.test(navigator.language) ? 'zh' : 'en';
+        }
+      } catch (_) {
+        currentLang = /^zh/i.test(navigator.language) ? 'zh' : 'en';
+      }
+
+      // DOM Elements
+      const elements = {
+        title: document.getElementById('title'),
+        subtitle: document.getElementById('subtitle'),
+        brandTag: document.getElementById('brand-tag'),
+        inputLabel: document.getElementById('input-label'),
+        licenseToken: document.getElementById('license-token'),
+        btnPasteText: document.getElementById('btn-paste-text'),
+        btnClearText: document.getElementById('btn-clear-text'),
+        btnActivateText: document.getElementById('btn-activate-text'),
+        btnQuitText: document.getElementById('btn-quit-text'),
+        pillSignature: document.getElementById('pill-signature'),
+        pillOffline: document.getElementById('pill-offline'),
+        pillSecurity: document.getElementById('pill-security'),
+        metaNote: document.getElementById('meta-note'),
+        shortcutHints: document.getElementById('shortcut-hints'),
+        statusBox: document.getElementById('status-box'),
+        statusIcon: document.getElementById('status-icon'),
+        statusText: document.getElementById('status-text'),
+        btnZh: document.getElementById('lang-btn-zh'),
+        btnEn: document.getElementById('lang-btn-en'),
+        btnPaste: document.getElementById('btn-paste'),
+        btnClear: document.getElementById('btn-clear'),
+        btnActivate: document.getElementById('btn-activate'),
+        btnQuit: document.getElementById('btn-quit')
+      };
+
+      function updateLanguage(lang) {
+        currentLang = lang;
+        try { localStorage.setItem('tools_license_lang', lang); } catch (_) {}
+        document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+
+        // Update active switch style
+        elements.btnZh.classList.toggle('active', lang === 'zh');
+        elements.btnEn.classList.toggle('active', lang === 'en');
+
+        const t = I18N[lang];
+        document.title = t.docTitle;
+        elements.title.textContent = t.title;
+        elements.subtitle.textContent = t.subtitle;
+        elements.brandTag.textContent = t.brandTag;
+        elements.licenseToken.placeholder = t.placeholder;
+        elements.btnPasteText.textContent = t.pasteBtn;
+        elements.btnClearText.textContent = t.clearBtn;
+        elements.btnActivateText.textContent = t.activateBtn;
+        elements.btnQuitText.textContent = t.quitBtn;
+        elements.pillSignature.textContent = t.pillSignature;
+        elements.pillOffline.textContent = t.pillOffline;
+        elements.pillSecurity.textContent = t.pillSecurity;
+        elements.metaNote.textContent = t.metaNote;
+        elements.shortcutHints.innerHTML = t.shortcuts;
+
+        // If status is currently displayed with a reason code, re-translate it
+        if (elements.statusBox.dataset.lastReasonCode) {
+          const code = elements.statusBox.dataset.lastReasonCode;
+          const translated = t.reasons[code] || code;
+          elements.statusText.textContent = `${t.failedPrefix}${translated}`;
+        }
+      }
+
+      function showStatus(message, type = 'error', reasonCode = '') {
+        elements.statusBox.dataset.lastReasonCode = reasonCode || '';
+        elements.statusText.textContent = message;
+        elements.statusBox.className = `status-alert show ${type}`;
+
+        // SVG Icon template based on type
+        if (type === 'error') {
+          elements.statusIcon.innerHTML = `
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          `;
+        } else if (type === 'info') {
+          elements.statusIcon.innerHTML = `
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <line x1="12" y1="8" x2="12.01" y2="8"/>
+          `;
+        } else if (type === 'success') {
+          elements.statusIcon.innerHTML = `
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          `;
+        }
+      }
+
+      function hideStatus() {
+        elements.statusBox.className = 'status-alert';
+        elements.statusBox.dataset.lastReasonCode = '';
+      }
+
+      async function doPaste() {
+        let text = '';
+        try {
+          if (window.DesktopLicense && typeof window.DesktopLicense.readClipboard === 'function') {
+            text = window.DesktopLicense.readClipboard();
+          }
+        } catch (_) {}
+
+        if (!text && navigator.clipboard && typeof navigator.clipboard.readText === 'function') {
+          try {
+            text = await navigator.clipboard.readText();
+          } catch (_) {}
+        }
+
+        if (text && text.trim()) {
+          elements.licenseToken.value = text.trim();
+          elements.licenseToken.focus();
+          hideStatus();
+        } else {
+          showStatus(I18N[currentLang].clipboardEmpty, 'info');
+          setTimeout(hideStatus, 2500);
+        }
+      }
+
+      function doClear() {
+        elements.licenseToken.value = '';
+        elements.licenseToken.focus();
+        hideStatus();
+      }
+
+      async function doActivate() {
+        const token = elements.licenseToken.value.trim();
+        const t = I18N[currentLang];
+
+        if (!token) {
+          showStatus(t.required, 'error');
+          elements.licenseToken.focus();
+          return;
+        }
+
+        document.body.classList.add('busy');
+        elements.btnActivateText.textContent = t.activateBtnBusy;
+        showStatus(t.checking, 'info');
+
+        try {
+          const result = await window.DesktopLicense.activate(token);
+          if (result && result.valid) {
+            showStatus(t.successPrefix, 'success');
+            // electron-main will automatically close this window upon valid activation
+          } else {
+            const reasonCode = result && result.reasonCode ? result.reasonCode : 'VERIFICATION_FAILED';
+            const reasonMsg = t.reasons[reasonCode] || reasonCode;
+            showStatus(`${t.failedPrefix}${reasonMsg}`, 'error', reasonCode);
+          }
+        } catch (err) {
+          const errMsg = err && err.message ? err.message : String(err || t.reasons.UNKNOWN_ERROR);
+          showStatus(`${t.failedPrefix}${errMsg}`, 'error');
+        } finally {
+          document.body.classList.remove('busy');
+          elements.btnActivateText.textContent = t.activateBtn;
+        }
+      }
+
+      function doQuit() {
+        if (window.DesktopLicense && typeof window.DesktopLicense.quit === 'function') {
+          window.DesktopLicense.quit();
+        } else {
+          window.close();
+        }
+      }
+
+      // Event Listeners
+      elements.btnZh.addEventListener('click', () => updateLanguage('zh'));
+      elements.btnEn.addEventListener('click', () => updateLanguage('en'));
+      elements.btnPaste.addEventListener('click', doPaste);
+      elements.btnClear.addEventListener('click', doClear);
+      elements.btnActivate.addEventListener('click', doActivate);
+      elements.btnQuit.addEventListener('click', doQuit);
+
+      // Keyboard shortcuts
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          doQuit();
+        } else if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+          e.preventDefault();
+          doActivate();
+        } else if (e.key === 'Enter' && !e.shiftKey && document.activeElement === elements.licenseToken) {
+          // If token looks like a single-line or multi-segment key, enter can submit
+          if (elements.licenseToken.value.trim().length > 30) {
+            e.preventDefault();
+            doActivate();
+          }
+        }
+      });
+
+      // Initialize
+      updateLanguage(currentLang);
+      elements.licenseToken.focus();
+
+      // Check initial state from main process
+      if (window.DesktopLicense && typeof window.DesktopLicense.getState === 'function') {
+        window.DesktopLicense.getState().then(state => {
+          if (state && state.reasonCode && state.reasonCode !== 'LICENSE_REQUIRED') {
+            const t = I18N[currentLang];
+            const reasonMsg = t.reasons[state.reasonCode] || state.reasonCode;
+            showStatus(`${t.failedPrefix}${reasonMsg}`, 'error', state.reasonCode);
+          }
+        }).catch(() => {});
+      }
+    })();
   </script>
 </body>
 </html>
