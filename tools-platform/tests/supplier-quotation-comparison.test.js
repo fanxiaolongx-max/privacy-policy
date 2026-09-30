@@ -330,6 +330,31 @@ test('automatically ignores rows with missing date when date column is present (
     assert.deepEqual(records.map(r => r.item), ['老豆腐', '韭菜']);
 });
 
+test('automatically ignores WK reserved week columns and avoids picking them as quantity (Case 8)', () => {
+    const sheet = {
+        name: 'Week1 (9.5-9.9)',
+        matrix: [
+            ['DATE', 'WK 1', "SUPPLIER'S NAME", 'BIG SERIES', 'DESCRIPTION OF GOODS', 'UNIT', '采购量'],
+            ['2026/10/5', 1, 'yummy', '蔬菜', '老豆腐', 'pcs', 20],
+            ['2026/10/5', 1, 'yummy', '蔬菜', '韭菜', 'kg', 8]
+        ]
+    };
+    const configs = core.analyzeSheets([sheet]);
+    assert.equal(configs[0].columns.date, 0);
+    assert.equal(configs[0].columns.baseSupplier, 2);
+    assert.equal(configs[0].columns.category, 3);
+    assert.equal(configs[0].columns.item, 4);
+    assert.equal(configs[0].columns.unit, 5);
+    assert.equal(configs[0].columns.quantity, 6, 'Should map quantity to column 6, not WK column 1');
+
+    const records = core.recordsFromSheet(configs[0]);
+    assert.equal(records.length, 2);
+    assert.equal(records[0].quantity, 20);
+    assert.equal(records[1].quantity, 8);
+    assert.notEqual(records[0].quantity, 1);
+});
+
+
 
 
 

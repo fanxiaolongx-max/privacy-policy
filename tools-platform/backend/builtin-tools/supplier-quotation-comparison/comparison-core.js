@@ -98,7 +98,8 @@
     spec: '包装规格',
     remark: '备注说明',
     taxFlag: '是否加税',
-    stock: '库存状态'
+    stock: '库存状态',
+    wk_ignored: '预留周数列'
   };
 
   function isDateValue(value) {
@@ -260,6 +261,30 @@
     return rawValues;
   }
 
+  function isWeekNumberColumn(header, rawValues) {
+    const h = text(header);
+    const hasWkInHeader = /(?:^|[\s_(\[（【\-])(?:wk|week|周次|周数)(?:[\s_\-\]\)）】\d]|$)/i.test(h)
+      || /^(?:wk|week)[\s_\-\d]*$/i.test(h);
+
+    let hasWkValue = false;
+    const nonWkValues = [];
+
+    const values = Array.isArray(rawValues) ? rawValues : [];
+    for (const val of values) {
+      const s = text(val);
+      if (!s) continue;
+      if (/(?:^|[\s_(\[（【\-])(?:wk|week)(?:[\s_\-\]\)）】\d]|$)/i.test(s) || /^(?:wk|week)[\s_\-\d]*$/i.test(s)) {
+        hasWkValue = true;
+      } else {
+        nonWkValues.push(s);
+      }
+    }
+
+    if (!hasWkInHeader && !hasWkValue) return false;
+    if (nonWkValues.length === 0) return true;
+    return nonWkValues.every(v => /^\d+(?:\.\d+)?$/.test(v) || parseNumber(v) !== null);
+  }
+
   function profileColumnData(values) {
     if (!Array.isArray(values) || !values.length) {
       return {
@@ -410,15 +435,45 @@
     const profiles = [];
     for (let c = 0; c < maxCol; c += 1) {
       const rawValues = sampleColumnData(matrix, headerRow, c);
+      const headerStr = text(headerCols[c]);
+      const isWeekCol = isWeekNumberColumn(headerStr, rawValues);
       profiles[c] = {
         colIdx: c,
-        header: text(headerCols[c]),
+        header: headerStr,
+        isWeekCol,
         profile: profileColumnData(rawValues)
       };
+      if (isWeekCol) {
+        profiles[c].profile.quantityScore = 0;
+        profiles[c].profile.unitScore = 0;
+        profiles[c].profile.itemScore = 0;
+        profiles[c].profile.categoryScore = 0;
+        profiles[c].profile.priceScore = 0;
+        profiles[c].profile.dateScore = 0;
+      }
     }
 
     const cols = { ...initialColumns };
     const corrections = [];
+
+    // ★ 检查并自动忽略 WK 预留周数列
+    profiles.forEach(p => {
+      if (p.isWeekCol) {
+        Object.keys(cols).forEach(field => {
+          if (cols[field] === p.colIdx) {
+            delete cols[field];
+          }
+        });
+        corrections.push({
+          field: 'wk_ignored',
+          fieldLabel: FIELD_LABELS.wk_ignored,
+          colIndex: p.colIdx,
+          originalHeader: p.header || 'WK',
+          sampleValues: p.profile.sampleValues.slice(0, 3).join('、'),
+          reason: `识别到第 ${p.colIdx + 1} 列为预留周数列（包含“WK”且其余全是数字），已自动忽略该列数据，避免被识别为采购量`
+        });
+      }
+    });
 
     // 0. 日期列保护识别与纠偏：若已识别到 date 列但其内容不是日期，或存在明显日期列
     const isCurrentDateInvalid = cols.date === undefined
@@ -512,26 +567,29 @@
       }
     }
 
-    // 5. Check quantity in base sheet (防止将日期列误认为采购量，保护已有合法采购量列)
+    // 5. Check quantity in base sheet (防止将日期列或WK周数列误认为采购量，保护已有合法采购量列)
     if (role === 'base') {
       const currentQtyIdx = cols.quantity;
-      const isCurrentQtyDate = currentQtyIdx !== undefined && (
+      const isCurrentQtyDateOrWk = currentQtyIdx !== undefined && (
         currentQtyIdx === cols.date ||
+        profiles[currentQtyIdx]?.isWeekCol ||
         profiles[currentQtyIdx]?.profile.dateScore >= 50 ||
         /date|日期/i.test(profiles[currentQtyIdx]?.header) ||
         isDateValue(profiles[currentQtyIdx]?.profile.sampleValues[0])
       );
 
-      if (isCurrentQtyDate) {
+      if (isCurrentQtyDateOrWk) {
         delete cols.quantity;
       }
 
       const isCurrentQtyInvalid = cols.quantity === undefined
         || profiles[cols.quantity]?.profile.isEmpty
+        || profiles[cols.quantity]?.isWeekCol
         || (profiles[cols.quantity]?.profile.quantityScore < 30 && !/量|数量|需求|qty/i.test(profiles[cols.quantity]?.header));
 
       if (isCurrentQtyInvalid) {
         const qtyCandidate = profiles.find(p =>
+          !p.isWeekCol &&
           p.profile.quantityScore >= 50 &&
           p.profile.dateScore < 50 &&
           !/date|日期/i.test(p.header) &&
@@ -551,8 +609,8 @@
             colIndex: qtyCandidate.colIdx,
             originalHeader: origHeader,
             sampleValues: sample,
-            reason: isCurrentQtyDate
-              ? `原采购量误识别到了日期列「${profiles[currentQtyIdx]?.header || 'DATE'}」，已自动重定向为真正的采购量列「${origHeader || '采购量'}」`
+            reason: isCurrentQtyDateOrWk
+              ? `原采购量误识别到了日期列或WK周数列「${profiles[currentQtyIdx]?.header || 'DATE/WK'}」，已自动重定向为真正的采购量列「${origHeader || '采购量'}」`
               : `原表头为「${origHeader || '空'}」，实际内容为采购数量（如：${sample}）`
           });
         }

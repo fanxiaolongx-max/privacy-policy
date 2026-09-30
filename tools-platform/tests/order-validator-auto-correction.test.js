@@ -215,3 +215,41 @@ test('餐单核验: Case 7 数据行没有有效日期时自动忽略过滤该�
   assert.equal(missingAnomalies[0].hasCorrection, false);
 });
 
+test('餐单核验: Case 8 识别到WK周数列（包含WK且其余全是数字）时自动忽略该列，避免被识别为采购量', () => {
+  const ctx = createContext();
+  const collector = [];
+  const case8Grid = [
+    ['DATE', 'WK 1', "SUPPLIER'S NAME", 'BIG SERIES', 'DESCRIPTION OF GOODS', 'UNIT', '采购量'],
+    ['2026/10/5', 1, '晨光蔬菜', '蔬菜', '老豆腐', 'pcs', 20],
+    ['2026/10/5', 1, '晨光蔬菜', '蔬菜', '韭菜', 'kg', 8],
+    ['2026/10/5', 1, '晨光蔬菜', '蔬菜', '空心菜', 'kg', 15]
+  ];
+
+  const cleaned = ctx.cleanAndFilterData(case8Grid, true, { sourceName: '待核对目标表', fileName: 'test8.xlsx', sheetName: 'Sheet1' }, collector);
+  assert.ok(cleaned.length > 0);
+  assert.equal(cleaned[0].includes('WK 1'), false, 'WK 1 should not be in cleaned headers');
+  const qtyIdx = cleaned[0].indexOf('采购量');
+  assert.ok(qtyIdx !== -1, '采购量 column should exist');
+  assert.equal(Number(cleaned[1][qtyIdx]), 20, 'Quantity should be 20, not the week number 1');
+  assert.equal(Number(cleaned[2][qtyIdx]), 8, 'Quantity should be 8, not the week number 1');
+  assert.equal(Number(cleaned[3][qtyIdx]), 15, 'Quantity should be 15, not the week number 1');
+
+  const wkAnomalies = collector.filter(a => a.issueType === '预留周数列自动忽略');
+  assert.equal(wkAnomalies.length, 1, 'Should log WK column ignore anomaly');
+  assert.match(wkAnomalies[0].issueDesc, /预留周数列/);
+
+  // 进一步测试：采购量表头缺失时，WK列也不会抢占采购量
+  const case8Shifted = [
+    ['DATE', 'WK', 'BIG SERIES', 'DESCRIPTION OF GOODS', 'UNIT', ''],
+    ['2026/10/5', 2, '蔬菜', '土豆', 'kg', 50],
+    ['2026/10/5', 2, '蔬菜', '番茄', 'kg', 35]
+  ];
+  const collector2 = [];
+  const cleanedShifted = ctx.cleanAndFilterData(case8Shifted, true, { sourceName: '待核对目标表', fileName: 'test8-shifted.xlsx', sheetName: 'Sheet1' }, collector2);
+  const shiftedQtyIdx = cleanedShifted[0].indexOf('采购量');
+  assert.ok(shiftedQtyIdx !== -1, 'Shifted 采购量 should be identified');
+  assert.equal(Number(cleanedShifted[1][shiftedQtyIdx]), 50, 'Shifted quantity should be 50, not week 2');
+  assert.equal(Number(cleanedShifted[2][shiftedQtyIdx]), 35, 'Shifted quantity should be 35, not week 2');
+});
+
+

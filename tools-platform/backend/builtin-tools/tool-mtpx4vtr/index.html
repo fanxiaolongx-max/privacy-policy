@@ -672,6 +672,30 @@
     return rawValues;
   }
 
+  function isWeekNumberColumn(header, rawValues) {
+    const h = String(header ?? '').trim();
+    const hasWkInHeader = /(?:^|[\s_(\[（【\-])(?:wk|week|周次|周数)(?:[\s_\-\]\)）】\d]|$)/i.test(h)
+      || /^(?:wk|week)[\s_\-\d]*$/i.test(h);
+
+    let hasWkValue = false;
+    const nonWkValues = [];
+
+    const values = Array.isArray(rawValues) ? rawValues : [];
+    for (const val of values) {
+      const s = String(val ?? '').trim();
+      if (!s) continue;
+      if (/(?:^|[\s_(\[（【\-])(?:wk|week)(?:[\s_\-\]\)）】\d]|$)/i.test(s) || /^(?:wk|week)[\s_\-\d]*$/i.test(s)) {
+        hasWkValue = true;
+      } else {
+        nonWkValues.push(s);
+      }
+    }
+
+    if (!hasWkInHeader && !hasWkValue) return false;
+    if (nonWkValues.length === 0) return true;
+    return nonWkValues.every(v => /^\d+(?:\.\d+)?$/.test(v) || parseOrderNumber(v) !== null);
+  }
+
   function profileOrderColumn(values) {
     if (!Array.isArray(values) || !values.length) {
       return {
@@ -810,15 +834,44 @@
     const profiles = [];
     for (let c = 0; c < maxCol; c += 1) {
       const rawValues = sampleOrderColumn(grid, headerRowIndex, c);
+      const headerStr = String(headerCols[c] ?? '').trim();
+      const isWeekCol = isWeekNumberColumn(headerStr, rawValues);
       profiles[c] = {
         colIdx: c,
-        header: String(headerCols[c] ?? '').trim(),
+        header: headerStr,
+        isWeekCol,
         profile: profileOrderColumn(rawValues)
       };
+      if (isWeekCol) {
+        profiles[c].profile.quantityScore = 0;
+        profiles[c].profile.unitScore = 0;
+        profiles[c].profile.itemScore = 0;
+        profiles[c].profile.categoryScore = 0;
+        profiles[c].profile.supplierScore = 0;
+        profiles[c].profile.dateScore = 0;
+      }
     }
 
     const colMap = { ...initialMap };
     const corrections = [];
+
+    // ★ 检查并自动忽略 WK 预留周数列，防止其污染字段识别或被误选为采购量
+    profiles.forEach(p => {
+      if (p.isWeekCol) {
+        Object.keys(colMap).forEach(key => {
+          if (colMap[key] === p.colIdx) {
+            delete colMap[key];
+          }
+        });
+        corrections.push({
+          key: '预留周数列自动忽略',
+          colIndex: p.colIdx,
+          origHeader: p.header || 'WK',
+          sample: p.profile.sampleValues.slice(0, 3).join('、'),
+          reason: `识别到第 ${p.colIdx + 1} 列为预留周数列（包含“WK”且其余全是数字），已自动忽略该列数据，避免被误识别为采购量`
+        });
+      }
+    });
 
     // 0. 校验 DATE 日期列
     const isCurrentDateInvalid = colMap['DATE'] === undefined
@@ -925,24 +978,27 @@
       }
     }
 
-    // 5. 校验 采购量 (防止误将日期列映射为采购量)
+    // 5. 校验 采购量 (防止误将日期列或WK周数列映射为采购量)
     const currentQtyIdx = colMap['采购量'];
-    const isCurrentQtyDate = currentQtyIdx !== undefined && (
+    const isCurrentQtyDateOrWk = currentQtyIdx !== undefined && (
       currentQtyIdx === colMap['DATE'] ||
+      profiles[currentQtyIdx]?.isWeekCol ||
       profiles[currentQtyIdx]?.profile.dateScore >= 50 ||
       /date|日期/i.test(profiles[currentQtyIdx]?.header) ||
       isRecognizableDateValue(profiles[currentQtyIdx]?.profile.sampleValues[0])
     );
-    if (isCurrentQtyDate) {
+    if (isCurrentQtyDateOrWk) {
       delete colMap['采购量'];
     }
 
     const isCurrentQtyInvalid = colMap['采购量'] === undefined
       || profiles[colMap['采购量']]?.profile.isEmpty
+      || profiles[colMap['采购量']]?.isWeekCol
       || (profiles[colMap['采购量']]?.profile.quantityScore < 30 && !/量|数量|需求|qty/i.test(profiles[colMap['采购量']]?.header));
 
     if (isCurrentQtyInvalid) {
       const qtyCandidate = profiles.find(p =>
+        !p.isWeekCol &&
         p.profile.quantityScore >= 50 &&
         p.profile.dateScore < 50 &&
         !/date|日期/i.test(p.header) &&
@@ -961,8 +1017,8 @@
           colIndex: qtyCandidate.colIdx,
           origHeader,
           sample,
-          reason: isCurrentQtyDate
-            ? `原采购量误识别到了日期列「${profiles[currentQtyIdx]?.header || 'DATE'}」，已自动重定向为真正的采购量列「${origHeader || '采购量'}」`
+          reason: isCurrentQtyDateOrWk
+            ? `原采购量误识别到了日期列或WK周数列「${profiles[currentQtyIdx]?.header || 'DATE/WK'}」，已自动重定向为真正的采购量列「${origHeader || '采购量'}」`
             : `原表头为「${origHeader || '空'}」，实际内容为采购数量（如：${sample}）`
         });
       }
@@ -1043,16 +1099,29 @@
 
       // 记录内容指纹智能纠错异常日志
       autoCorrections.forEach(corr => {
-        logAnomaly(
-          headerRowIndex + 1,
-          corr.key,
-          corr.origHeader || '空',
-          '表头列名错位自动校正',
-          corr.reason,
-          true,
-          `已基于列数据内容特征自动重映射为「${corr.key}」`,
-          '自动重映射列'
-        );
+        if (corr.key === '预留周数列自动忽略') {
+          logAnomaly(
+            headerRowIndex + 1,
+            corr.origHeader || 'WK (周数)',
+            corr.sample || '数字周数',
+            '预留周数列自动忽略',
+            corr.reason,
+            true,
+            '已自动忽略该列数据，避免干扰采购量识别',
+            '忽略该列'
+          );
+        } else {
+          logAnomaly(
+            headerRowIndex + 1,
+            corr.key,
+            corr.origHeader || '空',
+            '表头列名错位自动校正',
+            corr.reason,
+            true,
+            `已基于列数据内容特征自动重映射为「${corr.key}」`,
+            '自动重映射列'
+          );
+        }
       });
 
       const newGrid = [];
