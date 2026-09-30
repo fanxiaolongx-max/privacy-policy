@@ -85,16 +85,321 @@
     return columns;
   }
 
+  const FIELD_LABELS = {
+    item: '商品名称',
+    baseSupplier: '基础表供应商',
+    category: '种类/大类',
+    quantity: '采购量',
+    unit: '计量单位',
+    price: '税前/原报价',
+    taxPrice: '税后/结算价',
+    spec: '包装规格',
+    remark: '备注说明',
+    taxFlag: '是否加税',
+    stock: '库存状态'
+  };
+
+  const KNOWN_UNITS = new Set([
+    'kg', 'kgs', 'g', 'gr', 'gram', 'grams', '克', '千克', '公斤', '斤',
+    'l', 'lt', 'liter', 'litre', '升', 'ml', '毫升',
+    'pcs', 'pc', 'piece', 'pieces', '个', '件', '条', '板', '包', '袋', '瓶', '桶', '盒', '箱', '罐',
+    'bag', 'box', 'bottle', 'can', '把', '扎', '只', '头', '尾', '根', '块', '份', '副', '双', '卷', '提', '盘'
+  ]);
+
+  const KNOWN_CATEGORIES = [
+    '肉食禽蛋海鲜', '肉食禽蛋', '肉禽蛋海鲜', '肉禽蛋', '禽蛋', '肉类', '禽类', '蛋类',
+    '蔬菜', '蔬菜类', '净菜', '叶菜', '根茎', '根茎类',
+    '干货调味品', '干货调味', '干货', '调味品', '调料', '调味料', '调料类', '调料干货',
+    '豆制品', '豆类', '水产', '海鲜', '水产海鲜', '水产品', '鲜活水产',
+    '冻品', '冷冻', '冷冻品', '冻肉',
+    '主食', '面点', '面食', '米面', '粮油', '粮油副食',
+    '水果', '新鲜水果', '鲜果', '饮品', '饮料',
+    '熟食', '半成品', '加工品', '菌菇', '菌菇类', '禽肉', '畜肉'
+  ];
+
+  const FOOD_KEYWORDS_REGEX = /(?:鱼|虾|蟹|贝|鱿|螺|肚|鳝|参|蛙|鸡|鸭|鹅|牛|羊|猪|肉|排骨|爪|杂|肺|肠|翅|胗|卷|骨|鸽|菜|豆|芹|瓜|菇|茄|椒|葱|蒜|姜|萝|莲|藕|笋|苗|蓝|薯|芋|耳|菌|韭|菠|麦|芽|腐|花菜|香菜|油麦|生菜|海带|木耳|香菇|平菇|茶树菇|金针菇|草鱼|土鸡|白芷|面筋|豆腐|粉丝|粉|米|面|油|盐|糖|醋|酱|精|料酒|生抽|老抽|耗油|蚝油|八角|花椒|辣椒|孜然|咖喱|芝麻|淀粉|挂面|秋葵|大白菜|小白菜|上海青|包菜|冬瓜|豆角|香干|魔芋|鲤鱼|羊蝎子|老鸭|鸭血|毛肚|西芹)/;
+
+  function isCategoryWord(val) {
+    const c = compact(val);
+    if (!c) return false;
+    for (const cat of KNOWN_CATEGORIES) {
+      const cc = compact(cat);
+      if (c === cc || (cc.includes(c) && c.length >= 2) || (c.includes(cc) && cc.length >= 2)) return true;
+    }
+    return false;
+  }
+
+  function sampleColumnData(matrix, headerRow, colIdx, maxRows = 60) {
+    const start = Math.max(0, Number(headerRow || 0) + 1);
+    const limit = Math.min(matrix.length, start + maxRows);
+    const rawValues = [];
+    for (let r = start; r < limit; r += 1) {
+      const row = matrix[r] || [];
+      const val = text(row[colIdx]);
+      if (val !== '') rawValues.push(val);
+    }
+    return rawValues;
+  }
+
+  function profileColumnData(values) {
+    if (!Array.isArray(values) || !values.length) {
+      return {
+        total: 0,
+        isEmpty: true,
+        unitScore: 0,
+        quantityScore: 0,
+        categoryScore: 0,
+        itemScore: 0,
+        priceScore: 0,
+        supplierScore: 0,
+        distinctCount: 0,
+        distinctRatio: 0,
+        sampleValues: []
+      };
+    }
+    const N = values.length;
+    const distinctSet = new Set(values.map(v => compact(v)).filter(Boolean));
+    const distinctCount = distinctSet.size;
+    const distinctRatio = distinctCount / N;
+    const sampleValues = Array.from(new Set(values)).slice(0, 4);
+
+    let unitMatches = 0;
+    let qtyMatches = 0;
+    let categoryMatches = 0;
+    let foodMatches = 0;
+    let priceMatches = 0;
+    let totalLength = 0;
+
+    values.forEach(v => {
+      const c = compact(v);
+      totalLength += c.length;
+
+      if (KNOWN_UNITS.has(c)) {
+        unitMatches += 1;
+      }
+
+      const isDate = /^\d{4}[-/.]\d{1,2}[-/.]\d{1,2}/.test(v);
+      const num = parseNumber(v);
+      if (!isDate && num !== null) {
+        if (/^\d+(?:\.\d+)?\s*(?:kg|g|斤|公斤|千克|件|包|袋|瓶|箱|pcs|pc|个|升|l|ml)?$/i.test(v.trim())) {
+          qtyMatches += 1;
+        }
+        if (num >= 0) {
+          priceMatches += 1;
+        }
+      }
+
+      if (isCategoryWord(v)) {
+        categoryMatches += 1;
+      }
+
+      if (FOOD_KEYWORDS_REGEX.test(v)) {
+        foodMatches += 1;
+      }
+    });
+
+    const avgLen = totalLength / N;
+    const unitRatio = unitMatches / N;
+    const qtyRatio = qtyMatches / N;
+    const categoryRatio = categoryMatches / N;
+    const foodRatio = foodMatches / N;
+    const priceRatio = priceMatches / N;
+
+    let unitScore = 0;
+    if (unitRatio >= 0.70) unitScore = 95 + Math.round(unitRatio * 5);
+    else if (unitRatio >= 0.40) unitScore = 65 + Math.round(unitRatio * 20);
+
+    let quantityScore = 0;
+    if (qtyRatio >= 0.75) quantityScore = 90 + Math.round(qtyRatio * 10);
+    else if (qtyRatio >= 0.40) quantityScore = 50 + Math.round(qtyRatio * 30);
+
+    let priceScore = 0;
+    if (priceRatio >= 0.75 && !unitScore) priceScore = 80 + Math.round(priceRatio * 15);
+
+    let categoryScore = 0;
+    if (unitRatio < 0.35 && qtyRatio < 0.35) {
+      if (categoryRatio >= 0.60 && (distinctCount <= 8 || distinctRatio <= 0.35)) {
+        categoryScore = 95 + Math.round(categoryRatio * 5);
+      } else if (categoryRatio >= 0.30 && (distinctCount <= 6 || distinctRatio <= 0.25)) {
+        categoryScore = 80 + Math.round(categoryRatio * 15);
+      } else if (categoryRatio >= 0.15 && distinctCount <= 4 && avgLen <= 7) {
+        categoryScore = 65;
+      }
+    }
+
+    let itemScore = 0;
+    if (unitRatio < 0.30 && qtyRatio < 0.30) {
+      if (foodRatio >= 0.40 && (distinctRatio >= 0.45 || distinctCount >= 8)) {
+        itemScore = 95 + Math.round(foodRatio * 5);
+      } else if (foodRatio >= 0.25 && (distinctRatio >= 0.35 || distinctCount >= 5)) {
+        itemScore = 80 + Math.round(foodRatio * 15);
+      } else if (distinctRatio >= 0.60 && avgLen >= 2 && avgLen <= 12 && categoryScore < 60) {
+        itemScore = 70;
+      }
+    }
+    if (categoryScore >= 80 && categoryRatio >= 0.70) {
+      itemScore = Math.min(itemScore, 15);
+    }
+
+    let supplierScore = 0;
+    if (unitRatio < 0.20 && qtyRatio < 0.30) {
+      if (categoryScore >= 70 || (itemScore >= 70 && foodRatio >= 0.40)) {
+        supplierScore = 0;
+      } else {
+        supplierScore = 50;
+      }
+    }
+
+    return {
+      total: N,
+      isEmpty: false,
+      unitScore,
+      quantityScore,
+      categoryScore,
+      itemScore,
+      priceScore,
+      supplierScore,
+      distinctCount,
+      distinctRatio,
+      unitRatio,
+      qtyRatio,
+      categoryRatio,
+      foodRatio,
+      avgLen,
+      sampleValues
+    };
+  }
+
+  function autoCorrectColumns(matrix, headerRow, role, initialColumns) {
+    const headerCols = matrix[headerRow] || [];
+    const maxCol = headerCols.length;
+    const profiles = [];
+    for (let c = 0; c < maxCol; c += 1) {
+      const rawValues = sampleColumnData(matrix, headerRow, c);
+      profiles[c] = {
+        colIdx: c,
+        header: text(headerCols[c]),
+        profile: profileColumnData(rawValues)
+      };
+    }
+
+    const cols = { ...initialColumns };
+    const corrections = [];
+
+    // 1. Check unit column
+    const unitCandidate = profiles.find(p => p.profile.unitScore >= 75);
+    if (unitCandidate) {
+      const cIdx = unitCandidate.colIdx;
+      if (cols.unit !== cIdx) {
+        const origHeader = unitCandidate.header;
+        const sample = unitCandidate.profile.sampleValues.slice(0, 3).join('、');
+        if (cols.item === cIdx) delete cols.item;
+        if (cols.category === cIdx) delete cols.category;
+        cols.unit = cIdx;
+        corrections.push({
+          field: 'unit',
+          fieldLabel: FIELD_LABELS.unit,
+          colIndex: cIdx,
+          originalHeader: origHeader,
+          sampleValues: sample,
+          reason: `原表头为「${origHeader || '空'}」，实际内容为计量单位（如：${sample}）`
+        });
+      }
+    }
+
+    // 2. Check item column (商品名称)
+    const itemColIdx = cols.item;
+    const isItemColInvalid = itemColIdx === undefined
+      || profiles[itemColIdx]?.profile.isEmpty
+      || profiles[itemColIdx]?.profile.unitScore >= 75
+      || (profiles[itemColIdx]?.profile.categoryScore >= 85 && profiles[itemColIdx]?.profile.categoryRatio >= 0.70);
+
+    if (isItemColInvalid) {
+      const candidates = profiles
+        .filter(p => !p.profile.isEmpty && p.colIdx !== cols.unit)
+        .sort((a, b) => b.profile.itemScore - a.profile.itemScore);
+
+      const bestItem = candidates[0];
+      if (bestItem && bestItem.profile.itemScore >= 65) {
+        const oldItemHeader = bestItem.header;
+        const sample = bestItem.profile.sampleValues.slice(0, 3).join('、');
+        if (cols.category === bestItem.colIdx) delete cols.category;
+        if (cols.baseSupplier === bestItem.colIdx) delete cols.baseSupplier;
+        cols.item = bestItem.colIdx;
+        corrections.push({
+          field: 'item',
+          fieldLabel: FIELD_LABELS.item,
+          colIndex: bestItem.colIdx,
+          originalHeader: oldItemHeader,
+          sampleValues: sample,
+          reason: `原表头为「${oldItemHeader || '空'}」，实际内容为具体食材品名（如：${sample}）`
+        });
+      }
+    }
+
+    // 3. Check category column (种类/大类)
+    const categoryCandidate = profiles.find(p => p.profile.categoryScore >= 70 && p.colIdx !== cols.item && p.colIdx !== cols.unit);
+    if (categoryCandidate) {
+      const cIdx = categoryCandidate.colIdx;
+      if (cols.category !== cIdx) {
+        const origHeader = categoryCandidate.header;
+        const sample = categoryCandidate.profile.sampleValues.slice(0, 3).join('、');
+        if (cols.baseSupplier === cIdx) delete cols.baseSupplier;
+        cols.category = cIdx;
+        corrections.push({
+          field: 'category',
+          fieldLabel: FIELD_LABELS.category,
+          colIndex: cIdx,
+          originalHeader: origHeader,
+          sampleValues: sample,
+          reason: `原表头为「${origHeader || '空'}」，实际内容为品类大类（如：${sample}）`
+        });
+      }
+    }
+
+    // 4. Check baseSupplier false positives
+    if (cols.baseSupplier !== undefined) {
+      const p = profiles[cols.baseSupplier]?.profile;
+      if (p && (p.supplierScore === 0 || p.itemScore >= 80 || p.categoryScore >= 80)) {
+        delete cols.baseSupplier;
+      }
+    }
+
+    // 5. Check quantity in base sheet
+    if (role === 'base') {
+      const qtyCandidate = profiles.find(p => p.profile.quantityScore >= 75 && p.colIdx !== cols.item && p.colIdx !== cols.category && p.colIdx !== cols.unit);
+      if (qtyCandidate && cols.quantity !== qtyCandidate.colIdx) {
+        const origHeader = qtyCandidate.header;
+        const sample = qtyCandidate.profile.sampleValues.slice(0, 3).join('、');
+        cols.quantity = qtyCandidate.colIdx;
+        corrections.push({
+          field: 'quantity',
+          fieldLabel: FIELD_LABELS.quantity,
+          colIndex: qtyCandidate.colIdx,
+          originalHeader: origHeader,
+          sampleValues: sample,
+          reason: `原表头为「${origHeader || '空'}」，实际内容为采购数量（如：${sample}）`
+        });
+      }
+    }
+
+    return { columns: cols, corrections };
+  }
+
   function detectHeaderRow(matrix, role) {
-    let best = { headerRow: 0, columns: {}, score: -1 };
+    let best = { headerRow: 0, columns: {}, score: -1, corrections: [] };
     const limit = Math.min(15, matrix.length);
     for (let rowIndex = 0; rowIndex < limit; rowIndex += 1) {
-      const columns = detectColumns(matrix[rowIndex]);
+      const initial = detectColumns(matrix[rowIndex]);
+      const resolved = autoCorrectColumns(matrix, rowIndex, role, initial);
+      const columns = resolved.columns;
       let score = Object.keys(columns).length * 2;
       if (columns.item !== undefined) score += 8;
       if (role === 'base' && columns.quantity !== undefined) score += 4;
       if (role === 'supplier' && (columns.price !== undefined || columns.taxPrice !== undefined)) score += 5;
-      if (score > best.score) best = { headerRow: rowIndex, columns, score };
+      if (score > best.score) {
+        best = { headerRow: rowIndex, columns, score, corrections: resolved.corrections };
+      }
     }
     return best;
   }
@@ -133,6 +438,8 @@
         supplier: role === 'supplier' ? deriveSupplierName(sheet.name) : '',
         headerRow: detection.headerRow,
         columns: detection.columns,
+        corrections: detection.corrections || [],
+        autoCorrected: (detection.corrections || []).length > 0,
         taxMode: /税前|beforetax/i.test(compact(priceHeader)) ? 'exclusive' : 'auto',
         detectionScore: detection.score
       };
@@ -551,10 +858,16 @@
 
   return {
     FIELD_ALIASES,
+    FIELD_LABELS,
+    KNOWN_UNITS,
+    KNOWN_CATEGORIES,
     text,
     compact,
     normalizeItem,
     parseNumber,
+    sampleColumnData,
+    profileColumnData,
+    autoCorrectColumns,
     detectColumns,
     detectHeaderRow,
     analyzeSheets,

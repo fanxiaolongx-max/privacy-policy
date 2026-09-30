@@ -25,7 +25,8 @@
   const elements = {
     input: $('#fileInput'), drop: $('#dropZone'), status: $('#status'), config: $('#configCard'), result: $('#resultCard'),
     sheets: $('#sheetList'), preview: $('#preview'), summary: $('#summary'), tax: $('#taxRate'), threshold: $('#matchThreshold'), exportName: $('#exportName'),
-    fullscreenBtn: $('#fullscreenBtn'), viewModeBtn: $('#viewModeBtn'), schemaMatchAlert: $('#schemaMatchAlert'), resetConfigBtn: $('#resetConfigBtn'), saveSchemaBtn: $('#saveSchemaBtn')
+    fullscreenBtn: $('#fullscreenBtn'), viewModeBtn: $('#viewModeBtn'), schemaMatchAlert: $('#schemaMatchAlert'), resetConfigBtn: $('#resetConfigBtn'), saveSchemaBtn: $('#saveSchemaBtn'),
+    autoCorrectAlert: $('#autoCorrectAlert')
   };
 
   function escapeHtml(value) {
@@ -108,12 +109,25 @@
       else elements.schemaMatchAlert.classList.add('hidden');
     }
 
+    const totalCorrections = state.configs.reduce((sum, c) => sum + (c.corrections ? c.corrections.length : 0), 0);
+    if (elements.autoCorrectAlert) {
+      if (totalCorrections > 0 && !isMatch) {
+        elements.autoCorrectAlert.classList.remove('hidden');
+        const alertContent = elements.autoCorrectAlert.querySelector('.auto-correct-alert-content');
+        if (alertContent) {
+          alertContent.innerHTML = `<strong>💡 内容智能纠错生效：</strong>检测到表格存在表头与内容对应不上（如将品名错填在表头“大类”下、大类错填在“供应商”下等）的情况，系统已基于列内实际数据特征自动校正了 <b>${totalCorrections}</b> 处字段映射，可直接生成比价！`;
+        }
+      } else {
+        elements.autoCorrectAlert.classList.add('hidden');
+      }
+    }
+
     renderSheetConfig();
     elements.config.classList.remove('hidden');
     elements.result.classList.add('hidden');
     const base = state.configs.find(item => item.role === 'base');
     const supplierCount = state.configs.filter(item => item.role === 'supplier').length;
-    const matchTip = isMatch ? '；【已自动匹配并应用上次配置】' : '';
+    const matchTip = isMatch ? '；【已自动匹配并应用上次配置】' : (totalCorrections > 0 ? `；【✨已智能纠错 ${totalCorrections} 处字段】` : '');
     showStatus(`已读取 ${state.configs.length} 个工作表；基础表：${base ? base.name : '未识别'}；报价表：${supplierCount} 个${matchTip}`, 'success');
     elements.config.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
@@ -129,33 +143,50 @@
   }
 
   function fieldControl(config, index, field, label, className) {
-    return `<div class="field ${className || ''}"><label>${label}</label><select data-sheet-index="${index}" data-column-field="${field}">${columnOptions(config, config.columns[field])}</select></div>`;
+    const isCorrected = config.corrections && config.corrections.some(c => c.field === field);
+    const badge = isCorrected ? '<span class="auto-corrected-badge" title="已基于列数据内容自动校正">✨自动校正</span>' : '';
+    return `<div class="field ${className || ''} ${isCorrected ? 'field-corrected' : ''}"><label>${label} ${badge}</label><select data-sheet-index="${index}" data-column-field="${field}">${columnOptions(config, config.columns[field])}</select></div>`;
   }
 
   function renderSheetConfig() {
-    elements.sheets.innerHTML = state.configs.map((config, index) => `
-      <div class="sheet-card" data-config-index="${index}" data-role="${config.role}">
-        <div class="sheet-head">
-          <div><strong>${escapeHtml(config.name)}</strong><div class="small">自动识别 ${Object.keys(config.columns).length} 个字段</div></div>
-          <div class="field"><label>用途</label><select data-sheet-index="${index}" data-prop="role"><option value="base"${config.role === 'base' ? ' selected' : ''}>基础需求表</option><option value="supplier"${config.role === 'supplier' ? ' selected' : ''}>供应商报价</option><option value="ignore"${config.role === 'ignore' ? ' selected' : ''}>忽略</option></select></div>
-          <div class="field supplier-only"><label>供应商名称</label><input data-sheet-index="${index}" data-prop="supplier" value="${escapeHtml(config.supplier)}"></div>
-          <div class="field"><label>表头行</label><input data-sheet-index="${index}" data-prop="headerRow" type="number" min="1" max="${Math.max(1, config.matrix.length)}" value="${config.headerRow + 1}"></div>
-          <div class="field supplier-only"><label>报价含税方式</label><select data-sheet-index="${index}" data-prop="taxMode"><option value="auto"${config.taxMode === 'auto' ? ' selected' : ''}>逐行自动判断</option><option value="exclusive"${config.taxMode === 'exclusive' ? ' selected' : ''}>全部是税前价</option><option value="inclusive"${config.taxMode === 'inclusive' ? ' selected' : ''}>全部是含税价</option></select></div>
-        </div>
-        <div class="sheet-map">
-          ${fieldControl(config, index, 'item', '商品名称')}
-          ${fieldControl(config, index, 'baseSupplier', '基础表供应商', 'base-only')}
-          ${fieldControl(config, index, 'category', '类别')}
-          ${fieldControl(config, index, 'quantity', '采购量')}
-          ${fieldControl(config, index, 'unit', '单位')}
-          ${fieldControl(config, index, 'price', '税前/原报价', 'supplier-only')}
-          ${fieldControl(config, index, 'taxPrice', '税后/结算价', 'supplier-only')}
-          ${fieldControl(config, index, 'spec', '规格', 'supplier-only')}
-          ${fieldControl(config, index, 'remark', '备注', 'supplier-only')}
-          ${fieldControl(config, index, 'taxFlag', '是否加税', 'supplier-only')}
-          ${fieldControl(config, index, 'stock', '库存状态', 'supplier-only')}
-        </div>
-      </div>`).join('');
+    elements.sheets.innerHTML = state.configs.map((config, index) => {
+      const correctionsHtml = (config.corrections && config.corrections.length > 0)
+        ? `<div class="sheet-corrections-box">
+            <span class="correction-icon">✨</span>
+            <div class="correction-content">
+              <span class="correction-title">已基于数据特征自动纠偏 (${config.corrections.length} 处)：</span>
+              <div class="correction-tags">
+                ${config.corrections.map(c => `<span class="correction-tag" title="${escapeHtml(c.reason)}"><b style="color:var(--primary)">${escapeHtml(c.fieldLabel)}</b> ➔ 原表头「${escapeHtml(c.originalHeader || '空')}」<small>（示例：${escapeHtml(c.sampleValues || '')}）</small></span>`).join('')}
+              </div>
+            </div>
+          </div>`
+        : '';
+
+      return `
+        <div class="sheet-card" data-config-index="${index}" data-role="${config.role}">
+          <div class="sheet-head">
+            <div><strong>${escapeHtml(config.name)}</strong><div class="small">自动识别 ${Object.keys(config.columns).length} 个字段${config.corrections && config.corrections.length ? ` <span style="color:var(--primary);font-weight:700">（✨纠错 ${config.corrections.length} 处）</span>` : ''}</div></div>
+            <div class="field"><label>用途</label><select data-sheet-index="${index}" data-prop="role"><option value="base"${config.role === 'base' ? ' selected' : ''}>基础需求表</option><option value="supplier"${config.role === 'supplier' ? ' selected' : ''}>供应商报价</option><option value="ignore"${config.role === 'ignore' ? ' selected' : ''}>忽略</option></select></div>
+            <div class="field supplier-only"><label>供应商名称</label><input data-sheet-index="${index}" data-prop="supplier" value="${escapeHtml(config.supplier)}"></div>
+            <div class="field"><label>表头行</label><input data-sheet-index="${index}" data-prop="headerRow" type="number" min="1" max="${Math.max(1, config.matrix.length)}" value="${config.headerRow + 1}"></div>
+            <div class="field supplier-only"><label>报价含税方式</label><select data-sheet-index="${index}" data-prop="taxMode"><option value="auto"${config.taxMode === 'auto' ? ' selected' : ''}>逐行自动判断</option><option value="exclusive"${config.taxMode === 'exclusive' ? ' selected' : ''}>全部是税前价</option><option value="inclusive"${config.taxMode === 'inclusive' ? ' selected' : ''}>全部是含税价</option></select></div>
+          </div>
+          ${correctionsHtml}
+          <div class="sheet-map">
+            ${fieldControl(config, index, 'item', '商品名称')}
+            ${fieldControl(config, index, 'baseSupplier', '基础表供应商', 'base-only')}
+            ${fieldControl(config, index, 'category', '类别')}
+            ${fieldControl(config, index, 'quantity', '采购量')}
+            ${fieldControl(config, index, 'unit', '单位')}
+            ${fieldControl(config, index, 'price', '税前/原报价', 'supplier-only')}
+            ${fieldControl(config, index, 'taxPrice', '税后/结算价', 'supplier-only')}
+            ${fieldControl(config, index, 'spec', '规格', 'supplier-only')}
+            ${fieldControl(config, index, 'remark', '备注', 'supplier-only')}
+            ${fieldControl(config, index, 'taxFlag', '是否加税', 'supplier-only')}
+            ${fieldControl(config, index, 'stock', '库存状态', 'supplier-only')}
+          </div>
+        </div>`;
+    }).join('');
   }
 
   function syncConfigFromControls() {
@@ -677,7 +708,11 @@
       syncConfigFromControls();
       const index = Number(event.target.dataset.sheetIndex);
       const config = state.configs[index];
-      config.columns = core.detectColumns(config.matrix[config.headerRow] || []);
+      const initial = core.detectColumns(config.matrix[config.headerRow] || []);
+      const resolved = core.autoCorrectColumns(config.matrix, config.headerRow, config.role, initial);
+      config.columns = resolved.columns;
+      config.corrections = resolved.corrections;
+      config.autoCorrected = resolved.corrections.length > 0;
       renderSheetConfig();
     }
   });

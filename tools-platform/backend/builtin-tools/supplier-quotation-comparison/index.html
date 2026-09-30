@@ -537,6 +537,64 @@
       border:1px solid var(--success-soft-border);
       color:var(--success);
     }
+    .auto-correct-alert{
+      animation:fadeIn .25s ease-in-out;
+      background:var(--primary-soft);
+      border:1px solid var(--primary-soft-border);
+      color:var(--primary-soft-text);
+    }
+    .sheet-corrections-box{
+      display:flex;
+      align-items:flex-start;
+      gap:10px;
+      padding:9px 14px;
+      background:var(--primary-soft);
+      border-bottom:1px solid var(--primary-soft-border);
+      font-size:12px;
+      line-height:1.4;
+    }
+    .sheet-corrections-box .correction-icon{
+      font-size:14px;
+      line-height:1.2;
+    }
+    .sheet-corrections-box .correction-title{
+      font-weight:700;
+      color:var(--primary-soft-text);
+      display:inline-block;
+      margin-bottom:3px;
+    }
+    .sheet-corrections-box .correction-tags{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+    }
+    .correction-tag{
+      display:inline-flex;
+      align-items:center;
+      gap:4px;
+      background:var(--card);
+      border:1px solid var(--primary-soft-border);
+      border-radius:6px;
+      padding:2px 8px;
+      font-size:11.5px;
+      color:var(--text);
+      box-shadow:0 1px 2px rgba(0,0,0,0.03);
+    }
+    .auto-corrected-badge{
+      display:inline-block;
+      font-size:10.5px;
+      font-weight:700;
+      color:var(--primary);
+      background:var(--primary-soft);
+      border:1px solid var(--primary-soft-border);
+      border-radius:4px;
+      padding:1px 5px;
+      margin-left:4px;
+    }
+    .field.field-corrected select{
+      border-color:var(--primary);
+      background-color:var(--primary-soft);
+    }
     @keyframes fadeIn{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:translateY(0)}}
     @media(max-width:900px){.hero{align-items:flex-start;flex-direction:column}.settings{grid-template-columns:repeat(2,1fr)}.sheet-head{grid-template-columns:1fr 1fr}.sheet-map{grid-template-columns:repeat(2,1fr)}}
     @media(max-width:520px){.page{width:min(100% - 16px,1680px);padding-top:14px}.card{padding:13px}.settings,.sheet-map{grid-template-columns:1fr}.sheet-head{grid-template-columns:1fr}.privacy{white-space:normal}}
@@ -585,6 +643,12 @@
           <span><strong>格式完全一致：</strong>已检测到当前表格格式与上次保存一致，已自动为您应用上次的表格与字段选项！</span>
         </div>
         <button type="button" id="resetConfigBtn" class="btn" style="padding:4px 10px;font-size:11px;">恢复默认识别</button>
+      </div>
+      <div id="autoCorrectAlert" class="auto-correct-alert hidden" style="margin-bottom:12px;padding:10px 14px;border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12.5px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:16px">✨</span>
+          <span class="auto-correct-alert-content"><strong>内容智能纠错生效：</strong>检测到表格存在表头与内容对应不上（如品名与大类错位）的情况，系统已基于实际数据内容特征自动校正。</span>
+        </div>
       </div>
       <div class="settings">
         <div class="field"><label for="taxRate">默认税率（%）</label><input id="taxRate" type="number" min="0" max="100" step="0.1" value="14"></div>

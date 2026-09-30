@@ -165,4 +165,104 @@ test('handles extreme normalized price deviation by directly comparing quote pri
     assert.equal(compStatus.label, '⚠️ 需人工复核');
 });
 
+test('auto-corrects column mapping when headers are mislabeled (Case 1: SUPPLIER\'S NAME and BIG SERIES)', () => {
+    const sheet = {
+        name: 'Week1 (9.5-9.9)',
+        matrix: [
+            ["SUPPLIER'S NAME", "BIG SERIES"],
+            ["肉食禽蛋海鲜", "草鱼"],
+            ["肉食禽蛋海鲜", "土鸡"],
+            ["蔬菜", "豆腐皮"],
+            ["蔬菜", "嫩豆腐"],
+            ["蔬菜", "西芹"],
+            ["蔬菜", "花菜"],
+            ["蔬菜", "秋葵"],
+            ["蔬菜", "小白菜"]
+        ]
+    };
+    const configs = core.analyzeSheets([sheet]);
+    assert.equal(configs[0].columns.category, 0);
+    assert.equal(configs[0].columns.item, 1);
+    assert.equal(configs[0].columns.baseSupplier, undefined);
+    assert.equal(configs[0].autoCorrected, true);
+    assert.ok(configs[0].corrections.some(c => c.field === 'item' && c.colIndex === 1));
+    assert.ok(configs[0].corrections.some(c => c.field === 'category' && c.colIndex === 0));
+
+    const records = core.recordsFromSheet(configs[0]);
+    assert.equal(records.length, 8);
+    assert.equal(records[0].category, '肉食禽蛋海鲜');
+    assert.equal(records[0].item, '草鱼');
+    assert.equal(records[2].category, '蔬菜');
+    assert.equal(records[2].item, '豆腐皮');
+});
+
+test('auto-corrects shifted columns (Case 2: SUPPLIER\'S NAME + BIG SERIES + DESCRIPTION OF GOODS)', () => {
+    const sheet = {
+        name: 'Week1 (9.5-9.9)',
+        matrix: [
+            ["SUPPLIER'S NAME", "BIG SERIES", "DESCRIPTION OF GOODS"],
+            ["蔬菜", "老豆腐", "pcs"],
+            ["蔬菜", "韭菜", "kg"],
+            ["蔬菜", "空心菜", "kg"],
+            ["蔬菜", "嫩豆腐", "pcs"],
+            ["肉食禽蛋海鲜", "鲤鱼", "kg"],
+            ["肉食禽蛋海鲜", "土鸡", "pcs"]
+        ]
+    };
+    const configs = core.analyzeSheets([sheet]);
+    assert.equal(configs[0].columns.category, 0);
+    assert.equal(configs[0].columns.item, 1);
+    assert.equal(configs[0].columns.unit, 2);
+    assert.equal(configs[0].columns.baseSupplier, undefined);
+    assert.equal(configs[0].autoCorrected, true);
+
+    const records = core.recordsFromSheet(configs[0]);
+    assert.equal(records.length, 6);
+    assert.equal(records[0].item, '老豆腐');
+    assert.equal(records[0].category, '蔬菜');
+    assert.equal(records[0].unit, 'pcs');
+});
+
+test('auto-corrects item in supplier column and ignores blank column (Case 3: items under SUPPLIER\'S NAME)', () => {
+    const sheet = {
+        name: 'Week1 (9.5-9.9)',
+        matrix: [
+            ["SUPPLIER'S NAME", "BIG SERIES", "DESCRIPTION OF GOODS", "UNIT", "采购量"],
+            ["罗非鱼", "肉食禽蛋海鲜", "", "kg", 20],
+            ["老鹅", "肉食禽蛋海鲜", "", "kg", 25],
+            ["羊蝎子", "肉食禽蛋海鲜", "", "kg", 20],
+            ["大白菜", "蔬菜", "", "kg", 20]
+        ]
+    };
+    const configs = core.analyzeSheets([sheet]);
+    assert.equal(configs[0].columns.item, 0);
+    assert.equal(configs[0].columns.category, 1);
+    assert.equal(configs[0].columns.unit, 3);
+    assert.equal(configs[0].columns.quantity, 4);
+
+    const records = core.recordsFromSheet(configs[0]);
+    assert.equal(records.length, 4);
+    assert.equal(records[0].item, '罗非鱼');
+    assert.equal(records[0].category, '肉食禽蛋海鲜');
+    assert.equal(records[0].unit, 'kg');
+    assert.equal(records[0].quantity, 20);
+});
+
+test('preserves valid standard columns without false corrections (Case 4: standard format)', () => {
+    const sheet = {
+        name: 'Week1 (9.5-9.9)',
+        matrix: [
+            ["BIG SERIES", "DESCRIPTION OF GOODS", "UNIT", "采购量"],
+            ["肉食禽蛋海鲜", "牛肚", "kg", 20],
+            ["蔬菜", "包菜", "kg", 20]
+        ]
+    };
+    const configs = core.analyzeSheets([sheet]);
+    assert.equal(configs[0].columns.category, 0);
+    assert.equal(configs[0].columns.item, 1);
+    assert.equal(configs[0].columns.unit, 2);
+    assert.equal(configs[0].columns.quantity, 3);
+    assert.equal(configs[0].corrections.length, 0);
+});
+
 
