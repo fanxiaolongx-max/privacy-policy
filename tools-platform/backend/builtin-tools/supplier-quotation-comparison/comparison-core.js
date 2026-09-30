@@ -141,8 +141,7 @@
     if (m3) {
       return new Date(Date.UTC(Number(m3[1]), Number(m3[2]) - 1, Number(m3[3])));
     }
-    const d = new Date(s);
-    return Number.isNaN(d.getTime()) ? null : d;
+    return null;
   }
 
   function determineSheetReferenceDate(matrix, headerRow, dateColIdx, nowDate = new Date()) {
@@ -427,7 +426,7 @@
       || (profiles[cols.date]?.profile.dateScore < 40 && !/date|日期/i.test(profiles[cols.date]?.header));
 
     if (isCurrentDateInvalid) {
-      const dateCandidate = profiles.find(p => p.profile.dateScore >= 60 || /date|日期/i.test(p.header));
+      const dateCandidate = profiles.find(p => p.profile.dateScore >= 30 || /date|日期|时间|送货/i.test(p.header));
       if (dateCandidate) {
         cols.date = dateCandidate.colIdx;
       }
@@ -662,7 +661,11 @@
       if (dateCol !== undefined) {
         const rawDate = cellAt(row, dateCol);
         const parsedDate = parseDateValue(rawDate);
-        if (parsedDate && isDateDeviationTooFar(parsedDate, sheetRefDate, new Date())) {
+        if (!parsedDate) {
+          // 如果表中数据行没有日期 则也需要忽略该行数据
+          continue;
+        }
+        if (isDateDeviationTooFar(parsedDate, sheetRefDate, new Date())) {
           // 该行日期与当前基准偏差过大（例如 2025/12/11），判定为历史残留无效数据自动忽略
           continue;
         }

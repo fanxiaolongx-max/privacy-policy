@@ -494,8 +494,7 @@
       if (m3) {
         return new Date(Date.UTC(Number(m3[1]), Number(m3[2]) - 1, Number(m3[3])));
       }
-      const d = new Date(s);
-      return Number.isNaN(d.getTime()) ? null : d;
+      return null;
     }
 
     function determineOrderSheetReferenceDate(grid, headerRowIndex, dateColIdx, nowDate = new Date()) {
@@ -827,7 +826,7 @@
       || (profiles[colMap['DATE']]?.profile.dateScore < 40 && !/date|日期/i.test(profiles[colMap['DATE']]?.header));
 
     if (isCurrentDateInvalid) {
-      const dateCandidate = profiles.find(p => p.profile.dateScore >= 60 || /date|日期/i.test(p.header));
+      const dateCandidate = profiles.find(p => p.profile.dateScore >= 30 || /date|日期|时间|送货/i.test(p.header));
       if (dateCandidate) {
         colMap['DATE'] = dateCandidate.colIdx;
       }
@@ -1075,11 +1074,27 @@
           continue;
         }
 
-        // ★ 日期偏差过大校验：若本行日期与当前基准日期偏差过大（例如 2025/12/11），说明是历史残留无效数据，自动忽略过滤
+        // ★ 日期校验：
+        // 1. 若本行没有日期（空值、非法文本等），则自动忽略过滤该行
+        // 2. 若识别到的日期与基准日期偏差过大（例如 2025/12/11），说明是历史残留无效数据，自动忽略过滤
         if (sheetDateColIdx !== undefined) {
           const rawDateVal = row[sheetDateColIdx];
           const parsedDate = parseOrderDate(rawDateVal);
-          if (parsedDate && isOrderDateDeviationTooFar(parsedDate, sheetRefDate, new Date())) {
+          if (!parsedDate) {
+            logAnomaly(
+              i + 1,
+              'DATE (送货日期)',
+              String(rawDateVal ?? ''),
+              '缺失日期数据过滤',
+              `数据行缺少有效送货日期（当前值为 "${String(rawDateVal ?? '').trim() || '空'}"），已自动忽略该行数据`,
+              false,
+              '无（自动过滤跳过无有效送货日期的数据行）',
+              '过滤跳过',
+              row
+            );
+            continue;
+          }
+          if (isOrderDateDeviationTooFar(parsedDate, sheetRefDate, new Date())) {
             const formattedDateStr = formatExcelDate(rawDateVal);
             logAnomaly(
               i + 1,
@@ -1087,9 +1102,9 @@
               String(rawDateVal ?? ''),
               '过期/异常日期数据过滤',
               `识别到的送货日期 (${formattedDateStr || rawDateVal}) 与当前基准日期偏差过大，判定为历史残留或无效数据，已自动过滤跳过`,
-              true,
-              '自动过滤并跳过该行无效数据',
-              '过滤跳过该行',
+              false,
+              '无（自动过滤跳过异常/过期日期数据行）',
+              '过滤跳过',
               row
             );
             continue;
@@ -2350,6 +2365,7 @@
         ['-', 46295, '调料类', '调料类', '', '斤', '5', '品名空缺自动以大分类补全测试', '30'],
         ['-', 46295, '蔬菜类', '蔬菜类', '公斤', '花菜', '15', '品名与单位反转调换测试', '60'],
         ['-', 46002, '蔬菜类', '蔬菜类', '过期大白菜', '斤', '10', '历史日期偏差过大自动过滤测试(2025/12/11)', '50'],
+        ['-', '', '蔬菜类', '蔬菜类', '无日期生菜', '斤', '8', '数据行无送货日期自动忽略测试', '30'],
         ['', '', '', '', '', '', '', '', ''],
         ['-', 46295, '', '', '', '斤', '10', '品名与分类皆空不可纠错测试', '50'],
       ];

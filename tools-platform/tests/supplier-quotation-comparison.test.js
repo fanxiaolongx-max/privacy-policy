@@ -311,6 +311,26 @@ test('automatically ignores rows with dates deviating too far from current/sheet
     assert.deepEqual(records.map(r => r.item), ['老豆腐', '韭菜']);
 });
 
+test('automatically ignores rows with missing date when date column is present (Case 7)', () => {
+    const sheet = {
+        name: 'Week1 (9.5-9.9)',
+        matrix: [
+            ['DATE', "SUPPLIER'S NAME", 'BIG SERIES', 'DESCRIPTION OF GOODS', 'UNIT', '采购量'],
+            ['2026/10/5', '蔬菜', '老豆腐', 'pcs', '', 20],
+            ['', '蔬菜', '无日期空心菜', 'kg', '', 10],
+            [null, '蔬菜', '空日期生菜', 'kg', '', 15],
+            ['2026/10/5', '蔬菜', '韭菜', 'kg', '', 8],
+            ['-', '蔬菜', '横杠日期番茄', 'kg', '', 20],
+            ['小计', '蔬菜', '小计统计行', 'kg', '', 50]
+        ]
+    };
+    const configs = core.analyzeSheets([sheet]);
+    const records = core.recordsFromSheet(configs[0]);
+    assert.equal(records.length, 2, 'Should filter out rows with missing or invalid date');
+    assert.deepEqual(records.map(r => r.item), ['老豆腐', '韭菜']);
+});
+
+
 
 
 

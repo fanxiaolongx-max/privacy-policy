@@ -148,6 +148,7 @@ test('餐单核验: 内置示例数据兼容性测试', () => {
     ['-', 46295, '调料类', '调料类', '', '斤', '5', '品名空缺自动以大分类补全测试', '30'],
     ['-', 46295, '蔬菜类', '蔬菜类', '公斤', '花菜', '15', '品名与单位反转调换测试', '60'],
     ['-', 46002, '蔬菜类', '蔬菜类', '过期大白菜', '斤', '10', '历史日期偏差过大自动过滤测试(2025/12/11)', '50'],
+    ['-', '', '蔬菜类', '蔬菜类', '无日期生菜', '斤', '8', '数据行无送货日期自动忽略测试', '30'],
     ['', '', '', '', '', '', '', '', ''],
     ['-', 46295, '', '', '', '斤', '10', '品名与分类皆空不可纠错测试', '50'],
   ];
@@ -158,8 +159,12 @@ test('餐单核验: 内置示例数据兼容性测试', () => {
   assert.equal(cleaned[1][2], '干海带');
   const hasOutdatedRow = cleaned.some(row => row.includes('过期大白菜'));
   assert.equal(hasOutdatedRow, false, 'Row with 2025/12/11 should be filtered out');
+  const hasMissingDateRow = cleaned.some(row => row.includes('无日期生菜'));
+  assert.equal(hasMissingDateRow, false, 'Row without date should be filtered out');
   const dateAnomalies = collector.filter(a => a.issueType === '过期/异常日期数据过滤');
   assert.ok(dateAnomalies.length >= 1, 'Should log anomaly for filtered outdated date row');
+  const missingDateAnomalies = collector.filter(a => a.issueType === '缺失日期数据过滤');
+  assert.ok(missingDateAnomalies.length >= 1, 'Should log anomaly for filtered missing date row');
 });
 
 test('餐单核验: Case 5 日期列含 Excel 序列号且表头列名错位，防止将日期识别为采购量', () => {
@@ -184,5 +189,29 @@ test('餐单核验: Case 5 日期列含 Excel 序列号且表头列名错位，�
   assert.equal(cleaned[1][3], 'pcs');
   assert.equal(cleaned[1][4], 20);
   assert.notEqual(cleaned[1][4], 46295);
+});
+
+test('餐单核验: Case 7 数据行没有有效日期时自动忽略过滤该行', () => {
+  const ctx = createContext();
+  const collector = [];
+  const case7Grid = [
+    ['DATE', "SUPPLIER'S NAME", 'BIG SERIES', 'DESCRIPTION OF GOODS', 'UNIT', '采购量'],
+    ['2026/10/5', '蔬菜', '老豆腐', 'pcs', '', 20],
+    ['', '蔬菜', '无日期空心菜', 'kg', '', 10],
+    [null, '蔬菜', '空日期生菜', 'kg', '', 15],
+    ['2026/10/5', '蔬菜', '韭菜', 'kg', '', 8],
+    ['-', '蔬菜', '横杠日期番茄', 'kg', '', 20],
+    ['合计', '蔬菜', '小计统计行', 'kg', '', 50]
+  ];
+
+  const cleaned = ctx.cleanAndFilterData(case7Grid, false, { sourceName: '核心标准源', fileName: 'test7.xlsx', sheetName: 'Sheet1' }, collector);
+  assert.equal(cleaned.length, 3, 'Header + 2 valid date rows');
+  assert.equal(cleaned[1][2], '老豆腐');
+  assert.equal(cleaned[2][2], '韭菜');
+
+  const missingAnomalies = collector.filter(a => a.issueType === '缺失日期数据过滤');
+  assert.equal(missingAnomalies.length, 4, 'Should record 4 anomalies for the 4 rows missing valid dates');
+  assert.equal(missingAnomalies[0].actionTaken, '过滤跳过');
+  assert.equal(missingAnomalies[0].hasCorrection, false);
 });
 
