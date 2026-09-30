@@ -344,7 +344,7 @@
     .coverage-table-wrap { overflow-x: auto; max-height: 420px; overflow-y: auto; background: #fff; border: 1px solid #eee1c5; border-radius: 7px }
     .coverage-table { width: 100%; border-collapse: collapse; font-size: 12px }
     .coverage-table th, .coverage-table td { padding: 7px 9px; border-bottom: 1px solid #eee9de; text-align: left; white-space: nowrap }
-    .coverage-table thead th { background: #fff6e2 }
+    .coverage-table thead th { position: sticky; top: 0; z-index: 2; background: #fff6e2; box-shadow: 0 1px 0 #eee1c5; }
     .coverage-table td:nth-child(2) { white-space: normal; min-width: 240px; overflow-wrap: anywhere }
     .coverage-table td:nth-child(3) { white-space: normal; min-width: 150px; overflow-wrap: anywhere }
     .coverage-table td:nth-child(4) { white-space: normal; min-width: 240px }
@@ -1268,6 +1268,22 @@
     .multi-session-bu-table td:first-child { width: 140px; min-width: 140px; }
     .multi-session-bu-table th:not(:first-child) { min-width: 94px; }
     .multi-session-bu-table small { color: #64748b; font-weight: 400; }
+    .multi-session-bu-table th.session-col-alt,
+    .multi-session-bu-table td.session-col-alt,
+    .multi-session-matrix-card .data-table th.session-col-alt,
+    .multi-session-matrix-card .data-table td.session-col-alt {
+      background-color: #f1f5f9 !important;
+    }
+    .multi-session-bu-table tbody tr:hover td.session-col-alt,
+    .multi-session-matrix-card .data-table tbody tr:hover td.session-col-alt {
+      background-color: #e2e8f0 !important;
+    }
+    .multi-session-bu-table th.session-col-end,
+    .multi-session-bu-table td.session-col-end,
+    .multi-session-matrix-card .data-table th.session-col-end,
+    .multi-session-matrix-card .data-table td.session-col-end {
+      border-right: 2px solid #cbd5e1 !important;
+    }
 
     .bu-summary-table th,
     .bu-summary-table td {
@@ -3903,15 +3919,17 @@
             if (att === 'Attend on Time' || att === 'Delay') { item.sessions[s.name].attended++; totals.sessions[s.name].attended++; }
           });
         });
-        const renderSessionCells = x => sessions.map(s => {
+        const renderSessionCells = x => sessions.map((s, i) => {
           const y = x.sessions[s.name];
-          return `<td class="num">${y.required}</td><td class="num rate">${rate(y.onTime, y.required)} <small>(${y.onTime}/${y.required})</small></td><td class="num rate">${rate(y.attended, y.required)} <small>(${y.attended}/${y.required})</small></td>`;
+          const alt = i % 2 === 1 ? ' session-col-alt' : '';
+          return `<td class="num${alt}">${y.required}</td><td class="num rate${alt}">${rate(y.onTime, y.required)} <small>(${y.onTime}/${y.required})</small></td><td class="num rate${alt} session-col-end">${rate(y.attended, y.required)} <small>(${y.attended}/${y.required})</small></td>`;
         }).join('');
         const buRows = [...byBu.entries()].sort((a, b) => b[1].eligible - a[1].eligible).map(([bu, x]) => {
           const selected = state.buFilter === bu ? 'selected' : '';
           return `
             <tr class="${selected}" data-action="bu-filter" data-bu="${esc(bu)}" title="${state.buFilter === bu ? bi('点击取消筛选', 'Click to clear filter') : bi('点击筛选下方人员名单', 'Click to filter people list')}">
               <td title="${esc(bu)}"><strong>${esc(bu)}</strong></td>
+              <td class="num" style="font-weight:600">${x.eligible}</td>
               ${renderSessionCells(x)}
               <td class="num rate" style="font-weight:700">${rate(x.full, x.eligible)} <small>(${x.full}/${x.eligible})</small></td>
             </tr>
@@ -3927,21 +3945,29 @@
               </div>
             </div>
             <div class="bu-summary-wrap">
-              <table class="bu-summary-table multi-session-bu-table" style="min-width:${Math.max(760, sessions.length * 330 + 240)}px">
+              <table class="bu-summary-table multi-session-bu-table" style="min-width:${Math.max(820, sessions.length * 330 + 320)}px">
                 <thead>
                   <tr>
                     <th rowspan="2">BU</th>
-                    ${sessions.map((s, i) => `<th colspan="3" title="${esc(s.name)}">${esc(displayLabels[i])}</th>`).join('')}
+                    <th rowspan="2">${bi('涉及参会总人数', 'Total People')}</th>
+                    ${sessions.map((s, i) => {
+                      const alt = i % 2 === 1 ? ' session-col-alt' : '';
+                      return `<th colspan="3" class="${alt} session-col-end" title="${esc(s.name)}">${esc(displayLabels[i])}</th>`;
+                    }).join('')}
                     <th rowspan="2">${bi('总全勤率', 'Overall Full Rate')}</th>
                   </tr>
                   <tr>
-                    ${sessions.map(() => `<th>${bi('应出席人数', 'Required')}</th><th>${bi('准时率', 'On-time Rate')}</th><th>${bi('本场全勤率', 'Session Full Rate')}</th>`).join('')}
+                    ${sessions.map((s, i) => {
+                      const alt = i % 2 === 1 ? ' session-col-alt' : '';
+                      return `<th class="${alt}">${bi('应出席人数', 'Required')}</th><th class="${alt}">${bi('准时率', 'On-time Rate')}</th><th class="${alt} session-col-end">${bi('本场全勤率', 'Session Full Rate')}</th>`;
+                    }).join('')}
                   </tr>
                 </thead>
                 <tbody>${buRows}</tbody>
                 <tfoot>
                   <tr>
                     <td>${bi('总计', 'Total')}</td>
+                    <td class="num" style="font-weight:700">${totals.eligible}</td>
                     ${renderSessionCells(totals)}
                     <td class="num rate" style="font-weight:700">${rate(totals.full, totals.eligible)} <small>(${totals.full}/${totals.eligible})</small></td>
                   </tr>
@@ -3986,11 +4012,12 @@
         const items = filtered.slice(start, start + state.pageSize);
 
         const body = items.length ? items.map((r, i) => {
-          const sessionCells = sessions.map(s => {
+          const sessionCells = sessions.map((s, idx) => {
             const rec = r.sessionRecords?.[s.name] || { attendance: 'Absent', attendanceTime: '', attendanceMethod: '无记录' };
-            if (!rec.required) return `<td><span class="status-pill" style="background:#f1f5f9;color:#64748b">${bi('无需出席', 'Not Required')}</span></td>`;
+            const altClass = (idx % 2 === 1 ? ' session-col-alt' : '') + ' session-col-end';
+            if (!rec.required) return `<td class="${altClass}"><span class="status-pill" style="background:#f1f5f9;color:#64748b">${bi('无需出席', 'Not Required')}</span></td>`;
             return `
-              <td>
+              <td class="${altClass}">
                 <div style="display:flex;flex-direction:column;align-items:flex-start;gap:2px">
                   <span class="status-pill ${statusClass(rec.attendance)} ${rec.attendanceMethod === '前夜WFM豁免' ? 'exempt' : ''}">${rec.attendanceMethod === '前夜WFM豁免' ? bi('🌙 前夜WFM豁免', '🌙 Night WFM Exempt') : rec.attendance}</span>
                   ${rec.attendanceTime ? `<span style="font-size:11px;color:#64748b">${esc(rec.attendanceTime)}</span>` : ''}
@@ -4041,7 +4068,7 @@
                     <th>${bi('工号 / Account', 'Employee ID / Account')}</th>
                     <th>BU</th>
                     <th>Customer Group</th>
-                    ${sessions.map((s, i) => `<th title="${esc(s.name)}">${esc(displayLabels[i])}</th>`).join('')}
+                    ${sessions.map((s, i) => `<th class="${(i % 2 === 1 ? 'session-col-alt ' : '')}session-col-end" title="${esc(s.name)}">${esc(displayLabels[i])}</th>`).join('')}
                     <th>${bi('综合出勤', 'Overall Status')}</th>
                     <th>${bi('关联记录数', 'Related Records')}</th>
                   </tr>
@@ -5307,14 +5334,103 @@
         } return files;
       }
       function buildAnalysisTables(rows = state.peopleCache?.all || []) {
-        const pending = !getMeetingSessions().length;
-        const statuses = pending ? ['Not Evaluated'] : ['Absent', 'Attend on Time', 'Delay', 'Fake Attendance'], counts = Object.fromEntries(statuses.map(s => [s, 0])), byBu = new Map();
-        rows.forEach(r => { counts[r.attendance] = (counts[r.attendance] || 0) + 1; const bu = normalizeName(r.bu) || 'Unidentified BU'; if (!byBu.has(bu)) byBu.set(bu, { total: 0, ...Object.fromEntries(statuses.map(s => [s, 0])) }); const x = byBu.get(bu); x.total++; x[r.attendance] = (x[r.attendance] || 0) + 1; });
-        const rate = (n, total) => total ? `${(n / total * 100).toFixed(1)}%` : '0.0%', summary = pending ? [['BU', 'Total People', 'Awaiting Check-in Data']] : [['BU', 'Total People', 'Absent', 'Attend on Time', 'Delay', 'Fake Attendance', 'On-time Attendance Rate']];
-        [...byBu.entries()].sort((a, b) => b[1].total - a[1].total || a[0].localeCompare(b[0])).forEach(([bu, x]) => summary.push(pending ? [bu, x.total, x['Not Evaluated']] : [bu, x.total, x.Absent, x['Attend on Time'], x.Delay, x['Fake Attendance'], rate(x['Attend on Time'], x.total)]));
-        summary.push(pending ? ['Total', rows.length, counts['Not Evaluated']] : ['Total', rows.length, counts.Absent, counts['Attend on Time'], counts.Delay, counts['Fake Attendance'], rate(counts['Attend on Time'], rows.length)]);
-        const people = [['Name', 'Employee ID / Account', 'BU', 'Customer Group', 'Attendance Status', 'Check-in / Join Time (Cairo)', 'Decision Source', 'Related Records']];
-        [...rows].sort((a, b) => (b.count || 0) - (a.count || 0) || (a.name || a.account).localeCompare(b.name || b.account, 'en')).forEach(r => people.push([r.name, r.account, r.bu, r.customer, r.attendance === 'Not Evaluated' ? 'Awaiting Check-in Data' : r.attendance, r.attendanceTime || '', r.attendance === 'Not Evaluated' ? '' : r.attendanceMethod === '豁免名单' ? 'Exemption List' : r.attendanceMethod === '前夜WFM豁免' ? 'Night WFM Exempt' : r.attendanceMethod === '现场扫码' ? 'On-site Scan' : r.attendanceMethod === '线上会议' ? 'Online Meeting' : 'No Record', r.count || 0]));
+        const sessions = state.peopleCache?.sessions || getMeetingSessions();
+        const pending = !sessions.length;
+        const isMultiAll = sessions.length > 1 && (!state.selectedSession || state.selectedSession === 'all');
+        const statuses = pending ? ['Not Evaluated'] : ['Absent', 'Attend on Time', 'Delay', 'Fake Attendance'];
+        const rate = (n, total) => total ? `${(n / total * 100).toFixed(1)}%` : '0.0%';
+
+        const summary = pending
+          ? [['Meeting Session', 'BU', 'Total People', 'Awaiting Check-in Data']]
+          : [['Meeting Session', 'BU', 'Total People', 'Absent', 'Attend on Time', 'Delay', 'Fake Attendance', 'On-time Attendance Rate']];
+        const people = [['Meeting Session', 'Name', 'Employee ID / Account', 'BU', 'Customer Group', 'Attendance Status', 'Check-in / Join Time (Cairo)', 'Decision Source', 'Related Records']];
+
+        const methodLabel = (m, att) => {
+          if (att === 'Not Evaluated') return '';
+          if (m === '豁免名单') return 'Exemption List';
+          if (m === '前夜WFM豁免') return 'Night WFM Exempt';
+          if (m === '现场扫码') return 'On-site Scan';
+          if (m === '线上会议') return 'Online Meeting';
+          return 'No Record';
+        };
+
+        if (isMultiAll) {
+          const grandCounts = Object.fromEntries(statuses.map(s => [s, 0]));
+          let grandTotal = 0;
+          sessions.forEach(s => {
+            const sessRows = getSessionPeopleRows(state.peopleCache?.all || rows, s.name);
+            const sCounts = Object.fromEntries(statuses.map(st => [st, 0]));
+            const sByBu = new Map();
+            sessRows.forEach(r => {
+              sCounts[r.attendance] = (sCounts[r.attendance] || 0) + 1;
+              grandCounts[r.attendance] = (grandCounts[r.attendance] || 0) + 1;
+              grandTotal++;
+              const bu = normalizeName(r.bu) || 'Unidentified BU';
+              if (!sByBu.has(bu)) sByBu.set(bu, { total: 0, ...Object.fromEntries(statuses.map(st => [st, 0])) });
+              const item = sByBu.get(bu);
+              item.total++;
+              item[r.attendance] = (item[r.attendance] || 0) + 1;
+            });
+
+            [...sByBu.entries()].sort((a, b) => b[1].total - a[1].total || a[0].localeCompare(b[0])).forEach(([bu, x]) => {
+              summary.push([s.name, bu, x.total, x.Absent, x['Attend on Time'], x.Delay, x['Fake Attendance'], rate(x['Attend on Time'], x.total)]);
+            });
+            summary.push([s.name, 'Subtotal', sessRows.length, sCounts.Absent, sCounts['Attend on Time'], sCounts.Delay, sCounts['Fake Attendance'], rate(sCounts['Attend on Time'], sessRows.length)]);
+
+            [...sessRows].sort((a, b) => (b.count || 0) - (a.count || 0) || (a.name || a.account).localeCompare(b.name || b.account, 'en')).forEach(r => {
+              people.push([
+                s.name,
+                r.name,
+                r.account,
+                r.bu,
+                r.customer,
+                r.attendance === 'Not Evaluated' ? 'Awaiting Check-in Data' : r.attendance,
+                r.attendanceTime || '',
+                methodLabel(r.attendanceMethod, r.attendance),
+                r.count || 0
+              ]);
+            });
+          });
+
+          summary.push(['All Sessions', 'Grand Total', grandTotal, grandCounts.Absent, grandCounts['Attend on Time'], grandCounts.Delay, grandCounts['Fake Attendance'], rate(grandCounts['Attend on Time'], grandTotal)]);
+        } else {
+          const sessionName = (state.selectedSession && state.selectedSession !== 'all')
+            ? state.selectedSession
+            : (sessions[0]?.name || (pending ? 'Pending Attendance' : (state.attendanceRules?.meetingDate || 'Main Session')));
+          const counts = Object.fromEntries(statuses.map(s => [s, 0]));
+          const byBu = new Map();
+          rows.forEach(r => {
+            counts[r.attendance] = (counts[r.attendance] || 0) + 1;
+            const bu = normalizeName(r.bu) || 'Unidentified BU';
+            if (!byBu.has(bu)) byBu.set(bu, { total: 0, ...Object.fromEntries(statuses.map(s => [s, 0])) });
+            const x = byBu.get(bu);
+            x.total++;
+            x[r.attendance] = (x[r.attendance] || 0) + 1;
+          });
+
+          [...byBu.entries()].sort((a, b) => b[1].total - a[1].total || a[0].localeCompare(b[0])).forEach(([bu, x]) => {
+            summary.push(pending
+              ? [sessionName, bu, x.total, x['Not Evaluated']]
+              : [sessionName, bu, x.total, x.Absent, x['Attend on Time'], x.Delay, x['Fake Attendance'], rate(x['Attend on Time'], x.total)]);
+          });
+          summary.push(pending
+            ? [sessionName, 'Total', rows.length, counts['Not Evaluated']]
+            : [sessionName, 'Total', rows.length, counts.Absent, counts['Attend on Time'], counts.Delay, counts['Fake Attendance'], rate(counts['Attend on Time'], rows.length)]);
+
+          [...rows].sort((a, b) => (b.count || 0) - (a.count || 0) || (a.name || a.account).localeCompare(b.name || b.account, 'en')).forEach(r => {
+            people.push([
+              sessionName,
+              r.name,
+              r.account,
+              r.bu,
+              r.customer,
+              r.attendance === 'Not Evaluated' ? 'Awaiting Check-in Data' : r.attendance,
+              r.attendanceTime || '',
+              methodLabel(r.attendanceMethod, r.attendance),
+              r.count || 0
+            ]);
+          });
+        }
 
         let multiMatrix = null;
         if (state.peopleCache?.sessions?.length > 1) {
@@ -5379,8 +5495,8 @@
           ['xl/workbook.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">${workbookSheets}</workbook>`],
           ['xl/_rels/workbook.xml.rels', relsSheets],
           ['xl/styles.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="3"><font><sz val="11"/><name val="Calibri"/></font><font><b/><color rgb="FFFFFFFF"/><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFC7000B"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE7E9EE"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="2"><border/><border><left style="thin"><color rgb="FFE0E3E8"/></left><right style="thin"><color rgb="FFE0E3E8"/></right><top style="thin"><color rgb="FFE0E3E8"/></top><bottom style="thin"><color rgb="FFE0E3E8"/></bottom></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="3"><xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment vertical="center"/></xf><xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf><xf numFmtId="0" fontId="2" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>'],
-          ['xl/worksheets/sheet1.xml', worksheetXml(summary, [22, 14, 12, 19, 12, 19, 24], summary.length)],
-          ['xl/worksheets/sheet2.xml', worksheetXml(people, [30, 22, 16, 24, 20, 28, 18, 17])]
+          ['xl/worksheets/sheet1.xml', worksheetXml(summary, pending ? [26, 22, 14, 24] : [26, 22, 14, 12, 19, 12, 19, 24], summary.length)],
+          ['xl/worksheets/sheet2.xml', worksheetXml(people, [26, 30, 22, 16, 24, 20, 28, 18, 17])]
         ];
         if (multiMatrix) {
           const sessionCount = (state.peopleCache?.sessions || []).length;

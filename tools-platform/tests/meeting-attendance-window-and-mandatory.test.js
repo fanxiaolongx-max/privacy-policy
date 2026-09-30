@@ -741,5 +741,107 @@ test('multi-session matrix card supports toggle fullscreen view and exit fullscr
     assert.equal(state.matrixFullscreen, false);
 });
 
+test('multi-session export includes Meeting Session column and aligns per-session attendance evaluation without false fake attendance', async () => {
+    const api = loadMeetingAttendance(1);
+    const state = api.state;
+
+    // Session 1 on 2026-08-01, Session 2 on 2026-08-05
+    state.attendanceRules = {
+        onTime: '09:00',
+        fake: '10:00',
+        minSessionRecords: 1,
+        orderWindowMonths: 1
+    };
+
+    state.sheets = [
+        {
+            id: 'rfc',
+            category: 'rfc',
+            fileName: 'RFC.xlsx',
+            sheetName: 'Sheet1',
+            headers: ['作业单号/Ticket ID', '创建时间/Create Time', '申请人账号/Apply Account', '处理人/Handler', 'BU'],
+            rows: [
+                ['NC20260725000001', '2026-07-25 08:00:00', 'u_alice', 'Alice', 'BU-Alpha'],
+                ['NC20260728000002', '2026-07-28 08:00:00', 'u_bob', 'Bob', 'BU-Beta'],
+                ['NC20260802000003', '2026-08-02 08:00:00', 'u_charlie', 'Charlie', 'BU-Gamma'] // Charlie only in window for Session 2
+            ]
+        },
+        {
+            id: 'offline_1',
+            category: 'offline',
+            fileName: '2026-08-01_现场签到.xlsx',
+            sheetName: 'Sheet1',
+            headers: ['工号', '姓名', '签到时间', 'BU'],
+            rows: [
+                ['u_alice', 'Alice', '2026-08-01 13:45:00', 'BU-Alpha'],
+                ['u_bob', 'Bob', '2026-08-01 16:30:00', 'BU-Beta'] // 16:30 Beijing -> 11:30 Cairo (>= 10:00 Fake Attendance)
+            ]
+        },
+        {
+            id: 'offline_2',
+            category: 'offline',
+            fileName: '2026-08-05_现场签到.xlsx',
+            sheetName: 'Sheet1',
+            headers: ['工号', '姓名', '签到时间', 'BU'],
+            rows: [
+                ['u_alice', 'Alice', '2026-08-05 13:50:00', 'BU-Alpha'], // 13:50 Beijing -> 08:50 Cairo (Attend on Time)
+                ['u_charlie', 'Charlie', '2026-08-05 13:55:00', 'BU-Gamma'] // 13:55 Beijing -> 08:55 Cairo (Attend on Time)
+            ]
+        }
+    ];
+
+    const cache = await api.ensurePeopleCache();
+    assert.equal(cache.sessions.length, 2);
+
+    // 1. Verify UI functions: BU table has Total People column and alternating classes
+    const buTableHtml = api.renderMultiSessionBuTable(cache.sessions, cache.all);
+    assert.match(buTableHtml, /涉及参会总人数/);
+    assert.match(buTableHtml, /session-col-alt/);
+    assert.match(buTableHtml, /session-col-end/);
+
+    // 2. Verify matrix card has alternating session classes
+    const matrixHtml = api.renderMultiSessionMatrixCard(cache.sessions, cache.all);
+    assert.match(matrixHtml, /session-col-alt/);
+    assert.match(matrixHtml, /session-col-end/);
+
+    // 3. Verify Excel export tables
+    state.selectedSession = 'all';
+    const tables = api.buildAnalysisTables(cache.all);
+    assert.ok(tables.summary);
+    assert.ok(tables.people);
+    assert.ok(tables.multiMatrix);
+
+    // Verify Summary Sheet headers and Meeting Session column
+    assert.deepEqual(Array.from(tables.summary[0]), ['Meeting Session', 'BU', 'Total People', 'Absent', 'Attend on Time', 'Delay', 'Fake Attendance', 'On-time Attendance Rate']);
+
+    // Verify People Sheet headers
+    assert.deepEqual(Array.from(tables.people[0]), ['Meeting Session', 'Name', 'Employee ID / Account', 'BU', 'Customer Group', 'Attendance Status', 'Check-in / Join Time (Cairo)', 'Decision Source', 'Related Records']);
+
+    // In Session 2, Charlie attended on 2026-08-05 on time.
+    // Charlie MUST NOT be marked as Fake Attendance in Session 2 export!
+    const sess2Charlie = tables.people.find(r => r[0].includes('2026-08-05') && r[2] === 'u_charlie');
+    assert.ok(sess2Charlie, 'Charlie must appear in Session 2 exported people list');
+    assert.equal(sess2Charlie[5], 'Attend on Time', 'Charlie must be Attend on Time, NOT Fake Attendance');
+
+    // Bob in Session 1 checked in at 10:30 (after 10:00 cutoff) -> Fake Attendance
+    const sess1Bob = tables.people.find(r => r[0].includes('2026-08-01') && r[2] === 'u_bob');
+    assert.ok(sess1Bob);
+    assert.equal(sess1Bob[5], 'Fake Attendance');
+
+    // Alice attended Session 2 on time on 2026-08-05.
+    // In old code, Alice's check-in date 08-05 was after Session 1 (08-01), causing false Fake Attendance.
+    // In new code, Alice MUST be Attend on Time in Session 2!
+    const sess2Alice = tables.people.find(r => r[0].includes('2026-08-05') && r[2] === 'u_alice');
+    assert.ok(sess2Alice);
+    assert.equal(sess2Alice[5], 'Attend on Time');
+
+    // Verify sticky header in coverage table css
+    const fs = require('fs');
+    const path = require('path');
+    const htmlContent = fs.readFileSync(path.join(__dirname, '../backend/builtin-tools/tool-msf5b7nn/index.html'), 'utf8');
+    assert.match(htmlContent, /\.coverage-table thead th\s*\{[^}]*position:\s*sticky/);
+});
+
+
 
 

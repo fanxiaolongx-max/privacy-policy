@@ -361,7 +361,7 @@ test('QR, RFC, and WFM people lists show ticket dates while attendance waits for
     const pendingWfmSearch = api.searchRequiredRows('wfm', 'charlie', new Set(['U10003']));
     assert.equal(pendingWfmSearch.length, 1);
     assert.equal(pendingWfmSearch[0].isNightWfm, false);
-    assert.deepEqual(Array.from(api.buildAnalysisTables(businessOnly).summary[0]), ['BU', 'Total People', 'Awaiting Check-in Data']);
+    assert.deepEqual(Array.from(api.buildAnalysisTables(businessOnly).summary[0]), ['Meeting Session', 'BU', 'Total People', 'Awaiting Check-in Data']);
     assert.doesNotMatch(api.renderCombinedPeopleCard(businessOnly), /🌙 前夜WFM豁免/);
     await assert.rejects(api.buildSnapshotPayload('仅业务表', '2026-08-05'), /请先导入现场签到或在线入会表/);
     api.state.sheets[0].rows.push(['QR20260415A', 'U10004', 'Older Order', '2026-04-15 09:00:00']);
