@@ -156,3 +156,28 @@ test('餐单核验: 内置示例数据兼容性测试', () => {
   assert.deepEqual(Array.from(cleaned[0]), ["DATE", "BIG SERIES", "DESCRIPTION OF GOODS", "UNIT", "采购量", "厨师备注"]);
   assert.equal(cleaned[1][2], '干海带');
 });
+
+test('餐单核验: Case 5 日期列含 Excel 序列号且表头列名错位，防止将日期识别为采购量', () => {
+  const ctx = createContext();
+  const collector = [];
+  const case5Grid = [
+    ['DATE', "SUPPLIER'S NAME", 'BIG SERIES', 'DESCRIPTION OF GOODS', 'UNIT', '采购量'],
+    [46295, '蔬菜', '老豆腐', 'pcs', '', 20],
+    [46295, '蔬菜', '韭菜', 'kg', '', 8],
+    [46295, '蔬菜', '空心菜', 'kg', '', 20],
+    [46295, '蔬菜', '嫩豆腐', 'pcs', '', 18],
+    [46295, '蔬菜', '瓢子瓜', 'kg', '', 15],
+    [46295, '蔬菜', '菜心', 'kg', '', 25]
+  ];
+
+  const cleaned = ctx.cleanAndFilterData(case5Grid, false, { sourceName: '核心标准源', fileName: 'test5.xlsx', sheetName: 'Sheet1' }, collector);
+  assert.ok(cleaned.length > 0);
+  assert.deepEqual(Array.from(cleaned[0]), ['DATE', 'BIG SERIES', 'DESCRIPTION OF GOODS', 'UNIT', '采购量']);
+  assert.equal(cleaned[1][0], '2026/9/30');
+  assert.equal(cleaned[1][1], '蔬菜');
+  assert.equal(cleaned[1][2], '老豆腐');
+  assert.equal(cleaned[1][3], 'pcs');
+  assert.equal(cleaned[1][4], 20);
+  assert.notEqual(cleaned[1][4], 46295);
+});
+

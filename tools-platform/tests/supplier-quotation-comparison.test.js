@@ -265,4 +265,34 @@ test('preserves valid standard columns without false corrections (Case 4: standa
     assert.equal(configs[0].corrections.length, 0);
 });
 
+test('auto-corrects shifted columns with DATE and Excel serials without misclassifying date as quantity (Case 5)', () => {
+    const sheet = {
+        name: 'Week1 (9.5-9.9)',
+        matrix: [
+            ['DATE', "SUPPLIER'S NAME", 'BIG SERIES', 'DESCRIPTION OF GOODS', 'UNIT', '采购量'],
+            [46295, '蔬菜', '老豆腐', 'pcs', '', 20],
+            [46295, '蔬菜', '韭菜', 'kg', '', 8],
+            [46295, '蔬菜', '空心菜', 'kg', '', 20],
+            [46295, '蔬菜', '嫩豆腐', 'pcs', '', 18],
+            [46295, '蔬菜', '瓢子瓜', 'kg', '', 15],
+            [46295, '蔬菜', '菜心', 'kg', '', 25]
+        ]
+    };
+    const configs = core.analyzeSheets([sheet]);
+    assert.equal(configs[0].columns.date, 0);
+    assert.equal(configs[0].columns.category, 1);
+    assert.equal(configs[0].columns.item, 2);
+    assert.equal(configs[0].columns.unit, 3);
+    assert.equal(configs[0].columns.quantity, 5);
+
+    const records = core.recordsFromSheet(configs[0]);
+    assert.equal(records.length, 6);
+    assert.equal(records[0].item, '老豆腐');
+    assert.equal(records[0].category, '蔬菜');
+    assert.equal(records[0].unit, 'pcs');
+    assert.equal(records[0].quantity, 20);
+    assert.notEqual(records[0].quantity, 46295);
+});
+
+
 

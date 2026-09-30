@@ -6,6 +6,7 @@
   'use strict';
 
   const FIELD_ALIASES = {
+    date: ['date', '日期', '送货日期', '采购日期', '下单日期', '时间'],
     item: ['descriptionofgoods', 'description', 'goods', '品名', '名称', '商品名称', '货品名称', '物料名称', '食材名称', '菜品', '项目'],
     baseSupplier: ['suppliersname', 'suppliername', 'supplier', '供应商名字', '供应商名称', '供应商'],
     category: ['bigseries', 'series', 'category', '种类', '大类', '类别', '品类'],
@@ -86,6 +87,7 @@
   }
 
   const FIELD_LABELS = {
+    date: '日期',
     item: '商品名称',
     baseSupplier: '基础表供应商',
     category: '种类/大类',
@@ -98,6 +100,20 @@
     taxFlag: '是否加税',
     stock: '库存状态'
   };
+
+  function isDateValue(value) {
+    if (value instanceof Date) return !Number.isNaN(value.getTime());
+    if (typeof value === 'number') return value > 30000 && value < 60000;
+    const s = text(value);
+    if (!s) return false;
+    if (/^\d{5}$/.test(s)) {
+      const n = Number(s);
+      if (n > 30000 && n < 60000) return true;
+    }
+    return /^\d{4}[-/.]\d{1,2}[-/.]\d{1,2}(?:[T\s].*)?$/.test(s) ||
+           /^\d{1,2}[-/.]\d{1,2}[-/.]\d{4}(?:[T\s].*)?$/.test(s) ||
+           /^\d{4}年\d{1,2}月\d{1,2}日/.test(s);
+  }
 
   const KNOWN_UNITS = new Set([
     'kg', 'kgs', 'g', 'gr', 'gram', 'grams', '克', '千克', '公斤', '斤',
@@ -168,6 +184,7 @@
     let categoryMatches = 0;
     let foodMatches = 0;
     let priceMatches = 0;
+    let dateMatches = 0;
     let totalLength = 0;
 
     values.forEach(v => {
@@ -178,7 +195,11 @@
         unitMatches += 1;
       }
 
-      const isDate = /^\d{4}[-/.]\d{1,2}[-/.]\d{1,2}/.test(v);
+      const isDate = isDateValue(v);
+      if (isDate) {
+        dateMatches += 1;
+      }
+
       const num = parseNumber(v);
       if (!isDate && num !== null) {
         if (/^\d+(?:\.\d+)?\s*(?:kg|g|斤|公斤|千克|件|包|袋|瓶|箱|pcs|pc|个|升|l|ml)?$/i.test(v.trim())) {
@@ -204,20 +225,27 @@
     const categoryRatio = categoryMatches / N;
     const foodRatio = foodMatches / N;
     const priceRatio = priceMatches / N;
+    const dateRatio = dateMatches / N;
 
     let unitScore = 0;
     if (unitRatio >= 0.70) unitScore = 95 + Math.round(unitRatio * 5);
     else if (unitRatio >= 0.40) unitScore = 65 + Math.round(unitRatio * 20);
 
+    let dateScore = 0;
+    if (dateRatio >= 0.50) dateScore = 90 + Math.round(dateRatio * 10);
+    else if (dateRatio >= 0.20) dateScore = 60 + Math.round(dateRatio * 20);
+
     let quantityScore = 0;
-    if (qtyRatio >= 0.75) quantityScore = 90 + Math.round(qtyRatio * 10);
-    else if (qtyRatio >= 0.40) quantityScore = 50 + Math.round(qtyRatio * 30);
+    if (dateScore < 50) {
+      if (qtyRatio >= 0.75) quantityScore = 90 + Math.round(qtyRatio * 10);
+      else if (qtyRatio >= 0.40) quantityScore = 50 + Math.round(qtyRatio * 30);
+    }
 
     let priceScore = 0;
-    if (priceRatio >= 0.75 && !unitScore) priceScore = 80 + Math.round(priceRatio * 15);
+    if (dateScore < 50 && priceRatio >= 0.75 && !unitScore) priceScore = 80 + Math.round(priceRatio * 15);
 
     let categoryScore = 0;
-    if (unitRatio < 0.35 && qtyRatio < 0.35) {
+    if (unitRatio < 0.35 && qtyRatio < 0.35 && dateRatio < 0.30) {
       if (categoryRatio >= 0.60 && (distinctCount <= 8 || distinctRatio <= 0.35)) {
         categoryScore = 95 + Math.round(categoryRatio * 5);
       } else if (categoryRatio >= 0.30 && (distinctCount <= 6 || distinctRatio <= 0.25)) {
@@ -228,7 +256,7 @@
     }
 
     let itemScore = 0;
-    if (unitRatio < 0.30 && qtyRatio < 0.30) {
+    if (unitRatio < 0.30 && qtyRatio < 0.30 && dateRatio < 0.30) {
       if (foodRatio >= 0.40 && (distinctRatio >= 0.45 || distinctCount >= 8)) {
         itemScore = 95 + Math.round(foodRatio * 5);
       } else if (foodRatio >= 0.25 && (distinctRatio >= 0.35 || distinctCount >= 5)) {
@@ -242,7 +270,7 @@
     }
 
     let supplierScore = 0;
-    if (unitRatio < 0.20 && qtyRatio < 0.30) {
+    if (unitRatio < 0.20 && qtyRatio < 0.30 && dateRatio < 0.30) {
       if (categoryScore >= 70 || (itemScore >= 70 && foodRatio >= 0.40)) {
         supplierScore = 0;
       } else {
@@ -258,6 +286,7 @@
       categoryScore,
       itemScore,
       priceScore,
+      dateScore,
       supplierScore,
       distinctCount,
       distinctRatio,
@@ -265,6 +294,8 @@
       qtyRatio,
       categoryRatio,
       foodRatio,
+      priceRatio,
+      dateRatio,
       avgLen,
       sampleValues
     };
@@ -286,8 +317,20 @@
     const cols = { ...initialColumns };
     const corrections = [];
 
+    // 0. 日期列保护识别与纠偏：若已识别到 date 列但其内容不是日期，或存在明显日期列
+    const isCurrentDateInvalid = cols.date === undefined
+      || profiles[cols.date]?.profile.isEmpty
+      || (profiles[cols.date]?.profile.dateScore < 40 && !/date|日期/i.test(profiles[cols.date]?.header));
+
+    if (isCurrentDateInvalid) {
+      const dateCandidate = profiles.find(p => p.profile.dateScore >= 60 || /date|日期/i.test(p.header));
+      if (dateCandidate) {
+        cols.date = dateCandidate.colIdx;
+      }
+    }
+
     // 1. Check unit column
-    const unitCandidate = profiles.find(p => p.profile.unitScore >= 75);
+    const unitCandidate = profiles.find(p => p.profile.unitScore >= 75 && p.colIdx !== cols.date);
     if (unitCandidate) {
       const cIdx = unitCandidate.colIdx;
       if (cols.unit !== cIdx) {
@@ -312,11 +355,12 @@
     const isItemColInvalid = itemColIdx === undefined
       || profiles[itemColIdx]?.profile.isEmpty
       || profiles[itemColIdx]?.profile.unitScore >= 75
+      || profiles[itemColIdx]?.profile.dateScore >= 50
       || (profiles[itemColIdx]?.profile.categoryScore >= 85 && profiles[itemColIdx]?.profile.categoryRatio >= 0.70);
 
     if (isItemColInvalid) {
       const candidates = profiles
-        .filter(p => !p.profile.isEmpty && p.colIdx !== cols.unit)
+        .filter(p => !p.profile.isEmpty && p.colIdx !== cols.unit && p.colIdx !== cols.date)
         .sort((a, b) => b.profile.itemScore - a.profile.itemScore);
 
       const bestItem = candidates[0];
@@ -338,7 +382,7 @@
     }
 
     // 3. Check category column (种类/大类)
-    const categoryCandidate = profiles.find(p => p.profile.categoryScore >= 70 && p.colIdx !== cols.item && p.colIdx !== cols.unit);
+    const categoryCandidate = profiles.find(p => p.profile.categoryScore >= 70 && p.colIdx !== cols.item && p.colIdx !== cols.unit && p.colIdx !== cols.date);
     if (categoryCandidate) {
       const cIdx = categoryCandidate.colIdx;
       if (cols.category !== cIdx) {
@@ -360,27 +404,69 @@
     // 4. Check baseSupplier false positives
     if (cols.baseSupplier !== undefined) {
       const p = profiles[cols.baseSupplier]?.profile;
-      if (p && (p.supplierScore === 0 || p.itemScore >= 80 || p.categoryScore >= 80)) {
+      if (p && (p.supplierScore === 0 || p.itemScore >= 80 || p.categoryScore >= 80 || p.dateScore >= 50)) {
         delete cols.baseSupplier;
       }
     }
 
-    // 5. Check quantity in base sheet
+    // 5. Check quantity in base sheet (防止将日期列误认为采购量，保护已有合法采购量列)
     if (role === 'base') {
-      const qtyCandidate = profiles.find(p => p.profile.quantityScore >= 75 && p.colIdx !== cols.item && p.colIdx !== cols.category && p.colIdx !== cols.unit);
-      if (qtyCandidate && cols.quantity !== qtyCandidate.colIdx) {
-        const origHeader = qtyCandidate.header;
-        const sample = qtyCandidate.profile.sampleValues.slice(0, 3).join('、');
-        cols.quantity = qtyCandidate.colIdx;
-        corrections.push({
-          field: 'quantity',
-          fieldLabel: FIELD_LABELS.quantity,
-          colIndex: qtyCandidate.colIdx,
-          originalHeader: origHeader,
-          sampleValues: sample,
-          reason: `原表头为「${origHeader || '空'}」，实际内容为采购数量（如：${sample}）`
-        });
+      const currentQtyIdx = cols.quantity;
+      const isCurrentQtyDate = currentQtyIdx !== undefined && (
+        currentQtyIdx === cols.date ||
+        profiles[currentQtyIdx]?.profile.dateScore >= 50 ||
+        /date|日期/i.test(profiles[currentQtyIdx]?.header) ||
+        isDateValue(profiles[currentQtyIdx]?.profile.sampleValues[0])
+      );
+
+      if (isCurrentQtyDate) {
+        delete cols.quantity;
       }
+
+      const isCurrentQtyInvalid = cols.quantity === undefined
+        || profiles[cols.quantity]?.profile.isEmpty
+        || (profiles[cols.quantity]?.profile.quantityScore < 30 && !/量|数量|需求|qty/i.test(profiles[cols.quantity]?.header));
+
+      if (isCurrentQtyInvalid) {
+        const qtyCandidate = profiles.find(p =>
+          p.profile.quantityScore >= 50 &&
+          p.profile.dateScore < 50 &&
+          !/date|日期/i.test(p.header) &&
+          !isDateValue(p.profile.sampleValues[0]) &&
+          p.colIdx !== cols.item &&
+          p.colIdx !== cols.category &&
+          p.colIdx !== cols.unit &&
+          p.colIdx !== cols.date
+        );
+        if (qtyCandidate && cols.quantity !== qtyCandidate.colIdx) {
+          const origHeader = qtyCandidate.header;
+          const sample = qtyCandidate.profile.sampleValues.slice(0, 3).join('、');
+          cols.quantity = qtyCandidate.colIdx;
+          corrections.push({
+            field: 'quantity',
+            fieldLabel: FIELD_LABELS.quantity,
+            colIndex: qtyCandidate.colIdx,
+            originalHeader: origHeader,
+            sampleValues: sample,
+            reason: isCurrentQtyDate
+              ? `原采购量误识别到了日期列「${profiles[currentQtyIdx]?.header || 'DATE'}」，已自动重定向为真正的采购量列「${origHeader || '采购量'}」`
+              : `原表头为「${origHeader || '空'}」，实际内容为采购数量（如：${sample}）`
+          });
+        }
+      }
+    }
+
+    // 6. Check price / taxPrice in supplier sheet (防止日期被误当成报价)
+    if (role === 'supplier') {
+      ['price', 'taxPrice'].forEach(priceField => {
+        const colIdx = cols[priceField];
+        if (colIdx !== undefined) {
+          const p = profiles[colIdx];
+          if (p && (p.colIdx === cols.date || p.profile.dateScore >= 50 || /date|日期/i.test(p.header))) {
+            delete cols[priceField];
+          }
+        }
+      });
     }
 
     return { columns: cols, corrections };
@@ -447,6 +533,9 @@
   }
 
   function parseQuantityUnit(value, fallbackUnit) {
+    if (isDateValue(value)) {
+      return { quantity: null, unit: text(fallbackUnit) };
+    }
     const source = text(value);
     return { quantity: parseNumber(source), unit: text(fallbackUnit) || source.replace(/[\d\s.,]/g, '') };
   }

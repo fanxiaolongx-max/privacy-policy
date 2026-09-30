@@ -437,12 +437,13 @@
     function formatExcelDate(val) {
       // Excel 的日期对象以 UTC 零点保存；使用本地时区读取可能退回前一天。
       if (val instanceof Date) return val.getUTCFullYear() + '/' + (val.getUTCMonth() + 1) + '/' + val.getUTCDate();
-      if (typeof val === 'number' && val > 30000 && val < 60000) {
+      const numVal = typeof val === 'number' ? val : (typeof val === 'string' && /^\d{5}$/.test(val.trim()) ? Number(val.trim()) : NaN);
+      if (!Number.isNaN(numVal) && numVal > 30000 && numVal < 60000) {
         if (typeof XLSX !== 'undefined' && XLSX.SSF && XLSX.SSF.parse_date_code) {
-          const parsed = XLSX.SSF.parse_date_code(val);
+          const parsed = XLSX.SSF.parse_date_code(numVal);
           if (parsed) return parsed.y + '/' + parsed.m + '/' + parsed.d;
         }
-        const date = new Date(Math.round((val - 25569) * 86400 * 1000));
+        const date = new Date(Math.round((numVal - 25569) * 86400 * 1000));
         return date.getUTCFullYear() + '/' + (date.getUTCMonth() + 1) + '/' + date.getUTCDate();
       }
       return val;
@@ -454,6 +455,10 @@
 
       const text = String(value ?? '').trim();
       if (!text) return false;
+      if (/^\d{5}$/.test(text)) {
+        const num = Number(text);
+        if (num > 30000 && num < 60000) return true;
+      }
       return /^\d{4}[/.\-]\d{1,2}[/.\-]\d{1,2}(?:[T\s].*)?$/.test(text) ||
         /^\d{1,2}[/.\-]\d{1,2}[/.\-]\d{4}(?:[T\s].*)?$/.test(text) ||
         /^\d{4}年\d{1,2}月\d{1,2}日/.test(text);
@@ -632,12 +637,15 @@
     if (unitRatio >= 0.70) unitScore = 95 + Math.round(unitRatio * 5);
     else if (unitRatio >= 0.40) unitScore = 65 + Math.round(unitRatio * 20);
 
-    let quantityScore = 0;
-    if (qtyRatio >= 0.75) quantityScore = 90 + Math.round(qtyRatio * 10);
-    else if (qtyRatio >= 0.40) quantityScore = 50 + Math.round(qtyRatio * 30);
-
     let dateScore = 0;
     if (dateRatio >= 0.50) dateScore = 90 + Math.round(dateRatio * 10);
+    else if (dateRatio >= 0.20) dateScore = 60 + Math.round(dateRatio * 20);
+
+    let quantityScore = 0;
+    if (dateScore < 50) {
+      if (qtyRatio >= 0.75) quantityScore = 90 + Math.round(qtyRatio * 10);
+      else if (qtyRatio >= 0.40) quantityScore = 50 + Math.round(qtyRatio * 30);
+    }
 
     let categoryScore = 0;
     if (unitRatio < 0.35 && qtyRatio < 0.35 && dateRatio < 0.30) {
@@ -709,6 +717,18 @@
     const colMap = { ...initialMap };
     const corrections = [];
 
+    // 0. 校验 DATE 日期列
+    const isCurrentDateInvalid = colMap['DATE'] === undefined
+      || profiles[colMap['DATE']]?.profile.isEmpty
+      || (profiles[colMap['DATE']]?.profile.dateScore < 40 && !/date|日期/i.test(profiles[colMap['DATE']]?.header));
+
+    if (isCurrentDateInvalid) {
+      const dateCandidate = profiles.find(p => p.profile.dateScore >= 60 || /date|日期/i.test(p.header));
+      if (dateCandidate) {
+        colMap['DATE'] = dateCandidate.colIdx;
+      }
+    }
+
     // 1. 校验 UNIT 单位列
     const currentUnitIdx = colMap['UNIT'];
     const isCurrentUnitInvalid = currentUnitIdx === undefined
@@ -716,7 +736,7 @@
       || profiles[currentUnitIdx]?.profile.unitScore < 50;
 
     if (isCurrentUnitInvalid) {
-      const unitCandidate = profiles.find(p => p.profile.unitScore >= 75);
+      const unitCandidate = profiles.find(p => p.profile.unitScore >= 75 && p.colIdx !== colMap['DATE']);
       if (unitCandidate) {
         const cIdx = unitCandidate.colIdx;
         const origHeader = unitCandidate.header;
@@ -743,7 +763,7 @@
 
     if (isDescInvalid) {
       const candidates = profiles
-        .filter(p => !p.profile.isEmpty && p.colIdx !== colMap['UNIT'])
+        .filter(p => !p.profile.isEmpty && p.colIdx !== colMap['UNIT'] && p.colIdx !== colMap['DATE'])
         .sort((a, b) => b.profile.itemScore - a.profile.itemScore);
 
       const bestItem = candidates[0];
@@ -770,7 +790,7 @@
       || (profiles[currentCategoryIdx]?.profile.itemScore >= 80 && profiles[currentCategoryIdx]?.profile.foodRatio >= 0.40);
 
     if (isCurrentCategoryInvalid) {
-      const categoryCandidate = profiles.find(p => p.profile.categoryScore >= 70 && p.colIdx !== colMap['DESCRIPTION OF GOODS'] && p.colIdx !== colMap['UNIT']);
+      const categoryCandidate = profiles.find(p => p.profile.categoryScore >= 70 && p.colIdx !== colMap['DESCRIPTION OF GOODS'] && p.colIdx !== colMap['UNIT'] && p.colIdx !== colMap['DATE']);
       if (categoryCandidate) {
         const cIdx = categoryCandidate.colIdx;
         const origHeader = categoryCandidate.header;
@@ -790,7 +810,7 @@
     // 4. 剔除 SUPPLIER NAME 误判（若内容实际上是食材或大类）
     if (colMap['SUPPLIER NAME'] !== undefined) {
       const p = profiles[colMap['SUPPLIER NAME']]?.profile;
-      if (p && (p.supplierScore === 0 || p.itemScore >= 80 || p.categoryScore >= 80)) {
+      if (p && (p.supplierScore === 0 || p.itemScore >= 80 || p.categoryScore >= 80 || p.dateScore >= 50)) {
         const origHeader = profiles[colMap['SUPPLIER NAME']].header;
         delete colMap['SUPPLIER NAME'];
         corrections.push({
@@ -802,9 +822,33 @@
       }
     }
 
-    // 5. 校验 采购量
-    if (colMap['采购量'] === undefined) {
-      const qtyCandidate = profiles.find(p => p.profile.quantityScore >= 75 && p.colIdx !== colMap['DESCRIPTION OF GOODS'] && p.colIdx !== colMap['BIG SERIES'] && p.colIdx !== colMap['UNIT'] && p.colIdx !== colMap['DATE']);
+    // 5. 校验 采购量 (防止误将日期列映射为采购量)
+    const currentQtyIdx = colMap['采购量'];
+    const isCurrentQtyDate = currentQtyIdx !== undefined && (
+      currentQtyIdx === colMap['DATE'] ||
+      profiles[currentQtyIdx]?.profile.dateScore >= 50 ||
+      /date|日期/i.test(profiles[currentQtyIdx]?.header) ||
+      isRecognizableDateValue(profiles[currentQtyIdx]?.profile.sampleValues[0])
+    );
+    if (isCurrentQtyDate) {
+      delete colMap['采购量'];
+    }
+
+    const isCurrentQtyInvalid = colMap['采购量'] === undefined
+      || profiles[colMap['采购量']]?.profile.isEmpty
+      || (profiles[colMap['采购量']]?.profile.quantityScore < 30 && !/量|数量|需求|qty/i.test(profiles[colMap['采购量']]?.header));
+
+    if (isCurrentQtyInvalid) {
+      const qtyCandidate = profiles.find(p =>
+        p.profile.quantityScore >= 50 &&
+        p.profile.dateScore < 50 &&
+        !/date|日期/i.test(p.header) &&
+        !isRecognizableDateValue(p.profile.sampleValues[0]) &&
+        p.colIdx !== colMap['DESCRIPTION OF GOODS'] &&
+        p.colIdx !== colMap['BIG SERIES'] &&
+        p.colIdx !== colMap['UNIT'] &&
+        p.colIdx !== colMap['DATE']
+      );
       if (qtyCandidate) {
         const origHeader = qtyCandidate.header;
         const sample = qtyCandidate.profile.sampleValues.slice(0, 3).join('、');
@@ -814,7 +858,9 @@
           colIndex: qtyCandidate.colIdx,
           origHeader,
           sample,
-          reason: `原表头为「${origHeader || '空'}」，实际内容为采购数量（如：${sample}）`
+          reason: isCurrentQtyDate
+            ? `原采购量误识别到了日期列「${profiles[currentQtyIdx]?.header || 'DATE'}」，已自动重定向为真正的采购量列「${origHeader || '采购量'}」`
+            : `原表头为「${origHeader || '空'}」，实际内容为采购数量（如：${sample}）`
         });
       }
     }
