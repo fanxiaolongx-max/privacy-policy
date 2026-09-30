@@ -109,6 +109,48 @@ function stateSummary(state) {
     };
 }
 
+function getBuildMetadata() {
+    let pkg = { version: '1.0.304', dependencies: {} };
+    let pkgMtime = null;
+    try {
+        const pkgPath = path.join(__dirname, '../../package.json');
+        if (fs.existsSync(pkgPath)) {
+            const stat = fs.statSync(pkgPath);
+            pkgMtime = stat.mtime;
+            pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+        }
+    } catch (_) {}
+
+    const isPortable = process.platform === 'win32' && Boolean(process.env.PORTABLE_EXECUTABLE_FILE);
+    let platformLabel = process.platform === 'win32'
+        ? (isPortable ? 'Windows x64 便携版' : 'Windows x64 桌面版')
+        : (process.platform === 'darwin' ? 'macOS 桌面版' : `${process.platform}-${process.arch}`);
+
+    const builtAt = pkgMtime ? pkgMtime.toISOString() : new Date().toISOString();
+    const deps = pkg.dependencies || {};
+
+    const dependencies = [
+        { name: 'exceljs', version: deps['exceljs'] || '^4.4.0', role: 'Excel 考勤比对、清洗与多场次导出引擎' },
+        { name: 'express', version: deps['express'] || '^4.18.2', role: '本地轻量高性能 Web 服务核心' },
+        { name: 'sqlite3', version: deps['sqlite3'] || '^6.0.1', role: '嵌入式离线关系型持久化数据引擎' },
+        { name: 'jszip', version: deps['jszip'] || '^3.10.1', role: '多场次数据包打包与解压缩组件' },
+        { name: '@tutao/oxmsg', version: deps['@tutao/oxmsg'] || '^0.2.3', role: 'Outlook .msg 邮件格式解析与提取' },
+        { name: '@google/generative-ai', version: deps['@google/generative-ai'] || '^0.24.1', role: 'Gemini AI 智能决策与分析模块' },
+        { name: 'acorn', version: deps['acorn'] || '^8.17.0', role: 'JavaScript 语法沙箱解析与静态校验' },
+        { name: 'cors / multer', version: `${deps['cors'] || '^2.8.5'} / ${deps['multer'] || '^1.4.5-lts.1'}`, role: '跨域安全与多媒体文件上传中间件' }
+    ];
+
+    return {
+        version: pkg.version || '1.0.304',
+        builtAt,
+        nodeVersion: process.version,
+        electronVersion: (process.versions && process.versions.electron) ? `v${process.versions.electron}` : null,
+        platformLabel,
+        isPortable,
+        dependencies
+    };
+}
+
 async function getStatus(options = {}) {
     const bundlePath = options.bundlePath || DEFAULT_BUNDLE_PATH;
     const statePath = options.statePath || path.join(getDataDir(), 'first-run-defaults.json');
@@ -120,6 +162,7 @@ async function getStatus(options = {}) {
         decided: Boolean(state),
         requiresAdmin: !isAdmin,
         state: stateSummary(state),
+        build: getBuildMetadata(),
         bundle: {
             version: bundle.bundleVersion,
             generatedAt: bundle.generatedAt,

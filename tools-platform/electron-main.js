@@ -127,10 +127,10 @@ let desktopLicenseRefreshTimer = null;
 let startupWindowLoaded = false;
 let startupWindowCreatedAt = 0;
 let startupProgressState = {
-    percent: 8,
-    title: '正在准备工作空间',
-    detail: '加载本地组件与用户数据，请稍候…',
-    stage: '启动初始化',
+    percent: 50,
+    title: '正在初始化运行服务',
+    detail: '解压已就绪，正在准备网络端口与本地服务…',
+    stage: '阶段 2/2 · 服务初始化',
     finished: false
 };
 let localPort = null;
@@ -723,8 +723,8 @@ function createStartupWindow() {
         skipTaskbar: true,
         show: false,
         center: true,
+        hasShadow: false,
         backgroundColor: '#00000000',
-        backgroundMaterial: process.platform === 'win32' ? 'acrylic' : undefined,
         icon: getAppIconPath(),
         webPreferences: {
             nodeIntegration: false,
@@ -766,7 +766,7 @@ function closeStartupWindow(success = true) {
     const win = startupWindow;
     if (!win || win.isDestroyed()) return;
     if (success) {
-        updateStartupProgress(100, '工作空间已就绪', '正在打开 Tools Platform 主页面…', '启动完成', true);
+        updateStartupProgress(100, '工作空间已就绪', '正在打开 Tools Platform 主页面…', '阶段 2/2 · 启动完成', true);
     } else {
         win.webContents.executeJavaScript('document.body.classList.add("is-finished")').catch(() => {});
     }
@@ -1663,17 +1663,17 @@ async function startTrayApp() {
     const launchExperience = prepareLaunchExperience();
     registerDownloadHandler();
     createStartupWindow();
-    updateStartupProgress(10, '正在准备工作空间', '加载绿色版运行环境与本地配置…', '启动初始化');
+    updateStartupProgress(52, '正在初始化运行服务', '加载绿色版运行环境与本地配置…', '阶段 2/2 · 启动初始化');
 
     try {
-        updateStartupProgress(18, '正在分配本地服务', '选择可用端口并准备安全的本地访问地址…', '网络准备');
+        updateStartupProgress(65, '正在分配本地服务', '选择可用端口并准备安全的本地访问地址…', '阶段 2/2 · 网络准备');
         const PORT = await getFreePort(3030);
         process.env.PORT = PORT;
         localPort = PORT;
         writeRuntimeStatusSnapshot();
 
         if (!localServerStarted) {
-            updateStartupProgress(32, '正在加载核心服务', '启动数据库、备份恢复与系统工具模块…', '服务加载');
+            updateStartupProgress(80, '正在加载核心服务', '启动数据库、备份恢复与系统工具模块…', '阶段 2/2 · 服务加载');
             localServerStarted = true;
             require('./backend/server.js');
         }
@@ -1686,7 +1686,7 @@ async function startTrayApp() {
 
         startRuntimeCommandWatcher();
         await waitForLocalServer(PORT);
-        updateStartupProgress(94, '本地服务已经就绪', '正在连接浏览器并打开主页面…', '打开主页面');
+        updateStartupProgress(96, '本地服务已经就绪', '正在连接浏览器并打开主页面…', '阶段 2/2 · 打开主页面');
         const launchUrl = buildLaunchUrl(PORT, launchExperience);
         if (launchExperience.shouldOpenSystemBrowser) {
             await shell.openExternal(launchUrl);
@@ -1695,7 +1695,7 @@ async function startTrayApp() {
         startDesktopLicenseRefresh();
         scheduleStartupUpdateCheck();
     } catch (err) {
-        updateStartupProgress(100, '启动未完成', err.message || String(err), '启动失败');
+        updateStartupProgress(100, '启动未完成', err.message || String(err), '阶段 2/2 · 启动失败');
         setTimeout(() => closeStartupWindow(false), 1600);
         dialog.showErrorBox('Server Startup Failed', `Failed to start the local server: ${err.message}`);
     }

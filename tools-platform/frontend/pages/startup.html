@@ -15,7 +15,8 @@
             height: 100%;
             margin: 0;
             overflow: hidden;
-            background: transparent;
+            background: transparent !important;
+            background-color: transparent !important;
         }
         body {
             display: grid;
@@ -23,6 +24,8 @@
             padding: 28px;
             opacity: 1;
             transition: opacity .28s ease, transform .28s ease;
+            user-select: none;
+            -webkit-user-select: none;
         }
         body.is-finished {
             opacity: 0;
@@ -38,11 +41,11 @@
             background:
                 radial-gradient(circle at 16% 5%, rgba(45, 212, 191, .24), transparent 35%),
                 radial-gradient(circle at 92% 95%, rgba(99, 102, 241, .22), transparent 38%),
-                linear-gradient(145deg, rgba(15, 23, 42, .78), rgba(30, 41, 59, .64));
+                linear-gradient(145deg, rgba(15, 23, 42, .92), rgba(30, 41, 59, .88));
             box-shadow:
-                0 34px 92px rgba(2, 8, 23, .52),
-                0 0 42px rgba(45, 212, 191, .12),
-                0 0 76px rgba(96, 165, 250, .10),
+                0 28px 75px rgba(2, 8, 23, .6),
+                0 0 32px rgba(45, 212, 191, .15),
+                0 0 56px rgba(96, 165, 250, .10),
                 inset 0 1px 0 rgba(255, 255, 255, .20);
             backdrop-filter: blur(28px) saturate(145%);
             -webkit-backdrop-filter: blur(28px) saturate(145%);
@@ -116,13 +119,14 @@
         }
         .portable {
             margin-left: auto;
-            padding: 5px 9px;
-            border: 1px solid rgba(52, 211, 153, .28);
+            padding: 5px 10px;
+            border: 1px solid rgba(52, 211, 153, .36);
             border-radius: 999px;
             color: #6ee7b7;
-            background: rgba(16, 185, 129, .12);
-            font-size: 10px;
+            background: rgba(16, 185, 129, .15);
+            font-size: 11px;
             font-weight: 800;
+            letter-spacing: .02em;
         }
         .status {
             align-self: center;
@@ -163,7 +167,7 @@
         }
         #bar {
             position: relative;
-            width: 8%;
+            width: 50%;
             height: 100%;
             border-radius: inherit;
             background: linear-gradient(90deg, #2dd4bf, #60a5fa 58%, #a78bfa);
@@ -197,19 +201,19 @@
                     <strong>Tools Platform</strong>
                     <span>LOCAL PRODUCTIVITY WORKSPACE</span>
                 </div>
-                <span class="portable">绿色便携版</span>
+                <span class="portable">阶段 2/2 · 服务初始化</span>
             </header>
             <div class="status">
-                <h1 id="title">正在准备工作空间</h1>
-                <p id="detail">加载本地组件与用户数据，请稍候…</p>
+                <h1 id="title">正在初始化运行服务</h1>
+                <p id="detail">解压已就绪，正在准备网络端口与本地服务…</p>
             </div>
             <footer>
                 <div class="progress-meta">
-                    <span id="stage">启动初始化</span>
-                    <span id="percent">8%</span>
+                    <span id="stage">阶段 2/2 · 服务初始化</span>
+                    <span id="percent">50%</span>
                 </div>
                 <div class="track"><div id="bar"></div></div>
-                <div class="foot">首次启动或版本更新时，系统工具同步可能需要更长时间。</div>
+                <div class="foot">阶段 2/2：核心服务就绪后将自动在浏览器中打开主工作区。</div>
             </footer>
         </main>
     </section>

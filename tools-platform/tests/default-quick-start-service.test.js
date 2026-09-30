@@ -210,3 +210,21 @@ test('a failed import restores the pre-import configuration and leaves the decis
     assert.equal(JSON.stringify(fixture.data), before);
     assert.equal(fs.existsSync(fixture.statePath), false);
 });
+
+test('getStatus returns build version, builtAt, platform, and third-party dependencies', async t => {
+    const fixture = makeFixture();
+    t.after(() => fs.rmSync(fixture.root, { recursive: true, force: true }));
+    const status = await service.getStatus({
+        role: 'admin', bundlePath: fixture.bundlePath, statePath: fixture.statePath
+    });
+    assert.ok(status.build);
+    assert.ok(status.build.version);
+    assert.ok(status.build.builtAt);
+    assert.ok(status.build.platformLabel);
+    assert.ok(Array.isArray(status.build.dependencies));
+    assert.ok(status.build.dependencies.length >= 7);
+    const excelDep = status.build.dependencies.find(d => d.name === 'exceljs');
+    assert.ok(excelDep);
+    assert.ok(excelDep.version);
+    assert.ok(excelDep.role);
+});
