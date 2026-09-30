@@ -5335,6 +5335,7 @@
       }
       function buildAnalysisTables(rows = state.peopleCache?.all || []) {
         const sessions = state.peopleCache?.sessions || getMeetingSessions();
+        const displayLabels = getSessionDisplayLabels(sessions);
         const pending = !sessions.length;
         const isMultiAll = sessions.length > 1 && (!state.selectedSession || state.selectedSession === 'all');
         const statuses = pending ? ['Not Evaluated'] : ['Absent', 'Attend on Time', 'Delay', 'Fake Attendance'];
@@ -5357,7 +5358,8 @@
         if (isMultiAll) {
           const grandCounts = Object.fromEntries(statuses.map(s => [s, 0]));
           let grandTotal = 0;
-          sessions.forEach(s => {
+          sessions.forEach((s, idx) => {
+            const sessionLabel = `#${idx + 1} ${displayLabels[idx] || s.name}`;
             const sessRows = getSessionPeopleRows(state.peopleCache?.all || rows, s.name);
             const sCounts = Object.fromEntries(statuses.map(st => [st, 0]));
             const sByBu = new Map();
@@ -5373,13 +5375,13 @@
             });
 
             [...sByBu.entries()].sort((a, b) => b[1].total - a[1].total || a[0].localeCompare(b[0])).forEach(([bu, x]) => {
-              summary.push([s.name, bu, x.total, x.Absent, x['Attend on Time'], x.Delay, x['Fake Attendance'], rate(x['Attend on Time'], x.total)]);
+              summary.push([sessionLabel, bu, x.total, x.Absent, x['Attend on Time'], x.Delay, x['Fake Attendance'], rate(x['Attend on Time'], x.total)]);
             });
-            summary.push([s.name, 'Subtotal', sessRows.length, sCounts.Absent, sCounts['Attend on Time'], sCounts.Delay, sCounts['Fake Attendance'], rate(sCounts['Attend on Time'], sessRows.length)]);
+            summary.push([sessionLabel, 'Subtotal', sessRows.length, sCounts.Absent, sCounts['Attend on Time'], sCounts.Delay, sCounts['Fake Attendance'], rate(sCounts['Attend on Time'], sessRows.length)]);
 
             [...sessRows].sort((a, b) => (b.count || 0) - (a.count || 0) || (a.name || a.account).localeCompare(b.name || b.account, 'en')).forEach(r => {
               people.push([
-                s.name,
+                sessionLabel,
                 r.name,
                 r.account,
                 r.bu,
@@ -5394,9 +5396,19 @@
 
           summary.push(['All Sessions', 'Grand Total', grandTotal, grandCounts.Absent, grandCounts['Attend on Time'], grandCounts.Delay, grandCounts['Fake Attendance'], rate(grandCounts['Attend on Time'], grandTotal)]);
         } else {
-          const sessionName = (state.selectedSession && state.selectedSession !== 'all')
-            ? state.selectedSession
-            : (sessions[0]?.name || (pending ? 'Pending Attendance' : (state.attendanceRules?.meetingDate || 'Main Session')));
+          let sessionLabel;
+          if (pending) {
+            sessionLabel = 'Pending Attendance';
+          } else {
+            const idx = sessions.findIndex(sess => sess.name === state.selectedSession);
+            if (idx >= 0) {
+              sessionLabel = `#${idx + 1} ${displayLabels[idx] || sessions[idx].name}`;
+            } else if (sessions.length > 0) {
+              sessionLabel = `#1 ${displayLabels[0] || sessions[0].name}`;
+            } else {
+              sessionLabel = state.attendanceRules?.meetingDate || 'Main Session';
+            }
+          }
           const counts = Object.fromEntries(statuses.map(s => [s, 0]));
           const byBu = new Map();
           rows.forEach(r => {
@@ -5410,16 +5422,16 @@
 
           [...byBu.entries()].sort((a, b) => b[1].total - a[1].total || a[0].localeCompare(b[0])).forEach(([bu, x]) => {
             summary.push(pending
-              ? [sessionName, bu, x.total, x['Not Evaluated']]
-              : [sessionName, bu, x.total, x.Absent, x['Attend on Time'], x.Delay, x['Fake Attendance'], rate(x['Attend on Time'], x.total)]);
+              ? [sessionLabel, bu, x.total, x['Not Evaluated']]
+              : [sessionLabel, bu, x.total, x.Absent, x['Attend on Time'], x.Delay, x['Fake Attendance'], rate(x['Attend on Time'], x.total)]);
           });
           summary.push(pending
-            ? [sessionName, 'Total', rows.length, counts['Not Evaluated']]
-            : [sessionName, 'Total', rows.length, counts.Absent, counts['Attend on Time'], counts.Delay, counts['Fake Attendance'], rate(counts['Attend on Time'], rows.length)]);
+            ? [sessionLabel, 'Total', rows.length, counts['Not Evaluated']]
+            : [sessionLabel, 'Total', rows.length, counts.Absent, counts['Attend on Time'], counts.Delay, counts['Fake Attendance'], rate(counts['Attend on Time'], rows.length)]);
 
           [...rows].sort((a, b) => (b.count || 0) - (a.count || 0) || (a.name || a.account).localeCompare(b.name || b.account, 'en')).forEach(r => {
             people.push([
-              sessionName,
+              sessionLabel,
               r.name,
               r.account,
               r.bu,
@@ -5495,8 +5507,8 @@
           ['xl/workbook.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">${workbookSheets}</workbook>`],
           ['xl/_rels/workbook.xml.rels', relsSheets],
           ['xl/styles.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="3"><font><sz val="11"/><name val="Calibri"/></font><font><b/><color rgb="FFFFFFFF"/><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFC7000B"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE7E9EE"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="2"><border/><border><left style="thin"><color rgb="FFE0E3E8"/></left><right style="thin"><color rgb="FFE0E3E8"/></right><top style="thin"><color rgb="FFE0E3E8"/></top><bottom style="thin"><color rgb="FFE0E3E8"/></bottom></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="3"><xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment vertical="center"/></xf><xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf><xf numFmtId="0" fontId="2" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>'],
-          ['xl/worksheets/sheet1.xml', worksheetXml(summary, pending ? [26, 22, 14, 24] : [26, 22, 14, 12, 19, 12, 19, 24], summary.length)],
-          ['xl/worksheets/sheet2.xml', worksheetXml(people, [26, 30, 22, 16, 24, 20, 28, 18, 17])]
+          ['xl/worksheets/sheet1.xml', worksheetXml(summary, pending ? [32, 22, 14, 24] : [32, 22, 14, 12, 19, 12, 19, 24], summary.length)],
+          ['xl/worksheets/sheet2.xml', worksheetXml(people, [32, 30, 22, 16, 24, 20, 28, 18, 17])]
         ];
         if (multiMatrix) {
           const sessionCount = (state.peopleCache?.sessions || []).length;

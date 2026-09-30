@@ -821,18 +821,24 @@ test('multi-session export includes Meeting Session column and aligns per-sessio
     // Charlie MUST NOT be marked as Fake Attendance in Session 2 export!
     const sess2Charlie = tables.people.find(r => r[0].includes('2026-08-05') && r[2] === 'u_charlie');
     assert.ok(sess2Charlie, 'Charlie must appear in Session 2 exported people list');
+    assert.equal(sess2Charlie[0], '#2 2026-08-05-现场签到', 'Session label must match page display label');
     assert.equal(sess2Charlie[5], 'Attend on Time', 'Charlie must be Attend on Time, NOT Fake Attendance');
 
     // Bob in Session 1 checked in at 10:30 (after 10:00 cutoff) -> Fake Attendance
     const sess1Bob = tables.people.find(r => r[0].includes('2026-08-01') && r[2] === 'u_bob');
     assert.ok(sess1Bob);
+    assert.equal(sess1Bob[0], '#1 2026-08-01-现场签到', 'Session label must match page display label');
     assert.equal(sess1Bob[5], 'Fake Attendance');
+
+    // Summary sheet also uses page display label #1 ...
+    assert.equal(tables.summary[1][0], '#1 2026-08-01-现场签到');
 
     // Alice attended Session 2 on time on 2026-08-05.
     // In old code, Alice's check-in date 08-05 was after Session 1 (08-01), causing false Fake Attendance.
     // In new code, Alice MUST be Attend on Time in Session 2!
     const sess2Alice = tables.people.find(r => r[0].includes('2026-08-05') && r[2] === 'u_alice');
     assert.ok(sess2Alice);
+    assert.equal(sess2Alice[0], '#2 2026-08-05-现场签到');
     assert.equal(sess2Alice[5], 'Attend on Time');
 
     // Verify sticky header in coverage table css
