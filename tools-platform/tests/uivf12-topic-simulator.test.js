@@ -15,7 +15,7 @@ test('site picker offers simulation only for sites with a topic runtime', () => 
     assert.match(copySource, /origin === 'https:\/\/netcare\.huawei\.com'/);
     assert.match(copySource, /origin === 'https:\/\/datafab-pro\.gtsdata\.huawei\.com'/);
     assert.match(copySource, /simulator \? `<button type="button" class="uiv-site-script-simulate"/);
-    assert.match(copySource, /模拟浮窗<\/button>/);
+    assert.match(copySource, /(?:\$\{UIVT\('uiv\.siteScript\.simulate'\)\}|模拟浮窗)<\/button>/);
     assert.match(copySource, /class="uiv-site-script-buttons">\$\{simulator[\s\S]*uiv-site-script-copy/);
 });
 

@@ -310,7 +310,8 @@ function populateMetricSelects(secId) {
             s.customMetrics.forEach(r => {
                 const titleStr = s.title || sId;
                 const parentLabel = getMetricRuleDisplayLabel(r);
-                parentHtml += `<option value="${sId}|${r.id}">作为 [${escapeHTML(parentLabel)}] 的子指标 (归属表: ${escapeHTML(titleStr)})</option>`;
+                const subMetricText = SLAT('sla.section.subMetricOf', { parent: escapeHTML(parentLabel), table: escapeHTML(titleStr) });
+                parentHtml += `<option value="${sId}|${r.id}">${subMetricText}</option>`;
             });
         }
     });
@@ -2251,7 +2252,10 @@ function renderMetricList(secId) {
     const state = AppState[secId];
     const list = document.getElementById(`m-list-${secId}`);
     const inboundRecords = getInboundSubMetricRecords(secId);
-    if (!state.customMetrics.length && !inboundRecords.length) { list.innerHTML = '<div style="color:#aaa;font-size:12px;text-align:center;">尚无推送规则</div>'; return; }
+    if (!state.customMetrics.length && !inboundRecords.length) {
+        list.innerHTML = `<div style="color:#aaa;font-size:12px;text-align:center;">${SLAT('sla.section.noRules')}</div>`;
+        return;
+    }
 
     let html = '';
     state.customMetrics.forEach(r => {
@@ -2260,9 +2264,9 @@ function renderMetricList(secId) {
             subHtml = `<div style="margin-top:6px; padding-left: 10px; border-left: 2px solid #e1bee7;">`;
             r.subMetrics.forEach((sm, idx) => {
                 let sourceNote = (sm.scope === 'all')
-                    ? `<span style="color:#7b1fa2;font-weight:bold;">(🌐 跨所有独立表联合提取)</span> `
+                    ? `<span style="color:#7b1fa2;font-weight:bold;">${SLAT('sla.section.crossNote')}</span> `
                     : ((sm.sourceSecId && sm.sourceSecId !== secId)
-                        ? `<span style="color:#d32f2f;font-weight:bold;">(跨表数据源: ${escapeHTML(AppState[sm.sourceSecId]?.title || sm.sourceSecId)})</span> `
+                        ? `<span style="color:#d32f2f;font-weight:bold;">${SLAT('sla.section.crossSource', { title: escapeHTML(AppState[sm.sourceSecId]?.title || sm.sourceSecId) })}</span> `
                         : '');
                 const smLabel = getMetricRuleDisplayLabel(sm, r);
                 let smDesc = describeMetricRule(sm);
@@ -2270,10 +2274,10 @@ function renderMetricList(secId) {
                 subHtml += `
                 <div style="font-size:11px; color:#555; background: #fafafa; padding: 6px; padding-right: 80px; margin-bottom: 4px; border-radius: 4px; position: relative;">
                     <div style="position:absolute; right:6px; top:6px; display:flex; gap:6px;">
-                        <button onclick="openMetricRuleEditorById('${secId}', '${r.id}', ${idx})" style="border:none; background:none; color:#1976d2; cursor:pointer;">✎ 修改</button>
-                        <button onclick="deleteSubMetricRule('${secId}', '${r.id}', ${idx})" style="border:none; background:none; color:#d32f2f; cursor:pointer;">✖ 删除</button>
+                        <button onclick="openMetricRuleEditorById('${secId}', '${r.id}', ${idx})" style="border:none; background:none; color:#1976d2; cursor:pointer;">${SLAT('sla.section.ruleEdit')}</button>
+                        <button onclick="deleteSubMetricRule('${secId}', '${r.id}', ${idx})" style="border:none; background:none; color:#d32f2f; cursor:pointer;">${SLAT('sla.section.ruleDelete')}</button>
                     </div>
-                    <b>[${escapeHTML(sm.category || '未分类')}] ${escapeHTML(smLabel)}</b> ${sourceNote}: <br/>${smDesc}
+                    <b>[${escapeHTML(sm.category || SLAT('sla.section.uncategorized'))}] ${escapeHTML(smLabel)}</b> ${sourceNote}: <br/>${smDesc}
                 </div>`;
             });
             subHtml += `</div>`;
@@ -2282,7 +2286,7 @@ function renderMetricList(secId) {
         let rDesc = '';
         rDesc = describeMetricRule(r).replace(' ➔ ', ' <br>➔ ');
         const crossBadge = r.scope === 'all'
-            ? ' <span style="background:#f3e5f5; color:#7b1fa2; font-size:11px; padding:1px 6px; border-radius:10px; font-weight:normal; margin-left:6px;">🌐 跨所有独立表</span>'
+            ? ` <span style="background:#f3e5f5; color:#7b1fa2; font-size:11px; padding:1px 6px; border-radius:10px; font-weight:normal; margin-left:6px;">${SLAT('sla.section.crossBadge')}</span>`
             : '';
 
         html += `
@@ -2290,8 +2294,8 @@ function renderMetricList(secId) {
             <div style="display:flex; justify-content: space-between; align-items: center;">
                 <div style="font-weight:bold;color:#4a90e2;font-size:13px;">[${escapeHTML(getMetricRuleDisplayLabel(r))}]${crossBadge}</div>
                 <div>
-                    <button class="action-btn" onclick="openMetricRuleEditorById('${secId}', '${r.id}')" style="font-size:11px; padding:2px 6px; background:#e3f2fd; color:#1565c0; margin-right:6px;">✎ 修改</button>
-                    <button class="action-btn" onclick="deleteMetricRule('${secId}', '${r.id}')" style="font-size:11px; padding:2px 6px; background:#ffebee; color:#c62828;">✖ 删除</button>
+                    <button class="action-btn" onclick="openMetricRuleEditorById('${secId}', '${r.id}')" style="font-size:11px; padding:2px 6px; background:#e3f2fd; color:#1565c0; margin-right:6px;">${SLAT('sla.section.ruleEdit')}</button>
+                    <button class="action-btn" onclick="deleteMetricRule('${secId}', '${r.id}')" style="font-size:11px; padding:2px 6px; background:#ffebee; color:#c62828;">${SLAT('sla.section.ruleDelete')}</button>
                 </div>
             </div>
             <div style="font-size:11px;color:#666;margin-top:4px;">${rDesc}</div>
@@ -2301,7 +2305,7 @@ function renderMetricList(secId) {
     if (inboundRecords.length) {
         html += `
             <div style="margin-top: 10px; padding: 8px; border: 1px dashed #ccc; border-radius: 8px; background: #fafafa;">
-                <div style="margin-bottom: 7px; color: #1976d2; font-size: 12px; font-weight: bold;">🔁 本表作为跨表子指标数据源</div>
+                <div style="margin-bottom: 7px; color: #1976d2; font-size: 12px; font-weight: bold;">${SLAT('sla.section.inboundHeader')}</div>
                 ${inboundRecords.map(record => renderMetricRuleCard(record, { allowEdit: true, allowDelete: true })).join('')}
             </div>
         `;

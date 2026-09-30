@@ -799,7 +799,7 @@ async function copySiteConsoleScripts(origin) {
         const scope = applyUivBatchCategoryFilter(scripts);
         const grouped = groupConsoleScriptsBySite(scope.scripts);
         const site = grouped.sites.find(item => item.origin === origin);
-        if (!site || !site.scripts.length) throw new Error('所选站点当前没有可复制的脚本，请刷新后重试。');
+        if (!site || !site.scripts.length) throw new Error(UIVT('uiv.siteScript.noSite', { site: origin }));
         const expanded = expandFloatingMetricDependencies(site.scripts, scripts, ruleBundle, site.origin);
         buildAndCopyMasterScript(expanded.scripts, `${site.name}-浮窗工具预备版`, {
             floatingLauncher: true,
@@ -808,10 +808,10 @@ async function copySiteConsoleScripts(origin) {
             ruleBundle
         });
         closeSiteConsoleScriptPicker();
-        const dependencyText = expanded.added.length ? `，自动补入 ${expanded.added.length} 个跨表依赖` : '';
-        showToast(`✅ 已复制 ${site.name} 的 F12 脚本（${expanded.scripts.length} 个任务${dependencyText}）`, 'success');
+        const dependencyText = expanded.added.length ? UIVT('uiv.siteScript.depText', { count: expanded.added.length }) : '';
+        showToast(UIVT('uiv.siteScript.copied', { name: site.name, count: expanded.scripts.length, dep: dependencyText }), 'success');
     } catch (error) {
-        showToast(`❌ 复制站点脚本失败：${error.message}`, 'error');
+        showToast(UIVT('uiv.siteScript.copyFail', { error: error.message }), 'error');
     }
 }
 
@@ -833,27 +833,27 @@ async function openSiteConsoleScriptPicker() {
                 <div style="min-width:0;">
                     <div class="uiv-site-script-name">${escapeUivHtml(site.name)}</div>
                     <div class="uiv-site-script-origin" title="${escapeUivHtml(site.origin)}">${escapeUivHtml(site.origin)}</div>
-                    <div class="uiv-site-script-count">${site.scripts.length} 个可执行脚本</div>
+                    <div class="uiv-site-script-count">${UIVT('uiv.siteScript.scriptCount', { count: site.scripts.length })}</div>
                 </div>
-                <div class="uiv-site-script-buttons">${simulator ? `<button type="button" class="uiv-site-script-simulate" data-site-origin="${escapeUivHtml(site.origin)}">模拟浮窗</button>` : ''}<button type="button" class="uiv-site-script-copy" data-site-origin="${escapeUivHtml(site.origin)}">复制此站点</button></div>
+                <div class="uiv-site-script-buttons">${simulator ? `<button type="button" class="uiv-site-script-simulate" data-site-origin="${escapeUivHtml(site.origin)}">${UIVT('uiv.siteScript.simulate')}</button>` : ''}<button type="button" class="uiv-site-script-copy" data-site-origin="${escapeUivHtml(site.origin)}">${UIVT('uiv.siteScript.copy')}</button></div>
             </div>
         `; }).join('');
         const unresolvedNote = grouped.unresolved.length
-            ? `<div class="uiv-site-script-notice">另有 ${grouped.unresolved.length} 个脚本无法识别站点，暂未列出。请先在脚本中补充请求 URL。</div>`
+            ? `<div class="uiv-site-script-notice">${UIVT('uiv.siteScript.unresolved', { count: grouped.unresolved.length })}</div>`
             : '';
         overlay.innerHTML = `
             <div class="uiv-site-script-dialog" role="dialog" aria-modal="true" aria-labelledby="uiv-site-script-title">
                 <div class="uiv-site-script-header">
                     <div>
-                        <h3 id="uiv-site-script-title">选择要复制脚本的站点</h3>
-                        <p>受浏览器同源策略限制，请选择你稍后要打开并粘贴脚本的站点。</p>
+                        <h3 id="uiv-site-script-title">${UIVT('uiv.siteScript.title')}</h3>
+                        <p>${UIVT('uiv.siteScript.subtitle')}</p>
                     </div>
-                    <button type="button" class="uiv-site-script-close" aria-label="关闭">×</button>
+                    <button type="button" class="uiv-site-script-close" aria-label="${UIVT('uiv.siteScript.close')}">×</button>
                 </div>
-                <div class="uiv-site-script-notice">浮窗模式不会逐个下载 CSV。抓取完成后可按指标查看详表，并将全部 CSV 一次打包下载为 ZIP。</div>
+                <div class="uiv-site-script-notice">${UIVT('uiv.siteScript.notice')}</div>
                 ${unresolvedNote}
                 <div class="uiv-site-script-list">
-                    ${siteRows || '<div class="uiv-site-script-empty">当前执行范围内没有识别到可用站点。<br>请检查仓库脚本的请求 URL 或分类范围设置。</div>'}
+                    ${siteRows || `<div class="uiv-site-script-empty">${UIVT('uiv.siteScript.empty')}</div>`}
                 </div>
             </div>
         `;
@@ -875,7 +875,7 @@ async function openSiteConsoleScriptPicker() {
         const firstButton = overlay.querySelector('.uiv-site-script-copy, .uiv-site-script-close');
         if (firstButton) firstButton.focus();
     } catch (error) {
-        showToast(`❌ 读取站点脚本失败：${error.message}`, 'error');
+        showToast(UIVT('uiv.siteScript.readFail', { error: error.message }), 'error');
     }
 }
 

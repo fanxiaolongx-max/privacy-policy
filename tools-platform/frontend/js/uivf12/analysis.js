@@ -736,12 +736,12 @@
 
         const configOptions = script.configOptions || buildConfigOptions(script, codeHints);
         const optionSummary = [
-            { label: '全局变量', on: configOptions.useGlobalVars },
-            { label: '翻页', on: configOptions.isPagination },
-            { label: '强制总数', on: configOptions.forceSumData },
-            { label: '动态CPC/NID', on: configOptions.autoFetchCPC },
-            { label: '双月', on: configOptions.autoRuntimeMonth },
-            { label: '三区阵列', on: configOptions.autoNetCareTriplicate }
+            { key: 'useGlobalVars', label: window.UIVT ? window.UIVT('uiv.analysis.optGlobalVars') : '全局变量', on: configOptions.useGlobalVars },
+            { key: 'isPagination', label: window.UIVT ? window.UIVT('uiv.analysis.optPagination') : '翻页', on: configOptions.isPagination },
+            { key: 'forceSumData', label: window.UIVT ? window.UIVT('uiv.analysis.optForceSum') : '强制总数', on: configOptions.forceSumData },
+            { key: 'autoFetchCPC', label: window.UIVT ? window.UIVT('uiv.analysis.optAutoCpc') : '动态CPC/NID', on: configOptions.autoFetchCPC },
+            { key: 'autoRuntimeMonth', label: window.UIVT ? window.UIVT('uiv.analysis.optAutoMonth') : '双月', on: configOptions.autoRuntimeMonth },
+            { key: 'autoNetCareTriplicate', label: window.UIVT ? window.UIVT('uiv.analysis.optTriplicate') : '三区阵列', on: configOptions.autoNetCareTriplicate }
         ];
 
         const responseRules = platform === 'DataFab'
@@ -798,7 +798,7 @@
 
     function renderFilterPills(row, filters, freqMap) {
         if (!filters || filters.length === 0) {
-            return '<span class="analysis-muted">未识别到筛选字段</span>';
+            return `<span class="analysis-muted">${window.UIVT ? window.UIVT('uiv.analysis.noFilters') : '未识别到筛选字段'}</span>`;
         }
         const expanded = expandedFilterRows.has(row.id);
         const valuedFilters = filters.filter(item => !item.isEmpty);
@@ -809,8 +809,10 @@
             ? `<button class="analysis-filter-toggle" onclick="event.stopPropagation(); UIVScriptAnalysis.toggleFilters('${escapeHtml(row.id)}')">${expanded ? '收起' : `展开全部 ${filters.length} 项${emptyCount ? ` · 含${emptyCount}个空值` : ''}`}</button>`
             : '';
         const emptyHint = !expanded && emptyCount > 0 && valuedFilters.length > 0
-            ? `<span class="analysis-pill off">另${emptyCount}个空值字段</span>`
+            ? `<span class="analysis-pill off">${window.UIVT ? window.UIVT('uiv.analysis.otherEmptyFilters', { count: emptyCount }) : `另${emptyCount}个空值字段`}</span>`
             : '';
+        const emptyLabel = window.UIVT ? window.UIVT('uiv.analysis.emptyValue') : '空值';
+        const deleteFieldTitle = window.UIVT ? window.UIVT('uiv.analysis.deleteFilterBtn') : '删除字段';
         return `<div class="analysis-pill-list">${visible.map(item => {
             const dupKey = `filter:${item.key}=${item.value}`;
             const isDup = !item.isEmpty && freqMap && freqMap.get(dupKey) > 1;
@@ -818,22 +820,32 @@
             const dupClass = isDup ? ' duplicate' : '';
             const dirtyClass = isDirty ? ' unsaved-field' : '';
             const dupAttr = isDup ? ` data-dup-key="${escapeHtml(dupKey)}"` : '';
-            return `<span class="analysis-pill editable ${item.isEmpty ? 'empty' : ''}${dupClass}${dirtyClass}"${dupAttr} title="${escapeHtml(item.value ? `${item.key}=${item.value}${isDup ? ' (在多条脚本中复用)' : ''}` : `${item.key}=空值，可点击编辑`)}" onclick="event.stopPropagation(); UIVScriptAnalysis.editFilter('${escapeHtml(row.id)}', '${escapeHtml(item.key)}')">
-                ${escapeHtml(item.key)}${item.displayValue ? '=' + escapeHtml(item.displayValue) : '=空值'}
-                <button class="analysis-filter-remove" title="删除字段" onclick="event.stopPropagation(); UIVScriptAnalysis.deleteFilter('${escapeHtml(row.id)}', '${escapeHtml(item.key)}')">×</button>
+            return `<span class="analysis-pill editable ${item.isEmpty ? 'empty' : ''}${dupClass}${dirtyClass}"${dupAttr} title="${escapeHtml(item.value ? `${item.key}=${item.value}${isDup ? ' (在多条脚本中复用)' : ''}` : `${item.key}=${emptyLabel}，可点击编辑`)}" onclick="event.stopPropagation(); UIVScriptAnalysis.editFilter('${escapeHtml(row.id)}', '${escapeHtml(item.key)}')">
+                ${escapeHtml(item.key)}${item.displayValue ? '=' + escapeHtml(item.displayValue) : '=' + emptyLabel}
+                <button class="analysis-filter-remove" title="${deleteFieldTitle}" onclick="event.stopPropagation(); UIVScriptAnalysis.deleteFilter('${escapeHtml(row.id)}', '${escapeHtml(item.key)}')">×</button>
             </span>`;
         }).join('')}${emptyHint}${extra}</div>`;
     }
 
     function renderOptionPills(options) {
-        return `<div class="analysis-pill-list">${options.map(opt => (
-            `<span class="analysis-pill ${opt.on ? 'good' : 'off'}">${escapeHtml(opt.label)}:${opt.on ? '开' : '关'}</span>`
-        )).join('')}</div>`;
+        const onLabel = window.UIVT ? window.UIVT('uiv.analysis.switchOn') : '开';
+        const offLabel = window.UIVT ? window.UIVT('uiv.analysis.switchOff') : '关';
+        return `<div class="analysis-pill-list">${options.map(opt => {
+            const label = opt.key && window.UIVT ? (
+                opt.key === 'useGlobalVars' ? window.UIVT('uiv.analysis.optGlobalVars') :
+                opt.key === 'isPagination' ? window.UIVT('uiv.analysis.optPagination') :
+                opt.key === 'forceSumData' ? window.UIVT('uiv.analysis.optForceSum') :
+                opt.key === 'autoFetchCPC' ? window.UIVT('uiv.analysis.optAutoCpc') :
+                opt.key === 'autoRuntimeMonth' ? window.UIVT('uiv.analysis.optAutoMonth') :
+                opt.key === 'autoNetCareTriplicate' ? window.UIVT('uiv.analysis.optTriplicate') : opt.label
+            ) : opt.label;
+            return `<span class="analysis-pill ${opt.on ? 'good' : 'off'}">${escapeHtml(label)}:${opt.on ? onLabel : offLabel}</span>`;
+        }).join('')}</div>`;
     }
 
     function renderCoreObjects(row, freqMap) {
         if (!row.coreObjects || row.coreObjects.length === 0) {
-            return '<span class="analysis-muted">脚本中未识别到核心对象</span>';
+            return `<span class="analysis-muted">${window.UIVT ? window.UIVT('uiv.analysis.noCore') : '脚本中未识别到核心对象'}</span>`;
         }
         const groups = row.coreGroups && row.coreGroups.length > 0
             ? row.coreGroups
@@ -861,12 +873,18 @@
     }
 
     function copyCellText(text) {
-        if (!text || text === '-' || text === '空') return;
+        if (!text || text === '-' || text === '空' || text === 'Empty') return;
         navigator.clipboard.writeText(text).then(() => {
-            if (window.showToast) showToast(`已复制: ${text.length > 30 ? text.substring(0, 30) + '...' : text}`);
+            if (window.showToast) {
+                const toastMsg = window.UIVT ? window.UIVT('uiv.analysis.copySuccess', { text: text.length > 30 ? text.substring(0, 30) + '...' : text }) : `已复制: ${text.length > 30 ? text.substring(0, 30) + '...' : text}`;
+                showToast(toastMsg);
+            }
         }).catch(err => {
             console.error('复制失败', err);
-            if (window.showToast) showToast('复制失败', 'error');
+            if (window.showToast) {
+                const failMsg = window.UIVT ? window.UIVT('uiv.analysis.copyFail') : '复制失败';
+                showToast(failMsg, 'error');
+            }
         });
     }
 
@@ -888,7 +906,8 @@
         if (!select) return;
         const current = select.value;
         const categories = [...new Set(analyzedRows.map(row => row.category))].sort((a, b) => a.localeCompare(b, 'zh-CN'));
-        select.innerHTML = '<option value="">全部分类</option>' + categories.map(cat => (
+        const allCatLabel = window.UIVT ? window.UIVT('uiv.analysis.allCategories') : '全部分类';
+        select.innerHTML = `<option value="">${escapeHtml(allCatLabel)}</option>` + categories.map(cat => (
             `<option value="${escapeHtml(cat)}">${escapeHtml(window.UIVI18n ? UIVI18n.categoryLabel(cat) : cat)}</option>`
         )).join('');
         if (categories.includes(current)) select.value = current;
@@ -906,11 +925,16 @@
         if (summary) {
             const datafabCount = analyzedRows.filter(row => row.platform === 'DataFab').length;
             const netcareCount = analyzedRows.filter(row => row.platform === 'NetCare').length;
-            summary.textContent = `共 ${analyzedRows.length} 条脚本 · DataFab ${datafabCount} · NetCare ${netcareCount} · 当前显示 ${rows.length}`;
+            summary.textContent = window.UIVT ? window.UIVT('uiv.analysis.summary', {
+                total: analyzedRows.length,
+                datafab: datafabCount,
+                netcare: netcareCount,
+                current: rows.length
+            }) : `共 ${analyzedRows.length} 条脚本 · DataFab ${datafabCount} · NetCare ${netcareCount} · 当前显示 ${rows.length}`;
         }
 
         if (rows.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="13" class="script-analysis-empty">没有匹配的脚本</td></tr>';
+            tbody.innerHTML = `<tr><td colspan="13" class="script-analysis-empty">${window.UIVT ? window.UIVT('uiv.analysis.noMatches') : '没有匹配的脚本'}</td></tr>`;
             return;
         }
 
@@ -928,12 +952,14 @@
             });
         });
 
+        const copyTitle = window.UIVT ? window.UIVT('uiv.analysis.copyCellTitle') : '点击复制内容';
+
         tbody.innerHTML = rows.map(row => `
             <tr class="${row.id === highlightedScriptId ? 'new-saved-row' : ''}" data-script-id="${escapeHtml(row.id)}" onclick="UIVScriptAnalysis.selectRow('${escapeHtml(row.id)}')" ondblclick="UIVScriptAnalysis.refill('${escapeHtml(row.id)}')">
-                <td><div class="analysis-main-text" style="cursor:pointer;" title="点击复制内容" onclick="event.stopPropagation(); UIVScriptAnalysis.copyCellText(this.innerText)">${escapeHtml(window.UIVI18n ? UIVI18n.categoryLabel(row.category) : row.category)}</div></td>
-                <td><div class="analysis-main-text" style="cursor:pointer;" title="点击复制内容" onclick="event.stopPropagation(); UIVScriptAnalysis.copyCellText(this.innerText)">${escapeHtml(row.name)}</div>${row.isDirty ? '<div class="analysis-muted">已修改，待保存</div>' : ''}</td>
-                <td><div class="analysis-main-text" style="cursor:pointer;" title="点击复制内容" onclick="event.stopPropagation(); UIVScriptAnalysis.copyCellText(this.innerText)">${escapeHtml(row.outputName)}</div><div class="analysis-muted" style="cursor:pointer;" title="点击复制内容" onclick="event.stopPropagation(); UIVScriptAnalysis.copyCellText(this.innerText)">${escapeHtml(row.pageName || '-')}</div></td>
-                <td><div class="analysis-url" style="cursor:pointer;" title="点击复制内容" onclick="event.stopPropagation(); UIVScriptAnalysis.copyCellText(this.innerText)">${escapeHtml(row.url || '-')}</div></td>
+                <td><div class="analysis-main-text" style="cursor:pointer;" title="${copyTitle}" onclick="event.stopPropagation(); UIVScriptAnalysis.copyCellText(this.innerText)">${escapeHtml(window.UIVI18n ? UIVI18n.categoryLabel(row.category) : row.category)}</div></td>
+                <td><div class="analysis-main-text" style="cursor:pointer;" title="${copyTitle}" onclick="event.stopPropagation(); UIVScriptAnalysis.copyCellText(this.innerText)">${escapeHtml(row.name)}</div>${row.isDirty ? `<div class="analysis-muted">${window.UIVT ? window.UIVT('uiv.analysis.modifiedTag') : '已修改，待保存'}</div>` : ''}</td>
+                <td><div class="analysis-main-text" style="cursor:pointer;" title="${copyTitle}" onclick="event.stopPropagation(); UIVScriptAnalysis.copyCellText(this.innerText)">${escapeHtml(row.outputName)}</div><div class="analysis-muted" style="cursor:pointer;" title="${copyTitle}" onclick="event.stopPropagation(); UIVScriptAnalysis.copyCellText(this.innerText)">${escapeHtml(row.pageName || '-')}</div></td>
+                <td><div class="analysis-url" style="cursor:pointer;" title="${copyTitle}" onclick="event.stopPropagation(); UIVScriptAnalysis.copyCellText(this.innerText)">${escapeHtml(row.url || '-')}</div></td>
                 <td><div style="font-size:11px;line-height:1.4;text-align:center;">${formatLocalTime(row.updatedAt)}</div></td>
                 <td>${renderPills([row.platform], row.platform === 'DataFab' ? 'good' : '')}</td>
                 <td>
@@ -945,13 +971,13 @@
                 <td>${renderOptionPills(row.options)}</td>
                 <td>${renderPills(row.responseRules, 'warn')}</td>
                 <td>${renderPills([
-                    row.hasPayload ? 'Payload可还原' : '旧脚本无Payload',
-                    row.hasConfig ? '开关可还原' : '开关靠代码识别'
+                    row.hasPayload ? (window.UIVT ? window.UIVT('uiv.analysis.payloadOk') : 'Payload可还原') : (window.UIVT ? window.UIVT('uiv.analysis.payloadLegacy') : '旧脚本无Payload'),
+                    row.hasConfig ? (window.UIVT ? window.UIVT('uiv.analysis.configOk') : '开关可还原') : (window.UIVT ? window.UIVT('uiv.analysis.configCode') : '开关靠代码识别')
                 ], row.canRefill ? 'good' : 'warn')}</td>
                 <td>
-                    <button class="script-analysis-action ${row.isDirty ? 'changed' : ''}" onclick="event.stopPropagation(); UIVScriptAnalysis.copyModified('${escapeHtml(row.id)}')">复制修改后脚本</button>
-                    <button class="script-analysis-action saveas" onclick="event.stopPropagation(); UIVScriptAnalysis.saveAsNew('${escapeHtml(row.id)}')">另存为新脚本</button>
-                    <button class="script-analysis-action delete" onclick="event.stopPropagation(); UIVScriptAnalysis.deleteScript('${escapeHtml(row.id)}')">删除脚本</button>
+                    <button class="script-analysis-action ${row.isDirty ? 'changed' : ''}" onclick="event.stopPropagation(); UIVScriptAnalysis.copyModified('${escapeHtml(row.id)}')">${window.UIVT ? window.UIVT('uiv.analysis.copyModified') : '复制修改后脚本'}</button>
+                    <button class="script-analysis-action saveas" onclick="event.stopPropagation(); UIVScriptAnalysis.saveAsNew('${escapeHtml(row.id)}')">${window.UIVT ? window.UIVT('uiv.analysis.saveAsNew') : '另存为新脚本'}</button>
+                    <button class="script-analysis-action delete" onclick="event.stopPropagation(); UIVScriptAnalysis.deleteScript('${escapeHtml(row.id)}')">${window.UIVT ? window.UIVT('uiv.analysis.deleteScript') : '删除脚本'}</button>
                 </td>
             </tr>
         `).join('');
@@ -974,7 +1000,9 @@
         if (!saveBtn) return;
         const count = modifiedRows.size;
         saveBtn.classList.toggle('dirty', count > 0);
-        saveBtn.textContent = count > 0 ? `保存修改 (${count})` : '保存修改';
+        saveBtn.textContent = count > 0
+            ? (window.UIVT ? window.UIVT('uiv.analysis.saveChangesCount', { count }) : `保存修改 (${count})`)
+            : (window.UIVT ? window.UIVT('uiv.analysis.saveChanges') : '保存修改');
     }
 
     function findRow(scriptId) {
@@ -1118,19 +1146,19 @@
     async function deleteFilter(scriptId, key) {
         const row = findRow(scriptId);
         if (!row || !row.payload) {
-            showToast('当前脚本没有可编辑 Payload', 'error');
+            showToast(window.UIVT ? window.UIVT('uiv.analysis.noFilters') : '当前脚本没有可编辑 Payload', 'error');
             return;
         }
         const confirmed = await openMiniDialog({
-            title: '删除筛选字段',
-            message: `确定删除筛选字段 [${key}] 吗？\n保存前只会影响当前分析窗口里的待保存版本。`,
-            confirmText: '删除字段',
+            title: window.UIVT ? window.UIVT('uiv.analysis.deleteFilterTitle') : '删除筛选字段',
+            message: window.UIVT ? window.UIVT('uiv.analysis.deleteFilterConfirm', { key }) : `确定删除筛选字段 [${key}] 吗？\n保存前只会影响当前分析窗口里的待保存版本。`,
+            confirmText: window.UIVT ? window.UIVT('uiv.analysis.deleteFilterBtn') : '删除字段',
             danger: true
         });
         if (!confirmed) return;
         const nextPayload = cloneJson(row.payload);
         if (!removeFilter(nextPayload, key)) {
-            showToast('未找到可删除的字段', 'error');
+            showToast(window.UIVT ? window.UIVT('uiv.analysis.noFilters') : '未找到可删除的字段', 'error');
             return;
         }
         setRowPayload(scriptId, nextPayload, `filter:${key}`);
@@ -1171,16 +1199,16 @@
         const updated = buildUpdatedScript(row);
         const code = updated.consoleCode || updated.code || '';
         if (!code) {
-            showToast('当前脚本没有可复制代码', 'error');
+            showToast(window.UIVT ? window.UIVT('uiv.copy.noCode') : '当前脚本没有可复制代码', 'error');
             return;
         }
         if (navigator.clipboard && navigator.clipboard.writeText) {
             await navigator.clipboard.writeText(code);
-            showToast('修改后脚本已复制');
+            showToast(window.UIVT ? window.UIVT('uiv.analysis.copiedModifiedScript') : '修改后脚本已复制');
             return;
         }
         if (window.UIVCopy && UIVCopy.copyFromMemory) {
-            UIVCopy.copyFromMemory(code, '修改后脚本');
+            UIVCopy.copyFromMemory(code, window.UIVT ? window.UIVT('uiv.analysis.copyModified') : '修改后脚本');
         }
     }
 
@@ -1189,9 +1217,9 @@
         if (!row) return;
         const defaultName = `${row.name}_副本`;
         const result = await openMiniDialog({
-            title: '另存为新脚本',
-            message: '为当前脚本副本命名并选择保存分类。当前分析窗口里的待修改筛选字段也会一并带入新脚本。',
-            confirmText: '另存为',
+            title: window.UIVT ? window.UIVT('uiv.analysis.saveAsTitle') : '另存为新脚本',
+            message: window.UIVT ? window.UIVT('uiv.analysis.saveAsMessage') : '为当前脚本副本命名并选择保存分类。当前分析窗口里的待修改筛选字段也会一并带入新脚本。',
+            confirmText: window.UIVT ? window.UIVT('uiv.analysis.saveAsConfirm') : '另存为',
             saveAs: {
                 name: defaultName,
                 category: getRememberedCategory(row.category)
@@ -1200,13 +1228,13 @@
         if (!result) return;
 
         const newName = result.name.trim();
-        const category = result.category || '默认分类';
+        const category = result.category || (window.UIVT ? window.UIVT('uiv.analysis.defaultCategory') : '默认分类');
         if (!newName) {
-            showToast('请填写新脚本名称', 'error');
+            showToast(window.UIVT ? window.UIVT('uiv.analysis.nameRequired') : '请填写新脚本名称', 'error');
             return;
         }
         if (rawScripts.some(script => script.name === newName)) {
-            showToast('脚本名称已存在，请换一个名称', 'error');
+            showToast(window.UIVT ? window.UIVT('uiv.analysis.nameExists') : '脚本名称已存在，请换一个名称', 'error');
             return;
         }
 
@@ -1221,7 +1249,7 @@
             await API.post('/api/uiv/scripts', { items: [newScript] });
             localStorage.setItem(SAVE_AS_CATEGORY_KEY, category);
             highlightedScriptId = newScript.id;
-            showToast(`已另存为新脚本：${newName}`);
+            showToast(window.UIVT ? window.UIVT('uiv.analysis.saveAsSuccess', { name: newName }) : `已另存为新脚本：${newName}`);
             const search = document.getElementById('scriptAnalysisSearch');
             const categorySelect = document.getElementById('scriptAnalysisCategory');
             if (search) search.value = '';
@@ -1234,7 +1262,7 @@
             render();
         } catch (error) {
             console.error('[UIVF12 Analysis] save as failed', error);
-            showToast('另存为新脚本失败', 'error');
+            showToast(window.UIVT ? window.UIVT('uiv.analysis.saveAsFail') : '另存为新脚本失败', 'error');
         }
     }
 
@@ -1242,9 +1270,9 @@
         const row = findRow(scriptId);
         if (!row) return;
         const confirmed = await openMiniDialog({
-            title: '删除脚本',
-            message: `确定删除脚本 [${row.name}] 吗？\n删除后会从脚本仓库中移除。`,
-            confirmText: '删除脚本',
+            title: window.UIVT ? window.UIVT('uiv.analysis.deleteTitle') : '删除脚本',
+            message: window.UIVT ? window.UIVT('uiv.analysis.deleteConfirm', { name: row.name }) : `确定删除脚本 [${row.name}] 吗？\n删除后会从脚本仓库中移除。`,
+            confirmText: window.UIVT ? window.UIVT('uiv.analysis.deleteScript') : '删除脚本',
             danger: true
         });
         if (!confirmed) return;
@@ -1253,20 +1281,20 @@
             await API.delete(`/api/uiv/scripts/${encodeURIComponent(scriptId)}`);
             modifiedRows.delete(scriptId);
             expandedFilterRows.delete(scriptId);
-            showToast(`已删除脚本：${row.name}`);
+            showToast(window.UIVT ? window.UIVT('uiv.analysis.deletedToast', { name: row.name }) : `已删除脚本：${row.name}`);
             if (window.UIVSidebar && UIVSidebar.loadSavedScripts) {
                 await UIVSidebar.loadSavedScripts({ reason: 'analysis-delete' });
             }
             await loadScripts(true);
         } catch (error) {
             console.error('[UIVF12 Analysis] delete failed', error);
-            showToast('删除脚本失败', 'error');
+            showToast(window.UIVT ? window.UIVT('uiv.analysis.deleteFail') : '删除脚本失败', 'error');
         }
     }
 
     async function saveChanges({ closeAfterSave = false } = {}) {
         if (modifiedRows.size === 0) {
-            showToast('没有需要保存的脚本');
+            showToast(window.UIVT ? window.UIVT('uiv.analysis.noScriptsToSave') : '没有需要保存的脚本');
             if (closeAfterSave) close({ force: true });
             return;
         }
@@ -1278,7 +1306,7 @@
         try {
             await API.post('/api/uiv/scripts', { items });
             modifiedRows.clear();
-            showToast(`已保存 ${items.length} 个修改脚本`);
+            showToast(window.UIVT ? window.UIVT('uiv.analysis.savedCount', { count: items.length }) : `已保存 ${items.length} 个修改脚本`);
             if (window.UIVSidebar && UIVSidebar.loadSavedScripts) {
                 await UIVSidebar.loadSavedScripts({ reason: 'analysis-save' });
             }
@@ -1287,7 +1315,7 @@
             if (closeAfterSave) close({ force: true });
         } catch (error) {
             console.error('[UIVF12 Analysis] save failed', error);
-            showToast('保存修改失败', 'error');
+            showToast(window.UIVT ? window.UIVT('uiv.analysis.saveFail') : '保存修改失败', 'error');
         }
     }
 
@@ -1318,9 +1346,9 @@
         if (!modal) return;
         if (!options.force && modifiedRows.size > 0) {
             const shouldSave = await openMiniDialog({
-                title: '修改尚未保存',
-                message: `还有 ${modifiedRows.size} 个脚本修改未保存。\n保存后再关闭窗口，避免修改丢失。`,
-                confirmText: '保存后关闭'
+                title: window.UIVT ? window.UIVT('uiv.analysis.unsavedTitle') : '修改尚未保存',
+                message: window.UIVT ? window.UIVT('uiv.analysis.unsavedMessage', { count: modifiedRows.size }) : `还有 ${modifiedRows.size} 个脚本修改未保存。\n保存后再关闭窗口，避免修改丢失。`,
+                confirmText: window.UIVT ? window.UIVT('uiv.analysis.unsavedSaveClose') : '保存后关闭'
             });
             if (shouldSave) saveChanges({ closeAfterSave: true });
             return;
@@ -1332,9 +1360,9 @@
     async function reload() {
         if (modifiedRows.size > 0) {
             const confirmed = await openMiniDialog({
-                title: '刷新分析数据',
-                message: '当前有未保存修改，刷新会丢失这些修改。\n确定继续刷新吗？',
-                confirmText: '继续刷新',
+                title: window.UIVT ? window.UIVT('uiv.analysis.refreshTitle') : '刷新分析数据',
+                message: window.UIVT ? window.UIVT('uiv.analysis.refreshMessage') : '当前有未保存修改，刷新会丢失这些修改。\n确定继续刷新吗？',
+                confirmText: window.UIVT ? window.UIVT('uiv.analysis.refreshConfirm') : '继续刷新',
                 danger: true
             });
             if (!confirmed) return;

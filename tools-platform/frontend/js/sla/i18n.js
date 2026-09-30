@@ -219,6 +219,21 @@
             'sla.section.mainMetric': '作为主指标独立展示',
             'sla.section.chooseCategory': '选择分类',
             'sla.section.saveRule': '➕ 保存规则',
+            'sla.section.dataScope': '数据范围:',
+            'sla.section.scopeCurrent': '仅当前表 (默认)',
+            'sla.section.scopeAll': '🌐 跨所有独立表联合提取',
+            'sla.section.advancedFilter': '⚙️ 高级多重过滤',
+            'sla.section.advancedHelp': '以下条件与上方主条件同时满足（AND），可不断增加。',
+            'sla.section.addCondition': '＋ 增加列条件',
+            'sla.section.noRules': '尚无推送规则',
+            'sla.section.ruleEdit': '✎ 修改',
+            'sla.section.ruleDelete': '✖ 删除',
+            'sla.section.crossBadge': '🌐 跨所有独立表',
+            'sla.section.crossNote': '(🌐 跨所有独立表联合提取)',
+            'sla.section.crossSource': '(跨表数据源: {title})',
+            'sla.section.inboundHeader': '🔁 本表作为跨表子指标数据源',
+            'sla.section.uncategorized': '未分类',
+            'sla.section.subMetricOf': '作为 [{parent}] 的子指标 (归属表: {table})',
             'sla.copy.noData': '当前无数据！',
             'sla.copy.noValid': '无有效数据！',
             'sla.copy.successCount': '✅ 提取成功 ({count}条)：\n{text}',
@@ -569,6 +584,21 @@
             'sla.section.mainMetric': 'Show as independent main metric',
             'sla.section.chooseCategory': 'Choose category',
             'sla.section.saveRule': '➕ Save Rule',
+            'sla.section.dataScope': 'Data Scope:',
+            'sla.section.scopeCurrent': 'Current table only (Default)',
+            'sla.section.scopeAll': '🌐 Joint extract across all tables',
+            'sla.section.advancedFilter': '⚙️ Advanced Multi-Filter',
+            'sla.section.advancedHelp': 'The conditions below must be satisfied together with the primary condition (AND). Add more as needed.',
+            'sla.section.addCondition': '＋ Add Column Condition',
+            'sla.section.noRules': 'No push rules configured',
+            'sla.section.ruleEdit': '✎ Edit',
+            'sla.section.ruleDelete': '✖ Delete',
+            'sla.section.crossBadge': '🌐 Across all tables',
+            'sla.section.crossNote': '(🌐 Joint extract across all tables)',
+            'sla.section.crossSource': '(Cross-table source: {title})',
+            'sla.section.inboundHeader': '🔁 This table acts as a cross-table sub-metric data source',
+            'sla.section.uncategorized': 'Uncategorized',
+            'sla.section.subMetricOf': 'As sub-metric of [{parent}] (Table: {table})',
             'sla.copy.noData': 'No data currently displayed.',
             'sla.copy.noValid': 'No valid data.',
             'sla.copy.successCount': '✅ Extracted ({count} items):\n{text}',
@@ -943,6 +973,46 @@
             setPh(`#c-search-${secId}`, t('sla.section.copySearchPh'));
             const metricHint = wrapper.querySelector(`#metrics-picker-${secId} > div:first-child`);
             if (metricHint) metricHint.textContent = t('sla.section.metricHint');
+
+            const typeExtract = wrapper.querySelector(`#metrics-picker-${secId} .m-type-extract-lbl`);
+            if (typeExtract) typeExtract.textContent = t('sla.section.extractOne');
+            const typeMulti = wrapper.querySelector(`#metrics-picker-${secId} .m-type-multi-lbl`);
+            if (typeMulti) typeMulti.textContent = t('sla.section.extractMulti');
+            const typeCount = wrapper.querySelector(`#metrics-picker-${secId} .m-type-count-lbl`);
+            if (typeCount) typeCount.textContent = t('sla.section.countTimes');
+            const typeRatio = wrapper.querySelector(`#metrics-picker-${secId} .m-type-ratio-lbl`);
+            if (typeRatio) typeRatio.textContent = t('sla.section.countRatio');
+
+            const scopeTitle = wrapper.querySelector(`#metrics-picker-${secId} .m-scope-title`);
+            if (scopeTitle) scopeTitle.textContent = t('sla.section.dataScope');
+            const scopeCurrent = wrapper.querySelector(`#metrics-picker-${secId} .m-scope-current-lbl`);
+            if (scopeCurrent) scopeCurrent.textContent = t('sla.section.scopeCurrent');
+            const scopeAll = wrapper.querySelector(`#metrics-picker-${secId} .m-scope-all-lbl`);
+            if (scopeAll) scopeAll.textContent = t('sla.section.scopeAll');
+
+            const advFilter = wrapper.querySelector(`#metrics-picker-${secId} .m-adv-filter-lbl`);
+            if (advFilter) advFilter.textContent = t('sla.section.advancedFilter');
+            const advLogic = wrapper.querySelector(`#metrics-picker-${secId} .m-condition-logic-lbl`);
+            if (advLogic) advLogic.textContent = t('sla.section.conditionRelation');
+            const advHelp = wrapper.querySelector(`#m-conditions-help-${secId}`);
+            if (advHelp) advHelp.textContent = t('sla.section.advancedHelp');
+            const addCondBtn = wrapper.querySelector(`#metrics-picker-${secId} .metric-condition-add`);
+            if (addCondBtn) addCondBtn.textContent = t('sla.section.addCondition');
+
+            set(`#m-condition-logic-${secId} option[value="and"]`, t('sla.section.conditionAnd'));
+            set(`#m-condition-logic-${secId} option[value="or"]`, t('sla.section.conditionOr'));
+
+            set(`#m-aggregation-${secId} option[value="sum"]`, t('sla.section.aggregateSum'));
+            set(`#m-aggregation-${secId} option[value="avg"]`, t('sla.section.aggregateAvg'));
+            set(`#m-aggregation-${secId} option[value="max"]`, t('sla.section.aggregateMax'));
+            set(`#m-aggregation-${secId} option[value="min"]`, t('sla.section.aggregateMin'));
+            set(`#m-aggregation-${secId} option[value="count"]`, t('sla.section.aggregateCount'));
+
+            set(`#m-color-${secId} option[value=""]`, t('sla.section.color'));
+            set(`#m-color-${secId} option[value="success"]`, t('sla.section.green'));
+            set(`#m-color-${secId} option[value="danger"]`, t('sla.section.red'));
+            set(`#m-color-${secId} option[value="warn"]`, t('sla.section.yellow'));
+
             setPh(`#m-valy-${secId}`, t('sla.section.valYPh'));
             setPh(`#m-c-valy-${secId}`, t('sla.section.countYPh'));
             setPh(`#m-c-valk-${secId}`, t('sla.section.countKPh'));
@@ -951,6 +1021,7 @@
             const summary = document.getElementById(`rule-summary-badge-${secId}`);
             if (summary) summary.title = t('sla.section.noRulesTitle');
             if (typeof window.populateMetricSelects === 'function') window.populateMetricSelects(secId);
+            if (typeof window.renderMetricList === 'function') window.renderMetricList(secId);
         });
         if (typeof window.updateAllMetricRuleSummaries === 'function') window.updateAllMetricRuleSummaries();
     }

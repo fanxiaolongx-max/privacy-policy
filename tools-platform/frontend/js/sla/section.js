@@ -793,16 +793,16 @@ function buildDOM(secId, title, themeColor) {
                     <div style="font-weight:bold;color:#8e44ad;font-size:13px;margin-bottom:10px;border-bottom:1px solid #f3e5f5;padding-bottom:6px;">${tt('sla.section.metricHint')}</div>
                     
                     <div style="margin-bottom:10px; display:flex; flex-wrap:wrap; gap:6px 12px; font-size:12px;">
-                        <label style="cursor:pointer;"><input type="radio" name="m-type-${secId}" value="extract" checked onclick="setMetricCreateType('${secId}', 'extract')"> ${tt('sla.section.extractOne')}</label>
-                        <label style="cursor:pointer;"><input type="radio" name="m-type-${secId}" value="extract_multi" onclick="setMetricCreateType('${secId}', 'extract_multi')"> ${tt('sla.section.extractMulti')}</label>
-                        <label style="cursor:pointer;"><input type="radio" name="m-type-${secId}" value="count" onclick="setMetricCreateType('${secId}', 'count')"> ${tt('sla.section.countTimes')}</label>
-                        <label style="cursor:pointer;"><input type="radio" name="m-type-${secId}" value="ratio" onclick="setMetricCreateType('${secId}', 'ratio')"> ${tt('sla.section.countRatio')}</label>
+                        <label style="cursor:pointer;"><input type="radio" name="m-type-${secId}" value="extract" checked onclick="setMetricCreateType('${secId}', 'extract')"> <span class="m-type-extract-lbl">${tt('sla.section.extractOne')}</span></label>
+                        <label style="cursor:pointer;"><input type="radio" name="m-type-${secId}" value="extract_multi" onclick="setMetricCreateType('${secId}', 'extract_multi')"> <span class="m-type-multi-lbl">${tt('sla.section.extractMulti')}</span></label>
+                        <label style="cursor:pointer;"><input type="radio" name="m-type-${secId}" value="count" onclick="setMetricCreateType('${secId}', 'count')"> <span class="m-type-count-lbl">${tt('sla.section.countTimes')}</span></label>
+                        <label style="cursor:pointer;"><input type="radio" name="m-type-${secId}" value="ratio" onclick="setMetricCreateType('${secId}', 'ratio')"> <span class="m-type-ratio-lbl">${tt('sla.section.countRatio')}</span></label>
                     </div>
 
                     <div style="margin-bottom:10px; display:flex; align-items:center; gap:12px; font-size:12px; background:#faf5ff; padding:7px 10px; border-radius:6px; border:1px solid #e9d5ff;">
-                        <span style="font-weight:bold; color:#7e22ce;">数据范围:</span>
-                        <label style="cursor:pointer; display:inline-flex; align-items:center; gap:4px;"><input type="radio" name="m-scope-${secId}" value="current" checked> 仅当前表 (默认)</label>
-                        <label style="cursor:pointer; display:inline-flex; align-items:center; gap:4px;"><input type="radio" name="m-scope-${secId}" value="all"> 🌐 跨所有独立表联合提取</label>
+                        <span style="font-weight:bold; color:#7e22ce;" class="m-scope-title">${tt('sla.section.dataScope')}</span>
+                        <label style="cursor:pointer; display:inline-flex; align-items:center; gap:4px;"><input type="radio" name="m-scope-${secId}" value="current" checked> <span class="m-scope-current-lbl">${tt('sla.section.scopeCurrent')}</span></label>
+                        <label style="cursor:pointer; display:inline-flex; align-items:center; gap:4px;"><input type="radio" name="m-scope-${secId}" value="all"> <span class="m-scope-all-lbl">${tt('sla.section.scopeAll')}</span></label>
                     </div>
 
                     <!-- 提取模式 -->
@@ -831,18 +831,18 @@ function buildDOM(secId, title, themeColor) {
                     </div>
 
                     <div class="metric-advanced-filter">
-                        <button type="button" class="metric-advanced-toggle" onclick="toggleMetricAdvancedConditions('${secId}')">⚙️ 高级多重过滤 <span id="m-conditions-count-${secId}">0</span></button>
+                        <button type="button" class="metric-advanced-toggle" onclick="toggleMetricAdvancedConditions('${secId}')"><span class="m-adv-filter-lbl">${tt('sla.section.advancedFilter')}</span> <span id="m-conditions-count-${secId}">0</span></button>
                         <div id="m-conditions-panel-${secId}" class="metric-advanced-panel" style="display:none;">
                             <div id="m-condition-logic-wrap-${secId}" class="metric-condition-logic" style="display:none;">
-                                <span>${tt('sla.section.conditionRelation')}</span>
+                                <span class="m-condition-logic-lbl">${tt('sla.section.conditionRelation')}</span>
                                 <select id="m-condition-logic-${secId}">
                                     <option value="and">${tt('sla.section.conditionAnd')}</option>
                                     <option value="or">${tt('sla.section.conditionOr')}</option>
                                 </select>
                             </div>
-                            <p id="m-conditions-help-${secId}">以下条件与上方主条件同时满足（AND），可不断增加。</p>
+                            <p id="m-conditions-help-${secId}">${tt('sla.section.advancedHelp')}</p>
                             <div id="m-conditions-${secId}"></div>
-                            <button type="button" class="metric-condition-add" onclick="addMetricConditionRow('${secId}')">＋ 增加列条件</button>
+                            <button type="button" class="metric-condition-add" onclick="addMetricConditionRow('${secId}')">${tt('sla.section.addCondition')}</button>
                         </div>
                     </div>
 

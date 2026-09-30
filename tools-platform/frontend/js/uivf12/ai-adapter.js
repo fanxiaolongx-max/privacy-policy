@@ -22,7 +22,7 @@
         resetProgress();
         el('uivAiAdapterOverlay').style.display = 'flex';
         el('uivAiAdapterStatus').textContent = '';
-        resetAnalyzeLog('等待开始分析。');
+        resetAnalyzeLog(window.UIVT ? window.UIVT('uiv.aiAdapter.waitingStart') : '等待开始分析。');
         if (!el('uivAiUrl').value) el('uivAiUrl').value = el('requestUrl').value || '';
         if (!el('uivAiOpenUrl').value && window.__uivAiAdapterCurrent && window.__uivAiAdapterCurrent.openUrl) {
             el('uivAiOpenUrl').value = window.__uivAiAdapterCurrent.openUrl;
@@ -59,7 +59,7 @@
         if (typeof node.setAttribute === 'function') node.setAttribute('aria-valuenow', String(Math.round(progressValue)));
         fill.style.width = `${progressValue}%`;
         labelNode.textContent = label || '';
-        valueNode.textContent = state === 'error' ? '失败' : `${Math.round(progressValue)}%`;
+        valueNode.textContent = state === 'error' ? (window.UIVT ? window.UIVT('uiv.aiAdapter.fail') : '失败') : `${Math.round(progressValue)}%`;
         if (typeof node.querySelectorAll === 'function') {
             const steps = [...node.querySelectorAll('.uiv-ai-progress-steps span')];
             steps.forEach((step, index) => {
@@ -73,7 +73,7 @@
     function resetProgress() {
         stopProgressPulse();
         progressValue = 0;
-        setProgress(0, '等待开始分析', 'idle');
+        setProgress(0, window.UIVT ? window.UIVT('uiv.aiAdapter.waitingStart') : '等待开始分析', 'idle');
     }
 
     function startProgressPulse() {
@@ -83,7 +83,11 @@
             const elapsed = Date.now() - progressStartedAt;
             const ceiling = elapsed < 5000 ? 52 : (elapsed < 15000 ? 72 : 84);
             if (progressValue < ceiling) {
-                const label = elapsed < 5000 ? '正在抽样脱敏并准备模型输入…' : (elapsed < 15000 ? 'AI 正在分析请求与响应结构…' : '模型仍在分析，正在耐心等待…');
+                const label = elapsed < 5000
+                    ? (window.UIVT ? window.UIVT('uiv.aiAdapter.pulseSample') : '正在抽样脱敏并准备模型输入…')
+                    : (elapsed < 15000
+                        ? (window.UIVT ? window.UIVT('uiv.aiAdapter.pulseModel') : 'AI 正在分析请求与响应结构…')
+                        : (window.UIVT ? window.UIVT('uiv.aiAdapter.pulseWait') : '模型仍在分析，正在耐心等待…'));
                 setProgress(Math.min(ceiling, progressValue + Math.max(0.7, (ceiling - progressValue) * 0.08)), label, 'busy');
             }
         }, 650);
@@ -92,8 +96,8 @@
     async function parseFetch() {
         try {
             const source = el('uivAiFetchSource').value.trim();
-            if (!source) throw new Error('请先粘贴 Copy as fetch 内容');
-            setStatus('正在安全解析 fetch 请求…', 'busy');
+            if (!source) throw new Error(window.UIVT ? window.UIVT('uiv.aiAdapter.fetchSourceEmpty') : '请先粘贴 Copy as fetch 内容');
+            setStatus(window.UIVT ? window.UIVT('uiv.aiAdapter.parsingFetch') : '正在安全解析 fetch 请求…', 'busy');
             el('uivAiParseFetchBtn').disabled = true;
             const result = await API.post('/api/uiv-ai-adapter/parse-fetch', { source });
             const parsed = result.parsed || {};
@@ -105,11 +109,14 @@
             el('uivAiCredentials').value = parsed.credentials || 'include';
             invalidateAnalysis();
             const sensitive = result.sensitiveHeaderNames || [];
+            const parsedLabel = window.UIVT ? window.UIVT('uiv.aiAdapter.parsed') : '已解析：';
+            const headersCountLabel = window.UIVT ? window.UIVT('uiv.aiAdapter.headerCount', { count: Object.keys(parsed.headers || {}).length }) : `${Object.keys(parsed.headers || {}).length} 个请求头`;
+            const warningText = sensitive.length ? `<br><span class="warn">${window.UIVT ? window.UIVT('uiv.aiAdapter.sensitiveHeadersWarning', { headers: sensitive.map(escapeHtml).join('、') }) : `发现敏感请求头：${sensitive.map(escapeHtml).join('、')}，发送给 AI 前会脱敏。`}</span>` : '';
             el('uivAiFetchSummary').innerHTML = `
-                <b>已解析：</b>${escapeHtml(parsed.method)} · ${escapeHtml(parsed.url)}
-                · ${Object.keys(parsed.headers || {}).length} 个请求头
-                ${sensitive.length ? `<br><span class="warn">发现敏感请求头：${sensitive.map(escapeHtml).join('、')}，发送给 AI 前会脱敏。</span>` : ''}`;
-            setStatus('fetch 已解析。粘贴响应后即可让 AI 分析。', 'ok');
+                <b>${parsedLabel}</b>${escapeHtml(parsed.method)} · ${escapeHtml(parsed.url)}
+                · ${headersCountLabel}
+                ${warningText}`;
+            setStatus(window.UIVT ? window.UIVT('uiv.aiAdapter.fetchParsed') : 'fetch 已解析。粘贴响应后即可让 AI 分析。', 'ok');
         } catch (error) {
             setStatus(error.message || 'Copy as fetch 解析失败', 'error');
         } finally {
@@ -321,26 +328,26 @@
         clearKeywordFocus();
         closeKeywordChoice();
         if (!keyword) {
-            setKeywordSummary('不填写关键词时，AI 会分析完整响应样本。', '');
+            setKeywordSummary(window.UIVT ? window.UIVT('uiv.aiAdapter.keywordSummary') : '不填写关键词时，AI 会分析完整响应样本。', '');
             return;
         }
         let responseJson;
         try {
             responseJson = parseJson('uivAiResponse', '响应样本');
         } catch (error) {
-            setKeywordSummary('请先粘贴合法响应 JSON，才能查找关键词。', 'error');
+            setKeywordSummary(window.UIVT ? window.UIVT('uiv.aiAdapter.keywordNeedValidJson') : '请先粘贴合法响应 JSON，才能查找关键词。', 'error');
             return;
         }
         keywordMatches = findKeywordMatches(responseJson, keyword);
         if (!keywordMatches.length) {
-            setKeywordSummary(`响应样本中未找到关键词“${keyword}”。`, 'error');
+            setKeywordSummary(window.UIVT ? window.UIVT('uiv.aiAdapter.keywordNotFound', { keyword }) : `响应样本中未找到关键词“${keyword}”。`, 'error');
             return;
         }
         if (keywordMatches.length === 1) {
             selectKeywordMatch(0, { silent: true });
             return;
         }
-        setKeywordSummary(`找到 ${keywordMatches.length} 处关键词“${keyword}”，请选择要抓取的数据片段。`, 'warn');
+        setKeywordSummary(window.UIVT ? window.UIVT('uiv.aiAdapter.keywordFoundMultiple', { count: keywordMatches.length, keyword }) : `找到 ${keywordMatches.length} 处关键词“${keyword}”，请选择要抓取的数据片段。`, 'warn');
         if (options.showChoice !== false) showKeywordChoice();
     }
 
@@ -357,21 +364,32 @@
     function selectKeywordMatch(index, options = {}) {
         const match = keywordMatches[index];
         if (!match) return;
+        const rootLabel = window.UIVT ? window.UIVT('uiv.aiAdapter.rootNode') : '(根节点)';
         el('uivAiResponseFocusPath').value = match.focusPath;
-        setKeywordSummary(`已聚焦：${match.focusPath || '(根节点)'}；命中位置：${match.matchPath || '(根节点)'}`, 'ok');
+        setKeywordSummary(window.UIVT ? window.UIVT('uiv.aiAdapter.keywordFocused', {
+            focus: match.focusPath || rootLabel,
+            hit: match.matchPath || rootLabel
+        }) : `已聚焦：${match.focusPath || '(根节点)'}；命中位置：${match.matchPath || '(根节点)'}`, 'ok');
         if (!options.silent) closeKeywordChoice();
     }
 
     function showKeywordChoice() {
         const list = el('uivAiKeywordChoiceList');
-        list.innerHTML = keywordMatches.map((match, index) => `
+        const rootLabel = window.UIVT ? window.UIVT('uiv.aiAdapter.rootNode') : '(根节点)';
+        const hitLabel = window.UIVT ? window.UIVT('uiv.aiAdapter.hitPos') : '命中位置';
+        const focusLabel = window.UIVT ? window.UIVT('uiv.aiAdapter.focusSegment') : '聚焦片段';
+        list.innerHTML = keywordMatches.map((match, index) => {
+            const typeLabel = match.matchType === '字段名'
+                ? (window.UIVT ? window.UIVT('uiv.aiAdapter.matchFieldName') : '字段名')
+                : (window.UIVT ? window.UIVT('uiv.aiAdapter.matchFieldValue') : '字段值');
+            return `
             <button class="uiv-ai-choice-item" onclick="UIVAIAdapter.selectKeywordMatch(${index})">
-                <div><b>${escapeHtml(match.matchType)}</b>：${escapeHtml(match.matchText)}</div>
-                <div>命中位置：<code>${escapeHtml(match.matchPath || '(根节点)')}</code></div>
-                <div>聚焦片段：<code>${escapeHtml(match.focusPath || '(根节点)')}</code></div>
+                <div><b>${escapeHtml(typeLabel)}</b>：${escapeHtml(match.matchText)}</div>
+                <div>${hitLabel}：<code>${escapeHtml(match.matchPath || rootLabel)}</code></div>
+                <div>${focusLabel}：<code>${escapeHtml(match.focusPath || rootLabel)}</code></div>
                 <pre>${escapeHtml(match.preview)}</pre>
             </button>
-        `).join('');
+        `; }).join('');
         el('uivAiKeywordChoiceOverlay').style.display = 'flex';
     }
 
@@ -390,14 +408,14 @@
         isAnalyzing = true;
         try {
             resetAnalyzeLog();
-            setProgress(7, '正在校验输入…', 'busy');
-            addAnalyzeLog('开始本地校验输入 JSON。');
-            setStatus('正在校验输入 JSON…', 'busy');
+            setProgress(7, window.UIVT ? window.UIVT('uiv.aiAdapter.validatingInput') : '正在校验输入…', 'busy');
+            addAnalyzeLog(window.UIVT ? window.UIVT('uiv.aiAdapter.logLocalValidateStart') : '开始本地校验输入 JSON。');
+            setStatus(window.UIVT ? window.UIVT('uiv.aiAdapter.validatingInputJson') : '正在校验输入 JSON…', 'busy');
             el('uivAiAnalyzeBtn').disabled = true;
             const input = requestInput();
-            setProgress(16, '输入校验完成，准备安全分析…', 'busy');
-            addAnalyzeLog('本地校验通过，准备发送到后端分析。', 'ok');
-            setStatus('已发送到后端，正在抽样、脱敏并调用 AI…', 'busy');
+            setProgress(16, window.UIVT ? window.UIVT('uiv.aiAdapter.validatedInput') : '输入校验完成，准备安全分析…', 'busy');
+            addAnalyzeLog(window.UIVT ? window.UIVT('uiv.aiAdapter.logLocalValidatePass') : '本地校验通过，准备发送到后端分析。', 'ok');
+            setStatus(window.UIVT ? window.UIVT('uiv.aiAdapter.sentToBackend') : '已发送到后端，正在抽样、脱敏并调用 AI…', 'busy');
             startProgressPulse();
             const result = await API.post('/api/uiv-ai-adapter/analyze', input);
             stopProgressPulse();
@@ -407,9 +425,9 @@
                 setProgress(progressValue, '输入已变更，请重新分析', 'error');
                 return;
             }
-            setProgress(88, '模型分析完成，正在验证路径…', 'busy');
+            setProgress(88, window.UIVT ? window.UIVT('uiv.aiAdapter.modelDoneVerifying') : '模型分析完成，正在验证路径…', 'busy');
             (result.logs || []).forEach(item => addAnalyzeLog(item.message || String(item), item.type || 'info'));
-            addAnalyzeLog('后端分析完成，正在渲染结果。', 'ok');
+            addAnalyzeLog(window.UIVT ? window.UIVT('uiv.aiAdapter.backendDoneRendering') : '后端分析完成，正在渲染结果。', 'ok');
             latestAnalysis = { input, ...result };
             const validation = result.validation || {};
             const adapter = result.adapter || {};
@@ -440,8 +458,8 @@
                 ${(adapter.notes || []).map(note => `<div class="note">• ${escapeHtml(note)}</div>`).join('')}
                 <details><summary>预览前 5 行</summary><pre>${escapeHtml(JSON.stringify(validation.previewRows || [], null, 2))}</pre></details>`;
             el('uivAiGenerateBtn').disabled = false;
-            setProgress(100, result.deterministicFallback ? '分析完成（已启用安全兜底）' : '分析与路径验证完成', 'ok');
-            setStatus('分析与样本验证通过，可以生成脚本。', 'ok');
+            setProgress(100, result.deterministicFallback ? (window.UIVT ? window.UIVT('uiv.aiAdapter.analyzeDoneFallback') : '分析完成（已启用安全兜底）') : (window.UIVT ? window.UIVT('uiv.aiAdapter.analyzeDoneOk') : '分析与路径验证完成'), 'ok');
+            setStatus(window.UIVT ? window.UIVT('uiv.aiAdapter.statusAnalyzePassed') : '分析与样本验证通过，可以生成脚本。', 'ok');
         } catch (error) {
             stopProgressPulse();
             latestAnalysis = null;
@@ -748,7 +766,7 @@ ${getAuthProbeRuntimeSource()}
 
     function generate() {
         if (!latestAnalysis) {
-            setStatus('请先完成 AI 分析。', 'error');
+            setStatus(window.UIVT ? window.UIVT('uiv.aiAdapter.needAnalyzeFirst') : '请先完成 AI 分析。', 'error');
             return;
         }
         const rawTitle = (el('uivAiFileName').value.trim() || 'AI_适配抓取').replace(/\.csv$/i, '');
@@ -773,7 +791,7 @@ ${getAuthProbeRuntimeSource()}
                 return;
             }
             close();
-            showToast(`✅ 已使用 ${plan.profile} 成熟逻辑 + AI 适配生成脚本，请先单脚本验证。`, 'success');
+            showToast(window.UIVT ? window.UIVT('uiv.aiAdapter.toastNativeSuccess', { profile: plan.profile }) : `✅ 已使用 ${plan.profile} 成熟逻辑 + AI 适配生成脚本，请先单脚本验证。`, 'success');
             return;
         }
 
@@ -794,7 +812,16 @@ ${getAuthProbeRuntimeSource()}
         window.__uivAiAdapterCurrent = adapterMeta;
         window.UIVAINaming?.generateForCurrentScript({ source: 'ai-generic' });
         close();
-        showToast('✅ 通用 AI 适配脚本已生成，请先单脚本验证后再加入批量仓库。', 'success');
+        showToast(window.UIVT ? window.UIVT('uiv.aiAdapter.toastGenericSuccess') : '✅ 通用 AI 适配脚本已生成，请先单脚本验证后再加入批量仓库。', 'success');
+    }
+
+    function refreshI18n() {
+        if (el('uivAiKeywordChoiceOverlay')?.style.display === 'flex' && keywordMatches.length) {
+            showKeywordChoice();
+        }
+        if (!isAnalyzing && progressValue === 0) {
+            resetProgress();
+        }
     }
 
     function initKeywordInputs() {
@@ -832,6 +859,7 @@ ${getAuthProbeRuntimeSource()}
         analyze,
         generate,
         selectKeywordMatch,
-        closeKeywordChoice
+        closeKeywordChoice,
+        refreshI18n
     };
 })();

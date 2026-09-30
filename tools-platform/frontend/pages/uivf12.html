@@ -317,124 +317,124 @@
         <div class="uiv-ai-dialog">
             <div class="uiv-ai-header">
                 <div>
-                    <h3>AI 全网站抓取适配器</h3>
-                    <p>AI 分析请求和响应结构；匹配 DataFab / NetCare 时自动复用现有成熟逻辑，其他结构使用通用受控模板。</p>
+                    <h3 data-uiv-i18n="uiv.aiAdapter.title">AI 全网站抓取适配器</h3>
+                    <p data-uiv-i18n="uiv.aiAdapter.subtitle">AI 分析请求和响应结构；匹配 DataFab / NetCare 时自动复用现有成熟逻辑，其他结构使用通用受控模板。</p>
                 </div>
-                <button onclick="UIVAIAdapter.close()" aria-label="关闭">×</button>
+                <button onclick="UIVAIAdapter.close()" aria-label="关闭" data-uiv-aria-label="uiv.aiAdapter.close">×</button>
             </div>
             <div class="uiv-ai-body">
                 <div class="uiv-ai-quick">
-                    <label><span>1. 粘贴 DevTools → Copy as fetch</span>
+                    <label><span data-uiv-i18n="uiv.aiAdapter.step1">1. 粘贴 DevTools → Copy as fetch</span>
                         <textarea id="uivAiFetchSource" placeholder='fetch("https://example.com/api/items", { headers: {...}, body: "...", method: "POST", credentials: "include" });'></textarea>
                     </label>
                     <div class="uiv-ai-parse-row">
-                        <button id="uivAiParseFetchBtn" class="btn btn-secondary" onclick="UIVAIAdapter.parseFetch()">解析并自动填充请求</button>
-                        <div id="uivAiFetchSummary">解析过程只读取静态 fetch 配置，不执行粘贴的代码。</div>
+                        <button id="uivAiParseFetchBtn" class="btn btn-secondary" onclick="UIVAIAdapter.parseFetch()" data-uiv-i18n="uiv.aiAdapter.parseBtn">解析并自动填充请求</button>
+                        <div id="uivAiFetchSummary" data-uiv-i18n="uiv.aiAdapter.parseSummary">解析过程只读取静态 fetch 配置，不执行粘贴的代码。</div>
                     </div>
-                    <label><span>2. 粘贴 DevTools → Copy response</span>
+                    <label><span data-uiv-i18n="uiv.aiAdapter.step2">2. 粘贴 DevTools → Copy response</span>
                         <textarea id="uivAiResponse" placeholder='{"data":{"records":[],"total":0}}'></textarea>
                     </label>
-                    <label><span>抓取关键词（可选，用于聚焦响应中的某一组数据）</span>
-                        <input id="uivAiResponseKeyword" type="text" placeholder="例如 c10_topN、records、风险列表">
+                    <label><span data-uiv-i18n="uiv.aiAdapter.keywordLabel">抓取关键词（可选，用于聚焦响应中的某一组数据）</span>
+                        <input id="uivAiResponseKeyword" type="text" placeholder="例如 c10_topN、records、风险列表" data-uiv-placeholder="uiv.aiAdapter.keywordPh">
                         <input id="uivAiResponseFocusPath" type="hidden">
                     </label>
-                    <div id="uivAiKeywordSummary" class="uiv-ai-keyword-summary">不填写关键词时，AI 会分析完整响应样本。</div>
+                    <div id="uivAiKeywordSummary" class="uiv-ai-keyword-summary" data-uiv-i18n="uiv.aiAdapter.keywordSummary">不填写关键词时，AI 会分析完整响应样本。</div>
                 </div>
                 <details class="uiv-ai-advanced">
-                    <summary>高级编辑：检查或修正自动解析结果</summary>
+                    <summary data-uiv-i18n="uiv.aiAdapter.advanced">高级编辑：检查或修正自动解析结果</summary>
                     <div class="uiv-ai-grid">
-                        <label class="uiv-ai-wide">请求 URL
+                        <label class="uiv-ai-wide"><span data-uiv-i18n="uiv.aiAdapter.reqUrl">请求 URL</span>
                             <input id="uivAiUrl" type="text" placeholder="https://example.com/api/items">
                         </label>
-                        <label class="uiv-ai-wide">抓取前打开页面 URL（可选）
+                        <label class="uiv-ai-wide"><span data-uiv-i18n="uiv.aiAdapter.openUrl">抓取前打开页面 URL（可选）</span>
                             <input id="uivAiOpenUrl" type="text" placeholder="https://example.com/dashboard">
                         </label>
-                        <label>请求方法
+                        <label><span data-uiv-i18n="uiv.aiAdapter.method">请求方法</span>
                             <select id="uivAiMethod">
                                 <option value="POST">POST</option>
                                 <option value="GET">GET</option>
                             </select>
                         </label>
-                        <label>请求体类型
+                        <label><span data-uiv-i18n="uiv.aiAdapter.bodyType">请求体类型</span>
                             <select id="uivAiBodyType">
-                                <option value="json">JSON</option>
-                                <option value="form">URL 编码表单</option>
-                                <option value="none">无请求体</option>
+                                <option value="json" data-uiv-i18n="uiv.aiAdapter.bodyTypeJson">JSON</option>
+                                <option value="form" data-uiv-i18n="uiv.aiAdapter.bodyTypeForm">URL 编码表单</option>
+                                <option value="none" data-uiv-i18n="uiv.aiAdapter.bodyTypeNone">无请求体</option>
                             </select>
                         </label>
-                        <label>分页策略
+                        <label><span data-uiv-i18n="uiv.aiAdapter.pagination">分页策略</span>
                             <select id="uivAiPaginationPolicy">
-                                <option value="auto">自动识别（默认）</option>
-                                <option value="none">强制不分页，只抓当前结果</option>
+                                <option value="auto" data-uiv-i18n="uiv.aiAdapter.paginationAuto">自动识别（默认）</option>
+                                <option value="none" data-uiv-i18n="uiv.aiAdapter.paginationNone">强制不分页，只抓当前结果</option>
                             </select>
                         </label>
-                        <label>凭据模式
+                        <label><span data-uiv-i18n="uiv.aiAdapter.credentials">凭据模式</span>
                             <select id="uivAiCredentials">
                                 <option value="include">include</option>
                                 <option value="same-origin">same-origin</option>
                                 <option value="omit">omit</option>
                             </select>
                         </label>
-                        <label>输出文件名
+                        <label><span data-uiv-i18n="uiv.aiAdapter.outputFileName">输出文件名</span>
                             <input id="uivAiFileName" type="text" value="AI_适配抓取_Latest" placeholder="AI_适配抓取_Latest">
                         </label>
-                        <label>认证来源
+                        <label><span data-uiv-i18n="uiv.aiAdapter.authStrategy">认证来源</span>
                             <select id="uivAiAuthStrategy">
-                                <option value="auto">让 AI 判断</option>
-                                <option value="cookie">浏览器 Cookie</option>
-                                <option value="cookieHeader">Cookie 值注入请求头（CSRF）</option>
-                                <option value="localStorage">localStorage</option>
-                                <option value="sessionStorage">sessionStorage</option>
-                                <option value="none">无需认证</option>
+                                <option value="auto" data-uiv-i18n="uiv.aiAdapter.authAuto">让 AI 判断</option>
+                                <option value="cookie" data-uiv-i18n="uiv.aiAdapter.authCookie">浏览器 Cookie</option>
+                                <option value="cookieHeader" data-uiv-i18n="uiv.aiAdapter.authCookieHeader">Cookie 值注入请求头（CSRF）</option>
+                                <option value="localStorage" data-uiv-i18n="uiv.aiAdapter.authLocalStorage">localStorage</option>
+                                <option value="sessionStorage" data-uiv-i18n="uiv.aiAdapter.authSessionStorage">sessionStorage</option>
+                                <option value="none" data-uiv-i18n="uiv.aiAdapter.authNone">无需认证</option>
                             </select>
                         </label>
-                        <label>Token/Cookie 来源键
-                            <input id="uivAiAuthSourceKey" type="text" placeholder="access_token 或 XSRF-TOKEN">
+                        <label><span data-uiv-i18n="uiv.aiAdapter.authSourceKey">Token/Cookie 来源键</span>
+                            <input id="uivAiAuthSourceKey" type="text" placeholder="access_token 或 XSRF-TOKEN" data-uiv-placeholder="uiv.aiAdapter.authSourceKeyPh">
                         </label>
-                        <label>存储值中的 Token 路径（可选）
-                            <input id="uivAiAuthValuePath" type="text" placeholder="例如 data.accessToken">
+                        <label><span data-uiv-i18n="uiv.aiAdapter.authValuePath">存储值中的 Token 路径（可选）</span>
+                            <input id="uivAiAuthValuePath" type="text" placeholder="例如 data.accessToken" data-uiv-placeholder="uiv.aiAdapter.authValuePathPh">
                         </label>
-                        <label>认证请求头
+                        <label><span data-uiv-i18n="uiv.aiAdapter.authHeader">认证请求头</span>
                             <input id="uivAiAuthHeader" type="text" value="Authorization" placeholder="Authorization">
                         </label>
-                        <label>认证前缀
+                        <label><span data-uiv-i18n="uiv.aiAdapter.authPrefix">认证前缀</span>
                             <input id="uivAiAuthPrefix" type="text" value="Bearer " placeholder="Bearer ">
                         </label>
-                        <label class="uiv-ai-wide">请求头 JSON（敏感值发送给 AI 前会自动脱敏）
+                        <label class="uiv-ai-wide"><span data-uiv-i18n="uiv.aiAdapter.headersLabel">请求头 JSON（敏感值发送给 AI 前会自动脱敏）</span>
                             <textarea id="uivAiHeaders" placeholder='{"content-type":"application/json","Authorization":"Bearer ..."}'>{}</textarea>
                         </label>
-                        <label class="uiv-ai-wide">请求负载 JSON
+                        <label class="uiv-ai-wide"><span data-uiv-i18n="uiv.aiAdapter.bodyLabel">请求负载 JSON</span>
                             <textarea id="uivAiBody" placeholder='{"page":1,"pageSize":50}'>{}</textarea>
                         </label>
-                        <label class="uiv-ai-wide">第二页或空页响应 JSON（可选，用于辅助判断分页）
+                        <label class="uiv-ai-wide"><span data-uiv-i18n="uiv.aiAdapter.secondResponseLabel">第二页或空页响应 JSON（可选，用于辅助判断分页）</span>
                             <textarea id="uivAiSecondResponse" placeholder='{"data":{"records":[],"total":0}}'></textarea>
                         </label>
                     </div>
                 </details>
-                <div class="uiv-ai-guardrail">
+                <div class="uiv-ai-guardrail" data-uiv-i18n="uiv.aiAdapter.guardrail">
                     支持 JSON/URL 编码表单、GET/POST、数字/offset/游标分页、GraphQL JSON、Cookie/浏览器存储认证及对象/原始值/二维数组。认证请求头来源未知时，生成脚本会在目标页面本地依次尝试 Cookie、localStorage、sessionStorage 和页面 Token 字段。只有结构高置信匹配才复用成熟引擎；非官方域名不会调用 DataFab / NetCare 专属接口。验证码、动态签名、文件上传和 HTML 页面抓取暂不开放。
                 </div>
                 <div id="uivAiProgress" class="uiv-ai-progress idle" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
                     <div class="uiv-ai-progress-head">
-                        <span id="uivAiProgressLabel">等待开始分析</span>
+                        <span id="uivAiProgressLabel" data-uiv-i18n="uiv.aiAdapter.waitingStart">等待开始分析</span>
                         <strong id="uivAiProgressValue">0%</strong>
                     </div>
                     <div class="uiv-ai-progress-track"><div id="uivAiProgressFill" class="uiv-ai-progress-fill"></div></div>
                     <div class="uiv-ai-progress-steps">
-                        <span data-threshold="10">校验输入</span>
-                        <span data-threshold="30">抽样脱敏</span>
-                        <span data-threshold="75">模型分析</span>
-                        <span data-threshold="100">路径验证</span>
+                        <span data-threshold="10" data-uiv-i18n="uiv.aiAdapter.stepValidate">校验输入</span>
+                        <span data-threshold="30" data-uiv-i18n="uiv.aiAdapter.stepSample">抽样脱敏</span>
+                        <span data-threshold="75" data-uiv-i18n="uiv.aiAdapter.stepModel">模型分析</span>
+                        <span data-threshold="100" data-uiv-i18n="uiv.aiAdapter.stepVerify">路径验证</span>
                     </div>
                 </div>
-                <div id="uivAiAdapterPreview" class="uiv-ai-preview">填写请求和响应样本后，点击“AI 分析并验证”。</div>
+                <div id="uivAiAdapterPreview" class="uiv-ai-preview" data-uiv-i18n="uiv.aiAdapter.previewDefault">填写请求和响应样本后，点击“AI 分析并验证”。</div>
                 <div id="uivAiAdapterLog" class="uiv-ai-log"></div>
                 <div id="uivAiAdapterStatus" class="uiv-ai-status"></div>
             </div>
             <div class="uiv-ai-footer">
-                <button class="btn btn-secondary" onclick="UIVAIAdapter.close()">取消</button>
-                <button id="uivAiAnalyzeBtn" class="btn btn-secondary" onclick="UIVAIAdapter.analyze()">AI 分析并验证</button>
-                <button id="uivAiGenerateBtn" class="btn btn-primary" onclick="UIVAIAdapter.generate()" disabled>生成智能复用脚本</button>
+                <button class="btn btn-secondary" onclick="UIVAIAdapter.close()" data-uiv-i18n="uiv.aiAdapter.cancel">取消</button>
+                <button id="uivAiAnalyzeBtn" class="btn btn-secondary" onclick="UIVAIAdapter.analyze()" data-uiv-i18n="uiv.aiAdapter.analyzeBtn">AI 分析并验证</button>
+                <button id="uivAiGenerateBtn" class="btn btn-primary" onclick="UIVAIAdapter.generate()" disabled data-uiv-i18n="uiv.aiAdapter.generateBtn">生成智能复用脚本</button>
             </div>
         </div>
     </div>
@@ -442,10 +442,10 @@
     <div id="uivAiKeywordChoiceOverlay" class="uiv-ai-choice-overlay" onclick="if(event.target===this) UIVAIAdapter.closeKeywordChoice()">
         <div class="uiv-ai-choice-dialog">
             <div class="uiv-ai-choice-header">
-                <h4>选择关键词所在的数据片段</h4>
-                <button onclick="UIVAIAdapter.closeKeywordChoice()" aria-label="关闭">×</button>
+                <h4 data-uiv-i18n="uiv.aiAdapter.choiceTitle">选择关键词所在的数据片段</h4>
+                <button onclick="UIVAIAdapter.closeKeywordChoice()" aria-label="关闭" data-uiv-aria-label="uiv.aiAdapter.close">×</button>
             </div>
-            <p>响应里多处命中该关键词，请选择要抓取的那一组 JSON 链条。</p>
+            <p data-uiv-i18n="uiv.aiAdapter.choiceSubtitle">响应里多处命中该关键词，请选择要抓取的那一组 JSON 链条。</p>
             <div id="uivAiKeywordChoiceList" class="uiv-ai-choice-list"></div>
         </div>
     </div>

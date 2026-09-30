@@ -231,7 +231,190 @@
             'uiv.extension.toastDownloading': '⚡ UI.Vision v9.6.1 插件包下载已触发！',
             'uiv.extension.copySuccess': '✅ 扩展管理地址已复制到剪贴板！',
             'uiv.extension.stepsCopied': '✅ 完整安装指引已复制到剪贴板！',
-            'uiv.extension.tip': '💡 <b>小技巧</b>：安装完成后，回到当前数据抓取工作台，点击左侧智能调度仓库底部的「🚀 运行批脚本」（或「🚀 运行测试批脚本」），即可直接调用 UI.Vision 插件自动抓取与全流程执行！'
+            'uiv.extension.tip': '💡 <b>小技巧</b>：安装完成后，回到当前数据抓取工作台，点击左侧智能调度仓库底部的「🚀 运行批脚本」（或「🚀 运行测试批脚本」），即可直接调用 UI.Vision 插件自动抓取与全流程执行！',
+
+            // Site script picker
+            'uiv.siteScript.title': '选择要复制脚本的站点',
+            'uiv.siteScript.subtitle': '受浏览器同源策略限制，请选择你稍后要打开并粘贴脚本的站点。',
+            'uiv.siteScript.notice': '浮窗模式不会逐个下载 CSV。抓取完成后可按指标查看详表，并将全部 CSV 一次打包下载为 ZIP。',
+            'uiv.siteScript.unresolved': '另有 {count} 个脚本无法识别站点，暂未列出。请先在脚本中补充请求 URL。',
+            'uiv.siteScript.empty': '当前执行范围内没有识别到可用站点。<br>请检查仓库脚本的请求 URL 或分类范围设置。',
+            'uiv.siteScript.scriptCount': '{count} 个可执行脚本',
+            'uiv.siteScript.simulate': '模拟浮窗',
+            'uiv.siteScript.copy': '复制此站点',
+            'uiv.siteScript.close': '关闭',
+            'uiv.siteScript.noScope': '❌ 当前分类或执行范围内没有可导出的脚本',
+            'uiv.siteScript.noSite': '❌ 站点 {site} 下没有可导出的脚本',
+            'uiv.siteScript.copied': '✅ 已复制 {name} 的 F12 脚本（{count} 个任务{dep}）',
+            'uiv.siteScript.depText': '，自动补入 {count} 个跨表依赖',
+            'uiv.siteScript.copyFail': '❌ 复制站点脚本失败：{error}',
+            'uiv.siteScript.readFail': '❌ 读取站点脚本失败：{error}',
+
+            // AI Scraper Adapter
+            'uiv.aiAdapter.title': 'AI 全网站抓取适配器',
+            'uiv.aiAdapter.subtitle': 'AI 分析请求和响应结构；匹配 DataFab / NetCare 时自动复用现有成熟逻辑，其他结构使用通用受控模板。',
+            'uiv.aiAdapter.close': '关闭',
+            'uiv.aiAdapter.step1': '1. 粘贴 DevTools → Copy as fetch',
+            'uiv.aiAdapter.parseBtn': '解析并自动填充请求',
+            'uiv.aiAdapter.parseSummary': '解析过程只读取静态 fetch 配置，不执行粘贴的代码。',
+            'uiv.aiAdapter.step2': '2. 粘贴 DevTools → Copy response',
+            'uiv.aiAdapter.keywordLabel': '抓取关键词（可选，用于聚焦响应中的某一组数据）',
+            'uiv.aiAdapter.keywordPh': '例如 c10_topN、records、风险列表',
+            'uiv.aiAdapter.keywordSummary': '不填写关键词时，AI 会分析完整响应样本。',
+            'uiv.aiAdapter.advanced': '高级编辑：检查或修正自动解析结果',
+            'uiv.aiAdapter.reqUrl': '请求 URL',
+            'uiv.aiAdapter.openUrl': '抓取前打开页面 URL（可选）',
+            'uiv.aiAdapter.method': '请求方法',
+            'uiv.aiAdapter.bodyType': '请求体类型',
+            'uiv.aiAdapter.bodyTypeJson': 'JSON',
+            'uiv.aiAdapter.bodyTypeForm': 'URL 编码表单',
+            'uiv.aiAdapter.bodyTypeNone': '无请求体',
+            'uiv.aiAdapter.pagination': '分页策略',
+            'uiv.aiAdapter.paginationAuto': '自动识别（默认）',
+            'uiv.aiAdapter.paginationNone': '强制不分页，只抓当前结果',
+            'uiv.aiAdapter.credentials': '凭据模式',
+            'uiv.aiAdapter.outputFileName': '输出文件名',
+            'uiv.aiAdapter.authStrategy': '认证来源',
+            'uiv.aiAdapter.authAuto': '让 AI 判断',
+            'uiv.aiAdapter.authCookie': '浏览器 Cookie',
+            'uiv.aiAdapter.authCookieHeader': 'Cookie 值注入请求头（CSRF）',
+            'uiv.aiAdapter.authLocalStorage': 'localStorage',
+            'uiv.aiAdapter.authSessionStorage': 'sessionStorage',
+            'uiv.aiAdapter.authNone': '无需认证',
+            'uiv.aiAdapter.authSourceKey': 'Token/Cookie 来源键',
+            'uiv.aiAdapter.authSourceKeyPh': 'access_token 或 XSRF-TOKEN',
+            'uiv.aiAdapter.authValuePath': '存储值中的 Token 路径（可选）',
+            'uiv.aiAdapter.authValuePathPh': '例如 data.accessToken',
+            'uiv.aiAdapter.authHeader': '认证请求头',
+            'uiv.aiAdapter.authPrefix': '认证前缀',
+            'uiv.aiAdapter.headersLabel': '请求头 JSON（敏感值发送给 AI 前会自动脱敏）',
+            'uiv.aiAdapter.bodyLabel': '请求负载 JSON',
+            'uiv.aiAdapter.secondResponseLabel': '第二页或空页响应 JSON（可选，用于辅助判断分页）',
+            'uiv.aiAdapter.guardrail': '支持 JSON/URL 编码表单、GET/POST、数字/offset/游标分页、GraphQL JSON、Cookie/浏览器存储认证及对象/原始值/二维数组。认证请求头来源未知时，生成脚本会在目标页面本地依次尝试 Cookie、localStorage、sessionStorage 和页面 Token 字段。只有结构高置信匹配才复用成熟引擎；非官方域名不会调用 DataFab / NetCare 专属接口。验证码、动态签名、文件上传和 HTML 页面抓取暂不开放。',
+            'uiv.aiAdapter.waitingStart': '等待开始分析',
+            'uiv.aiAdapter.stepValidate': '校验输入',
+            'uiv.aiAdapter.stepSample': '抽样脱敏',
+            'uiv.aiAdapter.stepModel': '模型分析',
+            'uiv.aiAdapter.stepVerify': '路径验证',
+            'uiv.aiAdapter.previewDefault': '填写请求和响应样本后，点击“AI 分析并验证”。',
+            'uiv.aiAdapter.cancel': '取消',
+            'uiv.aiAdapter.analyzeBtn': 'AI 分析并验证',
+            'uiv.aiAdapter.generateBtn': '生成智能复用脚本',
+            'uiv.aiAdapter.choiceTitle': '选择关键词所在的数据片段',
+            'uiv.aiAdapter.choiceSubtitle': '响应里多处命中该关键词，请选择要抓取的那一组 JSON 链条。',
+            'uiv.aiAdapter.pulseSample': '正在抽样脱敏并准备模型输入…',
+            'uiv.aiAdapter.pulseModel': 'AI 正在分析请求与响应结构…',
+            'uiv.aiAdapter.pulseWait': '模型仍在分析，正在耐心等待…',
+            'uiv.aiAdapter.fetchSourceEmpty': '请先粘贴 Copy as fetch 内容',
+            'uiv.aiAdapter.parsingFetch': '正在安全解析 fetch 请求…',
+            'uiv.aiAdapter.fetchParsed': 'fetch 已解析。粘贴响应后即可让 AI 分析。',
+            'uiv.aiAdapter.parsed': '已解析：',
+            'uiv.aiAdapter.headerCount': '{count} 个请求头',
+            'uiv.aiAdapter.sensitiveHeadersWarning': '发现敏感请求头：{headers}，发送给 AI 前会脱敏。',
+            'uiv.aiAdapter.keywordNeedValidJson': '请先粘贴合法响应 JSON，才能查找关键词。',
+            'uiv.aiAdapter.keywordNotFound': '响应样本中未找到关键词“{keyword}”。',
+            'uiv.aiAdapter.keywordFoundMultiple': '找到 {count} 处关键词“{keyword}”，请选择要抓取的数据片段。',
+            'uiv.aiAdapter.keywordFocused': '已聚焦：{focus}；命中位置：{hit}',
+            'uiv.aiAdapter.matchFieldName': '字段名',
+            'uiv.aiAdapter.matchFieldValue': '字段值',
+            'uiv.aiAdapter.hitPos': '命中位置',
+            'uiv.aiAdapter.focusSegment': '聚焦片段',
+            'uiv.aiAdapter.rootNode': '(根节点)',
+            'uiv.aiAdapter.validatingInput': '正在校验输入…',
+            'uiv.aiAdapter.logLocalValidateStart': '开始本地校验输入 JSON。',
+            'uiv.aiAdapter.validatingInputJson': '正在校验输入 JSON…',
+            'uiv.aiAdapter.validatedInput': '输入校验完成，准备安全分析…',
+            'uiv.aiAdapter.logLocalValidatePass': '本地校验通过，准备发送到后端分析。',
+            'uiv.aiAdapter.sentToBackend': '已发送到后端，正在抽样、脱敏并调用 AI…',
+            'uiv.aiAdapter.modelDoneVerifying': '模型分析完成，正在验证路径…',
+            'uiv.aiAdapter.backendDoneRendering': '后端分析完成，正在渲染结果。',
+            'uiv.aiAdapter.analyzeDoneFallback': '分析完成（已启用安全兜底）',
+            'uiv.aiAdapter.analyzeDoneOk': '分析与路径验证完成',
+            'uiv.aiAdapter.statusAnalyzePassed': '分析与样本验证通过，可以生成脚本。',
+            'uiv.aiAdapter.needAnalyzeFirst': '请先完成 AI 分析。',
+            'uiv.aiAdapter.toastNativeSuccess': '✅ 已使用 {profile} 成熟逻辑 + AI 适配生成脚本，请先单脚本验证。',
+            'uiv.aiAdapter.toastGenericSuccess': '✅ 通用 AI 适配脚本已生成，请先单脚本验证后再加入批量仓库。',
+            'uiv.aiAdapter.fail': '失败',
+
+            // Script analysis modal
+            'uiv.analysis.title': '脚本仓库分析',
+            'uiv.analysis.reading': '正在读取脚本仓库...',
+            'uiv.analysis.summary': '共 {total} 条脚本 · DataFab {datafab} · NetCare {netcare} · 当前显示 {current}',
+            'uiv.analysis.searchPh': '搜索分类、脚本、URL、字段...',
+            'uiv.analysis.allCategories': '全部分类',
+            'uiv.analysis.saveChanges': '保存修改',
+            'uiv.analysis.refresh': '刷新',
+            'uiv.analysis.thCategory': '分类',
+            'uiv.analysis.thName': '脚本名称',
+            'uiv.analysis.thOutput': '生成表名称',
+            'uiv.analysis.thUrl': '请求 URL',
+            'uiv.analysis.thUpdated': '更新时间',
+            'uiv.analysis.thPlatform': '平台',
+            'uiv.analysis.thRequest': '请求',
+            'uiv.analysis.thCore': '核心对象',
+            'uiv.analysis.thFilters': '筛选字段',
+            'uiv.analysis.thOptions': '运行开关',
+            'uiv.analysis.thResponse': '响应取表',
+            'uiv.analysis.thRefill': '回填状态',
+            'uiv.analysis.thActions': '操作',
+            'uiv.analysis.empty': '等待分析...',
+            'uiv.analysis.noMatches': '没有匹配的脚本',
+            'uiv.analysis.footer': '双击行可回填；点击筛选字段可改值，点击 × 可删除字段；保存前关闭窗口会提示先保存。',
+            'uiv.analysis.copyModified': '复制修改后脚本',
+            'uiv.analysis.saveAsNew': '另存为新脚本',
+            'uiv.analysis.deleteScript': '删除脚本',
+            'uiv.analysis.modifiedTag': '已修改，待保存',
+            'uiv.analysis.payloadOk': 'Payload可还原',
+            'uiv.analysis.payloadLegacy': '旧脚本无Payload',
+            'uiv.analysis.configOk': '开关可还原',
+            'uiv.analysis.configCode': '开关靠代码识别',
+            'uiv.analysis.copyCellTitle': '点击复制内容',
+            'uiv.analysis.optGlobalVars': '全局变量',
+            'uiv.analysis.optPagination': '翻页',
+            'uiv.analysis.optForceSum': '强制总数',
+            'uiv.analysis.optAutoCpc': '动态CPC/NID',
+            'uiv.analysis.optAutoMonth': '双月',
+            'uiv.analysis.optTriplicate': '三区阵列',
+            'uiv.analysis.switchOn': '开',
+            'uiv.analysis.switchOff': '关',
+            'uiv.analysis.noFilters': '未识别到筛选字段',
+            'uiv.analysis.noCore': '脚本中未识别到核心对象',
+            'uiv.analysis.otherEmptyFilters': '另{count}个空值字段',
+            'uiv.analysis.emptyValue': '空值',
+            'uiv.analysis.empty': '空',
+            'uiv.analysis.itemCount': ' · 共{count}项',
+            'uiv.analysis.saveChangesCount': '保存修改 ({count})',
+            'uiv.analysis.copySuccess': '已复制: {text}',
+            'uiv.analysis.copyFail': '复制失败',
+            'uiv.analysis.savedCount': '已保存 {count} 个修改脚本',
+            'uiv.analysis.noScriptsToSave': '没有需要保存的脚本',
+            'uiv.analysis.saveFail': '保存修改失败',
+            'uiv.analysis.deleteTitle': '删除脚本',
+            'uiv.analysis.deleteConfirm': '确定删除脚本 [{name}] 吗？\n删除后会从脚本仓库中移除。',
+            'uiv.analysis.deletedToast': '已删除脚本：{name}',
+            'uiv.analysis.deleteFail': '删除脚本失败',
+            'uiv.analysis.saveAsTitle': '另存为新脚本',
+            'uiv.analysis.saveAsMessage': '为当前脚本副本命名并选择保存分类。当前分析窗口里的待修改筛选字段也会一并带入新脚本。',
+            'uiv.analysis.saveAsConfirm': '另存为',
+            'uiv.analysis.saveAsSuccess': '已另存为新脚本：{name}',
+            'uiv.analysis.saveAsFail': '另存为新脚本失败',
+            'uiv.analysis.nameRequired': '请填写新脚本名称',
+            'uiv.analysis.nameExists': '脚本名称已存在，请换一个名称',
+            'uiv.analysis.unsavedTitle': '修改尚未保存',
+            'uiv.analysis.unsavedMessage': '还有 {count} 个脚本修改未保存。\n保存后再关闭窗口，避免修改丢失。',
+            'uiv.analysis.unsavedSaveClose': '保存后关闭',
+            'uiv.analysis.refreshTitle': '刷新分析数据',
+            'uiv.analysis.refreshMessage': '当前有未保存修改，刷新会丢失这些修改。\n确定继续刷新吗？',
+            'uiv.analysis.refreshConfirm': '继续刷新',
+            'uiv.analysis.confirm': '确认',
+            'uiv.analysis.cancel': '取消',
+            'uiv.analysis.apply': '应用修改',
+            'uiv.analysis.defaultCategory': '默认分类',
+            'uiv.analysis.editFilterTitle': '编辑筛选字段',
+            'uiv.analysis.deleteFilterTitle': '删除筛选字段',
+            'uiv.analysis.deleteFilterConfirm': '确定删除筛选字段 [{key}] 吗？\n保存前只会影响当前分析窗口里的待保存版本。',
+            'uiv.analysis.deleteFilterBtn': '删除字段',
+            'uiv.analysis.copiedModifiedScript': '修改后脚本已复制'
         },
         'en-US': {
             'uiv.title': 'UIVF12 Data Capture Engine v6.6 - Tools Platform',
@@ -461,7 +644,190 @@
             'uiv.extension.toastDownloading': '⚡ UI.Vision v9.6.1 package download started!',
             'uiv.extension.copySuccess': '✅ URL copied to clipboard!',
             'uiv.extension.stepsCopied': '✅ Full guide copied to clipboard!',
-            'uiv.extension.tip': '💡 <b>Tip</b>: After installation, return to the workbench and click <b>🚀 Run Batch</b> (or <b>🚀 Test Batch</b>) at the bottom of the Smart Repository to invoke the UI.Vision extension for automated data capture!'
+            'uiv.extension.tip': '💡 <b>Tip</b>: After installation, return to the workbench and click <b>🚀 Run Batch</b> (or <b>🚀 Test Batch</b>) at the bottom of the Smart Repository to invoke the UI.Vision extension for automated data capture!',
+
+            // Site script picker
+            'uiv.siteScript.title': 'Select Target Site to Copy Scripts',
+            'uiv.siteScript.subtitle': 'Due to browser Same-Origin Policy, please select the target site where you will paste and run scripts.',
+            'uiv.siteScript.notice': 'Floating mode avoids one-by-one CSV downloads. Once capture finishes, you can review metrics and batch download all CSVs in a single ZIP.',
+            'uiv.siteScript.unresolved': 'Another {count} scripts have no recognizable site and are omitted. Please configure request URLs first.',
+            'uiv.siteScript.empty': 'No recognizable sites found within the current scope.<br>Please check script request URLs or category filter settings.',
+            'uiv.siteScript.scriptCount': '{count} executable script(s)',
+            'uiv.siteScript.simulate': 'Simulate Floating Window',
+            'uiv.siteScript.copy': 'Copy Scripts for Site',
+            'uiv.siteScript.close': 'Close',
+            'uiv.siteScript.noScope': '❌ No exportable scripts found in current category or scope',
+            'uiv.siteScript.noSite': '❌ No exportable scripts found under site {site}',
+            'uiv.siteScript.copied': '✅ Copied F12 scripts for {name} ({count} task(s){dep})',
+            'uiv.siteScript.depText': ', auto-injected {count} cross-table dependencies',
+            'uiv.siteScript.copyFail': '❌ Failed to copy site scripts: {error}',
+            'uiv.siteScript.readFail': '❌ Failed to load site scripts: {error}',
+
+            // AI Scraper Adapter
+            'uiv.aiAdapter.title': 'AI Whole-Website Scraper Adapter',
+            'uiv.aiAdapter.subtitle': 'AI analyzes request and response structures; reuses mature engines for DataFab/NetCare, or applies guarded universal templates for other targets.',
+            'uiv.aiAdapter.close': 'Close',
+            'uiv.aiAdapter.step1': '1. Paste DevTools → Copy as fetch',
+            'uiv.aiAdapter.parseBtn': 'Parse & Auto-fill Request',
+            'uiv.aiAdapter.parseSummary': 'Parsing only inspects static fetch options; pasted code is never executed.',
+            'uiv.aiAdapter.step2': '2. Paste DevTools → Copy response',
+            'uiv.aiAdapter.keywordLabel': 'Target Keyword (Optional, to focus on a specific response dataset)',
+            'uiv.aiAdapter.keywordPh': 'e.g. c10_topN, records, risk_list',
+            'uiv.aiAdapter.keywordSummary': 'When empty, AI will inspect the entire response sample.',
+            'uiv.aiAdapter.advanced': 'Advanced Settings: Inspect or tweak parsed parameters',
+            'uiv.aiAdapter.reqUrl': 'Request URL',
+            'uiv.aiAdapter.openUrl': 'Pre-open Page URL (Optional)',
+            'uiv.aiAdapter.method': 'HTTP Method',
+            'uiv.aiAdapter.bodyType': 'Body Type',
+            'uiv.aiAdapter.bodyTypeJson': 'JSON',
+            'uiv.aiAdapter.bodyTypeForm': 'URL-encoded Form',
+            'uiv.aiAdapter.bodyTypeNone': 'No Body',
+            'uiv.aiAdapter.pagination': 'Pagination Policy',
+            'uiv.aiAdapter.paginationAuto': 'Auto Detect (Default)',
+            'uiv.aiAdapter.paginationNone': 'Force Single Page (Current results only)',
+            'uiv.aiAdapter.credentials': 'Credentials Mode',
+            'uiv.aiAdapter.outputFileName': 'Output File Name',
+            'uiv.aiAdapter.authStrategy': 'Auth Source',
+            'uiv.aiAdapter.authAuto': 'Let AI Decide',
+            'uiv.aiAdapter.authCookie': 'Browser Cookie',
+            'uiv.aiAdapter.authCookieHeader': 'Inject Cookie into Header (CSRF)',
+            'uiv.aiAdapter.authLocalStorage': 'localStorage',
+            'uiv.aiAdapter.authSessionStorage': 'sessionStorage',
+            'uiv.aiAdapter.authNone': 'No Auth Required',
+            'uiv.aiAdapter.authSourceKey': 'Token/Cookie Source Key',
+            'uiv.aiAdapter.authSourceKeyPh': 'access_token or XSRF-TOKEN',
+            'uiv.aiAdapter.authValuePath': 'Storage Token Path (Optional)',
+            'uiv.aiAdapter.authValuePathPh': 'e.g. data.accessToken',
+            'uiv.aiAdapter.authHeader': 'Auth Header Name',
+            'uiv.aiAdapter.authPrefix': 'Auth Token Prefix',
+            'uiv.aiAdapter.headersLabel': 'Request Headers JSON (Sensitive tokens masked before AI call)',
+            'uiv.aiAdapter.bodyLabel': 'Request Payload JSON',
+            'uiv.aiAdapter.secondResponseLabel': 'Page 2 or Empty Response JSON (Optional, assists pagination check)',
+            'uiv.aiAdapter.guardrail': 'Supports JSON/URL-encoded forms, GET/POST, numeric/offset/cursor pagination, GraphQL JSON, Cookie/storage auth, and objects/primitives/2D arrays. If auth header source is unknown, the generated script tests Cookie, localStorage, sessionStorage, and page tokens locally. Mature engines are reused only on high-confidence schema matches; non-official domains never call proprietary endpoints. Captchas, dynamic signatures, file uploads, and HTML scraping are unsupported.',
+            'uiv.aiAdapter.waitingStart': 'Waiting to start analysis',
+            'uiv.aiAdapter.stepValidate': 'Validate Input',
+            'uiv.aiAdapter.stepSample': 'Mask Sample',
+            'uiv.aiAdapter.stepModel': 'AI Analysis',
+            'uiv.aiAdapter.stepVerify': 'Verify Path',
+            'uiv.aiAdapter.previewDefault': 'Fill in request and response samples, then click "AI Analysis & Verification".',
+            'uiv.aiAdapter.cancel': 'Cancel',
+            'uiv.aiAdapter.analyzeBtn': 'AI Analysis & Verification',
+            'uiv.aiAdapter.generateBtn': 'Generate Smart Script',
+            'uiv.aiAdapter.choiceTitle': 'Select Target Data Fragment',
+            'uiv.aiAdapter.choiceSubtitle': 'Multiple locations matched this keyword. Please select the target JSON chain to capture.',
+            'uiv.aiAdapter.pulseSample': 'Sampling, masking and preparing model inputs...',
+            'uiv.aiAdapter.pulseModel': 'AI is analyzing request and response structures...',
+            'uiv.aiAdapter.pulseWait': 'Model analysis still in progress, waiting patiently...',
+            'uiv.aiAdapter.fetchSourceEmpty': 'Please paste "Copy as fetch" content first',
+            'uiv.aiAdapter.parsingFetch': 'Safely parsing fetch request...',
+            'uiv.aiAdapter.fetchParsed': 'Fetch parsed successfully. Paste response to analyze.',
+            'uiv.aiAdapter.parsed': 'Parsed: ',
+            'uiv.aiAdapter.headerCount': '{count} header(s)',
+            'uiv.aiAdapter.sensitiveHeadersWarning': 'Sensitive headers detected: {headers}. Will be masked before AI analysis.',
+            'uiv.aiAdapter.keywordNeedValidJson': 'Please paste valid response JSON to search keywords.',
+            'uiv.aiAdapter.keywordNotFound': 'Keyword "{keyword}" not found in response sample.',
+            'uiv.aiAdapter.keywordFoundMultiple': 'Found {count} occurrences of "{keyword}". Please select target data segment.',
+            'uiv.aiAdapter.keywordFocused': 'Focused: {focus}; Hit position: {hit}',
+            'uiv.aiAdapter.matchFieldName': 'Field Name',
+            'uiv.aiAdapter.matchFieldValue': 'Field Value',
+            'uiv.aiAdapter.hitPos': 'Hit Location',
+            'uiv.aiAdapter.focusSegment': 'Focused Segment',
+            'uiv.aiAdapter.rootNode': '(Root Node)',
+            'uiv.aiAdapter.validatingInput': 'Validating inputs...',
+            'uiv.aiAdapter.logLocalValidateStart': 'Starting local validation of input JSON.',
+            'uiv.aiAdapter.validatingInputJson': 'Validating input JSON...',
+            'uiv.aiAdapter.validatedInput': 'Input validation passed, preparing security analysis...',
+            'uiv.aiAdapter.logLocalValidatePass': 'Local validation passed, sending to backend.',
+            'uiv.aiAdapter.sentToBackend': 'Sent to backend. Sampling, masking, and calling AI...',
+            'uiv.aiAdapter.modelDoneVerifying': 'Model analysis completed, verifying data paths...',
+            'uiv.aiAdapter.backendDoneRendering': 'Backend analysis completed, rendering results.',
+            'uiv.aiAdapter.analyzeDoneFallback': 'Analysis completed (Safe fallback enabled)',
+            'uiv.aiAdapter.analyzeDoneOk': 'Analysis and path verification completed',
+            'uiv.aiAdapter.statusAnalyzePassed': 'Analysis and sample verification passed. Ready to generate.',
+            'uiv.aiAdapter.needAnalyzeFirst': 'Please complete AI analysis first.',
+            'uiv.aiAdapter.toastNativeSuccess': '✅ Script generated using {profile} mature engine + AI adaptation. Please verify individually.',
+            'uiv.aiAdapter.toastGenericSuccess': '✅ Universal AI adapted script generated. Please verify individually before adding to batch repo.',
+            'uiv.aiAdapter.fail': 'Failed',
+
+            // Script analysis modal
+            'uiv.analysis.title': 'Script Repository Analysis',
+            'uiv.analysis.reading': 'Reading script repository...',
+            'uiv.analysis.summary': 'Total {total} scripts · DataFab {datafab} · NetCare {netcare} · Showing {current}',
+            'uiv.analysis.searchPh': 'Search category, script, URL, fields...',
+            'uiv.analysis.allCategories': 'All Categories',
+            'uiv.analysis.saveChanges': 'Save Changes',
+            'uiv.analysis.refresh': 'Refresh',
+            'uiv.analysis.thCategory': 'Category',
+            'uiv.analysis.thName': 'Script Name',
+            'uiv.analysis.thOutput': 'Output Table Name',
+            'uiv.analysis.thUrl': 'Request URL',
+            'uiv.analysis.thUpdated': 'Updated At',
+            'uiv.analysis.thPlatform': 'Platform',
+            'uiv.analysis.thRequest': 'Request',
+            'uiv.analysis.thCore': 'Core Objects',
+            'uiv.analysis.thFilters': 'Filter Fields',
+            'uiv.analysis.thOptions': 'Switches',
+            'uiv.analysis.thResponse': 'Response Table',
+            'uiv.analysis.thRefill': 'Refill Status',
+            'uiv.analysis.thActions': 'Actions',
+            'uiv.analysis.empty': 'Waiting for analysis...',
+            'uiv.analysis.noMatches': 'No matching scripts found',
+            'uiv.analysis.footer': 'Double-click a row to refill workbench; click filter fields to edit value, click × to delete field; unsaved changes will prompt on close.',
+            'uiv.analysis.copyModified': 'Copy Modified Script',
+            'uiv.analysis.saveAsNew': 'Save as New Script',
+            'uiv.analysis.deleteScript': 'Delete Script',
+            'uiv.analysis.modifiedTag': 'Modified (Unsaved)',
+            'uiv.analysis.payloadOk': 'Payload Restorable',
+            'uiv.analysis.payloadLegacy': 'Legacy without Payload',
+            'uiv.analysis.configOk': 'Switches Restorable',
+            'uiv.analysis.configCode': 'Switches Code-Inferred',
+            'uiv.analysis.copyCellTitle': 'Click to copy text',
+            'uiv.analysis.optGlobalVars': 'Global Vars',
+            'uiv.analysis.optPagination': 'Pagination',
+            'uiv.analysis.optForceSum': 'Force Total',
+            'uiv.analysis.optAutoCpc': 'Dynamic CPC/NID',
+            'uiv.analysis.optAutoMonth': 'Bi-Monthly',
+            'uiv.analysis.optTriplicate': '3-Zone Triplicate',
+            'uiv.analysis.switchOn': 'ON',
+            'uiv.analysis.switchOff': 'OFF',
+            'uiv.analysis.noFilters': 'No filter fields detected',
+            'uiv.analysis.noCore': 'No core objects detected',
+            'uiv.analysis.otherEmptyFilters': 'Another {count} empty field(s)',
+            'uiv.analysis.emptyValue': 'Empty',
+            'uiv.analysis.empty': 'Empty',
+            'uiv.analysis.itemCount': ' · {count} item(s)',
+            'uiv.analysis.saveChangesCount': 'Save Changes ({count})',
+            'uiv.analysis.copySuccess': 'Copied: {text}',
+            'uiv.analysis.copyFail': 'Copy failed',
+            'uiv.analysis.savedCount': 'Saved {count} modified script(s)',
+            'uiv.analysis.noScriptsToSave': 'No scripts need saving',
+            'uiv.analysis.saveFail': 'Failed to save changes',
+            'uiv.analysis.deleteTitle': 'Delete Script',
+            'uiv.analysis.deleteConfirm': 'Are you sure you want to delete script [{name}]?\nIt will be removed from repository permanently.',
+            'uiv.analysis.deletedToast': 'Deleted script: {name}',
+            'uiv.analysis.deleteFail': 'Failed to delete script',
+            'uiv.analysis.saveAsTitle': 'Save as New Script',
+            'uiv.analysis.saveAsMessage': 'Name the copy and choose category. Modified filter fields will be included in the new script.',
+            'uiv.analysis.saveAsConfirm': 'Save As',
+            'uiv.analysis.saveAsSuccess': 'Saved as new script: {name}',
+            'uiv.analysis.saveAsFail': 'Failed to save as new script',
+            'uiv.analysis.nameRequired': 'Please provide a name for the new script',
+            'uiv.analysis.nameExists': 'Script name already exists, please choose another name',
+            'uiv.analysis.unsavedTitle': 'Unsaved Changes',
+            'uiv.analysis.unsavedMessage': '{count} script modifications are unsaved.\nSave before closing to prevent losing changes.',
+            'uiv.analysis.unsavedSaveClose': 'Save and Close',
+            'uiv.analysis.refreshTitle': 'Refresh Analysis Data',
+            'uiv.analysis.refreshMessage': 'There are unsaved changes. Refreshing will discard these modifications.\nDo you want to continue?',
+            'uiv.analysis.refreshConfirm': 'Continue Refresh',
+            'uiv.analysis.confirm': 'Confirm',
+            'uiv.analysis.cancel': 'Cancel',
+            'uiv.analysis.apply': 'Apply',
+            'uiv.analysis.defaultCategory': 'Default Category',
+            'uiv.analysis.editFilterTitle': 'Edit Filter Field',
+            'uiv.analysis.deleteFilterTitle': 'Delete Filter Field',
+            'uiv.analysis.deleteFilterConfirm': 'Are you sure you want to delete filter field [{key}]?\nBefore saving, this only affects the pending changes in the current analysis window.',
+            'uiv.analysis.deleteFilterBtn': 'Delete Field',
+            'uiv.analysis.copiedModifiedScript': 'Copied modified script'
         }
     };
 
@@ -629,7 +995,95 @@
         setText('.uiv-category-create-hint', t('uiv.categoryDialog.hint'));
         setText('#uivCategoryCreateCancel', t('uiv.categoryDialog.cancel'));
         setText('#uivCategoryCreateSubmit', t('uiv.categoryDialog.confirm'));
+
+        // Generic data attribute internationalization
+        document.querySelectorAll('[data-uiv-i18n]').forEach(node => {
+            const key = node.getAttribute('data-uiv-i18n');
+            if (key) node.textContent = t(key);
+        });
+        document.querySelectorAll('[data-uiv-placeholder]').forEach(node => {
+            const key = node.getAttribute('data-uiv-placeholder');
+            if (key) node.placeholder = t(key);
+        });
+        document.querySelectorAll('[data-uiv-title]').forEach(node => {
+            const key = node.getAttribute('data-uiv-title');
+            if (key) node.title = t(key);
+        });
+        document.querySelectorAll('[data-uiv-aria-label]').forEach(node => {
+            const key = node.getAttribute('data-uiv-aria-label');
+            if (key) node.setAttribute('aria-label', t(key));
+        });
+
+        // AI Scraper Adapter modal (#uivAiAdapterOverlay)
+        setText('#uivAiAdapterOverlay .uiv-ai-header h3', t('uiv.aiAdapter.title'));
+        setText('#uivAiAdapterOverlay .uiv-ai-header p', t('uiv.aiAdapter.subtitle'));
+        setTitle('#uivAiAdapterOverlay .uiv-ai-header button', t('uiv.aiAdapter.close'));
+        setText('#uivAiParseFetchBtn', t('uiv.aiAdapter.parseBtn'));
+        setText('#uivAiFetchSummary', t('uiv.aiAdapter.parseSummary'));
+        setPlaceholder('#uivAiResponseKeyword', t('uiv.aiAdapter.keywordPh'));
+        setText('#uivAiKeywordSummary', t('uiv.aiAdapter.keywordSummary'));
+        setText('#uivAiAdapterOverlay .uiv-ai-advanced > summary', t('uiv.aiAdapter.advanced'));
+        setText('#uivAiBodyType option[value="json"]', t('uiv.aiAdapter.bodyTypeJson'));
+        setText('#uivAiBodyType option[value="form"]', t('uiv.aiAdapter.bodyTypeForm'));
+        setText('#uivAiBodyType option[value="none"]', t('uiv.aiAdapter.bodyTypeNone'));
+        setText('#uivAiPaginationPolicy option[value="auto"]', t('uiv.aiAdapter.paginationAuto'));
+        setText('#uivAiPaginationPolicy option[value="none"]', t('uiv.aiAdapter.paginationNone'));
+        setText('#uivAiAuthStrategy option[value="auto"]', t('uiv.aiAdapter.authAuto'));
+        setText('#uivAiAuthStrategy option[value="cookie"]', t('uiv.aiAdapter.authCookie'));
+        setText('#uivAiAuthStrategy option[value="cookieHeader"]', t('uiv.aiAdapter.authCookieHeader'));
+        setText('#uivAiAuthStrategy option[value="localStorage"]', t('uiv.aiAdapter.authLocalStorage'));
+        setText('#uivAiAuthStrategy option[value="sessionStorage"]', t('uiv.aiAdapter.authSessionStorage'));
+        setText('#uivAiAuthStrategy option[value="none"]', t('uiv.aiAdapter.authNone'));
+        setPlaceholder('#uivAiAuthSourceKey', t('uiv.aiAdapter.authSourceKeyPh'));
+        setPlaceholder('#uivAiAuthValuePath', t('uiv.aiAdapter.authValuePathPh'));
+        setText('.uiv-ai-guardrail', t('uiv.aiAdapter.guardrail'));
+        setText('.uiv-ai-progress-steps span[data-threshold="10"]', t('uiv.aiAdapter.stepValidate'));
+        setText('.uiv-ai-progress-steps span[data-threshold="30"]', t('uiv.aiAdapter.stepSample'));
+        setText('.uiv-ai-progress-steps span[data-threshold="75"]', t('uiv.aiAdapter.stepModel'));
+        setText('.uiv-ai-progress-steps span[data-threshold="100"]', t('uiv.aiAdapter.stepVerify'));
+        const previewEl = document.getElementById('uivAiAdapterPreview');
+        if (previewEl && (!previewEl.dataset.custom || previewEl.dataset.custom === '0')) {
+            previewEl.textContent = t('uiv.aiAdapter.previewDefault');
+        }
+        setText('.uiv-ai-footer .btn-secondary:first-child', t('uiv.aiAdapter.cancel'));
+        setText('#uivAiAnalyzeBtn', t('uiv.aiAdapter.analyzeBtn'));
+        setText('#uivAiGenerateBtn', t('uiv.aiAdapter.generateBtn'));
+        setText('#uivAiKeywordChoiceOverlay .uiv-ai-choice-header h4', t('uiv.aiAdapter.choiceTitle'));
+        setText('#uivAiKeywordChoiceOverlay .uiv-ai-choice-dialog > p', t('uiv.aiAdapter.choiceSubtitle'));
+
+        // Script analysis modal (#scriptAnalysisModal)
+        setText('#scriptAnalysisTitle', t('uiv.analysis.title'));
+        setPlaceholder('#scriptAnalysisSearch', t('uiv.analysis.searchPh'));
+        setText('#scriptAnalysisCategory option[value=""]', t('uiv.analysis.allCategories'));
+        setText('.script-analysis-save', t('uiv.analysis.saveChanges'));
+        setText('.script-analysis-refresh', t('uiv.analysis.refresh'));
+        setTitle('.script-analysis-close', t('uiv.siteScript.close'));
+        const tableThs = document.querySelectorAll('#scriptAnalysisModal thead th');
+        if (tableThs.length >= 13) {
+            tableThs[0].textContent = t('uiv.analysis.thCategory');
+            tableThs[1].textContent = t('uiv.analysis.thName');
+            tableThs[2].textContent = t('uiv.analysis.thOutput');
+            tableThs[3].textContent = t('uiv.analysis.thUrl');
+            tableThs[4].textContent = t('uiv.analysis.thUpdated');
+            tableThs[5].textContent = t('uiv.analysis.thPlatform');
+            tableThs[6].textContent = t('uiv.analysis.thRequest');
+            tableThs[7].textContent = t('uiv.analysis.thCore');
+            tableThs[8].textContent = t('uiv.analysis.thFilters');
+            tableThs[9].textContent = t('uiv.analysis.thOptions');
+            tableThs[10].textContent = t('uiv.analysis.thResponse');
+            tableThs[11].textContent = t('uiv.analysis.thRefill');
+            tableThs[12].textContent = t('uiv.analysis.thActions');
+        }
+        setText('.script-analysis-footer span', t('uiv.analysis.footer'));
+
         if (window.UIVExtensionGuide?.refreshI18n) window.UIVExtensionGuide.refreshI18n();
+        if (window.UIVAIAdapter?.refreshI18n) window.UIVAIAdapter.refreshI18n();
+        if (window.UIVScriptAnalysis?.render && document.getElementById('scriptAnalysisModal')?.getAttribute('aria-hidden') === 'false') {
+            window.UIVScriptAnalysis.render();
+        }
+        if (document.getElementById('uiv-site-script-overlay')?.style.display === 'flex' && window.UIVCopy?.openSiteConsoleScriptPicker) {
+            window.UIVCopy.openSiteConsoleScriptPicker();
+        }
     }
 
     if (window.ToolsI18n) {
@@ -650,5 +1104,9 @@
         if (window.UIVSidebar?.refreshI18n) window.UIVSidebar.refreshI18n();
         if (window.UIVGenLog?.refreshI18n) window.UIVGenLog.refreshI18n();
         if (window.UIVExtensionGuide?.refreshI18n) window.UIVExtensionGuide.refreshI18n();
+        if (window.UIVAIAdapter?.refreshI18n) window.UIVAIAdapter.refreshI18n();
+        if (window.UIVScriptAnalysis?.render && document.getElementById('scriptAnalysisModal')?.getAttribute('aria-hidden') === 'false') {
+            window.UIVScriptAnalysis.render();
+        }
     });
 })();
