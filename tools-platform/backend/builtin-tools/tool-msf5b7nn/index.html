@@ -3066,6 +3066,48 @@
         }
         return getSheetDefaultSessionName(s, rowSessions);
       }
+      function getSheetMeetingDate(s) {
+        if (!s) return '';
+        const explicit = parseDateFromString(s.sessionName) || parseDateFromString(s.fileName) || parseDateFromString(s.sheetName);
+        if (explicit) return explicit;
+        const timeIndex = headerIndex(s.headers, s.category === 'offline' ? '签到时间' : 'join_time');
+        if (timeIndex >= 0 && Array.isArray(s.rows) && s.rows.length) {
+          const counts = new Map();
+          s.rows.forEach(r => {
+            const raw = cellAt(r, timeIndex);
+            const converted = s.category === 'offline' ? beijingToCairoAttendance(raw) : { dateStr: parseDateFromString(raw) };
+            const d = converted.dateStr || parseDateFromString(raw);
+            if (d) counts.set(d, (counts.get(d) || 0) + 1);
+          });
+          if (counts.size) {
+            return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
+          }
+        }
+        return '';
+      }
+      function getSessionDominantDate(s, rawName, sheetMeetingDate) {
+        if (!s || !s.rows || !s.rows.length) return sheetMeetingDate || '';
+        const explicit = parseDateFromString(rawName);
+        if (explicit) return explicit;
+        const titleCol = headerIndex(s.headers, 'meeting_title', '会议名称', '会议主题', '场次', '会议');
+        const timeIndex = headerIndex(s.headers, s.category === 'offline' ? '签到时间' : 'join_time');
+        if (timeIndex < 0) return sheetMeetingDate || '';
+        const counts = new Map();
+        s.rows.forEach(r => {
+          if (titleCol >= 0) {
+            const val = cleanSessionTitle(cellAt(r, titleCol));
+            if (val && val !== rawName) return;
+          }
+          const raw = cellAt(r, timeIndex);
+          const converted = s.category === 'offline' ? beijingToCairoAttendance(raw) : { dateStr: parseDateFromString(raw) };
+          const d = converted.dateStr || parseDateFromString(raw);
+          if (d) counts.set(d, (counts.get(d) || 0) + 1);
+        });
+        if (counts.size) {
+          return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
+        }
+        return sheetMeetingDate || '';
+      }
       function getSessionRowEvidence(s, row, rawName) {
         const timeIndex = headerIndex(s.headers, s.category === 'offline' ? '签到时间' : 'join_time');
         const rawTime = cellAt(row, timeIndex);
@@ -3084,9 +3126,10 @@
         state.sheets.forEach((s, sheetIndex) => {
           if (s.category !== 'offline' && s.category !== 'online') return;
           const rowSessions = getSheetRowSessionNames(s);
+          const sheetMeetingDate = getSheetMeetingDate(s);
           if (!s.rows?.length) {
             const rawName = getSheetDefaultSessionName(s);
-            const date = parseDateFromString(rawName) || parseDateFromString(s.fileName) || '';
+            const date = sheetMeetingDate || parseDateFromString(rawName) || '';
             const key = JSON.stringify([rawName, date]);
             if (!groups.has(key)) groups.set(key, {
               key, rawName, date, times: [], categories: new Set(),
@@ -3099,10 +3142,11 @@
           }
           (s.rows || []).forEach(row => {
             const rawName = getRawRowSessionName(s, row, rowSessions);
+            const date = (rowSessions.length > 1) ? getSessionDominantDate(s, rawName, sheetMeetingDate) : sheetMeetingDate;
             const evidence = getSessionRowEvidence(s, row, rawName);
-            const key = JSON.stringify([rawName, evidence.date]);
+            const key = JSON.stringify([rawName, date]);
             if (!groups.has(key)) groups.set(key, {
-              key, rawName, date: evidence.date, times: [], categories: new Set(),
+              key, rawName, date, times: [], categories: new Set(),
               explicit: false, rows: [], offlineSheetIds: new Set(), onlineSheetIds: new Set()
             });
             const group = groups.get(key);
@@ -3523,7 +3567,7 @@
               const exemption = getExemption(p);
               const isNightForSession = isPersonNightExemptForDate(p, sessDate) || (p.isNightWfmExempt && allMeetingDates.length <= 1);
               const nightExempt = (state.attendanceRules.nightWfmExempt !== false) && isNightForSession;
-              const record = (exemption || nightExempt) ? null : getAttendanceRecord(p.account, sIndex);
+              const record = (exemption || nightExempt) ? null : getAttendanceRecord(p.account, sIndex, sessDate);
               let attendance, attendanceMethod, attendanceTime;
               if (nightExempt) {
                 attendance = 'Attend on Time';
@@ -3534,7 +3578,7 @@
                 attendanceMethod = '豁免名单';
                 attendanceTime = '';
               } else {
-                attendance = determineAttendance(p.account, sIndex, p.name);
+                attendance = determineAttendance(p.account, sIndex, p.name, sessDate);
                 attendanceMethod = record?.method || '无记录';
                 attendanceTime = record?.displayTime || '';
               }
@@ -4232,36 +4276,25 @@
       }
       function detectMeetingDate(targetSessionName) {
         if (targetSessionName) {
+          const direct = parseDateFromString(targetSessionName);
+          if (direct) return direct;
+          const session = getMeetingSessions().find(x => x.name === targetSessionName);
+          if (session?.date) return session.date;
           for (const s of state.sheets.filter(s => s.category === 'offline' || s.category === 'online')) {
-            const timeCol = headerIndex(s.headers, '签到时间', 'join_time', 'time', '时间');
-            if (timeCol >= 0) {
-              for (const row of s.rows) {
-                if (getRowSessionName(s, row) === targetSessionName) {
-                  const d = getSessionRowEvidence(s, row, targetSessionName).date;
-                  if (d) return d;
-                }
-              }
-            }
             if (s.sessionName === targetSessionName || getSheetDefaultSessionName(s) === targetSessionName) {
-              const d = parseDateFromString(s.fileName) || parseDateFromString(s.sheetName);
+              const d = getSheetMeetingDate(s);
               if (d) return d;
             }
           }
-          return parseDateFromString(targetSessionName) || state.attendanceRules?.meetingDate || '';
-        }
-        for (const s of state.sheets.filter(s => s.category === 'offline' || s.category === 'online')) {
-          const timeCol = headerIndex(s.headers, '签到时间', 'join_time', 'time', '时间');
-          const rowSessions = getSheetRowSessionNames(s);
-          if (timeCol >= 0) {
-            for (const row of s.rows) {
-              const d = getSessionRowEvidence(s, row, getRawRowSessionName(s, row, rowSessions)).date;
-              if (d) return d;
-            }
-          }
-          const sheetDate = parseDateFromString(s.sessionName) || parseDateFromString(s.fileName) || parseDateFromString(s.sheetName);
-          if (sheetDate) return sheetDate;
+          return state.attendanceRules?.meetingDate || '';
         }
         if (state.attendanceRules?.meetingDate) return state.attendanceRules.meetingDate;
+        const firstSession = getMeetingSessions()[0];
+        if (firstSession?.date) return firstSession.date;
+        for (const s of state.sheets.filter(s => s.category === 'offline' || s.category === 'online')) {
+          const d = getSheetMeetingDate(s);
+          if (d) return d;
+        }
         for (const s of state.sheets) {
           const d = parseDateFromString(s.fileName) || parseDateFromString(s.sheetName);
           if (d) return d;
@@ -4725,7 +4758,8 @@
         })).map(p => {
           const exemption = hasEligibleSession ? getExemption(p) : null;
           const nightExempt = hasEligibleSession && (state.attendanceRules.nightWfmExempt !== false) && p.isNightWfmExempt;
-          const record = (exemption || nightExempt) ? null : getAttendanceRecord(p.account, attendanceIndex);
+          const defaultMeetingDate = detectMeetingDate();
+          const record = (exemption || nightExempt) ? null : getAttendanceRecord(p.account, attendanceIndex, defaultMeetingDate);
 
           let attendance;
           let attendanceMethod;
@@ -4744,7 +4778,7 @@
             attendanceMethod = '豁免名单';
             attendanceTime = '';
           } else {
-            attendance = determineAttendance(p.account, attendanceIndex, p.name);
+            attendance = determineAttendance(p.account, attendanceIndex, p.name, defaultMeetingDate);
             attendanceMethod = record?.method || '无记录';
             attendanceTime = record?.displayTime || '';
           }
@@ -4774,26 +4808,121 @@
         const parts = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(date), out = {}; parts.forEach(p => { if (p.type !== 'literal') out[p.type] = p.value; }); return out;
       }
       function beijingToCairoAttendance(value) {
-        const text = normalizeName(value), minute = parseAttendanceMinute(text); if (minute == null) return { minute: null, displayTime: text };
+        const text = normalizeName(value), minute = parseAttendanceMinute(text); if (minute == null) return { minute: null, displayTime: text, dateStr: null };
         let year, month, day, m = text.match(/(\d{4})[\-\/.年](\d{1,2})[\-\/.月](\d{1,2})日?/);
         if (m) { year = +m[1]; month = +m[2]; day = +m[3]; } else { m = text.match(/(\d{1,2})[\-\/.](\d{1,2})[\-\/.](\d{4})/); if (m) { year = +m[3]; month = +m[2]; day = +m[1]; } }
         if (!year) { const now = zoneDateParts(new Date(), 'Asia/Shanghai'); year = +now.year; month = +now.month; day = +now.day; }
         const instant = new Date(Date.UTC(year, month - 1, day, 0, 0) - 8 * 3600000 + minute * 60000), cairo = zoneDateParts(instant, 'Africa/Cairo'), cairoMinute = +cairo.hour * 60 + +cairo.minute;
         const hasDate = /(\d{4})[\-\/.年]|(\d{1,2})[\-\/.](\d{1,2})[\-\/.](\d{4})/.test(text), displayTime = `${cairo.hour}:${cairo.minute}`;
-        return { minute: cairoMinute, displayTime: hasDate ? `${cairo.year}-${cairo.month}-${cairo.day} ${displayTime}` : displayTime };
+        const dateStr = hasDate ? `${cairo.year}-${cairo.month}-${cairo.day}` : null;
+        return { minute: cairoMinute, displayTime: hasDate ? `${cairo.year}-${cairo.month}-${cairo.day} ${displayTime}` : displayTime, dateStr };
+      }
+      const ATTENDANCE_RANK = {
+        'Attend on Time': 1,
+        'Delay': 2,
+        'Fake Attendance': 3,
+        'Absent': 4
+      };
+      function evaluateRecordAttendance(rec, targetSessionDate) {
+        if (!rec) return 'Absent';
+        if (rec.minute == null) return 'Delay';
+        const onTime = timeInputMinutes(state.attendanceRules.onTime);
+        const fake = timeInputMinutes(state.attendanceRules.fake);
+        const sessionDate = targetSessionDate || (state.attendanceRules?.meetingDate) || detectMeetingDate();
+        const recordDate = rec.dateStr || parseDateFromString(rec.displayTime);
+        if (recordDate && sessionDate) {
+          if (recordDate > sessionDate) return 'Fake Attendance';
+          if (recordDate < sessionDate) return 'Fake Attendance';
+        }
+        if (rec.minute <= onTime) return 'Attend on Time';
+        if (rec.minute >= fake) return 'Fake Attendance';
+        return 'Delay';
       }
       function buildAttendanceIndex(targetSessionName) {
-        const index = new Map(), add = (rawId, rawTime, source) => { const ids = idVariants(rawId); if (!ids.size) return; const converted = source === 'offline' ? beijingToCairoAttendance(rawTime) : { minute: parseAttendanceMinute(rawTime), displayTime: normalizeName(rawTime) }, record = { minute: converted.minute, displayTime: converted.displayTime, method: source === 'offline' ? '现场扫码' : '线上会议' }; ids.forEach(id => { const old = index.get(id); if (!old || (record.minute != null && (old.minute == null || record.minute < old.minute))) index.set(id, record); }); };
+        const index = new Map();
         const acceptedSessions = new Set(getMeetingSessions().map(s => s.name));
-        state.sheets.filter(s => s.category === 'offline').forEach(s => { const idIndex = headerIndex(s.headers, '工号'), timeIndex = headerIndex(s.headers, '签到时间'); s.rows.forEach(row => { const name = getRowSessionName(s, row); if (!acceptedSessions.has(name) || (targetSessionName && name !== targetSessionName)) return; add(cellAt(row, idIndex), cellAt(row, timeIndex), 'offline'); }); });
-        state.sheets.filter(s => s.category === 'online').forEach(s => { const idIndex = headerIndex(s.headers, 'user_id'), timeIndex = headerIndex(s.headers, 'join_time'); s.rows.forEach(row => { const name = getRowSessionName(s, row); if (!acceptedSessions.has(name) || (targetSessionName && name !== targetSessionName)) return; add(cellAt(row, idIndex), cellAt(row, timeIndex), 'online'); }); });
+        const sessionList = getMeetingSessions();
+        const sessionDateByName = new Map(sessionList.map(s => [s.name, s.date]));
+        const targetSessionDate = targetSessionName
+          ? (sessionDateByName.get(targetSessionName) || detectMeetingDate(targetSessionName))
+          : detectMeetingDate();
+
+        const add = (rawId, rawTime, source, rowSessionName, sheetMeetingDate) => {
+          const ids = idVariants(rawId);
+          if (!ids.size) return;
+          const converted = source === 'offline'
+            ? beijingToCairoAttendance(rawTime)
+            : { minute: parseAttendanceMinute(rawTime), displayTime: normalizeName(rawTime), dateStr: parseDateFromString(rawTime) };
+          const rowDate = targetSessionName
+            ? targetSessionDate
+            : (sessionDateByName.get(rowSessionName) || sheetMeetingDate || targetSessionDate);
+          const record = {
+            minute: converted.minute,
+            displayTime: converted.displayTime,
+            dateStr: converted.dateStr || parseDateFromString(converted.displayTime),
+            sessionDate: rowDate,
+            method: source === 'offline' ? '现场扫码' : '线上会议'
+          };
+          ids.forEach(id => {
+            const old = index.get(id);
+            if (!old) {
+              index.set(id, record);
+            } else {
+              const oldStatus = evaluateRecordAttendance(old, old.sessionDate || rowDate);
+              const newStatus = evaluateRecordAttendance(record, rowDate);
+              const oldRank = ATTENDANCE_RANK[oldStatus] || 99;
+              const newRank = ATTENDANCE_RANK[newStatus] || 99;
+              if (newRank < oldRank) {
+                index.set(id, record);
+              } else if (newRank === oldRank) {
+                if (record.minute != null && (old.minute == null || record.minute < old.minute)) {
+                  index.set(id, record);
+                }
+              }
+            }
+          });
+        };
+
+        state.sheets.filter(s => s.category === 'offline').forEach(s => {
+          const idIndex = headerIndex(s.headers, '工号'), timeIndex = headerIndex(s.headers, '签到时间');
+          const sheetMeetingDate = getSheetMeetingDate(s);
+          s.rows.forEach(row => {
+            const name = getRowSessionName(s, row);
+            if (!acceptedSessions.has(name) || (targetSessionName && name !== targetSessionName)) return;
+            add(cellAt(row, idIndex), cellAt(row, timeIndex), 'offline', name, sheetMeetingDate);
+          });
+        });
+        state.sheets.filter(s => s.category === 'online').forEach(s => {
+          const idIndex = headerIndex(s.headers, 'user_id'), timeIndex = headerIndex(s.headers, 'join_time');
+          const sheetMeetingDate = getSheetMeetingDate(s);
+          s.rows.forEach(row => {
+            const name = getRowSessionName(s, row);
+            if (!acceptedSessions.has(name) || (targetSessionName && name !== targetSessionName)) return;
+            add(cellAt(row, idIndex), cellAt(row, timeIndex), 'online', name, sheetMeetingDate);
+          });
+        });
         return index;
       }
-      function getAttendanceRecord(account, index) { let best = null; for (const id of idVariants(account)) { const record = index.get(id); if (record && (!best || (record.minute != null && (best.minute == null || record.minute < best.minute)))) best = record; } return best; }
-      function determineAttendance(account, index, name = '') {
+      function getAttendanceRecord(account, index, sessionDate) {
+        let best = null;
+        let bestRank = Infinity;
+        for (const id of idVariants(account)) {
+          const record = index.get(id);
+          if (!record) continue;
+          const status = evaluateRecordAttendance(record, sessionDate || record.sessionDate);
+          const rank = ATTENDANCE_RANK[status] || 99;
+          if (!best || rank < bestRank || (rank === bestRank && (record.minute != null && (best.minute == null || record.minute < best.minute)))) {
+            best = record;
+            bestRank = rank;
+          }
+        }
+        return best;
+      }
+      function determineAttendance(account, index, name = '', sessionDate = '') {
         if (getExemption({ account, name })) return 'Attend on Time';
-        const record = getAttendanceRecord(account, index); if (!record) return 'Absent'; if (record.minute == null) return 'Delay';
-        const onTime = timeInputMinutes(state.attendanceRules.onTime), fake = timeInputMinutes(state.attendanceRules.fake); if (record.minute <= onTime) return 'Attend on Time'; if (record.minute >= fake) return 'Fake Attendance'; return 'Delay';
+        const record = getAttendanceRecord(account, index, sessionDate);
+        if (!record) return 'Absent';
+        return evaluateRecordAttendance(record, sessionDate || record.sessionDate);
       }
       function parsePeopleCell(value) {
         const text = normalizeName(value); if (!text) return []; const people = [], re = /([A-Za-z]{0,4}\d{5,})/g; let match, cursor = 0;
@@ -5702,7 +5831,7 @@
       function showLoading(on, text, percent) { $('#loading').classList.toggle('hidden', !on); if (text) $('#loadingText').textContent = text; if (percent != null) { const p = Math.max(0, Math.min(100, Math.round(percent))); $('#loadingBar').style.width = p + '%'; $('#loadingPercent').textContent = p + '%'; } }
       function nextPaint() { return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); }
       function toast(msg, type = '', duration = 2800) { const host = $('#toasts'); if (!host || typeof host.appendChild !== 'function') return; const t = document.createElement('div'); t.className = 'toast ' + type; t.textContent = msg; host.appendChild(t); setTimeout(() => t.remove?.(), duration); }
-      window.__meetingAttendance = { state, CATEGORIES, DEFAULT_COLUMNS, DEFAULT_CUSTOMER_MAPPINGS, DEFAULT_ATTENDANCE_RULES, PRESET_EXEMPTIONS, isInvalidStaffId, activeExemptions, handleDeveloperUnlock, disableDeveloperMode, parseDelimited, normalizeRows, classifySheet, defaultColumnIndices, getDisplayColumns, parsePeopleCell, parseQrPairedPeople, parseCreateTime, parseAttendanceMinute, beijingToCairoAttendance, buildAttendanceIndex, getAttendanceRecord, getExemption, determineAttendance, extractTicketDate, parseDateFromString, detectMeetingDate, getAllMeetingDates, getWindowDateRange, isOrderInWindow, isOrderInMeetingWindows, getPreviousDayDateString, parseRowTimestamp, isNightWfmTask, isPersonNightExemptForDate, normalizeMandatoryEntries, loadMandatoryAttendees, saveMandatoryAttendees, openMandatoryModal, closeMandatoryModal, renderMandatoryRows, appendMandatoryRow, updateMandatoryBadge, applyBatchMandatoryText, extractQrPeople, extractRfcPeople, extractWfmPeople, extractAttendanceSourcePeople, extractAllPeople, ensurePeopleCache, refreshCalculatedResults, invalidatePeopleCache, cleanSessionTitle, isGenericTitle, getSheetRowSessionNames, getSheetDefaultSessionName, getSheetSessionName, getRowSessionName, getMeetingSessions, getIgnoredMeetingSessions, getSessionPeopleRows, getSessionDisplayLabels, renderSessionSwitcher, renderSessionNoticeBar, renderMultiSessionOverview, renderMultiSessionBuTable, renderMultiSessionMatrixCard, mapCustomerGroup, resolveSearchIdentities, getPersonSearchScope, getPersonSearchScopeKey, formatSearchWindowMonths, searchRequiredRows, searchAttendanceRows, renderSearchDetailCard, buildBusinessCoverageReport, missingBusinessCoverage, validBusinessTimes, formatDateRange, roleCounts, roleLabel, sheetFingerprint, removeDuplicateSheets, renderAttendanceDashboard, renderCombinedPeopleCard, renderPeopleCard, renderPersonSearchPanel, renderPersonSearchResults, buildAnalysisTables, buildAnalysisWorkbook, buildSnapshotPayload, restoreMeetingSnapshot, openSaveSnapshotModal, closeSaveSnapshotModal, openSnapshotManagerModal, filterSnapshotCards };
+      window.__meetingAttendance = { state, CATEGORIES, DEFAULT_COLUMNS, DEFAULT_CUSTOMER_MAPPINGS, DEFAULT_ATTENDANCE_RULES, PRESET_EXEMPTIONS, isInvalidStaffId, activeExemptions, handleDeveloperUnlock, disableDeveloperMode, parseDelimited, normalizeRows, classifySheet, defaultColumnIndices, getDisplayColumns, parsePeopleCell, parseQrPairedPeople, parseCreateTime, parseAttendanceMinute, beijingToCairoAttendance, buildAttendanceIndex, getAttendanceRecord, getExemption, determineAttendance, extractTicketDate, parseDateFromString, detectMeetingDate, getAllMeetingDates, getSheetMeetingDate, getSessionDominantDate, evaluateRecordAttendance, ATTENDANCE_RANK, getWindowDateRange, isOrderInWindow, isOrderInMeetingWindows, getPreviousDayDateString, parseRowTimestamp, isNightWfmTask, isPersonNightExemptForDate, normalizeMandatoryEntries, loadMandatoryAttendees, saveMandatoryAttendees, openMandatoryModal, closeMandatoryModal, renderMandatoryRows, appendMandatoryRow, updateMandatoryBadge, applyBatchMandatoryText, extractQrPeople, extractRfcPeople, extractWfmPeople, extractAttendanceSourcePeople, extractAllPeople, ensurePeopleCache, refreshCalculatedResults, invalidatePeopleCache, cleanSessionTitle, isGenericTitle, getSheetRowSessionNames, getSheetDefaultSessionName, getSheetSessionName, getRowSessionName, getMeetingSessions, getIgnoredMeetingSessions, getSessionPeopleRows, getSessionDisplayLabels, renderSessionSwitcher, renderSessionNoticeBar, renderMultiSessionOverview, renderMultiSessionBuTable, renderMultiSessionMatrixCard, mapCustomerGroup, resolveSearchIdentities, getPersonSearchScope, getPersonSearchScopeKey, formatSearchWindowMonths, searchRequiredRows, searchAttendanceRows, renderSearchDetailCard, buildBusinessCoverageReport, missingBusinessCoverage, validBusinessTimes, formatDateRange, roleCounts, roleLabel, sheetFingerprint, removeDuplicateSheets, renderAttendanceDashboard, renderCombinedPeopleCard, renderPeopleCard, renderPersonSearchPanel, renderPersonSearchResults, buildAnalysisTables, buildAnalysisWorkbook, buildSnapshotPayload, restoreMeetingSnapshot, openSaveSnapshotModal, closeSaveSnapshotModal, openSnapshotManagerModal, filterSnapshotCards };
       init();
     })();
   </script>

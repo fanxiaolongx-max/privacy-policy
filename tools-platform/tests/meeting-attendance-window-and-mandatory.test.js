@@ -559,3 +559,116 @@ test('multi-session imports correctly handle spanning window, per-session night 
     assert.ok(matrixRow[4].includes('(Night WFM Exempt)'));
     assert.ok(matrixRow[5].includes('(Night WFM Exempt)'));
 });
+
+test('identifies fake attendance for check-ins after cutoff time or on subsequent days within a session sheet', async () => {
+    const api = loadMeetingAttendance(1);
+    const state = api.state;
+
+    // Meeting session on 2026-08-05
+    // onTime: 09:00, fake: 10:00
+    state.attendanceRules = {
+        onTime: '09:00',
+        fake: '10:00',
+        minSessionRecords: 1
+    };
+
+    state.sheets = [
+        {
+            id: 'rfc1',
+            category: 'rfc',
+            fileName: 'RFC_Orders.xlsx',
+            headers: ['作业单号/Ticket ID', '创建时间/Create Time', '建单人/Originator', '实施人', 'BU', '客户群'],
+            rows: [
+                ['NC20260804000001', '2026-08-04 10:00:00', 'Alice a1111111', 'Alice a1111111', 'BU-1', 'Group-A'],
+                ['NC20260804000002', '2026-08-04 10:00:00', 'Bob b2222222', 'Bob b2222222', 'BU-1', 'Group-A'],
+                ['NC20260804000003', '2026-08-04 10:00:00', 'Charlie c3333333', 'Charlie c3333333', 'BU-1', 'Group-A'],
+                ['NC20260804000004', '2026-08-04 10:00:00', 'David d4444444', 'David d4444444', 'BU-1', 'Group-A'],
+                ['NC20260804000005', '2026-08-04 10:00:00', 'Eva e5555555', 'Eva e5555555', 'BU-1', 'Group-A']
+            ]
+        },
+        {
+            id: 'offline_meeting',
+            category: 'offline',
+            fileName: '2026-08-05_安全生产例会签到.xlsx',
+            headers: ['工号', '姓名', '签到时间', 'BU'],
+            rows: [
+                // Alice: on time (BJT 13:55 -> Cairo 08:55 <= 09:00)
+                ['a1111111', 'Alice', '2026-08-05 13:55:00', 'BU-1'],
+                // Bob: delay (BJT 14:15 -> Cairo 09:15 between 09:00 and 10:00)
+                ['b2222222', 'Bob', '2026-08-05 14:15:00', 'BU-1'],
+                // Charlie: fake attendance on same day after cutoff (BJT 15:20 -> Cairo 10:20 >= 10:00)
+                ['c3333333', 'Charlie', '2026-08-05 15:20:00', 'BU-1'],
+                // David: fake attendance on subsequent day (BJT 2026-08-06 13:30 -> Cairo 2026-08-06 08:30 - early morning, but next day!)
+                ['d4444444', 'David', '2026-08-06 13:30:00', 'BU-1'],
+                // Eva: checked in twice: on-time (13:50) and next day (13:30) - should retain Attend on Time
+                ['e5555555', 'Eva', '2026-08-05 13:50:00', 'BU-1'],
+                ['e5555555', 'Eva', '2026-08-06 13:30:00', 'BU-1']
+            ]
+        }
+    ];
+
+    api.invalidatePeopleCache();
+    const cache = await api.ensurePeopleCache();
+
+    // 1. Verify that the sheet rows are NOT fragmented into rogue sessions
+    assert.equal(cache.sessions.length, 1, 'All rows in the sheet should remain in the single meeting session');
+
+    // 2. Verify attendance resolution for each person in single session
+    const people = cache.all;
+    const alice = people.find(p => p.account === 'a1111111');
+    const bob = people.find(p => p.account === 'b2222222');
+    const charlie = people.find(p => p.account === 'c3333333');
+    const david = people.find(p => p.account === 'd4444444');
+    const eva = people.find(p => p.account === 'e5555555');
+
+    assert.equal(alice.attendance, 'Attend on Time', 'Alice checked in before 09:00 on meeting day');
+    assert.equal(bob.attendance, 'Delay', 'Bob checked in between 09:00 and 10:00 on meeting day');
+    assert.equal(charlie.attendance, 'Fake Attendance', 'Charlie checked in after 10:00 cutoff on meeting day');
+    assert.equal(david.attendance, 'Fake Attendance', 'David checked in on the next day (2026-08-06)');
+    assert.equal(eva.attendance, 'Attend on Time', 'Eva has both on-time and late check-in, best status wins');
+
+    // 3. Now add a second meeting session on 2026-08-12 and verify multi-session handling
+    state.sheets.push({
+        id: 'offline_meeting_2',
+        category: 'offline',
+        fileName: '2026-08-12_第二场安全例会.xlsx',
+        sessionName: '2026-08-12_第二场安全例会',
+        headers: ['工号', '姓名', '签到时间', 'BU'],
+        rows: [
+            // Alice attended on time for session 2
+            ['a1111111', 'Alice', '2026-08-12 13:50:00', 'BU-1'],
+            // David attended on time for session 2 (even though he had fake attendance in session 1)
+            ['d4444444', 'David', '2026-08-12 13:55:00', 'BU-1'],
+            // Charlie checked in 2 days late for session 2 -> Fake Attendance
+            ['c3333333', 'Charlie', '2026-08-14 13:50:00', 'BU-1']
+        ]
+    });
+
+    api.invalidatePeopleCache();
+    const multiCache = await api.ensurePeopleCache();
+    assert.equal(multiCache.sessions.length, 2);
+
+    const mAlice = multiCache.all.find(p => p.account === 'a1111111');
+    const mBob = multiCache.all.find(p => p.account === 'b2222222');
+    const mCharlie = multiCache.all.find(p => p.account === 'c3333333');
+    const mDavid = multiCache.all.find(p => p.account === 'd4444444');
+    const mEva = multiCache.all.find(p => p.account === 'e5555555');
+
+    const sess1Name = multiCache.sessions[0].name;
+    const sess2Name = multiCache.sessions[1].name;
+
+    // Check Session 1 records
+    assert.equal(mAlice.sessionRecords[sess1Name].attendance, 'Attend on Time');
+    assert.equal(mBob.sessionRecords[sess1Name].attendance, 'Delay');
+    assert.equal(mCharlie.sessionRecords[sess1Name].attendance, 'Fake Attendance');
+    assert.equal(mDavid.sessionRecords[sess1Name].attendance, 'Fake Attendance');
+    assert.equal(mEva.sessionRecords[sess1Name].attendance, 'Attend on Time');
+
+    // Check Session 2 records
+    assert.equal(mAlice.sessionRecords[sess2Name].attendance, 'Attend on Time');
+    assert.equal(mDavid.sessionRecords[sess2Name].attendance, 'Attend on Time');
+    assert.equal(mCharlie.sessionRecords[sess2Name].attendance, 'Fake Attendance');
+    assert.equal(mBob.sessionRecords[sess2Name].attendance, 'Absent');
+});
+
+
