@@ -770,9 +770,14 @@ function createStartupWindow() {
             sandbox: true
         }
     });
-    startupWindow.once('ready-to-show', () => {
-        if (startupWindow && !startupWindow.isDestroyed()) startupWindow.show();
-    });
+    const showWindow = () => {
+        if (startupWindow && !startupWindow.isDestroyed() && !startupWindow.isVisible()) {
+            startupWindow.show();
+        }
+    };
+    startupWindow.once('ready-to-show', showWindow);
+    // 保护性保底：防止在特定 Windows 驱动/透明模式下 ready-to-show 滞后，120ms 内强制唤起呈现
+    setTimeout(showWindow, 120);
     startupWindow.webContents.once('did-finish-load', () => {
         startupWindowLoaded = true;
         renderStartupProgress();
@@ -1692,15 +1697,19 @@ function refreshTrayMenu() {
 }
 
 async function startTrayApp() {
+    // 第一时间弹出启动窗口，无缝接力阶段一解压，消除空白真空期
+    createStartupWindow();
+    updateStartupProgress(40, '便携环境已就绪', '正在加载桌面环境与授权验证…', '阶段 2/2 · 启动接力');
+
     const licensed = await ensureDesktopLicense();
     if (!licensed) {
+        closeStartupWindow(false);
         isQuitting = true;
         app.quit();
         return;
     }
     const launchExperience = prepareLaunchExperience();
     registerDownloadHandler();
-    createStartupWindow();
     updateStartupProgress(52, '正在初始化运行服务', '加载绿色版运行环境与本地配置…', '阶段 2/2 · 启动初始化');
 
     try {
@@ -1759,6 +1768,12 @@ app.on('window-all-closed', function () {
 
 app.on('second-instance', () => {
     console.log('[Electron] 检测到用户重复运行程序，自动唤起已有界面');
+    if (startupWindow && !startupWindow.isDestroyed()) {
+        if (startupWindow.isMinimized()) startupWindow.restore();
+        startupWindow.show();
+        startupWindow.focus();
+        return;
+    }
     if (licenseWindow && !licenseWindow.isDestroyed()) {
         if (licenseWindow.isMinimized()) licenseWindow.restore();
         licenseWindow.show();

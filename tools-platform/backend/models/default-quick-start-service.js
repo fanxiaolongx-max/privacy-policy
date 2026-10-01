@@ -301,6 +301,7 @@ module.exports = {
     DEFAULT_STATE_PATH,
     applyBundledDefaults,
     applyDecision,
+    getBuildMetadata,
     getStatus,
     loadBundle,
     mergeGroups,

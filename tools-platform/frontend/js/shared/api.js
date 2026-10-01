@@ -280,18 +280,19 @@ function initToolsWelcomeExperience() {
         }
         .tools-welcome-card {
             position: relative;
-            width: min(760px, calc(100vw - 36px));
-            min-height: 430px;
+            width: min(840px, calc(100vw - 36px));
+            max-height: calc(100vh - 48px);
+            overflow-y: auto;
+            overflow-x: hidden;
             display: grid;
             place-items: center;
             text-align: center;
-            padding: 46px 34px;
+            padding: 36px 30px 28px;
             border: 1px solid rgba(255,255,255,0.18);
-            border-radius: 22px;
-            background: linear-gradient(145deg, rgba(15,23,42,0.68), rgba(15,23,42,0.34));
-            box-shadow: 0 38px 110px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.16);
-            backdrop-filter: blur(22px);
-            overflow: hidden;
+            border-radius: 24px;
+            background: linear-gradient(145deg, rgba(15,23,42,0.86), rgba(15,23,42,0.56));
+            box-shadow: 0 38px 110px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.16);
+            backdrop-filter: blur(24px);
             animation: toolsWelcomeRise 0.82s cubic-bezier(.2,.8,.2,1) both;
         }
         .tools-welcome-card::before {
@@ -303,22 +304,22 @@ function initToolsWelcomeExperience() {
             animation: toolsWelcomeSweep 2.4s ease 0.35s both;
         }
         .tools-welcome-mark {
-            width: 94px;
-            height: 94px;
-            margin: 0 auto 24px;
+            width: 82px;
+            height: 82px;
+            margin: 0 auto 18px;
             display: grid;
             place-items: center;
-            border-radius: 28px;
+            border-radius: 26px;
             background: linear-gradient(135deg, rgba(100,255,218,0.22), rgba(74,144,226,0.22));
             border: 1px solid rgba(125,211,252,0.32);
             box-shadow: 0 0 50px rgba(100,255,218,0.28);
-            font-size: 46px;
+            font-size: 40px;
             animation: toolsWelcomePulse 1.8s ease-in-out infinite;
         }
         .tools-welcome-title {
             margin: 0;
-            font-size: clamp(34px, 6vw, 68px);
-            line-height: 1;
+            font-size: clamp(30px, 5.5vw, 56px);
+            line-height: 1.1;
             font-weight: 950;
             letter-spacing: 0;
             background: linear-gradient(90deg, #e0f2fe, #64ffda 34%, #93c5fd 68%, #c4b5fd);
@@ -326,40 +327,60 @@ function initToolsWelcomeExperience() {
             -webkit-text-fill-color: transparent;
         }
         .tools-welcome-subtitle {
-            margin: 18px auto 0;
+            margin: 14px auto 0;
             max-width: 560px;
             color: #cbd5e1;
-            font-size: clamp(15px, 2.2vw, 20px);
-            line-height: 1.65;
+            font-size: clamp(14px, 2vw, 18px);
+            line-height: 1.6;
+        }
+        .tools-welcome-meta-row {
+            margin-top: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
         }
         .tools-welcome-version {
-            margin-top: 18px;
             display: inline-flex;
             align-items: center;
-            min-height: 30px;
-            padding: 0 13px;
+            min-height: 28px;
+            padding: 0 12px;
             border-radius: 999px;
             background: rgba(100,255,218,0.12);
-            border: 1px solid rgba(100,255,218,0.26);
+            border: 1px solid rgba(100,255,218,0.28);
             color: #99f6e4;
             font-size: 12px;
             font-weight: 900;
         }
+        .tools-welcome-tag {
+            display: inline-flex;
+            align-items: center;
+            min-height: 28px;
+            padding: 0 11px;
+            border-radius: 999px;
+            background: rgba(148, 163, 184, 0.12);
+            border: 1px solid rgba(148, 163, 184, 0.22);
+            color: #cbd5e1;
+            font-size: 11px;
+            font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+        }
         .tools-welcome-points {
-            margin-top: 30px;
+            margin-top: 24px;
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 10px;
         }
         .tools-welcome-point {
-            min-height: 82px;
+            min-height: 78px;
             display: grid;
             align-content: center;
-            gap: 6px;
+            gap: 5px;
             padding: 12px;
             border-radius: 14px;
             background: rgba(255,255,255,0.06);
             border: 1px solid rgba(255,255,255,0.1);
+            text-align: left;
         }
         .tools-welcome-point b {
             color: #f8fafc;
@@ -369,6 +390,94 @@ function initToolsWelcomeExperience() {
             color: #94a3b8;
             font-size: 11px;
             line-height: 1.45;
+        }
+        .tools-welcome-deps-panel {
+            margin-top: 18px;
+            text-align: left;
+            padding: 14px 16px;
+            border-radius: 16px;
+            background: rgba(15, 23, 42, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .tools-welcome-deps-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .tools-welcome-deps-title {
+            color: #94a3b8;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .04em;
+        }
+        .tools-welcome-deps-badge {
+            color: #38bdf8;
+            font-size: 10px;
+            font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+            background: rgba(56, 189, 248, 0.12);
+            padding: 2px 7px;
+            border-radius: 999px;
+            border: 1px solid rgba(56, 189, 248, 0.22);
+        }
+        .tools-welcome-deps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+            gap: 8px;
+        }
+        .tools-welcome-dep-item {
+            padding: 7px 10px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            transition: all .18s ease;
+        }
+        .tools-welcome-dep-item:hover {
+            border-color: rgba(56, 189, 248, 0.35);
+            background: rgba(56, 189, 248, 0.08);
+        }
+        .tools-welcome-dep-name {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            color: #f1f5f9;
+            font-size: 11px;
+            font-weight: 700;
+            font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+        }
+        .tools-welcome-dep-ver {
+            color: #38bdf8;
+            font-size: 10px;
+        }
+        .tools-welcome-dep-role {
+            margin-top: 3px;
+            color: #94a3b8;
+            font-size: 10px;
+            line-height: 1.35;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .tools-welcome-enter-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 38px;
+            padding: 0 24px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #10b981, #06b6d4);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 800;
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
+            transition: transform .15s ease, box-shadow .15s ease;
+        }
+        .tools-welcome-enter-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
         }
         .tools-welcome-skip {
             position: absolute;
@@ -408,9 +517,10 @@ function initToolsWelcomeExperience() {
             50% { transform: translateY(-4px) scale(1.04); }
         }
         @media (max-width: 680px) {
-            .tools-welcome-card { min-height: 0; padding: 38px 20px; }
+            .tools-welcome-card { min-height: 0; padding: 28px 16px; }
             .tools-welcome-points { grid-template-columns: 1fr; }
-            .tools-welcome-mark { width: 76px; height: 76px; border-radius: 22px; font-size: 38px; }
+            .tools-welcome-mark { width: 68px; height: 68px; border-radius: 20px; font-size: 32px; }
+            .tools-welcome-deps-grid { grid-template-columns: 1fr; }
         }
     `;
     document.head.appendChild(style);
@@ -422,20 +532,72 @@ function initToolsWelcomeExperience() {
         <div class="tools-welcome-aurora"></div>
         <button type="button" class="tools-welcome-skip">跳过</button>
         <section class="tools-welcome-card" role="dialog" aria-label="${title}">
-            <div>
+            <div style="width: 100%;">
                 <div class="tools-welcome-mark">⚡</div>
                 <h1 class="tools-welcome-title">${title}</h1>
                 <p class="tools-welcome-subtitle">${subtitle}</p>
-                ${version ? `<div class="tools-welcome-version">v${version.replace(/^v/i, '')}</div>` : ''}
+                <div class="tools-welcome-meta-row">
+                    ${version ? `<div class="tools-welcome-version">v${version.replace(/^v/i, '')}</div>` : ''}
+                    <span class="tools-welcome-tag" id="toolsWelcomeBuiltAt" style="display:none"></span>
+                    <span class="tools-welcome-tag" id="toolsWelcomePlatform" style="display:none"></span>
+                </div>
                 <div class="tools-welcome-points">
                     <div class="tools-welcome-point"><b>双入口已就绪</b><span>内置窗口与系统浏览器可同时进入工具页面</span></div>
                     <div class="tools-welcome-point"><b>本地数据留存</b><span>配置、数据库和备份继续保存在用户目录</span></div>
                     <div class="tools-welcome-point"><b>自动更新在线</b><span>后续版本可在全局设置中检查并重启安装</span></div>
                 </div>
+                <div class="tools-welcome-deps-panel" id="toolsWelcomeDepsPanel" style="display:none">
+                    <div class="tools-welcome-deps-head">
+                        <span class="tools-welcome-deps-title">📦 内置核心三方依赖与运行组件</span>
+                        <span class="tools-welcome-deps-badge" id="toolsWelcomeDepsCount"></span>
+                    </div>
+                    <div class="tools-welcome-deps-grid" id="toolsWelcomeDepsGrid"></div>
+                </div>
+                <div style="margin-top: 22px; display: flex; justify-content: center; gap: 12px;">
+                    <button type="button" class="tools-welcome-enter-btn">进入工作空间</button>
+                </div>
             </div>
         </section>
     `;
     document.body.appendChild(overlay);
+
+    fetch('/api/app-version')
+        .then(res => res.json())
+        .then(data => {
+            const b = data && data.build;
+            if (!b) return;
+            const builtAtEl = overlay.querySelector('#toolsWelcomeBuiltAt');
+            if (builtAtEl && b.builtAt) {
+                try {
+                    const d = new Date(b.builtAt);
+                    const pad = n => String(n).padStart(2, '0');
+                    builtAtEl.textContent = `构建: ${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+                    builtAtEl.style.display = 'inline-flex';
+                } catch (_) {}
+            }
+            const platformEl = overlay.querySelector('#toolsWelcomePlatform');
+            if (platformEl && (b.platformLabel || b.nodeVersion)) {
+                platformEl.textContent = `${b.platformLabel || ''}${b.nodeVersion ? ` · Node ${b.nodeVersion}` : ''}`;
+                platformEl.style.display = 'inline-flex';
+            }
+            const depsPanel = overlay.querySelector('#toolsWelcomeDepsPanel');
+            const depsGrid = overlay.querySelector('#toolsWelcomeDepsGrid');
+            const depsCount = overlay.querySelector('#toolsWelcomeDepsCount');
+            if (Array.isArray(b.dependencies) && b.dependencies.length && depsPanel && depsGrid) {
+                depsCount.textContent = `${b.dependencies.length} 项`;
+                depsGrid.innerHTML = b.dependencies.map(dep => `
+                    <div class="tools-welcome-dep-item" title="${dep.role || ''}">
+                        <div class="tools-welcome-dep-name">
+                            <span>${dep.name}</span>
+                            <span class="tools-welcome-dep-ver">${dep.version}</span>
+                        </div>
+                        <div class="tools-welcome-dep-role">${dep.role || ''}</div>
+                    </div>
+                `).join('');
+                depsPanel.style.display = 'block';
+            }
+        })
+        .catch(() => {});
 
     const cleanUrl = () => {
         const next = new URL(window.location.href);
@@ -451,11 +613,31 @@ function initToolsWelcomeExperience() {
         }, 700);
     };
 
+    let closeTimer = null;
+    const startCloseTimer = (delayMs) => {
+        if (closeTimer) clearTimeout(closeTimer);
+        closeTimer = setTimeout(close, delayMs);
+    };
+    startCloseTimer(isUpdated ? 9500 : 8000);
+
+    const card = overlay.querySelector('.tools-welcome-card');
+    if (card) {
+        card.addEventListener('mouseenter', () => {
+            if (closeTimer) {
+                clearTimeout(closeTimer);
+                closeTimer = null;
+            }
+        });
+        card.addEventListener('mouseleave', () => {
+            startCloseTimer(4500);
+        });
+    }
+
     overlay.querySelector('.tools-welcome-skip')?.addEventListener('click', close);
+    overlay.querySelector('.tools-welcome-enter-btn')?.addEventListener('click', close);
     window.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') close();
     }, { once: true });
-    setTimeout(close, isUpdated ? 4800 : 5600);
 }
 
 if (document.readyState === 'loading') {

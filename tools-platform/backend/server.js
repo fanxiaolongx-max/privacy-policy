@@ -315,12 +315,18 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', time: new Date().toISOString() });
 });
 
-// 登录页未登录可访问，用根 package.json 版本号对齐 GitHub/electron-builder 打包版本。
+const quickStartService = require('./models/default-quick-start-service');
+
+// 登录页未登录可访问，用根 package.json 版本号对齐 GitHub/electron-builder 打包版本，附带构建与三方件信息。
 app.get('/api/app-version', (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
+    const buildMeta = typeof quickStartService.getBuildMetadata === 'function'
+        ? quickStartService.getBuildMetadata()
+        : null;
     res.json({
         name: appPackage.productName || appPackage.name || 'Tools Platform',
-        version: appPackage.version || '0.0.0'
+        version: appPackage.version || (buildMeta && buildMeta.version) || '0.0.0',
+        build: buildMeta
     });
 });
 
