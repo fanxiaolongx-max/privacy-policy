@@ -11,26 +11,50 @@ assert.ok(scriptMatches.length >= 2, 'tool-mtpx4vtr must have at least 2 script 
 const mainScript = scriptMatches[1][1];
 
 function createContext() {
-  const mockEl = () => ({
-    textContent: '',
-    value: '',
-    files: [],
-    classList: { add: () => {}, remove: () => {} },
-    querySelector: () => mockEl(),
-    querySelectorAll: () => [],
-    addEventListener: () => {},
-    removeEventListener: () => {},
-    getBoundingClientRect: () => ({ top: 0, left: 0, width: 100, height: 100, right: 100, bottom: 100 })
-  });
+  const elements = new Map();
+  const mockEl = (tag = 'div') => {
+    const el = {
+      tagName: tag.toUpperCase(),
+      innerHTML: '',
+      textContent: '',
+      value: '',
+      files: [],
+      classList: {
+        _classes: new Set(),
+        add: (...cls) => cls.forEach(c => el.classList._classes.add(c)),
+        remove: (...cls) => cls.forEach(c => el.classList._classes.delete(c)),
+        contains: (c) => el.classList._classes.has(c),
+        toggle: (c, force) => {
+          if (force !== undefined) {
+            if (force) el.classList._classes.add(c);
+            else el.classList._classes.delete(c);
+          } else {
+            if (el.classList._classes.has(c)) el.classList._classes.delete(c);
+            else el.classList._classes.add(c);
+          }
+        }
+      },
+      querySelector: () => mockEl(),
+      querySelectorAll: () => [],
+      closest: () => el,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      getBoundingClientRect: () => ({ top: 0, left: 0, width: 100, height: 100, right: 100, bottom: 100 })
+    };
+    return el;
+  };
 
   const winObj = {
-    auditStore: { anomalyLogs: [] },
+    auditStore: { anomalyLogs: [], searchKeywords: '' },
     addEventListener: () => {},
     removeEventListener: () => {}
   };
 
   const docObj = {
-    getElementById: () => mockEl(),
+    getElementById: (id) => {
+      if (!elements.has(id)) elements.set(id, mockEl());
+      return elements.get(id);
+    },
     querySelector: () => mockEl(),
     querySelectorAll: () => [],
     addEventListener: () => {},
@@ -456,6 +480,129 @@ test('餐单核验: Case 13 自动去除品名和单位中的残留括号并完�
   assert.equal(compMissing[0].difference, -12);
   assert.equal(compMissing[0].coreUnit, '瓶', 'Missing row unit must have bracket cleaned');
 });
+
+test('餐单核验: Case 14 比对结果顶部增加每日差异汇总表（仅显示差异），下方显示默认折叠的每日全量核对明细表', () => {
+  const ctx = createContext();
+
+  const comparisonDataWithDiff = [
+    // 2026/10/5：包含 1 个差异项（少了）和 1 个一致项
+    {
+      date: '2026/10/5',
+      item: '草鱼',
+      status: '少了',
+      expected: 10,
+      actual: 6,
+      difference: -4,
+      quantityAny: false,
+      supplier: '海纳水产',
+      remark: '',
+      coreUnit: 'kg',
+      targetUnit: 'kg',
+      bigSeries: '肉食禽蛋海鲜'
+    },
+    {
+      date: '2026/10/5',
+      item: '土鸡',
+      status: '一致',
+      expected: 5,
+      actual: 5,
+      difference: 0,
+      quantityAny: false,
+      supplier: '海纳水产',
+      remark: '',
+      coreUnit: '只',
+      targetUnit: '只',
+      bigSeries: '肉食禽蛋海鲜'
+    },
+    // 2026/10/6：包含 1 个差异项（多了）和 1 个一致项
+    {
+      date: '2026/10/6',
+      item: '生菜',
+      status: '多了',
+      expected: 15,
+      actual: 20,
+      difference: 5,
+      quantityAny: false,
+      supplier: '绿源蔬菜',
+      remark: '',
+      coreUnit: 'kg',
+      targetUnit: 'kg',
+      bigSeries: '蔬菜'
+    },
+    {
+      date: '2026/10/6',
+      item: '西红柿',
+      status: '一致',
+      expected: 8,
+      actual: 8,
+      difference: 0,
+      quantityAny: false,
+      supplier: '绿源蔬菜',
+      remark: '',
+      coreUnit: 'kg',
+      targetUnit: 'kg',
+      bigSeries: '蔬菜'
+    }
+  ];
+
+  // 执行渲染
+  ctx.renderComparisonGroups(comparisonDataWithDiff);
+  const container = ctx.document.getElementById('comparison-group-view');
+  assert.ok(container.innerHTML.length > 0, 'Comparison container should have rendered HTML');
+
+  // 1. 验证顶部每日差异汇总表
+  assert.ok(container.innerHTML.includes('每日差异汇总表（仅显示差异）'), 'Must contain top summary table title');
+  assert.ok(container.innerHTML.includes('共 2 项差异'), 'Top summary must indicate 2 discrepancies in total');
+  assert.ok(container.innerHTML.includes('comparison-summary-card'), 'Must render summary card container');
+  
+  // 顶部差异汇总表必须只展示差异项（草鱼、生菜），不应将一致项（土鸡、西红柿）混在差异表中
+  // 截取顶部差异汇总卡片的 HTML 范围
+  const summaryCardEndIdx = container.innerHTML.indexOf('每日全量核对明细（差异与一致完整数据）');
+  assert.ok(summaryCardEndIdx > 0, 'Bottom full detail section header must be present');
+  const summaryPartHtml = container.innerHTML.slice(0, summaryCardEndIdx);
+
+  assert.ok(summaryPartHtml.includes('草鱼'), 'Discrepancy item 草鱼 must be in top difference summary');
+  assert.ok(summaryPartHtml.includes('生菜'), 'Discrepancy item 生菜 must be in top difference summary');
+  assert.ok(!summaryPartHtml.includes('土鸡'), 'Matching item 土鸡 must NOT appear in top difference summary');
+  assert.ok(!summaryPartHtml.includes('西红柿'), 'Matching item 西红柿 must NOT appear in top difference summary');
+
+  // 2. 验证下方每日全量核对明细表（原每日表，包含差异与一致）
+  const detailPartHtml = container.innerHTML.slice(summaryCardEndIdx);
+  assert.ok(detailPartHtml.includes('全部展开'), 'Must have Expand All button');
+  assert.ok(detailPartHtml.includes('全部折叠'), 'Must have Collapse All button');
+  assert.ok(detailPartHtml.includes('DATE：2026/10/5'), 'Must render 2026/10/5 daily card');
+  assert.ok(detailPartHtml.includes('DATE：2026/10/6'), 'Must render 2026/10/6 daily card');
+
+  // 下方明细中同时包含差异和一致的全部项目
+  assert.ok(detailPartHtml.includes('草鱼') && detailPartHtml.includes('土鸡'), '2026/10/5 must contain both 草鱼 and 土鸡');
+  assert.ok(detailPartHtml.includes('生菜') && detailPartHtml.includes('西红柿'), '2026/10/6 must contain both 生菜 and 西红柿');
+
+  // 3. 验证默认折叠行为（保持页面整洁）
+  // 查找 daily cards 的 body 是否默认带有 hidden 类
+  assert.ok(detailPartHtml.includes('comparison-card-body hidden'), 'Daily detail tables must default to collapsed (hidden)');
+  assert.ok(detailPartHtml.includes('展开'), 'Toggle button must default to "展开" text');
+
+  // 4. 验证当所有数据全量一致时（0项差异）
+  const comparisonDataAllMatch = [
+    {
+      date: '2026/10/5',
+      item: '土鸡',
+      status: '一致',
+      expected: 5,
+      actual: 5,
+      difference: 0,
+      quantityAny: false,
+      supplier: '海纳水产',
+      remark: '',
+      coreUnit: '只',
+      targetUnit: '只',
+      bigSeries: '肉食禽蛋海鲜'
+    }
+  ];
+  ctx.renderComparisonGroups(comparisonDataAllMatch);
+  assert.ok(container.innerHTML.includes('所有日期核验均一致，无任何差异！'), 'Should display friendly zero-difference message when all match');
+});
+
 
 
 
