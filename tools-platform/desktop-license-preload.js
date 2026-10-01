@@ -11,5 +11,15 @@ contextBridge.exposeInMainWorld('DesktopLicense', {
             }
         } catch (_) {}
         return '';
+    },
+    onProgress: (callback) => {
+        if (typeof callback !== 'function') return () => {};
+        const handler = (_event, data) => callback(data);
+        ipcRenderer.on('desktop-license:progress', handler);
+        return () => {
+            try {
+                ipcRenderer.removeListener('desktop-license:progress', handler);
+            } catch (_) {}
+        };
     }
 });

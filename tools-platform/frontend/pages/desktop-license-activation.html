@@ -50,7 +50,7 @@
         radial-gradient(1200px circle at 50% -20%, rgba(37, 99, 235, 0.22) 0%, transparent 60%),
         radial-gradient(800px circle at 85% 90%, rgba(2, 132, 199, 0.14) 0%, transparent 55%),
         radial-gradient(600px circle at 15% 95%, rgba(99, 102, 241, 0.12) 0%, transparent 50%);
-      padding: 20px;
+      padding: 16px;
       user-select: none;
     }
 
@@ -61,7 +61,7 @@
       -webkit-backdrop-filter: blur(24px);
       border: 1px solid var(--card-border);
       border-radius: 20px;
-      padding: 30px 32px 26px;
+      padding: 26px 30px 22px;
       box-shadow:
         0 24px 60px -12px rgba(0, 0, 0, 0.8),
         0 0 0 1px rgba(255, 255, 255, 0.05),
@@ -87,7 +87,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 16px;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
 
     .brand-wrap {
@@ -118,7 +118,7 @@
     }
 
     .brand-text {
-      font-size: 17px;
+      font-size: 16.5px;
       font-weight: 700;
       letter-spacing: -0.01em;
       color: #f8fafc;
@@ -174,24 +174,24 @@
 
     /* Header Section */
     .header-section {
-      margin-bottom: 18px;
+      margin-bottom: 14px;
     }
 
     .title {
-      font-size: 21px;
+      font-size: 20px;
       font-weight: 700;
       letter-spacing: -0.02em;
       color: #ffffff;
-      margin-bottom: 6px;
+      margin-bottom: 5px;
       background: linear-gradient(180deg, #ffffff 40%, #cbd5e1 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
     .subtitle {
-      font-size: 13px;
+      font-size: 12.5px;
       color: var(--text-muted);
-      line-height: 1.55;
+      line-height: 1.5;
     }
 
     /* Alert / Status Bar */
@@ -199,11 +199,11 @@
       display: none;
       align-items: flex-start;
       gap: 10px;
-      padding: 11px 14px;
+      padding: 10px 13px;
       border-radius: 11px;
       font-size: 12.5px;
       line-height: 1.5;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
       animation: fadeIn 0.2s ease;
     }
 
@@ -246,16 +246,240 @@
       word-break: break-word;
     }
 
+    /* Progress Display Component */
+    .progress-card {
+      display: none;
+      background: rgba(11, 19, 35, 0.92);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 12px;
+      padding: 11px 13px 9px;
+      margin-bottom: 14px;
+      animation: fadeIn 0.25s ease;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    .progress-card.show {
+      display: block;
+    }
+
+    .progress-card.error {
+      border-color: rgba(239, 68, 68, 0.45);
+      background: rgba(239, 68, 68, 0.08);
+    }
+
+    .progress-card.success {
+      border-color: rgba(34, 197, 94, 0.45);
+      background: rgba(34, 197, 94, 0.08);
+    }
+
+    .progress-top-info {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .progress-status-title {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #e2e8f0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .progress-pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #38bdf8;
+      box-shadow: 0 0 8px #38bdf8;
+      flex-shrink: 0;
+      animation: pulseGlow 1.4s ease-in-out infinite;
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.6; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1.25); }
+    }
+
+    .progress-card.error .progress-pulse-dot {
+      background: #ef4444;
+      box-shadow: 0 0 8px #ef4444;
+      animation: none;
+    }
+
+    .progress-card.success .progress-pulse-dot {
+      background: #22c55e;
+      box-shadow: 0 0 8px #22c55e;
+      animation: none;
+    }
+
+    .progress-percent {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      font-weight: 700;
+      color: #38bdf8;
+      letter-spacing: -0.02em;
+    }
+
+    .progress-card.error .progress-percent {
+      color: #f87171;
+    }
+
+    .progress-card.success .progress-percent {
+      color: #4ade80;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 7px;
+      background: rgba(30, 41, 59, 0.9);
+      border-radius: 9999px;
+      overflow: hidden;
+      position: relative;
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      margin-bottom: 9px;
+    }
+
+    .progress-bar-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #0284c7 0%, #38bdf8 50%, #06b6d4 100%);
+      border-radius: 9999px;
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+    }
+
+    .progress-bar-fill::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+      animation: progressShimmer 1.5s infinite;
+    }
+
+    @keyframes progressShimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    .progress-card.error .progress-bar-fill {
+      background: linear-gradient(90deg, #dc2626 0%, #ef4444 100%);
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+    }
+
+    .progress-card.success .progress-bar-fill {
+      background: linear-gradient(90deg, #16a34a 0%, #22c55e 100%);
+      box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+    }
+
+    /* Milestone Steps */
+    .progress-milestones {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+    }
+
+    .milestone-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2.5px;
+      text-align: center;
+    }
+
+    .milestone-indicator {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #1e293b;
+      border: 1px solid #475569;
+      display: grid;
+      place-items: center;
+      transition: all 0.25s ease;
+    }
+
+    .milestone-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #64748b;
+      transition: all 0.25s ease;
+    }
+
+    .milestone-item.active .milestone-indicator {
+      border-color: #38bdf8;
+      background: rgba(56, 189, 248, 0.2);
+      box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+    }
+
+    .milestone-item.active .milestone-dot {
+      background: #38bdf8;
+      transform: scale(1.3);
+    }
+
+    .milestone-item.completed .milestone-indicator {
+      border-color: #22c55e;
+      background: #22c55e;
+      box-shadow: 0 0 6px rgba(34, 197, 94, 0.4);
+    }
+
+    .milestone-item.completed .milestone-dot {
+      background: #ffffff;
+      width: 5px;
+      height: 5px;
+    }
+
+    .milestone-item.failed .milestone-indicator {
+      border-color: #ef4444;
+      background: #ef4444;
+      box-shadow: 0 0 6px rgba(239, 68, 68, 0.4);
+    }
+
+    .milestone-item.failed .milestone-dot {
+      background: #ffffff;
+    }
+
+    .milestone-title {
+      font-size: 10.5px;
+      color: #64748b;
+      transition: color 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .milestone-item.active .milestone-title {
+      color: #38bdf8;
+      font-weight: 600;
+    }
+
+    .milestone-item.completed .milestone-title {
+      color: #94a3b8;
+    }
+
+    .milestone-item.failed .milestone-title {
+      color: #f87171;
+      font-weight: 600;
+    }
+
     /* Input Section */
     .input-section {
-      margin-bottom: 18px;
+      margin-bottom: 14px;
     }
 
     .input-meta-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       font-size: 12px;
     }
 
@@ -317,17 +541,17 @@
 
     textarea {
       width: 100%;
-      min-height: 112px;
-      max-height: 180px;
+      min-height: 98px;
+      max-height: 150px;
       resize: vertical;
       border: 1px solid var(--input-border);
       border-radius: 12px;
-      padding: 12px 14px;
+      padding: 10px 13px;
       background: var(--input-bg);
       color: #e2e8f0;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
       font-size: 12px;
-      line-height: 1.55;
+      line-height: 1.5;
       outline: none;
       transition: all 0.2s ease;
       box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
@@ -350,13 +574,13 @@
     .actions-bar {
       display: flex;
       gap: 12px;
-      margin-bottom: 18px;
+      margin-bottom: 15px;
     }
 
     button.btn {
       border: none;
       border-radius: 11px;
-      padding: 12px 20px;
+      padding: 11px 18px;
       font-size: 13.5px;
       font-weight: 600;
       cursor: pointer;
@@ -390,7 +614,7 @@
       color: #cbd5e1;
       background: #1e293b;
       border: 1px solid rgba(148, 163, 184, 0.16);
-      padding: 12px 18px;
+      padding: 11px 16px;
     }
 
     .btn-quit:hover {
@@ -424,13 +648,13 @@
 
     .busy {
       pointer-events: none;
-      opacity: 0.8;
+      opacity: 0.85;
     }
 
     /* Shortcuts and Meta Footer */
     .footer-section {
       border-top: 1px solid rgba(148, 163, 184, 0.12);
-      padding-top: 14px;
+      padding-top: 12px;
     }
 
     .feature-pills {
@@ -438,8 +662,8 @@
       align-items: center;
       justify-content: center;
       flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 10px;
+      gap: 7px;
+      margin-bottom: 8px;
     }
 
     .pill {
@@ -447,7 +671,7 @@
       color: var(--text-dim);
       background: rgba(15, 23, 42, 0.6);
       border: 1px solid rgba(148, 163, 184, 0.12);
-      padding: 3px 9px;
+      padding: 2.5px 8.5px;
       border-radius: 9999px;
       display: inline-flex;
       align-items: center;
@@ -473,7 +697,7 @@
       font-size: 11px;
       color: #475569;
       text-align: center;
-      margin-top: 5px;
+      margin-top: 4px;
     }
 
     .shortcut-hints kbd {
@@ -558,6 +782,38 @@
       </div>
     </section>
 
+    <!-- Progress Card Component -->
+    <div id="progress-card" class="progress-card" aria-live="polite">
+      <div class="progress-top-info">
+        <div class="progress-status-title">
+          <span class="progress-pulse-dot" id="progress-pulse-dot"></span>
+          <span id="progress-stage-desc">准备开始验证…</span>
+        </div>
+        <span id="progress-percent" class="progress-percent">0%</span>
+      </div>
+      <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div id="progress-bar-fill" class="progress-bar-fill"></div>
+      </div>
+      <div class="progress-milestones">
+        <div class="milestone-item" id="step-1">
+          <div class="milestone-indicator"><span class="milestone-dot"></span></div>
+          <span class="milestone-title" id="step-1-title">格式解析</span>
+        </div>
+        <div class="milestone-item" id="step-2">
+          <div class="milestone-indicator"><span class="milestone-dot"></span></div>
+          <span class="milestone-title" id="step-2-title">签名验签</span>
+        </div>
+        <div class="milestone-item" id="step-3">
+          <div class="milestone-indicator"><span class="milestone-dot"></span></div>
+          <span class="milestone-title" id="step-3-title">状态核查</span>
+        </div>
+        <div class="milestone-item" id="step-4">
+          <div class="milestone-indicator"><span class="milestone-dot"></span></div>
+          <span class="milestone-title" id="step-4-title">激活完成</span>
+        </div>
+      </div>
+    </div>
+
     <!-- Action Buttons -->
     <div class="actions-bar">
       <button type="button" id="btn-activate" class="btn btn-activate">
@@ -623,6 +879,22 @@
           failedPrefix: '授权失败：',
           successPrefix: '授权成功！正在启动主程序…',
           clipboardEmpty: '剪贴板为空或未包含有效文本',
+          steps: {
+            step1: '格式解析',
+            step2: '签名验签',
+            step3: '状态核查',
+            step4: '激活完成'
+          },
+          stages: {
+            START: '准备开始验证密钥…',
+            PARSE_TOKEN: '正在解析密钥格式与数据结构 (25%)…',
+            CHECK_SIGNATURE: '正在校验数字签名与产品授权 (50%)…',
+            CONNECT_SERVER: '正在连接授权服务器进行在线核查 (75%)…',
+            OFFLINE_VERIFY: '网络离线，正在执行本地离线签名核验 (85%)…',
+            FINALIZE: '授权校验通过，正在保存凭证 (100%)…',
+            SUCCESS: '授权验证成功！正在启动主程序…',
+            FAILED: '授权验证未通过'
+          },
           reasons: {
             LICENSE_REQUIRED: '需要输入 License 许可证密钥',
             INVALID_FORMAT: '密钥格式无效，请确认已完整复制（包含 DSKL1 前缀）',
@@ -664,6 +936,22 @@
           failedPrefix: 'Activation failed: ',
           successPrefix: 'License verified successfully! Starting application…',
           clipboardEmpty: 'Clipboard is empty or does not contain valid text',
+          steps: {
+            step1: 'Format',
+            step2: 'Signature',
+            step3: 'Verification',
+            step4: 'Activation'
+          },
+          stages: {
+            START: 'Preparing verification…',
+            PARSE_TOKEN: 'Parsing license format and data structure (25%)…',
+            CHECK_SIGNATURE: 'Verifying digital signature & product ID (50%)…',
+            CONNECT_SERVER: 'Connecting to license server for verification (75%)…',
+            OFFLINE_VERIFY: 'Network offline, verifying offline signed token (85%)…',
+            FINALIZE: 'License verified! Synchronizing security voucher (100%)…',
+            SUCCESS: 'License activated successfully! Starting application…',
+            FAILED: 'License verification failed'
+          },
           reasons: {
             LICENSE_REQUIRED: 'License key is required',
             INVALID_FORMAT: 'Invalid key format. Please ensure you copied the complete key with DSKL1 prefix',
@@ -722,8 +1010,24 @@
         btnPaste: document.getElementById('btn-paste'),
         btnClear: document.getElementById('btn-clear'),
         btnActivate: document.getElementById('btn-activate'),
-        btnQuit: document.getElementById('btn-quit')
+        btnQuit: document.getElementById('btn-quit'),
+        // Progress elements
+        progressCard: document.getElementById('progress-card'),
+        progressStageDesc: document.getElementById('progress-stage-desc'),
+        progressPercent: document.getElementById('progress-percent'),
+        progressBarFill: document.getElementById('progress-bar-fill'),
+        step1: document.getElementById('step-1'),
+        step2: document.getElementById('step-2'),
+        step3: document.getElementById('step-3'),
+        step4: document.getElementById('step-4'),
+        step1Title: document.getElementById('step-1-title'),
+        step2Title: document.getElementById('step-2-title'),
+        step3Title: document.getElementById('step-3-title'),
+        step4Title: document.getElementById('step-4-title')
       };
+
+      let currentStageName = 'START';
+      let currentProgressPercent = 0;
 
       function updateLanguage(lang) {
         currentLang = lang;
@@ -750,12 +1054,69 @@
         elements.metaNote.textContent = t.metaNote;
         elements.shortcutHints.innerHTML = t.shortcuts;
 
+        // Step titles
+        elements.step1Title.textContent = t.steps.step1;
+        elements.step2Title.textContent = t.steps.step2;
+        elements.step3Title.textContent = t.steps.step3;
+        elements.step4Title.textContent = t.steps.step4;
+
+        // If progress is active, re-translate stage description
+        if (elements.progressCard.classList.contains('show')) {
+          elements.progressStageDesc.textContent = t.stages[currentStageName] || currentStageName;
+        }
+
         // If status is currently displayed with a reason code, re-translate it
         if (elements.statusBox.dataset.lastReasonCode) {
           const code = elements.statusBox.dataset.lastReasonCode;
           const translated = t.reasons[code] || code;
           elements.statusText.textContent = `${t.failedPrefix}${translated}`;
         }
+      }
+
+      function updateProgress(stage, percent, isError = false) {
+        currentStageName = stage;
+        currentProgressPercent = Math.max(0, Math.min(100, Number(percent) || 0));
+
+        elements.progressCard.classList.add('show');
+        elements.progressCard.classList.toggle('error', isError);
+        elements.progressCard.classList.toggle('success', !isError && currentProgressPercent >= 100);
+
+        const t = I18N[currentLang];
+        elements.progressStageDesc.textContent = t.stages[stage] || stage;
+        elements.progressPercent.textContent = `${currentProgressPercent}%`;
+        elements.progressBarFill.style.width = `${currentProgressPercent}%`;
+
+        // Update milestone states
+        const stepItems = [elements.step1, elements.step2, elements.step3, elements.step4];
+        const stepThresholds = [25, 50, 75, 100];
+
+        stepItems.forEach((item, index) => {
+          const thresh = stepThresholds[index];
+          item.classList.remove('active', 'completed', 'failed');
+
+          if (isError) {
+            if (currentProgressPercent >= thresh) {
+              item.classList.add('completed');
+            } else if (index === 0 || currentProgressPercent >= stepThresholds[index - 1]) {
+              item.classList.add('failed');
+            }
+          } else {
+            if (currentProgressPercent >= thresh) {
+              item.classList.add('completed');
+            } else if (index === 0 || currentProgressPercent >= stepThresholds[index - 1]) {
+              item.classList.add('active');
+            }
+          }
+        });
+      }
+
+      function hideProgress() {
+        elements.progressCard.className = 'progress-card';
+        elements.progressBarFill.style.width = '0%';
+        elements.progressPercent.textContent = '0%';
+        [elements.step1, elements.step2, elements.step3, elements.step4].forEach(item => {
+          item.classList.remove('active', 'completed', 'failed');
+        });
       }
 
       function showStatus(message, type = 'error', reasonCode = '') {
@@ -817,6 +1178,7 @@
         elements.licenseToken.value = '';
         elements.licenseToken.focus();
         hideStatus();
+        hideProgress();
       }
 
       async function doActivate() {
@@ -824,6 +1186,7 @@
         const t = I18N[currentLang];
 
         if (!token) {
+          hideProgress();
           showStatus(t.required, 'error');
           elements.licenseToken.focus();
           return;
@@ -831,20 +1194,26 @@
 
         document.body.classList.add('busy');
         elements.btnActivateText.textContent = t.activateBtnBusy;
-        showStatus(t.checking, 'info');
+        hideStatus();
+
+        // Initialize progress
+        updateProgress('START', 15);
 
         try {
           const result = await window.DesktopLicense.activate(token);
           if (result && result.valid) {
+            updateProgress('SUCCESS', 100);
             showStatus(t.successPrefix, 'success');
             // electron-main will automatically close this window upon valid activation
           } else {
             const reasonCode = result && result.reasonCode ? result.reasonCode : 'VERIFICATION_FAILED';
             const reasonMsg = t.reasons[reasonCode] || reasonCode;
+            updateProgress('FAILED', Math.max(currentProgressPercent, 35), true);
             showStatus(`${t.failedPrefix}${reasonMsg}`, 'error', reasonCode);
           }
         } catch (err) {
           const errMsg = err && err.message ? err.message : String(err || t.reasons.UNKNOWN_ERROR);
+          updateProgress('FAILED', Math.max(currentProgressPercent, 35), true);
           showStatus(`${t.failedPrefix}${errMsg}`, 'error');
         } finally {
           document.body.classList.remove('busy');
@@ -867,6 +1236,15 @@
       elements.btnClear.addEventListener('click', doClear);
       elements.btnActivate.addEventListener('click', doActivate);
       elements.btnQuit.addEventListener('click', doQuit);
+
+      // Listen to progress events from electron main process
+      if (window.DesktopLicense && typeof window.DesktopLicense.onProgress === 'function') {
+        window.DesktopLicense.onProgress((data) => {
+          if (data && data.stage) {
+            updateProgress(data.stage, data.percent);
+          }
+        });
+      }
 
       // Keyboard shortcuts
       window.addEventListener('keydown', (e) => {

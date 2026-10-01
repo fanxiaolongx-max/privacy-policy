@@ -8,7 +8,7 @@ const root = path.resolve(__dirname, '..');
 const htmlPath = path.join(root, 'frontend/pages/desktop-license-activation.html');
 const html = fs.readFileSync(htmlPath, 'utf8');
 
-test('License Activation Page: HTML markup contains complete bilingual elements and tools', () => {
+test('License Activation Page: HTML markup contains complete bilingual elements and progress bar', () => {
     // Top bar & Language buttons
     assert.match(html, /id="lang-btn-zh"/);
     assert.match(html, /id="lang-btn-en"/);
@@ -22,6 +22,16 @@ test('License Activation Page: HTML markup contains complete bilingual elements 
     assert.match(html, /id="license-token"/);
     assert.match(html, /id="btn-paste"/);
     assert.match(html, /id="btn-clear"/);
+
+    // Progress card elements
+    assert.match(html, /id="progress-card"/);
+    assert.match(html, /id="progress-stage-desc"/);
+    assert.match(html, /id="progress-percent"/);
+    assert.match(html, /id="progress-bar-fill"/);
+    assert.match(html, /id="step-1"/);
+    assert.match(html, /id="step-2"/);
+    assert.match(html, /id="step-3"/);
+    assert.match(html, /id="step-4"/);
 
     // Action buttons
     assert.match(html, /id="btn-activate"/);
@@ -39,7 +49,7 @@ test('License Activation Page: HTML markup contains complete bilingual elements 
     assert.match(html, /id="shortcut-hints"/);
 });
 
-test('License Activation Page: Inline script is syntactically valid and executes with bilingual switching', () => {
+test('License Activation Page: Inline script is syntactically valid and executes with bilingual switching and progress tracking', async () => {
     const scriptMatch = html.match(/<script>([\s\S]*?)<\/script>/);
     assert.ok(scriptMatch, 'Inline script must exist');
     const script = scriptMatch[1];
@@ -69,12 +79,14 @@ test('License Activation Page: Inline script is syntactically valid and executes
             placeholder: '',
             className: '',
             dataset: {},
+            style: {},
             classList: {
                 toggle: function (cls, val) {
-                    this[cls] = val;
+                    this[cls] = Boolean(val);
                 },
                 add: function (cls) { this[cls] = true; },
-                remove: function (cls) { this[cls] = false; }
+                remove: function (cls) { this[cls] = false; },
+                contains: function (cls) { return Boolean(this[cls]); }
             },
             addEventListener: function (evt, handler) {
                 if (!listeners[id]) listeners[id] = {};
@@ -90,7 +102,10 @@ test('License Activation Page: Inline script is syntactically valid and executes
         'pill-signature', 'pill-offline', 'pill-security', 'meta-note',
         'shortcut-hints', 'status-box', 'status-icon', 'status-text',
         'lang-btn-zh', 'lang-btn-en', 'btn-paste', 'btn-clear',
-        'btn-activate', 'btn-quit'
+        'btn-activate', 'btn-quit',
+        'progress-card', 'progress-stage-desc', 'progress-percent', 'progress-bar-fill',
+        'step-1', 'step-2', 'step-3', 'step-4',
+        'step-1-title', 'step-2-title', 'step-3-title', 'step-4-title'
     ];
 
     elementIds.forEach(id => {
@@ -100,6 +115,7 @@ test('License Activation Page: Inline script is syntactically valid and executes
     const windowListeners = {};
     let quitCalled = false;
     let activatedToken = null;
+    let progressCallback = null;
 
     const context = {
         console,
@@ -117,9 +133,19 @@ test('License Activation Page: Inline script is syntactically valid and executes
             addEventListener: (evt, handler) => { windowListeners[evt] = handler; },
             DesktopLicense: {
                 getState: async () => ({ valid: false, reasonCode: 'LICENSE_REQUIRED' }),
-                activate: async (tok) => { activatedToken = tok; return { valid: true }; },
+                activate: async (tok) => {
+                    activatedToken = tok;
+                    if (progressCallback) {
+                        progressCallback({ stage: 'PARSE_TOKEN', percent: 25 });
+                        progressCallback({ stage: 'CHECK_SIGNATURE', percent: 50 });
+                        progressCallback({ stage: 'CONNECT_SERVER', percent: 75 });
+                        progressCallback({ stage: 'FINALIZE', percent: 100 });
+                    }
+                    return { valid: true };
+                },
                 quit: () => { quitCalled = true; },
-                readClipboard: () => 'DSKL1.test.signature'
+                readClipboard: () => 'DSKL1.test.signature',
+                onProgress: (cb) => { progressCallback = cb; }
             }
         },
         localStorage: storageMock,
@@ -134,6 +160,8 @@ test('License Activation Page: Inline script is syntactically valid and executes
     // 1. Initial Chinese mode check
     assert.equal(dom.documentElement.lang, 'zh-CN');
     assert.equal(dom.elements['title'].textContent, '首次运行授权激活');
+    assert.equal(dom.elements['step-1-title'].textContent, '格式解析');
+    assert.equal(dom.elements['step-2-title'].textContent, '签名验签');
     assert.equal(dom.elements['btn-activate-text'].textContent, '验证并启动（支持离线）');
     assert.match(dom.title, /Tools Platform - 软件授权激活/);
 
@@ -143,16 +171,20 @@ test('License Activation Page: Inline script is syntactically valid and executes
 
     assert.equal(dom.documentElement.lang, 'en');
     assert.equal(dom.elements['title'].textContent, 'First-Run License Activation');
+    assert.equal(dom.elements['step-1-title'].textContent, 'Format');
+    assert.equal(dom.elements['step-2-title'].textContent, 'Signature');
+    assert.equal(dom.elements['step-3-title'].textContent, 'Verification');
+    assert.equal(dom.elements['step-4-title'].textContent, 'Activation');
     assert.equal(dom.elements['btn-activate-text'].textContent, 'Verify & Launch (Offline Supported)');
     assert.equal(dom.elements['btn-quit-text'].textContent, 'Quit');
     assert.match(dom.elements['license-token'].placeholder, /Paste your complete license key/);
     assert.match(dom.title, /Tools Platform - License Activation/);
-    assert.equal(storageMock.getItem('tools_license_lang'), 'en', 'Language preference should be saved in localStorage');
+    assert.equal(storageMock.getItem('tools_license_lang'), 'en');
 
     // 3. Switch back to Chinese
     listeners['lang-btn-zh']['click']();
     assert.equal(dom.documentElement.lang, 'zh-CN');
-    assert.equal(dom.elements['title'].textContent, '首次运行授权激活');
+    assert.equal(dom.elements['step-1-title'].textContent, '格式解析');
     assert.equal(storageMock.getItem('tools_license_lang'), 'zh');
 
     // 4. Test Clipboard Paste functionality
@@ -160,18 +192,29 @@ test('License Activation Page: Inline script is syntactically valid and executes
     listeners['btn-paste']['click']();
     assert.equal(dom.elements['license-token'].value, 'DSKL1.test.signature');
 
-    // 5. Test Clear functionality
+    // 5. Test Activation and Progress tracking
+    assert.ok(listeners['btn-activate'] && listeners['btn-activate']['click']);
+    await listeners['btn-activate']['click']();
+
+    assert.equal(activatedToken, 'DSKL1.test.signature');
+    assert.equal(dom.elements['progress-card'].classList.contains('show'), true, 'Progress card should be displayed during activation');
+    assert.equal(dom.elements['progress-percent'].textContent, '100%');
+    assert.equal(dom.elements['progress-bar-fill'].style.width, '100%');
+    assert.match(dom.elements['progress-stage-desc'].textContent, /授权验证成功/);
+
+    // 6. Test Clear functionality resets progress
     assert.ok(listeners['btn-clear'] && listeners['btn-clear']['click']);
     listeners['btn-clear']['click']();
     assert.equal(dom.elements['license-token'].value, '');
+    assert.equal(dom.elements['progress-card'].className, 'progress-card', 'Progress card should be reset on clear');
 
-    // 6. Test Quit button
+    // 7. Test Quit button
     assert.ok(listeners['btn-quit'] && listeners['btn-quit']['click']);
     listeners['btn-quit']['click']();
     assert.equal(quitCalled, true, 'DesktopLicense.quit should be called on quit button click');
 });
 
-test('License Activation Page: Preload exposes readClipboard, getState, activate, and quit', () => {
+test('License Activation Page: Preload exposes readClipboard, getState, activate, quit, and onProgress', () => {
     const preloadPath = path.join(root, 'desktop-license-preload.js');
     const preloadCode = fs.readFileSync(preloadPath, 'utf8');
 
@@ -180,4 +223,41 @@ test('License Activation Page: Preload exposes readClipboard, getState, activate
     assert.match(preloadCode, /activate:/);
     assert.match(preloadCode, /quit:/);
     assert.match(preloadCode, /readClipboard:/);
+    assert.match(preloadCode, /onProgress:/);
+});
+
+test('Desktop License Client: validate reports progress stages to callback', async () => {
+    const { createDesktopLicenseClient } = require('../desktop-license-client');
+    const os = require('os');
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'license-progress-test-'));
+    const authority = require('../backend/models/desktop-license-authority');
+
+    const configPath = path.join(tempDir, 'config.json');
+    fs.writeFileSync(configPath, JSON.stringify({
+        version: 1,
+        productId: 'tools-platform-desktop',
+        validationUrl: 'http://127.0.0.1:9999/validate',
+        publicKeyJwk: authority.getPublicKeyJwk()
+    }));
+
+    const client = createDesktopLicenseClient({
+        configPath,
+        statePath: path.join(tempDir, 'state.json'),
+        publicStatusPath: path.join(tempDir, 'status.json')
+    });
+
+    const issued = authority.issue({ label: '测试进度报告', days: 30 });
+    const stages = [];
+
+    const result = await client.validate(issued.token, {
+        onProgress: (p) => {
+            stages.push(p.stage);
+        }
+    });
+
+    assert.equal(result.valid, true);
+    assert.ok(stages.includes('PARSE_TOKEN'), 'Should report PARSE_TOKEN');
+    assert.ok(stages.includes('CHECK_SIGNATURE'), 'Should report CHECK_SIGNATURE');
+    assert.ok(stages.includes('CONNECT_SERVER'), 'Should report CONNECT_SERVER');
+    assert.ok(stages.includes('FINALIZE'), 'Should report FINALIZE');
 });

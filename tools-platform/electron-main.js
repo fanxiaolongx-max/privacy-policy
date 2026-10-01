@@ -199,14 +199,25 @@ async function ensureDesktopLicense() {
 
 function registerDesktopLicenseIpcHandlers() {
     ipcMain.handle('desktop-license:get-state', () => desktopLicenseStatus);
-    ipcMain.handle('desktop-license:activate', async (_event, rawToken) => {
+    ipcMain.handle('desktop-license:activate', async (event, rawToken) => {
         const token = String(rawToken || '').trim();
-        desktopLicenseStatus = await desktopLicenseClient.validate(token, { requireOnline: true });
+        desktopLicenseStatus = await desktopLicenseClient.validate(token, {
+            requireOnline: true,
+            onProgress: (progress) => {
+                try {
+                    if (event && event.sender && !event.sender.isDestroyed()) {
+                        event.sender.send('desktop-license:progress', progress);
+                    }
+                } catch (_) {}
+            }
+        });
         if (desktopLicenseStatus.valid) {
             const resolve = licenseActivationResolve;
             licenseActivationResolve = null;
-            if (licenseWindow && !licenseWindow.isDestroyed()) licenseWindow.close();
-            if (resolve) resolve(true);
+            setTimeout(() => {
+                if (licenseWindow && !licenseWindow.isDestroyed()) licenseWindow.close();
+                if (resolve) resolve(true);
+            }, 500);
         }
         return desktopLicenseStatus;
     });

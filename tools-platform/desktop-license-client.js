@@ -227,16 +227,37 @@ function createDesktopLicenseClient({ configPath, statePath, publicStatusPath })
         });
     }
 
-    async function validate(token, { requireOnline = false } = {}) {
+    async function validate(token, { requireOnline = false, onProgress = null } = {}) {
+        const report = (stage, percent) => {
+            if (typeof onProgress === 'function') {
+                try { onProgress({ stage, percent }); } catch (_) {}
+            }
+        };
+
+        report('PARSE_TOKEN', 25);
         const inspected = inspectToken(token);
         if (!inspected.valid) return publish({ valid: false, reasonCode: inspected.reasonCode });
+
+        report('CHECK_SIGNATURE', 50);
+
         try {
-            return await online(token);
+            report('CONNECT_SERVER', 75);
+            const onlineResult = await online(token);
+            if (onlineResult && onlineResult.valid) {
+                report('FINALIZE', 100);
+            }
+            return onlineResult;
         } catch (_) {
-            if (inspected.locallyVerifiable) return offlineSignedToken(token, inspected.payload);
-            return requireOnline
-                ? publish({ valid: false, reasonCode: 'ONLINE_REQUIRED' })
-                : offlineAttestation(token);
+            report('OFFLINE_VERIFY', 85);
+            const fallbackResult = inspected.locallyVerifiable
+                ? offlineSignedToken(token, inspected.payload)
+                : (requireOnline
+                    ? publish({ valid: false, reasonCode: 'ONLINE_REQUIRED' })
+                    : offlineAttestation(token));
+            if (fallbackResult && fallbackResult.valid) {
+                report('FINALIZE', 100);
+            }
+            return fallbackResult;
         }
     }
 
