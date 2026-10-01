@@ -10,7 +10,7 @@ const sandbox = fs.mkdtempSync(path.join(os.tmpdir(), 'reward-program-'));
 process.env.TOOLS_DATA_DIR = path.join(sandbox, 'data');
 process.env.TOOLS_REPORT_DATA_DIR = path.join(sandbox, 'reports');
 const db = require('../backend/models/app-db');
-const { runWithTenant } = require('../backend/models/tenant-context');
+const { runWithTenant, getDataDir } = require('../backend/models/tenant-context');
 const core = require('../backend/models/reward-program-core');
 const repo = require('../backend/models/reward-program-repository');
 const router = require('../backend/routes/reward-program');
@@ -21,8 +21,9 @@ function app() {
     server.use(express.json());
     server.use((req, _res, next) => {
         const role = req.headers['x-role'] || 'user';
-        req.user = { username: req.headers['x-user'] || (role === 'admin' ? 'admin' : 'alice'), role };
-        runWithTenant(req.headers['x-tenant'] || 'reward-a', next);
+        const tenantId = req.headers['x-tenant'] || 'reward-a';
+        req.user = { username: req.headers['x-user'] || (role === 'admin' ? 'admin' : 'alice'), role, tenantId };
+        runWithTenant(tenantId, next);
     });
     server.use('/api/reward-program', router);
     return server;
@@ -242,6 +243,73 @@ test('rules support CNY currency, creation, deletion by admin, and usage isolati
     await request(server).delete(`${base}/rules/${defaultRuleId}`).set(admin).expect(200);
     const afterDefaultDel = (await request(server).get(base).expect(200)).body;
     assert(!afterDefaultDel.rules.some(r => r.id === defaultRuleId));
+});
+
+test('archived applications can be permanently deleted by admin, including evidence files and batch clearing', async () => {
+    const server = app(), base = '/api/reward-program', admin = { 'x-role': 'admin' };
+
+    // 1. Upload evidence file
+    const uploadRes = await request(server)
+        .post(`${base}/evidence`)
+        .attach('file', Buffer.from('test-evidence-content'), 'archived-evidence.pdf')
+        .expect(200);
+    const attachmentPath = uploadRes.body.path;
+    const attachmentFilename = path.basename(attachmentPath);
+
+    // Verify attachment file exists on disk
+    const tenantDir = path.join(getDataDir('reward-a'), 'reward-program-evidence');
+    assert.equal(fs.existsSync(path.join(tenantDir, attachmentFilename)), true);
+
+    // 2. Create application with evidence and publish then archive
+    const payload = {
+        category: 'bounty',
+        ruleId: 'bounty-project',
+        title: '归档删除测试项目',
+        summary: '用于测试彻底删除已归档记录',
+        projectName: '埃及5G工程交付',
+        totalAmountMinor: 10000,
+        attachments: [attachmentPath],
+        teams: [{ name: '交付组', mode: 'amount', amountMinor: 10000, members: [{ name: '张三', mode: 'amount', amountMinor: 10000 }] }]
+    };
+    const draft = (await request(server).post(`${base}/applications`).send(payload).expect(201)).body;
+    await request(server).post(`${base}/applications/${draft.id}/publish`).send({ ...payload, revision: 1 }).expect(200);
+    const archived = (await request(server).post(`${base}/applications/${draft.id}/archive`).set(admin).send({ revision: 2 }).expect(200)).body;
+    assert.equal(archived.status, 'archived');
+
+    // 3. Non-admin cannot delete archived record
+    await request(server).delete(`${base}/applications/${draft.id}`).expect(403);
+
+    // 4. Admin permanently deletes archived record
+    const delRes = (await request(server).delete(`${base}/applications/${draft.id}`).set(admin).expect(200)).body;
+    assert.equal(delRes.deleted, true);
+
+    // 5. Verify record and events are completely deleted from DB
+    await request(server).get(`${base}/applications/${draft.id}/events`).expect(404);
+    const listRes = (await request(server).get(base).expect(200)).body;
+    assert.equal(listRes.applications.some(a => a.id === draft.id), false);
+
+    // 6. Verify evidence attachment file is removed from disk
+    assert.equal(fs.existsSync(path.join(tenantDir, attachmentFilename)), false);
+
+    // 7. Test batch clear archived records
+    const draftA = (await request(server).post(`${base}/applications`).send({ ...payload, title: '归档批量删除A' }).expect(201)).body;
+    const draftB = (await request(server).post(`${base}/applications`).send({ ...payload, title: '归档批量删除B' }).expect(201)).body;
+    await request(server).post(`${base}/applications/${draftA.id}/publish`).send({ ...payload, title: '归档批量删除A', revision: 1 }).expect(200);
+    await request(server).post(`${base}/applications/${draftB.id}/publish`).send({ ...payload, title: '归档批量删除B', revision: 1 }).expect(200);
+    await request(server).post(`${base}/applications/${draftA.id}/archive`).set(admin).send({ revision: 2 }).expect(200);
+    await request(server).post(`${base}/applications/${draftB.id}/archive`).set(admin).send({ revision: 2 }).expect(200);
+
+    // Non-admin cannot batch clear
+    await request(server).delete(`${base}/archived`).expect(403);
+
+    // Admin batch clears archived records
+    const clearRes = (await request(server).delete(`${base}/archived?category=bounty`).set(admin).expect(200)).body;
+    assert.equal(clearRes.success, true);
+    assert.ok(clearRes.count >= 2);
+
+    // Verify all archived bounty records are cleared
+    const afterClearList = (await request(server).get(base).expect(200)).body;
+    assert.equal(afterClearList.applications.some(a => a.status === 'archived' && a.category === 'bounty'), false);
 });
 
 

@@ -97,7 +97,7 @@ test('SLARowDetail client-side logic tests', async t => {
             rectification: {
                 mode: 'rectification',
                 title: '🔧 整改详单合集',
-                orderedHeaders: ['task_id', 'task_status', 'task_owner', 'empty_col_1', 'empty_col_2', 'plan_date'],
+                orderedHeaders: ['task_id', 'task_status', 'task_owner', 'empty_col_1', 'empty_col_2', 'plan_date', 'source_name'],
                 currentDisplayData: [
                     {
                         task_id: 'RECT-2026-001',
@@ -106,6 +106,7 @@ test('SLARowDetail client-side logic tests', async t => {
                         empty_col_1: '',
                         empty_col_2: null,
                         plan_date: '2026-10-30',
+                        source_name: '  Orange E\n  Egypt for Telecommunications  ',
                         _slaText: '超期 3 天',
                         _rowClass: 'danger-row'
                     }
@@ -153,4 +154,6 @@ test('SLARowDetail client-side logic tests', async t => {
     assert.ok(bodyEl.innerHTML.includes('RECT-2026-001'), 'Modal body should render row values');
     assert.ok(bodyEl.innerHTML.includes('⭐ 常用 (11次)'), 'Frequent field should display star and copy count');
     assert.ok(!bodyEl.innerHTML.includes('empty_col_1'), 'Empty fields should be automatically hidden by default');
+    assert.ok(bodyEl.innerHTML.includes('>Orange E Egypt for Telecommunications</div>'), 'Imported whitespace should be compact in the detail view');
+    assert.equal(mockWindow.AppState.rectification.currentDisplayData[0].source_name, '  Orange E\n  Egypt for Telecommunications  ', 'Original value should remain available for copying');
 });

@@ -243,8 +243,8 @@
     ${licenseEnabled ? `<div id="expiryWarning" class="expiry-warning hidden"></div>` : ""}
     ${licenseEnabled ? `<section id="licensePanel" class="license-panel">
       <strong data-i18n="firstAuthorization">首次运行授权</strong>
-      <small data-i18n="licenseHint">请输入 Tools Platform 提供的本月 License 密钥。</small>
-      <textarea id="licenseInput" rows="4" placeholder="F12L1..."></textarea>
+      <small data-i18n="licenseHint">请输入 Tools Platform 提供的本月 License 密钥（样例格式形如 F12L1.eyJwcm9kdWN0SWQi...）。</small>
+      <textarea id="licenseInput" rows="4" placeholder="例如：F12L1.eyJwcm9kdWN0SWQi... (完整粘贴由句点分隔的三段式密钥)"></textarea>
       <button id="activateButton" class="license-button" data-i18n="activate">验证并授权</button>
     </section>` : ""}
     <button id="startButton" data-i18n="start">启动脚本</button>
@@ -287,7 +287,7 @@ const I18N = {
   zh: {
     openTarget: "请先打开目标网页",
     firstAuthorization: "首次运行授权",
-    licenseHint: "请输入 Tools Platform 提供的本月 License 密钥。",
+    licenseHint: "请输入 Tools Platform 提供的本月 License 密钥（样例格式形如 F12L1.eyJwcm9kdWN0SWQi...）。",
     activate: "验证并授权",
     start: "启动脚本",
     stop: "停止脚本",
@@ -318,7 +318,7 @@ const I18N = {
   en: {
     openTarget: "Please open the target page first",
     firstAuthorization: "First-time authorization",
-    licenseHint: "Enter the monthly License key provided by Tools Platform.",
+    licenseHint: "Enter the monthly License key provided by Tools Platform (e.g. F12L1.eyJwcm9kdWN0SWQi...).",
     activate: "Verify and activate",
     start: "Start script",
     stop: "Stop script",

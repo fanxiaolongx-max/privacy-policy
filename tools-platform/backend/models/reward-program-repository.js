@@ -71,11 +71,34 @@ async function remove(id, actor) {
     return withLock(async () => {
         const old = await application(id);
         if (!old) throw Object.assign(new Error('申请不存在'), { status: 404 });
-        if (old.status !== 'draft') throw Object.assign(new Error('只能删除草稿'), { status: 409 });
+        if (old.status !== 'draft' && old.status !== 'archived' && old.status !== 'completed') {
+            throw Object.assign(new Error('只能删除草稿或已归档记录'), { status: 409 });
+        }
         await run('DELETE FROM reward_program_applications WHERE id = ?', [id]);
         await run('DELETE FROM reward_program_events WHERE application_id = ?', [id]);
         await run('DELETE FROM reward_program_objections WHERE application_id = ?', [id]);
-        return { id, deleted: true };
+        return { id, deleted: true, status: old.status };
+    });
+}
+async function clearArchived(category) {
+    return withLock(async () => {
+        let sql = "SELECT * FROM reward_program_applications WHERE status IN ('archived', 'completed')";
+        const params = [];
+        if (category && category !== 'all') {
+            sql += ' AND category = ?';
+            params.push(category);
+        }
+        const rows = await all(sql, params);
+        if (!rows.length) return { count: 0, items: [] };
+
+        const ids = rows.map(r => r.id);
+        const placeholders = ids.map(() => '?').join(',');
+        await run(`DELETE FROM reward_program_applications WHERE id IN (${placeholders})`, ids);
+        await run(`DELETE FROM reward_program_events WHERE application_id IN (${placeholders})`, ids);
+        await run(`DELETE FROM reward_program_objections WHERE application_id IN (${placeholders})`, ids);
+
+        const items = rows.map(unpack);
+        return { count: ids.length, items };
     });
 }
 async function events(applicationId) {
@@ -146,4 +169,4 @@ async function resolveObjection(applicationId, objectionId, actor, resolution) {
         return { id: objectionId, status: 'resolved', resolution, resolvedBy: actor, resolvedAt: now };
     });
 }
-module.exports = { rules, saveRule, deleteRule, application, listApplications, events, objections, insert, update, remove, addObjection, resolveObjection };
+module.exports = { rules, saveRule, deleteRule, application, listApplications, events, objections, insert, update, remove, clearArchived, addObjection, resolveObjection };

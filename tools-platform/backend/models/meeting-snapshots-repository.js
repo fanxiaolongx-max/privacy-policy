@@ -1,4 +1,5 @@
 const { run, get, all, getDbPath } = require('./app-db');
+const { readKV, writeKV } = require('./kv-store');
 const { normalizeStaffId } = require('./staff-id-normalization');
 
 const initPromises = new Map();
@@ -1603,6 +1604,36 @@ async function extractRoster() {
     return converged.sort((a, b) => (a.staffId || a.id || '').localeCompare(b.staffId || b.id || ''));
 }
 
+const ROSTER_KV_CATEGORY = 'meeting_attendance';
+const ROSTER_KV_KEY = 'roster_settings';
+
+async function getRosterSettings() {
+    await ensureReady();
+    const defaultVal = {
+        mandatoryAttendees: [],
+        exemptions: [],
+        updatedAt: null
+    };
+    const settings = await readKV(ROSTER_KV_CATEGORY, ROSTER_KV_KEY, defaultVal);
+    return {
+        mandatoryAttendees: Array.isArray(settings?.mandatoryAttendees) ? settings.mandatoryAttendees : [],
+        exemptions: Array.isArray(settings?.exemptions) ? settings.exemptions : [],
+        updatedAt: settings?.updatedAt || null
+    };
+}
+
+async function saveRosterSettings({ mandatoryAttendees, exemptions } = {}) {
+    await ensureReady();
+    const current = await getRosterSettings();
+    const updated = {
+        mandatoryAttendees: Array.isArray(mandatoryAttendees) ? mandatoryAttendees : current.mandatoryAttendees,
+        exemptions: Array.isArray(exemptions) ? exemptions : current.exemptions,
+        updatedAt: new Date().toISOString()
+    };
+    await writeKV(ROSTER_KV_CATEGORY, ROSTER_KV_KEY, updated);
+    return updated;
+}
+
 module.exports = {
     ensureReady,
     listSnapshots,
@@ -1615,5 +1646,7 @@ module.exports = {
     extractRoster,
     preferCanonicalStaffId,
     cleanNameAndStaffId,
-    areStaffIdsEquivalent
+    areStaffIdsEquivalent,
+    getRosterSettings,
+    saveRosterSettings
 };

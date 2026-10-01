@@ -23,6 +23,18 @@ test('License Activation Page: HTML markup contains complete bilingual elements 
     assert.match(html, /id="btn-paste"/);
     assert.match(html, /id="btn-clear"/);
 
+    // Sample box elements
+    assert.match(html, /id="sample-box"/);
+    assert.match(html, /id="sample-badge"/);
+    assert.match(html, /id="sample-title-text"/);
+    assert.match(html, /id="btn-fill-sample"/);
+    assert.match(html, /id="btn-fill-sample-text"/);
+    assert.match(html, /id="btn-copy-sample"/);
+    assert.match(html, /id="btn-copy-sample-text"/);
+    assert.match(html, /id="sample-code-row"/);
+    assert.match(html, /id="sample-code"/);
+    assert.match(html, /id="sample-tip"/);
+
     // Progress card elements
     assert.match(html, /id="progress-card"/);
     assert.match(html, /id="progress-stage-desc"/);
@@ -103,6 +115,8 @@ test('License Activation Page: Inline script is syntactically valid and executes
         'shortcut-hints', 'status-box', 'status-icon', 'status-text',
         'lang-btn-zh', 'lang-btn-en', 'btn-paste', 'btn-clear',
         'btn-activate', 'btn-quit',
+        'sample-box', 'sample-badge', 'sample-title-text', 'btn-fill-sample', 'btn-fill-sample-text',
+        'btn-copy-sample', 'btn-copy-sample-text', 'sample-code-row', 'sample-code', 'sample-tip',
         'progress-card', 'progress-stage-desc', 'progress-percent', 'progress-bar-fill',
         'step-1', 'step-2', 'step-3', 'step-4',
         'step-1-title', 'step-2-title', 'step-3-title', 'step-4-title'
@@ -163,6 +177,9 @@ test('License Activation Page: Inline script is syntactically valid and executes
     assert.equal(dom.elements['step-1-title'].textContent, '格式解析');
     assert.equal(dom.elements['step-2-title'].textContent, '签名验签');
     assert.equal(dom.elements['btn-activate-text'].textContent, '验证并启动（支持离线）');
+    assert.equal(dom.elements['sample-badge'].textContent, '输入样例');
+    assert.equal(dom.elements['btn-fill-sample-text'].textContent, '填入输入框');
+    assert.equal(dom.elements['btn-copy-sample-text'].textContent, '复制样例');
     assert.match(dom.title, /Tools Platform - 软件授权激活/);
 
     // 2. Switch to English
@@ -177,6 +194,9 @@ test('License Activation Page: Inline script is syntactically valid and executes
     assert.equal(dom.elements['step-4-title'].textContent, 'Activation');
     assert.equal(dom.elements['btn-activate-text'].textContent, 'Verify & Launch (Offline Supported)');
     assert.equal(dom.elements['btn-quit-text'].textContent, 'Quit');
+    assert.equal(dom.elements['sample-badge'].textContent, 'Sample Format');
+    assert.equal(dom.elements['btn-fill-sample-text'].textContent, 'Fill Sample');
+    assert.equal(dom.elements['btn-copy-sample-text'].textContent, 'Copy Sample');
     assert.match(dom.elements['license-token'].placeholder, /Paste your complete license key/);
     assert.match(dom.title, /Tools Platform - License Activation/);
     assert.equal(storageMock.getItem('tools_license_lang'), 'en');
@@ -185,9 +205,21 @@ test('License Activation Page: Inline script is syntactically valid and executes
     listeners['lang-btn-zh']['click']();
     assert.equal(dom.documentElement.lang, 'zh-CN');
     assert.equal(dom.elements['step-1-title'].textContent, '格式解析');
+    assert.equal(dom.elements['sample-badge'].textContent, '输入样例');
     assert.equal(storageMock.getItem('tools_license_lang'), 'zh');
 
-    // 4. Test Clipboard Paste functionality
+    // 4. Test Fill Sample functionality
+    assert.ok(listeners['btn-fill-sample'] && listeners['btn-fill-sample']['click']);
+    listeners['btn-fill-sample']['click']();
+    assert.match(dom.elements['license-token'].value, /^DSKL1\./);
+    assert.match(dom.elements['status-text'].textContent, /已填入样例/);
+
+    // 5. Test Copy Sample functionality
+    assert.ok(listeners['btn-copy-sample'] && listeners['btn-copy-sample']['click']);
+    await listeners['btn-copy-sample']['click']();
+    assert.match(dom.elements['status-text'].textContent, /已复制到剪贴板/);
+
+    // 6. Test Clipboard Paste functionality
     assert.ok(listeners['btn-paste'] && listeners['btn-paste']['click']);
     listeners['btn-paste']['click']();
     assert.equal(dom.elements['license-token'].value, 'DSKL1.test.signature');

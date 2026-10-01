@@ -57,6 +57,28 @@ router.get('/extract-roster', async (req, res) => {
     }
 });
 
+// 1.4 获取会议名单配置（其他必选参会名单 & 开发者豁免名单）
+router.get('/settings/rosters', async (req, res) => {
+    try {
+        const data = await repo.getRosterSettings();
+        res.setHeader('X-Data-Source', 'sqlite');
+        res.json({ success: true, data });
+    } catch (error) {
+        sendError(res, error, '获取会议名单设置失败');
+    }
+});
+
+// 1.5 保存会议名单配置（其他必选参会名单 & 开发者豁免名单）
+router.put('/settings/rosters', async (req, res) => {
+    try {
+        const { mandatoryAttendees, exemptions } = req.body || {};
+        const data = await repo.saveRosterSettings({ mandatoryAttendees, exemptions });
+        res.json({ success: true, data });
+    } catch (error) {
+        sendError(res, error, '保存会议名单设置失败');
+    }
+});
+
 // 2. 获取单个快照完整数据
 router.get('/:id', async (req, res) => {
     try {

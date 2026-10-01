@@ -1670,16 +1670,20 @@ td.frequent-copied-cell {
     flex-shrink: 0;
 }
 .sla-detail-badge-pill.sla-status-pill {
-    background: #ef4444;
-    color: #fff;
+    background: #b91c1c !important;
+    color: #fff !important;
     max-width: 380px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 .sla-detail-badge-pill.sla-status-pill.warning-row {
-    background: #f59e0b;
-    color: #fff;
+    background: #92400e !important;
+    color: #fff !important;
+}
+.sla-detail-badge-pill.sla-status-pill.info-row {
+    background: #1d4ed8 !important;
+    color: #fff !important;
 }
 .sla-detail-header-actions {
     display: flex;
@@ -1915,9 +1919,9 @@ td.frequent-copied-cell {
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
     color: #0f172a;
     line-height: 1.35;
-    word-break: break-all;
-    white-space: pre-wrap;
-    padding: 2px 5px;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    padding: 1px 5px;
     border-radius: 3px;
     background: rgba(241, 245, 249, 0.45);
     cursor: pointer;
@@ -1992,4 +1996,3 @@ td.frequent-copied-cell {
     color: #94a3b8;
     font-size: 12px;
 }
-

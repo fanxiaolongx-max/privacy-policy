@@ -125,8 +125,8 @@ tbody tr:hover{background:rgba(19,107,81,.03)}
 .rec-action-btn.archive-record{color:var(--muted)}
 .rec-action-btn.unarchive-record{background:var(--brand-light);color:var(--brand);border-color:var(--brand)}
 .rec-action-btn.unarchive-record:hover{background:var(--brand);color:#fff}
-.rec-action-btn.delete-draft{background:var(--bad-bg);border-color:var(--bad-line);color:var(--bad)}
-.rec-action-btn.delete-draft:hover{background:var(--bad);color:#fff}
+.rec-action-btn.delete-draft, .rec-action-btn.delete-archived{background:var(--bad-bg);border-color:var(--bad-line);color:var(--bad)}
+.rec-action-btn.delete-draft:hover, .rec-action-btn.delete-archived:hover{background:var(--bad);color:#fff}
 
 .empty{border:1px dashed var(--line);border-radius:12px;padding:48px 24px;color:var(--muted);text-align:center;font-size:14px;background:var(--paper);margin:10px 0}
 .toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:var(--paper);padding:10px 18px;border-radius:10px;box-shadow:var(--shadow);z-index:99999;font-weight:600;font-size:13.5px}
@@ -638,6 +638,7 @@ tbody tr:hover{background:rgba(19,107,81,.03)}
     </div>
     <div class="filter-tags" id="filterTags"></div>
     <button type="button" class="filter-clear-btn" id="btnClearFilter">清空筛选</button>
+    <button type="button" class="btn danger hidden" id="btnClearArchived" style="font-size:12px;padding:6px 12px;margin-left:auto;white-space:nowrap" title="彻底删除当前类别全部已归档数据">🗑️ 清空已归档</button>
   </section>
 
   <section class="table-wrap">
@@ -1030,6 +1031,16 @@ tbody tr:hover{background:rgba(19,107,81,.03)}
     $('#filterTags').innerHTML = tags.map(([key, name]) => `
       <button type="button" class="filter-tag-btn ${state.filter === key ? 'active' : ''}" data-filter="${key}">${name}</button>
     `).join('');
+
+    const btnClearArchived = $('#btnClearArchived');
+    if (btnClearArchived) {
+      const archivedCount = state.applications.filter(a => (state.category === 'all' || a.category === state.category) && getUnifiedStatus(a) === 'archived').length;
+      const shouldShow = state.filter === 'archived' && state.isAdmin && archivedCount > 0;
+      btnClearArchived.classList.toggle('hidden', !shouldShow);
+      if (shouldShow) {
+        btnClearArchived.textContent = `🗑️ 清空已归档 (${archivedCount})`;
+      }
+    }
   }
 
   function renderTable() {
@@ -1052,6 +1063,7 @@ tbody tr:hover{background:rgba(19,107,81,.03)}
       const canRevoke = (uStatus === 'published') && state.isAdmin;
       const canArchive = (uStatus === 'published' || uStatus === 'revoked') && state.isAdmin;
       const canUnarchive = (uStatus === 'archived') && state.isAdmin;
+      const canDeleteArchived = (uStatus === 'archived') && state.isAdmin;
 
       const recipientNames = (item.category === 'bounty'
         ? (item.teams || []).map(t => `${t.name} (${(t.members || []).map(m => m.name).join('、') || '全员'})`).join('；')
@@ -1130,6 +1142,13 @@ tbody tr:hover{background:rgba(19,107,81,.03)}
                 <button type="button" class="rec-action-btn unarchive-record" data-action="unarchive" data-id="${esc(item.id)}" title="恢复此归档记录为已发布">
                   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7h7a4 4 0 0 1 4 4v0a4 4 0 0 1-4 4H5"/><path d="M6 4L3 7l3 3"/></svg>
                   <span>恢复</span>
+                </button>
+              ` : ''}
+
+              ${canDeleteArchived ? `
+                <button type="button" class="rec-action-btn delete-archived danger" data-action="delete-archived" data-id="${esc(item.id)}" title="彻底删除此归档记录">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2.5 4h11M5.5 4V2.5A1.5 1.5 0 0 1 7 1h2a1.5 1.5 0 0 1 1.5 1.5V4m2 0v9a1.5 1.5 0 0 1-1.5 1.5h-6A1.5 1.5 0 0 1 3.5 13V4"/></svg>
+                  <span>删除</span>
                 </button>
               ` : ''}
 
@@ -1529,6 +1548,7 @@ tbody tr:hover{background:rgba(19,107,81,.03)}
             ` : ''}
             ${uStatus === 'archived' && state.isAdmin ? `
               <button type="button" class="btn primary" id="detailUnarchiveBtn">恢复发布</button>
+              <button type="button" class="btn danger" id="detailDeleteArchivedBtn">彻底删除</button>
             ` : ''}
           </div>
         </div>
@@ -1560,6 +1580,7 @@ tbody tr:hover{background:rgba(19,107,81,.03)}
     $('#detailRevokeBtn')?.addEventListener('click', () => { $('#modalHost').innerHTML = ''; openRevokeDialog(item); });
     $('#detailArchiveBtn')?.addEventListener('click', () => { $('#modalHost').innerHTML = ''; archiveRecord(item); });
     $('#detailUnarchiveBtn')?.addEventListener('click', () => { $('#modalHost').innerHTML = ''; unarchiveRecord(item); });
+    $('#detailDeleteArchivedBtn')?.addEventListener('click', () => { $('#modalHost').innerHTML = ''; deleteArchivedRecord(item); });
   }
 
   function openRevokeDialog(item) {
@@ -2963,7 +2984,55 @@ tbody tr:hover{background:rgba(19,107,81,.03)}
     });
   }
 
+  function deleteArchivedRecord(item) {
+    confirmDialog({
+      title: '彻底删除已归档记录',
+      message: `确定彻底删除已归档记录【${item.title || '未命名记录'}】吗？`,
+      note: '⚠️ 此操作将从数据库和系统中彻底删除该申报记录、流转历史及证明附件，操作不可撤销且无法恢复。请谨慎操作！',
+      confirmText: '彻底删除',
+      confirmClass: 'danger',
+      onConfirm: async () => {
+        try {
+          await api(`/applications/${item.id}`, 'DELETE');
+          await load();
+          toast('已归档记录已彻底删除');
+        } catch (err) {
+          toast(err.message);
+        }
+      }
+    });
+  }
+
+  function clearArchivedRecords() {
+    const catLabel = state.category === 'all' ? '全部类别' : (cats[state.category]?.[1] || state.category);
+    const archivedList = state.applications.filter(a => (state.category === 'all' || a.category === state.category) && getUnifiedStatus(a) === 'archived');
+    if (!archivedList.length) {
+      toast('当前暂无已归档记录');
+      return;
+    }
+    confirmDialog({
+      title: '清空已归档数据',
+      message: `确定彻底删除【${catLabel}】下的全部 ${archivedList.length} 条已归档记录吗？`,
+      note: '⚠️ 此操作将从数据库和系统中永久清空这些申报记录、流转历史及证明材料附件，操作不可撤销且无法恢复。请谨慎操作！',
+      confirmText: '彻底清空',
+      confirmClass: 'danger',
+      onConfirm: async () => {
+        try {
+          const res = await api(`/archived?category=${encodeURIComponent(state.category)}`, 'DELETE');
+          await load();
+          toast(`已成功彻底删除 ${res?.count ?? archivedList.length} 条已归档记录`);
+        } catch (err) {
+          toast(err.message);
+        }
+      }
+    });
+  }
+
   function deleteRecord(item) {
+    if (getUnifiedStatus(item) === 'archived') {
+      deleteArchivedRecord(item);
+      return;
+    }
     confirmDialog({
       title: '删除草稿',
       message: `确定删除草稿【${item.title || '未命名草稿'}】吗？`,
@@ -3058,6 +3127,7 @@ tbody tr:hover{background:rgba(19,107,81,.03)}
       else if (action === 'archive') archiveRecord(item);
       else if (action === 'unarchive') unarchiveRecord(item);
       else if (action === 'delete') deleteRecord(item);
+      else if (action === 'delete-archived') deleteArchivedRecord(item);
       return;
     }
 
@@ -3077,6 +3147,7 @@ tbody tr:hover{background:rgba(19,107,81,.03)}
     $('#searchInput').value = '';
     render();
   });
+  $('#btnClearArchived')?.addEventListener('click', () => clearArchivedRecords());
 
   $('#searchInput')?.addEventListener('input', ev => {
     state.search = ev.target.value.trim();

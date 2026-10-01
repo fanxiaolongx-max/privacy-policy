@@ -2438,7 +2438,7 @@
           <tbody id="mandatoryListBody"></tbody>
         </table>
       </div>
-      <div id="mandatorySaveHint" style="padding:0 20px 14px;color:#667085;font-size:12px">💡 修改后点击“保存并应用”，将自动重算考勤结果并保存名单。</div>
+      <div id="mandatorySaveHint" style="padding:0 20px 14px;color:#667085;font-size:12px">💡 修改后点击“保存并应用”，将自动同步保存至服务器与本地，并刷新考勤结果。</div>
       <div class="modal-foot">
         <button class="btn" id="mandatoryCancelBtn">取消</button>
         <button class="btn btn-primary" id="mandatorySaveBtn">保存并应用</button>
@@ -2462,7 +2462,7 @@
             Account</span><span></span></div>
         <div id="exemptionList"></div>
       </div>
-      <div id="exemptionHint" style="padding:0 20px 14px;color:#667085;font-size:12px">姓名或工号至少填写一项；保存后会立即重新计算现有结果。</div>
+      <div id="exemptionHint" style="padding:0 20px 14px;color:#667085;font-size:12px">姓名或工号至少填写一项；修改后将同步保存至服务器与本地，并立即重算现有结果。</div>
       <div class="modal-foot"><button class="btn danger" id="developerDisableBtn"
           style="margin-right:auto">关闭开发者模式</button><button class="btn" id="developerCancelBtn">取消</button><button
           class="btn btn-primary" id="developerSaveBtn">保存并应用</button></div>
@@ -2846,6 +2846,7 @@
         });
         updateMandatoryBadge();
         render();
+        syncRostersWithServer();
       }
       function renderNav() {
         const short = c => c.id === 'offline' ? bi('签', 'S') : c.id === 'online' ? bi('会', 'O') : c.short;
@@ -2899,8 +2900,8 @@
         set('#linkToMandatoryModal', `👤 ${bi('管理其他必选参会人员名单 →', 'Manage Mandatory Attendees →')}`);
         set('#mandatoryModalTitle', `👤 ${bi('其他必选参会人员名单', 'Additional Mandatory Attendees')}`);
         set('#mandatoryModalSub', bi('除 RFC/QR/WFM 任务单中提取的人员外，可在此手动添加其他必须参会的人员。即使其无近期任务单也将纳入考勤考核。', 'Configure additional personnel who must attend. Even without recent RFC/QR/WFM tickets, they will be required to attend.'));
-        set('#mandatoryFieldHelp', bi('姓名或工号至少填一项；BU、客户群、角色/备注均可留空。BU 用于部门统计和筛选，客户群用于明细与导出，角色/备注用于标明参会身份；留空按“其他必选”处理。', 'Enter a name or employee ID. BU, customer group, and role/note are optional. BU is used for group statistics and filtering; customer group appears in details and exports; role/note identifies the attendee and defaults to “Additional Mandatory”.'));
-        set('#mandatorySaveHint', bi('💡 修改后点击“保存并应用”，将自动重算考勤结果并保存名单。', '💡 Click Save & Apply to recalculate attendance and save the list.'));
+        set('#mandatorySaveHint', bi('💡 修改后点击“保存并应用”，将自动同步保存至服务器与本地，并刷新考勤结果。', '💡 Click Save & Apply to sync with server and local storage, and recalculate results.'));
+        set('#exemptionHint', bi('姓名或工号至少填写一项；修改后将同步保存至服务器与本地，并立即重算现有结果。', 'Enter name or ID; changes will sync to server and local storage, and recalculate results immediately.'));
         set('#mandatoryAddBtn', `＋ ${bi('新增人员', 'Add Person')}`);
         set('#mandatoryBatchBtn', `📋 ${bi('批量粘贴导入', 'Batch Paste')}`);
         set('#mandatoryClearAllBtn', bi('清空名单', 'Clear All'));
@@ -3568,8 +3569,9 @@
         try { localStorage.setItem(MANDATORY_STORAGE_KEY, JSON.stringify(rows)); } catch (e) { console.warn('必选名单保存失败', e); }
         updateMandatoryBadge();
         closeMandatoryModal();
+        saveRostersToServer({ mandatoryAttendees: rows });
         const refreshed = await refreshCalculatedResults(bi('正在应用必选参会名单并重新计算考勤…', 'Applying mandatory roster and recalculating…'));
-        if (refreshed) toast(bi(`已保存 ${rows.length} 名其他必选参会人员，考勤结果已刷新`, `${rows.length} mandatory attendees saved; results refreshed`));
+        if (refreshed) toast(bi(`已保存 ${rows.length} 名其他必选参会人员至服务器与本地，考勤结果已刷新`, `${rows.length} mandatory attendees saved to server & local; results refreshed`));
       }
       function updateMandatoryBadge() {
         const count = state.mandatoryAttendees ? state.mandatoryAttendees.length : 0;
@@ -3622,7 +3624,84 @@
       }
       async function saveExemptions() {
         const seen = new Set(), rows = [...$('#exemptionList').querySelectorAll('.exemption-row')].map(r => ({ name: normalizeName(r.querySelector('.exemption-name').value), account: normalizeName(r.querySelector('.exemption-account').value) })).filter(x => x.name || x.account).filter(x => { const key = `${normalizeAttendanceId(x.account)}|${x.name.toLowerCase().replace(/\s+/g, ' ')}`; if (seen.has(key)) return false; seen.add(key); return true; });
-        state.exemptions = rows; try { localStorage.setItem(EXEMPTION_STORAGE_KEY, JSON.stringify(rows)); } catch (e) { console.warn('豁免名单保存失败', e); } applyDeveloperMode(); closeDeveloperModal(); const refreshed = await refreshCalculatedResults(bi('正在应用会议豁免名单并刷新统计…', 'Applying the meeting exemption list and refreshing…')); if (refreshed) { const total = activeExemptions().length; toast(bi(`已应用 ${total} 名豁免人员，均按 Attend on Time 计算`, `${total} exempt people applied; all count as Attend on Time`)); }
+        state.exemptions = rows;
+        try { localStorage.setItem(EXEMPTION_STORAGE_KEY, JSON.stringify(rows)); } catch (e) { console.warn('豁免名单保存失败', e); }
+        applyDeveloperMode();
+        closeDeveloperModal();
+        saveRostersToServer({ exemptions: rows });
+        const refreshed = await refreshCalculatedResults(bi('正在应用会议豁免名单并刷新统计…', 'Applying the meeting exemption list and refreshing…'));
+        if (refreshed) {
+          const total = activeExemptions().length;
+          toast(bi(`已保存并应用 ${total} 名豁免人员至服务器与本地，均按 Attend on Time 计算`, `${total} exempt people saved to server & local; all count as Attend on Time`));
+        }
+      }
+      async function saveRostersToServer(payload) {
+        if (typeof fetch !== 'function') return null;
+        try {
+          const resp = await fetch('/api/meeting-snapshots/settings/rosters', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload || {})
+          });
+          if (!resp.ok) {
+            console.warn('[MeetingAttendance] saveRostersToServer HTTP error:', resp.status);
+            return null;
+          }
+          const res = await resp.json();
+          return res?.data || null;
+        } catch (err) {
+          console.warn('[MeetingAttendance] saveRostersToServer failed:', err);
+          return null;
+        }
+      }
+      async function syncRostersWithServer() {
+        if (typeof fetch !== 'function') return null;
+        try {
+          const resp = await fetch('/api/meeting-snapshots/settings/rosters');
+          if (!resp.ok) return null;
+          const res = await resp.json();
+          const data = res?.data;
+          if (!data) return null;
+
+          let changed = false;
+          if (data.updatedAt) {
+            const srvMandatory = normalizeMandatoryEntries(data.mandatoryAttendees);
+            const srvExemptions = normalizeExemptionEntries(data.exemptions);
+            if (JSON.stringify(srvMandatory) !== JSON.stringify(state.mandatoryAttendees)) {
+              state.mandatoryAttendees = srvMandatory;
+              try { localStorage.setItem(MANDATORY_STORAGE_KEY, JSON.stringify(srvMandatory)); } catch (e) {}
+              updateMandatoryBadge();
+              const mModal = $('#mandatoryModal');
+              if (mModal && !mModal.classList.contains('hidden') && $('#mandatoryListBody')?.appendChild) renderMandatoryRows(state.mandatoryAttendees);
+              changed = true;
+            }
+            if (JSON.stringify(srvExemptions) !== JSON.stringify(state.exemptions)) {
+              state.exemptions = srvExemptions;
+              try { localStorage.setItem(EXEMPTION_STORAGE_KEY, JSON.stringify(srvExemptions)); } catch (e) {}
+              applyDeveloperMode();
+              const dModal = $('#developerModal');
+              if (dModal && !dModal.classList.contains('hidden') && $('#exemptionList')?.appendChild) renderExemptionRows(state.exemptions);
+              changed = true;
+            }
+          } else {
+            const hasLocalMandatory = state.mandatoryAttendees && state.mandatoryAttendees.length > 0;
+            const hasLocalExemptions = state.exemptions && state.exemptions.length > 0;
+            if (hasLocalMandatory || hasLocalExemptions) {
+              await saveRostersToServer({
+                mandatoryAttendees: state.mandatoryAttendees || [],
+                exemptions: state.exemptions || []
+              });
+            }
+          }
+
+          if (changed && state.sheets && state.sheets.length > 0) {
+            await refreshCalculatedResults(bi('已从服务器同步名单，正在重新计算考勤…', 'Roster synced from server; recalculating…'));
+          }
+          return data;
+        } catch (err) {
+          console.warn('[MeetingAttendance] syncRostersWithServer failed:', err);
+          return null;
+        }
       }
       async function refreshCalculatedResults(message) {
         try {
@@ -6082,7 +6161,7 @@
       function showLoading(on, text, percent) { $('#loading').classList.toggle('hidden', !on); if (text) $('#loadingText').textContent = text; if (percent != null) { const p = Math.max(0, Math.min(100, Math.round(percent))); $('#loadingBar').style.width = p + '%'; $('#loadingPercent').textContent = p + '%'; } }
       function nextPaint() { return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); }
       function toast(msg, type = '', duration = 2800) { const host = $('#toasts'); if (!host || typeof host.appendChild !== 'function') return; const t = document.createElement('div'); t.className = 'toast ' + type; t.textContent = msg; host.appendChild(t); setTimeout(() => t.remove?.(), duration); }
-      window.__meetingAttendance = { state, CATEGORIES, DEFAULT_COLUMNS, DEFAULT_CUSTOMER_MAPPINGS, DEFAULT_ATTENDANCE_RULES, PRESET_EXEMPTIONS, isInvalidStaffId, activeExemptions, handleDeveloperUnlock, disableDeveloperMode, parseDelimited, normalizeRows, classifySheet, defaultColumnIndices, getDisplayColumns, parsePeopleCell, parseQrPairedPeople, parseCreateTime, parseAttendanceMinute, beijingToCairoAttendance, buildAttendanceIndex, getAttendanceRecord, getExemption, determineAttendance, extractTicketDate, parseDateFromString, detectMeetingDate, getAllMeetingDates, getSheetMeetingDate, getSessionDominantDate, evaluateRecordAttendance, ATTENDANCE_RANK, getWindowDateRange, isOrderInWindow, isOrderInMeetingWindows, getPreviousDayDateString, parseRowTimestamp, isNightWfmTask, isPersonNightExemptForDate, normalizeMandatoryEntries, loadMandatoryAttendees, saveMandatoryAttendees, openMandatoryModal, closeMandatoryModal, renderMandatoryRows, appendMandatoryRow, updateMandatoryBadge, applyBatchMandatoryText, extractQrPeople, extractRfcPeople, extractWfmPeople, extractAttendanceSourcePeople, extractAllPeople, ensurePeopleCache, refreshCalculatedResults, invalidatePeopleCache, cleanSessionTitle, isGenericTitle, getSheetRowSessionNames, getSheetDefaultSessionName, getSheetSessionName, getRowSessionName, getMeetingSessions, getIgnoredMeetingSessions, getSessionPeopleRows, getSessionDisplayLabels, renderSessionSwitcher, renderSessionNoticeBar, renderMultiSessionOverview, renderMultiSessionBuTable, renderMultiSessionMatrixCard, toggleMatrixFullscreen, mapCustomerGroup, resolveSearchIdentities, getPersonSearchScope, getPersonSearchScopeKey, formatSearchWindowMonths, searchRequiredRows, searchAttendanceRows, renderSearchDetailCard, buildBusinessCoverageReport, missingBusinessCoverage, validBusinessTimes, formatDateRange, roleCounts, roleLabel, sheetFingerprint, removeDuplicateSheets, renderAttendanceDashboard, renderCombinedPeopleCard, renderPeopleCard, renderPersonSearchPanel, renderPersonSearchResults, buildAnalysisTables, buildAnalysisWorkbook, buildSnapshotPayload, restoreMeetingSnapshot, openSaveSnapshotModal, closeSaveSnapshotModal, openSnapshotManagerModal, filterSnapshotCards };
+      window.__meetingAttendance = { state, CATEGORIES, DEFAULT_COLUMNS, DEFAULT_CUSTOMER_MAPPINGS, DEFAULT_ATTENDANCE_RULES, PRESET_EXEMPTIONS, isInvalidStaffId, activeExemptions, handleDeveloperUnlock, disableDeveloperMode, parseDelimited, normalizeRows, classifySheet, defaultColumnIndices, getDisplayColumns, parsePeopleCell, parseQrPairedPeople, parseCreateTime, parseAttendanceMinute, beijingToCairoAttendance, buildAttendanceIndex, getAttendanceRecord, getExemption, determineAttendance, extractTicketDate, parseDateFromString, detectMeetingDate, getAllMeetingDates, getSheetMeetingDate, getSessionDominantDate, evaluateRecordAttendance, ATTENDANCE_RANK, getWindowDateRange, isOrderInWindow, isOrderInMeetingWindows, getPreviousDayDateString, parseRowTimestamp, isNightWfmTask, isPersonNightExemptForDate, normalizeMandatoryEntries, loadMandatoryAttendees, saveMandatoryAttendees, saveRostersToServer, syncRostersWithServer, openMandatoryModal, closeMandatoryModal, renderMandatoryRows, appendMandatoryRow, updateMandatoryBadge, applyBatchMandatoryText, extractQrPeople, extractRfcPeople, extractWfmPeople, extractAttendanceSourcePeople, extractAllPeople, ensurePeopleCache, refreshCalculatedResults, invalidatePeopleCache, cleanSessionTitle, isGenericTitle, getSheetRowSessionNames, getSheetDefaultSessionName, getSheetSessionName, getRowSessionName, getMeetingSessions, getIgnoredMeetingSessions, getSessionPeopleRows, getSessionDisplayLabels, renderSessionSwitcher, renderSessionNoticeBar, renderMultiSessionOverview, renderMultiSessionBuTable, renderMultiSessionMatrixCard, toggleMatrixFullscreen, mapCustomerGroup, resolveSearchIdentities, getPersonSearchScope, getPersonSearchScopeKey, formatSearchWindowMonths, searchRequiredRows, searchAttendanceRows, renderSearchDetailCard, buildBusinessCoverageReport, missingBusinessCoverage, validBusinessTimes, formatDateRange, roleCounts, roleLabel, sheetFingerprint, removeDuplicateSheets, renderAttendanceDashboard, renderCombinedPeopleCard, renderPeopleCard, renderPersonSearchPanel, renderPersonSearchResults, buildAnalysisTables, buildAnalysisWorkbook, buildSnapshotPayload, restoreMeetingSnapshot, openSaveSnapshotModal, closeSaveSnapshotModal, openSnapshotManagerModal, filterSnapshotCards };
       init();
     })();
   </script>

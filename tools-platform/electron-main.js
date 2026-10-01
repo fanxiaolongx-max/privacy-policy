@@ -184,9 +184,9 @@ function createLicenseWindow() {
     }
     licenseWindow = new BrowserWindow({
         width: 640,
-        height: 560,
+        height: 600,
         minWidth: 560,
-        minHeight: 500,
+        minHeight: 520,
         backgroundColor: '#090e17',
         show: false,
         center: true,

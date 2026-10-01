@@ -467,8 +467,9 @@
             const isFrequent = copyCount > 0;
             displayedCount++;
 
-            const displayVal = isEmpty ? '(空)' : String(val);
-            const isLong = !isEmpty && (displayVal.length > 55 || displayVal.includes('\n'));
+            // 只压缩展示用的空白；复制时仍使用 row 中的原始值。
+            const displayVal = isEmpty ? '(空)' : String(val).replace(/\s+/g, ' ').trim();
+            const isLong = !isEmpty && displayVal.length > 55;
             const rowClass = [
                 'sla-detail-field-item',
                 isFrequent ? 'is-frequent' : '',
@@ -482,11 +483,9 @@
                         ${isFrequent ? `<span class="sla-detail-frequent-badge" title="服务端已记住：该字段已累计复制 ${copyCount} 次">⭐ 常用 (${copyCount}次)</span>` : ''}
                         <span class="sla-detail-field-name">${escapeHTML(key)}</span>
                     </div>
-                    <div class="sla-detail-field-value-col ${isEmpty ? 'empty-val' : ''}" 
+                    <div class="sla-detail-field-value-col ${isEmpty ? 'empty-val' : ''}"
                         onclick="window.SLARowDetail.handleCopy('${escapeHTML(key)}', this.parentElement.querySelector('.sla-detail-copy-btn'))"
-                        title="点击快速复制内容">
-                        ${escapeHTML(displayVal)}
-                    </div>
+                        title="点击快速复制内容">${escapeHTML(displayVal)}</div>
                     <button type="button" class="sla-detail-copy-btn" 
                         onclick="window.SLARowDetail.handleCopy('${escapeHTML(key)}', this)" 
                         title="点击一键复制该字段内容">

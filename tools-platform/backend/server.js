@@ -357,13 +357,13 @@ app.use('/api', (req, res, next) => {
     if (req.path.startsWith('/surveys')) return next(); // 调查模板和提交由模块内部控制权限
     if (req.method === 'POST' && req.path === '/db/config/monthly_report_titles') return next(); // 登录用户可编辑月报中英文标题，路由内继续校验数据
     if (/^\/monthly-snapshots(?:\/[^/]+)?$/.test(req.path)) return next(); // 登录用户可维护各月份月报快照
-    if (/^\/meeting-snapshots(?:\/[^/]+)?$/.test(req.path)) return next(); // 登录用户可维护会议考勤历史快照
+    if (/^\/meeting-snapshots(?:\/.*)?$/.test(req.path)) return next(); // 登录用户可维护会议考勤历史快照与名单设置
     if (/^\/(?:operation-incentive-snapshots|incentive-snapshots)(?:\/[^/]+)?$/.test(req.path)) return next(); // 登录用户可维护操作激励历史快照
     if (/^\/custom-tools\/[^/]+\/(?:state(?:\/restore)?|history(?:\/[^/]+)?|snapshots(?:\/[^/]+)?)$/.test(req.path)) return next(); // 登录用户可维护自定义工具业务数据及快照
     if ((req.method === 'POST' && /^\/department-reward-penalty\/(?:records|evidence)$/.test(req.path)) ||
         (req.method === 'DELETE' && /^\/department-reward-penalty\/records\/[^/]+$/.test(req.path))) return next(); // 普通用户可提交草稿、证据和删除草稿，路由内校验发布和归属权限
     if ((req.method === 'POST' && /^\/reward-program\/(?:applications(?:\/[^/]+\/(?:save|submit|publish))?|evidence)$/.test(req.path)) ||
-        (req.method === 'DELETE' && /^\/reward-program\/applications\/[^/]+$/.test(req.path))) return next(); // 申报人可维护本人奖励草稿与发布、上传证明附件，路由内校验归属与状态
+        (req.method === 'DELETE' && /^\/reward-program\/(?:applications(?:\/[^/]+)?|archived)$/.test(req.path))) return next(); // 申报人/管理员可维护本人草稿/归档数据与发布，路由内校验归属与状态
     if (req.method === 'POST' && /^\/reward-program\/applications\/[^/]+\/objections$/.test(req.path)) return next(); // 登录用户可在公示期提出异议
     if (/^\/chat-history\/(?:settings|conversations\/[^/]+\/(?:read|pin)|favorites\/[^/]+)$/.test(req.path)) return next(); // 聊天数据租户共享，普通用户只能维护个人状态
     if (req.method === 'DELETE' && /^\/slide-design\/assets\/[^/]+$/.test(req.path)) return next(); // 素材上传者或管理员可删除，路由内校验归属

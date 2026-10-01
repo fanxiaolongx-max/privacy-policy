@@ -4,21 +4,21 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-function loadMeetingAttendance(minSessionRecords = 1) {
+function loadMeetingAttendance(minSessionRecords = 1, extraSandbox = {}) {
     const htmlPath = path.resolve(__dirname, '../backend/builtin-tools/tool-msf5b7nn/index.html');
     const html = fs.readFileSync(htmlPath, 'utf8');
     const scriptMatch = html.match(/<script>([\s\S]*?)<\/script>/);
     assert.ok(scriptMatch, 'Script block should exist in index.html');
     const scriptContent = scriptMatch[1];
 
-    const mockStorage = new Map();
-    const mockLocalStorage = {
+    const mockStorage = extraSandbox.mockStorage || new Map();
+    const mockLocalStorage = extraSandbox.localStorage || {
         getItem: key => mockStorage.get(key) || null,
         setItem: (key, val) => mockStorage.set(key, String(val)),
         removeItem: key => mockStorage.delete(key),
         clear: () => mockStorage.clear()
     };
-    const mockSessionStorage = {
+    const mockSessionStorage = extraSandbox.sessionStorage || {
         getItem: key => mockStorage.get('session:' + key) || null,
         setItem: (key, val) => mockStorage.set('session:' + key, String(val)),
         removeItem: key => mockStorage.delete('session:' + key),
@@ -29,6 +29,7 @@ function loadMeetingAttendance(minSessionRecords = 1) {
         classList: { toggle: () => {}, add: () => {}, remove: () => {}, contains: () => false },
         querySelectorAll: () => [],
         querySelector: () => null,
+        appendChild: () => {},
         addEventListener: () => {},
         setAttribute: () => {},
         style: {},
@@ -64,7 +65,8 @@ function loadMeetingAttendance(minSessionRecords = 1) {
             body: { appendChild: () => {}, classList: mockElement.classList },
             addEventListener: () => {}
         },
-        window: {}
+        window: {},
+        ...extraSandbox
     };
     sandbox.window = sandbox;
 
@@ -72,6 +74,7 @@ function loadMeetingAttendance(minSessionRecords = 1) {
     vm.runInContext(scriptContent, sandbox);
     const api = sandbox.window.__meetingAttendance;
     if (minSessionRecords !== null) api.state.attendanceRules.minSessionRecords = minSessionRecords;
+    api._mockStorage = mockStorage;
     return api;
 }
 
@@ -846,6 +849,103 @@ test('multi-session export includes Meeting Session column and aligns per-sessio
     const path = require('path');
     const htmlContent = fs.readFileSync(path.join(__dirname, '../backend/builtin-tools/tool-msf5b7nn/index.html'), 'utf8');
     assert.match(htmlContent, /\.coverage-table thead th\s*\{[^}]*position:\s*sticky/);
+});
+
+test('roster settings support dual persistence to localStorage and server API, with server-first synchronization', async () => {
+    // 1. Offline / Default sandbox (fetch undefined): save functions still work and persist to localStorage
+    const offlineApi = loadMeetingAttendance();
+    assert.equal(typeof offlineApi.saveRostersToServer, 'function');
+    assert.equal(typeof offlineApi.syncRostersWithServer, 'function');
+
+    offlineApi.state.mandatoryAttendees = [{ name: 'OfflineUser', account: 'u_offline', bu: 'BU1', customer: 'Cust1', role: '其他必选', note: '其他必选' }];
+    offlineApi._mockStorage.set('meetingAttendance.mandatoryAttendees.v1', JSON.stringify(offlineApi.state.mandatoryAttendees));
+    assert.equal(offlineApi.loadMandatoryAttendees().length, 1);
+
+    // 2. Mocked fetch sandbox: verify server PUT when saving
+    const requests = [];
+    let serverRosterData = {
+        mandatoryAttendees: [
+            { name: 'ServerMandatory', account: 'u_server_man', bu: 'ServerBU', customer: 'ServerCust', role: '其他必选', note: '其他必选' }
+        ],
+        exemptions: [
+            { name: 'ServerExempt', account: 'u_server_ex' }
+        ],
+        updatedAt: '2026-10-01T12:00:00.000Z'
+    };
+
+    const mockFetch = async (url, options = {}) => {
+        requests.push({ url, options });
+        if (url === '/api/meeting-snapshots/settings/rosters') {
+            if (options.method === 'PUT') {
+                const body = JSON.parse(options.body || '{}');
+                if (Array.isArray(body.mandatoryAttendees)) serverRosterData.mandatoryAttendees = body.mandatoryAttendees;
+                if (Array.isArray(body.exemptions)) serverRosterData.exemptions = body.exemptions;
+                serverRosterData.updatedAt = new Date().toISOString();
+                return {
+                    ok: true,
+                    status: 200,
+                    json: async () => ({ success: true, data: serverRosterData })
+                };
+            }
+            return {
+                ok: true,
+                status: 200,
+                json: async () => ({ success: true, data: serverRosterData })
+            };
+        }
+        return { ok: false, status: 404, json: async () => ({ error: 'Not found' }) };
+    };
+
+    const onlineApi = loadMeetingAttendance(1, { fetch: mockFetch });
+
+    // a) syncRostersWithServer prioritizes server when updatedAt exists
+    await onlineApi.syncRostersWithServer();
+    assert.equal(onlineApi.state.mandatoryAttendees.length, 1);
+    assert.equal(onlineApi.state.mandatoryAttendees[0].account, 'u_server_man');
+    assert.equal(onlineApi.state.exemptions.length, 1);
+    assert.equal(onlineApi.state.exemptions[0].account, 'u_server_ex');
+
+    // Verify localStorage was updated with server data
+    const localMandatory = JSON.parse(onlineApi._mockStorage.get('meetingAttendance.mandatoryAttendees.v1') || '[]');
+    const localExempt = JSON.parse(onlineApi._mockStorage.get('meetingAttendance.exemptionList.v1') || '[]');
+    assert.equal(localMandatory[0].account, 'u_server_man');
+    assert.equal(localExempt[0].account, 'u_server_ex');
+
+    // b) Test saveRostersToServer pushes updates to server
+    const newMandatory = [{ name: 'NewUser', account: 'u_new', bu: 'BU2', customer: 'Cust2', role: '其他必选', note: '' }];
+    await onlineApi.saveRostersToServer({ mandatoryAttendees: newMandatory });
+    assert.equal(serverRosterData.mandatoryAttendees[0].account, 'u_new');
+
+    // c) Auto-migration test: when server updatedAt is null, local entries are migrated to server
+    let autoMigratedData = null;
+    const migrationFetch = async (url, options = {}) => {
+        if (url === '/api/meeting-snapshots/settings/rosters') {
+            if (options.method === 'PUT') {
+                autoMigratedData = JSON.parse(options.body || '{}');
+                return {
+                    ok: true,
+                    status: 200,
+                    json: async () => ({ success: true, data: { ...autoMigratedData, updatedAt: new Date().toISOString() } })
+                };
+            }
+            return {
+                ok: true,
+                status: 200,
+                json: async () => ({ success: true, data: { mandatoryAttendees: [], exemptions: [], updatedAt: null } })
+            };
+        }
+        return { ok: false, status: 404, json: async () => ({ error: 'Not found' }) };
+    };
+
+    const prefilledStorage = new Map();
+    prefilledStorage.set('meetingAttendance.mandatoryAttendees.v1', JSON.stringify([
+        { name: 'LocalMigrate', account: 'u_migrate', bu: 'BU', customer: 'Cust', role: '其他必选' }
+    ]));
+    const migrateApi = loadMeetingAttendance(1, { fetch: migrationFetch, mockStorage: prefilledStorage });
+
+    await migrateApi.syncRostersWithServer();
+    assert.ok(autoMigratedData, 'syncRostersWithServer should auto-migrate local data to server if server is empty');
+    assert.equal(autoMigratedData.mandatoryAttendees[0].account, 'u_migrate');
 });
 
 

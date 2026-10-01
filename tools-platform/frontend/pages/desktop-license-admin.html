@@ -19,7 +19,7 @@
       <input id="expiresAt" class="input" type="datetime-local" title="可选：指定精确到期时间">
       <button id="issue" class="btn">签发 License</button>
     </div>
-    <div id="issued" class="issued"><div id="issuedMeta" class="hint"></div><textarea id="issuedToken" class="input mono" readonly></textarea><button id="copyIssued" class="btn small cyan">复制密钥</button></div>
+    <div id="issued" class="issued"><div id="issuedMeta" class="hint"></div><textarea id="issuedToken" class="input mono" readonly></textarea><div style="display:flex;align-items:center;gap:10px;margin-top:8px"><button id="copyIssued" class="btn small cyan">复制密钥</button><span class="hint">提示：此三段式长字符串（以 DSKL1. 开头）为完整 License 密钥，发给用户直接粘贴即可。</span></div></div>
   </section>
   <section class="panel">
     <div class="toolbar"><input id="search" class="input" style="max-width:520px" placeholder="搜索备注、License ID、状态"><div class="list-controls"><label class="hint"><input id="showArchived" type="checkbox"> 显示已归档</label><label class="hint">每页 <select id="pageSize"><option value="10" selected>10</option><option value="20">20</option><option value="50">50</option></select> 条</label><button id="refresh" class="btn small gray">刷新</button></div></div>

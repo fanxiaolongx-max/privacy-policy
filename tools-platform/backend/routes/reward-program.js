@@ -16,8 +16,22 @@ const revision = body => { const value = Number(body?.revision); if (!Number.isI
 const evidenceUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024, files: 1 } });
 const EVIDENCE_EXTENSIONS = new Set(['.pdf', '.png', '.jpg', '.jpeg', '.txt', '.zip', '.rar', '.7z', '.tar', '.gz', '.eml', '.msg']);
 const EVIDENCE_FILENAME_REGEX = /^[a-f0-9-]{36}\.(?:pdf|png|jpg|jpeg|txt|zip|rar|7z|tar|gz|eml|msg)$/i;
-const getEvidenceDir = req => path.join(getDataDir(req?.user?.tenantId || 'default'), 'reward-program-evidence');
+const getEvidenceDir = req => path.join(getDataDir(req?.user?.tenantId), 'reward-program-evidence');
 const getEvidencePath = (filename, req) => path.join(getEvidenceDir(req), filename);
+const deleteEvidenceFiles = (attachments, req) => {
+    if (!Array.isArray(attachments)) return;
+    for (const att of attachments) {
+        const filename = path.basename(att || '');
+        if (EVIDENCE_FILENAME_REGEX.test(filename)) {
+            try {
+                const filepath = getEvidencePath(filename, req);
+                if (fs.existsSync(filepath)) fs.unlinkSync(filepath);
+            } catch (e) {
+                console.warn('[reward-program] 删除证据附件失败:', e);
+            }
+        }
+    }
+};
 
 const draft = body => ({
     category: label(body.category, 30), ruleId: label(body.ruleId, 100), title: label(body.title),
@@ -164,10 +178,39 @@ router.post('/applications/:id/unarchive', wrap(async (req, res) => {
     const updatedPayload = { ...old, unarchivedAt: new Date().toISOString(), unarchivedBy: req.user.username };
     res.json(await repo.update(old.id, revision(req.body?.revision ? req.body : { revision: old.revision }), req.user.username, { category: old.category, ruleId: old.ruleId, status: restoreStatus, payload: updatedPayload }, 'unarchive', `恢复为${restoreStatus === 'published' ? '已发布' : restoreStatus}`));
 }));
+router.delete('/applications/archived', wrap(async (req, res) => {
+    if (!admin(req)) fail('仅管理员可彻底删除已归档记录', 403);
+    const category = req.query.category || req.body?.category;
+    const result = await repo.clearArchived(category);
+    if (Array.isArray(result.items)) {
+        for (const item of result.items) {
+            deleteEvidenceFiles(item.attachments, req);
+        }
+    }
+    res.json({ success: true, count: result.count });
+}));
+router.delete('/archived', wrap(async (req, res) => {
+    if (!admin(req)) fail('仅管理员可彻底删除已归档记录', 403);
+    const category = req.query.category || req.body?.category;
+    const result = await repo.clearArchived(category);
+    if (Array.isArray(result.items)) {
+        for (const item of result.items) {
+            deleteEvidenceFiles(item.attachments, req);
+        }
+    }
+    res.json({ success: true, count: result.count });
+}));
 router.delete('/applications/:id', wrap(async (req, res) => {
     const old = await repo.application(req.params.id);
-    if (!old || !owner(req, old)) fail('申请不存在或无权删除', 404);
-    if (old.status !== 'draft') fail('只能删除草稿', 409);
+    if (!old) fail('申请不存在', 404);
+    if (old.status === 'draft') {
+        if (!owner(req, old)) fail('申请不存在或无权删除', 403);
+    } else if (old.status === 'archived' || old.status === 'completed') {
+        if (!admin(req)) fail('仅管理员可彻底删除已归档记录', 403);
+    } else {
+        fail('只能删除草稿或已归档记录', 409);
+    }
+    deleteEvidenceFiles(old.attachments, req);
     res.json(await repo.remove(old.id, req.user.username));
 }));
 router.post('/applications/:id/submit', wrap(async (req, res) => {

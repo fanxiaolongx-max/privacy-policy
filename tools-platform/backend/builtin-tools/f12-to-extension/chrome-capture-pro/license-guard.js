@@ -11,7 +11,7 @@
   const I18N = {
     zh: {
       licenseTitle: 'Chrome Capture Pro 授权激活',
-      licenseSubtitle: '请输入 Tools Platform 提供的本月 License 密钥以解锁全功能特权。',
+      licenseSubtitle: '请输入 Tools Platform 提供的本月 License 密钥以解锁全功能特权（样例格式形如 F12L1.eyJwcm9kdWN0SWQi...）。',
       licensePlaceholder: 'F12L1.eyJwcm9kdWN0SWQiOiJDaHJvbWUgQ2FwdHVyZSBQcm8iLC... (粘贴完整密钥)',
       activateBtn: '验证并激活 Pro 特权',
       activating: '正在校验签名与有效期…',
@@ -38,7 +38,7 @@
     },
     en: {
       licenseTitle: 'Chrome Capture Pro Activation',
-      licenseSubtitle: 'Enter the monthly License key provided by Tools Platform to unlock all Pro features.',
+      licenseSubtitle: 'Enter the monthly License key provided by Tools Platform to unlock all Pro features (e.g. F12L1.eyJwcm9kdWN0SWQi...).',
       licensePlaceholder: 'F12L1.eyJwcm9kdWN0SWQiOiJDaHJvbWUgQ2FwdHVyZSBQcm8iLC... (Paste full key)',
       activateBtn: 'Verify & Activate Pro',
       activating: 'Verifying signature & validity…',

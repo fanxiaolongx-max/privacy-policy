@@ -877,6 +877,36 @@ test('meeting-snapshots REST API routes respond correctly to GET, POST, PUT, DEL
         // Verify deleted
         const checkRes = await fetch(`${base}/${newId}`);
         assert.equal(checkRes.status, 404);
+
+        // 6. GET /api/meeting-snapshots/settings/rosters
+        const rostersGetRes = await fetch(`${base}/settings/rosters`);
+        assert.equal(rostersGetRes.status, 200);
+        const rostersGetData = await rostersGetRes.json();
+        assert.equal(rostersGetData.success, true);
+        assert.ok(Array.isArray(rostersGetData.data.mandatoryAttendees));
+        assert.ok(Array.isArray(rostersGetData.data.exemptions));
+
+        // 7. PUT /api/meeting-snapshots/settings/rosters
+        const rostersPutRes = await fetch(`${base}/settings/rosters`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                mandatoryAttendees: [
+                    { name: 'IntegrationMan', account: 'u_int_man', bu: 'BU_Int', customer: 'Cust_Int', role: '其他必选' }
+                ],
+                exemptions: [
+                    { name: 'IntegrationExempt', account: 'u_int_ex' }
+                ]
+            })
+        });
+        assert.equal(rostersPutRes.status, 200);
+        const rostersPutData = await rostersPutRes.json();
+        assert.equal(rostersPutData.success, true);
+        assert.equal(rostersPutData.data.mandatoryAttendees.length, 1);
+        assert.equal(rostersPutData.data.mandatoryAttendees[0].account, 'u_int_man');
+        assert.equal(rostersPutData.data.exemptions.length, 1);
+        assert.equal(rostersPutData.data.exemptions[0].account, 'u_int_ex');
+        assert.ok(rostersPutData.data.updatedAt);
     } finally {
         server.close();
     }
