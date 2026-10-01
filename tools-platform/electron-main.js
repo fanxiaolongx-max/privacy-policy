@@ -1,4 +1,13 @@
 const { app, BrowserWindow, dialog, ipcMain, session, shell, Tray, Menu } = require('electron');
+
+// 保证程序单实例运行，避免多开冲突导致 SQLite 锁死 (SQLITE_BUSY: database is locked)
+const hasSingleInstanceLock = app.requestSingleInstanceLock();
+if (!hasSingleInstanceLock) {
+    console.warn('[Electron] 检测到已有实例在运行，当前第二实例静默退出');
+    app.quit();
+    process.exit(0);
+}
+
 const { autoUpdater } = require('electron-updater');
 const path = require('path');
 const fs = require('fs');
@@ -96,6 +105,23 @@ function setupElectronFileLogging() {
 }
 
 setupElectronFileLogging();
+
+process.on('uncaughtException', (err) => {
+    console.error('[Electron] Uncaught Exception:', err);
+    const msg = String(err && (err.message || err.stack) || '');
+    if (msg.includes('SQLITE_BUSY') || (err && err.code === 'SQLITE_BUSY')) {
+        try {
+            dialog.showErrorBox(
+                '数据服务忙碌 / Database Busy',
+                '检测到本地数据库正被占用或有残留进程在运行。\n\n' +
+                '建议排查方式：\n' +
+                '1. 请在任务管理器中检查并结束可能残留的 Tools Platform 进程；\n' +
+                '2. 避免同时在网盘实时同步目录或受限磁盘中多开运行。'
+            );
+        } catch (_) {}
+    }
+});
+
 console.log('[Electron] User Data Path:', process.env.TOOLS_DATA_DIR);
 
 const net = require('net');
@@ -1729,6 +1755,17 @@ app.on('window-all-closed', function () {
     if (isQuitting && process.platform !== 'darwin') {
         app.quit();
     }
+});
+
+app.on('second-instance', () => {
+    console.log('[Electron] 检测到用户重复运行程序，自动唤起已有界面');
+    if (licenseWindow && !licenseWindow.isDestroyed()) {
+        if (licenseWindow.isMinimized()) licenseWindow.restore();
+        licenseWindow.show();
+        licenseWindow.focus();
+        return;
+    }
+    openAppPath('/');
 });
 
 app.on('activate', function () {

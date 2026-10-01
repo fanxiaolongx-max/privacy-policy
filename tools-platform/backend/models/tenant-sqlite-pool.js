@@ -14,7 +14,16 @@ function databasePath(filename, scope = 'data') {
 
 function getConnection(filename, scope = 'data') {
     const filePath = databasePath(filename, scope);
-    if (!pools.has(filePath)) pools.set(filePath, new sqlite3.Database(filePath));
+    if (!pools.has(filePath)) {
+        const connection = new sqlite3.Database(filePath);
+        connection.configure('busyTimeout', 5000);
+        connection.serialize(() => {
+            connection.run('PRAGMA journal_mode = WAL');
+            connection.run('PRAGMA busy_timeout = 5000');
+            connection.run('PRAGMA foreign_keys = ON');
+        });
+        pools.set(filePath, connection);
+    }
     return pools.get(filePath);
 }
 

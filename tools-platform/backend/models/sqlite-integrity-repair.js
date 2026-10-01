@@ -23,7 +23,8 @@ async function withDatabase(dbPath, fn) {
     const db = await new Promise((resolve, reject) => {
         const handle = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE, err => {
             if (err) return reject(err);
-            resolve(handle);
+            handle.configure('busyTimeout', 5000);
+            handle.run('PRAGMA busy_timeout = 5000', () => resolve(handle));
         });
     });
 

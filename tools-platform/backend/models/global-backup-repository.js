@@ -125,6 +125,7 @@ async function restoreTenantControlPlane(snapshot) {
     if (!snapshot) return false;
     const dbPath = path.join(getDataDir(), 'tools.db');
     const db = new sqlite3.Database(dbPath);
+    db.configure('busyTimeout', 5000);
     try {
         await sqliteRun(db, 'PRAGMA foreign_keys = OFF');
         await sqliteRun(db, 'BEGIN IMMEDIATE');

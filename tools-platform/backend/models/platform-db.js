@@ -6,8 +6,10 @@ const { BASE_DATA_DIR } = require('./tenant-context');
 fs.mkdirSync(BASE_DATA_DIR, { recursive: true });
 const DB_PATH = path.join(BASE_DATA_DIR, 'tools.db');
 const db = new sqlite3.Database(DB_PATH);
+db.configure('busyTimeout', 5000);
 db.serialize(() => {
     db.run('PRAGMA journal_mode = WAL');
+    db.run('PRAGMA busy_timeout = 5000');
     db.run('PRAGMA foreign_keys = ON');
 });
 

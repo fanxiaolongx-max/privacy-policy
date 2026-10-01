@@ -15,8 +15,10 @@ function getDatabase() {
     const dbPath = getDbPath(tenantId);
     if (!connections.has(dbPath)) {
         const connection = new sqlite3.Database(dbPath);
+        connection.configure('busyTimeout', 5000);
         connection.serialize(() => {
             connection.run('PRAGMA journal_mode = WAL');
+            connection.run('PRAGMA busy_timeout = 5000');
             connection.run('PRAGMA foreign_keys = ON');
         });
         connections.set(dbPath, connection);
