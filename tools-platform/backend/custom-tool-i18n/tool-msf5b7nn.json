@@ -478,5 +478,21 @@
   "📸 保存快照": "📸 Save Snapshot",
   "＋ 新增映射": "＋ Add Mapping",
   "＋ 新增豁免人员": "＋ Add Exempt Person",
-  "，判断结果已刷新": ", results refreshed"
+  "，判断结果已刷新": ", results refreshed",
+  "🔄 WeLink 映射": "🔄 WeLink Mapping",
+  "WeLink 映射": "WeLink Mapping",
+  "下载 WeLink 人员查询脚本": "Download WeLink Query Script",
+  "下载脚本": "Download Script",
+  "导入 WeLink 查询结果与新旧工号映射": "Import WeLink Results & ID Mapping",
+  "工号变更": "ID Changed",
+  "疑似已离职": "Suspected Departed",
+  "已同人识别": "Identified Same Person",
+  "WeLink 人员信息与工号映射": "WeLink Personnel & ID Mapping",
+  "第一步：下载/复制 WeLink 查询脚本": "Step 1: Download/Copy WeLink Query Script",
+  "第二步：导入 WeLink 查询结果": "Step 2: Import WeLink Query Results",
+  "第三步：工号变更识别与离职预警": "Step 3: ID Change Recognition & Departure Alerts",
+  "导入查询结果": "Import Query Results",
+  "清空映射数据": "Clear Mapping Data",
+  "已识别新旧工号变更人员": "Recognized ID Changes",
+  "疑似已离职人员（查询返回无有效数据）": "Suspected Departed Personnel"
 }

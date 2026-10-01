@@ -2269,7 +2269,7 @@
     </div>
     <div class="top-actions"><button class="btn developer-btn hidden" id="developerModeBtn">⚗ 开发者模式</button><button
         class="btn btn-search" id="globalSearchBtn"><span class="search-icon">⌕</span><span
-          id="globalSearchText">人员搜索</span></button><button class="btn" id="mandatoryAttendeesBtn" title="手动配置其他必选参会人员名单">👤 其他必选名单<span class="session-tab-badge hidden" id="mandatoryTopBadge">0</span></button><button class="btn btn-snapshot" id="saveSnapshotBtn" title="一键保存当前全部导入数据与分析结果为服务器快照">📸 保存快照</button><button class="btn" id="manageSnapshotsBtn" title="查看、浏览和回溯保存在服务器上的历史会议考勤快照">📚 历史快照库</button><button class="btn btn-export" id="exportBtn">⇩
+          id="globalSearchText">人员搜索</span></button><button class="btn" id="mandatoryAttendeesBtn" title="手动配置其他必选参会人员名单">👤 其他必选名单<span class="session-tab-badge hidden" id="mandatoryTopBadge">0</span></button><button class="btn" id="welinkToolsBtn" title="WeLink 人员查询脚本与工号映射"><span style="margin-right:4px">🔄</span><span id="welinkToolsBtnText">WeLink 映射</span><span class="session-tab-badge hidden" id="welinkTopBadge">0</span></button><button class="btn btn-snapshot" id="saveSnapshotBtn" title="一键保存当前全部导入数据与分析结果为服务器快照">📸 保存快照</button><button class="btn" id="manageSnapshotsBtn" title="查看、浏览和回溯保存在服务器上的历史会议考勤快照">📚 历史快照库</button><button class="btn btn-export" id="exportBtn">⇩
         一键导出分析结果</button><button class="btn" id="langBtn">English</button><button class="btn"
         id="clearAllBtn">清空全部</button><button class="btn btn-primary" id="chooseBtn">一键导入全部表格</button></div>
   </header>
@@ -2539,6 +2539,80 @@
       </div>
       <div class="snapshot-modal-body" id="smListContainer"></div>
     </div>
+  <div class="modal hidden" id="welinkModal">
+    <div class="modal-card" style="width:min(940px,96vw);max-height:92vh">
+      <div class="modal-head">
+        <div>
+          <h3 id="welinkModalTitle">🔄 WeLink 人员查询与工号映射</h3>
+          <p id="welinkModalSub">根据当前提取的人员名单自动生成 WeLink 查询脚本，或导入查询结果进行新旧工号自动映射合并与考勤同人识别。</p>
+        </div>
+        <button class="modal-close" id="welinkModalClose">×</button>
+      </div>
+      <div class="welink-modal-body" style="padding:16px 20px;overflow-y:auto;display:flex;flex-direction:column;gap:16px">
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:8px">
+            <div>
+              <strong style="font-size:14px;color:#0f172a">1. 自动生成并下载 WeLink 人员查询脚本</strong>
+              <div style="font-size:12px;color:#64748b;margin-top:2px" id="welinkExtractStats">当前提取名单中包含 0 名有效工号人员</div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn" id="copyWelinkScriptBtn">📋 复制脚本</button>
+              <button class="btn btn-primary" id="downloadWelinkScriptBtn">📥 下载 WeLink 查询脚本 (.ps1)</button>
+            </div>
+          </div>
+          <div style="font-size:12px;color:#475569;line-height:1.5;background:#fff;border:1px dashed #cbd5e1;border-radius:6px;padding:8px 12px">
+            💡 <strong>使用说明</strong>：点击下载脚本并在已登录 WeLink 的终端（PowerShell）中运行，脚本将自动批量执行 <code>welink-cli search person</code> 并生成结果 TXT 文件。查询完毕后请在下方导入该 TXT 文件。
+          </div>
+        </div>
+
+        <div style="border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px">
+          <strong style="font-size:14px;color:#0f172a;display:block;margin-bottom:8px">2. 导入 WeLink 查询结果</strong>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;gap:10px;align-items:center">
+              <input type="file" id="welinkTxtFile" accept=".txt,text/plain" style="font-size:13px;flex:1">
+              <span style="font-size:12px;color:#94a3b8">或直接在下方文本框中粘贴</span>
+            </div>
+            <textarea id="welinkTxtInput" placeholder="在此粘贴 welink-cli search person 查询输出或脚本生成的 TXT 文件内容…" style="width:100%;height:100px;border:1px solid #d8dce4;border-radius:8px;padding:8px 12px;font-size:12px;font-family:monospace;box-sizing:border-box;resize:vertical"></textarea>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <input id="welinkManualQueryId" placeholder="单条 JSON 查询工号（可选，例如：00197735）" style="flex:1;min-width:240px;border:1px solid #d8dce4;border-radius:8px;padding:7px 10px;font-size:12px">
+              <button class="btn" id="clearWelinkDataBtn">清空人员信息</button>
+              <button class="btn btn-primary" id="applyWelinkImportBtn">解析并应用</button>
+            </div>
+            <div id="welinkParseStatus" style="font-size:12px;color:#2563eb;font-weight:500">尚未导入人员信息</div>
+          </div>
+        </div>
+
+        <div id="welinkChangedSection" style="display:none;border:1px solid #fef3c7;background:#fffbeb;border-radius:10px;padding:12px 16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <strong style="font-size:13px;color:#92400e">⚡ 已识别到工号变更人员（新旧工号已自动映射）</strong>
+            <span id="welinkChangedCount" style="font-size:12px;color:#b45309"></span>
+          </div>
+          <div style="max-height:160px;overflow-y:auto;border:1px solid #fde68a;border-radius:6px;background:#fff">
+            <table class="data-table" style="font-size:12px;margin:0">
+              <thead><tr><th>查询原工号</th><th>WeLink 现工号</th><th>姓名</th><th>部门</th><th>考勤状态</th></tr></thead>
+              <tbody id="welinkChangedTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="welinkDepartedSection" style="display:none;border:1px solid #fee2e2;background:#fff5f5;border-radius:10px;padding:12px 16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <strong style="font-size:13px;color:#991b1b">⚠️ 疑似已离职人员（查询返回空数据）</strong>
+            <span id="welinkDepartedCount" style="font-size:12px;color:#dc2626"></span>
+          </div>
+          <div style="font-size:11px;color:#7f1d1d;margin-bottom:6px">以下人员查询返回结果中 data 为空，已做标记，请人工二次确认。</div>
+          <div style="max-height:120px;overflow-y:auto;border:1px solid #fecaca;border-radius:6px;background:#fff">
+            <table class="data-table" style="font-size:12px;margin:0">
+              <thead><tr><th>查询工号</th><th>姓名</th><th>部门</th></tr></thead>
+              <tbody id="welinkDepartedTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn" id="welinkModalFooterClose">关闭</button>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -2580,12 +2654,335 @@
         { name: 'liqiyan', account: '' },
       ];
       // ===== 代码预置豁免名单结束 =====
+      const WELINK_STORAGE_KEY = 'meetingAttendance.welinkPeople.v1';
       const ATTENDANCE_STORAGE_KEY = 'meetingAttendance.attendanceRules.v1';
       const EXEMPTION_STORAGE_KEY = 'meetingAttendance.exemptionList.v1';
       const MANDATORY_STORAGE_KEY = 'meetingAttendance.mandatoryAttendees.v1';
       const DEVELOPER_SESSION_KEY = 'meetingAttendance.developerMode.v1';
       const LANGUAGE_STORAGE_KEY = 'meetingAttendance.language.v1';
       const SIDEBAR_STORAGE_KEY = 'meetingAttendance.sidebarCollapsed.v1';
+      function clean(v) { return normalizeName(v); }
+      function personKey(v) { return clean(v).toLowerCase(); }
+      function loadWelinkPeopleList() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(WELINK_STORAGE_KEY) || 'null');
+          if (Array.isArray(saved)) return saved;
+        } catch (e) { }
+        return [];
+      }
+      function psQuote(v) { return `'${String(v).replace(/'/g, "''")}'`; }
+      function psDoubleQuote(v) { return '"' + String(v).replace(/[`$"\r\n]/g, c => c === '\r' || c === '\n' ? '' : ('`' + c)) + '"'; }
+      function downloadText(name, content, type) {
+        const url = URL.createObjectURL(new Blob([content], { type }));
+        const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+      function buildWelinkScript(ids) {
+        const lines = [
+          "$ErrorActionPreference = 'Continue'",
+          "$outputFile = Join-Path (Get-Location) ('welink-person-results-' + (Get-Date -Format 'yyyyMMdd-HHmmss') + '.txt')",
+          "$success = 0",
+          "$total = " + ids.length,
+          "welink-cli auth login",
+          "$status = welink-cli auth status 2>&1 | Out-String",
+          "if ($LASTEXITCODE -ne 0 -or $status -notmatch 'User Token:\\s*valid') { Write-Host 'WeLink 登录无效，查询已停止。'; exit 1 }",
+          "Set-Content -LiteralPath $outputFile -Value '' -Encoding UTF8"
+        ];
+        ids.forEach(id => {
+          lines.push(`$id = ${psQuote(id)}`);
+          lines.push(`$result = welink-cli search person --text ${psDoubleQuote(id)} 2>&1 | Out-String`);
+          lines.push('$code = $LASTEXITCODE');
+          lines.push("Add-Content -LiteralPath $outputFile -Value ('welink-cli search person --text \"' + $id + '\"') -Encoding UTF8");
+          lines.push('Add-Content -LiteralPath $outputFile -Value $result -Encoding UTF8');
+          lines.push("if ($code -eq 0 -and $result -match 'employeeNumber|chineseName') { $success++ }");
+          lines.push("Write-Host ($success.ToString() + '/' + $total.ToString() + ' 查询成功；当前工号 ' + $id)");
+        });
+        lines.push("Write-Host ('完成：成功查询 ' + $success + ' / ' + $total + ' 人。结果：' + $outputFile)", "Invoke-Item -LiteralPath $outputFile");
+        return '\ufeff' + lines.join('\r\n') + '\r\n';
+      }
+      function allExtractedPeopleIds() {
+        const ids = new Set();
+        const addId = raw => {
+          if (!raw) return;
+          String(raw).split(/[\n,;，；|/]+/).map(cleanPersonName).forEach(part => {
+            const trimmed = normalizeAttendanceId(part);
+            if (trimmed && !isInvalidStaffId(trimmed) && /^[A-Za-z0-9_-]{4,10}$/.test(trimmed)) {
+              ids.add(trimmed);
+            }
+          });
+        };
+
+        if (state.peopleCache?.all?.length) {
+          state.peopleCache.all.forEach(p => addId(p.account));
+        } else {
+          extractQrPeople().forEach(p => addId(p.account));
+          extractRfcPeople().forEach(p => addId(p.account));
+          extractWfmPeople().forEach(p => addId(p.account));
+        }
+        if (Array.isArray(state.mandatoryAttendees)) {
+          state.mandatoryAttendees.forEach(m => addId(m.account));
+        }
+        if (!ids.size) {
+          state.sheets.forEach(s => {
+            const idIdx = headerIndex(s.headers, '工号', 'user_id', '用户id', '账号');
+            if (idIdx >= 0) {
+              s.rows.forEach(r => addId(cellAt(r, idIdx)));
+            }
+          });
+        }
+        return [...ids];
+      }
+      function triggerDownloadWelinkScript() {
+        const ids = allExtractedPeopleIds();
+        if (!ids.length) {
+          uiAlert(bi('当前未提取到任何有效工号，请先导入包含工号的名单或签到表格。', 'No valid staff IDs found. Import roster or attendance sheets first.'));
+          return;
+        }
+        downloadText('welink-人员信息查询.ps1', buildWelinkScript(ids), 'text/plain;charset=utf-8');
+        toast(bi(`已生成并下载包含 ${ids.length} 名人员的 WeLink 查询脚本`, `Generated and downloaded WeLink query script with ${ids.length} staff IDs`));
+      }
+      function copyWelinkScript() {
+        const ids = allExtractedPeopleIds();
+        if (!ids.length) {
+          uiAlert(bi('当前未提取到任何有效工号，请先导入包含工号的名单或签到表格。', 'No valid staff IDs found. Import roster or attendance sheets first.'));
+          return;
+        }
+        const text = buildWelinkScript(ids);
+        if (navigator.clipboard?.writeText) {
+          navigator.clipboard.writeText(text).then(() => {
+            toast(bi('✅ 已复制 WeLink 查询脚本至剪贴板', 'WeLink query script copied to clipboard'));
+          }).catch(() => {
+            downloadText('welink-人员信息查询.ps1', text, 'text/plain;charset=utf-8');
+          });
+        } else {
+          downloadText('welink-人员信息查询.ps1', text, 'text/plain;charset=utf-8');
+        }
+      }
+      function parseWelinkPeople(text, manualQueryId = '') {
+        const people = [];
+        const queries = [...String(text).matchAll(/--text\s+["']([^"']+)["']/g)].map(m => ({ pos: m.index, id: m[1] }));
+        let start = -1, depth = 0, inString = false, escape = false, parsedBlockCount = 0;
+        const source = String(text);
+        for (let i = 0; i < source.length; i++) {
+          const c = source[i];
+          if (start < 0) {
+            if (c === '{') { start = i; depth = 1; }
+            continue;
+          }
+          if (inString) {
+            if (escape) escape = false;
+            else if (c === '\\') escape = true;
+            else if (c === '"') inString = false;
+            continue;
+          }
+          if (c === '"') { inString = true; continue; }
+          if (c === '{') depth++;
+          if (c === '}' && --depth === 0) {
+            try {
+              const obj = JSON.parse(source.slice(start, i + 1));
+              parsedBlockCount++;
+              const data = Array.isArray(obj.data) ? obj.data : Array.isArray(obj.search_cli_person?.data) ? obj.search_cli_person.data : (obj.employeeNumber || obj.chineseName) ? [obj] : [];
+              const query = queries.filter(q => q.pos < start).at(-1)?.id || (!queries.length ? clean(manualQueryId) : '');
+              data.forEach(p => {
+                if (p && typeof p === 'object' && !Array.isArray(p) && !('pagination' in p)) {
+                  people.push({ ...p, __queryEmpNo: query });
+                }
+              });
+              const searchResult = obj.search_cli_person || obj;
+              if (!data.length && query && Array.isArray(searchResult?.data) && String(searchResult.code) === '200' && /success/i.test(clean(searchResult.message))) {
+                people.push({ __queryEmpNo: query, __suspectedDeparted: true, deptName: '疑似已离职' });
+              }
+            } catch (e) { }
+            start = -1;
+          }
+        }
+        if (!queries.length && parsedBlockCount > 1 && clean(manualQueryId)) {
+          return people.filter(p => !p.__suspectedDeparted).map(p => ({ ...p, __queryEmpNo: '' }));
+        }
+        return people;
+      }
+      function installWelinkPeople(people, recompute = true) {
+        state.welinkPeopleList = people || [];
+        state.welinkPeople = new Map();
+        state.welinkAliasMap = new Map();
+        const byQuery = new Map();
+
+        (people || []).forEach(p => {
+          const id = personKey(p.employeeNumber);
+          const query = personKey(p.__queryEmpNo);
+          if (id) state.welinkPeople.set(id, p);
+          if (query) {
+            if (!byQuery.has(query)) byQuery.set(query, []);
+            byQuery.get(query).push(p);
+          }
+        });
+
+        byQuery.forEach((matches, query) => {
+          const actual = matches.filter(p => !p.__suspectedDeparted);
+          const candidates = actual.length ? actual : matches;
+          const exact = candidates.find(p => personKey(p.employeeNumber) === query);
+          const distinct = new Map(candidates.map(p => [personKey(p.employeeNumber) || JSON.stringify(p), p]));
+          const selected = exact || (distinct.size === 1 ? [...distinct.values()][0] : null);
+          if (selected) state.welinkPeople.set(query, selected);
+        });
+
+        // Build bidirectional alias clusters with transitive closure
+        const pairs = [];
+        state.welinkPeople.forEach(p => {
+          const q = normalizeAttendanceId(p.__queryEmpNo);
+          const r = normalizeAttendanceId(p.employeeNumber);
+          if (q && r) pairs.push([q, r]);
+          else if (q) pairs.push([q, q]);
+          else if (r) pairs.push([r, r]);
+        });
+
+        pairs.forEach(([a, b]) => {
+          const cluster = new Set();
+          cluster.add(a);
+          cluster.add(b);
+          idVariants(a).forEach(v => cluster.add(v));
+          idVariants(b).forEach(v => cluster.add(v));
+
+          const overlapping = [];
+          cluster.forEach(id => {
+            if (state.welinkAliasMap.has(id)) {
+              overlapping.push(state.welinkAliasMap.get(id));
+            }
+          });
+          overlapping.forEach(existing => {
+            existing.forEach(id => cluster.add(id));
+          });
+          cluster.forEach(id => {
+            state.welinkAliasMap.set(id, cluster);
+          });
+        });
+
+        try {
+          localStorage.setItem(WELINK_STORAGE_KEY, JSON.stringify(state.welinkPeopleList));
+        } catch (e) {
+          console.warn('WeLink人员存储失败', e);
+        }
+
+        updateWelinkBadge();
+        if (recompute) {
+          refreshCalculatedResults(bi('正在应用 WeLink 人员映射并重新核算考勤…', 'Applying WeLink staff ID mappings and recalculating…'));
+        }
+      }
+      function welinkFor(person) {
+        return state.welinkPeople?.get(personKey(person)) || null;
+      }
+      function changedEmployeeId(person) {
+        const p = welinkFor(person);
+        const query = personKey(p?.__queryEmpNo);
+        const returned = personKey(p?.employeeNumber);
+        const normalized = id => /^[a-z](?=(?:wx\d{5,}|\d{5,})$)/i.test(id) ? id.slice(1) : id;
+        return query && query === personKey(person) && returned && normalized(query) !== normalized(returned) ? clean(p.employeeNumber) : '';
+      }
+      function changedEmployeeTag(person) {
+        const newId = changedEmployeeId(person);
+        return newId ? ` <span class="tag id-changed" style="cursor:help;font-size:11px;padding:1px 5px;background:#fef3c7;color:#92400e;border-radius:4px" title="查询工号：${esc(person)}；WeLink 返回工号：${esc(newId)}">工号变更</span>` : '';
+      }
+      function isSuspectedDeparted(person) {
+        return Boolean(welinkFor(person)?.__suspectedDeparted);
+      }
+      function suspectedDepartedPeople() {
+        return [...new Set(state.welinkPeople?.values() || [])].filter(p => p.__suspectedDeparted);
+      }
+      function updateWelinkBadge() {
+        const count = state.welinkPeople ? new Set(state.welinkPeople.values()).size : 0;
+        const badge = $('#welinkTopBadge');
+        if (badge) {
+          badge.textContent = count ? String(count) : '0';
+          badge.classList.toggle('hidden', !count);
+        }
+      }
+      function renderWelinkModalDetails() {
+        const parseStatus = $('#welinkParseStatus');
+        const count = state.welinkPeopleList ? state.welinkPeopleList.length : 0;
+        const changedList = [];
+        const departedList = [];
+
+        const seenQuery = new Set();
+        (state.welinkPeopleList || []).forEach(p => {
+          const query = clean(p.__queryEmpNo);
+          const returned = clean(p.employeeNumber);
+          const key = `${query}|${returned}`;
+          if (seenQuery.has(key)) return;
+          seenQuery.add(key);
+
+          if (p.__suspectedDeparted) {
+            departedList.push({ query, name: p.chineseName || '—', dept: p.deptName || '疑似已离职' });
+          } else {
+            const ch = changedEmployeeId(query);
+            if (ch) {
+              changedList.push({
+                query,
+                returned: ch,
+                name: p.chineseName || p.englishName || '—',
+                dept: p.deptName || p.departmentName || '—'
+              });
+            }
+          }
+        });
+
+        if (parseStatus) {
+          if (!count) {
+            parseStatus.textContent = bi('尚未导入人员信息', 'No personnel info imported');
+            parseStatus.style.color = '#64748b';
+          } else {
+            parseStatus.textContent = bi(`已关联 ${new Set(state.welinkPeople.values()).size} 条人员信息；识别工号变更 ${changedList.length} 人；疑似已离职 ${departedList.length} 人。`, `Linked ${new Set(state.welinkPeople.values()).size} records; ${changedList.length} ID change(s); ${departedList.length} suspected departure(s).`);
+            parseStatus.style.color = '#15803d';
+          }
+        }
+
+        const changedSec = $('#welinkChangedSection');
+        if (changedSec) {
+          if (changedList.length) {
+            changedSec.style.display = 'block';
+            $('#welinkChangedCount').textContent = `${changedList.length} ${t('peopleUnit')}`;
+            $('#welinkChangedTableBody').innerHTML = changedList.map(item => `
+              <tr>
+                <td><code>${esc(item.query)}</code></td>
+                <td><strong style="color:#b45309"><code>${esc(item.returned)}</code></strong></td>
+                <td>${esc(item.name)}</td>
+                <td>${esc(item.dept)}</td>
+                <td><span class="badge" style="background:#dcfce7;color:#15803d;font-size:11px;padding:1px 5px;border-radius:4px">✓ 已同人识别</span></td>
+              </tr>
+            `).join('');
+          } else {
+            changedSec.style.display = 'none';
+          }
+        }
+
+        const departedSec = $('#welinkDepartedSection');
+        if (departedSec) {
+          if (departedList.length) {
+            departedSec.style.display = 'block';
+            $('#welinkDepartedCount').textContent = `${departedList.length} ${t('peopleUnit')}`;
+            $('#welinkDepartedTableBody').innerHTML = departedList.map(item => `
+              <tr>
+                <td><code>${esc(item.query)}</code></td>
+                <td>${esc(item.name)}</td>
+                <td><span style="color:#b91c1c">${esc(item.dept)}</span></td>
+              </tr>
+            `).join('');
+          } else {
+            departedSec.style.display = 'none';
+          }
+        }
+      }
+      function openWelinkModal() {
+        const ids = allExtractedPeopleIds();
+        const stats = $('#welinkExtractStats');
+        if (stats) {
+          stats.textContent = bi(`当前提取名单中包含 ${ids.length} 名有效工号人员`, `Current roster contains ${ids.length} valid employee IDs`);
+        }
+        renderWelinkModalDetails();
+        $('#welinkModal').classList.remove('hidden');
+      }
+      function closeWelinkModal() {
+        $('#welinkModal').classList.add('hidden');
+      }
+
       const UI = {
         zh: { brand: '会议出席统计工具', clear: '清空全部', import: '一键导入全部表格', saveSnapshot: '保存快照', manageSnapshots: '历史快照库', dataInput: '数据输入', results: '处理结果', people: '人员提取结果', pageSize: '每页行数', imported: '已导入表格', rows: '行', peopleUnit: '人', emptyTitle: '当前类别还没有表格', emptyDesc: '导入后将按文件与工作表顺序依次显示', columns: '选择显示列', remove: '删除', peopleTitle: '人员提取结果', peopleDesc: '从 QR、RFC 和 WFM 原始表中提取人员并去重；角色、BU与客户群均依据最新订单取值。' },
         en: { brand: 'Meeting Attendance Analyzer', clear: 'Clear All', import: 'Import All Tables', saveSnapshot: 'Save Snapshot', manageSnapshots: 'Snapshot Library', dataInput: 'Data Input', results: 'Results', people: 'People Results', pageSize: 'Rows per page', imported: 'Imported Tables', rows: 'rows', peopleUnit: 'people', emptyTitle: 'No table in this category', emptyDesc: 'Imported sheets will appear in file and sheet order.', columns: 'Choose Columns', remove: 'Delete', peopleTitle: 'People Results', peopleDesc: 'Extract and deduplicate people from QR, RFC and WFM; role, BU and Customer Group use the latest order.' }
@@ -2617,7 +3014,7 @@
         } catch (e) { }
         return [];
       }
-      const state = { active: 'qr', lang: loadLanguage(), sidebarCollapsed: loadSidebarCollapsed(), pageSize: 200, sheets: [], seq: 0, editingSheet: null, peoplePages: { all: 1, qr: 1, rfc: 1, wfm: 1 }, buFilter: '', selectedSession: 'all', matrixFullscreen: false, personSearch: { query: '', result: null, pages: { qr: 1, rfc: 1, wfm: 1, offline: 1, online: 1 } }, dataVersion: 0, peopleCache: null, qualityCache: null, coverageCache: null, coverageDetailsOpen: false, peopleBuildId: 0, customerMappings: loadCustomerMappings(), attendanceRules: loadAttendanceRules(), exemptions: loadExemptions(), mandatoryAttendees: loadMandatoryAttendees(), developerMode: loadDeveloperMode(), developerClicks: [], openPeopleCards: new Set(), snapshotsList: [] };
+      const state = { active: 'qr', lang: loadLanguage(), sidebarCollapsed: loadSidebarCollapsed(), pageSize: 200, sheets: [], seq: 0, editingSheet: null, peoplePages: { all: 1, qr: 1, rfc: 1, wfm: 1 }, buFilter: '', selectedSession: 'all', matrixFullscreen: false, personSearch: { query: '', result: null, pages: { qr: 1, rfc: 1, wfm: 1, offline: 1, online: 1 } }, dataVersion: 0, peopleCache: null, qualityCache: null, coverageCache: null, coverageDetailsOpen: false, peopleBuildId: 0, customerMappings: loadCustomerMappings(), attendanceRules: loadAttendanceRules(), exemptions: loadExemptions(), mandatoryAttendees: loadMandatoryAttendees(), welinkPeopleList: loadWelinkPeopleList(), welinkPeople: new Map(), welinkAliasMap: new Map(), developerMode: loadDeveloperMode(), developerClicks: [], openPeopleCards: new Set(), snapshotsList: [] };
       const $ = s => document.querySelector(s);
       const t = key => UI[state.lang][key] || UI.zh[key] || key;
       const bi = (zh, en) => state.lang === 'en' ? (en || I18N_DICT[zh] || zh) : zh;
@@ -2819,6 +3216,38 @@
         $('#linkToMandatoryModal').onclick = e => { e.preventDefault(); closeAttendanceModal(); openMandatoryModal(); };
         $('#mandatoryModal').addEventListener('click', e => { if (e.target === $('#mandatoryModal')) closeMandatoryModal(); });
         $('#mandatoryListBody').addEventListener('click', e => { const b = e.target.closest('.mandatory-del-btn'); if (b) { b.closest('tr').remove(); if (!$('#mandatoryListBody').children.length) appendMandatoryRow({ name: '', account: '', bu: '', customer: '', role: '其他必选' }); } });
+        $('#welinkToolsBtn').onclick = openWelinkModal;
+        $('#welinkModalClose').onclick = $('#welinkModalFooterClose').onclick = closeWelinkModal;
+        $('#downloadWelinkScriptBtn').onclick = triggerDownloadWelinkScript;
+        $('#copyWelinkScriptBtn').onclick = copyWelinkScript;
+        $('#welinkTxtFile').onchange = async e => {
+          const file = e.target.files?.[0];
+          if (file) $('#welinkTxtInput').value = await file.text();
+        };
+        $('#applyWelinkImportBtn').onclick = () => {
+          const text = $('#welinkTxtInput').value;
+          const manualId = $('#welinkManualQueryId').value;
+          const people = parseWelinkPeople(text, manualId);
+          if (!people.length) {
+            $('#welinkParseStatus').textContent = bi('未解析出人员信息。若只粘贴一条空 data 的 JSON，请填写该次查询工号；完整脚本 TXT 请保留命令行。', 'No personnel records parsed. Provide the query ID if pasting a single empty-data JSON.');
+            $('#welinkParseStatus').style.color = '#dc2626';
+            return;
+          }
+          installWelinkPeople(people);
+          renderWelinkModalDetails();
+          toast(bi(`已成功导入并关联 ${people.length} 条 WeLink 人员信息`, `Imported and linked ${people.length} WeLink personnel records`));
+        };
+        $('#clearWelinkDataBtn').onclick = async () => {
+          if (await uiConfirm(bi('确定清空已导入的 WeLink 人员与工号映射数据吗？', 'Clear all imported WeLink personnel & staff ID mapping data?'), { danger: true, icon: '🗑️' })) {
+            $('#welinkTxtInput').value = '';
+            $('#welinkTxtFile').value = '';
+            $('#welinkManualQueryId').value = '';
+            installWelinkPeople([]);
+            renderWelinkModalDetails();
+            toast(bi('WeLink 人员信息已清空', 'WeLink personnel data cleared'));
+          }
+        };
+        $('#welinkModal').addEventListener('click', e => { if (e.target === $('#welinkModal')) closeWelinkModal(); });
         $('#developerModalClose').onclick = $('#developerCancelBtn').onclick = closeDeveloperModal; $('#developerDisableBtn').onclick = disableDeveloperMode; $('#exemptionAddBtn').onclick = () => appendExemptionRow('', ''); $('#developerSaveBtn').onclick = saveExemptions; $('#exemptionList').addEventListener('click', e => { const b = e.target.closest('.mapping-delete'); if (b) b.closest('.exemption-row').remove(); });
         $('#developerModal').addEventListener('click', e => { if (e.target === $('#developerModal')) closeDeveloperModal(); });
         $('#personSearchModalClose').onclick = closePersonSearchModal; $('#personSearchModal').addEventListener('click', e => { if (e.target === $('#personSearchModal')) closePersonSearchModal(); else handleSheetAction(e); });
@@ -2836,7 +3265,7 @@
           if (e.key === 'Escape') {
             const hasOpenModal = document.querySelector('.modal:not(.hidden)') || document.querySelector('.custom-ui-dialog');
             if (hasOpenModal) {
-              closeColumnModal(); closeMappingModal(); closeAttendanceModal(); closeDeveloperModal(); closeMandatoryModal(); closePersonSearchModal(); closeSaveSnapshotModal(); closeSnapshotManagerModal();
+              closeColumnModal(); closeMappingModal(); closeAttendanceModal(); closeDeveloperModal(); closeMandatoryModal(); closeWelinkModal(); closePersonSearchModal(); closeSaveSnapshotModal(); closeSnapshotManagerModal();
               return;
             }
             if (state.matrixFullscreen) {
@@ -2845,6 +3274,8 @@
           }
         });
         updateMandatoryBadge();
+        updateWelinkBadge();
+        installWelinkPeople(state.welinkPeopleList, false);
         render();
         syncRostersWithServer();
       }
@@ -3401,6 +3832,8 @@
         const peopleCard = e.target.closest('[data-people]');
         if (peopleCard) {
           if (btn.dataset.action === 'toggle-matrix-fullscreen') { toggleMatrixFullscreen(); return; }
+          if (btn.dataset.action === 'download-welink-script') { triggerDownloadWelinkScript(); return; }
+          if (btn.dataset.action === 'welink-modal') { openWelinkModal(); return; }
           if (btn.dataset.action === 'mandatory-people') { openMandatoryModal(); return; }
           if (btn.dataset.action === 'mapping') { openMappingModal(); return; }
           if (btn.dataset.action === 'attendance-rules') { openAttendanceModal(); return; }
@@ -3763,7 +4196,7 @@
               const exemption = getExemption(p);
               const isNightForSession = isPersonNightExemptForDate(p, sessDate) || (p.isNightWfmExempt && allMeetingDates.length <= 1);
               const nightExempt = (state.attendanceRules.nightWfmExempt !== false) && isNightForSession;
-              const record = (exemption || nightExempt) ? null : getAttendanceRecord(p.account, sIndex, sessDate);
+              const record = (exemption || nightExempt) ? null : getAttendanceRecord(p.account, sIndex, sessDate, p.name);
               let attendance, attendanceMethod, attendanceTime;
               if (nightExempt) {
                 attendance = 'Attend on Time';
@@ -4106,11 +4539,18 @@
             `;
           }).join('');
 
+          const changedTag = r.changedEmployeeId
+            ? ` <span class="tag id-changed" style="cursor:help;font-size:11px;padding:1px 5px;background:#fef3c7;color:#92400e;border-radius:4px" title="查询工号：${esc(r.oldEmployeeId || r.account)}；WeLink 现工号：${esc(r.changedEmployeeId)}">工号变更</span>`
+            : '';
+          const departedTag = r.isSuspectedDeparted
+            ? ` <span class="tag possible-departed" style="cursor:help;font-size:11px;padding:1px 5px;background:#fee2e2;color:#991b1b;border-radius:4px" title="WeLink 查询结果 data 为空，请人工二次确认">疑似已离职</span>`
+            : '';
+
           return `
             <tr>
               <td>${start + i + 1}</td>
               <td><strong>${esc(r.name)}</strong>${r.isManualMandatory ? ` <span class="badge" style="background:#e0f2fe;color:#0369a1;font-size:11px;padding:1px 5px;border-radius:4px">${bi('必选', 'Mandatory')}</span>` : ''}</td>
-              <td><code>${esc(r.account)}</code></td>
+              <td><code>${esc(r.account)}</code>${changedTag}${departedTag}</td>
               <td>${esc(r.bu)}</td>
               <td>${esc(r.customer)}</td>
               ${sessionCells}
@@ -4133,6 +4573,8 @@
               </div>
               <div class="sheet-actions">
                 <button class="icon-btn matrix-fullscreen-btn ${state.matrixFullscreen ? 'active' : ''}" data-action="toggle-matrix-fullscreen" title="${state.matrixFullscreen ? bi('退出全屏查看 (Esc)', 'Exit Fullscreen (Esc)') : bi('全屏查看横向比对表', 'Fullscreen View')}">${state.matrixFullscreen ? `🗗 ${bi('退出全屏', 'Exit Fullscreen')}` : `⛶ ${bi('全屏查看', 'Fullscreen')}`}</button>
+                <button class="icon-btn" data-action="download-welink-script" title="${bi('下载 WeLink 人员查询脚本', 'Download WeLink Query Script')}">📥 ${bi('下载脚本', 'Download Script')}</button>
+                <button class="icon-btn" data-action="welink-modal" title="${bi('导入 WeLink 查询结果与新旧工号映射', 'Import WeLink Results & ID Mapping')}">🔄 ${bi('WeLink 映射', 'WeLink Mapping')}</button>
                 <button class="icon-btn" data-action="mandatory-people">👤 ${bi('其他必选名单', 'Mandatory Attendees')}</button>
                 <button class="icon-btn" data-action="attendance-rules">⚙ ${bi('考勤规则', 'Attendance Rules')}</button>
                 <button class="icon-btn" data-action="mapping">⚙ ${bi('映射设置', 'Mapping')}</button>
@@ -4282,10 +4724,58 @@
       function idVariants(value) {
         const id = normalizeAttendanceId(value), out = new Set(); if (!id || isInvalidStaffId(id)) return out; out.add(id);
         const prefixed = id.match(/^[UA](\d{5,})$/); if (prefixed) out.add(prefixed[1]);
+        const initialPrefixed = id.match(/^[A-Z](?=(?:WX\d{5,}|\d{5,})$)/i); if (initialPrefixed) out.add(id.slice(1));
         return out;
       }
-      function addIdVariants(set, value) { idVariants(value).forEach(x => set.add(x)); }
-      function idsOverlap(value, ids) { for (const x of idVariants(value)) if (ids.has(x)) return true; return false; }
+      function getAllIdAliases(value) {
+        const out = new Set();
+        if (!value) return out;
+        String(value).split(/[\n,;，；|/]+/).forEach(part => {
+          const raw = cleanPersonName(part);
+          if (!raw || isInvalidStaffId(raw)) return;
+          const variants = idVariants(raw);
+          variants.forEach(v => {
+            out.add(v);
+            const cluster = state.welinkAliasMap?.get(v);
+            if (cluster) cluster.forEach(c => out.add(c));
+          });
+        });
+        return out;
+      }
+      function addIdVariants(set, value) { getAllIdAliases(value).forEach(x => set.add(x)); }
+      function idsOverlap(value, ids) { for (const x of getAllIdAliases(value)) if (ids.has(x)) return true; return false; }
+      function getCanonicalStaffId(rawId) {
+        if (!rawId) return '';
+        const aliases = getAllIdAliases(rawId);
+        for (const alias of aliases) {
+          const p = welinkFor(alias);
+          if (p && !p.__suspectedDeparted && p.employeeNumber) {
+            return normalizeAttendanceId(p.employeeNumber);
+          }
+        }
+        if (aliases.size) {
+          return [...aliases].sort((a, b) => b.length - a.length || a.localeCompare(b))[0];
+        }
+        return normalizeAttendanceId(rawId);
+      }
+      function getCanonicalPersonKey(account, name) {
+        if (account && !isInvalidStaffId(account)) {
+          const canonicalId = getCanonicalStaffId(account);
+          if (canonicalId) return `id:${canonicalId.toLowerCase()}`;
+        }
+        if (name) {
+          const cleanName = cleanPersonName(name).toLowerCase();
+          const wp = [...(state.welinkPeople?.values() || [])].find(p =>
+            !p.__suspectedDeparted && p.employeeNumber &&
+            (cleanPersonName(p.chineseName).toLowerCase() === cleanName || cleanPersonName(p.englishName).toLowerCase() === cleanName)
+          );
+          if (wp && wp.employeeNumber) {
+            return `id:${normalizeAttendanceId(wp.employeeNumber).toLowerCase()}`;
+          }
+          return `name:${cleanName}`;
+        }
+        return '';
+      }
       function personMatches(person, queryLower, ids) { return idsOverlap(person.account, ids) || (person.name && person.name.toLowerCase().includes(queryLower)); }
       function resolveSearchIdentities(query) {
         const q = normalizeName(query), lower = q.toLowerCase(), ids = new Set(), names = new Set();
@@ -4427,8 +4917,16 @@
       function renderCombinedPeopleCard(rows) {
         const kind = 'all', sortedRows = [...rows].sort((a, b) => (b.count || 0) - (a.count || 0) || (a.name || a.account).localeCompare(b.name || b.account, 'zh-CN')), filteredRows = state.buFilter ? sortedRows.filter(r => (normalizeName(r.bu) || '未识别 BU') === state.buFilter) : sortedRows, total = Math.max(1, Math.ceil(filteredRows.length / state.pageSize)); state.peoplePages[kind] = Math.min(Math.max(1, state.peoplePages[kind] || 1), total);
         const page = state.peoplePages[kind], start = (page - 1) * state.pageSize, items = filteredRows.slice(start, start + state.pageSize), headers = [bi('姓名', 'Name'), bi('工号 / Account', 'Employee ID / Account'), 'BU', 'Customer Group', 'Attendance Status', bi('现场签到 / 在线入会时间（开罗）', 'On-site Check-in / Online Join Time (Cairo)'), bi('判断方式', 'Decision Source'), bi('关联记录数', 'Related Records')];
-        const body = items.length ? items.map((r, i) => `<tr><td>${start + i + 1}</td><td>${esc(r.name)}${r.isManualMandatory ? ` <span class="badge" style="background:#e0f2fe;color:#0369a1;font-size:11px;padding:1px 5px;border-radius:4px">${bi('必选', 'Mandatory')}</span>` : ''}</td><td>${esc(r.account)}</td><td>${esc(r.bu)}</td><td>${esc(r.customer)}</td><td><span class="status-pill ${statusClass(r.attendance)} ${r.attendanceMethod === '前夜WFM豁免' ? 'exempt' : ''}">${r.attendance === 'Not Evaluated' ? bi('待导入签到数据', 'Awaiting Check-in Data') : r.attendanceMethod === '前夜WFM豁免' ? bi('🌙 前夜WFM豁免', '🌙 Night WFM Exempt') : r.attendance}</span></td><td>${esc(r.attendanceTime || '—')}</td><td>${r.attendance === 'Not Evaluated' ? '—' : esc(r.attendanceMethod === '豁免名单' ? bi('豁免名单', 'Exemption List') : r.attendanceMethod === '前夜WFM豁免' ? bi('前夜WFM豁免', 'Night WFM Exempt') : r.attendanceMethod === '现场扫码' ? bi('现场扫码', 'On-site Scan') : r.attendanceMethod === '线上会议' ? bi('线上会议', 'Online Meeting') : bi('无记录', 'No Record'))}</td><td class="attention-count">${r.count}</td></tr>`).join('') : `<tr><td></td><td colspan="8">${state.buFilter ? bi('该 BU 暂无人员', 'No people in this BU') : bi('尚未导入可合并的人员数据', 'No mergeable people data')}</td></tr>`;
-        return `<article class="sheet-card" data-people="all"><div class="sheet-head"><div class="sheet-title"><h3>${bi('三类合并人员备用名单', 'Combined QR / RFC / WFM People List')}${state.buFilter ? ` · ${esc(state.buFilter)}` : ''}</h3><div class="sheet-meta">${state.buFilter ? `${bi('筛选后', 'Filtered')} ${filteredRows.length.toLocaleString()} / ${rows.length.toLocaleString()} ${t('peopleUnit')}` : `${rows.length.toLocaleString()} ${t('peopleUnit')}`} · ${bi('按关联记录数从高到低排列', 'Sorted by related records, highest first')} · ${bi('当前规则：准时', 'Rules: on time')}≤${state.attendanceRules.onTime}，${bi('虚假签到', 'fake attendance')}≥${state.attendanceRules.fake}</div></div><div class="sheet-actions"><button class="icon-btn" data-action="mandatory-people">👤 ${bi('其他必选名单', 'Mandatory Attendees')}</button><button class="icon-btn" data-action="attendance-rules">⚙ ${bi('考勤规则', 'Attendance Rules')}</button><button class="icon-btn" data-action="mapping">⚙ ${bi('映射设置', 'Mapping')}</button></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>#</th>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table></div><div class="pager"><span>${bi('显示', 'Showing')} ${filteredRows.length ? start + 1 : 0}–${Math.min(start + state.pageSize, filteredRows.length)} / ${filteredRows.length.toLocaleString()} ${t('peopleUnit')}</span><div class="pager-controls"><button class="page-btn" data-action="first" ${page === 1 ? 'disabled' : ''}>«</button><button class="page-btn" data-action="prev" ${page === 1 ? 'disabled' : ''}>‹</button><span class="page-current">${page} / ${total}</span><button class="page-btn" data-action="next" ${page === total ? 'disabled' : ''}>›</button><button class="page-btn" data-action="last" ${page === total ? 'disabled' : ''}>»</button></div></div></article>`;
+        const body = items.length ? items.map((r, i) => {
+          const changedTag = r.changedEmployeeId
+            ? ` <span class="tag id-changed" style="cursor:help;font-size:11px;padding:1px 5px;background:#fef3c7;color:#92400e;border-radius:4px" title="查询工号：${esc(r.oldEmployeeId || r.account)}；WeLink 现工号：${esc(r.changedEmployeeId)}">工号变更</span>`
+            : '';
+          const departedTag = r.isSuspectedDeparted
+            ? ` <span class="tag possible-departed" style="cursor:help;font-size:11px;padding:1px 5px;background:#fee2e2;color:#991b1b;border-radius:4px" title="WeLink 查询结果 data 为空，请人工二次确认">疑似已离职</span>`
+            : '';
+          return `<tr><td>${start + i + 1}</td><td>${esc(r.name)}${r.isManualMandatory ? ` <span class="badge" style="background:#e0f2fe;color:#0369a1;font-size:11px;padding:1px 5px;border-radius:4px">${bi('必选', 'Mandatory')}</span>` : ''}</td><td><code>${esc(r.account)}</code>${changedTag}${departedTag}</td><td>${esc(r.bu)}</td><td>${esc(r.customer)}</td><td><span class="status-pill ${statusClass(r.attendance)} ${r.attendanceMethod === '前夜WFM豁免' ? 'exempt' : ''}">${r.attendance === 'Not Evaluated' ? bi('待导入签到数据', 'Awaiting Check-in Data') : r.attendanceMethod === '前夜WFM豁免' ? bi('🌙 前夜WFM豁免', '🌙 Night WFM Exempt') : r.attendance}</span></td><td>${esc(r.attendanceTime || '—')}</td><td>${r.attendance === 'Not Evaluated' ? '—' : esc(r.attendanceMethod === '豁免名单' ? bi('豁免名单', 'Exemption List') : r.attendanceMethod === '前夜WFM豁免' ? bi('前夜WFM豁免', 'Night WFM Exempt') : r.attendanceMethod === '现场扫码' ? bi('现场扫码', 'On-site Scan') : r.attendanceMethod === '线上会议' ? bi('线上会议', 'Online Meeting') : bi('无记录', 'No Record'))}</td><td class="attention-count">${r.count}</td></tr>`;
+        }).join('') : `<tr><td></td><td colspan="8">${state.buFilter ? bi('该 BU 暂无人员', 'No people in this BU') : bi('尚未导入可合并的人员数据', 'No mergeable people data')}</td></tr>`;
+        return `<article class="sheet-card" data-people="all"><div class="sheet-head"><div class="sheet-title"><h3>${bi('三类合并人员备用名单', 'Combined QR / RFC / WFM People List')}${state.buFilter ? ` · ${esc(state.buFilter)}` : ''}</h3><div class="sheet-meta">${state.buFilter ? `${bi('筛选后', 'Filtered')} ${filteredRows.length.toLocaleString()} / ${rows.length.toLocaleString()} ${t('peopleUnit')}` : `${rows.length.toLocaleString()} ${t('peopleUnit')}`} · ${bi('按关联记录数从高到低排列', 'Sorted by related records, highest first')} · ${bi('当前规则：准时', 'Rules: on time')}≤${state.attendanceRules.onTime}，${bi('虚假签到', 'fake attendance')}≥${state.attendanceRules.fake}</div></div><div class="sheet-actions"><button class="icon-btn" data-action="download-welink-script" title="${bi('下载 WeLink 人员查询脚本', 'Download WeLink Query Script')}">📥 ${bi('下载脚本', 'Download Script')}</button><button class="icon-btn" data-action="welink-modal" title="${bi('导入 WeLink 查询结果与新旧工号映射', 'Import WeLink Results & ID Mapping')}">🔄 ${bi('WeLink 映射', 'WeLink Mapping')}</button><button class="icon-btn" data-action="mandatory-people">👤 ${bi('其他必选名单', 'Mandatory Attendees')}</button><button class="icon-btn" data-action="attendance-rules">⚙ ${bi('考勤规则', 'Attendance Rules')}</button><button class="icon-btn" data-action="mapping">⚙ ${bi('映射设置', 'Mapping')}</button></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>#</th>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table></div><div class="pager"><span>${bi('显示', 'Showing')} ${filteredRows.length ? start + 1 : 0}–${Math.min(start + state.pageSize, filteredRows.length)} / ${filteredRows.length.toLocaleString()} ${t('peopleUnit')}</span><div class="pager-controls"><button class="page-btn" data-action="first" ${page === 1 ? 'disabled' : ''}>«</button><button class="page-btn" data-action="prev" ${page === 1 ? 'disabled' : ''}>‹</button><span class="page-current">${page} / ${total}</span><button class="page-btn" data-action="next" ${page === total ? 'disabled' : ''}>›</button><button class="page-btn" data-action="last" ${page === total ? 'disabled' : ''}>»</button></div></div></article>`;
       }
       function renderPeopleCard(kind, title, rows) {
         const total = Math.max(1, Math.ceil(rows.length / state.pageSize)); state.peoplePages[kind] = Math.min(Math.max(1, state.peoplePages[kind] || 1), total);
@@ -4821,7 +5319,7 @@
             const seenInRow = new Set();
             roleIndexes.forEach(cfg => {
               parsePeopleCell(cellAt(row, cfg.index)).forEach(p => {
-                const pKey = p.account ? `id:${p.account.replace(/\s+/g, '').toLowerCase()}` : `name:${p.name.toLowerCase()}`;
+                const pKey = getCanonicalPersonKey(p.account, p.name);
                 if (seenInRow.has(pKey)) return;
                 seenInRow.add(pKey);
                 const isNightExempt = nightInfo.isNight && (cfg.role === 'FME' || cfg.role === 'Creator' || /实施人|operator|fme|建单人/i.test(cfg.role));
@@ -4861,8 +5359,8 @@
             const name = cellAt(r, nameIndex);
             const bu = cellAt(r, buIndex);
             const customer = cellAt(r, customerIndex);
-            if (!id && !name) return;
-            const key = id ? `id:${id.replace(/\s+/g, '').toLowerCase()}` : `name:${name.toLowerCase()}`;
+            const key = getCanonicalPersonKey(id, name);
+            if (!key) return;
             if (!map.has(key)) {
               map.set(key, { names: new Set(), accounts: new Set(), roles: new Set(), role: '参会人员', roleTime: 0, bu: '', buTime: 0, customer: '', customerTime: 0, count: 0 });
             }
@@ -4886,8 +5384,8 @@
             const name = cellAt(r, nameIndex);
             const bu = cellAt(r, buIndex);
             const customer = cellAt(r, customerIndex);
-            if (!id && !name) return;
-            const key = id ? `id:${id.replace(/\s+/g, '').toLowerCase()}` : `name:${name.toLowerCase()}`;
+            const key = getCanonicalPersonKey(id, name);
+            if (!key) return;
             if (!map.has(key)) {
               map.set(key, { names: new Set(), accounts: new Set(), roles: new Set(), role: '参会人员', roleTime: 0, bu: '', buTime: 0, customer: '', customerTime: 0, count: 0 });
             }
@@ -4919,7 +5417,8 @@
         const sourceList = basePeople.length ? basePeople : extractAttendanceSourcePeople();
         const map = new Map();
         sourceList.forEach(p => {
-          const key = p.account ? `id:${p.account.replace(/\s+/g, '').toLowerCase()}` : `name:${p.name.toLowerCase()}`;
+          const key = getCanonicalPersonKey(p.account, p.name);
+          if (!key) return;
           if (!map.has(key)) map.set(key, { names: new Set(), accounts: new Set(), roles: new Set(), role: '', roleTime: -Infinity, bu: '', buTime: -Infinity, customer: '', customerTime: -Infinity, count: 0, inWindowCount: 0, orderDates: new Set(), hasUndatedOrder: false, isNightWfmExempt: false, nightWfmTasks: [], isManualMandatory: false, notes: new Set() });
           const x = map.get(key); if (p.name) x.names.add(p.name); if (p.account) x.accounts.add(p.account);
           if (p.role) { x.roles.add(p.role); if ((p._roleTime || 0) >= x.roleTime) { x.role = p.role; x.roleTime = p._roleTime || 0; } }
@@ -4940,8 +5439,8 @@
         // Merge state.mandatoryAttendees
         if (Array.isArray(state.mandatoryAttendees) && state.mandatoryAttendees.length > 0) {
           state.mandatoryAttendees.forEach(m => {
-            if (!m.name && !m.account) return;
-            const key = m.account ? `id:${m.account.replace(/\s+/g, '').toLowerCase()}` : `name:${m.name.toLowerCase()}`;
+            const key = getCanonicalPersonKey(m.account, m.name);
+            if (!key) return;
             if (!map.has(key)) {
               map.set(key, { names: new Set(), accounts: new Set(), roles: new Set(), role: m.role || '其他必选', roleTime: Infinity, bu: m.bu || '未识别 BU', buTime: Infinity, customer: m.customer || '—', customerTime: Infinity, count: 0, inWindowCount: 1, orderDates: new Set(), hasUndatedOrder: false, isNightWfmExempt: false, nightWfmTasks: [], isManualMandatory: true, notes: new Set() });
             }
@@ -4965,30 +5464,91 @@
           return (x.inWindowCount || 0) > 0;
         });
 
-        return filteredList.map(x => ({
-          name: [...x.names].join(' / '),
-          account: [...x.accounts].join(' / '),
-          role: x.role || [...x.roles].join(' / '),
-          bu: x.bu,
-          customer: mapCustomerGroup(x.customer),
-          customerGroup: mapCustomerGroup(x.customer),
-          count: x.count,
-          inWindowCount: x.inWindowCount,
-          orderDates: [...x.orderDates],
-          hasUndatedOrder: x.hasUndatedOrder,
-          fromAttendanceOnly: !basePeople.length && !x.isManualMandatory,
-          isNightWfmExempt: x.isNightWfmExempt,
-          nightWfmTasks: x.nightWfmTasks,
-          isManualMandatory: x.isManualMandatory,
-          note: [...x.notes].join('; '),
-          _roleTime: x.roleTime,
-          _buTime: x.buTime,
-          _customerTime: x.customerTime
-        })).map(p => {
+        return filteredList.map(x => {
+          const accountList = [...x.accounts];
+          let changedId = '';
+          let oldId = '';
+          let isDeparted = false;
+
+          for (const acc of accountList) {
+            if (isSuspectedDeparted(acc)) isDeparted = true;
+            const ch = changedEmployeeId(acc);
+            if (ch) {
+              changedId = ch;
+              oldId = acc;
+            }
+          }
+          if (!changedId) {
+            for (const n of x.names) {
+              if (isSuspectedDeparted(n)) isDeparted = true;
+            }
+          }
+
+          let preferredName = '';
+          for (const acc of accountList) {
+            const wp = welinkFor(acc);
+            if (wp && !wp.__suspectedDeparted && wp.chineseName) {
+              preferredName = cleanPersonName(wp.chineseName);
+              break;
+            }
+          }
+          if (!preferredName) {
+            for (const acc of accountList) {
+              const wp = welinkFor(acc);
+              if (wp && !wp.__suspectedDeparted && wp.englishName) {
+                preferredName = cleanPersonName(wp.englishName);
+                break;
+              }
+            }
+          }
+
+          const cleanedNames = new Set();
+          if (preferredName) {
+            cleanedNames.add(preferredName);
+          } else {
+            for (const rawName of x.names) {
+              const stripped = rawName.replace(/[\s(/（]+[A-Za-z]{0,4}\d{5,}[)/）]?$/i, '').trim();
+              cleanedNames.add(stripped || rawName);
+            }
+          }
+
+          const canonicalId = accountList.length ? getCanonicalStaffId(accountList[0]) : '';
+          const sortedAccounts = [...accountList].sort((a, b) => {
+            const na = normalizeAttendanceId(a), nb = normalizeAttendanceId(b);
+            const nc = normalizeAttendanceId(canonicalId);
+            if (na === nc) return -1;
+            if (nb === nc) return 1;
+            return a.localeCompare(b);
+          });
+
+          return {
+            name: [...cleanedNames].join(' / '),
+            account: sortedAccounts.join(' / '),
+            changedEmployeeId: changedId,
+            oldEmployeeId: oldId,
+            isSuspectedDeparted: isDeparted,
+            role: x.role || [...x.roles].join(' / '),
+            bu: x.bu,
+            customer: mapCustomerGroup(x.customer),
+            customerGroup: mapCustomerGroup(x.customer),
+            count: x.count,
+            inWindowCount: x.inWindowCount,
+            orderDates: [...x.orderDates],
+            hasUndatedOrder: x.hasUndatedOrder,
+            fromAttendanceOnly: !basePeople.length && !x.isManualMandatory,
+            isNightWfmExempt: x.isNightWfmExempt,
+            nightWfmTasks: x.nightWfmTasks,
+            isManualMandatory: x.isManualMandatory,
+            note: [...x.notes].join('; '),
+            _roleTime: x.roleTime,
+            _buTime: x.buTime,
+            _customerTime: x.customerTime
+          };
+        }).map(p => {
           const exemption = hasEligibleSession ? getExemption(p) : null;
           const nightExempt = hasEligibleSession && (state.attendanceRules.nightWfmExempt !== false) && p.isNightWfmExempt;
           const defaultMeetingDate = detectMeetingDate();
-          const record = (exemption || nightExempt) ? null : getAttendanceRecord(p.account, attendanceIndex, defaultMeetingDate);
+          const record = (exemption || nightExempt) ? null : getAttendanceRecord(p.account, attendanceIndex, defaultMeetingDate, p.name);
 
           let attendance;
           let attendanceMethod;
@@ -5021,7 +5581,7 @@
         }).sort((a, b) => (a.name || a.account).localeCompare(b.name || b.account, 'zh-CN'));
       }
       function normalizeAttendanceId(value) { return normalizeName(value).replace(/\s+/g, '').toUpperCase(); }
-      function identityIds(value) { const out = new Set(); String(value || '').split(/[\n,;，；|/]+/).forEach(part => idVariants(part).forEach(id => out.add(id))); return out; }
+      function identityIds(value) { const out = new Set(); String(value || '').split(/[\n,;，；|/]+/).forEach(part => getAllIdAliases(part).forEach(id => out.add(id))); return out; }
       function identityNames(value) { return new Set(String(value || '').split(/[\n,;，；|/]+/).map(x => normalizeName(x).toLowerCase().replace(/\s+/g, ' ')).filter(Boolean)); }
       function getExemption(person) {
         const ids = identityIds(person && person.account), names = identityNames(person && person.name); return activeExemptions().find(x => { const exemptionIds = identityIds(x.account); if (exemptionIds.size && [...exemptionIds].some(id => ids.has(id))) return true; const exemptionName = normalizeName(x.name).toLowerCase().replace(/\s+/g, ' '); return !!exemptionName && names.has(exemptionName); }) || null;
@@ -5077,7 +5637,7 @@
           : detectMeetingDate();
 
         const add = (rawId, rawTime, source, rowSessionName, sheetMeetingDate) => {
-          const ids = idVariants(rawId);
+          const ids = getAllIdAliases(rawId);
           if (!ids.size) return;
           const converted = source === 'offline'
             ? beijingToCairoAttendance(rawTime)
@@ -5132,10 +5692,21 @@
         });
         return index;
       }
-      function getAttendanceRecord(account, index, sessionDate) {
+      function getAttendanceRecord(account, index, sessionDate, name = '') {
         let best = null;
         let bestRank = Infinity;
-        for (const id of idVariants(account)) {
+        const aliases = new Set(getAllIdAliases(account));
+        if (name) {
+          const cleanN = cleanPersonName(name).toLowerCase();
+          const wp = [...(state.welinkPeople?.values() || [])].find(w =>
+            !w.__suspectedDeparted && w.employeeNumber &&
+            (cleanPersonName(w.chineseName).toLowerCase() === cleanN || cleanPersonName(w.englishName).toLowerCase() === cleanN)
+          );
+          if (wp && wp.employeeNumber) {
+            getAllIdAliases(wp.employeeNumber).forEach(id => aliases.add(id));
+          }
+        }
+        for (const id of aliases) {
           const record = index.get(id);
           if (!record) continue;
           const status = evaluateRecordAttendance(record, sessionDate || record.sessionDate);
@@ -5149,7 +5720,7 @@
       }
       function determineAttendance(account, index, name = '', sessionDate = '') {
         if (getExemption({ account, name })) return 'Attend on Time';
-        const record = getAttendanceRecord(account, index, sessionDate);
+        const record = getAttendanceRecord(account, index, sessionDate, name);
         if (!record) return 'Absent';
         return evaluateRecordAttendance(record, sessionDate || record.sessionDate);
       }
@@ -5192,7 +5763,13 @@
         if (/^\s*pm\s*$/i.test(p.role || '')) {
           p.bu = 'PMO';
         }
-        const key = p.account ? `id:${p.account.replace(/\s+/g, '').toLowerCase()}` : `name:${p.name.toLowerCase()}`;
+        const key = getCanonicalPersonKey(p.account, p.name);
+        if (!key) return;
+        const wp = welinkFor(p.account) || welinkFor(p.name);
+        if (wp && (!p.bu || p.bu === '未识别 BU')) {
+          const dept = wp.deptName || wp.departmentName || '';
+          if (dept) p.bu = dept;
+        }
         if (!map.has(key)) map.set(key, {
           names: new Set(),
           accounts: new Set(),
@@ -5700,6 +6277,7 @@
           attendanceRules: state.attendanceRules,
           exemptions: state.exemptions,
           mandatoryAttendees: state.mandatoryAttendees || [],
+          welinkPeople: state.welinkPeopleList || [],
           qualityIssuesCount: invalidAttendanceRows().length
         };
 
@@ -6136,6 +6714,11 @@
           try { localStorage.setItem(MANDATORY_STORAGE_KEY, JSON.stringify(state.mandatoryAttendees)); } catch (e) { }
           updateMandatoryBadge();
         }
+        if (Array.isArray(p.welinkPeople)) {
+          installWelinkPeople(p.welinkPeople, false);
+        } else {
+          installWelinkPeople([], false);
+        }
 
         invalidatePeopleCache();
         state.selectedSession = p.selectedSession || 'all';
@@ -6161,7 +6744,7 @@
       function showLoading(on, text, percent) { $('#loading').classList.toggle('hidden', !on); if (text) $('#loadingText').textContent = text; if (percent != null) { const p = Math.max(0, Math.min(100, Math.round(percent))); $('#loadingBar').style.width = p + '%'; $('#loadingPercent').textContent = p + '%'; } }
       function nextPaint() { return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); }
       function toast(msg, type = '', duration = 2800) { const host = $('#toasts'); if (!host || typeof host.appendChild !== 'function') return; const t = document.createElement('div'); t.className = 'toast ' + type; t.textContent = msg; host.appendChild(t); setTimeout(() => t.remove?.(), duration); }
-      window.__meetingAttendance = { state, CATEGORIES, DEFAULT_COLUMNS, DEFAULT_CUSTOMER_MAPPINGS, DEFAULT_ATTENDANCE_RULES, PRESET_EXEMPTIONS, isInvalidStaffId, activeExemptions, handleDeveloperUnlock, disableDeveloperMode, parseDelimited, normalizeRows, classifySheet, defaultColumnIndices, getDisplayColumns, parsePeopleCell, parseQrPairedPeople, parseCreateTime, parseAttendanceMinute, beijingToCairoAttendance, buildAttendanceIndex, getAttendanceRecord, getExemption, determineAttendance, extractTicketDate, parseDateFromString, detectMeetingDate, getAllMeetingDates, getSheetMeetingDate, getSessionDominantDate, evaluateRecordAttendance, ATTENDANCE_RANK, getWindowDateRange, isOrderInWindow, isOrderInMeetingWindows, getPreviousDayDateString, parseRowTimestamp, isNightWfmTask, isPersonNightExemptForDate, normalizeMandatoryEntries, loadMandatoryAttendees, saveMandatoryAttendees, saveRostersToServer, syncRostersWithServer, openMandatoryModal, closeMandatoryModal, renderMandatoryRows, appendMandatoryRow, updateMandatoryBadge, applyBatchMandatoryText, extractQrPeople, extractRfcPeople, extractWfmPeople, extractAttendanceSourcePeople, extractAllPeople, ensurePeopleCache, refreshCalculatedResults, invalidatePeopleCache, cleanSessionTitle, isGenericTitle, getSheetRowSessionNames, getSheetDefaultSessionName, getSheetSessionName, getRowSessionName, getMeetingSessions, getIgnoredMeetingSessions, getSessionPeopleRows, getSessionDisplayLabels, renderSessionSwitcher, renderSessionNoticeBar, renderMultiSessionOverview, renderMultiSessionBuTable, renderMultiSessionMatrixCard, toggleMatrixFullscreen, mapCustomerGroup, resolveSearchIdentities, getPersonSearchScope, getPersonSearchScopeKey, formatSearchWindowMonths, searchRequiredRows, searchAttendanceRows, renderSearchDetailCard, buildBusinessCoverageReport, missingBusinessCoverage, validBusinessTimes, formatDateRange, roleCounts, roleLabel, sheetFingerprint, removeDuplicateSheets, renderAttendanceDashboard, renderCombinedPeopleCard, renderPeopleCard, renderPersonSearchPanel, renderPersonSearchResults, buildAnalysisTables, buildAnalysisWorkbook, buildSnapshotPayload, restoreMeetingSnapshot, openSaveSnapshotModal, closeSaveSnapshotModal, openSnapshotManagerModal, filterSnapshotCards };
+      window.__meetingAttendance = { state, CATEGORIES, DEFAULT_COLUMNS, DEFAULT_CUSTOMER_MAPPINGS, DEFAULT_ATTENDANCE_RULES, PRESET_EXEMPTIONS, isInvalidStaffId, activeExemptions, handleDeveloperUnlock, disableDeveloperMode, parseDelimited, normalizeRows, classifySheet, defaultColumnIndices, getDisplayColumns, parsePeopleCell, parseQrPairedPeople, parseCreateTime, parseAttendanceMinute, beijingToCairoAttendance, buildAttendanceIndex, getAttendanceRecord, getExemption, determineAttendance, extractTicketDate, parseDateFromString, detectMeetingDate, getAllMeetingDates, getSheetMeetingDate, getSessionDominantDate, evaluateRecordAttendance, ATTENDANCE_RANK, getWindowDateRange, isOrderInWindow, isOrderInMeetingWindows, getPreviousDayDateString, parseRowTimestamp, isNightWfmTask, isPersonNightExemptForDate, normalizeMandatoryEntries, loadMandatoryAttendees, saveMandatoryAttendees, saveRostersToServer, syncRostersWithServer, openMandatoryModal, closeMandatoryModal, renderMandatoryRows, appendMandatoryRow, updateMandatoryBadge, applyBatchMandatoryText, buildWelinkScript, allExtractedPeopleIds, parseWelinkPeople, installWelinkPeople, loadWelinkPeopleList, getAllIdAliases, getCanonicalStaffId, getCanonicalPersonKey, welinkFor, changedEmployeeId, changedEmployeeTag, isSuspectedDeparted, suspectedDepartedPeople, openWelinkModal, closeWelinkModal, extractQrPeople, extractRfcPeople, extractWfmPeople, extractAttendanceSourcePeople, extractAllPeople, ensurePeopleCache, refreshCalculatedResults, invalidatePeopleCache, cleanSessionTitle, isGenericTitle, getSheetRowSessionNames, getSheetDefaultSessionName, getSheetSessionName, getRowSessionName, getMeetingSessions, getIgnoredMeetingSessions, getSessionPeopleRows, getSessionDisplayLabels, renderSessionSwitcher, renderSessionNoticeBar, renderMultiSessionOverview, renderMultiSessionBuTable, renderMultiSessionMatrixCard, toggleMatrixFullscreen, mapCustomerGroup, resolveSearchIdentities, getPersonSearchScope, getPersonSearchScopeKey, formatSearchWindowMonths, searchRequiredRows, searchAttendanceRows, renderSearchDetailCard, buildBusinessCoverageReport, missingBusinessCoverage, validBusinessTimes, formatDateRange, roleCounts, roleLabel, sheetFingerprint, removeDuplicateSheets, renderAttendanceDashboard, renderCombinedPeopleCard, renderPeopleCard, renderPersonSearchPanel, renderPersonSearchResults, buildAnalysisTables, buildAnalysisWorkbook, buildSnapshotPayload, restoreMeetingSnapshot, openSaveSnapshotModal, closeSaveSnapshotModal, openSnapshotManagerModal, filterSnapshotCards };
       init();
     })();
   </script>
