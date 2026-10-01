@@ -416,3 +416,80 @@ test('Snapshot persistence and restoration preserves WeLink mapped people and al
     assert.equal(restoredPeople[0].attendance, 'Attend on Time');
     assert.equal(restoredPeople[0].changedEmployeeId, 'WX123456');
 });
+
+test('WeLink modal DOM structure is top-level and clicking welinkToolsBtn opens modal without hidden parents', () => {
+    const htmlPath = path.resolve(__dirname, '../backend/builtin-tools/tool-msf5b7nn/index.html');
+    const html = fs.readFileSync(htmlPath, 'utf8');
+
+    // 1. Verify #welinkModal is NOT nested inside #snapshotModal
+    const snapModalIndex = html.indexOf('id="snapshotModal"');
+    const welinkModalIndex = html.indexOf('id="welinkModal"');
+    assert.ok(snapModalIndex > 0, 'snapshotModal must exist');
+    assert.ok(welinkModalIndex > snapModalIndex, 'welinkModal must appear after snapshotModal');
+
+    // Count open/close divs between snapshotModal and welinkModal
+    const between = html.slice(snapModalIndex, welinkModalIndex);
+    const opens = (between.match(/<div\b/g) || []).length;
+    const closes = (between.match(/<\/div>/g) || []).length;
+    assert.equal(opens, closes, 'All divs in snapshotModal must be properly closed before welinkModal opens');
+
+    // 2. Test modal element open/close behavior in mock DOM
+    const mockElements = new Map();
+    function getEl(id) {
+        if (!mockElements.has(id)) {
+            const classes = new Set(id.toLowerCase().includes('modal') ? ['hidden'] : []);
+            mockElements.set(id, {
+                id,
+                classList: {
+                    contains: (cls) => classes.has(cls),
+                    remove: (cls) => { classes.delete(cls); },
+                    add: (cls) => { classes.add(cls); },
+                    toggle: (cls) => { classes.has(cls) ? classes.delete(cls) : classes.add(cls); }
+                },
+                querySelectorAll: () => [],
+                querySelector: () => null,
+                appendChild: () => {},
+                addEventListener: () => {},
+                setAttribute: () => {},
+                style: {},
+                textContent: '',
+                innerHTML: '',
+                value: ''
+            });
+        }
+        return mockElements.get(id);
+    }
+
+    const api = loadMeetingAttendance(1, {
+        document: {
+            documentElement: { lang: 'zh-CN' },
+            title: '',
+            querySelector: (sel) => {
+                if (sel === '#welinkModal') return getEl('welinkModal');
+                if (sel === '#welinkExtractStats') return getEl('welinkExtractStats');
+                if (sel === '#welinkChangedSection') return getEl('welinkChangedSection');
+                if (sel === '#welinkDepartedSection') return getEl('welinkDepartedSection');
+                if (sel === '#welinkParseStatus') return getEl('welinkParseStatus');
+                if (sel === '#welinkToolsBtn') return getEl('welinkToolsBtn');
+                return getEl(sel.replace(/^[#.]/, ''));
+            },
+            querySelectorAll: () => [],
+            getElementById: (id) => getEl(id),
+            createElement: () => ({ ...getEl('created') }),
+            body: { appendChild: () => {}, classList: { contains: () => false, add: () => {}, remove: () => {} } },
+            addEventListener: () => {}
+        }
+    });
+
+    // Initial state: hidden
+    assert.equal(getEl('welinkModal').classList.contains('hidden'), true, 'welinkModal should initially be hidden');
+
+    // Call openWelinkModal
+    api.openWelinkModal();
+    assert.equal(getEl('welinkModal').classList.contains('hidden'), false, 'openWelinkModal must remove hidden class from welinkModal');
+
+    // Call closeWelinkModal
+    api.closeWelinkModal();
+    assert.equal(getEl('welinkModal').classList.contains('hidden'), true, 'closeWelinkModal must re-add hidden class to welinkModal');
+});
+

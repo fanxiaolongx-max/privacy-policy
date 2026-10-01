@@ -2539,6 +2539,8 @@
       </div>
       <div class="snapshot-modal-body" id="smListContainer"></div>
     </div>
+  </div>
+
   <div class="modal hidden" id="welinkModal">
     <div class="modal-card" style="width:min(940px,96vw);max-height:92vh">
       <div class="modal-head">
@@ -2971,13 +2973,17 @@
         }
       }
       function openWelinkModal() {
-        const ids = allExtractedPeopleIds();
-        const stats = $('#welinkExtractStats');
-        if (stats) {
-          stats.textContent = bi(`当前提取名单中包含 ${ids.length} 名有效工号人员`, `Current roster contains ${ids.length} valid employee IDs`);
+        try {
+          const ids = allExtractedPeopleIds();
+          const stats = $('#welinkExtractStats');
+          if (stats) {
+            stats.textContent = bi(`当前提取名单中包含 ${ids.length} 名有效工号人员`, `Current roster contains ${ids.length} valid employee IDs`);
+          }
+          renderWelinkModalDetails();
+        } catch (err) {
+          console.warn('[MeetingAttendance] openWelinkModal error:', err);
         }
-        renderWelinkModalDetails();
-        $('#welinkModal').classList.remove('hidden');
+        $('#welinkModal')?.classList.remove('hidden');
       }
       function closeWelinkModal() {
         $('#welinkModal').classList.add('hidden');
@@ -3217,6 +3223,12 @@
         $('#mandatoryModal').addEventListener('click', e => { if (e.target === $('#mandatoryModal')) closeMandatoryModal(); });
         $('#mandatoryListBody').addEventListener('click', e => { const b = e.target.closest('.mandatory-del-btn'); if (b) { b.closest('tr').remove(); if (!$('#mandatoryListBody').children.length) appendMandatoryRow({ name: '', account: '', bu: '', customer: '', role: '其他必选' }); } });
         $('#welinkToolsBtn').onclick = openWelinkModal;
+        document.querySelector('.top-actions')?.addEventListener('click', e => {
+          if (e.target.closest('#welinkToolsBtn')) {
+            e.preventDefault();
+            openWelinkModal();
+          }
+        });
         $('#welinkModalClose').onclick = $('#welinkModalFooterClose').onclick = closeWelinkModal;
         $('#downloadWelinkScriptBtn').onclick = triggerDownloadWelinkScript;
         $('#copyWelinkScriptBtn').onclick = copyWelinkScript;
