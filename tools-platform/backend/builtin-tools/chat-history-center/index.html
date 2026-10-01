@@ -397,6 +397,34 @@
     </form>
 </dialog>
 
+<dialog id="deleteSourceDialog" class="confirm-dialog" onclick="if(event.target===this)this.close()">
+    <div class="dialog-head">
+        <strong class="confirm-dialog-title"><span class="confirm-warning-icon">⚠️</span> 确认删除数据源</strong>
+        <button id="closeDeleteSourceDialog" class="icon-btn" type="button" title="关闭 (Esc)">×</button>
+    </div>
+    <div class="dialog-body confirm-dialog-body">
+        <div class="confirm-alert-box">
+            <div class="confirm-alert-header">
+                <span class="confirm-alert-badge">高危操作</span>
+                <span class="confirm-alert-tip">删除后不可恢复</span>
+            </div>
+            <p class="confirm-main-warning">该数据源及其导入的所有历史消息将从当前租户中永久移除，相关统计将同步重置。</p>
+        </div>
+        <div class="confirm-target-card">
+            <div class="confirm-target-headline">
+                <span id="deleteSourceTypeBadge" class="type-badge"></span>
+                <strong id="deleteSourceName" class="confirm-target-name"></strong>
+                <span id="deleteSourceCountBadge" class="source-count-badge"></span>
+            </div>
+            <div id="deleteSourceMeta" class="confirm-target-meta"></div>
+        </div>
+    </div>
+    <div class="dialog-foot">
+        <button id="cancelDeleteSourceBtn" class="btn" type="button">取消</button>
+        <button id="confirmDeleteSourceBtn" class="btn btn-danger" type="button">确认删除</button>
+    </div>
+</dialog>
+
 <div id="tableFilterPopover" class="table-filter-popover" hidden>
     <div class="table-filter-title"><strong id="tableFilterTitle">筛选</strong><button id="closeTableFilter" class="icon-btn-small" type="button">×</button></div>
     <input id="tableFilterSearch" class="control" placeholder="搜索可选值…">

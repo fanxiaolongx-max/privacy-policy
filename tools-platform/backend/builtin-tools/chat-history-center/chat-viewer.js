@@ -1992,20 +1992,53 @@
                 remove.className = 'danger-btn';
                 remove.type = 'button';
                 remove.textContent = '删除';
-                remove.addEventListener('click', async () => {
-                    const confirmation = window.prompt(`删除后该会话及所有消息将从当前租户消失。\n请输入会话名称“${source.display_name}”确认：`);
-                    if (confirmation !== source.display_name) return;
-                    try {
-                        await API.delete(`/api/chat-history/sources/${encodeURIComponent(source.id)}`);
-                        showToast('数据源已删除');
-                        state.conversationCache.delete(source.conversation_id);
-                        await Promise.all([loadSources(state.sourcePage), loadConversations(true)]);
-                    } catch (error) { showToast(error.message, true); }
+                remove.addEventListener('click', () => {
+                    openDeleteSourceDialog(source);
                 });
                 row.append(info, remove);
                 host.append(row);
             });
         } catch (error) { showToast(error.message, true); }
+    }
+
+    let pendingDeleteSource = null;
+
+    function openDeleteSourceDialog(source) {
+        if (!source) return;
+        pendingDeleteSource = source;
+        const dialog = $('deleteSourceDialog');
+        if (!dialog) return;
+
+        const typeBadge = $('deleteSourceTypeBadge');
+        if (typeBadge) {
+            typeBadge.className = `type-badge type-${source.conversation_type || 'other'}`;
+            typeBadge.textContent = typeLabels[source.conversation_type] || '其他';
+        }
+
+        const nameEl = $('deleteSourceName');
+        if (nameEl) {
+            nameEl.textContent = source.display_name || source.relative_path || '未命名数据源';
+        }
+
+        const countBadge = $('deleteSourceCountBadge');
+        if (countBadge) {
+            countBadge.textContent = `${formatNumber(source.message_count)} 条消息`;
+        }
+
+        const metaEl = $('deleteSourceMeta');
+        if (metaEl) {
+            const sizeStr = formatBytes(source.file_size);
+            const importTime = source.imported_at ? source.imported_at.replace('T', ' ').slice(0, 19) : '-';
+            metaEl.textContent = `${source.relative_path || ''} · 大小: ${sizeStr} · 导入时间: ${importTime}`;
+        }
+
+        const confirmBtn = $('confirmDeleteSourceBtn');
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = '确认删除';
+        }
+
+        dialog.showModal();
     }
 
     function parserRuleTypeLabel(type) {
@@ -2337,6 +2370,32 @@
         if (state.sourcePage < state.sourceTotalPages) loadSources(state.sourcePage + 1);
     });
     $('refreshSources')?.addEventListener('click', () => loadSources(state.sourcePage));
+    $('closeDeleteSourceDialog')?.addEventListener('click', () => $('deleteSourceDialog')?.close());
+    $('cancelDeleteSourceBtn')?.addEventListener('click', () => $('deleteSourceDialog')?.close());
+    $('confirmDeleteSourceBtn')?.addEventListener('click', async () => {
+        if (!pendingDeleteSource) return;
+        const source = pendingDeleteSource;
+        const confirmBtn = $('confirmDeleteSourceBtn');
+        if (confirmBtn) {
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = '正在删除…';
+        }
+        try {
+            await API.delete(`/api/chat-history/sources/${encodeURIComponent(source.id)}`);
+            $('deleteSourceDialog')?.close();
+            showToast('数据源已成功删除');
+            state.conversationCache.delete(source.conversation_id);
+            pendingDeleteSource = null;
+            await Promise.all([loadSources(state.sourcePage), loadConversations(true)]);
+        } catch (error) {
+            showToast(error.message, true);
+        } finally {
+            if (confirmBtn) {
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = '确认删除';
+            }
+        }
+    });
     let scrollMemoryTimer;
     $('messageScroller').addEventListener('scroll', () => {
         if (!state.activeConversation || !$('chatHitNav').hidden) return;

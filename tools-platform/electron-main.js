@@ -179,9 +179,20 @@ let lastRuntimeCommandId = '';
 
 function createLicenseWindow() {
     if (licenseWindow && !licenseWindow.isDestroyed()) {
+        if (licenseWindow.isMinimized()) licenseWindow.restore();
+        licenseWindow.show();
         licenseWindow.focus();
+        licenseWindow.setAlwaysOnTop(true);
+        licenseWindow.moveTop();
         return licenseWindow;
     }
+
+    // 阶段二发现授权过期弹出激活弹窗时，先取消启动窗口置顶，避免启动窗遮挡激活弹窗
+    if (startupWindow && !startupWindow.isDestroyed()) {
+        startupWindow.setAlwaysOnTop(false);
+        updateStartupProgress(40, '等待授权激活', '检测到 License 尚未激活或已过期，请在授权激活窗口中完成激活…', '阶段 2/2 · 等待授权');
+    }
+
     licenseWindow = new BrowserWindow({
         width: 640,
         height: 600,
@@ -190,6 +201,7 @@ function createLicenseWindow() {
         backgroundColor: '#090e17',
         show: false,
         center: true,
+        alwaysOnTop: true,
         autoHideMenuBar: true,
         title: 'Tools Platform - 软件授权激活 / License Activation',
         icon: getAppIconPath(),
@@ -200,7 +212,39 @@ function createLicenseWindow() {
             sandbox: true
         }
     });
-    licenseWindow.once('ready-to-show', () => licenseWindow && licenseWindow.show());
+
+    // 右键上下文菜单：支持在输入框等位置快速粘贴、剪切、复制
+    licenseWindow.webContents.on('context-menu', (_e, params) => {
+        if (!licenseWindow || licenseWindow.isDestroyed()) return;
+        const menuTemplate = [];
+        if (params.isEditable) {
+            menuTemplate.push(
+                { role: 'undo', label: '撤销 / Undo' },
+                { role: 'redo', label: '重做 / Redo' },
+                { type: 'separator' },
+                { role: 'cut', label: '剪切 / Cut' },
+                { role: 'copy', label: '复制 / Copy' },
+                { role: 'paste', label: '粘贴 / Paste' },
+                { role: 'selectAll', label: '全选 / Select All' }
+            );
+        } else {
+            menuTemplate.push(
+                { role: 'copy', label: '复制 / Copy' },
+                { role: 'selectAll', label: '全选 / Select All' }
+            );
+        }
+        const menu = Menu.buildFromTemplate(menuTemplate);
+        menu.popup({ window: licenseWindow });
+    });
+
+    licenseWindow.once('ready-to-show', () => {
+        if (!licenseWindow || licenseWindow.isDestroyed()) return;
+        licenseWindow.show();
+        licenseWindow.focus();
+        licenseWindow.setAlwaysOnTop(true);
+        licenseWindow.moveTop();
+    });
+
     licenseWindow.on('closed', () => {
         licenseWindow = null;
         if (licenseActivationResolve) {
@@ -208,6 +252,22 @@ function createLicenseWindow() {
             licenseActivationResolve = null;
         }
     });
+
+    // 当启动窗口被点击时，如果授权窗口正在等待激活，自动将焦点还给授权窗口
+    if (startupWindow && !startupWindow.isDestroyed()) {
+        const onStartupFocus = () => {
+            if (licenseWindow && !licenseWindow.isDestroyed()) {
+                licenseWindow.focus();
+            }
+        };
+        startupWindow.on('focus', onStartupFocus);
+        licenseWindow.once('closed', () => {
+            if (startupWindow && !startupWindow.isDestroyed()) {
+                startupWindow.removeListener('focus', onStartupFocus);
+            }
+        });
+    }
+
     licenseWindow.loadFile(path.join(__dirname, 'frontend/pages/desktop-license-activation.html'));
     return licenseWindow;
 }
@@ -242,6 +302,11 @@ function registerDesktopLicenseIpcHandlers() {
             licenseActivationResolve = null;
             setTimeout(() => {
                 if (licenseWindow && !licenseWindow.isDestroyed()) licenseWindow.close();
+                if (startupWindow && !startupWindow.isDestroyed()) {
+                    startupWindow.setAlwaysOnTop(true);
+                    startupWindow.show();
+                    startupWindow.focus();
+                }
                 if (resolve) resolve(true);
             }, 500);
         }
@@ -1768,16 +1833,18 @@ app.on('window-all-closed', function () {
 
 app.on('second-instance', () => {
     console.log('[Electron] 检测到用户重复运行程序，自动唤起已有界面');
-    if (startupWindow && !startupWindow.isDestroyed()) {
-        if (startupWindow.isMinimized()) startupWindow.restore();
-        startupWindow.show();
-        startupWindow.focus();
-        return;
-    }
     if (licenseWindow && !licenseWindow.isDestroyed()) {
         if (licenseWindow.isMinimized()) licenseWindow.restore();
         licenseWindow.show();
         licenseWindow.focus();
+        licenseWindow.setAlwaysOnTop(true);
+        licenseWindow.moveTop();
+        return;
+    }
+    if (startupWindow && !startupWindow.isDestroyed()) {
+        if (startupWindow.isMinimized()) startupWindow.restore();
+        startupWindow.show();
+        startupWindow.focus();
         return;
     }
     openAppPath('/');

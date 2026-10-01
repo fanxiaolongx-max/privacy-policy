@@ -293,3 +293,28 @@ test('Desktop License Client: validate reports progress stages to callback', asy
     assert.ok(stages.includes('CONNECT_SERVER'), 'Should report CONNECT_SERVER');
     assert.ok(stages.includes('FINALIZE'), 'Should report FINALIZE');
 });
+
+test('Desktop License Activation Window: electron-main enforces topmost layer and paste support over startup window', () => {
+    const mainPath = path.join(root, 'electron-main.js');
+    const mainCode = fs.readFileSync(mainPath, 'utf8');
+
+    // 1. licenseWindow has alwaysOnTop enabled
+    assert.match(mainCode, /function createLicenseWindow\(\)[\s\S]*?alwaysOnTop:\s*true/);
+
+    // 2. startupWindow alwaysOnTop is revoked when license window is shown
+    assert.match(mainCode, /startupWindow\.setAlwaysOnTop\(false\)/);
+
+    // 3. Right-click context menu with paste support is registered
+    assert.match(mainCode, /licenseWindow\.webContents\.on\('context-menu'/);
+    assert.match(mainCode, /role:\s*'paste'/);
+
+    // 4. Focus redirection from startup window to license window
+    assert.match(mainCode, /startupWindow\.on\('focus'/);
+
+    // 5. Restoration of startupWindow on successful activation
+    assert.match(mainCode, /startupWindow\.setAlwaysOnTop\(true\)/);
+
+    // 6. second-instance prioritizes licenseWindow
+    assert.match(mainCode, /app\.on\('second-instance'[\s\S]*?if\s*\(licenseWindow && !licenseWindow\.isDestroyed\(\)\)/);
+});
+

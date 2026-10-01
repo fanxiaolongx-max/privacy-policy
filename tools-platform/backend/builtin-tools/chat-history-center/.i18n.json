@@ -78,6 +78,7 @@
   "分析已更新并缓存": "Analytics updated and cached",
   "分钟 / 小时": "Minutes / Hour",
   "删除": "Delete",
+  "删除后不可恢复": "Cannot be undone",
   "删除已标记的测试数据及可安全识别的旧版测试会话": "Delete marked test data and safely identified legacy test conversations",
   "别名 / 曾用名": "Alias / Former Name",
   "别名 / 曾用名备注": "Alias / Notes",
@@ -366,5 +367,10 @@
   "（覆盖所有已导入的群组与讨论组）": "(Covers all imported groups and discussion groups)",
   "）。群聊因多人交替讨论，该值为沟通活跃节奏参考，非绝对一对一专属回复时延。": "). Since group chats involve multiple participants taking turns, this value is a reference for communication activity pace, not an absolute one-to-one response delay.",
   "，包含单聊、群组与讨论组）。": ", including direct chats, groups, and discussion groups).",
-  "，包含汉字、英文字母及符号标点）。": ", including Chinese characters, English letters, symbols, and punctuation)."
+  "，包含汉字、英文字母及符号标点）。": ", including Chinese characters, English letters, symbols, and punctuation).",
+  "确认删除数据源": "Confirm Delete Data Source",
+  "确认删除": "Confirm Delete",
+  "高危操作": "High Risk Action",
+  "数据源已成功删除": "Data source deleted successfully",
+  "该数据源及其导入的所有历史消息将从当前租户中永久移除，相关统计将同步重置。": "This data source and all its imported history messages will be permanently removed from the current tenant, and related statistics will be reset."
 }

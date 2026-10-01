@@ -1503,6 +1503,12 @@
       updateLanguage(currentLang);
       elements.licenseToken.focus();
 
+      window.addEventListener('focus', () => {
+        if (elements.licenseToken && !elements.licenseToken.value.trim()) {
+          elements.licenseToken.focus();
+        }
+      });
+
       // Check initial state from main process
       if (window.DesktopLicense && typeof window.DesktopLicense.getState === 'function') {
         window.DesktopLicense.getState().then(state => {

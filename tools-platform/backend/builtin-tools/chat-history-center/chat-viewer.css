@@ -217,6 +217,22 @@ button.role-badge:focus-visible{outline:2px solid var(--green);outline-offset:2p
 .danger-btn{border:1px solid #fecdd3;color:#e11d48;background:#fff1f3;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:600;cursor:pointer;transition:.15s;flex-shrink:0}
 .danger-btn:hover{background:#ffe4e6;border-color:#fda4af;color:#be123c}
 dialog{border:0;border-radius:15px;padding:0;width:min(520px,calc(100vw - 30px));background:var(--card);color:var(--text);box-shadow:0 25px 80px rgba(24,40,50,.32)}dialog::backdrop{background:rgba(23,37,45,.58);backdrop-filter:blur(3px)}.dialog-head{height:52px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}.dialog-body{padding:17px}.dialog-body p{color:var(--muted);margin-top:0}.dialog-foot{padding:12px 16px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px}
+.confirm-dialog{width:min(480px,calc(100vw - 32px));border-radius:16px;box-shadow:0 24px 70px rgba(15,23,42,.35);overflow:hidden}
+.confirm-dialog-title{display:flex;align-items:center;gap:7px;font-size:14.5px;color:#e11d48}
+.confirm-warning-icon{font-size:16px;line-height:1}
+.confirm-dialog-body{padding:18px 20px;display:flex;flex-direction:column;gap:13px}
+.confirm-alert-box{background:#fff1f2;border:1px solid #fecdd3;border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:5px}
+.confirm-alert-header{display:flex;align-items:center;gap:8px}
+.confirm-alert-badge{display:inline-block;padding:2px 7px;border-radius:4px;background:#e11d48;color:#fff;font-size:10.5px;font-weight:700}
+.confirm-alert-tip{font-size:11.5px;font-weight:700;color:#be123c}
+.confirm-main-warning{color:#9f1239;font-size:12px;line-height:1.6;margin:0}
+.confirm-target-card{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.confirm-target-headline{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.confirm-target-name{font-size:13.5px;font-weight:700;color:var(--text);word-break:break-all}
+.confirm-target-meta{font-size:11px;color:var(--muted);word-break:break-all;line-height:1.5}
+.btn-danger{background:linear-gradient(135deg,#e11d48 0%,#be123c 100%);border-color:transparent;color:#fff!important;box-shadow:0 4px 14px rgba(225,29,72,.24);font-weight:700;cursor:pointer;transition:all .15s ease}
+.btn-danger:hover{background:linear-gradient(135deg,#be123c 0%,#9f1239 100%);color:#fff!important;box-shadow:0 6px 18px rgba(225,29,72,.32)}
+.btn-danger:active{transform:translateY(1px)}
 .import-options{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}.import-choice{min-height:145px;border:1px solid var(--line);border-radius:12px;background:#f8fbfa;color:var(--text);padding:16px;text-align:center}.import-choice:hover{border-color:#79bda4;background:var(--green-soft)}.import-choice>span{display:block;font-size:30px}.import-choice strong{display:block;margin:8px;font-size:13px;color:var(--text)}.import-choice small{color:var(--muted);line-height:1.55;font-size:11px}.test-data-choice{border-color:#bce5d5;background:linear-gradient(180deg,#f3fbf7,#eaf6f1);position:relative}.test-data-choice:hover{border-color:var(--green);background:#ddf4ea;box-shadow:0 6px 18px rgba(8,127,91,.15)}.test-data-choice strong{color:var(--green)}
 .empty-actions{margin-top:14px;display:flex;gap:10px;justify-content:center}.page-actions{display:flex;gap:8px;align-items:center}
 .toast{position:fixed;right:18px;bottom:18px;z-index:1000;background:#20313a;color:#fff;border-radius:10px;padding:10px 14px;box-shadow:var(--shadow);opacity:0;transform:translateY(8px);pointer-events:none;transition:.2s}.toast.show{opacity:1;transform:none}.toast.error{background:#a62f44}
@@ -289,6 +305,11 @@ dialog{border:0;border-radius:15px;padding:0;width:min(520px,calc(100vw - 30px))
 :is(.dark-theme, [data-theme="dark"]) .badge-warn{background:#45301a;color:#fbbf24}
 :is(.dark-theme, [data-theme="dark"]) .btn-danger-soft{background:#38161d;border-color:#5c242e;color:#fb7185}
 :is(.dark-theme, [data-theme="dark"]) .btn-danger-soft:hover{background:#4c1d27;border-color:#88303f;color:#fda4af}
+:is(.dark-theme, [data-theme="dark"]) .confirm-alert-box{background:rgba(225,29,72,.12);border-color:rgba(225,29,72,.32)}
+:is(.dark-theme, [data-theme="dark"]) .confirm-alert-tip{color:#fda4af}
+:is(.dark-theme, [data-theme="dark"]) .confirm-main-warning{color:#fecdd3}
+:is(.dark-theme, [data-theme="dark"]) .confirm-dialog-title{color:#fb7185}
+:is(.dark-theme, [data-theme="dark"]) .confirm-target-card{background:#141c22;border-color:#27353f}
 :is(.dark-theme, [data-theme="dark"]) .import-choice{background:#202b32;border-color:#43515a;color:#eef4f6}
 :is(.dark-theme, [data-theme="dark"]) .import-choice:hover{background:#234238;border-color:#58bc98}
 :is(.dark-theme, [data-theme="dark"]) .import-choice small{color:#bdc7cd}
@@ -390,6 +411,11 @@ dialog{border:0;border-radius:15px;padding:0;width:min(520px,calc(100vw - 30px))
 :root:not([data-theme="light"]):not(.theme-light) .badge-warn{background:#45301a;color:#fbbf24}
 :root:not([data-theme="light"]):not(.theme-light) .btn-danger-soft{background:#38161d;border-color:#5c242e;color:#fb7185}
 :root:not([data-theme="light"]):not(.theme-light) .btn-danger-soft:hover{background:#4c1d27;border-color:#88303f;color:#fda4af}
+:root:not([data-theme="light"]):not(.theme-light) .confirm-alert-box{background:rgba(225,29,72,.12);border-color:rgba(225,29,72,.32)}
+:root:not([data-theme="light"]):not(.theme-light) .confirm-alert-tip{color:#fda4af}
+:root:not([data-theme="light"]):not(.theme-light) .confirm-main-warning{color:#fecdd3}
+:root:not([data-theme="light"]):not(.theme-light) .confirm-dialog-title{color:#fb7185}
+:root:not([data-theme="light"]):not(.theme-light) .confirm-target-card{background:#141c22;border-color:#27353f}
 :root:not([data-theme="light"]):not(.theme-light) .import-choice{background:#202b32;border-color:#43515a;color:#eef4f6}
 :root:not([data-theme="light"]):not(.theme-light) .import-choice:hover{background:#234238;border-color:#58bc98}
 :root:not([data-theme="light"]):not(.theme-light) .import-choice small{color:#bdc7cd}

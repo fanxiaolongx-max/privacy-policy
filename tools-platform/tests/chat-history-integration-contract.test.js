@@ -68,4 +68,13 @@ test('chat history center is a valid bundled platform-only HTML tool', () => {
     assert.match(css, /column-resize-handle/);
     assert.match(css, /group-name-link\{display:block;width:100%;max-width:100%;overflow:hidden;text-overflow:ellipsis/);
     assert.match(css, /resizable-table td\{min-width:0;overflow:hidden;text-overflow:ellipsis/);
+
+    // Verify elegant delete source dialog and prompt removal
+    assert.match(html, /id="deleteSourceDialog"/);
+    assert.match(html, /id="confirmDeleteSourceBtn"/);
+    assert.match(js, /openDeleteSourceDialog/);
+    assert.doesNotMatch(js, /window\.prompt/);
+    assert.match(css, /\.confirm-dialog/);
+    assert.match(css, /\.btn-danger/);
 });
+
