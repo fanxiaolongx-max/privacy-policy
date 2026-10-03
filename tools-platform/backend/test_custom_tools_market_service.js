@@ -80,13 +80,21 @@ function run() {
         }), { targetDir: root, platformVersion: '1.0.209' });
         assert.strictEqual(bundled.status, 'unchanged', 'legacy bundled fingerprints should be recomputed canonically');
 
-        writeManifest(root, 'current', {
+        const currentDir = writeManifest(root, 'current', {
             builtIn: true,
             system: { managedBy: 'tools-platform', fingerprint: 'b'.repeat(64), files: ['index.html'] },
             market: { id: 'official/current', releaseVersion: '1.2.0', files: [] }
         });
-        const current = market.compareCatalogTool(catalogTool('current'), { targetDir: root, platformVersion: '1.0.209' });
+        const currentCatalog = catalogTool('current');
+        currentCatalog.package.directoryFingerprint = fingerprintFiles(
+            currentDir, currentCatalog.package.files.map(file => file.path)
+        );
+        const current = market.compareCatalogTool(currentCatalog, { targetDir: root, platformVersion: '1.0.209' });
         assert.strictEqual(current.status, 'unchanged');
+
+        fs.writeFileSync(path.join(currentDir, 'index.html'), '<html>modified locally</html>');
+        const modified = market.compareCatalogTool(currentCatalog, { targetDir: root, platformVersion: '1.0.209' });
+        assert.strictEqual(modified.status, 'update', 'market-linked tools must compare actual release content');
 
         writeManifest(bundledRoot, 'newer-bundled', {
             tool: { slug: 'newer-bundled', name: 'newer-bundled', updatedAt: '2026-09-16T00:00:00.000Z' }
