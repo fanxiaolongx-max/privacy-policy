@@ -54,6 +54,15 @@
       "encrypted": false,
       "fingerprint": "18da61da38e43d6bbd393fda1e2176758cca4cb5d4d96ff5c4223888e118a752",
       "updatedAt": "2026-09-28T18:30:33.104Z"
+    },
+    {
+      "slug": "tool-mumxi3px",
+      "name": "强控业务比对检索",
+      "description": "查询产品是否属于强控业务比对范围，支持产品数据导入导出、服务器保存、模糊检索和静态快照同步。",
+      "href": "./tool-mumxi3px/index.html",
+      "encrypted": false,
+      "fingerprint": "fe163f06b206bc905ef5517290f3e3a3afece843f68141419c17b856f5c100ef",
+      "updatedAt": "2026-10-03T19:24:43.201Z"
     }
   ]
 }
