@@ -131,7 +131,7 @@
     }
 
     function usesNativeLanguageControl() {
-        return Boolean(document.querySelector('[data-set-lang], [data-lang-btn], .lang-switch [data-lang], #langBtn, #lang-btn, #langZh, #langEn, .lang-toggle'));
+        return Boolean(document.querySelector('[data-set-lang], [data-lang-btn], .lang-switch [data-lang], #langBtn, #lang-btn, #language-toggle, #langZh, #langEn, .lang-toggle'));
     }
 
     function applyTextNode(node) {
@@ -231,7 +231,7 @@
             }
             return;
         }
-        const toggle = document.querySelector('#langBtn, #lang-btn, .lang-toggle');
+        const toggle = document.querySelector('#langBtn, #lang-btn, #language-toggle, .lang-toggle');
         if (!toggle || toggle.id === 'toolsCustomLanguageButton') return;
         const label = (toggle.textContent || '').trim().toLowerCase();
         const offersEnglish = /^(?:en|english)$/.test(label) || /\ben\b|english/.test(label);
@@ -292,7 +292,7 @@
         observer.observe(document.body, { childList: true, subtree: true, characterData: true });
         document.addEventListener('click', event => {
             if (syncingNativeControl) return;
-            const control = event.target.closest?.('[data-set-lang], [data-lang-btn], .lang-btn, #langBtn, #lang-btn, #langZh, #langEn, .lang-toggle');
+            const control = event.target.closest?.('[data-set-lang], [data-lang-btn], .lang-btn, #langBtn, #lang-btn, #language-toggle, #langZh, #langEn, .lang-toggle');
             if (!control || control.id === 'toolsCustomLanguageButton') return;
             const explicit = control.dataset.setLang || control.dataset.lang || control.dataset.langBtn
                 || (control.id === 'langEn' ? 'en' : control.id === 'langZh' ? 'zh' : '');

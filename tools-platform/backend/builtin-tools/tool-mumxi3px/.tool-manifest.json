@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "tool": {
+    "slug": "tool-mumxi3px",
+    "name": "强控业务比对检索",
+    "nameEn": "Product Scope Checker",
+    "icon": "🧩",
+    "description": "查询产品是否属于强控业务比对范围，支持产品数据导入导出、服务器保存、模糊检索和静态快照同步。",
+    "descriptionEn": "Verify product comparison scope with product import/export, server persistence, fuzzy search, and synchronized static snapshots.",
+    "tags": [
+      "产品查询",
+      "范围核验",
+      "Excel导入",
+      "模糊搜索"
+    ],
+    "href": "/tools/tool-mumxi3px",
+    "filePath": "/custom-tools/tool-mumxi3px/index.html",
+    "publicAccess": false,
+    "createdAt": "2026-09-29T17:06:48.021Z",
+    "updatedAt": "2026-10-03T10:00:00.000Z"
+  }
+}

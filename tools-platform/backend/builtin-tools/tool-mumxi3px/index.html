@@ -1,0 +1,511 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>强控业务比对产品查询系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 自定义一些滚动条和动画样式，提升企业级 UI 体验 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .dropdown-shadow {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(0, 0, 0, 0.05);
+        }
+        @media (prefers-color-scheme: dark) {
+            body { background: #101827; color: #e2e8f0; }
+            .bg-white, .bg-slate-50 { background-color: #182335; }
+            .bg-blue-50 { background-color: #152b48; }
+            .bg-amber-50 { background-color: #332714; }
+            .text-slate-900, .text-slate-800, .text-slate-700, .text-blue-900 { color: #e2e8f0; }
+            .text-slate-500, .text-slate-400 { color: #a8b8cd; }
+            .border-slate-200, .border-slate-300, .border-slate-100 { border-color: #35445c; }
+        }
+        button:disabled { opacity: .6; cursor: wait; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
+
+    <div class="max-w-5xl mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="mb-8 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between border-b border-slate-200 pb-6">
+            <div>
+                <h1 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                    <svg class="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                    <span data-i18n="title">强控业务比对产品查询系统</span>
+                </h1>
+                <p class="text-sm text-slate-500 mt-1" data-i18n="subtitle">快速核验目标产品是否属于强控业务比对范围。</p>
+            </div>
+            <div class="mt-4 sm:mt-0 flex items-center gap-3">
+                <button id="language-toggle" type="button" class="px-3 py-1.5 rounded-md border border-slate-300 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">🌐 English</button>
+                <div class="text-sm text-slate-500" id="data-status">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                    暂无产品数据
+                </span>
+                </div>
+            </div>
+        </header>
+
+        <main class="space-y-6">
+            <!-- Product imports are persisted to the current tenant database. -->
+            <!-- PRODUCT_DATA_MANAGEMENT_START -->
+            <section id="product-data-management" class="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-900">
+                <p data-i18n="dataHelp">支持导入 XLSX、CSV、TSV 和 JSON，导入将替换当前产品列表并保存到服务器。静态页面推送会包含最新数据。</p>
+                <div class="mt-3 flex flex-wrap gap-3">
+                    <button id="import-products" type="button" class="bg-blue-600 text-white px-4 py-2 rounded-lg" data-i18n="importProducts">导入产品数据</button>
+                    <button id="export-products" type="button" class="border border-slate-300 bg-white px-4 py-2 rounded-lg" data-i18n="exportProducts">导出产品数据</button>
+                    <input id="product-file" type="file" accept=".xlsx,.csv,.tsv,.txt,.json" hidden>
+                </div>
+                <details class="mt-3">
+                    <summary class="cursor-pointer font-medium" data-i18n="formatExample">查看 XLSX / CSV 格式示例</summary>
+                    <p class="mt-3" data-i18n="formatHelp">第一行为表头，第二行起填写产品。只读取 XLSX 的第一个工作表；“产品”列必填，其余列可留空或省略。中文、英文和中英文双语表头均可识别。</p>
+                    <p class="mt-3 font-medium" data-i18n="xlsxExample">XLSX 示例：在 Excel 中按下面的列填写</p>
+                    <div class="mt-2 overflow-x-auto">
+                        <table class="w-full text-left whitespace-nowrap border-collapse text-xs">
+                            <thead><tr class="border-b border-blue-200">
+                                <th class="p-2" data-i18n="scenario">ICT作业场景</th><th class="p-2" data-i18n="productLine">产品线</th><th class="p-2" data-i18n="productCategory">产品族</th><th class="p-2" data-i18n="product">产品名称</th><th class="p-2" data-i18n="creator">创建人</th><th class="p-2" data-i18n="createTime">创建时间</th><th class="p-2" data-i18n="updator">更新人</th><th class="p-2" data-i18n="updateTime">更新时间</th>
+                            </tr></thead>
+                            <tbody><tr><td class="p-2">Installation</td><td class="p-2">Network</td><td class="p-2">Router</td><td class="p-2">Router-A</td><td class="p-2">Alex</td><td class="p-2">2026-10-01</td><td class="p-2">Alex</td><td class="p-2">2026-10-03</td></tr></tbody>
+                        </table>
+                    </div>
+                    <p class="mt-3 font-medium" data-i18n="csvExample">CSV 示例：使用英文逗号分隔，保存为 UTF-8 编码</p>
+                    <pre class="mt-2 overflow-x-auto rounded border border-blue-200 bg-white p-3 text-xs" data-i18n="csvSample">ICT作业场景,产品线,产品族,产品,创建人,创建时间,更新人,更新时间
+Installation,Network,Router,Router-A,Alex,2026-10-01,Alex,2026-10-03</pre>
+                    <p class="mt-2" data-i18n="csvHelp">CSV 字段包含逗号或换行时，用双引号包裹；字段内的双引号写成两个双引号。示例数据仅作格式说明，不会自动导入。</p>
+                </details>
+                <p id="product-message" role="status" class="mt-2" aria-live="polite"></p>
+            </section>
+            <!-- PRODUCT_DATA_MANAGEMENT_END -->
+
+            <!-- Search Card -->
+            <div id="search-section" class="bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-slate-200 fade-in relative z-10">
+                <h2 class="text-lg font-semibold text-slate-800 mb-4" data-i18n="searchTitle">产品查询</h2>
+                <div class="relative">
+                    <div class="relative flex items-center w-full">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
+                        <input type="text" id="search-input" class="block w-full pl-10 pr-12 py-3 border border-slate-300 rounded-lg leading-5 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-shadow" data-i18n-placeholder="searchPlaceholder" placeholder="请输入完整或部分产品名称进行模糊匹配..." autocomplete="off">
+                        <button id="clear-search" class="absolute inset-y-0 right-0 pr-3 flex items-center hidden text-slate-400 hover:text-slate-600" aria-label="清空" data-i18n-aria="clearSearch">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                    <ul id="autocomplete-dropdown" class="absolute z-20 w-full bg-white mt-1 rounded-lg border border-slate-200 dropdown-shadow max-h-60 overflow-y-auto hidden"></ul>
+                </div>
+                <div class="mt-3 flex justify-end">
+                    <button id="search-btn" class="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors" data-i18n="searchButton">精确核验</button>
+                </div>
+                <p id="query-message" role="status" aria-live="polite" class="mt-3 text-sm text-amber-700"></p>
+                <p id="empty-data-hint" class="hidden mt-4 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3"><span data-i18n="emptyData">暂无产品记录，请导入产品数据。</span></p>
+            </div>
+
+            <!-- Result Area -->
+            <div id="result-section" class="hidden fade-in">
+                <!-- Result will be injected here -->
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // --- Embedded Excel data area ---
+        // Paste the copied Excel range, including its header row, between the backticks below.
+        // Chinese/English bilingual headers are supported, including line breaks or punctuation.
+        // Example: "产品族\nProduct Category" and "产品\nProduct" each remain one column header.
+        // Keep the tab-separated columns and do not remove the header row.
+        const BUILT_IN_EXCEL_DATA = `"ICT作业场景
+ICT Operation Scenario"	"产品线
+Product Line"	"产品族
+Product Category"	"产品
+Product"	"创建人
+Creator"	"创建时间
+Create Time"	"更新人
+Updator"	"更新时间
+Update Time"
+`;
+
+        let globalProductData = [];
+        let isDataLoaded = false;
+
+        const searchInput = document.getElementById('search-input');
+        const autocompleteDropdown = document.getElementById('autocomplete-dropdown');
+        const searchBtn = document.getElementById('search-btn');
+        const clearSearchBtn = document.getElementById('clear-search');
+        const resultSection = document.getElementById('result-section');
+        const dataStatus = document.getElementById('data-status');
+        const emptyDataHint = document.getElementById('empty-data-hint');
+
+        const normalizeHeader = (str) => String(str ?? '').replace(/^\uFEFF/, '').toLowerCase().replace(/[\s\p{P}\p{S}]/gu, '');
+
+        // Parse Excel-pasted TSV, including quoted tabs/newlines and escaped quotes.
+        const parseTSV = (text) => {
+            const rows = [];
+            let row = [], cell = '', quoted = false;
+            for (let i = 0; i < text.length; i++) {
+                const ch = text[i];
+                if (ch === '"') {
+                    if (quoted && text[i + 1] === '"') { cell += '"'; i++; }
+                    else quoted = !quoted;
+                } else if (ch === '\t' && !quoted) {
+                    row.push(cell); cell = '';
+                } else if ((ch === '\n' || ch === '\r') && !quoted) {
+                    if (ch === '\r' && text[i + 1] === '\n') i++;
+                    row.push(cell); rows.push(row); row = []; cell = '';
+                } else cell += ch;
+            }
+            if (cell.length || row.length) { row.push(cell); rows.push(row); }
+            return rows.filter(r => r.some(v => String(v).trim() !== ''));
+        };
+
+        const standardizeRow = (headers, values) => {
+            const item = {};
+            headers.forEach((header, i) => {
+                const key = normalizeHeader(header);
+                const value = (values[i] ?? '').trim();
+                if (key.includes('ict作业场景') || key.includes('ictoperationscenario')) item.scenario = value;
+                else if (key.includes('产品线') || key.includes('productline')) item.productLine = value;
+                else if (key.includes('产品族') || key.includes('productcategory')) item.productCategory = value;
+                else if (key.includes('创建人') || key.includes('creator')) item.creator = value;
+                else if (key.includes('创建时间') || key.includes('createtime')) item.createTime = value;
+                else if (key.includes('更新人') || key.includes('updator') || key.includes('updater')) item.updator = value;
+                else if (key.includes('更新时间') || key.includes('updatetime')) item.updateTime = value;
+                else if (key === '产品' || key === 'product' || key.includes('产品product') || key.includes('product产品') || key.includes('产品名称') || key.includes('productname')) item.productName = value;
+            });
+            return item;
+        };
+
+        const loadBuiltInData = () => {
+            const rows = parseTSV(BUILT_IN_EXCEL_DATA);
+            const headers = rows.shift() || [];
+            globalProductData = rows.map(row => standardizeRow(headers, row))
+                .filter(item => item.productName && item.productName.trim());
+            isDataLoaded = globalProductData.length > 0;
+            if (isDataLoaded) {
+                emptyDataHint.classList.add('hidden');
+            } else {
+                emptyDataHint.classList.remove('hidden');
+            }
+        };
+        const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+
+        const translations = {
+            en: {
+                title:'Mandatory Business Comparison Product Scope Checker', subtitle:'Quickly verify whether a product is included in the mandatory business comparison scope.',
+                dataMode:'Built-in Data Mode:', dataInstructions:'Paste your Excel range, including the header row, into', dataInstructionsEnd:'in the HTML source, save it, and reopen the page to search.',
+                searchTitle:'Search Products', searchPlaceholder:'Enter a full or partial product name...', clearSearch:'Clear search', searchButton:'Verify',
+                emptyData:'No product records yet. Import a product data file.', emptyDataEnd:'in the HTML source and paste the Excel range, including its headers.',
+                dataCount:n=>`Product data (${n} records)`, noData:'No product data yet',
+                foundTitle:'Included in the mandatory comparison list', foundSubtitle:'Product details', product:'Product', productLine:'Product Line', productCategory:'Product Category',
+                scenario:'ICT Operation Scenario', creator:'Creator', createTime:'Create Time', updator:'Updater', updateTime:'Update Time',
+                notFound:'Not in mandatory comparison scope', notFoundPrefix:'No product was found in the product list for', notFoundSuffix:'This product may not be covered by current mandatory business comparison rules.',
+                formatExample:'View XLSX / CSV format examples', formatHelp:'The first row contains headers; product records start on the second row. Only the first XLSX worksheet is read. Product is required; other columns may be blank or omitted. Chinese, English and bilingual headers are supported.', xlsxExample:'XLSX example: fill these columns in Excel', csvExample:'CSV example: separate columns with commas and save as UTF-8', csvSample:'ICT Operation Scenario,Product Line,Product Category,Product,Creator,Create Time,Updater,Update Time\nInstallation,Network,Router,Router-A,Alex,2026-10-01,Alex,2026-10-03', csvHelp:'Wrap fields containing commas or line breaks in double quotes. Escape a double quote with two double quotes. Sample records are for illustration and are not imported automatically.', emptyReadOnly:'No product records in this snapshot.', dataHelp:'Import XLSX, CSV, TSV or JSON. Imports replace the product list and save it to the server. Published snapshots include the latest data.', importProducts:'Import products', exportProducts:'Export products', importing:'Importing and saving…', saved:n=>`Saved ${n} products to the server.`, snapshotLoadFailed:'Could not load snapshot data. Reload to try again.', loadFailed:'Could not load server data. Reload to try again.', failed:'Import failed', snapshotHelp:'Read-only snapshot. Product data reflects the publication time.', noSuggestions:'No matching products', noCategory:'No category', noProductLine:'No product line'
+            },
+            zh: {
+                title:'强控业务比对产品查询系统', subtitle:'快速核验目标产品是否属于强控业务比对范围。',
+                dataMode:'内置数据模式：', dataInstructions:'请在 HTML 源码中的', dataInstructionsEnd:'区域粘贴 Excel 数据（含表头），保存后重新打开页面即可查询。',
+                searchTitle:'产品查询', searchPlaceholder:'请输入完整或部分产品名称进行模糊匹配...', clearSearch:'清空', searchButton:'精确核验',
+                emptyData:'暂无产品记录，请导入产品数据。', emptyDataEnd:'，粘贴含表头的 Excel 数据。',
+                dataCount:n=>`产品数据（${n} 条）`, noData:'暂无产品数据',
+                foundTitle:'包含在强控业务比对列表内', foundSubtitle:'以下是该产品的完整档案信息。', product:'产品名称', productLine:'产品线', productCategory:'产品族',
+                scenario:'ICT作业场景', creator:'创建人', createTime:'创建时间', updator:'更新人', updateTime:'更新时间',
+                notFound:'不在强控业务比对范围内', notFoundPrefix:'未在产品列表中找到产品', notFoundSuffix:'该产品可能不受当前强控业务规则约束。',
+                formatExample:'查看 XLSX / CSV 格式示例', formatHelp:'第一行为表头，第二行起填写产品。只读取 XLSX 的第一个工作表；“产品”列必填，其余列可留空或省略。中文、英文和中英文双语表头均可识别。', xlsxExample:'XLSX 示例：在 Excel 中按下面的列填写', csvExample:'CSV 示例：使用英文逗号分隔，保存为 UTF-8 编码', csvSample:'ICT作业场景,产品线,产品族,产品,创建人,创建时间,更新人,更新时间\nInstallation,Network,Router,Router-A,Alex,2026-10-01,Alex,2026-10-03', csvHelp:'CSV 字段包含逗号或换行时，用双引号包裹；字段内的双引号写成两个双引号。示例数据仅作格式说明，不会自动导入。', emptyReadOnly:'此快照暂无产品记录。', dataHelp:'支持导入 XLSX、CSV、TSV 和 JSON，导入将替换当前产品列表并保存到服务器。静态页面推送会包含最新数据。', importProducts:'导入产品数据', exportProducts:'导出产品数据', importing:'正在导入并保存…', saved:n=>`已将 ${n} 条产品保存到服务器。`, snapshotLoadFailed:'快照数据读取失败，请刷新重试。', loadFailed:'服务器数据读取失败，请刷新重试。', failed:'导入失败', snapshotHelp:'只读快照，产品数据以推送时刻为准。', noSuggestions:'无匹配产品建议', noCategory:'无产品族', noProductLine:'无产品线'
+            }
+        };
+        let currentLanguage = 'zh';
+        let messageKey = '', messageArgs = [];
+        const snapshotMode = window.__PRODUCT_SCOPE_SNAPSHOT__ === true;
+        const messageElement = () => document.getElementById('product-message') || document.getElementById('query-message');
+        let enableImport = () => {};
+        const productApi = '/api/custom-tools/tool-mumxi3px/products';
+        const t = (key, ...args) => {
+            const value = translations[currentLanguage][key];
+            return typeof value === 'function' ? value(...args) : (value ?? key);
+        };
+        const updateDataStatus = () => {
+            const cls = isDataLoaded ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
+            const label = isDataLoaded ? t('dataCount', globalProductData.length) : t('noData');
+            dataStatus.innerHTML = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${cls}">${escapeHtml(label)}</span>`;
+        };
+        const applyLanguage = () => {
+            document.documentElement.lang = currentLanguage === 'en' ? 'en' : 'zh-CN';
+            document.title = currentLanguage === 'en' ? 'Mandatory Business Comparison Product Scope Checker' : '强控业务比对产品查询系统';
+            document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = t(el.dataset.i18nPlaceholder); });
+            document.querySelectorAll('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
+            document.getElementById('language-toggle').textContent = currentLanguage === 'zh' ? '🌐 English' : '🌐 中文';
+            updateDataStatus();
+            messageElement().textContent = messageKey ? t(messageKey, ...messageArgs) : '';
+            if (snapshotMode) emptyDataHint.querySelector('[data-i18n]').textContent = t('emptyReadOnly');
+            autocompleteDropdown.classList.add('hidden');
+            if (!resultSection.classList.contains('hidden')) handleSearch();
+        };
+        document.getElementById('language-toggle').addEventListener('click', () => {
+            currentLanguage = currentLanguage === 'en' ? 'zh' : 'en';
+            applyLanguage();
+        });
+        loadBuiltInData();
+        applyLanguage();
+
+        const setProducts = products => {
+            globalProductData = products;
+            isDataLoaded = products.length > 0;
+            emptyDataHint.classList.toggle('hidden', isDataLoaded);
+            resultSection.classList.add('hidden');
+            autocompleteDropdown.classList.add('hidden');
+            updateDataStatus();
+        };
+        const showMessage = (key, ...args) => {
+            messageKey = key; messageArgs = args;
+            messageElement().textContent = t(key, ...args);
+        };
+        // PRODUCT_DATA_MANAGEMENT_SCRIPT_START
+        const importButton = document.getElementById('import-products');
+        const fileInput = document.getElementById('product-file');
+        enableImport = () => { importButton.disabled = false; };
+        importButton.hidden = snapshotMode;
+        importButton.disabled = !snapshotMode;
+        importButton.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', async () => {
+            const file = fileInput.files[0];
+            if (!file) return;
+            importButton.disabled = true;
+            showMessage('importing');
+            try {
+                const form = new FormData(); form.append('file', file);
+                const response = await fetch(productApi + '/import', { method: 'POST', body: form, credentials: 'same-origin' });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || t('failed'));
+                setProducts(data.products);
+                showMessage('saved', data.products.length);
+            } catch (error) {
+                showMessage('failed');
+                document.getElementById('product-message').textContent += ': ' + error.message;
+            } finally { importButton.disabled = false; fileInput.value = ''; }
+        });
+        document.getElementById('export-products').addEventListener('click', () => {
+            const blob = new Blob([JSON.stringify({ version: 1, products: globalProductData }, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a'); link.href = url; link.download = 'product-scope-data.json';
+            link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+        });
+        // PRODUCT_DATA_MANAGEMENT_SCRIPT_END
+        async function loadServerProducts() {
+            try {
+                if (snapshotMode) {
+                    const products = window.__PRODUCT_SCOPE_DATA_URL__
+                        ? await fetch(window.__PRODUCT_SCOPE_DATA_URL__, { cache: 'no-store' }).then(r => { if (!r.ok) throw new Error('Snapshot load failed'); return r.json(); })
+                        : window.__PRODUCT_SCOPE_DATA__;
+                    if (products) setProducts(products);
+                } else {
+                    const response = await fetch(productApi, { credentials: 'same-origin', cache: 'no-store' });
+                    if (!response.ok) throw new Error('Server load failed');
+                    const data = await response.json();
+                    if (data.updatedAt) setProducts(data.products);
+                }
+            } catch (_) { showMessage(snapshotMode ? 'snapshotLoadFailed' : 'loadFailed'); }
+            finally { enableImport(); }
+        }
+        // Complete initial loading after all search handlers have been initialized.
+        window.addEventListener('DOMContentLoaded', loadServerProducts, { once: true });
+
+        // --- STREAMING_CHUNK:Search and Autocomplete Logic ---
+        
+        const renderResult = (product) => {
+            resultSection.classList.remove('hidden');
+            autocompleteDropdown.classList.add('hidden');
+            
+            if (product) {
+                // Success: Found in strong control list
+                resultSection.innerHTML = `
+                    <div class="bg-white rounded-xl shadow-md border-t-4 border-t-blue-600 overflow-hidden fade-in">
+                        <div class="px-6 py-5 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+                            <div>
+                                <h3 class="text-lg leading-6 font-semibold text-slate-900 flex items-center gap-2">
+                                    <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    ${t('foundTitle')}
+                                </h3>
+                                <p class="mt-1 max-w-2xl text-sm text-slate-500">${t('foundSubtitle')}</p>
+                            </div>
+                        </div>
+                        <div class="px-6 py-5">
+                            <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
+                                <div class="sm:col-span-1">
+                                    <dt class="text-sm font-medium text-slate-500">${t('product')}</dt>
+                                    <dd class="mt-1 text-sm text-slate-900 font-semibold">${escapeHtml(product.productName || '-')}</dd>
+                                </div>
+                                <div class="sm:col-span-1">
+                                    <dt class="text-sm font-medium text-slate-500">${t('productLine')}</dt>
+                                    <dd class="mt-1 text-sm text-slate-900">${escapeHtml(product.productLine || '-')}</dd>
+                                </div>
+                                <div class="sm:col-span-1">
+                                    <dt class="text-sm font-medium text-slate-500">${t('productCategory')}</dt>
+                                    <dd class="mt-1 text-sm text-slate-900">${escapeHtml(product.productCategory || '-')}</dd>
+                                </div>
+                                <div class="sm:col-span-3">
+                                    <dt class="text-sm font-medium text-slate-500">${t('scenario')}</dt>
+                                    <dd class="mt-1 text-sm text-slate-900 bg-slate-50 p-3 rounded-md border border-slate-100 whitespace-pre-wrap">${escapeHtml(product.scenario || '-')}</dd>
+                                </div>
+                                <div class="sm:col-span-1">
+                                    <dt class="text-sm font-medium text-slate-500">${t('creator')}</dt>
+                                    <dd class="mt-1 text-sm text-slate-900">${escapeHtml(product.creator || '-')}</dd>
+                                </div>
+                                <div class="sm:col-span-1">
+                                    <dt class="text-sm font-medium text-slate-500">${t('createTime')}</dt>
+                                    <dd class="mt-1 text-sm text-slate-900">${escapeHtml(product.createTime || '-')}</dd>
+                                </div>
+                                <div class="sm:col-span-1 hidden lg:block"></div>
+                                <div class="sm:col-span-1">
+                                    <dt class="text-sm font-medium text-slate-500">${t('updator')}</dt>
+                                    <dd class="mt-1 text-sm text-slate-900">${escapeHtml(product.updator || '-')}</dd>
+                                </div>
+                                <div class="sm:col-span-1">
+                                    <dt class="text-sm font-medium text-slate-500">${t('updateTime')}</dt>
+                                    <dd class="mt-1 text-sm text-slate-900">${escapeHtml(product.updateTime || '-')}</dd>
+                                </div>
+                            </dl>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Not found
+                const queryVal = searchInput.value.trim();
+                resultSection.innerHTML = `
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden fade-in text-center p-12">
+                        <svg class="mx-auto h-16 w-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <h3 class="mt-4 text-lg font-medium text-slate-900">${t('notFound')}</h3>
+                        <p class="mt-2 text-sm text-slate-500">${t('notFoundPrefix')} <span class="font-semibold text-slate-700">"${escapeHtml(queryVal)}"</span>.</p>
+                        <p class="text-sm text-slate-500 mt-1">${t('notFoundSuffix')}</p>
+                    </div>
+                `;
+            }
+        };
+
+        const handleSearch = () => {
+            if (!isDataLoaded) { resultSection.classList.add('hidden'); return; }
+            const query = searchInput.value.trim().toLowerCase();
+            if (!query) {
+                resultSection.classList.add('hidden');
+                return;
+            }
+            
+            // Check for exact match first
+            let matchedProduct = globalProductData.find(item => String(item.productName).trim().toLowerCase() === query);
+            
+            // If not exact, maybe case insensitive exact or just pick the first one that includes it if user clicks search directly?
+            // Usually, "Search" button means strict verfication.
+            if (!matchedProduct) {
+                 // Try a soft match if only one result exists
+                 const softMatches = globalProductData.filter(item => String(item.productName).toLowerCase().includes(query));
+                 if(softMatches.length === 1) {
+                     matchedProduct = softMatches[0];
+                     searchInput.value = matchedProduct.productName; // Auto complete input
+                 }
+            }
+
+            renderResult(matchedProduct);
+            autocompleteDropdown.classList.add('hidden');
+        };
+
+        // --- STREAMING_CHUNK:Autocomplete Event Listeners ---
+        searchInput.addEventListener('input', (e) => {
+            const val = e.target.value.trim();
+            if (!isDataLoaded) { autocompleteDropdown.classList.add('hidden'); return; }
+            
+            // Toggle clear button
+            if (val) clearSearchBtn.classList.remove('hidden');
+            else clearSearchBtn.classList.add('hidden');
+
+            if (!val) {
+                autocompleteDropdown.classList.add('hidden');
+                autocompleteDropdown.innerHTML = '';
+                return;
+            }
+
+            // Filter data
+            const lowerVal = val.toLowerCase();
+            const matches = globalProductData.filter(item => 
+                String(item.productName).toLowerCase().includes(lowerVal)
+            ).slice(0, 10); // Limit to top 10 results for performance
+
+            if (matches.length > 0) {
+                autocompleteDropdown.innerHTML = matches.map(item => {
+                    // Highlight matching part
+                    const name = String(item.productName);
+                    const regex = new RegExp(`(${val.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+                    const highlightedName = name.split(regex).map((part, index) => index % 2
+                        ? `<span class="text-blue-600 font-semibold">${escapeHtml(part)}</span>`
+                        : escapeHtml(part)).join('');
+                    
+                    return `
+                        <li class="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-slate-100 last:border-0 transition-colors" data-name="${escapeHtml(name)}">
+                            <div class="text-sm text-slate-800">${highlightedName}</div>
+                            <div class="text-xs text-slate-400 mt-1 truncate">${escapeHtml(item.productCategory || t('noCategory'))} > ${escapeHtml(item.productLine || t('noProductLine'))}</div>
+                        </li>
+                    `;
+                }).join('');
+                autocompleteDropdown.classList.remove('hidden');
+            } else {
+                autocompleteDropdown.innerHTML = `<li class="px-4 py-3 text-sm text-slate-500 text-center italic">${t('noSuggestions')}</li>`;
+                autocompleteDropdown.classList.remove('hidden');
+            }
+        });
+
+        // Handle Dropdown Item Click
+        autocompleteDropdown.addEventListener('click', (e) => {
+            const li = e.target.closest('li');
+            if (li && li.dataset.name) {
+                searchInput.value = li.dataset.name;
+                autocompleteDropdown.classList.add('hidden');
+                handleSearch();
+            }
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !autocompleteDropdown.contains(e.target)) {
+                autocompleteDropdown.classList.add('hidden');
+            }
+        });
+
+        // Key bindings
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleSearch();
+            }
+        });
+
+        searchBtn.addEventListener('click', handleSearch);
+
+        clearSearchBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            clearSearchBtn.classList.add('hidden');
+            autocompleteDropdown.classList.add('hidden');
+            resultSection.classList.add('hidden');
+            searchInput.focus();
+        });
+
+    </script>
+</body>
+</html>

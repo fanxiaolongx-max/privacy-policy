@@ -32,27 +32,11 @@ test('memory category controls appear only on the front of each flashcard', () =
     assert.match(source, /\.starter-flip-card\.flipped \.starter-flip-front \.card-shift-actions \{ display: none; \}/);
 });
 
-test('Arabic spelling, transliteration, and case-ending examples stay aligned', () => {
-    const expectedPairs = [
-        ['بِقَلْبِي', 'bi-qalbī'],
-        ['خُبْز', 'khubz'],
-        ['مَثِيل', 'mathīl'],
-        ['صَنْدُوق', 'ṣandūʾ'],
-        ['بَرْطَمَان', 'barṭamān'],
-        ['إِزَازَة', 'izāza'],
-        ['بَيْتٌ', 'baytun'],
-        ['بَيْتٍ', 'baytin'],
-        ['بَيْتًا', 'baytan'],
-        ['كُتُبٌ', 'kutubun'],
-        ['عُضْوٌ', 'ʿuḍwun'],
-        ['هَدْيٌ', 'hadyun'],
-        ['مَبْدَأً', 'mabdaʾan'],
-        ['تَبَاطُؤٌ', 'tabāṭuʾun']
-    ];
-    expectedPairs.forEach(([arabic, transliteration]) => {
-        assert.ok(source.includes(arabic), `missing corrected Arabic form: ${arabic}`);
-        assert.ok(source.includes(transliteration), `missing corrected transliteration: ${transliteration}`);
-    });
+test('Egyptian beginner spellings and readings remain aligned', () => {
+    for (const [arabic, pron] of [['عِيش', 'ʿēsh'], ['بَيْت', 'bēt'], ['سُوق', 'sūʾ'], ['لَبَن', 'laban']]) {
+        assert.ok(source.includes(arabic));
+        assert.ok(source.includes(pron));
+    }
 });
 
 test('flashcard phonetic labels analyze only the selected key letter', () => {
@@ -69,12 +53,12 @@ test('flashcard phonetic labels analyze only the selected key letter', () => {
         { Intl }
     );
 
-    assert.equal(analyze('تُفَّاح', 'ت').vowelDetail, '短音 u');
-    assert.equal(analyze('تُفَّاح', 'ف').vowelDetail, '长音 ā · 重音');
+    assert.equal(analyze('تُفَّاح', 'ت').vowelDetail, '埃及短音 o');
+    assert.equal(analyze('تُفَّاح', 'ف').vowelDetail, '长音 ā · 叠音');
     assert.equal(analyze('بَاب', 'ب').vowelDetail, '长音 ā');
     assert.equal(analyze('تِين', 'ت').vowelDetail, '长音 ī');
     assert.equal(analyze('سُوق', 'و').vowelDetail, '长音 ū');
-    assert.equal(analyze('بَيْت', 'ب').vowelDetail, '双元音 ay');
+    assert.equal(analyze('بَيْت', 'ب').vowelDetail, '埃及长音 ē');
     assert.equal(analyze('تَمْر', 'م').vowelDetail, '静音 ْ');
 
     assert.match(source, /const keyPhonetics = getCardKeyPhonetics\(word\);/);

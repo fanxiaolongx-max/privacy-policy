@@ -273,6 +273,14 @@ registerProvider('tool-ms4xb66s', {
     buildPagesSnapshot: (tenantId, opts) => require('./operation-incentive-snapshot').buildPagesSnapshot(tenantId, opts)
 });
 
+registerProvider('tool-mumxi3px', {
+    name: '强控业务比对检索',
+    description: '查询服务器保存的产品范围数据，推送时同步生成最新数据快照。',
+    defaultFile: 'tool-mumxi3px/index.html',
+    buildSnapshot: (tenantId, opts) => require('./product-scope-snapshot').buildSnapshot(tenantId, opts),
+    buildPagesSnapshot: (tenantId, opts) => require('./product-scope-snapshot').buildPagesSnapshot(tenantId, opts)
+});
+
 registerProvider('tool-mqp55fna', {
     name: '六个一信息收集',
     description: '查看调查模板与全部提交记录的只读快照。',

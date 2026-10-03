@@ -5,8 +5,8 @@
     "name": "阿拉伯语互动课堂",
     "nameEn": "Egyptian Arabic Interactive Classroom",
     "icon": "🇪🇬",
-    "description": "面向中文学习者的阿拉伯语与埃及口语沉浸式互动课堂，涵盖字母发音、连写变形、符号词汇、单词卡片记忆库、超市数字生活场景与测验。",
-    "descriptionEn": "An immersive Egyptian Arabic interactive learning platform for Chinese speakers, featuring phonetics, joining rules, symbol vocabulary, flashcards memory deck, real-world dialogues, and quizzes.",
+    "description": "开罗埃及口语互动课堂：字母与拼读、词汇记忆、生活会话、字母抽查四大模块，支持配音、字形辨认与加速闯关。",
+    "descriptionEn": "Cairene Egyptian Arabic in four modules: alphabet and reading, vocabulary, everyday conversation, and timed letter challenges with audio.",
     "tags": [
       "阿拉伯语",
       "埃及口语",
@@ -18,7 +18,7 @@
     "filePath": "/custom-tools/tool-mtakhxqm/index.html",
     "publicAccess": true,
     "createdAt": "2026-08-26T20:49:48.814Z",
-    "updatedAt": "2026-09-06T14:20:00.000Z"
+    "updatedAt": "2026-10-03T12:00:00.000Z"
   },
   "history": {
     "id": "builtin-tool-mtakhxqm",

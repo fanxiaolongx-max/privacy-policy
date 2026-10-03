@@ -157,7 +157,7 @@ function buildBootstrap(slug, options = {}) {
         const runtime = fs.readFileSync(RUNTIME_FILE, 'utf8').replace(/<\/script/gi, '<\\/script');
         return `${configScript}<script>${runtime}<\/script>`;
     }
-    return `${configScript}<script src="/js/shared/custom-tool-i18n-runtime.js?v=20260812-06"><\/script>`;
+    return `${configScript}<script src="/js/shared/custom-tool-i18n-runtime.js?v=20261003-01"><\/script>`;
 }
 
 function injectBeforeLastBody(html, injection) {

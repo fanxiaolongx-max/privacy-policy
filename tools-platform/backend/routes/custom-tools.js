@@ -21,6 +21,27 @@ const customToolExportService = require('../models/custom-tool-export-service');
 const snapshotsRepo = require('../models/custom-tools-snapshots-repository');
 const marketService = require('../models/custom-tools-market-service');
 const { Worker } = require('node:worker_threads');
+const productScopeRepo = require('../models/product-scope-repository');
+const { getTenantId, runWithTenant } = require('../models/tenant-context');
+const productUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024, files: 1 } });
+
+router.get('/tool-mumxi3px/products', async (req, res, next) => {
+    try { res.json(await productScopeRepo.loadProducts()); } catch (err) { next(err); }
+});
+router.post('/tool-mumxi3px/products/import', requireAdmin, (req, res, next) => {
+    req.suppressBodyLog = true;
+    const tenantId = getTenantId();
+    productUpload.single('file')(req, res, err => {
+        if (err) return res.status(400).json({ error: err.code === 'LIMIT_FILE_SIZE' ? '文件不能超过 10 MB' : '上传文件失败' });
+        runWithTenant(tenantId, next);
+    });
+}, async (req, res) => {
+    try {
+        if (!req.file) return res.status(400).json({ error: '请选择产品数据文件' });
+        const products = await productScopeRepo.parseImport(req.file.buffer, req.file.originalname);
+        res.json({ success: true, ...await productScopeRepo.saveProducts(products) });
+    } catch (err) { res.status(err.status || 500).json({ error: err.status === 400 ? err.message : '保存产品数据失败' }); }
+});
 
 const builtinToolsSourceDir = path.join(__dirname, '../builtin-tools');
 const backupUpload = multer({
