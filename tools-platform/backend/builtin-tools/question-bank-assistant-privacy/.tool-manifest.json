@@ -4,7 +4,7 @@
     "slug": "question-bank-assistant-privacy",
     "name": "题库助手隐私政策",
     "icon": "🔏",
-    "description": "题库与答题助手浏览器扩展的中英文隐私政策，说明本地题库、License 校验、扩展权限和用户数据控制方式。",
+    "description": "题库与答题助手中英文隐私政策，说明 AI 数据传输、加密保险库、凭据与日志、导入导出、可选 License 和用户数据控制。",
     "tags": [
       "隐私政策",
       "浏览器扩展",
@@ -14,7 +14,7 @@
     "filePath": "/custom-tools/question-bank-assistant-privacy/index.html",
     "publicAccess": true,
     "createdAt": "2026-08-06T00:00:00.000Z",
-    "updatedAt": "2026-08-06T00:00:00.000Z"
+    "updatedAt": "2026-10-03T00:00:00.000Z"
   },
   "history": {
     "id": "builtin-question-bank-assistant-privacy-v1",

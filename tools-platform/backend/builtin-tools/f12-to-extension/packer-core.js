@@ -132,6 +132,8 @@
       manualLaunch: input.manualLaunch === true || license.enabled,
       license,
       optionalPermissions,
+      examAiBridge: input.examAiBridge === true,
+      examVaultBridge: input.examVaultBridge === true,
       code: String(input.code || "")
     };
   }
@@ -178,6 +180,73 @@
     })[char]);
   }
 
+  // Runs in the isolated extension world; page requests never include site cookies.
+  function examAiRelay() {
+    if (globalThis.__tpExamAiRelay) return;
+    globalThis.__tpExamAiRelay = true;
+    document.documentElement.dataset.tpExamAiBridge = '1';
+    const active = new Set();
+    window.addEventListener('message', event => {
+      const message = event.data;
+      if (event.source !== window || event.origin !== location.origin || message?.source !== 'TP_EXAM_AI_REQUEST') return;
+      if (typeof message.id !== 'string' || !/^[a-f0-9-]{36}$/.test(message.id)) return;
+      if (message.cancel) {
+        if (active.has(message.id)) chrome.runtime.sendMessage({ type: 'TP_EXAM_AI_CANCEL', id: message.id }).catch(() => {});
+        return;
+      }
+      if (active.has(message.id) || active.size >= 20) return;
+      active.add(message.id);
+      chrome.runtime.sendMessage({ type: 'TP_EXAM_AI_FETCH', id: message.id, request: message.request })
+        .then(result => window.postMessage({ source: 'TP_EXAM_AI_RESULT', id: message.id, ...result }, location.origin))
+        .catch(() => window.postMessage({ source: 'TP_EXAM_AI_RESULT', id: message.id, ok: false, error: 'Extension request failed' }, location.origin))
+        .finally(() => active.delete(message.id));
+    });
+  }
+
+  function examAiBackground() {
+    const controllers = new Map();
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      if (sender.id !== chrome.runtime.id || (!sender.tab && !sender.url?.startsWith(chrome.runtime.getURL(''))) || !['TP_EXAM_AI_FETCH', 'TP_EXAM_AI_CANCEL'].includes(message?.type)) return;
+      if (typeof message.id !== 'string' || !/^[a-f0-9-]{36}$/.test(message.id)) return;
+      const id = `${sender.tab?.id ?? sender.url}:${sender.frameId ?? 0}:${message.id}`;
+      if (message.type === 'TP_EXAM_AI_CANCEL') { controllers.get(id)?.abort(); sendResponse({ ok: true }); return; }
+      if (controllers.has(id) || controllers.size >= 40) { sendResponse({ ok: false, error: 'Too many requests' }); return; }
+      (async () => {
+        let timer;
+        try {
+          const request = message.request;
+          const url = new URL(request.url);
+          if (url.protocol !== 'https:' && !(url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname))) throw new Error();
+          if (url.username || url.password || url.search || url.hash) throw new Error();
+          const headers = { 'Content-Type': 'application/json' };
+          for (const [name, value] of Object.entries(request.headers || {})) {
+            if (['authorization', 'x-api-key', 'x-goog-api-key', 'anthropic-version'].includes(name.toLowerCase()) && typeof value === 'string' && value.length <= 4096) headers[name] = value;
+          }
+          const body = JSON.stringify(request.body);
+          if (!body || body.length > 120000) throw new Error();
+          const controller = new AbortController(); controllers.set(id, controller);
+          timer = setTimeout(() => controller.abort(), 60000);
+          const response = await fetch(url.href, { method: 'POST', headers, body, credentials: 'omit', redirect: 'error', signal: controller.signal });
+          const reader = response.body.getReader(); const decoder = new TextDecoder();
+          let text = ''; let size = 0;
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            size += value.byteLength;
+            if (size > 1048576) { await reader.cancel(); throw new Error(); }
+            text += decoder.decode(value, { stream: true });
+          }
+          text += decoder.decode();
+          if (!response.ok) { sendResponse({ ok: false, error: `HTTP ${response.status}`, status: response.status, responseText: text }); return; }
+          try { sendResponse({ ok: true, status: response.status, data: JSON.parse(text) }); }
+          catch (_) { sendResponse({ ok: false, error: 'Invalid response JSON', status: response.status, responseText: text }); }
+        } catch (_) { sendResponse({ ok: false, error: 'AI request failed or cancelled' }); }
+        finally { clearTimeout(timer); controllers.delete(id); }
+      })();
+      return true;
+    });
+  }
+
   function buildPackage(options) {
     const validation = validateOptions(options);
     if (validation.errors.length) {
@@ -186,7 +255,14 @@
       throw error;
     }
     const settings = validation.options;
-    const permissions = unique([...DEFAULT_PERMISSIONS, ...settings.optionalPermissions]);
+    const examAiEnabled = options.examAiBridge === true || settings.code.includes("TP_EXAM_AI_V1");
+    const examVaultEnabled = options.examVaultBridge === true || settings.code.includes("TP_EXAM_VAULT_V1");
+    const vaultFactory = examVaultEnabled ? (typeof globalThis.createTPExamVault === 'function' ? globalThis.createTPExamVault : (typeof require === 'function' ? require('./exam-vault.js') : null)) : null;
+    if (examVaultEnabled && !vaultFactory) throw new Error('题库加密组件未加载，请刷新打包页面。');
+    const storeGuide = examVaultEnabled ? (globalThis.TPExamStoreGuide || (typeof require === 'function' ? require('./exam-store-guide.js') : null)) : null;
+    if (examVaultEnabled && !storeGuide) throw new Error('题库上架指南组件未加载，请刷新打包页面。');
+    if (examVaultEnabled) settings.world = 'ISOLATED';
+    const permissions = unique([...DEFAULT_PERMISSIONS, ...settings.optionalPermissions, ...(examVaultEnabled ? ['unlimitedStorage'] : [])]);
     const contentScript = {
       matches: settings.matches,
       js: ["content.js"],
@@ -276,6 +352,7 @@ button.secondary { color: #fff; background: #ff4d4f; }
 button.secondary:hover { background: #cf1322; }`;
       files["popup.js"] = `const MANUAL_LAUNCH = ${JSON.stringify(settings.manualLaunch)};
 const SCRIPT_WORLD = ${JSON.stringify(settings.world)};
+const SECURE_EXAM = ${JSON.stringify(examVaultEnabled)};
 const ALL_FRAMES = ${JSON.stringify(settings.allFrames)};
       const LICENSE_CONFIG = ${JSON.stringify({
         enabled: licenseEnabled,
@@ -665,6 +742,8 @@ async function sendToPage(action) {
         world: SCRIPT_WORLD,
         files: ["content.js"]
       });
+    } else if (SECURE_EXAM) {
+      await chrome.tabs.sendMessage(tab.id, { type: "TP_EXAM_CONTROL", action });
     } else {
       await chrome.scripting.executeScript({
         target: { tabId: tab.id, allFrames: ALL_FRAMES },
@@ -719,6 +798,32 @@ initializePopup();`;
 });`;
     }
 
+    if (examAiEnabled) {
+      manifest.host_permissions = unique([...manifest.host_permissions, "https://*/*", "http://localhost/*", "http://127.0.0.1/*"]);
+      // Always install the relay, including popup/manual-launch packages.
+      if (!examVaultEnabled) manifest.content_scripts = [...(manifest.content_scripts || []), {
+        matches: settings.matches, js: ["exam-ai-relay.js"], run_at: "document_idle", world: "ISOLATED",
+        ...(settings.allFrames ? { all_frames: true } : {})
+      }];
+      manifest.background = { service_worker: "background.js" };
+      if (!examVaultEnabled) files["exam-ai-relay.js"] = `(${examAiRelay.toString()})();`;
+      files["background.js"] = (files["background.js"] || "") + `\n(${examAiBackground.toString()})();`;
+      files["manifest.json"] = JSON.stringify(manifest, null, 2);
+    }
+    if (examVaultEnabled) {
+      files[storeGuide.filename] = storeGuide.markdown;
+      manifest.minimum_chrome_version = '102';
+      const core = `globalThis.TPExamVault = (${vaultFactory.toString()})();`;
+      files['content.js'] = core + '\n' + files['content.js'];
+      manifest.background = { service_worker: 'background.js' };
+      files['background.js'] = (files['background.js'] || '') + `\n(${vaultFactory.toString()})().background();`;
+      files['exam-vault-core.js'] = core;
+      files['exam-vault-page.js'] = 'TPExamVault.passwordPage();';
+      files['exam-vault.html'] = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Question bank vault</title><link rel="stylesheet" href="exam-vault.css"></head><body><main><header><h1 id="vault-title"></h1><button id="vault-language" type="button">EN</button></header><p id="vault-intro"></p><div id="vault-keyboard"></div><p id="vault-status" role="status"></p><p class="note" id="vault-note"></p></main><script src="exam-vault-core.js"><\/script><script src="exam-vault-page.js"><\/script></body></html>`;
+      files['exam-vault.css'] = 'body{margin:0;background:#eef2f7;color:#172033;font:12px/1.5 system-ui,sans-serif}main{box-sizing:border-box;max-width:480px;margin:8px auto;padding:12px;background:white;border-radius:14px;box-shadow:0 8px 30px #0001}header{display:flex;align-items:center;justify-content:space-between;gap:12px}h1{font-size:18px;margin:0}p{margin:8px 0}button{padding:5px 10px;border:1px solid #cbd5e1;border-radius:7px;background:#f8fafc;color:#334155;cursor:pointer;font:12px system-ui}button:disabled{opacity:.5}.note{font-size:11px;color:#64748b}#vault-status{color:#92400e;overflow-wrap:anywhere}#vault-status:empty{display:none}@media(max-width:500px){main{margin:8px;padding:12px}}';
+      files['exam-details.html'] = '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>题库详情中心 / Question bank details</title></head><body><script src="content.js"><\/script></body></html>';
+      files['manifest.json'] = JSON.stringify(manifest, null, 2);
+    }
     return { manifest, files, validation };
   }
 

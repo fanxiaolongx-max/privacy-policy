@@ -3220,7 +3220,9 @@
                         ? text('内置工具较新，将从内置源安装', 'Bundled tool is newer; install from bundled source')
                         : tool.selectedSource === 'unknown'
                             ? text('缺少可比较的发布日期，已停止自动更新', 'Release dates cannot be compared; automatic update paused')
-                            : text('工具市场较新，将从市场安装', 'Market tool is newer; install from market');
+                            : tool.status === 'unchanged'
+                                ? text('本地内容与工具市场一致', 'Local content matches the market release')
+                                : text('将从工具市场安装', 'Install from the tool market');
 
                     let badgeHtml = '';
                     if (hasPendingUpdates && isPending) {

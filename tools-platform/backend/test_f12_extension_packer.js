@@ -370,7 +370,7 @@ async function testChromeCaptureTemplateCompatibility() {
     assert.ok(indexHtml.includes('Chrome Capture Pro 屏幕录制与截图增强版'), '页面必须包含 Chrome Capture Pro 预设');
     assert.ok(indexHtml.includes('chrome-capture-pro.template.zip'), '页面必须引用模板压缩包');
     assert.ok(indexHtml.includes('transformChromeCaptureManifest'), '页面打包必须调用 manifest 转换');
-    assert.ok(indexHtml.includes('packer-core.js?v=20260816-01'), '页面必须刷新 packer-core 缓存版本');
+    assert.ok(indexHtml.includes('packer-core.js?v=20261003-10'), '页面必须刷新 packer-core 缓存版本');
 }
 
 async function main() {

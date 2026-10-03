@@ -24,7 +24,7 @@ function createImportPersistence(initial = {}, failOnceOn = '') {
         },
         removeItem: key => values.delete(key)
     };
-    const persist = new Function('localStorage', 'storageScanCache', 'isStorageQuotaError', 'pauseForStorageQuota', 'getStorageKey', 'console',
+    const persist = new Function('examStorage', 'storageScanCache', 'isStorageQuotaError', 'pauseForStorageQuota', 'getStorageKey', 'console',
         `${source.slice(start, end)}\nreturn persistQuestionBanksAtomically;`)(
         localStorage, cache, () => false, () => {}, () => 'ScraperData_A', { warn() {}, error() {} }
     );
@@ -78,6 +78,6 @@ test('storage manager supports multi-select backup, cleanup, capacity refresh, a
     assert.match(source, /availableBytes: Math\.max\(0, CONSERVATIVE_LOCAL_STORAGE_QUOTA_BYTES - totalBytes\)/);
     assert.match(source, /const compactQuestionBankSafely = questions =>/);
     assert.match(source, /comboKeys\.has\(key\)/);
-    assert.match(source, /downloadQuestionBankBackup\(selectedBanks\);[\s\S]*localStorage\.removeItem\(bank\.storageKey\)/);
+    assert.match(source, /downloadQuestionBankBackup\(selectedBanks\);[\s\S]*examStorage\.removeItem\(bank\.storageKey\)/);
     assert.match(source, /storageCleaned[\s\S]*formatStorageBytes\(after\.availableBytes\)/);
 });

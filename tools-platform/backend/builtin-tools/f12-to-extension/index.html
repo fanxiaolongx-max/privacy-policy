@@ -222,6 +222,9 @@
         </svg>
         <span>打包为 Edge/Chrome 扩展 (.zip)</span>
       </button>
+      <div id="examStoreGuideActions" hidden style="display:none" class="flex flex-wrap items-center gap-2">
+        <span class="text-xs text-slate-400">题库助手打包时附带上架指南，点击可查看并复制提交文案。</span>
+      </div>
       <div id="licenseResult" class="hidden rounded-xl border border-amber-500/40 bg-amber-950/30 p-3 text-xs text-amber-100">
         <div class="mb-2 font-semibold">本月 License 密钥（请单独提供给扩展使用者）</div>
         <textarea id="licenseToken" readonly rows="4" class="input-field w-full rounded-lg p-2 font-mono text-[10px]"></textarea>
@@ -270,8 +273,11 @@
     </section>
   </div>
 
-  <script src="./packer-core.js?v=20260816-01"></script>
+  <script src="./exam-vault.js?v=20261003-09"></script>
+  <script src="./exam-store-guide.js?v=20261003-13"></script>
+  <script src="./packer-core.js?v=20261003-10"></script>
   <script>
+    TPExamStoreGuide.mount(document.getElementById('examStoreGuideActions'));
     const BUILTIN_SCRIPTS = {
       'sv-cfc-monitor': {
         file: './default-f12.js',
@@ -282,11 +288,11 @@
         includePopup: true
       },
       'exam-question-bank': {
-        file: './exam-question-bank-assistant.js?v=20260831-01',
+        file: './exam-question-bank-assistant.js?v=20261003-09',
         name: '题库与答题助手',
         description: '抓取考试题目、维护本地题库并辅助自动答题。',
         matches: 'https://w3.huawei.com/*\nhttps://ilearning.huawei.com/*',
-        world: 'MAIN',
+        world: 'ISOLATED',
         includePopup: true,
         manualLaunch: true
       },
@@ -359,11 +365,19 @@
       status.className = `mb-2 text-right text-[11px] ${tone}`;
     }
 
+    function updateStoreGuideUI() {
+      TPExamStoreGuide.setVisible(document.getElementById('examStoreGuideActions'), { code: document.getElementById('extCode').value });
+    }
+
+    document.getElementById('extCode').addEventListener('input', updateStoreGuideUI);
+    document.getElementById('extCode').addEventListener('change', updateStoreGuideUI);
+
     function setActiveScript(kind, id) {
       activeScriptRef = kind && id ? { kind, id } : null;
       document.getElementById('saveServerScriptBtn').textContent = kind === 'server'
         ? '更新服务器脚本'
         : '保存到服务器';
+      updateStoreGuideUI();
     }
 
     function setOptionalPermissions(permissions = []) {
@@ -409,6 +423,7 @@
       document.getElementById('licenseResult').classList.add('hidden');
       setOptionalPermissions();
       if (clearCode) document.getElementById('extCode').value = '';
+      updateStoreGuideUI();
       document.getElementById('compatReport').classList.add('hidden');
       updatePackageTargetUI();
       setScriptLibraryStatus(reason || '已开始新脚本，请填写左侧打包信息。', 'text-cyan-300');
@@ -561,7 +576,8 @@
         }
         const res = await fetch(preset.file + '?t=' + Date.now());
         if (!res.ok) throw new Error(`脚本读取失败（HTTP ${res.status}）`);
-        const code = await res.text();
+        let code = await res.text();
+        if (code.includes('TP_EXAM_VAULT_V1')) code = `globalThis.TPExamVault = (${createTPExamVault.toString()})();\n` + code;
         if (!code.trim()) throw new Error('内置脚本内容为空。');
         document.getElementById('extCode').value = code;
         document.getElementById('extCode').readOnly = false;
@@ -695,6 +711,8 @@
         includePopup: document.getElementById('extPopup').value === 'yes',
         manualLaunch: document.getElementById('extManualLaunch').checked,
         packageTarget: document.getElementById('extPackageTarget').value,
+        examAiBridge: document.getElementById('extCode').value.includes('TP_EXAM_AI_V1'),
+        examVaultBridge: document.getElementById('extCode').value.includes('TP_EXAM_VAULT_V1'),
         obfuscateRequested: document.getElementById('extPackageTarget').value !== 'store'
           && document.getElementById('extObfuscate').checked,
         licenseRequested: document.getElementById('extLicense').checked,
@@ -1138,6 +1156,7 @@
           const targetSuffix = options.packageTarget === 'store' ? '-edge-store' : '-local';
           const fileName = "extension-" + options.name.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase() + "-v" + options.version + targetSuffix + ".zip";
           saveAs(content, fileName);
+          if (TPExamStoreGuide.matchesScript(options) && generated.files[TPExamStoreGuide.filename]) TPExamStoreGuide.download();
           await refreshVersionPreview();
           packedSuccessfully = true;
         }

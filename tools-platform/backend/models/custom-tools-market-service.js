@@ -288,6 +288,7 @@ function bundledCandidate(item, sourceDir) {
     const marketTime = releaseTime(item.releasedAt || item.releaseVersion);
     return {
         fingerprint: source.fingerprint,
+        files: source.files,
         version,
         comparable: bundledTime !== null && marketTime !== null,
         newer: bundledTime !== null && marketTime !== null && bundledTime > marketTime
@@ -305,13 +306,15 @@ function compareCatalogTool(item, { targetDir = repo.CUSTOM_TOOLS_DIR, sourceDir
         ? 'unknown' : bundled && bundled.newer ? 'builtin' : 'market';
     const selectedFingerprint = selectedSource === 'builtin' ? bundled.fingerprint : item.package.directoryFingerprint;
     const compatible = selectedSource === 'builtin' || versionAtLeast(platformVersion, item.minPlatformVersion);
-    let localFingerprint = manifest && manifest.system && manifest.system.fingerprint || null;
-    if (managed && !manifest.market && Array.isArray(manifest.system.files)) {
-        const managedFiles = [repo.TOOL_MANIFEST_FILE, ...manifest.system.files]
-            .filter((file, index, files) => files.indexOf(file) === index);
+    let localFingerprint = null;
+    if (exists && linked && selectedSource !== 'unknown') {
+        // Compare the actual release files, not a stale installation inventory.
+        // Extra local assets are outside the release and must not trigger updates.
+        const releaseFiles = selectedSource === 'builtin'
+            ? bundled.files : item.package.files.map(file => file.path);
         try {
-            localFingerprint = managedFiles.every(file => fs.existsSync(path.join(toolDir, file)))
-                ? fingerprintFiles(toolDir, managedFiles)
+            localFingerprint = releaseFiles.every(file => fs.existsSync(path.join(toolDir, file)))
+                ? fingerprintFiles(toolDir, releaseFiles)
                 : null;
         } catch (_) { localFingerprint = null; }
     }

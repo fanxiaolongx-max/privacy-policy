@@ -29,6 +29,10 @@
         }
     }
 
+    function updateStoreGuideUI() {
+        TPExamStoreGuide.setVisible($('examStoreGuideActions'), { code: $('code').value });
+    }
+
     function applyPreset() {
         const key = $('preset').value;
         const [kind, id] = key.split(':');
@@ -39,6 +43,7 @@
             for (const id of ['name', 'description', 'matches', 'code']) $(id).value = '';
             $('code').readOnly = false;
             $('code').placeholder = '// 粘贴或选择脚本';
+            updateStoreGuideUI();
             status('新脚本：填写配置和代码后即可打包。');
             return;
         }
@@ -51,6 +56,7 @@
         $('manual').checked = selected.manualLaunch === true;
         $('allFrames').checked = selected.allFrames === true;
         $('code').value = selected.code || '';
+        updateStoreGuideUI();
         const permissions = new Set(selected.optionalPermissions || []);
         for (const option of $('permissions').options) option.selected = permissions.has(option.value);
         $('code').readOnly = Boolean(selected.isFullExtension);
@@ -135,6 +141,7 @@
             link.click();
             link.remove();
             setTimeout(() => URL.revokeObjectURL(url), 60000);
+            if (TPExamStoreGuide.matchesScript(options) && zip.file(TPExamStoreGuide.filename)) TPExamStoreGuide.download();
             status(`已生成 ${link.download}（${Math.ceil(blob.size / 1024)} KB）`, 'ok');
         } catch (error) {
             status('打包失败：' + error.message, 'error');
@@ -145,6 +152,10 @@
 
     async function start() {
         try {
+            TPExamStoreGuide.mount($('examStoreGuideActions'));
+            updateStoreGuideUI();
+            $('code').addEventListener('input', updateStoreGuideUI);
+            $('code').addEventListener('change', updateStoreGuideUI);
             if (window.TP_F12_DATA) catalog = window.TP_F12_DATA;
             else {
                 const response = await fetch(window.TP_F12_DATA_URL, { cache: 'no-store' });

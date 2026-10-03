@@ -59,9 +59,12 @@ test('F12 snapshot carries saved and built-in scripts plus offline packer assets
     assert.ok(output.files.get('data/chrome-capture-pro.template.zip').length > 100000);
     assert.ok(output.files.get('data/ppo-traffic-autofill.template.zip').length > 100000);
     assert.ok(output.files.has('data/assets/packer-core.js'));
+    assert.ok(output.files.has('data/assets/exam-store-guide.js'));
+    assert.match(output.html, /examStoreGuideActions/);
     assert.ok(output.files.has('data/assets/jszip.min.js'));
     assert.ok(output.files.has('data/assets/static-packer-runtime.js'));
     const single = await f12Snapshot.buildSnapshot('default');
+    assert.match(single, /EXAM_STORE_SUBMISSION_GUIDE\.md/);
     assert.match(single, /Snapshot Script/);
     assert.match(single, /saved script/);
     assert.match(single, /templateBase64/);
