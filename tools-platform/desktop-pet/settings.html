@@ -206,8 +206,19 @@
     <div class="menu-row">
       <label class="check-label">
         <input type="checkbox" id="typingCheck" class="check-input" checked>
-        <span>打字与任务起舞动效</span>
+        <span>打字与任务起舞动效 (全局敲键盘)</span>
       </label>
+    </div>
+
+    <!-- macOS 辅助功能权限提示与授权引导 -->
+    <div id="macAccessibilityBox" style="display:none;background:rgba(245,158,11,0.08);border:1px dashed rgba(245,158,11,0.3);border-radius:8px;padding:8px 10px;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+        <span style="font-size:11px;color:#d97706;font-weight:600;">macOS 系统全局键盘权限</span>
+        <button id="authMacBtn" type="button" style="background:#f59e0b;color:#fff;border:none;border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;font-weight:700;">去授权</button>
+      </div>
+      <div style="font-size:10px;color:#94a3b8;margin-top:4px;line-height:1.4;">
+        需要「辅助功能」授权才能在其他应用打字时感知按键喵
+      </div>
     </div>
 
     <div class="divider"></div>
@@ -285,6 +296,27 @@
       if (ipcRenderer) ipcRenderer.send('pet-close-settings');
     });
 
+    async function checkMacPermission() {
+      if (ipcRenderer && typeof process !== 'undefined' && process.platform === 'darwin') {
+        try {
+          const hasPerm = await ipcRenderer.invoke('pet-check-accessibility');
+          const box = document.getElementById('macAccessibilityBox');
+          if (box) {
+            box.style.display = hasPerm ? 'none' : 'block';
+          }
+        } catch (_) {}
+      }
+    }
+
+    const authMacBtn = document.getElementById('authMacBtn');
+    if (authMacBtn) {
+      authMacBtn.addEventListener('click', () => {
+        if (ipcRenderer) {
+          ipcRenderer.send('pet-request-accessibility');
+        }
+      });
+    }
+
     // 接收主进程初始配置
     if (ipcRenderer) {
       ipcRenderer.on('pet-init-settings', (event, cfg) => {
@@ -299,6 +331,7 @@
         }
         if (typeof cfg.bubbleOn === 'boolean') bubbleCheck.checked = cfg.bubbleOn;
         if (typeof cfg.typingOn === 'boolean') typingCheck.checked = cfg.typingOn;
+        checkMacPermission();
       });
     }
   </script>

@@ -2,8 +2,10 @@ const fs = require('fs');
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 const { ensureTenantDirs, getDataDir, getTenantId } = require('./tenant-context');
+const { initializeSqliteConnection } = require('./sqlite-connection-initializer');
 
 const connections = new Map();
+const connectionReadiness = new WeakMap();
 
 function getDbPath(tenantId = getTenantId()) {
     return path.join(getDataDir(tenantId), 'tools.db');
@@ -16,11 +18,7 @@ function getDatabase() {
     if (!connections.has(dbPath)) {
         const connection = new sqlite3.Database(dbPath);
         connection.configure('busyTimeout', 5000);
-        connection.serialize(() => {
-            connection.run('PRAGMA journal_mode = WAL');
-            connection.run('PRAGMA busy_timeout = 5000');
-            connection.run('PRAGMA foreign_keys = ON');
-        });
+        connectionReadiness.set(connection, initializeSqliteConnection(connection));
         connections.set(dbPath, connection);
     }
     return connections.get(dbPath);
@@ -33,18 +31,21 @@ const db = new Proxy({}, {
     }
 });
 
-function run(sql, params = []) {
+async function run(sql, params = []) {
     const connection = getDatabase();
+    await connectionReadiness.get(connection);
     return new Promise((resolve, reject) => connection.run(sql, params, function (error) {
         error ? reject(error) : resolve({ lastID: this.lastID, changes: this.changes });
     }));
 }
-function get(sql, params = []) {
+async function get(sql, params = []) {
     const connection = getDatabase();
+    await connectionReadiness.get(connection);
     return new Promise((resolve, reject) => connection.get(sql, params, (error, row) => error ? reject(error) : resolve(row)));
 }
-function all(sql, params = []) {
+async function all(sql, params = []) {
     const connection = getDatabase();
+    await connectionReadiness.get(connection);
     return new Promise((resolve, reject) => connection.all(sql, params, (error, rows) => error ? reject(error) : resolve(rows)));
 }
 async function closeDatabase() {
@@ -54,6 +55,7 @@ async function closeDatabase() {
 }
 
 async function closeConnections(items) {
+    await Promise.allSettled(items.map(connection => connectionReadiness.get(connection)));
     await Promise.all(items.map(connection => new Promise((resolve, reject) => {
         connection.close(error => error && error.code !== 'SQLITE_MISUSE' ? reject(error) : resolve());
     })));

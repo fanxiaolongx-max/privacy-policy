@@ -8249,6 +8249,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const navigationCacheReady = hydrateNavigationFromCache();
     if (!navigationCacheReady) await loadNavigationData();
     renderNavbar();
+    syncNavUserSession();
     initBackToTopButton();
     if (navigationCacheReady) loadNavigationData();
     trackCurrentToolOpen();
@@ -8259,6 +8260,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (typeof requestIdleCallback === 'function') requestIdleCallback(scheduleBuiltinToolsSync, { timeout: 12000 });
     else scheduleBuiltinToolsSync();
 });
+
+async function syncNavUserSession() {
+    try {
+        const res = await fetch('/api/auth/me');
+        if (res.ok) {
+            const data = await res.json();
+            if (data && data.username) {
+                localStorage.setItem('tools_user', data.username);
+                if (data.role) localStorage.setItem('tools_role', data.role);
+                if (data.tenantId) localStorage.setItem('tools_tenant_id', data.tenantId);
+                const userChipText = document.querySelector('.nav-user-chip .nav-action-text');
+                if (userChipText) {
+                    userChipText.innerHTML = `${navEscape(data.username)} · <span id="navActiveTenantName">${navEscape(activeTenantName())}</span>`;
+                }
+            }
+        } else if (res.status === 401) {
+            const pathname = window.location.pathname;
+            const isPublicPage = pathname === '/login.html' || pathname === '/pages/login.html' ||
+                pathname === '/privacy' || pathname === '/privacy.html' ||
+                pathname === '/terms' || pathname === '/terms.html' ||
+                pathname === '/cinema' || pathname === '/cinema.html';
+            if (!isPublicPage) {
+                window.location.replace('/login.html');
+            }
+        }
+    } catch (_) {}
+}
 
 // EXE 授权角标在普通 Web 部署中会自动隐藏，仅桌面版本地服务显示。
 if (!document.querySelector('script[data-desktop-license-badge]')) {

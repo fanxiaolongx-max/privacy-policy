@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, ipcMain, session, shell, Tray, Menu } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, session, shell, Tray, Menu, nativeImage } = require('electron');
 
 // 保证程序单实例运行，避免多开冲突导致 SQLite 锁死 (SQLITE_BUSY: database is locked)
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
@@ -43,6 +43,9 @@ if (process.env.TOOLS_DAILY_LOGS === undefined) {
 const petManager = require('./desktop-pet/pet-manager');
 
 function getAppIconPath() {
+    if (process.platform === 'darwin') {
+        return path.join(__dirname, 'frontend/assets/icon-windows.png');
+    }
     if (process.platform !== 'win32') {
         return path.join(__dirname, 'frontend/assets/icon.ico');
     }
@@ -425,6 +428,12 @@ function formatUpdaterError(err) {
             detail: 'GitHub 返回了 502 错误页，当前发布包通常没有问题。可过几分钟再点“检查更新”。'
         };
     }
+    if (statusCode === '404' || /Cannot find latest(?:-mac)?\.yml/i.test(raw)) {
+        return {
+            message: '当前已是最新版本',
+            detail: '云端暂未发现更新的发行版本。'
+        };
+    }
     if (hasHtml && isGitHub) {
         return {
             message: statusCode
@@ -439,8 +448,9 @@ function formatUpdaterError(err) {
             detail: statusCode ? `GitHub HTTP ${statusCode}` : raw.slice(0, 500)
         };
     }
+    const cleanMsg = raw.split(/[\r\n]/)[0].slice(0, 60);
     return {
-        message: raw.slice(0, 500) || '更新失败',
+        message: cleanMsg || '检查更新失败',
         detail: raw.length > 500 ? `${raw.slice(0, 500)}...` : raw
     };
 }
@@ -775,10 +785,18 @@ function registerDownloadHandler() {
 function createTray() {
     const iconPath = getAppIconPath();
     try {
-        tray = new Tray(iconPath);
+        // macOS does not decode ICO files; keep the menu bar icon at its native size.
+        const icon = process.platform === 'darwin'
+            ? nativeImage.createFromPath(iconPath).resize({ width: 18, height: 18 })
+            : iconPath;
+        tray = new Tray(icon);
         tray.setToolTip('Tools Platform 本地服务');
-        tray.on('click', () => openAppPath('/'));
-        tray.on('double-click', () => openAppPath('/'));
+        // On macOS setContextMenu handles clicks; opening a browser here would also
+        // launch a tab whenever the user only wants to operate the menu.
+        if (process.platform !== 'darwin') {
+            tray.on('click', () => openAppPath('/'));
+            tray.on('double-click', () => openAppPath('/'));
+        }
         refreshTrayMenu();
     } catch (e) {
         console.warn('[Electron] Failed to create Tray:', e);
@@ -1779,7 +1797,7 @@ function refreshTrayMenu() {
         { label: '查看实时日志/更新进度', click: openRuntimeStatusWindow },
         { label: '打开日志文件夹', click: openLogsFolder },
         { type: 'separator' },
-        { label: `更新状态：${updateStatus.message || '等待检查更新'}`, enabled: false },
+        { label: `更新状态：${String(updateStatus.message || '等待检查更新').replace(/[\r\n\t]+/g, ' ').slice(0, 24)}`, enabled: false },
         ...(isPortableWindows
             ? [{ label: '打开 GitHub 绿色版下载页', click: openLatestReleasePage }]
             : [{ label: '检查更新', click: checkForUpdatesFromTray }]),
@@ -1876,25 +1894,33 @@ app.on('window-all-closed', function () {
     }
 });
 
-app.on('second-instance', () => {
-    console.log('[Electron] 检测到用户重复运行程序，自动唤起已有界面');
+function focusPendingAppWindow() {
     if (licenseWindow && !licenseWindow.isDestroyed()) {
         if (licenseWindow.isMinimized()) licenseWindow.restore();
         licenseWindow.show();
         licenseWindow.focus();
         licenseWindow.setAlwaysOnTop(true);
         licenseWindow.moveTop();
-        return;
+        return true;
     }
     if (startupWindow && !startupWindow.isDestroyed()) {
         if (startupWindow.isMinimized()) startupWindow.restore();
         startupWindow.show();
         startupWindow.focus();
-        return;
+        return true;
     }
+    return false;
+}
+
+app.on('second-instance', () => {
+    console.log('[Electron] 检测到用户重复运行程序，自动唤起已有界面');
+    if (focusPendingAppWindow()) return;
     openAppPath('/');
 });
 
 app.on('activate', function () {
+    if (focusPendingAppWindow()) return;
+    // Dock activation can arrive before startup has created a window or a port.
+    if (!localPort) return;
     openAppPath('/');
 });

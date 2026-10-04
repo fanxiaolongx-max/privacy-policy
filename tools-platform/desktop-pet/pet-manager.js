@@ -6,6 +6,13 @@ const ipcMain = electron && electron.ipcMain ? electron.ipcMain : null;
 const path = require('path');
 const fs = require('fs');
 const { detectAllQuotas } = require('./quota-detector');
+const {
+    startKeyboardHook,
+    stopKeyboardHook,
+    isKeyboardHookRunning,
+    checkAccessibilityPermission,
+    openAccessibilitySettings
+} = require('./pet-keyboard-hook');
 
 let petWin = null;
 let chatWin = null;
@@ -15,6 +22,34 @@ let localServerPort = 3030;
 let localBaseUrl = 'http://localhost:3030';
 let quotaPollingTimer = null;
 let ipcRegistered = false;
+
+/**
+ * 向桌宠窗口派发全局或本地按键反馈
+ */
+function triggerPetKeyPress() {
+    try {
+        if (petWin && !petWin.isDestroyed() && petWin.isVisible()) {
+            petWin.webContents.send('pet-key-press');
+        }
+    } catch (_) {}
+}
+
+/**
+ * 根据当前桌宠开关与显隐状态，安全同步全局键盘监听钩子
+ */
+function syncKeyboardHookState() {
+    try {
+        const cfg = loadPetConfig();
+        const shouldRun = cfg.enabled !== false && cfg.typingOn !== false && isPetVisible();
+        if (shouldRun) {
+            startKeyboardHook(triggerPetKeyPress);
+        } else {
+            stopKeyboardHook();
+        }
+    } catch (err) {
+        console.warn('[PetManager] syncKeyboardHookState error:', err.message || err);
+    }
+}
 
 function getUserDataDir() {
     if (app && typeof app.getPath === 'function') {
@@ -193,10 +228,12 @@ function createPetWindow() {
         petWin.setAlwaysOnTop(true);
         petWin.webContents.send('pet-apply-config', cfg);
         refreshQuotas();
+        syncKeyboardHookState();
     });
 
     petWin.on('closed', () => {
         petWin = null;
+        stopKeyboardHook();
     });
 
     return petWin;
@@ -472,7 +509,26 @@ function registerIpc() {
             if (petWin && !petWin.isDestroyed()) {
                 petWin.webContents.send('pet-apply-config', merged);
             }
+            if (cfg && (cfg.typingOn !== undefined || cfg.enabled !== undefined)) {
+                syncKeyboardHookState();
+            }
         } catch (_) {}
+    });
+
+    // 本地打字输入触发 (如在桌宠 AI 聊天框中输入)
+    ipcMain.on('pet-key-press-local', () => {
+        triggerPetKeyPress();
+    });
+
+    // 检查 macOS 辅助功能权限
+    ipcMain.handle('pet-check-accessibility', () => {
+        return checkAccessibilityPermission(false);
+    });
+
+    // 请求 macOS 辅助功能授权并打开系统设置
+    ipcMain.on('pet-request-accessibility', () => {
+        checkAccessibilityPermission(true);
+        openAccessibilitySettings();
     });
 
     // 本次隐藏
@@ -514,6 +570,7 @@ function registerIpc() {
  * 本次临时隐藏
  */
 function hidePetForNow() {
+    stopKeyboardHook();
     if (chatWin && !chatWin.isDestroyed()) chatWin.hide();
     if (settingsWin && !settingsWin.isDestroyed()) settingsWin.hide();
     if (petWin && !petWin.isDestroyed()) petWin.hide();
@@ -527,6 +584,7 @@ function showPetForNow() {
         petWin.show();
         petWin.focus();
         petWin.setAlwaysOnTop(true);
+        syncKeyboardHookState();
     } else {
         createPetWindow();
     }
@@ -540,6 +598,7 @@ function setPetEnabled(enabled) {
     if (enabled) {
         showPetForNow();
     } else {
+        stopKeyboardHook();
         // 彻底关闭并销毁窗口，恢复完全无桌宠状态
         if (chatWin && !chatWin.isDestroyed()) chatWin.destroy();
         if (settingsWin && !settingsWin.isDestroyed()) settingsWin.destroy();
@@ -594,6 +653,7 @@ function initDesktopPet({ port = 3030, baseUrl = 'http://localhost:3030' } = {})
 }
 
 function cleanupDesktopPet() {
+    stopKeyboardHook();
     if (quotaPollingTimer) {
         clearInterval(quotaPollingTimer);
         quotaPollingTimer = null;

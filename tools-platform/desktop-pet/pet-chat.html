@@ -419,6 +419,13 @@
       border-color: #ec4899;
       background: #ffffff;
     }
+    .input-box::placeholder {
+      color: #94a3b8;
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
     .send-btn {
       height: 36px;
       padding: 0 14px;
@@ -532,7 +539,8 @@
       <textarea
         id="userInput"
         class="input-box"
-        placeholder="向哈基米提问平台工具或闲聊… (Enter发送，Shift+Enter换行)"
+        placeholder="向哈基米提问或闲聊… (Enter发送)"
+        title="按 Enter 发送，Shift+Enter 换行"
         rows="1"
       ></textarea>
       <button id="sendBtn" class="send-btn">
@@ -847,6 +855,9 @@
     sendBtn.addEventListener('click', () => handleSendMessage());
 
     userInput.addEventListener('keydown', (e) => {
+      if (ipcRenderer && e.key !== 'Enter') {
+        try { ipcRenderer.send('pet-key-press-local'); } catch (_) {}
+      }
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         handleSendMessage();

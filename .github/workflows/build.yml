@@ -74,7 +74,7 @@ jobs:
           echo "release_version=${release_version}" >> "$GITHUB_OUTPUT"
           echo "release_tag=${release_tag}" >> "$GITHUB_OUTPUT"
 
-  build:
+  build-windows:
     needs: prepare-release
     runs-on: windows-latest
 
@@ -134,7 +134,7 @@ jobs:
             tools-platform/dist/*.blockmap
             tools-platform/frontend/downloads/uivision-extension-9.6.1.zip
 
-      - name: Release
+      - name: Release Windows
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ needs.prepare-release.outputs.release_tag }}
@@ -144,5 +144,82 @@ jobs:
             tools-platform/dist/*.yml
             tools-platform/dist/*.blockmap
             tools-platform/frontend/downloads/uivision-extension-9.6.1.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-mac:
+    needs: prepare-release
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare-release.outputs.release_tag }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Dependencies
+        working-directory: tools-platform
+        run: npm install
+
+      - name: Cache electron-builder binaries
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Caches/electron
+            ~/Library/Caches/electron-builder
+          key: ${{ runner.os }}-electron-builder-${{ hashFiles('tools-platform/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-electron-builder-
+
+      - name: Build Application (macOS)
+        working-directory: tools-platform
+        shell: bash
+        run: |
+          for i in 1 2 3; do
+            echo "Starting build attempt $i of 3..."
+            if npm run build:mac; then
+              echo "Build succeeded on attempt $i."
+              break
+            fi
+            if [ "$i" -eq 3 ]; then
+              echo "Build failed after 3 attempts."
+              exit 1
+            fi
+            echo "Build attempt $i failed. Retrying in 15s..."
+            sleep 15
+          done
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: built-app-macos
+          path: |
+            tools-platform/dist/*.dmg
+            tools-platform/dist/*.zip
+            tools-platform/dist/latest-mac.yml
+            tools-platform/dist/*.blockmap
+
+      - name: Release macOS
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.prepare-release.outputs.release_tag }}
+          name: ${{ needs.prepare-release.outputs.release_tag }}
+          files: |
+            tools-platform/dist/*.dmg
+            tools-platform/dist/*.zip
+            tools-platform/dist/latest-mac.yml
+            tools-platform/dist/*.blockmap
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

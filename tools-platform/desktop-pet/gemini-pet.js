@@ -1019,7 +1019,8 @@
       } else if (inTypingMode || workStateMode === 'typing') {
         targetSrc = IMAGES.typing;
       }
-      if (img.src !== targetSrc) {
+      if (img.dataset.curSrc !== targetSrc) {
+        img.dataset.curSrc = targetSrc;
         img.src = targetSrc;
         if (typeof updateHitTestProbe === 'function') {
           updateHitTestProbe(targetSrc);
@@ -1994,16 +1995,16 @@
         img.classList.add('gpet-typing-anim');
       }
 
-      if (typingCombo % 4 === 0 || typingCombo >= 15) {
+      if (typingCombo % 3 === 0 || typingCombo >= 12) {
         spawnTypingSpark();
       }
 
-      if (typingCombo === 8 || typingCombo === 25 || typingCombo === 50) {
+      if (typingCombo === 5 || typingCombo === 12 || typingCombo === 25 || typingCombo === 50) {
         showTypingBubble();
       }
 
       if (typingDecayTimer) clearTimeout(typingDecayTimer);
-      typingDecayTimer = setTimeout(exitTypingMode, 2300);
+      typingDecayTimer = setTimeout(exitTypingMode, 5000);
     }
 
     function exitTypingMode() {

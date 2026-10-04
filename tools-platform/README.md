@@ -1099,6 +1099,8 @@ PORT=3030 npm start
 ```
 
 #### 2. macOS 部署
+
+macOS Electron DMG 的本地构建、Developer ID 签名、公证与桌宠验收见 [macOS 桌面发布指南](docs/macos-desktop-release.md)。先运行 `npm run build:mac:local` 验证当前架构，再配置公证并接入远端发布。
 ```bash
 # 1. 推荐使用 nvm 或 brew 安装 Node 20
 brew install node@20

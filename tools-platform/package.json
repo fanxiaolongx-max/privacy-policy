@@ -19,7 +19,8 @@
     "build:win:setup": "electron-builder --win nsis --x64 -p never",
     "build:win:portable": "electron-builder --win portable --x64 -p never --config.win.icon=frontend/assets/icon-windows-portable.ico",
     "build:win:publish": "npm run license:verify-desktop-config && electron-builder --win nsis --x64 --publish always && electron-builder --win portable --x64 --publish always --config.win.icon=frontend/assets/icon-windows-portable.ico",
-    "build:mac": "npm run license:verify-desktop-config && electron-builder --mac -p never",
+    "build:mac": "npm run license:verify-desktop-config && npm run release:verify-assets && node scripts/build-mac.js",
+    "build:mac:local": "npm run license:verify-desktop-config && npm run release:verify-assets && node scripts/build-mac.js --local",
     "release:verify-assets": "node scripts/verify-release-assets.js"
   },
   "build": {
@@ -38,6 +39,12 @@
       "desktop-license-client.js",
       "desktop-license-preload.js",
       "README.md",
+      "!backend/{data,backups,factory-reset-archives,logs,tmp,runtime,node_modules}/**/*",
+      "!backend/wal_strings.txt",
+      "!frontend/assets/videos/**/*",
+      "!**/.env",
+      "!**/.env.*",
+      "!**/*.{db,sqlite,sqlite3,db-wal,db-shm,log,p12,pfx,p8,pem,key,certSigningRequest}",
       "!backend/models/desktop-license-authority.js",
       "!backend/models/desktop-license-registry.js",
       "!backend/routes/desktop-license-admin.js",
@@ -55,11 +62,22 @@
       }
     ],
     "mac": {
+      "icon": "frontend/assets/icon-mac.png",
       "category": "public.app-category.productivity",
+      "hardenedRuntime": true,
+      "forceCodeSigning": true,
+      "notarize": true,
       "artifactName": "Tools-Platform-${version}-${arch}.${ext}",
       "target": [
         {
           "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
           "arch": [
             "x64",
             "arm64"
@@ -110,6 +128,7 @@
     "multer": "^1.4.5-lts.1",
     "sqlite3": "^6.0.1",
     "supertest": "^7.2.2",
+    "uiohook-napi": "^1.5.5",
     "uuid": "^9.0.0"
   },
   "devDependencies": {
