@@ -6,6 +6,7 @@ const LEGACY_SETTINGS_KEY = 'ai_settings';
 
 const DEFAULT_SETTINGS = {
     provider: 'gemini',
+    anthropicAuthType: 'ANTHROPIC_AUTH_TOKEN',
     apiBaseUrl: '',
     model: 'gemini-2.5-flash',
     apiKey: '',
@@ -31,6 +32,11 @@ function normalizeProvider(value) {
     return ['gemini', 'openai', 'anthropic', 'minimax', 'openai-compatible'].includes(provider) ? provider : 'gemini';
 }
 
+function normalizeAnthropicAuthType(value) {
+    const type = String(value || '').trim().toUpperCase();
+    return type === 'ANTHROPIC_API_KEY' ? 'ANTHROPIC_API_KEY' : 'ANTHROPIC_AUTH_TOKEN';
+}
+
 function clampNumber(value, fallback, min, max) {
     const num = Number(value);
     if (!Number.isFinite(num)) return fallback;
@@ -42,6 +48,7 @@ function normalizeSettings(input = {}, previous = {}) {
     const provider = normalizeProvider(base.provider);
     return {
         provider,
+        anthropicAuthType: normalizeAnthropicAuthType(base.anthropicAuthType),
         apiBaseUrl: String(base.apiBaseUrl || '').trim().slice(0, 500),
         model: String(base.model || DEFAULT_MODELS[provider] || DEFAULT_SETTINGS.model).trim() || DEFAULT_MODELS[provider],
         apiKey: String(base.apiKey || '').trim(),
@@ -66,9 +73,14 @@ function isLikelyValidApiKey(apiKey) {
     return String(apiKey).trim().length >= 12;
 }
 
-function getEnvKeyForProvider(provider) {
+function getEnvKeyForProvider(provider, anthropicAuthType = 'ANTHROPIC_AUTH_TOKEN') {
     if (provider === 'openai' || provider === 'openai-compatible') return String(process.env.OPENAI_API_KEY || '').trim();
-    if (provider === 'anthropic') return String(process.env.ANTHROPIC_API_KEY || '').trim();
+    if (provider === 'anthropic') {
+        if (anthropicAuthType === 'ANTHROPIC_API_KEY') {
+            return String(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN || '').trim();
+        }
+        return String(process.env.ANTHROPIC_AUTH_TOKEN || process.env.ANTHROPIC_API_KEY || '').trim();
+    }
     if (provider === 'minimax') return String(process.env.MINIMAX_API_KEY || '').trim();
     return String(process.env.GEMINI_API_KEY || '').trim();
 }
@@ -167,7 +179,7 @@ function profileNotFoundError() {
 }
 
 function runtimeSettings(stored) {
-    const envKey = getEnvKeyForProvider(stored.provider);
+    const envKey = getEnvKeyForProvider(stored.provider, stored.anthropicAuthType);
     const apiKey = stored.apiKey || envKey;
     return {
         ...stored,
@@ -181,6 +193,7 @@ function runtimeSettings(stored) {
 function publicSettings(runtime) {
     return {
         provider: runtime.provider,
+        anthropicAuthType: runtime.anthropicAuthType || 'ANTHROPIC_AUTH_TOKEN',
         apiBaseUrl: runtime.apiBaseUrl,
         model: runtime.model,
         maxOutputTokens: runtime.maxOutputTokens,

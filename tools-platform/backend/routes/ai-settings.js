@@ -16,6 +16,38 @@ router.get('/usage', async (req, res) => {
     }
 });
 
+router.delete('/usage', async (req, res) => {
+    try {
+        const { key, provider, model, profileId, clearAll } = req.query || {};
+        const result = await aiUsageRepo.clearUsageStats({
+            key,
+            provider,
+            model,
+            profileId,
+            clearAll: clearAll === 'true' || clearAll === true || key === 'all'
+        });
+        res.json({ success: true, ...result });
+    } catch (err) {
+        res.status(500).json({ error: err.message || '清空用量统计失败' });
+    }
+});
+
+router.post('/usage/clear', async (req, res) => {
+    try {
+        const { key, provider, model, profileId, clearAll } = req.body || {};
+        const result = await aiUsageRepo.clearUsageStats({
+            key,
+            provider,
+            model,
+            profileId,
+            clearAll: clearAll === 'true' || clearAll === true || key === 'all'
+        });
+        res.json({ success: true, ...result });
+    } catch (err) {
+        res.status(500).json({ error: err.message || '清空用量统计失败' });
+    }
+});
+
 router.put('/', async (req, res) => {
     try {
         res.json(await repo.saveSettings(req.body || {}));
@@ -75,6 +107,7 @@ router.post('/test', async (req, res) => {
         res.json({
             success: true,
             provider: settings.provider,
+            anthropicAuthType: settings.anthropicAuthType,
             apiBaseUrl: settings.apiBaseUrl,
             model: settings.model,
             reply: String(result.text || '').slice(0, 300),
@@ -104,6 +137,7 @@ router.post('/profiles/:profileId/test', async (req, res) => {
         res.json({
             success: true,
             provider: settings.provider,
+            anthropicAuthType: settings.anthropicAuthType,
             apiBaseUrl: settings.apiBaseUrl,
             model: settings.model,
             reply: String(result.text || '').slice(0, 300),

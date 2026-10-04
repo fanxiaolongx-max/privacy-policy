@@ -228,4 +228,121 @@ async function getUsageStats({ dimension = 'day' } = {}) {
     };
 }
 
-module.exports = { ensureReady, recordUsage, getUsageStats };
+async function clearUsageStats({ key, provider, model, profileId, clearAll } = {}) {
+    await ensureReady();
+    if (clearAll === true || key === 'all') {
+        const deletedModels = await all('SELECT COUNT(*) AS count FROM ai_usage_daily_models');
+        const deletedDaily = await all('SELECT COUNT(*) AS count FROM ai_usage_daily');
+        await run('DELETE FROM ai_usage_daily_models');
+        await run('DELETE FROM ai_usage_daily');
+        return {
+            clearedAll: true,
+            deletedModelRecords: deletedModels[0]?.count || 0,
+            deletedDailyRecords: deletedDaily[0]?.count || 0
+        };
+    }
+
+    let targetProvider = provider ? String(provider).trim() : '';
+    let targetModel = model ? String(model).trim() : '';
+    let targetProfileId = profileId !== undefined && profileId !== null ? String(profileId).trim() : null;
+
+    if (key && (!targetProvider || !targetModel)) {
+        try {
+            const parts = Buffer.from(key, 'base64url').toString('utf8').split('\u0000');
+            targetProvider = parts[0] || targetProvider;
+            targetModel = parts[1] || targetModel;
+            if (parts[2] !== undefined && targetProfileId === null) {
+                targetProfileId = parts[2];
+            }
+        } catch (_) {}
+    }
+
+    if (!targetProvider && !targetModel) {
+        throw new Error('未指定需要清空统计的模型或Key');
+    }
+
+    let selectSql = 'SELECT * FROM ai_usage_daily_models WHERE 1=1';
+    const params = [];
+    if (targetProvider) {
+        selectSql += ' AND provider = ?';
+        params.push(targetProvider);
+    }
+    if (targetModel) {
+        selectSql += ' AND model = ?';
+        params.push(targetModel);
+    }
+    if (targetProfileId !== null) {
+        selectSql += ' AND profile_id = ?';
+        params.push(targetProfileId);
+    }
+
+    const rows = await all(selectSql, params);
+    if (!rows || rows.length === 0) {
+        return {
+            clearedCount: 0,
+            clearedTokens: 0,
+            clearedCostCny: 0,
+            message: '未找到匹配的模型用量记录'
+        };
+    }
+
+    let totalTokensCleared = 0;
+    let totalCostCnyCleared = 0;
+    let totalRequestsCleared = 0;
+
+    for (const row of rows) {
+        totalTokensCleared += Number(row.total_tokens || 0);
+        totalCostCnyCleared += Number(row.cost_cny || 0);
+        totalRequestsCleared += Number(row.request_count || 0);
+
+        await run(`
+            UPDATE ai_usage_daily
+            SET prompt_tokens = MAX(0, prompt_tokens - ?),
+                output_tokens = MAX(0, output_tokens - ?),
+                total_tokens = MAX(0, total_tokens - ?),
+                cost_usd = MAX(0.0, cost_usd - ?),
+                cost_cny = MAX(0.0, cost_cny - ?),
+                request_count = MAX(0, request_count - ?),
+                updated_at = CURRENT_TIMESTAMP
+            WHERE usage_date = ?
+        `, [
+            Number(row.prompt_tokens || 0),
+            Number(row.output_tokens || 0),
+            Number(row.total_tokens || 0),
+            Number(row.cost_usd || 0),
+            Number(row.cost_cny || 0),
+            Number(row.request_count || 0),
+            row.usage_date
+        ]);
+    }
+
+    let deleteSql = 'DELETE FROM ai_usage_daily_models WHERE 1=1';
+    const deleteParams = [];
+    if (targetProvider) {
+        deleteSql += ' AND provider = ?';
+        deleteParams.push(targetProvider);
+    }
+    if (targetModel) {
+        deleteSql += ' AND model = ?';
+        deleteParams.push(targetModel);
+    }
+    if (targetProfileId !== null) {
+        deleteSql += ' AND profile_id = ?';
+        deleteParams.push(targetProfileId);
+    }
+    await run(deleteSql, deleteParams);
+
+    await run('DELETE FROM ai_usage_daily WHERE total_tokens <= 0 AND request_count <= 0');
+
+    return {
+        clearedRecords: rows.length,
+        clearedTokens: totalTokensCleared,
+        clearedCostCny: Number(totalCostCnyCleared.toFixed(4)),
+        clearedRequests: totalRequestsCleared,
+        provider: targetProvider,
+        model: targetModel,
+        profileId: targetProfileId
+    };
+}
+
+module.exports = { ensureReady, recordUsage, getUsageStats, clearUsageStats };

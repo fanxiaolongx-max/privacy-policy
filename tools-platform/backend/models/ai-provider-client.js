@@ -183,8 +183,24 @@ class AiProviderClient {
             'openai-compatible': 'gpt-4o-mini'
         };
         this.model = settings.model || defaultModels[this.provider];
+        this.anthropicAuthType = settings.anthropicAuthType === 'ANTHROPIC_API_KEY' ? 'ANTHROPIC_API_KEY' : 'ANTHROPIC_AUTH_TOKEN';
         this.usesMiniMaxProtocol = this.provider === 'minimax'
             || (this.provider === 'openai-compatible' && (/minimax/i.test(this.baseUrl) || /^MiniMax-/i.test(this.model)));
+    }
+
+    getAnthropicHeaders(isStream = false) {
+        const headers = {
+            'Content-Type': 'application/json',
+            'anthropic-version': '2023-06-01'
+        };
+        if (isStream) headers['Accept'] = 'text/event-stream';
+        if (this.anthropicAuthType === 'ANTHROPIC_API_KEY') {
+            headers['x-api-key'] = this.apiKey;
+        } else {
+            // ANTHROPIC_AUTH_TOKEN (默认 Bearer Token / OAuth / Claude Code / Proxy)
+            headers['Authorization'] = `Bearer ${this.apiKey}`;
+        }
+        return headers;
     }
 
     async generateText({ prompt, systemInstruction = '', messages = null, maxOutputTokens, temperature, responseMimeType, json, thinkingBudget, onRetry, onDelta, signal } = {}) {
@@ -597,11 +613,7 @@ class AiProviderClient {
 
         const res = await fetch(`${this.baseUrl}/messages`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-api-key': this.apiKey,
-                'anthropic-version': '2023-06-01'
-            },
+            headers: this.getAnthropicHeaders(false),
             body: JSON.stringify(body),
             signal
         });
@@ -634,12 +646,7 @@ class AiProviderClient {
         if (systemInstruction) body.system = systemInstruction;
         const res = await fetch(`${this.baseUrl}/messages`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Accept: 'text/event-stream',
-                'x-api-key': this.apiKey,
-                'anthropic-version': '2023-06-01'
-            },
+            headers: this.getAnthropicHeaders(true),
             body: JSON.stringify(body),
             signal
         });

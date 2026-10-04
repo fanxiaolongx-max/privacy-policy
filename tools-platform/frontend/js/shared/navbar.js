@@ -600,6 +600,13 @@ function registerNavbarI18n() {
             'nav.ai.usageAllModels': '全部模型',
             'nav.ai.usageByModel': '按模型查看趋势',
             'nav.ai.usageLegacy': '历史未分类',
+            'nav.ai.anthropicAuthField': 'Anthropic 认证字段',
+            'nav.ai.anthropicAuthToken': 'ANTHROPIC_AUTH_TOKEN (默认 Bearer)',
+            'nav.ai.anthropicApiKey': 'ANTHROPIC_API_KEY (x-api-key)',
+            'nav.ai.clearModelUsage': '清空此模型统计',
+            'nav.ai.clearModelUsageConfirm': '确定清空该模型的历史 Token 用量与计费统计吗？',
+            'nav.ai.clearAllModelUsage': '清空全部模型统计',
+            'nav.ai.clearedSuccess': '统计信息已清空',
 
             'nav.up.help': '更新来源为 GitHub Releases。下载完成后可立即重启安装，也可以稍后手动重启。',
             'nav.up.current': '当前版本',
@@ -1049,6 +1056,13 @@ function registerNavbarI18n() {
             'nav.ai.usageAllModels': 'All models',
             'nav.ai.usageByModel': 'View trends by model',
             'nav.ai.usageLegacy': 'Legacy unclassified',
+            'nav.ai.anthropicAuthField': 'Anthropic Auth Field',
+            'nav.ai.anthropicAuthToken': 'ANTHROPIC_AUTH_TOKEN (Default Bearer)',
+            'nav.ai.anthropicApiKey': 'ANTHROPIC_API_KEY (x-api-key)',
+            'nav.ai.clearModelUsage': 'Clear model stats',
+            'nav.ai.clearModelUsageConfirm': 'Clear historical token usage and cost stats for this model?',
+            'nav.ai.clearAllModelUsage': 'Clear all models stats',
+            'nav.ai.clearedSuccess': 'Statistics cleared',
 
             'nav.up.help': 'Updates are delivered from GitHub Releases. After download, restart now to install or restart later manually.',
             'nav.up.current': 'Current Version',
@@ -2480,6 +2494,11 @@ function renderAiUsageDashboard(data) {
         <div style="margin:12px 0 10px;display:flex;align-items:center;gap:7px;overflow-x:auto;padding-bottom:3px;">
             <button type="button" class="nav-settings-add ${selectedModel ? 'secondary' : ''}" onclick="setAiUsageModel('all')" style="margin:0;white-space:nowrap;">${navEscape(navT('nav.ai.usageAllModels'))}</button>
             ${models.map(item => `<button type="button" class="nav-settings-add ${selectedModel?.key === item.key ? '' : 'secondary'}" onclick="setAiUsageModel('${navEscape(item.key)}')" style="margin:0;white-space:nowrap;">${navEscape(item.profileName || item.provider)} · ${navEscape(item.model)} · ${formatAiUsageNumber(item.totals?.tokens)}</button>`).join('')}
+            ${selectedModel ? `
+                <button type="button" class="nav-settings-add danger" onclick="clearSelectedModelAiUsage()" style="margin:0 0 0 auto;white-space:nowrap;font-size:12px;padding:3px 10px;height:28px;" title="清空当前选中模型的用量与计费统计">🗑 ${navEscape(navT('nav.ai.clearModelUsage'))}</button>
+            ` : (models.length > 0 ? `
+                <button type="button" class="nav-settings-add secondary" onclick="promptClearAllAiUsage()" style="margin:0 0 0 auto;white-space:nowrap;font-size:12px;padding:3px 10px;height:28px;" title="清空全部历史用量与计费统计">🗑 ${navEscape(navT('nav.ai.clearAllModelUsage'))}…</button>
+            ` : '')}
         </div>
         <div style="font-size:11px;color:#64748b;margin-bottom:8px;">${navEscape(navT('nav.ai.usageByModel'))}${Number(unclassified.tokens || 0) > 0 ? ` · ${navEscape(navT('nav.ai.usageLegacy'))} ${formatAiUsageNumber(unclassified.tokens)} Tokens` : ''}</div>
         <div class="nav-ai-usage-kpis">
@@ -2489,12 +2508,111 @@ function renderAiUsageDashboard(data) {
         </div>
         <div class="nav-ai-usage-legend"><span class="tokens">Token</span><span class="cost">费用 CNY</span><b>${navEscape(navT('nav.ai.usagePeriod'))}：${formatAiUsageNumber(period.tokens)} Tokens · ¥${period.costCny.toFixed(4)}</b></div>
         <div class="nav-ai-chart-wrap">${buildAiUsageChart(series)}</div>
+        ${models.length > 0 ? `
+        <div style="margin-top:12px;background:rgba(248,250,252,0.78);border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;">
+                <span style="font-size:12px;font-weight:600;color:#334155;">历史模型用量明细 (${models.length})</span>
+                <span style="font-size:11px;color:#64748b;">支持独立清空指定模型历史记录</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:5px;max-height:150px;overflow-y:auto;padding-right:2px;">
+                ${models.map(item => {
+                    const displayName = `${item.profileName || item.provider} · ${item.model}`;
+                    return `
+                    <div style="display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid #edf2f7;border-radius:8px;padding:5px 9px;font-size:12px;">
+                        <div style="display:flex;align-items:center;gap:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                            <strong style="color:#1e293b;">${navEscape(displayName)}</strong>
+                            <span style="color:#64748b;font-size:11px;">(${formatAiUsageNumber(item.totals?.tokens)} Tokens · ¥${Number(item.totals?.costCny || 0).toFixed(4)})</span>
+                        </div>
+                        <button type="button" class="nav-settings-add danger" onclick="clearSpecificModelUsage('${navEscape(item.key)}', '${navEscape(displayName)}', ${item.totals?.tokens || 0}, ${Number(item.totals?.costCny || 0).toFixed(4)})" style="margin:0;font-size:11px;padding:2px 8px;height:24px;line-height:20px;" title="清空该模型的历史 Token 与计费统计">🗑 清空统计</button>
+                    </div>
+                    `;
+                }).join('')}
+            </div>
+        </div>
+        ` : ''}
     `;
 }
 
 window.setAiUsageModel = function (key) {
     navState.aiUsageModelKey = key || 'all';
     if (navState.aiUsageData) renderAiUsageDashboard(navState.aiUsageData);
+};
+
+window.clearSpecificModelUsage = async function (key, displayName, tokens, costCny) {
+    const confirmed = await showNavbarConfirm({
+        title: navLocaleText('清空模型统计信息', 'Clear Model Statistics'),
+        message: navLocaleText(
+            `确定清空模型 “${displayName}” 的全部历史 Token 用量与计费统计吗？`,
+            `Clear all historical token usage and cost statistics for “${displayName}”?`
+        ),
+        hint: navLocaleText(
+            `当前累计：${formatAiUsageNumber(tokens)} Tokens，¥${costCny} 元。清空后不可恢复。`,
+            `Current totals: ${formatAiUsageNumber(tokens)} Tokens, ¥${costCny}. This cannot be undone.`
+        ),
+        tone: 'danger',
+        confirmText: navLocaleText('确认清空', 'Clear Statistics')
+    });
+    if (!confirmed) return;
+
+    const indicator = document.getElementById('navSettingsSaveState');
+    if (indicator) indicator.textContent = '正在清空模型用量统计…';
+    try {
+        const res = await fetch(`/api/ai-settings/usage?key=${encodeURIComponent(key)}`, {
+            method: 'DELETE',
+            headers: getAuthHeaderForNav()
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+        if (navState.aiUsageModelKey === key) navState.aiUsageModelKey = 'all';
+        if (indicator) indicator.textContent = `已成功清空模型 “${displayName}” 统计信息`;
+        await loadAiUsageDashboard(navState.aiUsageDimension);
+    } catch (err) {
+        if (indicator) indicator.textContent = `清空失败：${err.message}`;
+        alert(`清空统计失败：${err.message}`);
+    }
+};
+
+window.clearSelectedModelAiUsage = async function () {
+    const models = Array.isArray(navState.aiUsageData?.models) ? navState.aiUsageData.models : [];
+    const selected = models.find(item => item.key === navState.aiUsageModelKey);
+    if (!selected) return;
+    const displayName = `${selected.profileName || selected.provider} · ${selected.model}`;
+    await clearSpecificModelUsage(selected.key, displayName, selected.totals?.tokens || 0, Number(selected.totals?.costCny || 0).toFixed(4));
+};
+
+window.promptClearAllAiUsage = async function () {
+    const totals = navState.aiUsageData?.totals || {};
+    const confirmed = await showNavbarConfirm({
+        title: navLocaleText('清空全部模型统计信息', 'Clear All Models Statistics'),
+        message: navLocaleText(
+            '确定清空全部模型的历史 Token 用量与计费统计吗？',
+            'Are you sure you want to clear historical token usage and cost statistics for ALL models?'
+        ),
+        hint: navLocaleText(
+            `当前全部累计：${formatAiUsageNumber(totals.tokens)} Tokens，¥${Number(totals.costCny || 0).toFixed(4)} 元。清空后全部模型与每日图表都将归零，不可恢复。`,
+            `Current all totals: ${formatAiUsageNumber(totals.tokens)} Tokens, ¥${Number(totals.costCny || 0).toFixed(4)}. Cannot be undone.`
+        ),
+        tone: 'danger',
+        confirmText: navLocaleText('全部清空', 'Clear All')
+    });
+    if (!confirmed) return;
+
+    const indicator = document.getElementById('navSettingsSaveState');
+    if (indicator) indicator.textContent = '正在清空全部模型统计…';
+    try {
+        const res = await fetch('/api/ai-settings/usage?clearAll=true', {
+            method: 'DELETE',
+            headers: getAuthHeaderForNav()
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+        navState.aiUsageModelKey = 'all';
+        if (indicator) indicator.textContent = '全部模型统计信息已清空';
+        await loadAiUsageDashboard(navState.aiUsageDimension);
+    } catch (err) {
+        if (indicator) indicator.textContent = `清空失败：${err.message}`;
+        alert(`清空失败：${err.message}`);
+    }
 };
 
 async function loadAiUsageDashboard(dimension = navState.aiUsageDimension || 'day') {
@@ -2543,7 +2661,7 @@ async function renderAiSettings(content) {
                     ${profiles.map(profile => `
                         <button type="button" class="nav-ai-profile-card ${profile.id === settings.id ? 'selected' : ''} ${profile.isActive ? 'active' : ''}" onclick="selectAiProfile('${navEscape(profile.id)}')">
                             <span class="nav-ai-profile-card-top"><b>${navEscape(profile.name)}</b>${profile.isActive ? '<em>使用中</em>' : ''}</span>
-                            <span>${navEscape(profile.provider)} · ${navEscape(profile.model)}</span>
+                            <span>${navEscape(profile.provider)} · ${navEscape(profile.model)}${profile.provider === 'anthropic' || /claude/i.test(profile.model) ? ` · ${profile.anthropicAuthType === 'ANTHROPIC_API_KEY' ? 'API_KEY' : 'AUTH_TOKEN'}` : ''}</span>
                             <small class="${profile.keyLooksValid ? 'ready' : ''}">${profile.keyLooksValid ? '● Token 可用' : '○ Token 未就绪'}</small>
                         </button>
                     `).join('')}
@@ -2592,6 +2710,13 @@ async function renderAiSettings(content) {
                         <option value="openai-compatible" ${settings.provider === 'openai-compatible' ? 'selected' : ''}>OpenAI Compatible</option>
                     </select>
                 </label>
+                <label class="nav-ai-field nav-ai-field-wide" id="navAiAnthropicAuthWrap" style="${(settings.provider === 'anthropic' || /claude|anthropic/i.test(settings.model)) ? '' : 'display:none;'}">
+                    <span>${navEscape(navT('nav.ai.anthropicAuthField'))}</span>
+                    <select id="navAiAnthropicAuthType" class="nav-settings-input" onchange="scheduleAiSettingsSave()">
+                        <option value="ANTHROPIC_AUTH_TOKEN" ${settings.anthropicAuthType !== 'ANTHROPIC_API_KEY' ? 'selected' : ''}>${navEscape(navT('nav.ai.anthropicAuthToken'))}</option>
+                        <option value="ANTHROPIC_API_KEY" ${settings.anthropicAuthType === 'ANTHROPIC_API_KEY' ? 'selected' : ''}>${navEscape(navT('nav.ai.anthropicApiKey'))}</option>
+                    </select>
+                </label>
                 <label class="nav-ai-field nav-ai-field-wide">
                     <span>${navEscape(navT('nav.ai.lblApiUrl'))}</span>
                     <input id="navAiApiBaseUrl" class="nav-settings-input" value="${navEscape(settings.apiBaseUrl || '')}" placeholder="${navEscape(navT('nav.ai.plhApiUrl'))}" oninput="scheduleAiSettingsSave()">
@@ -2605,7 +2730,7 @@ async function renderAiSettings(content) {
                 </label>
                 <label class="nav-ai-field">
                     <span>${navEscape(navT('nav.ai.lblModel'))}</span>
-                    <input id="navAiModel" class="nav-settings-input" list="navAiModelOptions" value="${navEscape(settings.model)}" oninput="scheduleAiSettingsSave()">
+                    <input id="navAiModel" class="nav-settings-input" list="navAiModelOptions" value="${navEscape(settings.model)}" oninput="updateAiModelAuthVisibility(); scheduleAiSettingsSave()">
                     <datalist id="navAiModelOptions">
                         <option value="gemini-2.5-flash"></option>
                         <option value="gemini-2.5-pro"></option>
@@ -2658,10 +2783,12 @@ async function renderAiSettings(content) {
 
 function collectAiSettingsPayload(options = {}) {
     const tokenInput = document.getElementById('navAiApiKey');
+    const authTypeSelect = document.getElementById('navAiAnthropicAuthType');
     const payload = {
         profileId: navState.aiSelectedProfileId,
         name: document.getElementById('navAiProfileName')?.value || 'AI 配置',
         provider: document.getElementById('navAiProvider')?.value || 'gemini',
+        anthropicAuthType: authTypeSelect?.value || 'ANTHROPIC_AUTH_TOKEN',
         apiBaseUrl: document.getElementById('navAiApiBaseUrl')?.value || '',
         model: document.getElementById('navAiModel')?.value || 'gemini-2.5-flash',
         temperature: document.getElementById('navAiTemperature')?.value || 0.7,
@@ -2793,6 +2920,10 @@ window.deleteAiProfile = async function () {
 window.handleAiProviderChange = function () {
     const provider = document.getElementById('navAiProvider')?.value || 'gemini';
     const modelInput = document.getElementById('navAiModel');
+    const authWrap = document.getElementById('navAiAnthropicAuthWrap');
+    if (authWrap) {
+        authWrap.style.display = (provider === 'anthropic' || /claude|anthropic/i.test(modelInput?.value || '')) ? '' : 'none';
+    }
     const defaults = {
         gemini: 'gemini-2.5-flash',
         openai: 'gpt-4o-mini',
@@ -2802,6 +2933,9 @@ window.handleAiProviderChange = function () {
     };
     if (modelInput && defaults[provider]) {
         modelInput.value = defaults[provider];
+        if (authWrap) {
+            authWrap.style.display = (provider === 'anthropic' || /claude|anthropic/i.test(modelInput.value)) ? '' : 'none';
+        }
     }
     const apiBaseUrlInput = document.getElementById('navAiApiBaseUrl');
     if (apiBaseUrlInput) {
@@ -2809,6 +2943,15 @@ window.handleAiProviderChange = function () {
         if (['gemini', 'openai', 'anthropic'].includes(provider)) apiBaseUrlInput.value = '';
     }
     scheduleAiSettingsSave();
+};
+
+window.updateAiModelAuthVisibility = function () {
+    const provider = document.getElementById('navAiProvider')?.value || 'gemini';
+    const model = document.getElementById('navAiModel')?.value || '';
+    const authWrap = document.getElementById('navAiAnthropicAuthWrap');
+    if (authWrap) {
+        authWrap.style.display = (provider === 'anthropic' || /claude|anthropic/i.test(model)) ? '' : 'none';
+    }
 };
 
 window.testAiSettingsNow = async function () {

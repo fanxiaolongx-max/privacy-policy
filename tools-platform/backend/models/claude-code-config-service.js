@@ -24,17 +24,22 @@ function readExistingSettings(settingsPath) {
 function buildClaudeCodeSettings(existing, apiRelay) {
     const config = friendLinksRepo.normalizeApiRelay(apiRelay);
     const existingEnv = existing.env && typeof existing.env === 'object' && !Array.isArray(existing.env)
-        ? existing.env
+        ? { ...existing.env }
         : {};
+    const useApiKey = apiRelay && apiRelay.anthropicAuthType === 'ANTHROPIC_API_KEY';
+    if (useApiKey) {
+        delete existingEnv.ANTHROPIC_AUTH_TOKEN;
+        existingEnv.ANTHROPIC_API_KEY = config.apiKey;
+    } else {
+        delete existingEnv.ANTHROPIC_API_KEY;
+        existingEnv.ANTHROPIC_AUTH_TOKEN = config.apiKey;
+    }
+    existingEnv.ANTHROPIC_BASE_URL = config.baseUrl;
+    existingEnv.ANTHROPIC_MODEL = config.defaultModel;
+    existingEnv.ANTHROPIC_SMALL_FAST_MODEL = config.fastModel;
     return {
         ...existing,
-        env: {
-            ...existingEnv,
-            ANTHROPIC_BASE_URL: config.baseUrl,
-            ANTHROPIC_AUTH_TOKEN: config.apiKey,
-            ANTHROPIC_MODEL: config.defaultModel,
-            ANTHROPIC_SMALL_FAST_MODEL: config.fastModel
-        }
+        env: existingEnv
     };
 }
 
@@ -72,11 +77,12 @@ function installClaudeCodeConfig(apiRelay, options = {}) {
         throw error;
     }
 
+    const authKey = (apiRelay && apiRelay.anthropicAuthType === 'ANTHROPIC_API_KEY') ? 'ANTHROPIC_API_KEY' : 'ANTHROPIC_AUTH_TOKEN';
     return {
         installed: true,
         settingsPath,
         backupPath,
-        variables: ['ANTHROPIC_BASE_URL', 'ANTHROPIC_AUTH_TOKEN', 'ANTHROPIC_MODEL', 'ANTHROPIC_SMALL_FAST_MODEL']
+        variables: ['ANTHROPIC_BASE_URL', authKey, 'ANTHROPIC_MODEL', 'ANTHROPIC_SMALL_FAST_MODEL']
     };
 }
 
