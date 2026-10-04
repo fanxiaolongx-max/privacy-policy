@@ -1849,6 +1849,18 @@ function getManualAdjustAutoFillPrefs() {
     return globalConfig.prefs.manualAdjustAutoFill;
 }
 
+function isManualAdjustItemAutoFillEnabled(idxKey) {
+    const prefs = getManualAdjustAutoFillPrefs();
+    if (prefs[idxKey] !== undefined) {
+        return !!prefs[idxKey];
+    }
+    const idx = parseInt(idxKey, 10);
+    if (Array.isArray(manualAdjustItems) && Number.isInteger(idx) && manualAdjustItems[idx]) {
+        return !!manualAdjustItems[idx].autoFill;
+    }
+    return false;
+}
+
 function hasManualAdjustValueForIndex(adjustData, itemIndex) {
     if (!adjustData || typeof adjustData !== 'object') return false;
     return categories.some(cat => {
@@ -1857,17 +1869,53 @@ function hasManualAdjustValueForIndex(adjustData, itemIndex) {
     });
 }
 
+function hasManualAdjustDetailForCatAndIndex(details, cat, itemIndex) {
+    if (window.ReportManualAdjustAutoFill?.hasDetailForCatAndIndex) {
+        return window.ReportManualAdjustAutoFill.hasDetailForCatAndIndex(details, cat, itemIndex);
+    }
+    if (!details || typeof details !== 'object') return false;
+    const detail = details[cat] && details[cat][itemIndex];
+    if (!detail) return false;
+    const records = normalizeManualAdjustDetailRecords(detail);
+    return records.some(r => {
+        return !!(r.reason && String(r.reason).trim())
+            || !!(r.occurredAt && String(r.occurredAt).trim())
+            || !!(r.recorder && String(r.recorder).trim())
+            || (Array.isArray(r.attachments) && r.attachments.length > 0);
+    });
+}
+
+function hasManualAdjustDetailForIndex(details, itemIndex) {
+    if (window.ReportManualAdjustAutoFill?.hasDetailForIndex) {
+        return window.ReportManualAdjustAutoFill.hasDetailForIndex(details, itemIndex, categories);
+    }
+    if (!details || typeof details !== 'object') return false;
+    return categories.some(cat => hasManualAdjustDetailForCatAndIndex(details, cat, itemIndex));
+}
+
 function findLatestManualAdjustSnapshotBefore(currentSnap, itemIndex) {
-    const snapIdx = snapshots.findIndex(s => s.id === currentSnap.id);
+    if (window.ReportManualAdjustAutoFill?.findLatestSourceSnapshot) {
+        return window.ReportManualAdjustAutoFill.findLatestSourceSnapshot(
+            currentSnap,
+            itemIndex,
+            snapshots,
+            categories,
+            formatSnapshotTime
+        );
+    }
+    const snapIdx = snapshots.findIndex(s => s && s.id === currentSnap?.id);
     if (snapIdx < 0) return null;
 
     for (let i = snapIdx + 1; i < snapshots.length; i++) {
         const sourceSnap = snapshots[i];
+        if (!sourceSnap) continue;
         const adjustData = sourceSnap.manualAdjustData || {};
-        if (hasManualAdjustValueForIndex(adjustData, itemIndex)) {
+        const adjustDetails = sourceSnap.manualAdjustDetails || {};
+        if (hasManualAdjustValueForIndex(adjustData, itemIndex) || hasManualAdjustDetailForIndex(adjustDetails, itemIndex)) {
             return {
                 snapshot: sourceSnap,
                 adjustData,
+                adjustDetails,
                 sourceText: formatSnapshotTime(sourceSnap)
             };
         }
@@ -1877,39 +1925,133 @@ function findLatestManualAdjustSnapshotBefore(currentSnap, itemIndex) {
 
 function applyManualAdjustAutoFillToSnapshot(snapshot) {
     if (!snapshot) return false;
+    if (window.ReportManualAdjustAutoFill?.applyAutoFill) {
+        const result = window.ReportManualAdjustAutoFill.applyAutoFill({
+            snapshot,
+            snapshots,
+            categories,
+            manualAdjustItems,
+            prefs: getManualAdjustAutoFillPrefs(),
+            formatTime: formatSnapshotTime,
+            logMessageBuilder: ({ sourceText, recordCount, attachmentCount }) => {
+                return rt('report.adjust.autoFillInheritedLog', {
+                    source: sourceText,
+                    count: recordCount,
+                    attachments: attachmentCount
+                });
+            }
+        });
+        return result.changed;
+    }
+
     const autoPrefs = getManualAdjustAutoFillPrefs();
-    const enabledIndices = Object.keys(autoPrefs).filter(idx => autoPrefs[idx]);
-    if (!enabledIndices.length) return false;
+    const candidateIndices = new Set();
+    Object.keys(autoPrefs).forEach(idxKey => {
+        if (autoPrefs[idxKey]) candidateIndices.add(idxKey);
+    });
+    if (Array.isArray(manualAdjustItems)) {
+        manualAdjustItems.forEach((item, idx) => {
+            if (item && !item.deleted && item.autoFill) {
+                candidateIndices.add(String(idx));
+            }
+        });
+    }
+
+    if (!candidateIndices.size) return false;
 
     if (!snapshot.manualAdjustData || typeof snapshot.manualAdjustData !== 'object') {
         snapshot.manualAdjustData = {};
+    }
+    if (!snapshot.manualAdjustDetails || typeof snapshot.manualAdjustDetails !== 'object') {
+        snapshot.manualAdjustDetails = {};
     }
     if (!snapshot.manualAdjustAutoFillSources || typeof snapshot.manualAdjustAutoFillSources !== 'object') {
         snapshot.manualAdjustAutoFillSources = {};
     }
 
     let changed = false;
-    enabledIndices.forEach(idxKey => {
+    candidateIndices.forEach(idxKey => {
         const idx = parseInt(idxKey, 10);
         if (!Number.isInteger(idx) || !manualAdjustItems[idx] || manualAdjustItems[idx].deleted) return;
-        if (hasManualAdjustValueForIndex(snapshot.manualAdjustData, idxKey)) return;
 
         const source = findLatestManualAdjustSnapshotBefore(snapshot, idxKey);
         if (!source) return;
 
+        let itemHadEffect = false;
         categories.forEach(cat => {
-            const sourceVal = source.adjustData[cat] && source.adjustData[cat][idxKey];
-            if (sourceVal === undefined || sourceVal === null || String(sourceVal).trim() === '') return;
             if (!snapshot.manualAdjustData[cat]) snapshot.manualAdjustData[cat] = {};
-            snapshot.manualAdjustData[cat][idxKey] = parseInt(sourceVal, 10) || 0;
+            if (!snapshot.manualAdjustDetails[cat]) snapshot.manualAdjustDetails[cat] = {};
+
+            const currentVal = snapshot.manualAdjustData[cat][idxKey];
+            const currentHasCount = currentVal !== undefined && currentVal !== null && String(currentVal).trim() !== '';
+            const currentHasDetail = hasManualAdjustDetailForCatAndIndex(snapshot.manualAdjustDetails, cat, idxKey);
+
+            if (currentHasCount && currentHasDetail) return;
+
+            const sourceVal = source.adjustData && source.adjustData[cat] && source.adjustData[cat][idxKey];
+            const sourceDetail = source.adjustDetails && source.adjustDetails[cat] && source.adjustDetails[cat][idxKey];
+            const sourceRecords = normalizeManualAdjustDetailRecords(sourceDetail);
+
+            let assignedCount = false;
+            if (!currentHasCount) {
+                if (sourceVal !== undefined && sourceVal !== null && String(sourceVal).trim() !== '') {
+                    snapshot.manualAdjustData[cat][idxKey] = parseInt(sourceVal, 10) || 0;
+                    assignedCount = true;
+                    itemHadEffect = true;
+                    changed = true;
+                } else if (sourceRecords.length > 0) {
+                    snapshot.manualAdjustData[cat][idxKey] = sourceRecords.length;
+                    assignedCount = true;
+                    itemHadEffect = true;
+                    changed = true;
+                }
+            }
+
+            if (!currentHasDetail && sourceRecords.length > 0) {
+                const clonedRecords = sourceRecords.map(rec => ({
+                    id: (globalThis.crypto?.randomUUID?.() || `record-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`),
+                    occurredAt: String(rec.occurredAt || ''),
+                    recorder: String(rec.recorder || ''),
+                    reason: String(rec.reason || ''),
+                    attachments: Array.isArray(rec.attachments)
+                        ? rec.attachments.map(att => ({
+                            url: String(att.url || ''),
+                            name: String(att.name || ''),
+                            size: typeof att.size === 'number' ? att.size : 0,
+                            type: String(att.type || '')
+                        }))
+                        : [],
+                    newFiles: []
+                }));
+
+                const totalAtts = clonedRecords.reduce((sum, r) => sum + r.attachments.length, 0);
+                const logSummary = rt('report.adjust.autoFillInheritedLog', {
+                    source: source.sourceText,
+                    count: clonedRecords.length,
+                    attachments: totalAtts
+                });
+
+                snapshot.manualAdjustDetails[cat][idxKey] = {
+                    records: clonedRecords,
+                    changeLog: [{ time: new Date().toISOString(), summary: logSummary }]
+                };
+
+                if (!currentHasCount && !assignedCount) {
+                    snapshot.manualAdjustData[cat][idxKey] = clonedRecords.length;
+                }
+
+                itemHadEffect = true;
+                changed = true;
+            }
         });
 
-        snapshot.manualAdjustAutoFillSources[idxKey] = {
-            snapshotId: source.snapshot.id,
-            timestamp: source.snapshot.timestamp,
-            label: source.sourceText
-        };
-        changed = true;
+        if (itemHadEffect) {
+            snapshot.manualAdjustAutoFillSources[idxKey] = {
+                snapshotId: source.snapshot.id,
+                timestamp: source.snapshot.timestamp,
+                label: source.sourceText
+            };
+        }
     });
 
     return changed;
@@ -2429,7 +2571,7 @@ function renderReport(snap) {
 
         const typeColor = item.type === '加分' ? '#2e7d32' : '#c62828';
         const typeBg = item.type === '加分' ? '#e8f5e9' : '#ffebee';
-        const isAuto = !!manualAutoPrefs[idx];
+        const isAuto = isManualAdjustItemAutoFillEnabled(idx);
         const autoSource = manualAutoSources[idx];
         const autoColor = isAuto ? '#0288d1' : '#9e9e9e';
         const autoBg = isAuto ? '#e1f5fe' : '#f5f5f5';
@@ -3326,7 +3468,9 @@ window.openManualAdjustDetailModal = function (cat, idx) {
     manualAdjustLogVisibleCount = 5;
     const modal = ensureManualAdjustDetailModal();
     document.getElementById('manual-adjust-detail-title').textContent = rt('report.adjust.detailTitle');
-    document.getElementById('manual-adjust-detail-subtitle').textContent = `${cat} · ${getTranslatedLabel(manualAdjustItems[idx].name)}`;
+    const autoSource = currentSnapshot.manualAdjustAutoFillSources?.[idx];
+    const autoSourceHint = (autoSource && autoSource.label) ? ` (${rt('report.auto.source')}: ${getTranslatedLabel(autoSource.label)})` : '';
+    document.getElementById('manual-adjust-detail-subtitle').textContent = `${cat} · ${getTranslatedLabel(manualAdjustItems[idx].name)}${autoSourceHint}`;
     renderManualAdjustRecords();
     renderManualAdjustChangeLog();
     modal.style.display = 'flex';
@@ -3899,6 +4043,13 @@ window.openAddAdjustModal = function (idx = null) {
                         <input type="number" id="new-adjust-cap" placeholder="${rt('report.adjust.capPlaceholder')}" min="1" step="0.5" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box; font-size:14px;">
                     </div>
                 </div>
+                <div style="margin-bottom:15px; padding:10px 12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px;">
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; color:#333; font-weight:500; margin:0;">
+                        <input type="checkbox" id="new-adjust-autofill" style="cursor:pointer; width:16px; height:16px;">
+                        <span>${rt('report.adjust.autoFillCheckboxLabel')}</span>
+                    </label>
+                    <div style="font-size:11px; color:#64748b; margin-top:4px; margin-left:24px; line-height:1.4;">${rt('report.adjust.autoFillCheckboxHint')}</div>
+                </div>
                 <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:25px;">
                     <button onclick="document.getElementById('add-adjust-modal').style.display='none'" style="padding:8px 16px; border:1px solid #ccc; background:#fff; border-radius:6px; cursor:pointer;">${rt('report.button.cancel')}</button>
                     <button id="adjust-modal-save-btn" onclick="saveNewAdjustItem()" style="padding:8px 16px; border:none; background:#e65100; color:#fff; border-radius:6px; cursor:pointer; font-weight:bold;">${rt('report.adjust.saveGlobal')}</button>
@@ -3913,6 +4064,8 @@ window.openAddAdjustModal = function (idx = null) {
     modal.querySelector('#new-adjust-name').value = item ? item.name : '';
     modal.querySelector('#new-adjust-unit').value = item ? item.unit : '2';
     modal.querySelector('#new-adjust-cap').value = item && item.cap !== null && item.cap !== undefined && item.cap !== '' ? item.cap : '';
+    const isAuto = editIdx !== null ? isManualAdjustItemAutoFillEnabled(editIdx) : false;
+    modal.querySelector('#new-adjust-autofill').checked = isAuto;
 
     const card = document.getElementById('adjust-card');
     if (document.fullscreenElement === card) {
@@ -3930,6 +4083,7 @@ window.saveNewAdjustItem = async function () {
     const unit = parseFloat(document.getElementById('new-adjust-unit').value) || 0;
     const capStr = document.getElementById('new-adjust-cap').value.trim();
     const cap = capStr === '' ? null : parseFloat(capStr);
+    const autoFill = !!document.getElementById('new-adjust-autofill')?.checked;
 
     if (!name) {
         showToast(rt('report.toast.enterItemName'), 'error');
@@ -3947,10 +4101,12 @@ window.saveNewAdjustItem = async function () {
     }
 
     const desc = buildManualAdjustDesc(unit, cap);
-    const nextItem = { type, name, unit, cap, desc };
+    const nextItem = { type, name, unit, cap, desc, autoFill };
 
+    let targetIdx = editingAdjustItemIndex;
     if (editingAdjustItemIndex === null) {
         manualAdjustItems.push(nextItem);
+        targetIdx = manualAdjustItems.length - 1;
     } else {
         manualAdjustItems[editingAdjustItemIndex] = {
             ...manualAdjustItems[editingAdjustItemIndex],
@@ -3960,8 +4116,21 @@ window.saveNewAdjustItem = async function () {
 
     try {
         await saveManualAdjustItemsConfig(editingAdjustItemIndex === null ? rt('report.toast.customItemAdded') : rt('report.toast.adjustItemUpdated'));
+
+        const prefs = getManualAdjustAutoFillPrefs();
+        prefs[String(targetIdx)] = autoFill;
+        await saveSlaPrefPatch({ manualAdjustAutoFill: prefs });
+
+        if (autoFill && currentSnapshot) {
+            const changed = applyManualAdjustAutoFillToSnapshot(currentSnapshot);
+            if (changed) {
+                await putSnapshotWithCompression(currentSnapshot.id, currentSnapshot, 'manual-adjust-auto-fill-modal');
+            }
+        }
+
         document.getElementById('add-adjust-modal').style.display = 'none';
         editingAdjustItemIndex = null;
+        renderCurrentSnapshot();
     } catch (e) {
         showToast(rt('report.toast.saveFailed'), 'error');
     }
@@ -4526,6 +4695,11 @@ window.toggleManualAdjustAutoFill = async function (idx) {
 
     try {
         await saveSlaPrefPatch({ manualAdjustAutoFill: prefs });
+
+        if (manualAdjustItems[idx]) {
+            manualAdjustItems[idx].autoFill = prefs[key];
+            await saveManualAdjustItemsConfig();
+        }
 
         let changed = false;
         if (prefs[key] && currentSnapshot) {
