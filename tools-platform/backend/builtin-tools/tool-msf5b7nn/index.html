@@ -1111,6 +1111,12 @@
       background: #eef2f6
     }
 
+    .status-pill.departed {
+      color: #991b1b;
+      background: #fee2e2;
+      border: 1px solid #fecaca
+    }
+
     .result-details>summary {
       list-style: none;
       cursor: pointer
@@ -4220,6 +4226,9 @@
                 attendanceTime = '';
               } else {
                 attendance = determineAttendance(p.account, sIndex, p.name, sessDate);
+                if (attendance === 'Absent' && p.isSuspectedDeparted) {
+                  attendance = 'Suspected Departure or ID Change';
+                }
                 attendanceMethod = record?.method || '无记录';
                 attendanceTime = record?.displayTime || '';
               }
@@ -4257,8 +4266,14 @@
               statusText = bi(`部分出席 (${attendedCount}/${requiredSessions.length})`, `Partial (${attendedCount}/${requiredSessions.length})`);
               statusTag = 'partial';
             } else {
-              statusText = requiredSessions.length ? bi('全部缺席', 'All Absent') : bi('无需出席', 'Not Required');
-              statusTag = 'none';
+              const allDeparted = requiredSessions.length > 0 && requiredSessions.every(s => p.sessionRecords?.[s.name]?.attendance === 'Suspected Departure or ID Change');
+              if (allDeparted) {
+                statusText = bi('疑似离职或工号变更', 'Suspected Departure or ID Change');
+                statusTag = 'none';
+              } else {
+                statusText = requiredSessions.length ? bi('全部缺席', 'All Absent') : bi('无需出席', 'Not Required');
+                statusTag = 'none';
+              }
             }
             p.multiSessionStatus = statusText;
             p.multiSessionStatusTag = statusTag;
@@ -4543,7 +4558,7 @@
             return `
               <td class="${altClass}">
                 <div style="display:flex;flex-direction:column;align-items:flex-start;gap:2px">
-                  <span class="status-pill ${statusClass(rec.attendance)} ${rec.attendanceMethod === '前夜WFM豁免' ? 'exempt' : ''}">${rec.attendanceMethod === '前夜WFM豁免' ? bi('🌙 前夜WFM豁免', '🌙 Night WFM Exempt') : rec.attendance}</span>
+                  <span class="status-pill ${statusClass(rec.attendance)} ${rec.attendanceMethod === '前夜WFM豁免' ? 'exempt' : ''}">${rec.attendance === 'Suspected Departure or ID Change' ? bi('疑似离职或工号变更', 'Suspected Departure or ID Change') : rec.attendanceMethod === '前夜WFM豁免' ? bi('🌙 前夜WFM豁免', '🌙 Night WFM Exempt') : rec.attendance}</span>
                   ${rec.attendanceTime ? `<span style="font-size:11px;color:#64748b">${esc(rec.attendanceTime)}</span>` : ''}
                   <span style="font-size:10px;color:#94a3b8">${esc(rec.attendanceMethod === '豁免名单' ? bi('豁免', 'Exemption') : rec.attendanceMethod === '前夜WFM豁免' ? bi('前夜WFM', 'Night WFM') : rec.attendanceMethod === '现场扫码' ? bi('现场', 'Scan') : rec.attendanceMethod === '线上会议' ? bi('线上', 'Online') : '')}</span>
                 </div>
@@ -4916,12 +4931,34 @@
         const result = state.personSearch.result; if (!result) return; const total = Math.max(1, Math.ceil(result[kind].length / state.pageSize)); let page = state.personSearch.pages[kind] || 1;
         if (action === 'first') page = 1; if (action === 'prev') page--; if (action === 'next') page++; if (action === 'last') page = total; state.personSearch.pages[kind] = Math.min(Math.max(1, page), total); renderPersonSearchModal(); document.querySelector(`#personSearchModal [data-search-category="${kind}"]`)?.scrollIntoView({ block: 'nearest' });
       }
-      function statusClass(status) { return status === 'Attend on Time' ? 'ontime' : status === 'Delay' ? 'delay' : status === 'Fake Attendance' ? 'fake' : status === 'Not Evaluated' ? 'pending' : 'absent'; }
+      function statusClass(status) { return status === 'Attend on Time' ? 'ontime' : status === 'Delay' ? 'delay' : status === 'Fake Attendance' ? 'fake' : status === 'Not Evaluated' ? 'pending' : (status === 'Suspected Departure or ID Change' || status === 'departed') ? 'departed' : 'absent'; }
       function renderAttendanceDashboard(rows) {
-        const statuses = ['Absent', 'Attend on Time', 'Delay', 'Fake Attendance'], counts = Object.fromEntries(statuses.map(s => [s, 0])); rows.forEach(r => counts[r.attendance] = (counts[r.attendance] || 0) + 1);
+        const statuses = ['Absent', 'Attend on Time', 'Delay', 'Fake Attendance'], counts = Object.fromEntries(statuses.map(s => [s, 0]));
+        let departedCount = 0;
+        rows.forEach(r => {
+          if (r.attendance === 'Suspected Departure or ID Change') {
+            counts.Absent = (counts.Absent || 0) + 1;
+            departedCount++;
+          } else if (counts[r.attendance] !== undefined) {
+            counts[r.attendance]++;
+          }
+        });
         const rate = (onTime, total) => total ? `${(onTime / total * 100).toFixed(1)}%` : '0.0%';
-        const cards = statuses.map(s => `<div class="status-card ${statusClass(s)}"><div class="status-name">${s}</div><div class="status-value">${(counts[s] || 0).toLocaleString()}</div></div>`).join('');
-        const byBu = new Map(); rows.forEach(r => { const bu = normalizeName(r.bu) || '未识别 BU'; if (!byBu.has(bu)) byBu.set(bu, { total: 0, 'Attend on Time': 0, Delay: 0, Absent: 0, 'Fake Attendance': 0 }); const x = byBu.get(bu); x.total++; x[r.attendance] = (x[r.attendance] || 0) + 1; });
+        const cards = statuses.map(s => {
+          const extra = (s === 'Absent' && departedCount > 0)
+            ? `<div style="font-size:11px;color:#991b1b;margin-top:2px;">${bi(`含疑似离职 ${departedCount} 人`, `incl. ${departedCount} suspected`)}</div>`
+            : '';
+          return `<div class="status-card ${statusClass(s)}"><div class="status-name">${s}</div><div class="status-value">${(counts[s] || 0).toLocaleString()}</div>${extra}</div>`;
+        }).join('');
+        const byBu = new Map();
+        rows.forEach(r => {
+          const bu = normalizeName(r.bu) || '未识别 BU';
+          if (!byBu.has(bu)) byBu.set(bu, { total: 0, 'Attend on Time': 0, Delay: 0, Absent: 0, 'Fake Attendance': 0 });
+          const x = byBu.get(bu);
+          x.total++;
+          const statusKey = r.attendance === 'Suspected Departure or ID Change' ? 'Absent' : r.attendance;
+          if (x[statusKey] !== undefined) x[statusKey]++;
+        });
         const tableRows = [...byBu.entries()].sort((a, b) => b[1].total - a[1].total).map(([bu, x]) => `<tr class="${state.buFilter === bu ? 'selected' : ''}" data-action="bu-filter" data-bu="${esc(bu)}" title="${state.buFilter === bu ? bi('点击取消筛选', 'Click to clear filter') : bi('点击筛选该 BU', 'Click to filter this BU')}"><td title="${esc(bu)}">${esc(bu)}</td><td class="num">${x.total}</td><td class="num absent">${x.Absent}</td><td class="num ontime">${x['Attend on Time']}</td><td class="num delay">${x.Delay}</td><td class="num fake">${x['Fake Attendance']}</td><td class="num rate">${rate(x['Attend on Time'], x.total)}</td></tr>`).join('');
         const table = tableRows ? `<div class="bu-summary-wrap"><table class="bu-summary-table"><thead><tr><th>BU</th><th>${bi('总人数', 'Total')}</th><th>Absent</th><th>Attend on Time</th><th>Delay</th><th>Fake Attendance</th><th>${bi('按时出席率', 'On-time Rate')}</th></tr></thead><tbody>${tableRows}</tbody><tfoot><tr><td>${bi('总计', 'Total')}</td><td class="num">${rows.length}</td><td class="num absent">${counts.Absent}</td><td class="num ontime">${counts['Attend on Time']}</td><td class="num delay">${counts.Delay}</td><td class="num fake">${counts['Fake Attendance']}</td><td class="num rate">${rate(counts['Attend on Time'], rows.length)}</td></tr></tfoot></table></div>` : `<div class="empty" style="padding:20px">${bi('暂无BU考勤数据', 'No BU attendance data')}</div>`;
         return `<section class="attendance-dashboard"><div class="status-grid">${cards}</div><div class="chart-card"><div class="chart-head" style="margin-bottom:10px"><div><h3>${bi('BU考勤状态表', 'BU Attendance Summary')}</h3><p>${bi('点击任意BU行筛选下方合并名单，再次点击取消筛选', 'Click any BU row to filter the combined list; click again to clear')}${state.buFilter ? `；${bi('当前', 'Current')}：${esc(state.buFilter)}` : ''}</p></div></div>${table}</div></section>`;
@@ -4936,7 +4973,7 @@
           const departedTag = r.isSuspectedDeparted
             ? ` <span class="tag possible-departed" style="cursor:help;font-size:11px;padding:1px 5px;background:#fee2e2;color:#991b1b;border-radius:4px" title="WeLink 查询结果 data 为空，请人工二次确认">疑似已离职</span>`
             : '';
-          return `<tr><td>${start + i + 1}</td><td>${esc(r.name)}${r.isManualMandatory ? ` <span class="badge" style="background:#e0f2fe;color:#0369a1;font-size:11px;padding:1px 5px;border-radius:4px">${bi('必选', 'Mandatory')}</span>` : ''}</td><td><code>${esc(r.account)}</code>${changedTag}${departedTag}</td><td>${esc(r.bu)}</td><td>${esc(r.customer)}</td><td><span class="status-pill ${statusClass(r.attendance)} ${r.attendanceMethod === '前夜WFM豁免' ? 'exempt' : ''}">${r.attendance === 'Not Evaluated' ? bi('待导入签到数据', 'Awaiting Check-in Data') : r.attendanceMethod === '前夜WFM豁免' ? bi('🌙 前夜WFM豁免', '🌙 Night WFM Exempt') : r.attendance}</span></td><td>${esc(r.attendanceTime || '—')}</td><td>${r.attendance === 'Not Evaluated' ? '—' : esc(r.attendanceMethod === '豁免名单' ? bi('豁免名单', 'Exemption List') : r.attendanceMethod === '前夜WFM豁免' ? bi('前夜WFM豁免', 'Night WFM Exempt') : r.attendanceMethod === '现场扫码' ? bi('现场扫码', 'On-site Scan') : r.attendanceMethod === '线上会议' ? bi('线上会议', 'Online Meeting') : bi('无记录', 'No Record'))}</td><td class="attention-count">${r.count}</td></tr>`;
+          return `<tr><td>${start + i + 1}</td><td>${esc(r.name)}${r.isManualMandatory ? ` <span class="badge" style="background:#e0f2fe;color:#0369a1;font-size:11px;padding:1px 5px;border-radius:4px">${bi('必选', 'Mandatory')}</span>` : ''}</td><td><code>${esc(r.account)}</code>${changedTag}${departedTag}</td><td>${esc(r.bu)}</td><td>${esc(r.customer)}</td><td><span class="status-pill ${statusClass(r.attendance)} ${r.attendanceMethod === '前夜WFM豁免' ? 'exempt' : ''}">${r.attendance === 'Not Evaluated' ? bi('待导入签到数据', 'Awaiting Check-in Data') : r.attendance === 'Suspected Departure or ID Change' ? bi('疑似离职或工号变更', 'Suspected Departure or ID Change') : r.attendanceMethod === '前夜WFM豁免' ? bi('🌙 前夜WFM豁免', '🌙 Night WFM Exempt') : r.attendance}</span></td><td>${esc(r.attendanceTime || '—')}</td><td>${r.attendance === 'Not Evaluated' ? '—' : esc(r.attendanceMethod === '豁免名单' ? bi('豁免名单', 'Exemption List') : r.attendanceMethod === '前夜WFM豁免' ? bi('前夜WFM豁免', 'Night WFM Exempt') : r.attendanceMethod === '现场扫码' ? bi('现场扫码', 'On-site Scan') : r.attendanceMethod === '线上会议' ? bi('线上会议', 'Online Meeting') : bi('无记录', 'No Record'))}</td><td class="attention-count">${r.count}</td></tr>`;
         }).join('') : `<tr><td></td><td colspan="8">${state.buFilter ? bi('该 BU 暂无人员', 'No people in this BU') : bi('尚未导入可合并的人员数据', 'No mergeable people data')}</td></tr>`;
         return `<article class="sheet-card" data-people="all"><div class="sheet-head"><div class="sheet-title"><h3>${bi('三类合并人员备用名单', 'Combined QR / RFC / WFM People List')}${state.buFilter ? ` · ${esc(state.buFilter)}` : ''}</h3><div class="sheet-meta">${state.buFilter ? `${bi('筛选后', 'Filtered')} ${filteredRows.length.toLocaleString()} / ${rows.length.toLocaleString()} ${t('peopleUnit')}` : `${rows.length.toLocaleString()} ${t('peopleUnit')}`} · ${bi('按关联记录数从高到低排列', 'Sorted by related records, highest first')} · ${bi('当前规则：准时', 'Rules: on time')}≤${state.attendanceRules.onTime}，${bi('虚假签到', 'fake attendance')}≥${state.attendanceRules.fake}</div></div><div class="sheet-actions"><button class="icon-btn" data-action="download-welink-script" title="${bi('下载 WeLink 人员查询脚本', 'Download WeLink Query Script')}">📥 ${bi('下载脚本', 'Download Script')}</button><button class="icon-btn" data-action="welink-modal" title="${bi('导入 WeLink 查询结果与新旧工号映射', 'Import WeLink Results & ID Mapping')}">🔄 ${bi('WeLink 映射', 'WeLink Mapping')}</button><button class="icon-btn" data-action="mandatory-people">👤 ${bi('其他必选名单', 'Mandatory Attendees')}</button><button class="icon-btn" data-action="attendance-rules">⚙ ${bi('考勤规则', 'Attendance Rules')}</button><button class="icon-btn" data-action="mapping">⚙ ${bi('映射设置', 'Mapping')}</button></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>#</th>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table></div><div class="pager"><span>${bi('显示', 'Showing')} ${filteredRows.length ? start + 1 : 0}–${Math.min(start + state.pageSize, filteredRows.length)} / ${filteredRows.length.toLocaleString()} ${t('peopleUnit')}</span><div class="pager-controls"><button class="page-btn" data-action="first" ${page === 1 ? 'disabled' : ''}>«</button><button class="page-btn" data-action="prev" ${page === 1 ? 'disabled' : ''}>‹</button><span class="page-current">${page} / ${total}</span><button class="page-btn" data-action="next" ${page === total ? 'disabled' : ''}>›</button><button class="page-btn" data-action="last" ${page === total ? 'disabled' : ''}>»</button></div></div></article>`;
       }
@@ -5580,6 +5617,9 @@
             attendanceTime = '';
           } else {
             attendance = determineAttendance(p.account, attendanceIndex, p.name, defaultMeetingDate);
+            if (attendance === 'Absent' && p.isSuspectedDeparted) {
+              attendance = 'Suspected Departure or ID Change';
+            }
             attendanceMethod = record?.method || '无记录';
             attendanceTime = record?.displayTime || '';
           }
@@ -6032,14 +6072,15 @@
             const sCounts = Object.fromEntries(statuses.map(st => [st, 0]));
             const sByBu = new Map();
             sessRows.forEach(r => {
-              sCounts[r.attendance] = (sCounts[r.attendance] || 0) + 1;
-              grandCounts[r.attendance] = (grandCounts[r.attendance] || 0) + 1;
+              const statusKey = r.attendance === 'Suspected Departure or ID Change' ? 'Absent' : r.attendance;
+              sCounts[statusKey] = (sCounts[statusKey] || 0) + 1;
+              grandCounts[statusKey] = (grandCounts[statusKey] || 0) + 1;
               grandTotal++;
               const bu = normalizeName(r.bu) || 'Unidentified BU';
               if (!sByBu.has(bu)) sByBu.set(bu, { total: 0, ...Object.fromEntries(statuses.map(st => [st, 0])) });
               const item = sByBu.get(bu);
               item.total++;
-              item[r.attendance] = (item[r.attendance] || 0) + 1;
+              item[statusKey] = (item[statusKey] || 0) + 1;
             });
 
             [...sByBu.entries()].sort((a, b) => b[1].total - a[1].total || a[0].localeCompare(b[0])).forEach(([bu, x]) => {
@@ -6080,12 +6121,13 @@
           const counts = Object.fromEntries(statuses.map(s => [s, 0]));
           const byBu = new Map();
           rows.forEach(r => {
-            counts[r.attendance] = (counts[r.attendance] || 0) + 1;
+            const statusKey = r.attendance === 'Suspected Departure or ID Change' ? 'Absent' : r.attendance;
+            counts[statusKey] = (counts[statusKey] || 0) + 1;
             const bu = normalizeName(r.bu) || 'Unidentified BU';
             if (!byBu.has(bu)) byBu.set(bu, { total: 0, ...Object.fromEntries(statuses.map(s => [s, 0])) });
             const x = byBu.get(bu);
             x.total++;
-            x[r.attendance] = (x[r.attendance] || 0) + 1;
+            x[statusKey] = (x[statusKey] || 0) + 1;
           });
 
           [...byBu.entries()].sort((a, b) => b[1].total - a[1].total || a[0].localeCompare(b[0])).forEach(([bu, x]) => {
@@ -6122,7 +6164,9 @@
             const sessStatuses = sessions.map(s => {
               const rec = r.sessionRecords?.[s.name];
               if (rec && !rec.required) return 'Not Required';
-              if (!rec || rec.attendance === 'Absent') return 'Absent';
+              if (!rec) return 'Absent';
+              if (rec.attendance === 'Suspected Departure or ID Change') return 'Suspected Departure or ID Change';
+              if (rec.attendance === 'Absent') return 'Absent';
               return `${rec.attendance}${rec.attendanceMethod === '前夜WFM豁免' ? ' (Night WFM Exempt)' : ''}${rec.attendanceTime ? ` (${rec.attendanceTime})` : ''}`;
             });
             multiMatrix.push([

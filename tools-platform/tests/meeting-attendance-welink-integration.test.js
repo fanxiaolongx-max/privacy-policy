@@ -493,3 +493,74 @@ test('WeLink modal DOM structure is top-level and clicking welinkToolsBtn opens 
     assert.equal(getEl('welinkModal').classList.contains('hidden'), true, 'closeWelinkModal must re-add hidden class to welinkModal');
 });
 
+test('Suspected departure attendance: un-checked staff with empty WeLink result evaluated as Suspected Departure or ID Change in calculation and export', () => {
+    const api = loadMeetingAttendance();
+
+    // 1. Setup sheets: RFC has 2 people (00111111 departed and un-checked, 00222222 departed but checked in)
+    api.state.sheets = [
+        {
+            id: 's_rfc',
+            category: 'rfc',
+            fileName: 'RFC_Tasks.xlsx',
+            sheetName: 'RFC',
+            headers: ['BU', 'Customer Group', 'Create Time', '建单人/Originator', 'Task ID'],
+            rows: [
+                ['网络BU', 'Cairo', '2026-08-01 10:00:00', '张三 00111111', 'NC202608010001'],
+                ['网络BU', 'Cairo', '2026-08-01 10:00:00', '李四 00222222', 'NC202608010002']
+            ]
+        },
+        {
+            id: 's_offline',
+            category: 'offline',
+            fileName: '2026-08-15现场签到.xlsx',
+            sheetName: '签到表',
+            headers: ['工号', '姓名', '签到时间'],
+            rows: [
+                // Only 李四 checked in on time
+                ['00222222', '李四', '2026-08-15 13:40:00']
+            ]
+        }
+    ];
+
+    // 2. Install WeLink results where both are suspected departed (data: [])
+    api.installWelinkPeople([
+        {
+            __queryEmpNo: '00111111',
+            __suspectedDeparted: true,
+            deptName: '疑似已离职'
+        },
+        {
+            __queryEmpNo: '00222222',
+            __suspectedDeparted: true,
+            deptName: '疑似已离职'
+        }
+    ], false);
+
+    // 3. Evaluate people
+    const people = api.extractAllPeople();
+    assert.equal(people.length, 2);
+
+    const zhang = people.find(p => p.account.includes('00111111'));
+    assert.ok(zhang);
+    assert.equal(zhang.isSuspectedDeparted, true);
+    assert.equal(zhang.attendance, 'Suspected Departure or ID Change', 'Unchecked suspected departed staff must receive Suspected Departure or ID Change');
+
+    const li = people.find(p => p.account.includes('00222222'));
+    assert.ok(li);
+    assert.equal(li.isSuspectedDeparted, true);
+    assert.equal(li.attendance, 'Attend on Time', 'Checked-in staff must retain Attend on Time even if marked as suspected departed in query');
+
+    // 4. Test Excel buildAnalysisTables export
+    const tables = api.buildAnalysisTables(people);
+    assert.ok(tables.people);
+
+    const exportedZhang = tables.people.find(r => r[2].includes('00111111'));
+    assert.ok(exportedZhang);
+    assert.equal(exportedZhang[5], 'Suspected Departure or ID Change', 'Exported Attendance Status column must be Suspected Departure or ID Change');
+
+    const exportedLi = tables.people.find(r => r[2].includes('00222222'));
+    assert.ok(exportedLi);
+    assert.equal(exportedLi[5], 'Attend on Time', 'Exported Attendance Status column for attendee must be Attend on Time');
+});
+
+
