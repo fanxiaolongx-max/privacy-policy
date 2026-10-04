@@ -1,8 +1,8 @@
 # Tools Platform
 
-Tools Platform 是一个面向运维数据抓取、SLA 指标合控、质量看板、月报工作区、一键催办、胶片设计/PPT 素材库、专题分析、部门奖惩与负向事件治理、正向激励申报、Dragon Claw 智能体与 2D/3D 知识图谱的综合性本地/内网工具中台。
+Tools Platform 是一个面向运维数据抓取、SLA 指标合控、质量看板、月报工作区、一键催办、胶片设计/PPT 素材库、专题分析、部门奖惩与负向事件治理、正向激励申报、会议考勤矩阵与花名册体系、智能订单与报价核验、加密考题金库、Dragon Claw 智能体、哈基米桌面宠物伴侣 (Desktop Pet) 与 2D/3D 知识图谱的综合性本地/内网工具中台。
 
-项目采用 **Express + 原生多页面静态前端 + SQLite** 的轻量高效架构，同时提供 Windows Electron 托盘常驻安装版/绿色免安装版，并配套 iOS/KMP 移动端工程生态。
+项目采用 **Express + 原生多页面静态前端 + SQLite** 的轻量高效架构，客户端生态原生覆盖 **Windows (NSIS 安装版 / 单文件免安装绿色版)** 与 **macOS (Apple Developer 签名与官方公证 DMG / ZIP 双架构)**，并配套 iOS/KMP 移动端工程生态。
 
 ---
 
@@ -17,11 +17,12 @@ Tools Platform 是一个面向运维数据抓取、SLA 指标合控、质量看�
    - [2.3 报表看板、月报工作区与运营大屏](#23-报表看板月报工作区与运营大屏)
    - [2.4 一键精准催办与导出](#24-一键精准催办与导出)
    - [2.5 胶片设计与 PPT 素材库](#25-胶片设计与-ppt-素材库)
-   - [2.6 专项治理工具链 (专题分析 / 部门奖惩 / 正向激励 / 会议考勤与花名册 / PR审计 / FRT / 需求广场 / 问卷调研)](#26-专项治理工具链)
+   - [2.6 专项治理工具链 (专题分析 / 部门奖惩 / 正向激励 / 会议考勤与花名册 / 采购订单核验与报价比对 / 加密考题金库 / 阿拉伯语互动学习 / PR审计 / FRT / 需求广场 / 问卷调研)](#26-专项治理工具链)
    - [2.7 平台效能大盘、服务监控与友情链接](#27-平台效能大盘服务监控与友情链接)
    - [2.8 自定义工具与多源工具市场生态](#28-自定义工具与多源工具市场生态)
    - [2.9 Dragon Claw 智能体与 2D/3D 双视图知识图谱](#29-dragon-claw-智能体与-2d3d-双视图知识图谱)
    - [2.10 光影大厅 (Tools Cinema) 与多媒体生态](#210-光影大厅-tools-cinema-与多媒体生态)
+   - [2.11 桌面宠物伴侣 (哈基米 Hajimi Companion) 与智能客服](#211-桌面宠物伴侣-哈基米-hajimi-companion-与智能客服)
 3. [安全授权与双轨 License 体系 (含安全基线与脱敏)](#3-安全授权与双轨-license-体系)
 4. [数据存储、启动自愈与 Schema 字典](#4-数据存储启动自愈与迁移治理)
 5. [备份恢复与远端主站同步](#5-备份恢复与远端主站同步)
@@ -31,11 +32,11 @@ Tools Platform 是一个面向运维数据抓取、SLA 指标合控、质量看�
 9. [移动端生态 (iOS / KMP)](#9-移动端生态-ios--kmp)
 10. [目录结构详解](#10-目录结构详解)
 11. [环境变量与配置字典](#11-环境变量与配置字典)
-12. [多系统部署、Windows 客户端与新手配置指引](#12-多系统部署windows-客户端与新手配置指引)
+12. [多系统部署、桌面客户端与新手配置指引](#12-多系统部署桌面客户端与新手配置指引)
     - [12.1 跨操作系统基础环境准备](#121-跨操作系统基础环境准备)
     - [12.2 生产环境 PM2 常驻部署指引](#122-生产环境-pm2-常驻部署指引)
-    - [12.3 Windows 桌面客户端指引 (安装版 vs 绿色版)](#123-windows-桌面客户端指引-安装版-vs-绿色版)
-    - [12.4 Windows 客户端本地生成文件与目录全景字典 (Setup vs Portable)](#124-windows-客户端本地生成文件与目录全景字典-setup-vs-portable)
+    - [12.3 桌面客户端指引 (Windows 安装版/绿色版 vs macOS 签名公证版)](#123-桌面客户端指引-windows-安装版绿色版-vs-macos-签名公证版)
+    - [12.4 桌面客户端本地生成文件与目录全景字典 (Windows vs macOS)](#124-桌面客户端本地生成文件与目录全景字典-windows-vs-macos)
     - [12.5 新手入门：安装登录后需要做啥 (Day 1 Checklist)](#125-新手入门安装登录后需要做啥-day-1-checklist)
 13. [CI/CD 自动化发布与客户端平滑升级机制](#13-cicd-自动化发布与客户端平滑升级机制)
 14. [开发约定与排障 FAQ](#14-开发约定与排障-faq)
@@ -63,13 +64,15 @@ flowchart TD
     end
 
     subgraph 展现与应用层["3. 展现与业务应用"]
-        B5 --> C1["报表看板 (/report)<br/>(健康度排名/比例计分/短板透视)"]
+        B5 --> C1["报表看板 (/report)<br/>(健康度排名/比例计分/手动调整填充)"]
         B5 --> C2["月度质量报告与工作区 (/monthly)<br/>(行内富文本编辑/Diff比对/长图与MSG导出)"]
         B5 --> C3["运营大屏 (/bigscreen)<br/>(会议室态势驾驶舱)"]
         B5 --> C4["一键催办 (/expedite)<br/>(文案组装/全屏截图/Excel导出/网络别名映射)"]
         B5 --> C5["专题分析中心 (/topic-analysis)<br/>(NetCare/DataFab历史快照/EOS收编进展)"]
         B5 --> C6["光影大厅 (/cinema)<br/>(多媒体点播与展厅模式)"]
         B5 --> C7["移动端 API (/api/external/metrics)<br/>(iOS / KMP App 只读查看)"]
+        B5 --> C8["桌面宠物伴侣 (哈基米)<br/>(置顶微件/全局键盘监听/额度探测/避让客服)"]
+        B5 --> C9["桌面系统托盘生态<br/>(Windows Setup/Portable + macOS DMG/ZIP)"]
     end
 
     subgraph 支撑与治理层["4. 专项工具与中台支撑"]
@@ -79,10 +82,13 @@ flowchart TD
         D4["需求广场与问卷调研 (/requirements, /surveys)"]
         D5["部门奖惩与负向事件治理 (/api/department-reward-penalty)"]
         D6["正向激励方案申报与核算 (/api/reward-program)"]
-        D7["会议考勤与操作激励快照 (/api/meeting-snapshots)"]
-        D8["系统告警中心 & AI分析 (/alert-center)"]
-        D9["Dragon Claw 智能体与知识图谱 (/api/ai)"]
-        D10["多源工具市场与自定义扩展 (/custom-tools)"]
+        D7["会议考勤矩阵与 WeLink 识别 (/api/meeting-snapshots)"]
+        D8["智能餐单与采购订单核验 (/tools/tool-mtpx4vtr)"]
+        D9["加密考题金库与题库学习 (/exam-question-bank-vault)"]
+        D10["阿拉伯语沉浸式口语互动 (/tools/tool-mtakhxqm)"]
+        D11["系统告警中心 & AI分析 (/alert-center)"]
+        D12["Dragon Claw 智能体与知识图谱 (/api/ai)"]
+        D13["多源工具市场与自定义扩展 (/custom-tools)"]
     end
 ```
 
@@ -493,7 +499,7 @@ flowchart TD
 
 ### 2.6 专项治理工具链
 
-针对交付与运维中的高复杂度场景，平台打造了覆盖专题历史回顾、负向事件奖惩、正向激励审批及花名册考勤的专项治理工具矩阵：
+针对交付与运维中的高复杂度场景，平台打造了覆盖专题历史回顾、负向事件奖惩、正向激励审批、花名册考勤矩阵、订单智能核验、加密考题金库及多语言学习的专项治理工具矩阵：
 
 - **专题分析中心与历史快照 (`/topic-analysis`, `/api/topic-snapshots`)**：
   - **租户级快照数据中心**：集中归档 NetCare 与 DataFab 的批次导入快照，保留完整的原始 JSON 结构，支持跨月份按时间轴追溯与穿透检索。
@@ -509,10 +515,31 @@ flowchart TD
   - **规范化申报与核算**：支持多维度业务正向激励方案设定、月度/季度申报立项、激励额度核算、佐证凭证（PDF/图片/压缩包）上传及多级审批流转。
   - **异议与留痕台账**：支持对激励结果发起在线异议申诉，系统完整记录版本修订历史与审计日志。
   - **快照同步发布**：同样支持一键将正向激励台账打包并自动化推送至 Pages 站点归档。
-- **会议考勤与操作激励花名册体系 (`/api/meeting-snapshots`, `/api/operation-incentive-snapshots`)**：
-  - **花名册多源智能提取与清洗**：支持从 QR、RFC、WFM 等多类型表格中提取人员名单；算法自动对包含分号/逗号的复合单元格进行拆分去重。
-  - **工号归一化与防误触过滤 (`staff-id-normalization.js`)**：智能剥离工号的 `m` 前缀别名、严格过滤超过 10 位的工单号或无效单据号，精准识别 FME/TE 双重角色与在册人员周期。
-  - **高性能秒级哈希匹配**：底层采用 $O(1)$ 哈希映射算法取代传统 $O(N^2)$ 遍历，将全量名单交叉核验性能提升数十倍，请求超时阈值放宽至 90 秒守护稳定运行。
+- **会议考勤矩阵与花名册体系 (`/api/meeting-snapshots`, `/api/operation-incentive-snapshots`)**：
+  - **多场次会议批量导入与场次切换**：支持单次导入多场次打卡明细，前端支持场次动态无缝切换、单独维护出勤基线与统计结论。
+  - **跨场次考勤比对矩阵 (Comparison Matrix)**：
+    - 生成多场次全量人员交叉核验矩阵，直观对比出勤率、缺勤场次及连续出勤表现。
+    - 支持一键切换**全屏视图 (Fullscreen / Exit Fullscreen)**，高密度表头吸顶滚动，提供沉浸式管理大屏审查体验。
+  - **伪考勤防刷识别算法**：智能识别“多日伪打卡”与“截止时间后伪考勤”，精准识破后续日期提前补卡或截断后的虚假记录。
+  - **晚班/夜班 WFM 排班豁免机制**：支持按场次设定校验时间窗，关联 WFM 排班系统，自动识别合法晚班/夜班人员并给予免打卡豁免处理。
+  - **自动生成 WeLink 人员查询脚本与映射导入**：
+    - 针对提取结果中未匹配的人员，一键自动生成针对企业通讯录 (WeLink) 的批量检索脚本。
+    - 支持导入通讯录映射表，自动合并新旧工号（智能剥离工号首字母及 `m` 前缀别名）并实现跨表同人识别。
+  - **疑似离职与工号变更判定**：系统在考勤汇总与人员清单导出中自动将未匹配人员标记为“疑似离职或工号变更 ('Suspected Departure or ID Change')”，方便管理员逐级核实。
+  - **名单双持久化与彻底删除**：考勤记录双重落盘保障，归档记录支持按需彻底物理删除。
+- **餐单与采购订单智能核验器 (`tool-mtpx4vtr` / `order-validator`)**：
+  - **内容驱动的列画像分析 (Column Profiling)**：根据整列数据特征（数值分布、文本模式、日期格式）自动反推真实列含义，自动纠偏人工错标的表头列名。
+  - **抗干扰日期与数量识别**：智能剥离 WK 预留周列、Excel 内部日期序列号，防止采购数量被错误劫持；自动过滤无日期或严重偏离基准日期的杂质数据行；自动忽略采购量、实际量与差异三者全为 0 的无效对比行。
+  - **品名规范清洗**：自动清洗商品品名与规格中悬空的未闭合或多余冗余括号。
+  - **层级呈现看板**：顶部提供每日差异汇总卡片，下方提供默认折叠的每日明细表格、空供应商折叠过滤与悬浮卡片交互。
+- **供应商报价比对 (`supplier-quotation-comparison`) 与强控业务比对 (`tool-mumxi3px`)**：
+  - 同样搭载数据驱动列画像引擎，支持跨供应商、跨型号的多规格报价明细比对与差异高亮。
+  - 强控业务比对产品查询系统，支持产品范围检索与合规排查。
+- **加密考题金库与题库学习 (`question-bank-study` / `exam-question-bank-vault`)**：
+  - 加密考题金库存储引擎，题目、题干与答案选项经强加密隔离存储。
+  - 题库学习支持多模型 AI 辅助答题建议、投票共识推断、错误经验自动剔除与思考日志全过程追溯。
+- **阿拉伯语/埃及口语沉浸式互动学习 (`tool-mtakhxqm`)**：
+  - 专为海外一线团队打造的沉浸式口语教室，提供词汇跟读、字母发音练习、互动操练与多媒体音频播放。
 - **PR 进展审计 (`/praudit`)**：
   - 审计级批量自检系统，检查 PR 进展附件记录是否完整合规，支持导入 Excel 校验并导出双语 PDF 报告。
 - **FRT KPI 自动核算 (`/frt`)**：
@@ -521,6 +548,7 @@ flowchart TD
   - 平台需求全民提交入口，提供待评审 -> 评估中 -> 开发中 -> 已上线 -> 已驳回的可视化流转看板。
 - **可配置问卷调研系统 (`/surveys`)**：
   - 自由定义调研表单字段，支持针对特定管理角色进行统计分析，收集提交并一键导出 Excel。
+
 
 ---
 
@@ -592,9 +620,10 @@ flowchart TD
 
 - **多模型提供商接入与流式体验**：
   - 原生适配 **Google Gemini、OpenAI / Azure OpenAI、Anthropic Claude、MiniMax** 以及兼容 OpenAI 接口规范的各大内外部大模型。
+  - **Anthropic 认证类型定制**：针对 Anthropic/Claude 模型支持配置独立的认证类型（`x-api-key` 或 `Bearer` Token 自由切换），完美兼容官方直连与内网反向代理网关。
   - 后端通过 `ai-provider-client.js` 统一适配，支持真实的 Server-Sent Events / Chunk 流式输出与前端打字机渲染，支持用户中途主动中断生成。
   - **多模型自动故障转移 (Auto-Switch Failover)**：支持在设置中心按优先级编排备用模型链；当主力模型发生 429 并发上限、503 服务过载、网关超时或格式畸变时，客户端自动无感熔断并热切换至下一顺位模型重试，前端实时标注实际响应模型与降级标签。
-  - **单模型 Token 用量与成本独立核算 (`ai_usage_daily_models`)**：按模型粒度精确统计当日 Prompt Token、Completion Token 与等效财务成本，提供基于单价配置的精细化费用分析与限额保护。
+  - **单模型 Token 用量核算与一键清理 (`ai_usage_daily_models`)**：按模型粒度精确统计当日 Prompt Token、Completion Token 与等效财务成本，提供费用分析与限额保护，并支持一键清空历史模型用量统计以满足阶段性核算需求。
   - 设置中心支持配置不同模型的 API Token、模型标识、系统提示词与输入/输出 Token 单价，前端对话实时显示 **Token 消耗量与成本费用估算**。
 
 - **双引擎只读安全检索架构**：
@@ -657,6 +686,50 @@ graph TD
 
 ---
 
+### 2.11 桌面宠物伴侣 (哈基米 Hajimi Companion) 与智能客服
+
+针对日常办公中的陪伴、趣味互动、敲击键盘反馈以及极速 AI 问答诉求，桌面客户端内置了高交互、低资源占用的 **桌面宠物伴侣 (哈基米 Hajimi Companion)**。
+
+```mermaid
+flowchart TD
+    subgraph DesktopPetSys["桌面宠物伴侣架构 (Desktop Pet System)"]
+        HOOK["系统级全局按键监听 (uiohook-napi)<br/>[macOS Accessibility / Windows 原生]"]
+        PROBE["本地模型额度嗅探 (quota-detector.js)<br/>[Antigravity / Gemini / Claude 额度与倒计时]"]
+        WIN["置顶透明伴侣视窗 (BrowserWindow)<br/>[pet.html + gemini-pet.js]"]
+        CHAT["独立毛玻璃 AI 客服 (pet-chat.html)<br/>[智能左右避让防遮挡 + 长期免登凭证]"]
+        TRAY["操作系统托盘 & 右键设置<br/>[开机自启/音量/缩放/显隐/位置记忆]"]
+    end
+
+    HOOK -->|pet-key-press 事件| WIN
+    PROBE -->|5h/周额度与刷新倒计时| WIN
+    WIN -->|打字抖动/小鸭音效/果冻回弹/Combo徽章| USER["用户桌面办公交互"]
+    WIN -->|双击或右键呼出| CHAT
+    TRAY -->|持久化到 desktop-pet-config.json| WIN
+    CHAT -->|直接调用本地免登凭证| BACKEND["本地中台服务 (/api/ai/chat)"]
+```
+
+- **高保真动画与物理反馈引擎**：
+  - **丰富姿态与动效**：内置 `idle`（待机呼吸）、`dragged`（抓取悬空）、`happy`（欢呼跃动）、`chill`（惬意打盹）、`fall`（下落跌坐果冻回弹 `gpet-jelly`）、`pat`（抚摸心心升腾 `gpet-heart`）以及 `typing`（极速打字与上下震荡）等多套状态资产。
+  - **拖拽与窗口穿透**：悬浮窗支持按住小宠小人直接在桌面上任意拖拽，松手自动记忆坐标；气泡与背景支持精准透明穿透，日常完全不干扰其他工作窗口。
+- **跨平台系统级全局键盘监听与连击热力系统 (`pet-keyboard-hook.js`)**：
+  - **无侵入全局捕获**：基于 `uiohook-napi` 监听系统按键事件，Windows 下开箱即用，macOS 下提供系统“辅助功能 (Accessibility)”授权检测与一键打开系统隐私设置引导。
+  - **敲击联动与小鸭音效**：在任意外部软件（代码编辑器、微信、Word 等）中打字，小宠均能同步触发打字动画，并按配置播放清脆可爱的小鸭子叫声 (`Ya1.mp3`/`Ya2.mp3`)。
+  - **连击徽章 (Combo Badge) 与狂热模式 (Fever Mode)**：连续高频输入时，小宠头顶浮现流光渐变的 Combo 连击计数；达到连击阈值时触发火焰色狂热震颤 (Fever Shake) 特效，极大提升敲键盘的节奏感与趣味性。
+- **本地多模型额度实时探测器 (`quota-detector.js`)**：
+  - **多模型配额嗅探**：支持无感探测本地 Antigravity 语言服务器状态，提取 CSRF 凭证并解析 Gemini 与 Claude 的 `5h` 和 `weekly` 周期剩余百分比与刷新倒计时（例如自动将 `refresh in 3 hours 20 minutes` 解析为 `3小时20分后刷新`）。
+  - **智能动态气泡**：小宠头顶的气泡支持按需轮播模型剩余额度或警告信息，让开发者对自身 AI 额度水位一目了然。
+- **独立毛玻璃 AI 客服视窗 (`pet-chat.html`)**：
+  - **防遮挡坐标避让算法 (`calculateChatBounds`)**：根据小宠当前所处的屏幕绝对坐标及主显示器工作区，自动计算对话框的最佳落点（优先放置在空间更充裕的左侧或右侧，底边对齐脚底），杜绝对话框遮挡小宠本身。
+  - **毛玻璃粉红极简设计**：视窗采用 24px 高斯模糊 backdrop-filter、圆润卡片设计、猫耳头像呼吸动画，支持按住标题栏自由拖动。
+  - **本地安全免登凭证**：系统启动时通过 `auth-sessions-repository` 为小宠自动签发 `desktop_pet` 专属长期会话 Token，直接免登调用中台全部 AI 会话与报表接口，支持上下文对话与交互式错误排查。
+- **个性化设置与托盘菜单集成**：
+  - **右键悬浮控制面板**：右键点击小宠即可呼出轻量控制面板，支持体型缩放（0.6x~2.5x 自由滑动）、音量控制（0%~100%）、打字声音开启/关闭、动态气泡开关、打字动作开关及位置重置。
+  - **配置持久化**：所有个性化参数与最后停放位置自动持久化至用户数据目录下的 `desktop-pet-config.json`，版本升级与重启完全无缝保留。
+  - **系统托盘一键调度**：系统托盘右键菜单提供专有“🐾 桌面宠物 (哈基米)”子菜单，包含“开机/启动自动运行桌宠”、“本次隐藏/唤回显示桌宠”以及“呼出桌宠AI客服对话”。
+
+---
+
+
 ## 3. 安全授权与双轨 License 体系
 
 为了保证安装包与扩展在企业内网的安全合规分发，平台构建了严密的**双轨非对称加密授权体系**：
@@ -694,6 +767,12 @@ sequenceDiagram
    - 签发权威私钥 (`desktop-license-signing-key.json`)、授权台账 (`desktop-license-registry.json`)、管理员签发路由与管理页面，**在 electron-builder 打包配置中被严格排除 (`!backend/...`)**，绝不随客户端分发。
 4. **F12 浏览器扩展 License**：
    - 针对浏览器扩展提供独立公钥验签与打包接口 (`/api/public/f12-license`)。
+5. **现代化双语激活界面与里程碑验证**：
+   - 客户端激活页全面支持中英双语自适应，内置标准 License 格式示例展示与一键快捷复制。
+   - 激活核验过程配备动态进度条与阶段里程碑跟踪（语法格式校验 $\rightarrow$ 离线公钥验签 $\rightarrow$ 租户权限初始化 $\rightarrow$ 在线可信时间确认），提供丝滑透明的用户体验。
+6. **单实例互斥锁与 SQLite 防死锁守护**：
+   - 桌面端启动期通过 Electron 原生 `app.requestSingleInstanceLock()` 机制实行单实例保护，重复启动将自动聚焦已打开的程序并退出当前进程，彻底避免多进程并发读写 SQLite。
+   - SQLite 底层驱动配置 `busy_timeout = 15000` (15秒等待)，杜绝启动与跨表批量写入时的瞬时锁冲突。
 
 ---
 
@@ -735,6 +814,8 @@ flowchart LR
 | **`ai-knowledge.db`** | `backend/data/` | Dragon Claw 智能体代码与项目文档增量向量/BM25 索引缓存（可随源码更新随时重建） |
 | **`custom-tools/`** | `backend/data/` | 所有上传的自定义 HTML 工具与静态资源文件 |
 | **`images/`** | `data/` | 报表全屏高清截图、导出 Excel/PDF 临时缓存文件 |
+| **`desktop-pet-config.json`** | 用户数据目录 (`%APPDATA%` 或 `~/Library/Application Support/`) | 桌面宠物个性化运行配置（启停状态、当前可见性、小宠缩放比例、打字音效音量、声音方案、气泡显隐、打字反馈及屏幕坐标记忆） |
+
 
 ### 4.2 启动期完整性自检与自愈 (`sqlite-integrity-repair.js`)
 
@@ -937,6 +1018,11 @@ flowchart TD
 | **数据探索** | `/db-explorer` | 需登录 (修改需Admin) | SQLite 底层物理表可视化查询与多日日志打包导出 |
 | **自定义工具** | `/custom-tool` / `/tools/:slug` | 按工具配置 | 运行与管理自定义 HTML/ZIP 工具，支持多源市场扩展 |
 | **License 管理** | `/desktop-license-admin` | 管理员专有 | 管理员签发、续期、失效与归档客户端 License（服务端专有） |
+| **桌面宠物 AI 对话窗** | `desktop-pet/pet-chat.html` | 客户端本地免登 | 哈基米桌面伴侣独立 AI 客服视窗，支持智能避让、上下文问答与错误排查 |
+| **餐单与采购核验** | `/tools/tool-mtpx4vtr` | 需登录/本地 | 内容驱动列画像自动纠偏、WK预留周列智能剥离、每日差异汇总与明细折叠 |
+| **强控业务比对产品查询** | `/tools/tool-mumxi3px` | 需登录/本地 | 强控业务比对产品多维度模糊检索与合规范围排查 |
+| **阿拉伯语互动学习** | `/tools/tool-mtakhxqm` | 需登录/本地 | 埃及口语课堂词汇发音跟读、字母练习与多媒体互动测验 |
+| **聊天记录中心** | `/tools/chat-history-center` | 需登录 (管理需Admin) | 租户隔离的 TXT 聊天消息、全文检索、人员统计与多源数据源管理 |
 | **合规与隐私** | `/privacy`, `/terms` | 公开 | 平台合规静态说明页，支持独立或弹窗访问 |
 
 ---
@@ -1178,86 +1264,97 @@ pm2 stop tools-platform         # 停止服务
 
 ---
 
-### 12.3 Windows 桌面客户端指引 (安装版 vs 绿色版)
+### 12.3 桌面客户端指引 (Windows 安装版/绿色版 vs macOS 签名公证版)
 
-平台通过 GitHub Actions 自动构建并发布两种 Windows 客户端：
+平台通过 GitHub Actions 自动化流水线构建并发布 Windows 与 macOS 多端桌面客户端：
 
-| 特性维度 | NSIS 安装版 (`Setup.exe`) | 绿色免安装版 (`Portable.exe`) |
-| :--- | :--- | :--- |
-| **文件名格式** | `Tools-Platform-Setup-X.Y.Z.exe` | `Tools-Platform-Portable-X.Y.Z.exe` |
-| **安装方式** | 标准 Windows 安装向导，可自定义安装路径 | 单文件 EXE，双击直接运行，无需安装 |
-| **快捷方式** | 自动创建桌面与开始菜单快捷方式 | 不创建快捷方式，可手动发送快捷方式到桌面 |
-| **版本升级** | **支持应用内检测更新与静默自动升级** | 需从 GitHub Releases 手动下载新 EXE 替换 |
-| **开机自启** | 托盘菜单可直接一键勾选开机自启动 | 不写注册表启动项，纯绿色便携 |
-| **数据存储** | 共用当前用户数据目录 (`%APPDATA%/tools-platform/data`) | 共用相同用户数据目录，更换 EXE **数据不丢失** |
-| **使用场景** | **推荐主力办公机安装使用** | 临时调试、U盘便携、无管理员安装权限机器 |
+| 特性维度 | Windows NSIS 安装版 (`Setup.exe`) | Windows 绿色免安装版 (`Portable.exe`) | macOS 原生客户端 (`DMG` / `ZIP`) |
+| :--- | :--- | :--- | :--- |
+| **文件名格式** | `Tools-Platform-Setup-X.Y.Z.exe` | `Tools-Platform-Portable-X.Y.Z.exe` | `Tools-Platform-X.Y.Z-arm64.dmg` / `x64.dmg` |
+| **支持架构** | x64 (64位) | x64 (64位) | **Apple Silicon (arm64) & Intel (x64) 双原生** |
+| **安装方式** | 标准 Windows 安装向导，可自定义路径 | 单文件 EXE，双击直接运行，无需安装 | 挂载 DMG 拖入 `/Applications`，开箱即用 |
+| **快捷方式** | 自动创建桌面与开始菜单快捷方式 | 不创建快捷方式，可手动发送到桌面 | 自动集成于 macOS 启动台 (Launchpad) 与访达应用目录 |
+| **版本升级** | **支持应用内检测更新与静默自动升级** | 需从 GitHub Releases 手动下载新 EXE 替换 | **支持通过 ZIP 载荷进行应用内增量检测与升级** |
+| **开机自启** | 托盘菜单可直接一键勾选开机自启动 | 不写注册表启动项，纯绿色便携 | 托盘/Dock 支持配置登录项自动启动 |
+| **系统级桌宠** | **支持哈基米桌宠全功能与全局键盘监听** | **支持哈基米桌宠全功能与全局键盘监听** | **支持哈基米桌宠全功能（需系统辅助功能权限）** |
+| **数据存储** | `%APPDATA%\Tools Platform\` | 共享相同目录，更换 EXE **数据不丢失** | `~/Library/Application Support/Tools Platform/` |
+| **安全机制** | 单实例锁 + SQLite 15s Busy Timeout | 单实例锁 + SQLite 15s Busy Timeout | **Apple Developer 签名 + Hardened Runtime + 官方公证** |
 
 #### 客户端获取与激活步骤：
-1. **下载客户端**：从 GitHub Releases 下载最新的 `Tools-Platform-Setup-X.Y.Z.exe` 或 `Tools-Platform-Portable-X.Y.Z.exe`。
-2. **首次启动激活**：
-   - 首次双击打开程序，将弹出 License 激活窗口。
+1. **下载对应版本**：从 GitHub Releases 下载适合操作系统的最新客户端。macOS 用户按芯片选择 `arm64` (M系列芯片) 或 `x64` (Intel芯片)。
+2. **首次启动与激活**：
+   - 首次打开程序，将弹出中英双语 License 激活窗口（支持标准样例一键复制）。
    - 输入管理员分配的通用授权码（以 `DSKL1-` 开头）。
-   - 客户端核验成功后，将在后台自动拉起本地服务并在右下角系统托盘常驻。
-3. **打开主页**：双击托盘图标，程序将自动调用系统默认浏览器打开 `http://localhost:3030`。
+   - 客户端完成离线公钥验签与可信时间校验后，在后台自动启动本地服务并常驻系统托盘/状态栏。
+3. **打开主页与桌宠联动**：
+   - 双击托盘图标，程序将自动调用默认浏览器打开 `http://localhost:3030`。
+   - 屏幕右下角自动唤起**哈基米桌面宠物**。
+   - **macOS 全局打字监听授权**：若要在敲击键盘时触发桌宠打字动画与小鸭叫声，请在系统弹窗中点击前往设置，或打开“系统设置 $\rightarrow$ 隐私与安全性 $\rightarrow$ 辅助功能 (Accessibility)”，为 `Tools Platform` 勾选授权。未授权时桌宠其他功能与 AI 客服依然完全可用。
 
 ---
 
-### 12.4 Windows 客户端本地生成文件与目录全景字典 (Setup vs Portable)
+### 12.4 桌面客户端本地生成文件与目录全景字典 (Windows vs macOS)
 
-为方便运维审计、数据迁移、备份及排障分析，以下详细列出 `Tools-Platform-Setup-X.Y.Z.exe`（安装版）与 `Tools-Platform-Portable-X.Y.Z.exe`（绿色便携版）在 Windows 系统中落地生成的所有目录、文件及其具体用途。
+为方便运维审计、数据迁移、备份及排障分析，以下详细列出桌面客户端在 Windows 与 macOS 系统中落地生成的所有目录、文件及其具体用途。
 
-#### 12.4.1 安装版 vs 绿色版落地特征概览
+#### 12.4.1 安装版 / 绿色版 / macOS 落地特征概览
 
 ```mermaid
 flowchart LR
-    subgraph SetupVer["Tools-Platform-Setup-X.Y.Z.exe (安装版)"]
+    subgraph WinSetup["Windows Setup.exe (安装版)"]
         S1["安装目录:<br/>%LocalAppData%\Programs\tools-platform"]
         S2["桌面/开始菜单快捷方式 (.lnk)"]
-        S3["注册表卸载项 (Uninstall)"]
-        S4["自动更新缓存:<br/>%LOCALAPPDATA%\tools-platform-updater"]
+        S3["自动更新缓存:<br/>%LOCALAPPDATA%\tools-platform-updater"]
     end
 
-    subgraph PortableVer["Tools-Platform-Portable-X.Y.Z.exe (绿色便携版)"]
+    subgraph WinPortable["Windows Portable.exe (绿色便携版)"]
         P1["单文件便携运行 (支持 U 盘)"]
         P2["运行临时解压目录:<br/>%TEMP%\electron-builder-portable\...<br/>(退出自动清理)"]
-        P3["0 注册表写入 / 0 快捷方式残留"]
     end
 
-    subgraph SharedData["共享持久化用户数据目录 (%APPDATA%\Tools Platform\)"]
-        D1["核心 SQLite 数据库<br/>(tools.db / report.db / requirements.db)"]
+    subgraph MacApp["macOS DMG / ZIP (原生应用版)"]
+        M1["应用程序目录:<br/>/Applications/Tools Platform.app"]
+        M2["Apple Gatekeeper 公证票据 (Stapled ticket)"]
+    end
+
+    subgraph SharedData["持久化用户数据目录 (Windows: %APPDATA% / macOS: ~/Library/Application Support)"]
+        D1["核心 SQLite 数据库 (tools.db / report.db / requirements.db)"]
         D2["授权凭证 (desktop-license.json)"]
-        D3["每日运行日志 (logs/YYYY-MM-DD/...)"]
-        D4["自定义扩展工具生态 (custom-tools/)"]
-        D5["系统与媒体素材 (images/ / backups/)"]
+        D3["桌宠个性化配置 (desktop-pet-config.json)"]
+        D4["每日运行日志 (logs/YYYY-MM-DD/...)"]
+        D5["自定义扩展工具生态 (custom-tools/)"]
     end
 
-    SetupVer --> SharedData
-    PortableVer --> SharedData
+    WinSetup --> SharedData
+    WinPortable --> SharedData
+    MacApp --> SharedData
 ```
 
 #### 12.4.2 客户端安装与执行层目录 (Program & Temp Files)
 
-| 适用版本 | 默认物理路径 | 生成文件清单 | 作用与生命周期说明 |
+| 适用平台 / 版本 | 默认物理路径 | 生成文件清单 | 作用与生命周期说明 |
 | :--- | :--- | :--- | :--- |
-| **安装版 (Setup)** | `%LocalAppData%\Programs\tools-platform\`<br/>*(自定义安装则为用户指定路径)* | • `Tools Platform.exe`<br/>• `Uninstall Tools Platform.exe`<br/>• `resources\app.asar`<br/>• `resources\elevate.exe`<br/>• 核心运行依赖库 (`ffmpeg.dll`, `d3dcompiler_47.dll`, `v8_context_snapshot.bin`, `locales\*.pak` 等) | **程序主程序与运行依赖库**。<br/>包含全部前后端源码（打包于 asar）、Node.js 与 Chromium 核心执行环境。运行卸载程序或覆盖安装时更新。 |
-| **安装版 (Setup)** | `%USERPROFILE%\Desktop\`<br/>`%APPDATA%\Microsoft\Windows\Start Menu\Programs\` | • `Tools Platform.lnk` | **桌面与开始菜单快捷方式**。<br/>便于用户快速启动托盘客户端，卸载时自动移除。 |
-| **安装版 (Setup)** | `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\com.toolsplatform.app` | • 注册表项（DisplayName, DisplayVersion, UninstallString 等） | **控制面板卸载注册项**。<br/>让应用正常展示在 Windows“设置 $\rightarrow$ 应用 $\rightarrow$ 已安装的应用”中。 |
-| **安装版 (Setup)** | `%LOCALAPPDATA%\tools-platform-updater\` | • `latest.yml`<br/>• `*.blockmap`<br/>• `Tools-Platform-Setup-*.exe` | **自动更新增量下载缓存**。<br/>应用内后台检测到新版本时，按差量 Blockmap 仅拉取变更块，升级安装完成后自动清理。 |
-| **绿色版 (Portable)** | `%TEMP%\electron-builder-portable\tools-platform-*\`<br/>*(或 `%LOCALAPPDATA%\Temp\...`)* | • 临时解包的 EXE 运行载荷与 asar 资源 | **绿色版临时自解压运行目录**。<br/>启动时解压运行依赖，**客户端退出时自动清理**，不污染主机。 |
+| **Windows 安装版 (Setup)** | `%LocalAppData%\Programs\tools-platform\` | • `Tools Platform.exe`<br/>• `Uninstall Tools Platform.exe`<br/>• `resources\app.asar`<br/>• 核心 DLLs 与运行环境 | **程序主程序与运行依赖库**。覆盖安装或卸载时变动。 |
+| **Windows 快捷方式** | `%USERPROFILE%\Desktop\`<br/>`%APPDATA%\Microsoft\Windows\Start Menu\Programs\` | • `Tools Platform.lnk` | **桌面与开始菜单快捷方式**。卸载时自动移除。 |
+| **Windows 绿色版 (Portable)** | `%TEMP%\electron-builder-portable\tools-platform-*\` | • 临时解包的 EXE 运行载荷与 asar 资源 | **临时自解压运行目录**。客户端退出时自动清理，0 残留。 |
+| **macOS 客户端 (DMG/ZIP)** | `/Applications/Tools Platform.app/` | • `Contents/MacOS/Tools Platform`<br/>• `Contents/Resources/app.asar`<br/>• `Contents/Frameworks/...` | **macOS 签名公证独立包**。包含全部原生模块、前后端代码与运行时。 |
 
-#### 12.4.3 持久化用户数据目录 (%APPDATA%\Tools Platform\)
+#### 12.4.3 持久化用户数据目录 (Windows vs macOS)
 
 > [!IMPORTANT]
-> **无论使用安装版还是绿色版，所有业务数据、配置、授权凭证均统一持久化存储于当前用户的 `%APPDATA%\Tools Platform\` 目录下**。
-> 这意味着在安装版与绿色版之间互相切换、或直接下载新版 Portable.exe 替换旧版时，**所有业务数据均 100% 自动继承且绝对不会丢失**。
+> **所有业务数据、配置、授权凭证均统一持久化存储于操作系统的专用数据目录下：**
+> - **Windows**：`%APPDATA%\Tools Platform\`（即 `C:\Users\<Username>\AppData\Roaming\Tools Platform\`）
+> - **macOS**：`~/Library/Application Support/Tools Platform/`
+> 这意味着在安装版与绿色版之间互相切换、升级新版或更换客户端时，**所有业务数据与桌宠个性化设置均 100% 自动继承且绝对不会丢失**。
 
 ##### 用户数据目录完整拓扑结构：
 ```text
-%APPDATA%\Tools Platform\ (即 C:\Users\<Username>\AppData\Roaming\Tools Platform\)
+用户数据目录/ (Windows: %APPDATA%\Tools Platform\ | macOS: ~/Library/Application Support/Tools Platform/)
 ├── desktop-license.json                 # [授权] 客户端本地离线激活状态与硬件签名凭证
 ├── desktop-license-public-status.json   # [授权] 授权只读状态镜像 (供前端安全调用展示)
+├── desktop-pet-config.json              # [桌宠] 哈基米个性化配置 (缩放、音量、打字开关、气泡开关、记忆坐标)
 ├── launch-state.json                    # [运行] 启动时间戳、窗口坐标与上次状态缓存
-├── tools-platform-runtime-monitor.ps1   # [监控] Windows 原生托盘状态探针 PowerShell 脚本
+├── tools-platform-runtime-monitor.ps1   # [监控] Windows 原生托盘状态探针脚本 (仅 Windows)
 ├── logs\                                # [日志] 系统运行日志与运行时进程监控
 │   ├── YYYY-MM-DD\                      #       按日期分目录归档
 │   │   ├── out.log                      #       标准输出日志 (后端启动流水、API 访问日志)
@@ -1269,6 +1366,7 @@ flowchart LR
 │   ├── report.db                        # [SQLite] 报表与月报库 (SLA 快照、指标明细、健康度计分)
 │   ├── requirements.db                  # [SQLite] 需求广场库 (专项治理协作需求与工单流转)
 │   ├── ai-knowledge.db                  # [SQLite] AI 知识图谱向量库 (本地问答切片与检索索引)
+│   ├── chat-history.db                  # [SQLite] 租户隔离的聊天记录与全文检索库
 │   ├── *.db-wal / *.db-shm              # [SQLite] WAL 模式高并发读写临时预写日志与索引
 │   ├── custom-tools\                    # [生态] 自定义工具目录 (每个微工具的 HTML/JS/manifest/.i18n)
 │   ├── builtin-tools-sync-decisions.json# [生态] 内置工具升级冲突判定记录 (保护本地修改)
@@ -1278,9 +1376,6 @@ flowchart LR
 │   ├── tmp\                             # [暂存] 临时中转目录 (解压、大文件上传、UIV 抓取中间数据)
 │   └── tenants\                         # [租户] 新租户独立业务空间（默认租户不搬迁）
 │       └── <tenant-id>\                 #       每个租户独立的 DB、附件、脚本和工具目录
-│           ├── tools.db / report.db / requirements.db / ai-knowledge.db
-│           ├── custom-tools\ / images\ / slide-library\
-│           └── backups\ / tmp\
 └── Cache\ / Code Cache\ / Local Storage # [引擎缓存] Chromium 渲染引擎与离线本地前端状态缓存
 ```
 
@@ -1290,17 +1385,19 @@ flowchart LR
 | :--- | :--- | :--- | :--- |
 | `desktop-license.json` | JSON | 存储客户端激活码（`DSKL1-` 开头）、机器指纹 Hash、签名认证及离线授权有效期。 | 需在下次启动时重新输入授权码激活。 |
 | `desktop-license-public-status.json` | JSON | 授权脱敏公开状态（有效期、授权状态、租户名），供前端安全展示。 | 重启后由主进程自动重新生成。 |
+| `desktop-pet-config.json` | JSON | 哈基米桌面宠物配置（enabled, visible, scale, soundVol, soundSet, bubbleOn, typingOn, position 坐标）。 | 重启后恢复默认桌宠大小与音量配置。 |
 | `launch-state.json` | JSON | 记录上次启动时间、端口分配、窗口尺寸与位置缓存。 | 重启后由程序重新生成默认窗口位置。 |
 | `logs/YYYY-MM-DD/out.log` / `error.log` | Log 文本 | 记录本地后台运行流水与异常报错堆栈，支持托盘右键一键打开分析。 | 无影响，日志按日自动归档。 |
 | `logs/runtime-status.json` | JSON | 实时运行时快照（进程 PID、本地服务端口 3030、心跳状态）。 | 由主进程定时刷新写入。 |
 | `data/tools.db` | SQLite 数据库 | **全局控制面及默认租户兼容库**。账号、Session、租户清单保存在这里；升级前已有的导航、AI 配置、脚本、SLA 规则和自定义工具注册表继续作为默认租户数据原地使用。 | **极高**。丢失将影响登录、租户清单及默认租户业务。 |
-| `data/chat-history.db` / `data/tenants/<tenant-id>/chat-history.db` | SQLite 数据库 | 租户共享的 TXT 聊天消息、全文索引、人员统计及用户个人状态。 | 丢失将需重新导入 TXT；该库不进入平台全局备份。 |
-| `data/tenants/<tenant-id>/` | 独立租户目录 | 新租户的 `tools.db`、`report.db`、`requirements.db`、`ai-knowledge.db`、附件、自定义工具、备份和临时文件；目录之间不共享业务数据。 | 仅影响对应租户；归档租户时目录会保留。 |
+| `data/chat-history.db` | SQLite 数据库 | 租户共享的 TXT 聊天消息、全文索引、人员统计及用户个人状态。 | 丢失将需重新导入 TXT；该库不进入平台全局备份。 |
+| `data/tenants/<tenant-id>/` | 独立租户目录 | 新租户的独立业务空间，目录之间严格数据隔离。 | 仅影响对应租户；归档租户时目录会保留。 |
 | `data/report.db` | SQLite 数据库 | **报表看板与月报分析库**。包含历史月度快照、指标合控计算结果、各维度健康度计分、短板排名明细。 | **极高**。丢失将失去所有历史月报与数据看板记录。 |
 | `data/requirements.db` | SQLite 数据库 | **需求广场流转库**。包含专项治理需求提单、流转进度与反馈工单。 | **高**。丢失将清空需求广场数据。 |
 | `data/custom-tools/` | 文件夹 | 存放用户自行开发或导入的自定义小工具全部静态源码与多语言字典。 | 丢失将无法打开自建的扩展微工具。 |
 | `data/backups/builtin-tools/` | 文件夹 | 每次内置工具随版本升级前自动创建的安全备份副本。 | 无影响，仅在需要回滚旧版内置工具时使用。 |
 | `data/images/` | 图片媒体文件 | 胶片设计素材库切图、PPT 页面图片、报表生成的缩略图与图表资产。 | 相关 PPT 素材与图片无法正常展示预览。 |
+
 
 #### 12.4.4 用户主动导出文件目录 (Downloads)
 
@@ -1353,7 +1450,7 @@ flowchart TD
 
 ## 13. CI/CD 自动化发布与客户端平滑升级机制
 
-平台配置了工业级 **GitHub Actions 自动化流水线**，实现了“主分支代码推送 -> 自动打标/语义化升级 -> Windows 双版本交叉编译 -> 发布 GitHub Releases -> 客户端差量增量更新”的闭环发布生命周期：
+平台配置了工业级 **GitHub Actions 自动化流水线**，实现了“主分支代码推送 -> 自动打标/语义化升级 -> Windows/macOS 双端并行交叉编译与签名公证 -> 发布 GitHub Releases -> 客户端差量增量更新”的闭环发布生命周期：
 
 ```mermaid
 sequenceDiagram
@@ -1361,38 +1458,55 @@ sequenceDiagram
     actor Dev as 开发者 / Git Push
     participant CI as GitHub Actions (CI Runner)
     participant GH as GitHub Releases
-    participant Client as 已安装桌面客户端
+    participant WinClient as Windows 客户端
+    participant MacClient as macOS 客户端
 
     Dev->>CI: Push 代码至 main 分支
     CI->>CI: 1. 自动执行 npm version patch
     CI->>CI: 2. 自动打 Git Tag (vX.Y.Z) 并推回仓库
-    CI->>CI: 3. Windows 环境构建 Setup.exe 与 Portable.exe
-    CI->>CI: 4. 生成 latest.yml 与 .blockmap 差量索引
-    CI->>GH: 5. 自动上传产物并发布 Release
-    Note over Client,GH: 客户端后台自动感知与更新
-    Client->>GH: 托盘定期拉取 latest.yml 比对版本
-    GH-->>Client: 发现新版本，按 Blockmap 仅下载差异增量字节
-    Client-->>Client: 托盘提示“新版本已就绪”，用户确认后重启平滑应用
+    par Windows 构建 (windows-latest)
+        CI->>CI: 3a. 构建 Setup.exe 与 Portable.exe
+        CI->>CI: 3b. 生成 latest.yml 与 .blockmap 差量索引
+    and macOS 构建 (macos-latest)
+        CI->>CI: 3c. 配置 Apple Keychain 导入 P12 证书
+        CI->>CI: 3d. 构建 arm64 与 x64 DMG + ZIP 双架构
+        CI->>CI: 3e. 执行 Apple Notarization 公证与 Stapler 票据装订
+        CI->>CI: 3f. 生成 latest-mac.yml 更新索引
+    end
+    CI->>GH: 4. 自动上传 Windows 与 macOS 产物并发布 Release
+    Note over WinClient,GH: Windows 客户端后台自动感知与更新
+    WinClient->>GH: 托盘定期拉取 latest.yml 比对版本，按 Blockmap 差量下载
+    Note over MacClient,GH: macOS 客户端后台自动感知与更新
+    MacClient->>GH: 状态栏拉取 latest-mac.yml 比对版本，拉取 ZIP 载荷自动升级
 ```
 
 ### 13.1 语义化版本与自动化 Release 流水线 (`.github/workflows/build.yml`)
-1. **自动 Patch 版本递增**：
-   - 开发者向 `main` 分支提交代码后，CI 流水线第一阶段 (`prepare-release`) 自动在 `tools-platform/package.json` 中自增 patch 版本号。
+1. **自动 Patch 版本递增 (`prepare-release`)**：
+   - 开发者向 `main` 分支提交代码后，流水线在 `ubuntu-latest` 环境中自动在 `tools-platform/package.json` 中自增 patch 版本号。
    - 自动提交 `chore: release vX.Y.Z [skip ci]` 并打上对应 `vX.Y.Z` 的 Git Tag，随后推回 GitHub 仓库。
-2. **多版本自动交叉编译**：
-   - 第二阶段 (`build`) 在 `windows-latest` 环境下拉取最新 Tag。
+2. **Windows 交叉编译 (`build-windows`)**：
+   - 在 `windows-latest` 环境下拉取最新 Tag。
    - 执行 `npm run build:win`，同时构建 NSIS 安装包 (`Setup.exe`) 与绿色免安装单文件 (`Portable.exe`)。
-3. **Release 资产自动归档**：
-   - 自动生成 NSIS 升级所需的 `latest.yml` 校验清单与 `.blockmap` 文件。
-   - 通过 `softprops/action-gh-release` 自动将双版本 `.exe` 及升级资产发布至 GitHub Releases。
+   - 自动生成 `latest.yml` 校验清单与 `.blockmap` 增量索引。
+3. **macOS 签名与公证流水线 (`build-mac`)**：
+   - 在 `macos-latest` 环境下拉取最新 Tag。
+   - **钥匙串安全注入**：将 Base64 编码的 Developer ID Application P12 证书解码并导入专用钥匙串，设置分区列表权限 (`set-key-partition-list`)。
+   - **原生双架构构建**：执行 `npm run build:mac`，同时编译 `arm64` (Apple Silicon) 与 `x64` (Intel) 两套架构的 DMG 安装镜像与 ZIP 更新包。
+   - **官方公证 (Apple Notarization)**：集成 Apple `notarytool` 提交公证，公证成功后执行 `stapler` 将凭证票据压入 DMG 与 `.app`，完全杜绝 macOS Gatekeeper 拦截警告。
+   - 自动生成 `latest-mac.yml` 跨版本更新索引。
+4. **Release 资产自动归档**：
+   - 通过 `softprops/action-gh-release` 统一归档 Windows 与 macOS 全部安装包、更新包及元数据。
 
 ### 13.2 客户端平滑增量更新机制 (Electron-Updater)
-1. **Blockmap 差量增量下载**：
+1. **Windows Blockmap 差量增量下载**：
    - 安装版客户端内置 `electron-updater`，启动时或托盘右键手动“检查更新”时，自动向 GitHub Releases 拉取 `latest.yml`。
    - 比对本地版本号与远程版本号；若发现新版本，利用 `.blockmap` 索引仅下载变动的二进制 Block 数据，**节省 80%+ 的网络流量消耗**。
-2. **托盘日志与进度可视化**：
-   - 下载进度实时推送到 Windows 托盘与原生的 WinForms 进度监控窗口。
-   - 下载完成后弹出“重启安装新版本”提示，用户点击后自动退出、平滑覆盖并重启恢复服务。
+2. **macOS 自动升级机制**：
+   - macOS 客户端自动向 GitHub Releases 拉取 `latest-mac.yml`，检测到新版本后下载对应架构的 ZIP 载荷，在后台解压并于用户确认后静默重启覆盖应用。
+3. **托盘日志与进度可视化**：
+   - 下载进度实时推送到托盘与原生进度监控窗口。
+   - 下载完成后弹出“重启安装新版本”提示，用户点击后自动平滑重启恢复服务。
+
 
 ### 13.3 HTML 工具市场与独立发布
 
