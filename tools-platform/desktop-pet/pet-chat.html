@@ -258,6 +258,104 @@
       color: #ffffff;
     }
 
+    /* 错误与原始请求/响应调试卡片 (优雅折叠交互) */
+    .error-container {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .error-title-row {
+      color: #b91c1c;
+      font-size: 12.5px;
+      line-height: 1.5;
+    }
+    .error-trigger-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 5px;
+      padding: 5px 11px;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 10px;
+      color: #dc2626;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .15s ease;
+      font-family: inherit;
+      box-shadow: 0 2px 6px rgba(239, 68, 68, 0.12);
+    }
+    .error-trigger-btn:hover {
+      background: #fee2e2;
+      border-color: #ef4444;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
+    }
+    .error-hint-click {
+      font-weight: 500;
+      text-decoration: underline;
+      font-size: 10.5px;
+      color: #991b1b;
+      margin-left: 3px;
+    }
+    .error-debug-card {
+      margin-top: 8px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 10px 12px;
+      color: #e2e8f0;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+      animation: msg-appear .2s ease;
+    }
+    .error-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #334155;
+      margin-bottom: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #f472b6;
+    }
+    .copy-report-btn {
+      background: #1e293b;
+      border: 1px solid #475569;
+      color: #cbd5e1;
+      font-size: 10.5px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all .15s ease;
+    }
+    .copy-report-btn:hover {
+      background: #334155;
+      color: #ffffff;
+      border-color: #f472b6;
+    }
+    .debug-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #38bdf8;
+      margin: 6px 0 2px 0;
+    }
+    .debug-code {
+      background: #020617;
+      border: 1px solid #1e293b;
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 10.5px;
+      color: #cbd5e1;
+      max-height: 180px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      margin: 0;
+    }
+
     /* 快捷提问推荐词 Chips */
     .quick-chips {
       padding: 6px 12px;
@@ -452,6 +550,7 @@
     }
 
     let localPort = 3030;
+    let authToken = null;
     let messagesHistory = [];
     let isGenerating = false;
     let abortController = null;
@@ -462,6 +561,41 @@
     const typingIndicator = document.getElementById('typingIndicator');
     const quotaBar = document.getElementById('quotaBar');
     const subtitleStatus = document.getElementById('subtitleStatus');
+
+    window.__PET_ERROR_DEBUG_MAP = {};
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    window.toggleErrorDebug = function(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const isHidden = el.style.display === 'none';
+      el.style.display = isHidden ? 'block' : 'none';
+      if (isHidden) {
+        chatBody.scrollTop = chatBody.scrollHeight;
+      }
+    };
+
+    window.copyErrorDebug = function(id, btn) {
+      const data = window.__PET_ERROR_DEBUG_MAP[id];
+      if (!data) return;
+      const text = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+      navigator.clipboard.writeText(text).then(() => {
+        const oldText = btn.innerHTML;
+        btn.innerHTML = '已复制 ✅';
+        setTimeout(() => { btn.innerHTML = oldText; }, 2000);
+      }).catch(() => {
+        alert('自动复制受限，请在下方手动全选复制喵~');
+      });
+    };
 
     // 简单轻量 Markdown 解析器
     function renderMarkdown(text) {
@@ -558,6 +692,8 @@
 
       const aiBubble = appendMessage('', 'ai');
       let responseText = '';
+      let currentRes = null;
+      let rawErrorBody = '';
 
       abortController = new AbortController();
 
@@ -566,26 +702,35 @@
         "2. 性格魅力：你是一只充满活力、元气灵动、忠诚体贴的桌面小猫咪。说话语气温和亲切、活泼治愈，偶尔在句尾或情绪处自然地带上可爱的猫咪语气词（如'喵~'、'✧(≖ ◡ ≖✿)'、'(ฅ'ω'ฅ)'）。\n" +
         "请始终以热情耐心的态度为主人效劳！";
 
+      const payloadObj = {
+        messages: messagesHistory,
+        context: systemPrompt,
+        pageTitle: '哈基米桌面伴侣',
+        pagePath: '/desktop-pet',
+        uiLanguage: 'zh-CN',
+        stream: true
+      };
+
       try {
         const targetUrl = `http://127.0.0.1:${localPort}/api/ai/chat`;
+        const headers = {
+          'Content-Type': 'application/json',
+          'Accept': 'application/x-ndjson, application/json'
+        };
+        if (authToken) {
+          headers['Authorization'] = `Bearer ${authToken}`;
+        }
+
         const res = await fetch(targetUrl, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/x-ndjson, application/json'
-          },
-          body: JSON.stringify({
-            messages: messagesHistory,
-            context: systemPrompt,
-            pageTitle: '哈基米桌面伴侣',
-            pagePath: '/desktop-pet',
-            uiLanguage: 'zh-CN',
-            stream: true
-          }),
+          headers,
+          body: JSON.stringify(payloadObj),
           signal: abortController.signal
         });
+        currentRes = res;
 
         if (!res.ok) {
+          rawErrorBody = await res.text().catch(() => '');
           throw new Error(`服务响应异常 HTTP ${res.status}`);
         }
 
@@ -629,7 +774,67 @@
         if (ipcRenderer) ipcRenderer.send('pet-trigger-motion', 'happy');
       } catch (err) {
         typingIndicator.style.display = 'none';
-        aiBubble.innerHTML = `<span style="color:#e11d48;">呜呜，连接平台 AI 服务时出现了一点小状况喵：${err.message || err}</span>`;
+
+        const debugId = 'dbg_' + Date.now();
+        const status = currentRes ? currentRes.status : 0;
+        const statusText = currentRes ? currentRes.statusText : (err.message || '网络连接失败');
+
+        let responseHeadersObj = {};
+        if (currentRes && currentRes.headers) {
+          try {
+            responseHeadersObj = Object.fromEntries(currentRes.headers.entries());
+          } catch (_) {}
+        }
+
+        let parsedBody = rawErrorBody;
+        try {
+          parsedBody = JSON.parse(rawErrorBody);
+        } catch (_) {}
+
+        const debugReport = {
+          timestamp: new Date().toLocaleString(),
+          summary: `AI服务交互异常 [HTTP ${status || 'ERR'}]`,
+          request: {
+            url: `http://127.0.0.1:${localPort}/api/ai/chat`,
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/x-ndjson, application/json',
+              'Authorization': authToken ? `Bearer ${authToken.slice(0, 8)}...${authToken.slice(-6)}` : '(未提供鉴权Token)'
+            },
+            payload: payloadObj
+          },
+          response: {
+            status,
+            statusText,
+            headers: responseHeadersObj,
+            body: parsedBody || err.message
+          }
+        };
+
+        window.__PET_ERROR_DEBUG_MAP[debugId] = debugReport;
+
+        aiBubble.innerHTML = `
+          <div class="error-container">
+            <div class="error-title-row">
+              <div>呜呜，连接平台 AI 服务时出现了一点小状况喵：</div>
+              <button class="error-trigger-btn" onclick="toggleErrorDebug('${debugId}')" title="点击查看服务器原始请求与返回详情">
+                <span>⚠️ [服务响应异常 ${status ? `HTTP ${status}` : '网络连接失败'}]</span>
+                <span class="error-hint-click">(点击查看原始请求/返回 🔍)</span>
+              </button>
+            </div>
+            <div class="error-debug-card" id="${debugId}" style="display: none;">
+              <div class="error-card-header">
+                <span>📡 平台服务端交互诊断报告</span>
+                <button class="copy-report-btn" onclick="copyErrorDebug('${debugId}', this)">📋 复制诊断报告</button>
+              </div>
+              <div class="debug-label">【客户端请求】POST /api/ai/chat</div>
+              <pre class="debug-code"><code>${escapeHtml(JSON.stringify(debugReport.request, null, 2))}</code></pre>
+              <div class="debug-label">【服务端返回】HTTP ${status} (${statusText})</div>
+              <pre class="debug-code"><code>${escapeHtml(typeof parsedBody === 'string' ? parsedBody : JSON.stringify(parsedBody, null, 2))}</code></pre>
+            </div>
+          </div>
+        `;
         if (ipcRenderer) ipcRenderer.send('pet-trigger-motion', 'chill');
       } finally {
         isGenerating = false;
@@ -673,10 +878,20 @@
       if (ipcRenderer) ipcRenderer.send('pet-toggle-chat');
     });
 
+    // 初始化获取主进程参数 (Token, Port, Quotas)
+    if (ipcRenderer && typeof ipcRenderer.invoke === 'function') {
+      ipcRenderer.invoke('pet-get-init-data').then(data => {
+        if (data && data.port) localPort = data.port;
+        if (data && data.token) authToken = data.token;
+        if (data && data.quotas) updateQuotaDisplay(data.quotas);
+      }).catch(() => {});
+    }
+
     // 接收主进程广播
     if (ipcRenderer) {
       ipcRenderer.on('pet-chat-init', (event, data) => {
         if (data && data.port) localPort = data.port;
+        if (data && data.token) authToken = data.token;
         if (data && data.quotas) updateQuotaDisplay(data.quotas);
       });
 

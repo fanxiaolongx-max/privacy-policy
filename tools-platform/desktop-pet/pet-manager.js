@@ -84,11 +84,28 @@ function getInitialPetPosition(workArea, petW, petH, savedPos) {
     return { x: Math.round(targetX), y: Math.round(targetY) };
 }
 
+let cachedPetToken = null;
+async function getOrCreateDesktopPetToken() {
+    if (cachedPetToken) return cachedPetToken;
+    try {
+        const crypto = require('crypto');
+        const authSessionsRepo = require('../backend/models/auth-sessions-repository');
+        cachedPetToken = 'pet_' + crypto.randomBytes(24).toString('hex');
+        const expiresAt = Date.now() + 365 * 24 * 60 * 60 * 1000;
+        await authSessionsRepo.saveSession(cachedPetToken, 'desktop_pet', 'admin', expiresAt, 'default');
+        console.log('[PetManager] 已为桌面宠物自动签发本地长期凭证，具备完整 AI 对话与服务权限');
+        return cachedPetToken;
+    } catch (err) {
+        console.warn('[PetManager] Failed to create desktop pet auth session:', err.message || err);
+        return null;
+    }
+}
+
 /**
  * 智能计算对话窗口坐标：
- * 严格保证对话框与桌宠小人左右错开，绝对不产生遮挡覆盖！
+ * 严格保证对话框与桌宠小人左右错开，绝对不产生遮挡覆盖！默认加大宽高度 (440x620)
  */
-function calculateChatBounds(petBounds, chatW = 370, chatH = 520) {
+function calculateChatBounds(petBounds, chatW = 440, chatH = 620) {
     const primaryDisplay = screen.getDisplayMatching(petBounds) || screen.getPrimaryDisplay();
     const workArea = primaryDisplay.workArea;
 
@@ -208,10 +225,10 @@ function createChatWindow() {
         transparent: true,
         alwaysOnTop: true,
         resizable: true,
-        minWidth: 320,
-        minHeight: 400,
-        maxWidth: 580,
-        maxHeight: 760,
+        minWidth: 360,
+        minHeight: 460,
+        maxWidth: 760,
+        maxHeight: 960,
         skipTaskbar: true,
         hasShadow: true,
         show: false,
@@ -228,11 +245,15 @@ function createChatWindow() {
         console.warn('[PetManager] Failed to load pet-chat.html:', err.message || err);
     });
 
-    chatWin.webContents.once('did-finish-load', () => {
+    chatWin.webContents.once('did-finish-load', async () => {
         if (chatWin && !chatWin.isDestroyed()) {
+            const token = await getOrCreateDesktopPetToken();
+            const quotas = await detectAllQuotas().catch(() => null);
             chatWin.webContents.send('pet-chat-init', {
                 port: localServerPort,
-                baseUrl: localBaseUrl
+                baseUrl: localBaseUrl,
+                token: token,
+                quotas: quotas
             });
             refreshQuotas();
         }
@@ -314,6 +335,18 @@ function registerIpc() {
     if (ipcRegistered) return;
     ipcRegistered = true;
 
+    // 获取前端初始参数 (端口、Token、配额数据)
+    ipcMain.handle('pet-get-init-data', async () => {
+        const token = await getOrCreateDesktopPetToken();
+        const quotas = await detectAllQuotas().catch(() => null);
+        return {
+            port: localServerPort,
+            baseUrl: localBaseUrl,
+            token: token,
+            quotas: quotas
+        };
+    });
+
     // 切换对话窗口 (点击桌宠时触发)
     ipcMain.on('pet-toggle-chat', () => {
         try {
@@ -325,7 +358,8 @@ function registerIpc() {
             } else {
                 // 每次打开重新根据桌宠当前位置校准对话框坐标，保证不重叠
                 if (petWin && !petWin.isDestroyed()) {
-                    const bounds = calculateChatBounds(petWin.getBounds(), chatWin.getSize()[0], chatWin.getSize()[1]);
+                    const currentSize = chatWin.getSize();
+                    const bounds = calculateChatBounds(petWin.getBounds(), currentSize[0] || 440, currentSize[1] || 620);
                     chatWin.setBounds(bounds);
                 }
                 chatWin.show();
