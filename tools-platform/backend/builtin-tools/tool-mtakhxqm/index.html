@@ -11,7 +11,7 @@
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="handwriting/engine.css?v=20260830">
-    <link rel="stylesheet" href="classroom.css?v=20261003-1">
+    <link rel="stylesheet" href="classroom.css?v=20261004-4">
     <style>
         /* 全局变量与色彩系统 (采用类似现代教育App的配色) */
         :root {
@@ -1937,7 +1937,7 @@
         <!-- 右侧内容 -->
         <main class="content-area">
 
-            <div class="source-note">🇪🇬 开罗常见口语 · 从右向左读写。拉丁转写表示读音；汉语谐音仅作记忆辅助，咽音、喉塞音与重辅音请结合配音学习。</div>
+            <div class="source-note">🇪🇬 开罗常见口语 · 从右向左读写。拉丁转写表示读音；汉语谐音仅作记忆辅助。字母音节配音中的前导 /a/ 用来帮助听清，目标读音在后半段；整词直接按口语朗读。</div>
             <div id="lesson-subnav" class="lesson-subnav" aria-label="当前模块内容"></div>
             <!-- 1. 家庭称谓 -->
             <section id="tab-family" class="section">
@@ -2359,7 +2359,7 @@
             { ar: 'شَمْس', emoji: '☀️', translation: '太阳', pron: 'shams' },
             // 重音/叠音符号 (Shaddah ّ) 典型词汇
             { ar: 'أُمّ', emoji: '👩', translation: '母亲', pron: 'umm' },
-            { ar: 'جَدّ', emoji: '👴', translation: '祖父/爷爷', pron: 'gadd' },
+            { ar: 'جِدّ', emoji: '👴', translation: '祖父/爷爷', pron: 'gidd' },
             { ar: 'جِدَّة', emoji: '👵', translation: '祖母/奶奶', pron: 'gidda' },
             { ar: 'بَطّ', emoji: '🦆', translation: '鸭子', pron: 'baṭṭ' },
             { ar: 'تُفَّاح', emoji: '🍎', translation: '苹果', pron: 'toffāḥ' },
@@ -2472,7 +2472,7 @@
             family: [
                 { zh: "爸爸", ar: "بابا", py: "bāba", hz: "巴巴", group: "直系父母" },
                 { zh: "妈妈", ar: "ماما", py: "māma", hz: "玛玛", group: "直系父母" },
-                { zh: "爷爷/外公", ar: "جَدّ", py: "Gadd", hz: "盖德", group: "祖父母" },
+                { zh: "爷爷/外公", ar: "جِدّ", py: "gidd", hz: "吉德（g 音）", group: "祖父母" },
                 { zh: "奶奶/外婆", ar: "جِدَّة", py: "gidda", hz: "吉达（g 音）", group: "祖父母" },
                 { zh: "儿子", ar: "ابن", py: "Ibn", hz: "伊本", group: "子女" },
                 { zh: "女儿", ar: "بنت", py: "Bint", hz: "宾特", group: "子女" },
@@ -2601,7 +2601,7 @@
 
         const TOKEN_GLOSS = {
             "أبي": "我的爸爸（أب + 我的 ـي）", "أمي": "我的妈妈（أم + 我的 ـي）",
-            "جَدّ": "祖父 / 外祖父", "جَدَّة": "祖母 / 外祖母", "ابن": "儿子；也用于构成男性亲属",
+            "جِدّ": "祖父 / 外祖父", "جِدَّة": "祖母 / 外祖母", "ابن": "儿子；也用于构成男性亲属",
             "بنت": "女儿；也用于构成女性亲属", "عَمّ": "父亲的兄弟", "عَمَّة": "父亲的姐妹",
             "خال": "母亲的兄弟", "خالة": "母亲的姐妹", "عَمّي": "我的叔伯（عم + ـي）",
             "عَمَّتي": "我的姑姑（عمة + ـي）", "خالي": "我的舅舅（خال + ـي）", "خالتي": "我的姨妈（خالة + ـي）",
@@ -2704,7 +2704,7 @@
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 speechState.manifest = await response.json();
                 try {
-                    const overlay = await fetch('audio/drill-manifest.json?v=20261003-1');
+                    const overlay = await fetch('audio/drill-manifest.json?v=20261004-3');
                     if (overlay.ok) speechState.curated = await overlay.json();
                 } catch (_) { /* Existing offline audio remains available. */ }
                 status.textContent = `已加载 ${speechState.manifest.audioFileCount} 个内置 AI 音频`;
@@ -2818,8 +2818,11 @@
         function playUnit(type, key, variant, trigger) {
             stopSpeech();
             const unit = speechState.manifest?.units?.[type]?.[variant]?.[key];
-            const source = (variant === 'egyptian' && type !== 'letters' && speechState.curated?.[key]) || (typeof unit === 'string' ? unit : unit?.audio);
-            const fallbackText = type === 'letters' ? (unit?.name || key) : (unit?.text || key);
+            const corrected = variant === 'egyptian' && type === 'syllables'
+                ? window.letterDrill?.bank().find(item => !item.word && item.unit === key) : null;
+            const source = (corrected && speechState.curated?.[corrected.targetAudioKey])
+                || (variant === 'egyptian' && type !== 'letters' && speechState.curated?.[key]) || (typeof unit === 'string' ? unit : unit?.audio);
+            const fallbackText = corrected?.targetSpeech || (type === 'letters' ? (unit?.name || key) : (unit?.text || key));
             if (source) playLocalAudio(source, fallbackText, variant, trigger);
             else speakBrowserFallback(fallbackText, variant, trigger);
         }
@@ -2964,7 +2967,7 @@
 
             if (item.ar.includes('ّ')) {
                 hasSoundChange = true;
-                rules.push('符号 ّ 是叠音符（shadda）：把前面的辅音延长一拍。它不是一个新字母，也不是额外音节，例如 جَدّ 的 dd、عَمّ 的 mm。');
+                rules.push('符号 ّ 是叠音符（shadda）：把前面的辅音延长一拍。它不是一个新字母，也不是额外音节，例如 جِدّ 的 dd、عَمّ 的 mm。');
             }
 
             if (tokens.some(token => /^(عَمّي|عَمَّتي|خالي|خالتي|عندك|معاك)$/.test(token))) {
@@ -2984,7 +2987,7 @@
 
             if (item.ar.includes('ج')) {
                 hasSoundChange = true;
-                rules.push('埃及口语通常把 ج 读成英语 go 开头的 <b>g</b>；标准阿语多读 <b>j / dʒ</b>。所以 جَدّ 在埃及音中是 gadd，而标准语更接近 jadd。');
+                rules.push('埃及口语通常把 ج 读成英语 go 开头的 <b>g</b>；标准阿语多读 <b>j / dʒ</b>。例如“爷爷”在埃及口语中写 جِدّ、读 gidd，标准语写 جَدّ、读 jadd；这里既有辅音差异，也有元音差异。');
             }
 
             if (/خمستاشر/.test(ar)) {
@@ -3168,7 +3171,7 @@
             const contextual = {
                 'ث': [['ثَمَن', 'taman · 价格'], ['مَثَل', 'masal · 例子']],
                 'ذ': [['ذَهَب', 'dahab · 黄金'], ['ذَوْق', 'zōʾ · 品味']],
-                'ظ': [['ظَهْر', 'ḍahr · 背部'], ['نَظِيف', 'naḍīf · 干净']]
+                'ظ': [['ظَهْر', 'ḍahr · 背部'], ['حَظّ', 'ḥaẓẓ · 运气']]
             };
             if (contextual[letter]) return contextual[letter].map(([key, label]) => ({key, display: key, label, type: 'words'}));
             if (letter === 'ا') {
@@ -5123,8 +5126,9 @@
         };
 
     </script>
-    <script src="classroom.js?v=20261003-1"></script>
-    <script src="letter-drill.js?v=20261003-1"></script>
+    <script src="classroom.js?v=20261004-3"></script>
+    <script src="letter-drill-data.js?v=20261004-3"></script>
+    <script src="letter-drill.js?v=20261004-4"></script>
     <script src="handwriting/engine.js?v=20260830-3"></script>
 </body>
 

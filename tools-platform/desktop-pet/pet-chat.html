@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>✦ 哈基米 · 桌面智能客服伴侣</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: transparent !important;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .chat-container {
+      margin: 8px;
+      width: calc(100% - 16px);
+      height: calc(100% - 16px);
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1.5px solid rgba(244, 114, 182, 0.4);
+      border-radius: 20px;
+      box-shadow: 0 20px 48px rgba(236, 72, 153, 0.2), 0 4px 16px rgba(15, 23, 42, 0.12);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* 头部可爱顶栏 (支持拖拽) */
+    .chat-header {
+      background: linear-gradient(135deg, rgba(254, 242, 242, 0.95), rgba(253, 242, 248, 0.95));
+      border-bottom: 1px solid rgba(244, 114, 182, 0.25);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      -webkit-app-region: drag; /* 允许按住头部拖动整个对话窗 */
+      cursor: grab;
+      position: relative;
+      z-index: 10;
+    }
+    .chat-header:active {
+      cursor: grabbing;
+    }
+    .avatar-wrapper {
+      position: relative;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #fbcfe8, #f472b6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 4px 10px rgba(236, 72, 153, 0.3);
+      -webkit-app-region: no-drag;
+    }
+    .avatar-img {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+      animation: cat-breathe 3s ease-in-out infinite;
+    }
+    @keyframes cat-breathe {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08) translateY(-1px); }
+    }
+    .online-dot {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      width: 10px;
+      height: 10px;
+      background: #10b981;
+      border: 2px solid #ffffff;
+      border-radius: 50%;
+      box-shadow: 0 0 6px #10b981;
+    }
+    .header-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .header-title {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #9d174d;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      letter-spacing: 0.2px;
+    }
+    .header-subtitle {
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      -webkit-app-region: no-drag;
+    }
+    .header-btn {
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+      color: #64748b;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all .15s ease;
+    }
+    .header-btn:hover {
+      background: rgba(244, 114, 182, 0.2);
+      color: #be185d;
+    }
+
+    /* 多模型额度胶囊栏 (可选展示，不影响主业务) */
+    .quota-capsule-bar {
+      background: rgba(254, 242, 242, 0.7);
+      border-bottom: 1px solid rgba(244, 114, 182, 0.15);
+      padding: 5px 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10.5px;
+      color: #475569;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .quota-capsule-bar::-webkit-scrollbar {
+      display: none;
+    }
+    .quota-chip {
+      background: #ffffff;
+      border: 1px solid rgba(244, 114, 182, 0.3);
+      padding: 2px 7px;
+      border-radius: 10px;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: #be185d;
+      font-weight: 600;
+    }
+    .quota-chip.codex {
+      color: #0284c7;
+      border-color: rgba(56, 189, 248, 0.4);
+    }
+    .quota-chip.idle {
+      color: #64748b;
+      border-color: #cbd5e1;
+      font-weight: 500;
+    }
+
+    /* 消息展示区域 */
+    .chat-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(244, 114, 182, 0.4) transparent;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+    .chat-body::-webkit-scrollbar {
+      width: 5px;
+    }
+    .chat-body::-webkit-scrollbar-thumb {
+      background: rgba(244, 114, 182, 0.4);
+      border-radius: 10px;
+    }
+
+    .msg-row {
+      display: flex;
+      gap: 8px;
+      max-width: 90%;
+      animation: msg-appear .2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes msg-appear {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .msg-row.ai {
+      align-self: flex-start;
+    }
+    .msg-row.user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+
+    .msg-bubble {
+      padding: 9px 13px;
+      border-radius: 16px;
+      font-size: 12.5px;
+      line-height: 1.55;
+      word-break: break-word;
+      position: relative;
+    }
+    .msg-row.ai .msg-bubble {
+      background: #ffffff;
+      color: #1e293b;
+      border: 1px solid rgba(226, 232, 240, 0.9);
+      border-top-left-radius: 4px;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+    }
+    .msg-row.user .msg-bubble {
+      background: linear-gradient(135deg, #ec4899, #8b5cf6);
+      color: #ffffff;
+      border-top-right-radius: 4px;
+      box-shadow: 0 4px 14px rgba(236, 72, 153, 0.3);
+    }
+
+    /* Markdown 元素优化 */
+    .msg-bubble p {
+      margin: 4px 0;
+    }
+    .msg-bubble p:first-child { margin-top: 0; }
+    .msg-bubble p:last-child { margin-bottom: 0; }
+    .msg-bubble pre {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 8px 10px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 11.5px;
+      margin: 6px 0;
+    }
+    .msg-bubble code {
+      background: rgba(236, 72, 153, 0.1);
+      color: #be185d;
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-size: 11.5px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .msg-row.user .msg-bubble code {
+      background: rgba(255, 255, 255, 0.25);
+      color: #ffffff;
+    }
+
+    /* 快捷提问推荐词 Chips */
+    .quick-chips {
+      padding: 6px 12px;
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      background: rgba(254, 242, 242, 0.5);
+      border-top: 1px dashed rgba(244, 114, 182, 0.25);
+    }
+    .quick-chips::-webkit-scrollbar {
+      display: none;
+    }
+    .chip-btn {
+      background: #ffffff;
+      border: 1px solid rgba(244, 114, 182, 0.35);
+      color: #9d174d;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 9px;
+      border-radius: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all .15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .chip-btn:hover {
+      background: #fdf2f8;
+      border-color: #ec4899;
+      transform: translateY(-1px);
+    }
+
+    /* 底部输入框 */
+    .chat-footer {
+      padding: 10px 12px;
+      background: #ffffff;
+      border-top: 1px solid rgba(244, 114, 182, 0.2);
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+    .input-box {
+      flex: 1;
+      min-height: 36px;
+      max-height: 90px;
+      border: 1.5px solid rgba(244, 114, 182, 0.35);
+      border-radius: 14px;
+      padding: 8px 12px;
+      font-size: 12.5px;
+      color: #1e293b;
+      outline: none;
+      resize: none;
+      background: rgba(253, 242, 248, 0.3);
+      font-family: inherit;
+      line-height: 1.4;
+      transition: border-color .15s;
+    }
+    .input-box:focus {
+      border-color: #ec4899;
+      background: #ffffff;
+    }
+    .send-btn {
+      height: 36px;
+      padding: 0 14px;
+      background: linear-gradient(135deg, #ec4899, #d946ef);
+      color: #ffffff;
+      border: none;
+      border-radius: 14px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      box-shadow: 0 4px 12px rgba(236, 72, 153, 0.35);
+      transition: all .15s ease;
+      flex-shrink: 0;
+    }
+    .send-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(236, 72, 153, 0.45);
+    }
+    .send-btn:active {
+      transform: translateY(1px);
+    }
+    .send-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .typing-indicator {
+      display: none;
+      align-self: flex-start;
+      padding: 6px 12px;
+      background: #fdf2f8;
+      border-radius: 12px;
+      font-size: 11px;
+      color: #be185d;
+      font-style: italic;
+      animation: pulse 1.2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <!-- 顶栏 -->
+    <div class="chat-header">
+      <div class="avatar-wrapper">
+        <img class="avatar-img" src="./assets/happy.png" alt="Hajimi" />
+        <div class="online-dot"></div>
+      </div>
+      <div class="header-info">
+        <div class="header-title">
+          <span>哈基米 · 桌面智能伴侣</span>
+          <span style="font-size: 11px;">🐾</span>
+        </div>
+        <div class="header-subtitle" id="subtitleStatus">平台智能客服已连线 · 随时为你效劳喵~</div>
+      </div>
+      <div class="header-actions">
+        <button class="header-btn" id="newChatBtn" title="清空并开启新对话">✨</button>
+        <button class="header-btn" id="hideBtn" title="关闭对话框 (点击桌宠可重新打开)">✕</button>
+      </div>
+    </div>
+
+    <!-- 额度胶囊栏 (动态渲染，优雅降级) -->
+    <div class="quota-capsule-bar" id="quotaBar">
+      <div class="quota-chip idle">
+        <span>💤</span>
+        <span>伴侣待命模式 · 平台工具就绪</span>
+      </div>
+    </div>
+
+    <!-- 聊天内容区域 -->
+    <div class="chat-body" id="chatBody">
+      <!-- 初始欢迎语 -->
+      <div class="msg-row ai">
+        <div class="msg-bubble">
+          主人好呀喵！(ฅ'ω'ฅ) 我是你的桌面专属看板娘<b>「哈基米」</b>！<br>
+          我已经接通了 Tools Platform 后台智能客服引擎。你可以随时向我询问：<br>
+          • 平台系统工具使用说明与自动化技巧<br>
+          • 今日任务、告警中心与数据运维状态<br>
+          • 或者是任何你想聊的话题与编程伴写哦喵~
+        </div>
+      </div>
+    </div>
+
+    <div class="typing-indicator" id="typingIndicator">哈基米正在思考组织语言喵… 💭</div>
+
+    <!-- 快捷提问推荐词 -->
+    <div class="quick-chips">
+      <button class="chip-btn" data-prompt="请帮我检查一下当前平台的告警中心，最近有无未处理的异常告警？">
+        <span>🚨</span> 今日告警速报
+      </button>
+      <button class="chip-btn" data-prompt="请介绍一下平台支持哪些核心运维工具和系统功能？">
+        <span>🛠️</span> 常用工具导航
+      </button>
+      <button class="chip-btn" data-prompt="哈基米，我写代码好累呀，来给我讲个猫咪小故事或者卖个萌鼓励我一下吧喵~">
+        <span>🐟</span> 摸鱼元气充能
+      </button>
+      <button class="chip-btn" data-prompt="请告诉我如何使用平台的新增自定义系统工具？">
+        <span>💡</span> 自定义工具指引
+      </button>
+    </div>
+
+    <!-- 底部输入框 -->
+    <div class="chat-footer">
+      <textarea
+        id="userInput"
+        class="input-box"
+        placeholder="向哈基米提问平台工具或闲聊… (Enter发送，Shift+Enter换行)"
+        rows="1"
+      ></textarea>
+      <button id="sendBtn" class="send-btn">
+        <span>(ฅ'ω'ฅ)</span>
+        <span>发送</span>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const isElectron = typeof require !== 'undefined';
+    let ipcRenderer = null;
+    if (isElectron) {
+      try { ipcRenderer = require('electron').ipcRenderer; } catch (_) {}
+    }
+
+    let localPort = 3030;
+    let messagesHistory = [];
+    let isGenerating = false;
+    let abortController = null;
+
+    const chatBody = document.getElementById('chatBody');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const typingIndicator = document.getElementById('typingIndicator');
+    const quotaBar = document.getElementById('quotaBar');
+    const subtitleStatus = document.getElementById('subtitleStatus');
+
+    // 简单轻量 Markdown 解析器
+    function renderMarkdown(text) {
+      if (!text) return '';
+      let html = String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+      // 代码块 ```code```
+      html = html.replace(/```([\s\S]*?)```/g, (m, code) => {
+        return `<pre><code>${code.trim()}</code></pre>`;
+      });
+
+      // 行内代码 `code`
+      html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+      // 粗体 **bold**
+      html = html.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+
+      // 换行
+      html = html.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+
+      return html;
+    }
+
+    function appendMessage(text, role) {
+      const row = document.createElement('div');
+      row.className = `msg-row ${role}`;
+
+      const bubble = document.createElement('div');
+      bubble.className = 'msg-bubble';
+      bubble.innerHTML = renderMarkdown(text);
+
+      row.appendChild(bubble);
+      chatBody.appendChild(row);
+      chatBody.scrollTop = chatBody.scrollHeight;
+      return bubble;
+    }
+
+    // 更新多模型额度展示
+    function updateQuotaDisplay(quotas) {
+      if (!quotas) return;
+      let html = '';
+
+      if (quotas.antigravity && quotas.antigravity.active) {
+        const ag = quotas.antigravity;
+        html += `<div class="quota-chip">
+          <span>✨ Gemini 5h:</span>
+          <span>${ag.gemini5h}%</span>
+          <span style="font-size:9.5px;opacity:.7;">(${ag.gemini5hReset || '已同步'})</span>
+        </div>`;
+        if (ag.geminiWeekly !== undefined) {
+          html += `<div class="quota-chip">
+            <span>📅 周额度:</span>
+            <span>${ag.geminiWeekly}%</span>
+          </div>`;
+        }
+      }
+
+      if (quotas.codex && quotas.codex.active) {
+        html += `<div class="quota-chip codex">
+          <span>⚡ Codex:</span>
+          <span>正常在线</span>
+        </div>`;
+      }
+
+      if (!html) {
+        html = `<div class="quota-chip idle">
+          <span>💤</span>
+          <span>独立伴侣模式 · 平台工具就绪</span>
+        </div>`;
+      }
+
+      quotaBar.innerHTML = html;
+    }
+
+    async function handleSendMessage(presetText) {
+      if (isGenerating) return;
+      const text = (presetText || userInput.value || '').trim();
+      if (!text) return;
+
+      appendMessage(text, 'user');
+      userInput.value = '';
+      messagesHistory.push({ role: 'user', content: text });
+
+      isGenerating = true;
+      sendBtn.disabled = true;
+      typingIndicator.style.display = 'block';
+      chatBody.scrollTop = chatBody.scrollHeight;
+
+      // 触发宠物起舞动作
+      if (ipcRenderer) ipcRenderer.send('pet-trigger-motion', 'typing');
+
+      const aiBubble = appendMessage('', 'ai');
+      let responseText = '';
+
+      abortController = new AbortController();
+
+      const systemPrompt = "【角色与性格设定】：你现在是 Tools Platform 的桌面看板娘与智能客服伴侣「哈基米」（Hajimi）。\n" +
+        "1. 专业能力：你精通 Tools Platform 平台的所有工具、功能（UIVision自动化、SLA服务等级协议、告警中心、题库系统等）、数据运维与系统架构，能够准确、可靠、高效地解答主人的平台使用问题与技术疑问。\n" +
+        "2. 性格魅力：你是一只充满活力、元气灵动、忠诚体贴的桌面小猫咪。说话语气温和亲切、活泼治愈，偶尔在句尾或情绪处自然地带上可爱的猫咪语气词（如'喵~'、'✧(≖ ◡ ≖✿)'、'(ฅ'ω'ฅ)'）。\n" +
+        "请始终以热情耐心的态度为主人效劳！";
+
+      try {
+        const targetUrl = `http://127.0.0.1:${localPort}/api/ai/chat`;
+        const res = await fetch(targetUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/x-ndjson, application/json'
+          },
+          body: JSON.stringify({
+            messages: messagesHistory,
+            context: systemPrompt,
+            pageTitle: '哈基米桌面伴侣',
+            pagePath: '/desktop-pet',
+            uiLanguage: 'zh-CN',
+            stream: true
+          }),
+          signal: abortController.signal
+        });
+
+        if (!res.ok) {
+          throw new Error(`服务响应异常 HTTP ${res.status}`);
+        }
+
+        typingIndicator.style.display = 'none';
+
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/x-ndjson') && res.body) {
+          const reader = res.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = '';
+
+          while (true) {
+            const { value, done } = await reader.read();
+            buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+            const lines = buffer.split(/\r?\n/);
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (!trimmed) continue;
+              try {
+                const event = JSON.parse(trimmed);
+                if (event.type === 'delta' && event.delta) {
+                  responseText += event.delta;
+                  aiBubble.innerHTML = renderMarkdown(responseText);
+                  chatBody.scrollTop = chatBody.scrollHeight;
+                } else if (event.type === 'error') {
+                  throw new Error(event.error || 'AI 回复出错');
+                }
+              } catch (_) {}
+            }
+            if (done) break;
+          }
+        } else {
+          const data = await res.json();
+          responseText = data.reply || data.message || '哈基米收到啦喵~';
+          aiBubble.innerHTML = renderMarkdown(responseText);
+        }
+
+        messagesHistory.push({ role: 'model', content: responseText });
+        if (ipcRenderer) ipcRenderer.send('pet-trigger-motion', 'happy');
+      } catch (err) {
+        typingIndicator.style.display = 'none';
+        aiBubble.innerHTML = `<span style="color:#e11d48;">呜呜，连接平台 AI 服务时出现了一点小状况喵：${err.message || err}</span>`;
+        if (ipcRenderer) ipcRenderer.send('pet-trigger-motion', 'chill');
+      } finally {
+        isGenerating = false;
+        sendBtn.disabled = false;
+        abortController = null;
+        chatBody.scrollTop = chatBody.scrollHeight;
+      }
+    }
+
+    sendBtn.addEventListener('click', () => handleSendMessage());
+
+    userInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSendMessage();
+      }
+    });
+
+    // 快捷推荐词点击
+    document.querySelectorAll('.chip-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const prompt = btn.getAttribute('data-prompt');
+        if (prompt) handleSendMessage(prompt);
+      });
+    });
+
+    // 新对话
+    document.getElementById('newChatBtn').addEventListener('click', () => {
+      messagesHistory = [];
+      chatBody.innerHTML = `
+        <div class="msg-row ai">
+          <div class="msg-bubble">
+            记忆已清空，开启全新的畅聊会话喵！(ฅ'ω'ฅ) 主人请尽管吩咐~
+          </div>
+        </div>
+      `;
+    });
+
+    // 隐藏窗口
+    document.getElementById('hideBtn').addEventListener('click', () => {
+      if (ipcRenderer) ipcRenderer.send('pet-toggle-chat');
+    });
+
+    // 接收主进程广播
+    if (ipcRenderer) {
+      ipcRenderer.on('pet-chat-init', (event, data) => {
+        if (data && data.port) localPort = data.port;
+        if (data && data.quotas) updateQuotaDisplay(data.quotas);
+      });
+
+      ipcRenderer.on('pet-quota-update', (event, quotas) => {
+        updateQuotaDisplay(quotas);
+      });
+    }
+  </script>
+</body>
+</html>

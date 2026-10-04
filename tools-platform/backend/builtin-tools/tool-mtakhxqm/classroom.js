@@ -27,6 +27,19 @@ window.classroomNavigate = function (id) {
     });
 };
 function initClassroom() {
+    const header = document.querySelector('header');
+    if (header && window.ResizeObserver) {
+        const updateHeaderHeight = () => document.documentElement.style.setProperty('--classroom-header-height', header.getBoundingClientRect().height + 'px');
+        updateHeaderHeight();
+        new ResizeObserver(updateHeaderHeight).observe(header);
+    }
+    // Reuse the drill lexicon so new everyday words can also be reviewed in the deck.
+    const existingWords = new Set(STARTER_WORD_DATA.map(word => word.ar));
+    for (const word of window.EgyptianDrillData.COMMON_WORDS) {
+        if (existingWords.has(word.ar)) continue;
+        STARTER_WORD_DATA.push({...word, emoji:'💬'});
+        existingWords.add(word.ar);
+    }
     window.classroomNavigate('tab-alphabet');
     window.letterDrill.init();
     const letterFilters = document.getElementById('deck-letter-chips');

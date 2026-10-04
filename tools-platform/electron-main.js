@@ -40,6 +40,7 @@ process.env.TOOLS_LOG_DIR = electronLogRoot;
 if (process.env.TOOLS_DAILY_LOGS === undefined) {
     process.env.TOOLS_DAILY_LOGS = '0';
 }
+const petManager = require('./desktop-pet/pet-manager');
 
 function getAppIconPath() {
     if (process.platform !== 'win32') {
@@ -1741,6 +1742,40 @@ function refreshTrayMenu() {
         { label: '打开数据导入', click: () => openAppPath('/sla') },
         { label: '打开报表看板', click: () => openAppPath('/report') },
         { type: 'separator' },
+        {
+            label: '🐾 桌面宠物 (哈基米)',
+            submenu: [
+                {
+                    label: '开机/启动自动运行桌宠',
+                    type: 'checkbox',
+                    checked: petManager.isPetEnabled(),
+                    click: (item) => {
+                        petManager.setPetEnabled(item.checked);
+                        refreshTrayMenu();
+                    }
+                },
+                {
+                    label: petManager.isPetVisible() ? '🙈 本次隐藏桌宠' : '👀 唤回显示桌宠',
+                    enabled: petManager.isPetEnabled(),
+                    click: () => {
+                        if (petManager.isPetVisible()) {
+                            petManager.hidePetForNow();
+                        } else {
+                            petManager.showPetForNow();
+                        }
+                        refreshTrayMenu();
+                    }
+                },
+                {
+                    label: '💬 呼出桌宠AI客服对话',
+                    enabled: petManager.isPetEnabled(),
+                    click: () => {
+                        petManager.createChatWindow().show();
+                    }
+                }
+            ]
+        },
+        { type: 'separator' },
         { label: '查看实时日志/更新进度', click: openRuntimeStatusWindow },
         { label: '打开日志文件夹', click: openLogsFolder },
         { type: 'separator' },
@@ -1806,6 +1841,13 @@ async function startTrayApp() {
         closeStartupWindow();
         startDesktopLicenseRefresh();
         scheduleStartupUpdateCheck();
+
+        // 启动桌面宠物组件
+        try {
+            petManager.initDesktopPet({ port: PORT, baseUrl: launchUrl });
+        } catch (petErr) {
+            console.warn('[Electron] Failed to initialize desktop pet:', petErr.message || petErr);
+        }
     } catch (err) {
         updateStartupProgress(100, '启动未完成', err.message || String(err), '阶段 2/2 · 启动失败');
         setTimeout(() => closeStartupWindow(false), 1600);
@@ -1815,6 +1857,9 @@ async function startTrayApp() {
 
 app.on('before-quit', () => {
     isQuitting = true;
+    try {
+        petManager.cleanupDesktopPet();
+    } catch (_) {}
 });
 
 app.whenReady().then(() => {

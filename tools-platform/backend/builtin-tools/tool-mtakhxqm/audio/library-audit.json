@@ -1,0 +1,176 @@
+{
+  "version": 1,
+  "checkedAt": "2026-10-04",
+  "method": "MP3 decoding, sample format, duration, PCM RMS and peak checks; archive CRC and manifest references. No human pronunciation certification.",
+  "allDecoded": 1645,
+  "archiveFileCount": 1645,
+  "encoding": {
+    "codec": "mp3",
+    "sampleRate": 24000,
+    "channels": 1
+  },
+  "originalLibrary": {
+    "decoded": 1261,
+    "corrupt": 0,
+    "silent": 0,
+    "durationRangeSeconds": [
+      1.248,
+      6.048
+    ],
+    "lowRmsThreshold": 300,
+    "lowRmsFiles": [
+      {
+        "file": "classroom-05dc9fc1e11ef21c.mp3",
+        "duration": 1.872,
+        "rms": 154.93,
+        "peak": 2153,
+        "keys": [
+          "فُ"
+        ]
+      },
+      {
+        "file": "classroom-2ed304f6c33007f1.mp3",
+        "duration": 1.872,
+        "rms": 84.3,
+        "peak": 1952,
+        "keys": [
+          "فِ"
+        ]
+      },
+      {
+        "file": "classroom-5fd80fa57c64317a.mp3",
+        "duration": 1.872,
+        "rms": 276.96,
+        "peak": 3905,
+        "keys": [
+          "بَ"
+        ]
+      },
+      {
+        "file": "syllable-egyptian-119c5451ad7c3fae.mp3",
+        "duration": 1.296,
+        "rms": 287.65,
+        "peak": 4189,
+        "keys": [
+          {
+            "kind": "syllables",
+            "variant": "egyptian",
+            "key": "ش"
+          }
+        ]
+      },
+      {
+        "file": "syllable-egyptian-390d2843328ddca3.mp3",
+        "duration": 1.32,
+        "rms": 106.35,
+        "peak": 1894,
+        "keys": [
+          {
+            "kind": "syllables",
+            "variant": "egyptian",
+            "key": "فِ"
+          }
+        ]
+      },
+      {
+        "file": "syllable-egyptian-6a9b00bf691bdfd2.mp3",
+        "duration": 1.248,
+        "rms": 155.09,
+        "peak": 2198,
+        "keys": [
+          {
+            "kind": "syllables",
+            "variant": "egyptian",
+            "key": "ت"
+          }
+        ]
+      },
+      {
+        "file": "syllable-egyptian-a83185c0fe218172.mp3",
+        "duration": 1.272,
+        "rms": 281.74,
+        "peak": 3663,
+        "keys": [
+          {
+            "kind": "syllables",
+            "variant": "egyptian",
+            "key": "ز"
+          }
+        ]
+      },
+      {
+        "file": "syllable-egyptian-e57c96ba8aea7ea0.mp3",
+        "duration": 1.248,
+        "rms": 257.08,
+        "peak": 2893,
+        "keys": [
+          {
+            "kind": "syllables",
+            "variant": "egyptian",
+            "key": "ث"
+          }
+        ]
+      },
+      {
+        "file": "syllable-egyptian-ea02a7a1f92ea9fa.mp3",
+        "duration": 1.272,
+        "rms": 190.11,
+        "peak": 2211,
+        "keys": [
+          {
+            "kind": "syllables",
+            "variant": "egyptian",
+            "key": "فُ"
+          }
+        ]
+      },
+      {
+        "file": "syllable-standard-2155dba946011ef5.mp3",
+        "duration": 1.248,
+        "rms": 127.62,
+        "peak": 3203,
+        "keys": [
+          {
+            "kind": "syllables",
+            "variant": "standard",
+            "key": "قِ"
+          }
+        ]
+      }
+    ],
+    "note": "RMS includes padding and flags quiet speech for review; this does not establish a phonetic mismatch. Original library files are retained."
+  },
+  "curatedRevision": {
+    "revision": "egyptian-ipa-20261004-1",
+    "keyCount": 375,
+    "fileCount": 372,
+    "missing": 0,
+    "corrupt": 0,
+    "silent": 0,
+    "lowRmsFiles": [],
+    "lowSpeechActivityFiles": [],
+    "durationRangeSeconds": [
+      0.194208,
+      4.095292
+    ],
+    "processing": "Rebuilt Egyptian speech with carrier syllables, edge-silence trimming, and bounded peak normalization."
+  },
+  "pronunciationReview": {
+    "humanReviewed": false,
+    "remainingFocus": "Word-final unstressed vowels, contextual long /eː oː/, glottal stops and gemination remain listening-review priorities.",
+    "pendingNativeReview": [
+      {
+        "key": "ذَوْق",
+        "speech": "زَوْء",
+        "expectedIpa": "zoːʔ",
+        "reason": "Confirm Cairo long /oː/ and final /ʔ/ by a native speaker; decoding and ASR do not verify these sounds."
+      },
+      {
+        "key": "فَوْق",
+        "speech": "فَوْء",
+        "expectedIpa": "foːʔ",
+        "reason": "Confirm Cairo long /oː/ and final /ʔ/ by a native speaker; decoding and ASR do not verify these sounds."
+      }
+    ]
+  }
+}
