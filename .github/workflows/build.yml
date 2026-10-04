@@ -176,6 +176,32 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-electron-builder-
 
+      - name: Setup macOS Keychain for Code Signing
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.CSC_LINK }}
+          P12_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          KEYCHAIN_PASSWORD: "builder_keychain_${{ github.run_id }}"
+        run: |
+          set -euo pipefail
+          CERT_PATH="$RUNNER_TEMP/build_cert.p12"
+          KEYCHAIN_PATH="$RUNNER_TEMP/build.keychain"
+
+          # 1. Decode certificate
+          echo "$BUILD_CERTIFICATE_BASE64" | base64 --decode > "$CERT_PATH"
+
+          # 2. Create custom keychain with known password
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # 3. Import certificate & private key
+          security import "$CERT_PATH" -k "$KEYCHAIN_PATH" -P "$P12_PASSWORD" -T /usr/bin/codesign -T /usr/bin/productbuild
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # 4. Set as default and add to keychain search list
+          security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | tr -d '"')
+          security default-keychain -s "$KEYCHAIN_PATH"
+
       - name: Build Application (macOS)
         working-directory: tools-platform
         shell: bash
@@ -195,11 +221,17 @@ jobs:
           done
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CSC_LINK: ${{ secrets.CSC_LINK }}
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          CSC_KEYCHAIN: ${{ runner.temp }}/build.keychain
+          CSC_KEYCHAIN_PASSWORD: "builder_keychain_${{ github.run_id }}"
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+      - name: Clean up Keychain
+        if: always()
+        run: |
+          security delete-keychain "$RUNNER_TEMP/build.keychain" || true
+          rm -f "$RUNNER_TEMP/build_cert.p12" || true
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
