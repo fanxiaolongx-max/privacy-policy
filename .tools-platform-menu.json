@@ -54,6 +54,15 @@
       "encrypted": false,
       "fingerprint": "18da61da38e43d6bbd393fda1e2176758cca4cb5d4d96ff5c4223888e118a752",
       "updatedAt": "2026-09-28T18:30:33.104Z"
+    },
+    {
+      "slug": "tool-mr88gv9x",
+      "name": "平台介绍",
+      "description": "CS质量运营工具平台的能力、流程与应用场景介绍。",
+      "href": "./tool-mr88gv9x/index.html",
+      "encrypted": false,
+      "fingerprint": "43df4dd69713720355eef4ee38f9d7a0c5e5f228ed7cfc594d61667d5dc237aa",
+      "updatedAt": "2026-10-05T06:44:39.937Z"
     }
   ]
 }
