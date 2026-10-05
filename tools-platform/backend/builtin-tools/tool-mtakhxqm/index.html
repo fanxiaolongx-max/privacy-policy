@@ -2696,6 +2696,7 @@
             localAudio: null,
             activeButton: null
         };
+        window.speechState = speechState;
 
         async function loadLocalAudioManifest() {
             const status = document.getElementById('voice-status');
@@ -2820,9 +2821,10 @@
             const unit = speechState.manifest?.units?.[type]?.[variant]?.[key];
             const corrected = variant === 'egyptian' && type === 'syllables'
                 ? window.letterDrill?.bank().find(item => !item.word && item.unit === key) : null;
-            const source = (corrected && speechState.curated?.[corrected.targetAudioKey])
-                || (variant === 'egyptian' && type !== 'letters' && speechState.curated?.[key]) || (typeof unit === 'string' ? unit : unit?.audio);
-            const fallbackText = corrected?.targetSpeech || (type === 'letters' ? (unit?.name || key) : (unit?.text || key));
+            const source = (typeof unit === 'string' ? unit : unit?.audio)
+                || (corrected && speechState.curated?.[corrected.targetAudioKey])
+                || (variant === 'egyptian' && type !== 'letters' && speechState.curated?.[key]);
+            const fallbackText = (type === 'letters' ? (unit?.name || key) : (unit?.text || key)) || corrected?.targetSpeech;
             if (source) playLocalAudio(source, fallbackText, variant, trigger);
             else speakBrowserFallback(fallbackText, variant, trigger);
         }

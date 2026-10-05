@@ -1856,6 +1856,8 @@
     }
 
     function scheduleProactiveAlert() {
+        const token = localStorage.getItem('tools_token') || sessionStorage.getItem('tools_token');
+        if (!token) return;
         if (proactiveTimer) window.clearTimeout(proactiveTimer);
         const delay = isProactiveSnoozedToday()
             ? Math.max(1000, new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + 1).getTime() - Date.now() + 1000)
@@ -2056,6 +2058,8 @@
     }
 
     async function loadProactiveAlert() {
+        const token = localStorage.getItem('tools_token') || sessionStorage.getItem('tools_token');
+        if (!token) return;
         if (isProactiveSnoozedToday()) {
             scheduleProactiveAlert();
             return;
@@ -2067,6 +2071,10 @@
         proactiveLoading = true;
         try {
             const response = await fetch('/api/ai/proactive-alerts?limit=200', { headers: getAuthHeaders() });
+            if (response.status === 401) {
+                // 401 身份过期或未登录，停止主动告警轮询
+                return;
+            }
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const data = await response.json();
             const selected = chooseProactiveItems(data.items);

@@ -145,7 +145,7 @@ test('curated beginner content excludes formal and Levantine distractors', () =>
 
 // A small DOM/clock/audio fixture exercises public UI events without adding a
 // browser dependency. Audio completion and timer advancement are independent.
-function browserFixture(letter = 'ث', random = 0) {
+function browserFixture(letter = 'ث', random = 0, options = {}) {
     class Element {
         constructor(tagName = 'div') {
             this.tagName = tagName.toUpperCase();this.children = [];this.hidden = false;
@@ -213,9 +213,16 @@ function browserFixture(letter = 'ث', random = 0) {
     }
     const manifest = Object.fromEntries(pool.flatMap(q => [q.audioKey, q.targetAudioKey,
         ...(q.parts || []).filter(part => part.read).map(part => part.audioKey)]).map(key => [key, 'fixture:' + key]));
-    const window = {EgyptianDrillData: require(path.join(root, 'letter-drill-data.js')), addEventListener() {}};
+    const window = {EgyptianDrillData: require(path.join(root, 'letter-drill-data.js')), addEventListener() {}, ...options.window};
+    if (options.speechState) window.speechState = options.speechState;
+    const fetchHandler = options.fetch || (async (url) => {
+        if (options.fullManifest && String(url).includes('manifest.json') && !String(url).includes('drill')) {
+            return {ok: true, json: async () => options.fullManifest};
+        }
+        return {ok: true, json: async () => manifest};
+    });
     const context = {
-        window, document, Audio, performance: {now: () => 0}, fetch: async () => ({ok: true, json: async () => manifest}),
+        window, document, Audio, performance: {now: () => 0}, fetch: fetchHandler,
         Math: Object.assign(Object.create(Math), {random: typeof random === 'function' ? random : () => random}),
         setTimeout: (fn, delay) => {const id = ++cursor;timeouts.set(id, {fn,delay});return id;},
         clearTimeout: id => timeouts.delete(id),
@@ -349,3 +356,49 @@ test('deliberate inspection cancels automatic advancement before or after audio 
         assert.equal($('drill-count').textContent, '2/20');
     }
 });
+
+test('clicking split letters in decomposed words plays clean syllable and long vowel recordings rather than whole words', async () => {
+    const fullManifest = JSON.parse(fs.readFileSync(path.join(root, 'audio/manifest.json')));
+    const selected = pool.filter(q => q.letter === 'ا');
+    const kitabIndex = selected.findIndex(q => q.word === 'كِتَاب');
+    assert.ok(kitabIndex >= 0);
+    const browser = browserFixture('ا', () => (kitabIndex + 0.1) / selected.length, {
+        fullManifest,
+        speechState: { manifest: fullManifest }
+    });
+    const { $, recordings } = browser;
+    assert.ok($('drill-display').innerHTML.includes('كِتَاب'));
+
+    // Split the word to show individual letter parts
+    $('drill-word').onclick();
+    await browser.flush();
+    assert.equal($('drill-parts').hidden, false);
+    assert.equal($('drill-parts').children.length, 4);
+
+    // Part 0: كِ (/ki/) -> clean syllable audio without carrier prefix
+    $('drill-parts').children[0].onclick();
+    await browser.flush();
+    assert.equal(recordings.at(-1).played, fullManifest.units.syllables.egyptian['كِ'].audio);
+    assert.ok($('drill-audio-status').textContent.includes('字母音 /ki/'));
+    assert.ok(!$('drill-audio-status').textContent.includes('前导'));
+
+    // Part 1: تَ (/taː/) -> clean syllable audio
+    $('drill-parts').children[1].onclick();
+    await browser.flush();
+    assert.equal(recordings.at(-1).played, fullManifest.units.syllables.egyptian['تَ'].audio);
+    assert.ok($('drill-audio-status').textContent.includes('字母音 /taː/'));
+
+    // Part 2: ا (/aː/) -> pure long vowel audio (آ), NOT the whole word كِتَاب
+    $('drill-parts').children[2].onclick();
+    await browser.flush();
+    assert.equal(recordings.at(-1).played, fullManifest.units.syllables.egyptian['آ'].audio);
+    assert.notEqual(recordings.at(-1).played, browser.manifest['كِتَاب']);
+    assert.ok($('drill-audio-status').textContent.includes('长元音 /aː/'));
+
+    // Whole word button still plays the whole word
+    $('drill-whole').onclick();
+    await browser.flush();
+    assert.equal(recordings.at(-1).played, browser.manifest['كِتَاب']);
+    assert.ok($('drill-audio-status').textContent.includes('整词'));
+});
+

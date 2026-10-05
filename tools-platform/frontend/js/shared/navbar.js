@@ -6415,7 +6415,11 @@ function severityLabel(severity) {
 
 async function fetchAlertCenterSummary() {
     const res = await fetch('/api/alert-center/summary', { headers: getAuthHeaderForNav() });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) {
+        const err = new Error(`HTTP ${res.status}`);
+        err.status = res.status;
+        throw err;
+    }
     return res.json();
 }
 
@@ -6654,12 +6658,40 @@ window.resolveNavbarFormDialog = function (confirmed) {
     navDialogPreviousFocus = null;
 };
 
-async function refreshAlertCenterBadge() {
+let alertCenterPollTimer = null;
+
+function stopAlertCenterPolling() {
+    if (alertCenterPollTimer) {
+        clearInterval(alertCenterPollTimer);
+        alertCenterPollTimer = null;
+    }
+}
+
+function startAlertCenterPolling(intervalMs = 60000) {
+    stopAlertCenterPolling();
     if (!hasNavAuthToken()) return;
+    alertCenterPollTimer = setInterval(refreshAlertCenterBadge, intervalMs);
+}
+
+window.startAlertCenterPolling = startAlertCenterPolling;
+window.stopAlertCenterPolling = stopAlertCenterPolling;
+
+async function refreshAlertCenterBadge() {
+    if (!hasNavAuthToken()) {
+        stopAlertCenterPolling();
+        updateAlertCenterBadge({ unread: 0 });
+        return;
+    }
     try {
         navState.alertCenter.summary = await fetchAlertCenterSummary();
         updateAlertCenterBadge();
     } catch (e) {
+        if (e.status === 401 || (e.message && e.message.includes('401'))) {
+            // 检测到 401 响应说明登录凭据失效，立即停止轮询，避免对服务端产生大量无效日志
+            stopAlertCenterPolling();
+            updateAlertCenterBadge({ unread: 0 });
+            return;
+        }
         console.warn('[AlertCenter] summary failed:', e);
     }
 }
@@ -7079,6 +7111,7 @@ async function renderAccountSettings(content) {
 }
 
 window.doLogout = async function () {
+    stopAlertCenterPolling();
     try {
         await fetch('/api/auth/logout', {
             method: 'POST',
@@ -8253,8 +8286,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     initBackToTopButton();
     if (navigationCacheReady) loadNavigationData();
     trackCurrentToolOpen();
-    refreshAlertCenterBadge();
-    setInterval(refreshAlertCenterBadge, 60000);
+    if (hasNavAuthToken()) {
+        refreshAlertCenterBadge();
+        startAlertCenterPolling(60000);
+    }
     setTimeout(checkServerStatus, 500);
     const scheduleBuiltinToolsSync = () => setTimeout(checkBuiltinToolsSync, 8000);
     if (typeof requestIdleCallback === 'function') requestIdleCallback(scheduleBuiltinToolsSync, { timeout: 12000 });
@@ -8276,6 +8311,7 @@ async function syncNavUserSession() {
                 }
             }
         } else if (res.status === 401) {
+            stopAlertCenterPolling();
             const pathname = window.location.pathname;
             const isPublicPage = pathname === '/login.html' || pathname === '/pages/login.html' ||
                 pathname === '/privacy' || pathname === '/privacy.html' ||

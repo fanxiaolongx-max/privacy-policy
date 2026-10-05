@@ -117,10 +117,22 @@
     const esc = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const ipaText = ipa => '/' + ipa + '/';
     let state={running:false,paused:false,locked:false,round:0,score:0,streak:0,correct:0,misses:[],pool:[],q:null,remaining:0,deadline:0,timer:null,next:null,split:false,inspecting:false};
-    let audio=null, audioManifest=null, audioEpoch=0, audioDone=null, activeTrigger=null;
+    let audio=null, audioManifest=null, fullManifest=null, audioEpoch=0, audioDone=null, activeTrigger=null;
     let wordObserver=null;
     const manifestReady = fetch('audio/drill-manifest.json?v=20261004-3',{cache:'no-cache'})
         .then(r=>r.ok?r.json():null).then(m=>audioManifest=m).catch(()=>null);
+    const fullManifestReady = fetch('audio/manifest.json',{cache:'no-cache'})
+        .then(r=>r.ok?r.json():null).then(m=>fullManifest=m).catch(()=>null);
+    function getSyllablesCatalog() {
+        return root.speechState?.manifest?.units?.syllables?.egyptian
+            || fullManifest?.units?.syllables?.egyptian
+            || null;
+    }
+    function getLettersCatalog() {
+        return root.speechState?.manifest?.units?.letters?.egyptian
+            || fullManifest?.units?.letters?.egyptian
+            || null;
+    }
     function stopAudio() {
         audioEpoch++;
         if(audio) { audio.onended=null;audio.onerror=null;audio.pause(); }
@@ -134,9 +146,11 @@
         if(typeof stopSpeech==='function') stopSpeech();
         const epoch=audioEpoch;
         if(!audioManifest) await manifestReady;
+        if(!fullManifest && fullManifestReady) await fullManifestReady;
         if(epoch!==audioEpoch || !state.running) return false;
-        const source=audioManifest?.[item.audioKey];
-        const carrier=item.contextOnly?' · 在整词中听这个音':item.carrier?' · 前导 /a/ 帮助听清目标音':'';
+        const source=item.audioUrl || audioManifest?.[item.audioKey];
+        const isClean=Boolean(item.audioUrl);
+        const carrier=isClean?'':item.contextOnly?' · 在整词中听这个音':item.carrier?' · 前导 /a/ 帮助听清目标音':'';
         audioStatus('正在播放'+label+carrier);
         activeTrigger=trigger;trigger?.classList.add('playing');
         return new Promise(resolve => {
@@ -189,6 +203,21 @@
     function listenPart(part,trigger) {
         inspect();
         if(!part.read) { stopAudio();audioStatus('这个字母在此词中不单独发音');return; }
+        const syllables=getSyllablesCatalog(), letters=getLettersCatalog();
+        let cleanAudio=null, cleanLabel=null;
+        if(syllables) {
+            if(part.glyph==='ا' || part.read==='ā') {
+                const syl=syllables['آ'];
+                if(syl?.audio) { cleanAudio=syl.audio;cleanLabel='长元音 '+ipaText(part.ipa); }
+            } else if(syllables[part.glyph]?.audio) {
+                cleanAudio=syllables[part.glyph].audio;cleanLabel='字母音 '+ipaText(part.ipa);
+            } else if(syllables[part.glyph+'ْ']?.audio && (part.read===part.glyph || !/[aiueoāīūēō]/u.test(part.read))) {
+                cleanAudio=syllables[part.glyph+'ْ'].audio;cleanLabel='字母音 '+ipaText(part.ipa);
+            } else if(letters?.[part.glyph]?.audio && !part.contextOnly) {
+                cleanAudio=letters[part.glyph].audio;cleanLabel='字母 '+ipaText(part.ipa);
+            }
+        }
+        if(cleanAudio) return play({...part,audioUrl:cleanAudio,carrier:false,contextOnly:false},trigger,cleanLabel);
         return play(part,trigger,(part.contextOnly?'词内读音 ':'字母 ')+ipaText(part.ipa));
     }
     function renderWord(q) {
@@ -240,7 +269,13 @@
             const shape=item.forms[Math.floor(Math.random()*4)];
             const button=document.createElement('button');button.lang='ar';button.className='drill-glyph'+(i===target?' drill-target':'');
             button.textContent=shape;button.setAttribute('aria-label','朗读字母 '+shape);
-            button.onclick=()=>{inspect();play({...item,audioKey:item.targetAudioKey,speech:item.targetSpeech},button,'字母 '+ipaText(item.ipa));};
+            button.onclick=()=>{
+                inspect();
+                const sylCatalog=getSyllablesCatalog();
+                const cleanAudio=sylCatalog?.[item.unit]?.audio;
+                if(cleanAudio) play({...item,audioUrl:cleanAudio,carrier:false,contextOnly:false},button,'字母 '+ipaText(item.ipa));
+                else play({...item,audioKey:item.targetAudioKey,speech:item.targetSpeech},button,'字母 '+ipaText(item.ipa));
+            };
             wave.append(button);
         });
         $('drill-display').replaceChildren(wave);
