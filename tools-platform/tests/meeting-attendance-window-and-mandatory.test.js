@@ -815,10 +815,17 @@ test('multi-session export includes Meeting Session column and aligns per-sessio
     assert.ok(tables.multiMatrix);
 
     // Verify Summary Sheet headers and Meeting Session column
-    assert.deepEqual(Array.from(tables.summary[0]), ['Meeting Session', 'BU', 'Total People', 'Absent', 'Attend on Time', 'Delay', 'Fake Attendance', 'On-time Attendance Rate']);
+    assert.deepEqual(Array.from(tables.summary[0]), ['Meeting Session', 'BU', 'Total People', 'Absent', 'Attend on Time', 'Delay', 'Fake Attendance', 'On-time Attendance Rate', 'Note']);
 
     // Verify People Sheet headers
     assert.deepEqual(Array.from(tables.people[0]), ['Meeting Session', 'Name', 'Employee ID / Account', 'BU', 'Customer Group', 'Attendance Status', 'Check-in / Join Time (Cairo)', 'Decision Source', 'Related Records']);
+
+    // Verify MultiMatrix Overall Status column in English mode
+    api.state.lang = 'en';
+    const enTables = api.buildAnalysisTables(cache.all);
+    const charlieMatrixRow = enTables.multiMatrix.find(r => r[1] === 'u_charlie');
+    assert.ok(charlieMatrixRow);
+    assert.equal(charlieMatrixRow[6], 'Full (All On-time)');
 
     // In Session 2, Charlie attended on 2026-08-05 on time.
     // Charlie MUST NOT be marked as Fake Attendance in Session 2 export!

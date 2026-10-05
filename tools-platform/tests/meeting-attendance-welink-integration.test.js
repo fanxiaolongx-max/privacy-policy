@@ -553,6 +553,22 @@ test('Suspected departure attendance: un-checked staff with empty WeLink result 
     // 4. Test Excel buildAnalysisTables export
     const tables = api.buildAnalysisTables(people);
     assert.ok(tables.people);
+    assert.ok(tables.summary);
+
+    // Summary headers should include Note
+    assert.equal(tables.summary[0][8], 'Note', 'Header 8 should be Note');
+
+    // Total row should have remarks with departed count in Chinese by default
+    const totalRow = tables.summary.find(r => r[1] === 'Total');
+    assert.ok(totalRow);
+    assert.equal(totalRow[8], '含疑似离职 1 人', 'Total row should remark suspected departure in Chinese');
+
+    // In English mode, remarks should be in English
+    api.state.lang = 'en';
+    const enTables = api.buildAnalysisTables(people);
+    const enTotalRow = enTables.summary.find(r => r[1] === 'Total');
+    assert.ok(enTotalRow);
+    assert.equal(enTotalRow[8], 'Incl. 1 suspected departure', 'Total row should remark suspected departure in English');
 
     const exportedZhang = tables.people.find(r => r[2].includes('00111111'));
     assert.ok(exportedZhang);

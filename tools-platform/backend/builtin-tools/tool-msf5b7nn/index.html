@@ -3170,6 +3170,11 @@
             localStorage.setItem(LANGUAGE_STORAGE_KEY, state.lang);
             localStorage.setItem('tools_lang', state.lang === 'en' ? 'en-US' : 'zh-CN');
           } catch (e) { }
+          if (state.peopleCache?.all) {
+            state.peopleCache.all.forEach(p => {
+              p.multiSessionStatus = state.lang === 'en' ? (p.multiSessionStatusEn || getMultiSessionStatusLabel(p, 'en')) : (p.multiSessionStatusZh || p.multiSessionStatus);
+            });
+          }
           renderNav(); applyStaticLanguage(); applySidebarState(); render();
           if (!$('#personSearchModal').classList.contains('hidden')) renderPersonSearchModal();
         };
@@ -4238,12 +4243,22 @@
                 attendanceTime,
                 attendanceMethod
               };
-              sCounts[attendance] = (sCounts[attendance] || 0) + 1;
+              if (attendance === 'Suspected Departure or ID Change') {
+                sCounts.Absent = (sCounts.Absent || 0) + 1;
+                sCounts['Suspected Departure or ID Change'] = (sCounts['Suspected Departure or ID Change'] || 0) + 1;
+              } else {
+                sCounts[attendance] = (sCounts[attendance] || 0) + 1;
+              }
               const bu = normalizeName(p.bu) || '未识别 BU';
-              if (!sByBu.has(bu)) sByBu.set(bu, { total: 0, 'Attend on Time': 0, Delay: 0, Absent: 0, 'Fake Attendance': 0 });
+              if (!sByBu.has(bu)) sByBu.set(bu, { total: 0, 'Attend on Time': 0, Delay: 0, Absent: 0, 'Fake Attendance': 0, 'Suspected Departure or ID Change': 0 });
               const b = sByBu.get(bu);
               b.total++;
-              b[attendance] = (b[attendance] || 0) + 1;
+              if (attendance === 'Suspected Departure or ID Change') {
+                b.Absent = (b.Absent || 0) + 1;
+                b['Suspected Departure or ID Change'] = (b['Suspected Departure or ID Change'] || 0) + 1;
+              } else if (b[attendance] !== undefined) {
+                b[attendance] = (b[attendance] || 0) + 1;
+              }
             });
             sessionStats[sess.name] = { counts: sCounts, byBu: sByBu, total: requiredTotal };
           });
@@ -4252,30 +4267,36 @@
             const requiredSessions = sessions.filter(s => p.sessionRecords?.[s.name]?.required);
             const attendedCount = requiredSessions.filter(s => ['Attend on Time', 'Delay'].includes(p.sessionRecords[s.name].attendance)).length;
             const onTimeCount = requiredSessions.filter(s => p.sessionRecords[s.name].attendance === 'Attend on Time').length;
-            let statusText = '';
-            let statusTag = '';
+            let statusZh = '', statusEn = '', statusTag = '';
             if (requiredSessions.length && attendedCount === requiredSessions.length) {
               if (onTimeCount === requiredSessions.length) {
-                statusText = bi('全勤 (全准时)', 'Full (All On-time)');
+                statusZh = '全勤 (全准时)';
+                statusEn = 'Full (All On-time)';
                 statusTag = 'full-ontime';
               } else {
-                statusText = bi('全勤 (有迟到)', 'Full (With Delay)');
+                statusZh = '全勤 (有迟到)';
+                statusEn = 'Full (With Delay)';
                 statusTag = 'full-delay';
               }
             } else if (attendedCount > 0) {
-              statusText = bi(`部分出席 (${attendedCount}/${requiredSessions.length})`, `Partial (${attendedCount}/${requiredSessions.length})`);
+              statusZh = `部分出席 (${attendedCount}/${requiredSessions.length})`;
+              statusEn = `Partial (${attendedCount}/${requiredSessions.length})`;
               statusTag = 'partial';
             } else {
               const allDeparted = requiredSessions.length > 0 && requiredSessions.every(s => p.sessionRecords?.[s.name]?.attendance === 'Suspected Departure or ID Change');
               if (allDeparted) {
-                statusText = bi('疑似离职或工号变更', 'Suspected Departure or ID Change');
+                statusZh = '疑似离职或工号变更';
+                statusEn = 'Suspected Departure or ID Change';
                 statusTag = 'none';
               } else {
-                statusText = requiredSessions.length ? bi('全部缺席', 'All Absent') : bi('无需出席', 'Not Required');
+                statusZh = requiredSessions.length ? '全部缺席' : '无需出席';
+                statusEn = requiredSessions.length ? 'All Absent' : 'Not Required';
                 statusTag = 'none';
               }
             }
-            p.multiSessionStatus = statusText;
+            p.multiSessionStatusZh = statusZh;
+            p.multiSessionStatusEn = statusEn;
+            p.multiSessionStatus = state.lang === 'en' ? statusEn : statusZh;
             p.multiSessionStatusTag = statusTag;
             p.attendedSessionsCount = attendedCount;
             p.requiredSessionsCount = requiredSessions.length;
@@ -4397,6 +4418,7 @@
           const coverageNote = missingSources.length ? `<div class="session-card-coverage-note" title="${bi('根据现场签到与在线会议的月份覆盖范围提示，仅供核对；每场可任选一种签到方式', 'Based on attendance month coverage, for review only; each meeting may use either check-in method')}">⚠ ${missingSources.map(item => item.category === 'offline' ? bi('现场签到', 'On-site check-in') : bi('在线会议', 'Online meeting')).join('、')}${bi('数据疑似缺失', ' data may be missing')}</div>` : '';
           const sourceSheets = sess.sourceSheets || [];
           const sourceTooltip = `<div class="session-card-source-tooltip" role="tooltip"><strong>${bi('本场来源表格', 'Source Sheets')} · ${sourceSheets.length}</strong><ul>${sourceSheets.map(sheet => `<li>${esc(sheet.fileName || sheet.sheetName || bi('未命名表格', 'Unnamed sheet'))}${sheet.sheetName ? ` · ${esc(sheet.sheetName)}` : ''} <small>(${bi(sheet.category === 'offline' ? '现场签到' : '在线签到', sheet.category === 'offline' ? 'On-site' : 'Online')})</small></li>`).join('')}</ul></div>`;
+          const departed = counts['Suspected Departure or ID Change'] || 0;
           return `
             <div class="session-card${missingSources.length ? ' coverage-warning' : ''}">
               <div class="session-card-head">
@@ -4413,7 +4435,7 @@
                 <div class="snap-chip rate" title="${bi('按时出席', 'Attend on Time')}">${bi('准时', 'On-time')}: ${counts['Attend on Time']} (${onTimeRate})</div>
                 <div class="snap-chip delay" title="${bi('迟到', 'Delay')}">${bi('迟到', 'Delay')}: ${counts.Delay}</div>
                 <div class="snap-chip fake" title="${bi('虚假签到', 'Fake Attendance')}">${bi('虚假', 'Fake')}: ${counts['Fake Attendance']}</div>
-                <div class="snap-chip absent" title="${bi('缺席', 'Absent')}">${bi('缺席', 'Absent')}: ${counts.Absent}</div>
+                <div class="snap-chip absent" title="${bi('缺席', 'Absent')}${departed ? ` · ${bi(`含疑似离职 ${departed} 人`, `incl. ${departed} suspected`)}` : ''}">${bi('缺席', 'Absent')}: ${counts.Absent}${departed ? ` <small style="font-size:10px;opacity:0.9">(${bi(`含疑似离职 ${departed} 人`, `incl. ${departed} suspected`)})</small>` : ''}</div>
               </div>
               ${coverageNote}
               <div class="session-card-bottom">
@@ -6041,6 +6063,25 @@
           files.set(name, content); p += 46 + nlen + elen + clen;
         } return files;
       }
+      function getMultiSessionStatusLabel(p, lang = state.lang) {
+        if (!p) return '';
+        if (lang === 'en') {
+          if (p.multiSessionStatusEn) return p.multiSessionStatusEn;
+          const str = String(p.multiSessionStatus || '');
+          if (str.includes('全准时') || str === 'Full (All On-time)') return 'Full (All On-time)';
+          if (str.includes('有迟到') || str === 'Full (With Delay)') return 'Full (With Delay)';
+          if (str.includes('疑似离职') || str === 'Suspected Departure or ID Change') return 'Suspected Departure or ID Change';
+          if (str.includes('全部缺席') || str === 'All Absent') return 'All Absent';
+          if (str.includes('无需出席') || str === 'Not Required') return 'Not Required';
+          const m = str.match(/部分出席\s*\(([^)]+)\)/);
+          if (m) return `Partial (${m[1]})`;
+          if (p.requiredSessionsCount != null && p.attendedSessionsCount != null && p.attendedSessionsCount > 0) {
+            return `Partial (${p.attendedSessionsCount}/${p.requiredSessionsCount})`;
+          }
+          return p.multiSessionStatus || '';
+        }
+        return p.multiSessionStatusZh || p.multiSessionStatus || '';
+      }
       function buildAnalysisTables(rows = state.peopleCache?.all || []) {
         const sessions = state.peopleCache?.sessions || getMeetingSessions();
         const displayLabels = getSessionDisplayLabels(sessions);
@@ -6048,10 +6089,11 @@
         const isMultiAll = sessions.length > 1 && (!state.selectedSession || state.selectedSession === 'all');
         const statuses = pending ? ['Not Evaluated'] : ['Absent', 'Attend on Time', 'Delay', 'Fake Attendance'];
         const rate = (n, total) => total ? `${(n / total * 100).toFixed(1)}%` : '0.0%';
+        const departedNote = (count) => count ? (state.lang === 'en' ? `Incl. ${count} suspected departure${count > 1 ? 's' : ''}` : `含疑似离职 ${count} 人`) : '';
 
         const summary = pending
           ? [['Meeting Session', 'BU', 'Total People', 'Awaiting Check-in Data']]
-          : [['Meeting Session', 'BU', 'Total People', 'Absent', 'Attend on Time', 'Delay', 'Fake Attendance', 'On-time Attendance Rate']];
+          : [['Meeting Session', 'BU', 'Total People', 'Absent', 'Attend on Time', 'Delay', 'Fake Attendance', 'On-time Attendance Rate', 'Note']];
         const people = [['Meeting Session', 'Name', 'Employee ID / Account', 'BU', 'Customer Group', 'Attendance Status', 'Check-in / Join Time (Cairo)', 'Decision Source', 'Related Records']];
 
         const methodLabel = (m, att) => {
@@ -6066,27 +6108,35 @@
         if (isMultiAll) {
           const grandCounts = Object.fromEntries(statuses.map(s => [s, 0]));
           let grandTotal = 0;
+          let grandDeparted = 0;
           sessions.forEach((s, idx) => {
             const sessionLabel = `#${idx + 1} ${displayLabels[idx] || s.name}`;
             const sessRows = getSessionPeopleRows(state.peopleCache?.all || rows, s.name);
             const sCounts = Object.fromEntries(statuses.map(st => [st, 0]));
             const sByBu = new Map();
+            let sDeparted = 0;
             sessRows.forEach(r => {
-              const statusKey = r.attendance === 'Suspected Departure or ID Change' ? 'Absent' : r.attendance;
+              const isDeparted = r.attendance === 'Suspected Departure or ID Change';
+              const statusKey = isDeparted ? 'Absent' : r.attendance;
               sCounts[statusKey] = (sCounts[statusKey] || 0) + 1;
               grandCounts[statusKey] = (grandCounts[statusKey] || 0) + 1;
+              if (isDeparted) {
+                sDeparted++;
+                grandDeparted++;
+              }
               grandTotal++;
               const bu = normalizeName(r.bu) || 'Unidentified BU';
-              if (!sByBu.has(bu)) sByBu.set(bu, { total: 0, ...Object.fromEntries(statuses.map(st => [st, 0])) });
+              if (!sByBu.has(bu)) sByBu.set(bu, { total: 0, departed: 0, ...Object.fromEntries(statuses.map(st => [st, 0])) });
               const item = sByBu.get(bu);
               item.total++;
               item[statusKey] = (item[statusKey] || 0) + 1;
+              if (isDeparted) item.departed++;
             });
 
             [...sByBu.entries()].sort((a, b) => b[1].total - a[1].total || a[0].localeCompare(b[0])).forEach(([bu, x]) => {
-              summary.push([sessionLabel, bu, x.total, x.Absent, x['Attend on Time'], x.Delay, x['Fake Attendance'], rate(x['Attend on Time'], x.total)]);
+              summary.push([sessionLabel, bu, x.total, x.Absent, x['Attend on Time'], x.Delay, x['Fake Attendance'], rate(x['Attend on Time'], x.total), departedNote(x.departed)]);
             });
-            summary.push([sessionLabel, 'Subtotal', sessRows.length, sCounts.Absent, sCounts['Attend on Time'], sCounts.Delay, sCounts['Fake Attendance'], rate(sCounts['Attend on Time'], sessRows.length)]);
+            summary.push([sessionLabel, 'Subtotal', sessRows.length, sCounts.Absent, sCounts['Attend on Time'], sCounts.Delay, sCounts['Fake Attendance'], rate(sCounts['Attend on Time'], sessRows.length), departedNote(sDeparted)]);
 
             [...sessRows].sort((a, b) => (b.count || 0) - (a.count || 0) || (a.name || a.account).localeCompare(b.name || b.account, 'en')).forEach(r => {
               people.push([
@@ -6103,7 +6153,7 @@
             });
           });
 
-          summary.push(['All Sessions', 'Grand Total', grandTotal, grandCounts.Absent, grandCounts['Attend on Time'], grandCounts.Delay, grandCounts['Fake Attendance'], rate(grandCounts['Attend on Time'], grandTotal)]);
+          summary.push(['All Sessions', 'Grand Total', grandTotal, grandCounts.Absent, grandCounts['Attend on Time'], grandCounts.Delay, grandCounts['Fake Attendance'], rate(grandCounts['Attend on Time'], grandTotal), departedNote(grandDeparted)]);
         } else {
           let sessionLabel;
           if (pending) {
@@ -6120,24 +6170,28 @@
           }
           const counts = Object.fromEntries(statuses.map(s => [s, 0]));
           const byBu = new Map();
+          let totalDeparted = 0;
           rows.forEach(r => {
-            const statusKey = r.attendance === 'Suspected Departure or ID Change' ? 'Absent' : r.attendance;
+            const isDeparted = r.attendance === 'Suspected Departure or ID Change';
+            const statusKey = isDeparted ? 'Absent' : r.attendance;
             counts[statusKey] = (counts[statusKey] || 0) + 1;
+            if (isDeparted) totalDeparted++;
             const bu = normalizeName(r.bu) || 'Unidentified BU';
-            if (!byBu.has(bu)) byBu.set(bu, { total: 0, ...Object.fromEntries(statuses.map(s => [s, 0])) });
+            if (!byBu.has(bu)) byBu.set(bu, { total: 0, departed: 0, ...Object.fromEntries(statuses.map(st => [st, 0])) });
             const x = byBu.get(bu);
             x.total++;
             x[statusKey] = (x[statusKey] || 0) + 1;
+            if (isDeparted) x.departed++;
           });
 
           [...byBu.entries()].sort((a, b) => b[1].total - a[1].total || a[0].localeCompare(b[0])).forEach(([bu, x]) => {
             summary.push(pending
               ? [sessionLabel, bu, x.total, x['Not Evaluated']]
-              : [sessionLabel, bu, x.total, x.Absent, x['Attend on Time'], x.Delay, x['Fake Attendance'], rate(x['Attend on Time'], x.total)]);
+              : [sessionLabel, bu, x.total, x.Absent, x['Attend on Time'], x.Delay, x['Fake Attendance'], rate(x['Attend on Time'], x.total), departedNote(x.departed)]);
           });
           summary.push(pending
             ? [sessionLabel, 'Total', rows.length, counts['Not Evaluated']]
-            : [sessionLabel, 'Total', rows.length, counts.Absent, counts['Attend on Time'], counts.Delay, counts['Fake Attendance'], rate(counts['Attend on Time'], rows.length)]);
+            : [sessionLabel, 'Total', rows.length, counts.Absent, counts['Attend on Time'], counts.Delay, counts['Fake Attendance'], rate(counts['Attend on Time'], rows.length), departedNote(totalDeparted)]);
 
           [...rows].sort((a, b) => (b.count || 0) - (a.count || 0) || (a.name || a.account).localeCompare(b.name || b.account, 'en')).forEach(r => {
             people.push([
@@ -6167,7 +6221,8 @@
               if (!rec) return 'Absent';
               if (rec.attendance === 'Suspected Departure or ID Change') return 'Suspected Departure or ID Change';
               if (rec.attendance === 'Absent') return 'Absent';
-              return `${rec.attendance}${rec.attendanceMethod === '前夜WFM豁免' ? ' (Night WFM Exempt)' : ''}${rec.attendanceTime ? ` (${rec.attendanceTime})` : ''}`;
+              const exemptTag = rec.attendanceMethod === '前夜WFM豁免' ? ' (Night WFM Exempt)' : (rec.attendanceMethod === '豁免名单' ? ' (Exemption List)' : '');
+              return `${rec.attendance}${exemptTag}${rec.attendanceTime ? ` (${rec.attendanceTime})` : ''}`;
             });
             multiMatrix.push([
               r.name,
@@ -6175,7 +6230,7 @@
               r.bu,
               r.customer,
               ...sessStatuses,
-              r.multiSessionStatus || '',
+              getMultiSessionStatusLabel(r, state.lang),
               r.count || 0
             ]);
           });
@@ -6184,10 +6239,22 @@
       }
       function xmlEscape(value) { return String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' }[c])); }
       function excelColumnName(index) { let name = ''; for (let n = index + 1; n; n = Math.floor((n - 1) / 26))name = String.fromCharCode(65 + (n - 1) % 26) + name; return name; }
-      function worksheetXml(rows, widths, totalStyleRow = 0) {
+      function worksheetXml(rows, widths, styleOption = 0) {
         const lastCol = excelColumnName(Math.max(0, (rows[0]?.length || 1) - 1)), lastRow = Math.max(1, rows.length), cols = widths.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join('');
-        const data = rows.map((row, ri) => `<row r="${ri + 1}">${row.map((v, ci) => { const ref = `${excelColumnName(ci)}${ri + 1}`, style = ri === 0 ? 1 : (totalStyleRow === ri + 1 ? 2 : 0); return typeof v === 'number' && Number.isFinite(v) ? `<c r="${ref}" s="${style}"><v>${v}</v></c>` : `<c r="${ref}" s="${style}" t="inlineStr"><is><t xml:space="preserve">${xmlEscape(v)}</t></is></c>`; }).join('')}</row>`).join('');
-        const filterEnd = totalStyleRow > 1 ? totalStyleRow - 1 : lastRow; return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><dimension ref="A1:${lastCol}${lastRow}"/><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="15"/><cols>${cols}</cols><sheetData>${data}</sheetData><autoFilter ref="A1:${lastCol}${Math.max(1, filterEnd)}"/></worksheet>`;
+        const getStyle = (row, ri) => {
+          if (typeof styleOption === 'function') return styleOption(row, ri);
+          if (typeof styleOption === 'number' && styleOption > 0) {
+            return ri === 0 ? 1 : (styleOption === ri + 1 ? 2 : 0);
+          }
+          return ri === 0 ? 1 : 0;
+        };
+        const data = rows.map((row, ri) => `<row r="${ri + 1}">${row.map((v, ci) => {
+          const ref = `${excelColumnName(ci)}${ri + 1}`;
+          const style = getStyle(row, ri);
+          return typeof v === 'number' && Number.isFinite(v) ? `<c r="${ref}" s="${style}"><v>${v}</v></c>` : `<c r="${ref}" s="${style}" t="inlineStr"><is><t xml:space="preserve">${xmlEscape(v)}</t></is></c>`;
+        }).join('')}</row>`).join('');
+        const filterEnd = typeof styleOption === 'number' && styleOption > 1 ? styleOption - 1 : lastRow;
+        return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><dimension ref="A1:${lastCol}${lastRow}"/><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="15"/><cols>${cols}</cols><sheetData>${data}</sheetData><autoFilter ref="A1:${lastCol}${Math.max(1, filterEnd)}"/></worksheet>`;
       }
       function crc32(bytes) { if (!crc32.table) { crc32.table = Array.from({ length: 256 }, (_, n) => { let c = n; for (let k = 0; k < 8; k++)c = (c & 1) ? 0xedb88320 ^ (c >>> 1) : c >>> 1; return c >>> 0; }); } let crc = 0xffffffff; for (const b of bytes) crc = crc32.table[(crc ^ b) & 255] ^ (crc >>> 8); return (crc ^ 0xffffffff) >>> 0; }
       function binaryHeader(size, writer) { const out = new Uint8Array(size), view = new DataView(out.buffer); writer({ u16: (o, v) => view.setUint16(o, v, true), u32: (o, v) => view.setUint32(o, v >>> 0, true) }); return out; }
@@ -6218,8 +6285,13 @@
           ['_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'],
           ['xl/workbook.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">${workbookSheets}</workbook>`],
           ['xl/_rels/workbook.xml.rels', relsSheets],
-          ['xl/styles.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="3"><font><sz val="11"/><name val="Calibri"/></font><font><b/><color rgb="FFFFFFFF"/><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFC7000B"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE7E9EE"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="2"><border/><border><left style="thin"><color rgb="FFE0E3E8"/></left><right style="thin"><color rgb="FFE0E3E8"/></right><top style="thin"><color rgb="FFE0E3E8"/></top><bottom style="thin"><color rgb="FFE0E3E8"/></bottom></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="3"><xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment vertical="center"/></xf><xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf><xf numFmtId="0" fontId="2" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>'],
-          ['xl/worksheets/sheet1.xml', worksheetXml(summary, pending ? [32, 22, 14, 24] : [32, 22, 14, 12, 19, 12, 19, 24], summary.length)],
+          ['xl/styles.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="3"><font><sz val="11"/><name val="Calibri"/></font><font><b/><color rgb="FFFFFFFF"/><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="5"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFC7000B"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFD9DFE7"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE8EEF5"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="2"><border/><border><left style="thin"><color rgb="FFE0E3E8"/></left><right style="thin"><color rgb="FFE0E3E8"/></right><top style="thin"><color rgb="FFE0E3E8"/></top><bottom style="thin"><color rgb="FFE0E3E8"/></bottom></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="4"><xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment vertical="center"/></xf><xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf><xf numFmtId="0" fontId="2" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment vertical="center"/></xf><xf numFmtId="0" fontId="2" fillId="4" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment vertical="center"/></xf></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>'],
+          ['xl/worksheets/sheet1.xml', worksheetXml(summary, pending ? [32, 22, 14, 24] : [32, 22, 14, 12, 19, 12, 19, 24, 28], (row, ri) => {
+            if (ri === 0) return 1;
+            if (row[1] === 'Grand Total' || row[1] === 'Total') return 2;
+            if (row[1] === 'Subtotal') return 3;
+            return 0;
+          })],
           ['xl/worksheets/sheet2.xml', worksheetXml(people, [32, 30, 22, 16, 24, 20, 28, 18, 17])]
         ];
         if (multiMatrix) {
@@ -6800,7 +6872,7 @@
       function showLoading(on, text, percent) { $('#loading').classList.toggle('hidden', !on); if (text) $('#loadingText').textContent = text; if (percent != null) { const p = Math.max(0, Math.min(100, Math.round(percent))); $('#loadingBar').style.width = p + '%'; $('#loadingPercent').textContent = p + '%'; } }
       function nextPaint() { return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))); }
       function toast(msg, type = '', duration = 2800) { const host = $('#toasts'); if (!host || typeof host.appendChild !== 'function') return; const t = document.createElement('div'); t.className = 'toast ' + type; t.textContent = msg; host.appendChild(t); setTimeout(() => t.remove?.(), duration); }
-      window.__meetingAttendance = { state, CATEGORIES, DEFAULT_COLUMNS, DEFAULT_CUSTOMER_MAPPINGS, DEFAULT_ATTENDANCE_RULES, PRESET_EXEMPTIONS, isInvalidStaffId, activeExemptions, handleDeveloperUnlock, disableDeveloperMode, parseDelimited, normalizeRows, classifySheet, defaultColumnIndices, getDisplayColumns, parsePeopleCell, parseQrPairedPeople, parseCreateTime, parseAttendanceMinute, beijingToCairoAttendance, buildAttendanceIndex, getAttendanceRecord, getExemption, determineAttendance, extractTicketDate, parseDateFromString, detectMeetingDate, getAllMeetingDates, getSheetMeetingDate, getSessionDominantDate, evaluateRecordAttendance, ATTENDANCE_RANK, getWindowDateRange, isOrderInWindow, isOrderInMeetingWindows, getPreviousDayDateString, parseRowTimestamp, isNightWfmTask, isPersonNightExemptForDate, normalizeMandatoryEntries, loadMandatoryAttendees, saveMandatoryAttendees, saveRostersToServer, syncRostersWithServer, openMandatoryModal, closeMandatoryModal, renderMandatoryRows, appendMandatoryRow, updateMandatoryBadge, applyBatchMandatoryText, buildWelinkScript, allExtractedPeopleIds, parseWelinkPeople, installWelinkPeople, loadWelinkPeopleList, getAllIdAliases, getCanonicalStaffId, getCanonicalPersonKey, welinkFor, changedEmployeeId, changedEmployeeTag, isSuspectedDeparted, suspectedDepartedPeople, openWelinkModal, closeWelinkModal, extractQrPeople, extractRfcPeople, extractWfmPeople, extractAttendanceSourcePeople, extractAllPeople, ensurePeopleCache, refreshCalculatedResults, invalidatePeopleCache, cleanSessionTitle, isGenericTitle, getSheetRowSessionNames, getSheetDefaultSessionName, getSheetSessionName, getRowSessionName, getMeetingSessions, getIgnoredMeetingSessions, getSessionPeopleRows, getSessionDisplayLabels, renderSessionSwitcher, renderSessionNoticeBar, renderMultiSessionOverview, renderMultiSessionBuTable, renderMultiSessionMatrixCard, toggleMatrixFullscreen, mapCustomerGroup, resolveSearchIdentities, getPersonSearchScope, getPersonSearchScopeKey, formatSearchWindowMonths, searchRequiredRows, searchAttendanceRows, renderSearchDetailCard, buildBusinessCoverageReport, missingBusinessCoverage, validBusinessTimes, formatDateRange, roleCounts, roleLabel, sheetFingerprint, removeDuplicateSheets, renderAttendanceDashboard, renderCombinedPeopleCard, renderPeopleCard, renderPersonSearchPanel, renderPersonSearchResults, buildAnalysisTables, buildAnalysisWorkbook, buildSnapshotPayload, restoreMeetingSnapshot, openSaveSnapshotModal, closeSaveSnapshotModal, openSnapshotManagerModal, filterSnapshotCards };
+      window.__meetingAttendance = { state, CATEGORIES, DEFAULT_COLUMNS, DEFAULT_CUSTOMER_MAPPINGS, DEFAULT_ATTENDANCE_RULES, PRESET_EXEMPTIONS, isInvalidStaffId, activeExemptions, handleDeveloperUnlock, disableDeveloperMode, parseDelimited, normalizeRows, classifySheet, defaultColumnIndices, getDisplayColumns, parsePeopleCell, parseQrPairedPeople, parseCreateTime, parseAttendanceMinute, beijingToCairoAttendance, buildAttendanceIndex, getAttendanceRecord, getExemption, determineAttendance, extractTicketDate, parseDateFromString, detectMeetingDate, getAllMeetingDates, getSheetMeetingDate, getSessionDominantDate, evaluateRecordAttendance, ATTENDANCE_RANK, getWindowDateRange, isOrderInWindow, isOrderInMeetingWindows, getPreviousDayDateString, parseRowTimestamp, isNightWfmTask, isPersonNightExemptForDate, normalizeMandatoryEntries, loadMandatoryAttendees, saveMandatoryAttendees, saveRostersToServer, syncRostersWithServer, openMandatoryModal, closeMandatoryModal, renderMandatoryRows, appendMandatoryRow, updateMandatoryBadge, applyBatchMandatoryText, buildWelinkScript, allExtractedPeopleIds, parseWelinkPeople, installWelinkPeople, loadWelinkPeopleList, getAllIdAliases, getCanonicalStaffId, getCanonicalPersonKey, welinkFor, changedEmployeeId, changedEmployeeTag, isSuspectedDeparted, suspectedDepartedPeople, openWelinkModal, closeWelinkModal, extractQrPeople, extractRfcPeople, extractWfmPeople, extractAttendanceSourcePeople, extractAllPeople, ensurePeopleCache, refreshCalculatedResults, invalidatePeopleCache, cleanSessionTitle, isGenericTitle, getSheetRowSessionNames, getSheetDefaultSessionName, getSheetSessionName, getRowSessionName, getMeetingSessions, getIgnoredMeetingSessions, getSessionPeopleRows, getSessionDisplayLabels, renderSessionSwitcher, renderSessionNoticeBar, renderMultiSessionOverview, renderMultiSessionBuTable, renderMultiSessionMatrixCard, toggleMatrixFullscreen, mapCustomerGroup, resolveSearchIdentities, getPersonSearchScope, getPersonSearchScopeKey, formatSearchWindowMonths, searchRequiredRows, searchAttendanceRows, renderSearchDetailCard, buildBusinessCoverageReport, missingBusinessCoverage, validBusinessTimes, formatDateRange, roleCounts, roleLabel, sheetFingerprint, removeDuplicateSheets, renderAttendanceDashboard, renderCombinedPeopleCard, renderPeopleCard, renderPersonSearchPanel, renderPersonSearchResults, getMultiSessionStatusLabel, buildAnalysisTables, buildAnalysisWorkbook, buildSnapshotPayload, restoreMeetingSnapshot, openSaveSnapshotModal, closeSaveSnapshotModal, openSnapshotManagerModal, filterSnapshotCards };
       init();
     })();
   </script>
