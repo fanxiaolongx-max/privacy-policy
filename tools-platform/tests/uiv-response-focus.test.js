@@ -19,6 +19,10 @@ test('uivf12 HTML contains response sample input, focus bar, and choice modal', 
     assert.match(pageSource, /id="responseFocusPath"/, 'HTML should contain #responseFocusPath');
     assert.match(pageSource, /id="uivResponseChoiceOverlay"/, 'HTML should contain #uivResponseChoiceOverlay');
     assert.match(pageSource, /id="uivResponseChoiceList"/, 'HTML should contain #uivResponseChoiceList');
+    assert.match(pageSource, /id="responseSampleGuidePopover"/, 'HTML should contain #responseSampleGuidePopover');
+    assert.match(pageSource, /id="responseSampleGuideTrigger"/, 'HTML should contain #responseSampleGuideTrigger');
+    assert.match(pageSource, /id="responseFocusMultiHint"/, 'HTML should contain #responseFocusMultiHint');
+    assert.match(pageSource, /id="responseFocusCandidateChips"/, 'HTML should contain #responseFocusCandidateChips');
 });
 
 test('uivf12 i18n dictionaries contain bilingual response sample and focus keys', () => {
@@ -38,12 +42,26 @@ test('uivf12 i18n dictionaries contain bilingual response sample and focus keys'
         'uiv.focus.keywordNone',
         'uiv.focus.selectedInfo',
         'uiv.focus.chooseTable',
+        'uiv.focus.chooseTableMulti',
+        'uiv.focus.multiCandidatePrompt',
+        'uiv.focus.multiCandidateSpecified',
         'uiv.focus.modalTitle',
         'uiv.focus.modalSubtitle',
+        'uiv.focus.modalMultiSubtitle',
+        'uiv.focus.matchedBadge',
+        'uiv.focus.unmatchedBadge',
         'uiv.focus.keywordPlaceholder',
         'uiv.focus.clearTitle',
         'uiv.focus.closeModal',
-        'uiv.focus.activeLog'
+        'uiv.focus.activeLog',
+        'uiv.sampleGuide.badgeText',
+        'uiv.sampleGuide.popoverTitle',
+        'uiv.sampleGuide.popoverDesc',
+        'uiv.sampleGuide.descDatafab',
+        'uiv.sampleGuide.descStandard',
+        'uiv.sampleGuide.descNested',
+        'uiv.sampleGuide.fillBtn',
+        'uiv.sampleGuide.copyBtn'
     ];
 
     for (const key of expectedKeys) {
@@ -326,11 +344,11 @@ test('generator without responseFocus defaults to backward compatible component 
 });
 
 test('uiv modules are cache-busted and i18n protects against raw key overwriting', () => {
-    assert.match(pageSource, /i18n\.js\?v=20261005-03/);
-    assert.match(pageSource, /workbench\.js\?v=20261005-03/);
-    assert.match(pageSource, /generator\.js\?v=20261005-03/);
-    assert.match(pageSource, /save\.js\?v=20261005-03/);
-    assert.match(pageSource, /uivf12\.css\?v=20261005-03/);
+    assert.match(pageSource, /i18n\.js\?v=20261005-04/);
+    assert.match(pageSource, /workbench\.js\?v=20261005-04/);
+    assert.match(pageSource, /generator\.js\?v=20261005-04/);
+    assert.match(pageSource, /save\.js\?v=20261005-04/);
+    assert.match(pageSource, /uivf12\.css\?v=20261005-04/);
     assert.match(i18nSource, /function isRawKey/);
     assert.match(i18nSource, /!isRawKey\(val\)/);
 });
@@ -339,5 +357,155 @@ test('jsonInput and responseSampleInput evenly split vertical space', () => {
     assert.match(cssSource, /#jsonInput,\s*#payloadViewer,\s*#responseSampleInput,\s*#responseSampleViewer\s*\{[\s\S]*?flex:\s*1\s+1\s+0;[\s\S]*?min-height:\s*80px;/);
     assert.doesNotMatch(cssSource, /#jsonInput[^{]*\{[^}]*max-height:\s*200px/);
     assert.doesNotMatch(cssSource, /#responseSampleInput[^{]*\{[^}]*max-height:\s*160px/);
+});
+
+test('workbench supports sample guide templates and dynamic example loading', () => {
+    const mockWindow = {};
+    const fn = new Function('window', `${workbenchSource}; return window.UIVWorkbench;`);
+    const UIVWorkbench = fn(mockWindow);
+
+    assert.ok(UIVWorkbench.SAMPLE_GUIDE_TEMPLATES.datafab, 'datafab template should exist');
+    assert.ok(UIVWorkbench.SAMPLE_GUIDE_TEMPLATES.standard, 'standard template should exist');
+    assert.ok(UIVWorkbench.SAMPLE_GUIDE_TEMPLATES.nested, 'nested template should exist');
+
+    const datafabTables = UIVWorkbench.discoverResponseTables(UIVWorkbench.SAMPLE_GUIDE_TEMPLATES.datafab);
+    assert.equal(datafabTables.length, 2, 'DataFab guide sample should contain 2 candidate tables');
+});
+
+test('workbench handles multi-table matching when keyword exists in multiple tables', () => {
+    const sampleMultiResponse = {
+        data: [
+            {
+                id: 'comp_0_overview',
+                metadata: [
+                    { displayName: 'Region', column: 'region_name_en_mp' },
+                    { displayName: 'Count', column: 'cnt' }
+                ],
+                data: [{ Region: 'North Africa', Count: 10 }]
+            },
+            {
+                id: 'comp_1_detail',
+                metadata: [
+                    { displayName: 'rep_name', column: 'rep_name' },
+                    { displayName: 'Region', column: 'region_name_en_mp' },
+                    { displayName: 'Count', column: 'cnt' }
+                ],
+                data: [{ rep_name: 'Egypt', Region: 'North Africa', Count: 6 }]
+            }
+        ]
+    };
+
+    const mockDOM = {
+        responseSampleInput: { value: JSON.stringify(sampleMultiResponse), style: {} },
+        responseSampleViewer: { style: {}, innerHTML: '' },
+        responseFocusKeyword: { value: 'Region' },
+        responseFocusPath: { value: '' },
+        responseFocusBar: { style: {} },
+        responseFocusSummary: { textContent: '' },
+        responseFocusTableCount: { textContent: '' },
+        responseFocusSelectedInfo: { style: {}, innerHTML: '' },
+        responseFocusMultiHint: { style: { display: 'none' } },
+        responseFocusMultiHintText: { textContent: '' },
+        responseFocusCandidateChips: { innerHTML: '' },
+        btnChooseResponseFocus: {
+            classList: {
+                add: function(c) { this[c] = true; },
+                remove: function(c) { delete this[c]; }
+            },
+            querySelector: () => ({ textContent: '' })
+        }
+    };
+
+    const mockWindow = { document: { getElementById: (id) => mockDOM[id] || null } };
+    const fn = new Function('window', 'document', `${workbenchSource}; return window.UIVWorkbench;`);
+    const UIVWorkbench = fn(mockWindow, mockWindow.document);
+
+    UIVWorkbench.formatAndAnalyzeResponseSample();
+
+    const matches = UIVWorkbench.matchTableByKeyword('Region');
+    assert.equal(matches.length, 2, 'Both tables should match the keyword "Region"');
+    assert.equal(mockDOM.responseFocusMultiHint.style.display, 'flex', 'Multi-match hint should be displayed');
+    assert.ok(mockDOM.responseFocusCandidateChips.innerHTML.includes('表 1') && mockDOM.responseFocusCandidateChips.innerHTML.includes('表 2'), 'Candidate chips for both tables should be rendered');
+
+    // Simulate user explicitly clicking candidate Table 2 (index 1)
+    UIVWorkbench.selectFocusTable(1, true);
+    assert.equal(UIVWorkbench.isExplicitlySelected(), true);
+
+    const config = UIVWorkbench.getResponseFocusConfig();
+    assert.equal(config.componentIndex, 1, 'Component index 1 should be selected');
+    assert.equal(config.path, 'data[1].data');
+    assert.equal(config.userSelected, true);
+});
+
+test('generator extractRows prioritizes componentIndex when keyword matches multiple tables', () => {
+    const mockDOM = {
+        errorMsg: { innerText: '' },
+        jsonInput: { value: '{"srcTenantId":"tenant_123","answerParamList":[{"id":"id_0"},{"id":"id_1"}]}', style: {} },
+        payloadViewer: { style: {} },
+        requestUrl: { value: 'https://datafab-pro.gtsdata.huawei.com/DataFabKernelCn/v1/answer/getAnswers' },
+        fileName: { value: 'PBI_Target' },
+        useGlobalVars: { checked: true },
+        isPagination: { checked: true },
+        forceSumData: { checked: false },
+        autoFetchCPC: { checked: false },
+        autoRuntimeMonth: { checked: false },
+        codeOutput: { value: '' },
+        consoleOutput: { value: '' }
+    };
+
+    const focusConfig = {
+        keyword: 'Region',
+        componentIndex: 1,
+        componentId: 'comp_1_detail',
+        path: 'data[1].data',
+        title: 'Rep Office Detail',
+        userSelected: true
+    };
+
+    const mockWindow = {
+        document: {
+            getElementById: (id) => mockDOM[id] || null
+        },
+        UIVGenLog: {
+            start: () => {}, section: () => {}, info: () => {}, dim: () => {}, error: () => {}, success: () => {}, done: () => {}
+        },
+        UIVT: (key) => key,
+        UIVWorkbench: {
+            formatAndAnalyzeJSON: () => {},
+            getParsedPayload: () => JSON.parse(mockDOM.jsonInput.value),
+            findKeyDeep: (obj, key) => (obj && obj[key] !== undefined ? obj[key] : null),
+            setCurrentTitle: () => {},
+            getResponseFocusConfig: () => focusConfig
+        }
+    };
+
+    const sandbox = new Function('window', 'document', 'UIVGenLog', 'UIVT', `${generatorSource}; return generateScript;`);
+    const generateScript = sandbox(mockWindow, mockWindow.document, mockWindow.UIVGenLog, mockWindow.UIVT);
+
+    generateScript();
+
+    const consoleScript = mockDOM.consoleOutput.value;
+    const rowsMatch = consoleScript.match(/function extractRows\(obj\)\s*\{[\s\S]*?\n\s{9}\}/)[0];
+    const extractRows = new Function('obj', 'console', rowsMatch + '; return extractRows(obj);');
+
+    // API response where BOTH comp 0 and comp 1 match "Region"
+    const sampleApiResponse = {
+        data: [
+            {
+                id: 'comp_0_overview',
+                metadata: [{ displayName: 'Region' }],
+                data: [{ Region: 'Region Overview (Wrong Table)' }]
+            },
+            {
+                id: 'comp_1_detail',
+                metadata: [{ displayName: 'Region' }, { displayName: 'rep_name' }],
+                data: [{ Region: 'North Africa', rep_name: 'Egypt Rep Office (Correct Table)' }]
+            }
+        ]
+    };
+
+    const rows = extractRows(sampleApiResponse, { log: () => {} });
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].rep_name, 'Egypt Rep Office (Correct Table)', 'extractRows MUST extract component 1 chosen by user, NOT component 0');
 });
 

@@ -84,6 +84,28 @@
         });
     }
 
+    // Desktop opens the platform in the system browser, so sync via its local API.
+    // Serialize requests so rapid toggles cannot arrive in reverse order.
+    let desktopSync = Promise.resolve();
+    function syncDesktopLanguage() {
+        if (!['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname)) return;
+        desktopSync = desktopSync.catch(() => {}).then(async () => {
+            const token = localStorage.getItem('tools_token');
+            if (!token) return;
+            await fetch('/api/desktop-pet/language', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ language: getStoredLang() })
+            });
+        }).catch(() => {});
+    }
+    window.addEventListener('tools:languagechange', syncDesktopLanguage);
+    window.addEventListener('storage', event => {
+        if (event.key === STORAGE_KEY || event.key === 'tools_language') syncDesktopLanguage();
+    });
+    window.addEventListener('pageshow', syncDesktopLanguage);
+    syncDesktopLanguage();
+
     function setLanguage(lang) {
         if (!SUPPORTED_LANGS.includes(lang)) return;
         localStorage.setItem(STORAGE_KEY, lang);

@@ -316,7 +316,35 @@ function generateScript(options = {}) {
              // 🎯 数据聚焦模式 (针对多表或指定关键词/路径)
              const focusConfig = ${serializeForScript(focusConfig)};
              if (focusConfig) {
-                 // 1. 如果配置了关键词，优先检查各组件的元数据或行内容
+                 // 1. 如果配置了目标组件索引且在 obj.data 中存在，绝对优先精确提取指定目标表
+                 if (typeof focusConfig.componentIndex === 'number' && focusConfig.componentIndex >= 0 &&
+                     obj && obj.data && Array.isArray(obj.data) && obj.data[focusConfig.componentIndex] &&
+                     Array.isArray(obj.data[focusConfig.componentIndex].data)) {
+                     console.log("%c     🎯 [聚焦提取] 按目标组件索引精确提取 -> data[" + focusConfig.componentIndex + "].data (共 " + obj.data[focusConfig.componentIndex].data.length + " 行)", "color: #00b894; font-size: 11px; font-weight: bold;");
+                     return obj.data[focusConfig.componentIndex].data;
+                 }
+                 // 2. 如果配置了具体路径 (例如 data[1].data 或 items.records)
+                 if (focusConfig.path) {
+                     try {
+                         const cleanPath = String(focusConfig.path).replace(/^\\$\\.?/, "").replace(/\\[(\\d+)\\]/g, ".$1");
+                         const keys = cleanPath.split(".").filter(Boolean);
+                         if (!keys.some(k => ["__proto__", "prototype", "constructor"].includes(String(k).toLowerCase()))) {
+                             let target = obj;
+                             for (const k of keys) {
+                                 if (target == null || !Object.prototype.hasOwnProperty.call(Object(target), k)) {
+                                     target = undefined;
+                                     break;
+                                 }
+                                 target = target[k];
+                             }
+                             if (Array.isArray(target)) {
+                                 console.log("%c     🎯 [聚焦提取] 按路径提取成功 -> " + focusConfig.path + " (共 " + target.length + " 行)", "color: #00b894; font-size: 11px; font-weight: bold;");
+                                 return target;
+                             }
+                         }
+                     } catch (_) {}
+                 }
+                 // 3. 兜底搜索：如果未指定固定组件或路径，按关键词在各组件中搜索
                  if (focusConfig.keyword) {
                      const kw = String(focusConfig.keyword).trim().toLowerCase();
                      if (obj && obj.data && Array.isArray(obj.data)) {
@@ -340,34 +368,6 @@ function generateScript(options = {}) {
                              }
                          }
                      }
-                 }
-                 // 2. 如果配置了目标组件索引且在 obj.data 中存在
-                 if (typeof focusConfig.componentIndex === 'number' && focusConfig.componentIndex >= 0 &&
-                     obj && obj.data && Array.isArray(obj.data) && obj.data[focusConfig.componentIndex] &&
-                     Array.isArray(obj.data[focusConfig.componentIndex].data)) {
-                     console.log("%c     🎯 [聚焦提取] 按组件索引提取 -> data[" + focusConfig.componentIndex + "].data (共 " + obj.data[focusConfig.componentIndex].data.length + " 行)", "color: #00b894; font-size: 11px; font-weight: bold;");
-                     return obj.data[focusConfig.componentIndex].data;
-                 }
-                 // 3. 如果配置了具体路径 (例如 data[1].data 或 items.records)
-                 if (focusConfig.path) {
-                     try {
-                         const cleanPath = String(focusConfig.path).replace(/^\\$\\.?/, "").replace(/\\[(\\d+)\\]/g, ".$1");
-                         const keys = cleanPath.split(".").filter(Boolean);
-                         if (!keys.some(k => ["__proto__", "prototype", "constructor"].includes(String(k).toLowerCase()))) {
-                             let target = obj;
-                             for (const k of keys) {
-                                 if (target == null || !Object.prototype.hasOwnProperty.call(Object(target), k)) {
-                                     target = undefined;
-                                     break;
-                                 }
-                                 target = target[k];
-                             }
-                             if (Array.isArray(target)) {
-                                 console.log("%c     🎯 [聚焦提取] 按路径提取成功 -> " + focusConfig.path + " (共 " + target.length + " 行)", "color: #00b894; font-size: 11px; font-weight: bold;");
-                                 return target;
-                             }
-                         }
-                     } catch (_) {}
                  }
              }
 

@@ -7788,7 +7788,7 @@ function ensureToolsI18nLoaded() {
             return;
         }
         const script = document.createElement('script');
-        script.src = '/js/shared/i18n.js?v=20260610-01';
+        script.src = '/js/shared/i18n.js?v=20261005-01';
         script.onload = resolve;
         script.onerror = resolve;
         document.head.appendChild(script);

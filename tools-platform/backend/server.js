@@ -370,6 +370,7 @@ app.use('/api', (req, res, next) => {
     if (req.method === 'POST' && req.path === '/uiv/run-uivision-macro') return next(); // 只生成临时 runner，不修改业务数据
     if (req.method === 'POST' && req.path === '/platform-metrics/open') return next(); // 登录用户记录工具打开量
     if (req.method === 'POST' && req.path === '/recent-nav') return next(); // 登录用户维护自己的最近使用
+    if (req.method === 'POST' && req.path === '/desktop-pet/language') return next(); // 路由内限制本机登录用户
     if (req.method === 'POST' && req.path === '/ai/proactive-alert-message') return next(); // 只读 KPI 提醒文案，不修改业务数据
     if (req.method === 'POST' && req.path === '/report-msg/export') return next(); // 仅生成并返回当前用户的月报文件
     if (req.method !== 'GET') {
@@ -402,6 +403,7 @@ app.use('/api/slide-design', slideDesignRoutes); // 胶片设计项目与 PPT �
 app.use('/api/surveys', surveysRoutes); // 可配置调查模板与提交记录 API
 app.use('/api/nav-settings', navSettingsRoutes); // 顶部导航全局设置 API
 app.use('/api/recent-nav', require('./routes/recent-nav')); // 按租户和账号保存最近使用
+app.use('/api/desktop-pet', require('./routes/desktop-pet'));
 app.use('/api/ai-settings', aiSettingsRoutes); // Dragon Claw 智能体模型配置 API
 app.use('/api/global-backup', globalBackupRoutes); // 当前租户核心数据备份与恢复 API（保留历史路由名）
 app.use('/api/external/metrics', externalMetricsRoutes); // 外部/移动端只读指标 API

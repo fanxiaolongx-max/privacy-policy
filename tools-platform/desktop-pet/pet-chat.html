@@ -472,6 +472,7 @@
       50% { opacity: 1; }
     }
   </style>
+  <script src="pet-i18n.js?v=20261005-01"></script>
 </head>
 <body>
   <div class="chat-container">
@@ -506,8 +507,8 @@
     <div class="chat-body" id="chatBody">
       <!-- 初始欢迎语 -->
       <div class="msg-row ai">
-        <div class="msg-bubble">
-          主人好呀喵！(ฅ'ω'ฅ) 我是你的桌面专属看板娘<b>「哈基米」</b>！<br>
+        <div class="msg-bubble" data-pet-ui>
+          主人好呀喵！(ฅ'ω'ฅ) 我是你的桌面专属看板娘 <b>「哈基米」</b>！<br>
           我已经接通了 Tools Platform 后台智能客服引擎。你可以随时向我询问：<br>
           • 平台系统工具使用说明与自动化技巧<br>
           • 今日任务、告警中心与数据运维状态<br>
@@ -551,6 +552,7 @@
   </div>
 
   <script>
+    const petT = text => window.PetI18n.t(text);
     const isElectron = typeof require !== 'undefined';
     let ipcRenderer = null;
     if (isElectron) {
@@ -598,10 +600,10 @@
       const text = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
       navigator.clipboard.writeText(text).then(() => {
         const oldText = btn.innerHTML;
-        btn.innerHTML = '已复制 ✅';
+        btn.innerHTML = petT("已复制 ✅");
         setTimeout(() => { btn.innerHTML = oldText; }, 2000);
       }).catch(() => {
-        alert('自动复制受限，请在下方手动全选复制喵~');
+        alert(petT("自动复制受限，请在下方手动全选复制喵~"));
       });
     };
 
@@ -654,7 +656,7 @@
         html += `<div class="quota-chip">
           <span>✨ Gemini 5h:</span>
           <span>${ag.gemini5h}%</span>
-          <span style="font-size:9.5px;opacity:.7;">(${ag.gemini5hReset || '已同步'})</span>
+          <span style="font-size:9.5px;opacity:.7;">(${ag.gemini5hReset || petT("已同步")})</span>
         </div>`;
         if (ag.geminiWeekly !== undefined) {
           html += `<div class="quota-chip">
@@ -712,10 +714,10 @@
 
       const payloadObj = {
         messages: messagesHistory,
-        context: systemPrompt,
-        pageTitle: '哈基米桌面伴侣',
+        context: systemPrompt + (window.PetI18n.getLanguage() === 'en-US' ? '\nReply in English, with a friendly kitty personality.' : '\n请使用简体中文回复，保持亲切的猫咪性格。'),
+        pageTitle: window.PetI18n.getLanguage() === 'en-US' ? 'Hajimi desktop companion' : '哈基米桌面伴侣',
         pagePath: '/desktop-pet',
-        uiLanguage: 'zh-CN',
+        uiLanguage: window.PetI18n.getLanguage(),
         stream: true
       };
 
@@ -739,7 +741,7 @@
 
         if (!res.ok) {
           rawErrorBody = await res.text().catch(() => '');
-          throw new Error(`服务响应异常 HTTP ${res.status}`);
+          throw new Error(`${petT('服务响应异常')} HTTP ${res.status}`);
         }
 
         typingIndicator.style.display = 'none';
@@ -766,7 +768,7 @@
                   aiBubble.innerHTML = renderMarkdown(responseText);
                   chatBody.scrollTop = chatBody.scrollHeight;
                 } else if (event.type === 'error') {
-                  throw new Error(event.error || 'AI 回复出错');
+                  throw new Error(event.error || petT("AI 回复出错"));
                 }
               } catch (_) {}
             }
@@ -774,7 +776,7 @@
           }
         } else {
           const data = await res.json();
-          responseText = data.reply || data.message || '哈基米收到啦喵~';
+          responseText = data.reply || data.message || petT("哈基米收到啦喵~");
           aiBubble.innerHTML = renderMarkdown(responseText);
         }
 
@@ -785,7 +787,7 @@
 
         const debugId = 'dbg_' + Date.now();
         const status = currentRes ? currentRes.status : 0;
-        const statusText = currentRes ? currentRes.statusText : (err.message || '网络连接失败');
+        const statusText = currentRes ? currentRes.statusText : (err.message || petT("网络连接失败"));
 
         let responseHeadersObj = {};
         if (currentRes && currentRes.headers) {
@@ -801,14 +803,14 @@
 
         const debugReport = {
           timestamp: new Date().toLocaleString(),
-          summary: `AI服务交互异常 [HTTP ${status || 'ERR'}]`,
+          summary: `${petT('AI服务交互异常')} [HTTP ${status || 'ERR'}]`,
           request: {
             url: `http://127.0.0.1:${localPort}/api/ai/chat`,
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/x-ndjson, application/json',
-              'Authorization': authToken ? `Bearer ${authToken.slice(0, 8)}...${authToken.slice(-6)}` : '(未提供鉴权Token)'
+              'Authorization': authToken ? '[REDACTED]' : '(none)'
             },
             payload: payloadObj
           },
@@ -823,11 +825,11 @@
         window.__PET_ERROR_DEBUG_MAP[debugId] = debugReport;
 
         aiBubble.innerHTML = `
-          <div class="error-container">
+          <div class="error-container" data-pet-ui>
             <div class="error-title-row">
               <div>呜呜，连接平台 AI 服务时出现了一点小状况喵：</div>
               <button class="error-trigger-btn" onclick="toggleErrorDebug('${debugId}')" title="点击查看服务器原始请求与返回详情">
-                <span>⚠️ [服务响应异常 ${status ? `HTTP ${status}` : '网络连接失败'}]</span>
+                <span>⚠️ [<span>${petT('服务响应异常')}</span> ${status ? `HTTP ${status}` : `<span>${petT("网络连接失败")}</span>`}]</span>
                 <span class="error-hint-click">(点击查看原始请求/返回 🔍)</span>
               </button>
             </div>
@@ -836,9 +838,9 @@
                 <span>📡 平台服务端交互诊断报告</span>
                 <button class="copy-report-btn" onclick="copyErrorDebug('${debugId}', this)">📋 复制诊断报告</button>
               </div>
-              <div class="debug-label">【客户端请求】POST /api/ai/chat</div>
+              <div class="debug-label"><span>${petT('【客户端请求】')}</span> POST /api/ai/chat</div>
               <pre class="debug-code"><code>${escapeHtml(JSON.stringify(debugReport.request, null, 2))}</code></pre>
-              <div class="debug-label">【服务端返回】HTTP ${status} (${statusText})</div>
+              <div class="debug-label"><span>${petT('【服务端返回】')}</span> HTTP ${status} (${statusText})</div>
               <pre class="debug-code"><code>${escapeHtml(typeof parsedBody === 'string' ? parsedBody : JSON.stringify(parsedBody, null, 2))}</code></pre>
             </div>
           </div>
@@ -877,7 +879,7 @@
       messagesHistory = [];
       chatBody.innerHTML = `
         <div class="msg-row ai">
-          <div class="msg-bubble">
+          <div class="msg-bubble" data-pet-ui>
             记忆已清空，开启全新的畅聊会话喵！(ฅ'ω'ฅ) 主人请尽管吩咐~
           </div>
         </div>

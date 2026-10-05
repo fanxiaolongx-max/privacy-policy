@@ -9,6 +9,8 @@ let discoveredTables = [];
 let selectedFocusTableIndex = -1;
 let currentScriptTitle = '';
 let currentScriptTitleInputName = '';
+let userExplicitlySelectedTable = false;
+let currentSampleGuideTab = 'datafab';
 
 function getEl(id) {
     const doc = typeof document !== 'undefined' ? document : (typeof window !== 'undefined' ? window.document : null);
@@ -81,6 +83,150 @@ function formatAndAnalyzeJSON() {
         formatAndAnalyzeResponseSample();
     }
 }
+
+// ──────────────────────────────────────────────────────────
+// 响应示例指南模板与交互控制 (Sample Guide & Dynamic Examples)
+// ──────────────────────────────────────────────────────────
+const SAMPLE_GUIDE_TEMPLATES = {
+    datafab: {
+        data: [
+            {
+                id: "chart_region_summary",
+                metadata: [
+                    { displayName: "Region", column: "region_name_en_mp" },
+                    { displayName: "变更单数量", column: "cr_count" },
+                    { displayName: "操作量合计", column: "operating_quantity_fm" }
+                ],
+                data: [
+                    { Region: "Northern Africa Region", "变更单数量": 10, "操作量合计": 340 }
+                ],
+                totalsData: {
+                    columns: {
+                        "变更单数量": { summing: 10 },
+                        "操作量合计": { summing: 340 }
+                    }
+                }
+            },
+            {
+                id: "chart_rep_office_detail",
+                metadata: [
+                    { displayName: "rep_name_en_mp", column: "rep_name_en_mp" },
+                    { displayName: "Region", column: "region_name_en_mp" },
+                    { displayName: "变更单数量", column: "cr_count" },
+                    { displayName: "操作量合计", column: "operating_quantity_fm" }
+                ],
+                data: [
+                    { rep_name_en_mp: "Egypt Rep Office", Region: "Northern Africa Region", "变更单数量": 6, "操作量合计": 210 },
+                    { rep_name_en_mp: "Algeria Rep Office", Region: "Northern Africa Region", "变更单数量": 4, "操作量合计": 130 }
+                ],
+                totalsData: {
+                    columns: {
+                        "变更单数量": { summing: 10 },
+                        "操作量合计": { summing: 340 }
+                    }
+                }
+            }
+        ]
+    },
+    standard: {
+        code: 200,
+        msg: "success",
+        data: [
+            { id: 101, taskName: "核心网割接维护专项", status: "COMPLETED", operator: "张工", count: 12 },
+            { id: 102, taskName: "无线基站巡检排障", status: "IN_PROGRESS", operator: "李工", count: 8 },
+            { id: 103, taskName: "光缆熔接路由复测", status: "PENDING", operator: "王工", count: 5 }
+        ],
+        total: 3
+    },
+    nested: {
+        status: 0,
+        result: {
+            pageNo: 1,
+            pageSize: 20,
+            totalCount: 128,
+            records: [
+                { ticketId: "TK-2026-001", siteCode: "CAI-042", country: "Egypt", severity: "HIGH", createdTime: "2026-10-01" },
+                { ticketId: "TK-2026-002", siteCode: "ALG-108", country: "Algeria", severity: "MEDIUM", createdTime: "2026-10-02" }
+            ]
+        }
+    }
+};
+
+function renderSampleGuideCode() {
+    const codeEl = getEl('responseSampleGuideCode');
+    if (!codeEl) return;
+    const template = SAMPLE_GUIDE_TEMPLATES[currentSampleGuideTab] || SAMPLE_GUIDE_TEMPLATES.datafab;
+    codeEl.textContent = JSON.stringify(template, null, 2);
+}
+
+function switchSampleGuideTab(tabKey, event) {
+    if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+    }
+    if (!SAMPLE_GUIDE_TEMPLATES[tabKey]) return;
+    currentSampleGuideTab = tabKey;
+    const tabs = typeof document !== 'undefined' ? document.querySelectorAll('.guide-example-tab') : [];
+    tabs.forEach(tab => {
+        if (tab.getAttribute('data-tab') === tabKey) tab.classList.add('active');
+        else tab.classList.remove('active');
+    });
+    renderSampleGuideCode();
+}
+
+function fillSampleFromGuide(event) {
+    if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+    }
+    const template = SAMPLE_GUIDE_TEMPLATES[currentSampleGuideTab] || SAMPLE_GUIDE_TEMPLATES.datafab;
+    const jsonStr = JSON.stringify(template, null, 4);
+    const input = getEl('responseSampleInput');
+    const viewer = getEl('responseSampleViewer');
+    if (input) {
+        input.value = jsonStr;
+        input.style.display = 'block';
+    }
+    if (viewer) viewer.style.display = 'none';
+    formatAndAnalyzeResponseSample();
+    const popover = getEl('responseSampleGuidePopover');
+    if (popover) popover.classList.remove('pinned');
+    if (typeof showToast === 'function') {
+        showToast(safeT('uiv.sampleGuide.toastFilled'));
+    }
+}
+
+function copySampleFromGuide(event) {
+    if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+    }
+    const template = SAMPLE_GUIDE_TEMPLATES[currentSampleGuideTab] || SAMPLE_GUIDE_TEMPLATES.datafab;
+    const jsonStr = JSON.stringify(template, null, 4);
+    if (typeof navigator !== 'undefined' && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        navigator.clipboard.writeText(jsonStr).then(() => {
+            if (typeof showToast === 'function') showToast(safeT('uiv.sampleGuide.toastCopied'));
+        }).catch(() => {
+            if (window.UIVCopy?.copyFallback) window.UIVCopy.copyFallback(jsonStr);
+        });
+    } else if (window.UIVCopy?.copyFallback) {
+        window.UIVCopy.copyFallback(jsonStr);
+        if (typeof showToast === 'function') showToast(safeT('uiv.sampleGuide.toastCopied'));
+    }
+}
+
+function toggleSampleGuidePinned(event) {
+    if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+    }
+    const popover = getEl('responseSampleGuidePopover');
+    if (popover) {
+        popover.classList.toggle('pinned');
+        renderSampleGuideCode();
+    }
+}
+
 
 // ──────────────────────────────────────────────────────────
 // 响应样本解析与多表智能识别 (Multi-Table Discovery)
@@ -216,11 +362,16 @@ function renderResponseFocusUI() {
     const selectedInfo = getEl('responseFocusSelectedInfo');
     const pathInput = getEl('responseFocusPath');
     const kwInput = getEl('responseFocusKeyword');
+    const multiHint = getEl('responseFocusMultiHint');
+    const multiHintText = getEl('responseFocusMultiHintText');
+    const chipsContainer = getEl('responseFocusCandidateChips');
+    const chooseBtn = getEl('btnChooseResponseFocus');
     if (!bar) return;
 
     if (!discoveredTables.length) {
         bar.style.display = 'none';
         if (selectedInfo) selectedInfo.style.display = 'none';
+        if (multiHint) multiHint.style.display = 'none';
         return;
     }
 
@@ -234,6 +385,48 @@ function renderResponseFocusUI() {
         selectedTable = discoveredTables[selectedFocusTableIndex];
     }
 
+    const matches = kw ? matchTableByKeyword(kw) : [];
+
+    // 多表命中候选与引导选择处理
+    if (kw && matches.length > 1) {
+        if (multiHint) {
+            multiHint.style.display = 'flex';
+            if (multiHintText) {
+                multiHintText.textContent = userExplicitlySelectedTable
+                    ? safeT('uiv.focus.multiCandidateSpecified', {
+                        count: matches.length,
+                        index: (selectedTable ? selectedTable.index + 1 : selectedFocusTableIndex + 1),
+                        name: selectedTable ? selectedTable.title : ''
+                    })
+                    : safeT('uiv.focus.multiCandidatePrompt', { keyword: kw, count: matches.length });
+            }
+            if (chipsContainer) {
+                chipsContainer.innerHTML = matches.map(m => {
+                    const isSelected = m.index === selectedFocusTableIndex;
+                    return `
+                        <button type="button" class="response-focus-chip ${isSelected ? 'active' : ''}" onclick="UIVWorkbench.selectFocusTable(${m.index}, true)">
+                            <span class="chip-marker">${isSelected ? '🎯' : '📍'}</span>
+                            <b>[表 ${m.index + 1}]</b> ${escapeHtml(m.title)}
+                            <small style="opacity:0.8;">(${m.rowCount}行)</small>
+                        </button>
+                    `;
+                }).join('');
+            }
+        }
+        if (chooseBtn) {
+            chooseBtn.classList.add('btn-multi-match');
+            const btnSpan = chooseBtn.querySelector('[data-uiv-i18n]');
+            if (btnSpan) btnSpan.textContent = safeT('uiv.focus.chooseTableMulti', { count: matches.length });
+        }
+    } else {
+        if (multiHint) multiHint.style.display = 'none';
+        if (chooseBtn) {
+            chooseBtn.classList.remove('btn-multi-match');
+            const btnSpan = chooseBtn.querySelector('[data-uiv-i18n]');
+            if (btnSpan) btnSpan.textContent = safeT('uiv.focus.chooseTable');
+        }
+    }
+
     if (selectedTable) {
         if (pathInput) pathInput.value = selectedTable.path;
         if (selectedInfo) {
@@ -245,9 +438,15 @@ function renderResponseFocusUI() {
             })}</span>`;
         }
         if (summary) {
-            summary.textContent = kw
-                ? safeT('uiv.focus.keywordMatched', { keyword: kw, name: selectedTable.title, path: selectedTable.path })
-                : safeT('uiv.focus.selectedInfo', { name: selectedTable.title, path: selectedTable.path, count: selectedTable.rowCount });
+            if (kw && matches.length > 1) {
+                summary.textContent = userExplicitlySelectedTable
+                    ? safeT('uiv.focus.multiCandidateSpecified', { count: matches.length, index: selectedTable.index + 1, name: selectedTable.title })
+                    : safeT('uiv.focus.keywordMultiple', { keyword: kw, count: matches.length });
+            } else if (kw) {
+                summary.textContent = safeT('uiv.focus.keywordMatched', { keyword: kw, name: selectedTable.title, path: selectedTable.path });
+            } else {
+                summary.textContent = safeT('uiv.focus.selectedInfo', { name: selectedTable.title, path: selectedTable.path, count: selectedTable.rowCount });
+            }
         }
     } else {
         if (pathInput) pathInput.value = '';
@@ -276,6 +475,7 @@ function formatAndAnalyzeResponseSample() {
         parsedResponseObj = null;
         discoveredTables = [];
         selectedFocusTableIndex = -1;
+        userExplicitlySelectedTable = false;
         if (viewer) { viewer.style.display = 'none'; viewer.innerHTML = ''; }
         if (editor) editor.style.display = 'block';
         renderResponseFocusUI();
@@ -304,6 +504,7 @@ function formatAndAnalyzeResponseSample() {
             const foundIdx = discoveredTables.findIndex(t => t.path === savedPath);
             if (foundIdx !== -1) {
                 selectedFocusTableIndex = foundIdx;
+                userExplicitlySelectedTable = true;
             }
         }
 
@@ -311,11 +512,13 @@ function formatAndAnalyzeResponseSample() {
             const matches = matchTableByKeyword(kw);
             if (matches.length > 0) {
                 selectedFocusTableIndex = matches[0].index;
+                userExplicitlySelectedTable = (matches.length === 1);
             }
         }
 
         if (selectedFocusTableIndex === -1 && discoveredTables.length > 0) {
             selectedFocusTableIndex = 0;
+            userExplicitlySelectedTable = false;
         }
 
         renderResponseFocusUI();
@@ -324,6 +527,7 @@ function formatAndAnalyzeResponseSample() {
         parsedResponseObj = null;
         discoveredTables = [];
         selectedFocusTableIndex = -1;
+        userExplicitlySelectedTable = false;
         renderResponseFocusUI();
     }
 }
@@ -335,17 +539,50 @@ function openFocusChoiceModal() {
     }
     const overlay = getEl('uivResponseChoiceOverlay');
     const list = getEl('uivResponseChoiceList');
+    const subtitle = getEl('uivResponseChoiceSubtitle');
+    const titleEl = getEl('uivResponseChoiceTitle');
     if (!overlay || !list) return;
 
-    list.innerHTML = discoveredTables.map((table, idx) => {
+    const kw = getEl('responseFocusKeyword')?.value.trim() || '';
+    const matches = kw ? matchTableByKeyword(kw) : [];
+    const matchedIndices = new Set(matches.map(m => m.index));
+
+    if (titleEl) {
+        titleEl.textContent = safeT('uiv.focus.modalTitle');
+    }
+
+    if (subtitle) {
+        if (kw && matches.length > 1) {
+            subtitle.textContent = safeT('uiv.focus.modalMultiSubtitle', { keyword: kw, count: matches.length });
+        } else {
+            subtitle.textContent = safeT('uiv.focus.modalSubtitle');
+        }
+    }
+
+    // 将匹配到关键词的表排在前面展示
+    const displayList = [...discoveredTables];
+    if (kw && matches.length > 0) {
+        displayList.sort((a, b) => {
+            const aMatched = matchedIndices.has(a.index) ? 1 : 0;
+            const bMatched = matchedIndices.has(b.index) ? 1 : 0;
+            return bMatched - aMatched;
+        });
+    }
+
+    list.innerHTML = displayList.map(table => {
+        const idx = table.index;
         const isSelected = idx === selectedFocusTableIndex;
+        const isMatched = matchedIndices.has(idx);
         const colsPreview = table.columns && table.columns.length
             ? table.columns.slice(0, 8).join(', ') + (table.columns.length > 8 ? '...' : '')
             : '';
         return `
-            <button type="button" class="uiv-ai-choice-item ${isSelected ? 'selected' : ''}" onclick="UIVWorkbench.selectFocusTable(${idx})">
+            <button type="button" class="uiv-ai-choice-item ${isSelected ? 'selected' : ''} ${isMatched ? 'matched-keyword-card' : ''}" onclick="UIVWorkbench.selectFocusTable(${idx}, true)">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <b>[表 ${idx + 1}] ${escapeHtml(table.title)}</b>
+                    <div style="display:flex; align-items:center; flex-wrap:wrap; gap:4px;">
+                        <b>[表 ${idx + 1}] ${escapeHtml(table.title)}</b>
+                        ${isMatched ? `<span class="matched-keyword-badge">${safeT('uiv.focus.matchedBadge')}</span>` : (kw ? `<span class="unmatched-keyword-badge">${safeT('uiv.focus.unmatchedBadge')}</span>` : '')}
+                    </div>
                     <span style="font-size:11px; color:#38bdf8; background:rgba(56,189,248,0.12); padding:2px 8px; border-radius:4px; font-weight:600;">
                         ${table.rowCount} 行
                     </span>
@@ -368,9 +605,10 @@ function closeFocusChoiceModal() {
     if (overlay) overlay.style.display = 'none';
 }
 
-function selectFocusTable(index) {
+function selectFocusTable(index, isExplicit = true) {
     if (index >= 0 && index < discoveredTables.length) {
         selectedFocusTableIndex = index;
+        userExplicitlySelectedTable = Boolean(isExplicit);
         const table = discoveredTables[index];
         const pathInput = getEl('responseFocusPath');
         if (pathInput) pathInput.value = table.path;
@@ -381,6 +619,7 @@ function selectFocusTable(index) {
 
 function clearResponseFocus() {
     selectedFocusTableIndex = -1;
+    userExplicitlySelectedTable = false;
     const kwInput = getEl('responseFocusKeyword');
     if (kwInput) kwInput.value = '';
     const pathInput = getEl('responseFocusPath');
@@ -392,6 +631,7 @@ function onResponseKeywordInput() {
     const kwInput = getEl('responseFocusKeyword');
     const kw = kwInput ? kwInput.value.trim() : '';
     if (!kw) {
+        userExplicitlySelectedTable = false;
         if (discoveredTables.length > 0) {
             selectedFocusTableIndex = 0;
             const pathInput = getEl('responseFocusPath');
@@ -402,11 +642,18 @@ function onResponseKeywordInput() {
     }
     const matches = matchTableByKeyword(kw);
     if (matches.length > 0) {
-        selectedFocusTableIndex = matches[0].index;
+        const currentInMatches = selectedFocusTableIndex >= 0 && matches.some(m => m.index === selectedFocusTableIndex);
+        if (!currentInMatches || !userExplicitlySelectedTable) {
+            selectedFocusTableIndex = matches[0].index;
+            userExplicitlySelectedTable = (matches.length === 1);
+        }
         const pathInput = getEl('responseFocusPath');
-        if (pathInput) pathInput.value = matches[0].path;
+        if (pathInput && discoveredTables[selectedFocusTableIndex]) {
+            pathInput.value = discoveredTables[selectedFocusTableIndex].path;
+        }
     } else {
         selectedFocusTableIndex = -1;
+        userExplicitlySelectedTable = false;
         const pathInput = getEl('responseFocusPath');
         if (pathInput) pathInput.value = '';
     }
@@ -427,7 +674,8 @@ function getResponseFocusConfig() {
         path: focusPath || (selectedTable ? selectedTable.path : null),
         componentIndex: selectedTable ? selectedTable.componentIndex : null,
         componentId: selectedTable ? selectedTable.componentId : null,
-        title: selectedTable ? selectedTable.title : null
+        title: selectedTable ? selectedTable.title : null,
+        userSelected: userExplicitlySelectedTable
     };
 }
 
@@ -575,6 +823,17 @@ if (typeof document !== 'undefined') {
                 kwTimer = setTimeout(() => onResponseKeywordInput(), 200);
             });
         }
+        const guideTrigger = getEl('responseSampleGuideTrigger');
+        if (guideTrigger && !guideTrigger.__boundGuide && typeof guideTrigger.addEventListener === 'function') {
+            guideTrigger.__boundGuide = true;
+            guideTrigger.addEventListener('click', (e) => toggleSampleGuidePinned(e));
+            guideTrigger.addEventListener('mouseenter', () => renderSampleGuideCode());
+        }
+        const labelWrap = getEl('responseSampleLabelWrap');
+        if (labelWrap && !labelWrap.__boundGuide && typeof labelWrap.addEventListener === 'function') {
+            labelWrap.__boundGuide = true;
+            labelWrap.addEventListener('mouseenter', () => renderSampleGuideCode());
+        }
     };
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', bindWorkbenchListeners);
@@ -599,6 +858,13 @@ window.UIVWorkbench = {
     clearResponseFocus,
     onResponseKeywordInput,
     getResponseFocusConfig,
+    switchSampleGuideTab,
+    fillSampleFromGuide,
+    copySampleFromGuide,
+    toggleSampleGuidePinned,
+    renderSampleGuideCode,
+    isExplicitlySelected: () => userExplicitlySelectedTable,
+    SAMPLE_GUIDE_TEMPLATES,
     getParsedPayload: () => parsedPayloadObj,
     getParsedResponse: () => parsedResponseObj,
     getDiscoveredTables: () => discoveredTables,

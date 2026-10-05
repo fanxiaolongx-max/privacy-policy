@@ -40,6 +40,7 @@ function createMockDomEnvironment(navigatorOverrides = {}, storageInitial = {}) 
 
     const mockWindow = {
         document: mockDocument,
+        location: { hostname: 'localhost', href: 'http://localhost:3000' },
         navigator: {
             languages: ['zh-CN', 'zh'],
             language: 'zh-CN',

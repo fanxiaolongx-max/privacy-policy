@@ -5,6 +5,12 @@ const screen = electron && electron.screen ? electron.screen : null;
 const ipcMain = electron && electron.ipcMain ? electron.ipcMain : null;
 const path = require('path');
 const fs = require('fs');
+const desktopLanguage = require('../backend/models/desktop-language');
+desktopLanguage.events.on('change', (language) => {
+    for (const win of [petWin, chatWin, settingsWin]) {
+        if (win && !win.isDestroyed()) win.webContents.send('pet-language-change', language);
+    }
+});
 const { detectAllQuotas } = require('./quota-detector');
 const {
     startKeyboardHook,
@@ -371,6 +377,7 @@ async function refreshQuotas() {
 function registerIpc() {
     if (ipcRegistered) return;
     ipcRegistered = true;
+    ipcMain.handle('pet-get-language', () => desktopLanguage.getLanguage());
 
     // 获取前端初始参数 (端口、Token、配额数据)
     ipcMain.handle('pet-get-init-data', async () => {

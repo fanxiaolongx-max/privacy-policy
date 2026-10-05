@@ -41,6 +41,7 @@ if (process.env.TOOLS_DAILY_LOGS === undefined) {
     process.env.TOOLS_DAILY_LOGS = '0';
 }
 const petManager = require('./desktop-pet/pet-manager');
+require('./backend/models/desktop-language').events.on('change', () => refreshTrayMenu());
 
 function getAppIconPath() {
     if (process.platform === 'darwin') {
@@ -1748,6 +1749,7 @@ function refreshTrayMenu() {
     writeRuntimeStatusSnapshot();
     const baseUrl = getAppBaseUrl();
     const loginSettings = app.getLoginItemSettings();
+    const petT = (zh, en) => require('./backend/models/desktop-language').getLanguage() === 'en-US' ? en : zh;
     const menuTemplate = [
         { label: `Tools Platform v${app.getVersion()}`, enabled: false },
         { label: baseUrl || '本地服务启动中...', enabled: false },
@@ -1761,10 +1763,10 @@ function refreshTrayMenu() {
         { label: '打开报表看板', click: () => openAppPath('/report') },
         { type: 'separator' },
         {
-            label: '🐾 桌面宠物 (哈基米)',
+            label: petT('🐾 桌面宠物 (哈基米)', '🐾 Desktop pet (Hajimi)'),
             submenu: [
                 {
-                    label: '开机/启动自动运行桌宠',
+                    label: petT('开机/启动自动运行桌宠', 'Start pet with app'),
                     type: 'checkbox',
                     checked: petManager.isPetEnabled(),
                     click: (item) => {
@@ -1773,7 +1775,7 @@ function refreshTrayMenu() {
                     }
                 },
                 {
-                    label: petManager.isPetVisible() ? '🙈 本次隐藏桌宠' : '👀 唤回显示桌宠',
+                    label: petManager.isPetVisible() ? petT('🙈 本次隐藏桌宠', '🙈 Hide pet for now') : petT('👀 唤回显示桌宠', '👀 Show pet'),
                     enabled: petManager.isPetEnabled(),
                     click: () => {
                         if (petManager.isPetVisible()) {
@@ -1785,7 +1787,7 @@ function refreshTrayMenu() {
                     }
                 },
                 {
-                    label: '💬 呼出桌宠AI客服对话',
+                    label: petT('💬 呼出桌宠AI客服对话', '💬 Chat with Hajimi'),
                     enabled: petManager.isPetEnabled(),
                     click: () => {
                         petManager.createChatWindow().show();

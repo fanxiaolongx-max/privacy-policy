@@ -2,6 +2,7 @@
   if (window.__geminiHajimiWidget) return;
   window.__geminiHajimiWidget = true;
 
+  var petT = function (text) { return window.PetI18n ? window.PetI18n.t(text) : text; };
   var isElectron = typeof require !== 'undefined';
   var ipcRenderer = null;
   if (isElectron) {
@@ -79,7 +80,7 @@
     '.gpet-menu{position:fixed;min-width:210px;max-width:calc(100vw - 16px);max-height:calc(100vh - 16px);overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;background:rgba(255,255,255,0.96);backdrop-filter:blur(16px);border:1px solid rgba(37,99,235,0.25);border-radius:12px;padding:10px 12px;opacity:0;transform:scale(.92) translateY(-6px);transition:opacity .18s ease,transform .2s cubic-bezier(.34,1.56,.64,1);pointer-events:none;z-index:100000;box-shadow:0 12px 32px rgba(15,23,42,0.22);color-scheme:light;box-sizing:border-box}',
     '.gpet-menu.gpet-menu-open{opacity:1;transform:scale(1) translateY(0);pointer-events:auto}',
     '.gpet-menu-title{font-size:13px;font-weight:700;color:#1e3a8a;margin-bottom:8px;display:flex;align-items:center;gap:6px}',
-    '.gpet-menu-row{display:flex;align-items:center;gap:8px;margin:6px 0;color:#1e293b;font-size:12px;white-space:nowrap}',
+    '.gpet-menu-row{display:flex;align-items:center;gap:8px;margin:6px 0;color:#1e293b;font-size:12px;flex-wrap:wrap}',
     '.gpet-range{flex:1;min-width:0;accent-color:#2563eb}',
     '.gpet-number{width:46px;border:1px solid rgba(37,99,235,0.3);border-radius:6px;padding:2px 4px;font-size:12px;color:#1e293b;background:#fff;box-sizing:border-box;text-align:center}',
     '.gpet-number:disabled{opacity:.4;background:rgba(0,0,0,0.06);cursor:not-allowed}',
@@ -111,7 +112,7 @@
     var img = document.createElement('img');
     img.className = 'gpet-img gpet-breathe';
     img.src = IMAGES.chill;
-    img.alt = 'Gemini 哈基米';
+    img.alt = petT('Gemini 哈基米');
     img.draggable = false;
 
     var bubbleBox = document.createElement('div');
@@ -142,13 +143,13 @@
     textBox.className = 'gpet-text';
     var labelEl = document.createElement('div');
     labelEl.className = 'gpet-label';
-    labelEl.textContent = '✦ Gemini 5小时配额';
+    labelEl.textContent = petT('✦ Gemini 5小时配额');
     var amountEl = document.createElement('div');
     amountEl.className = 'gpet-amount';
     amountEl.textContent = '100%';
     var hintEl = document.createElement('div');
     hintEl.className = 'gpet-hint';
-    hintEl.textContent = '反重力全速运转中 ✦';
+    hintEl.textContent = petT('反重力全速运转中 ✦');
     textBox.appendChild(labelEl);
     textBox.appendChild(amountEl);
     textBox.appendChild(hintEl);
@@ -199,7 +200,7 @@
     var closeMenuBtn = document.createElement('button');
     closeMenuBtn.type = 'button';
     closeMenuBtn.innerHTML = '✕';
-    closeMenuBtn.title = '关闭菜单';
+    closeMenuBtn.title = petT('关闭菜单');
     closeMenuBtn.style.cssText = 'border:none;background:transparent;cursor:pointer;font-size:14px;color:#64748b;padding:0 4px;line-height:1;font-weight:700;';
     closeMenuBtn.addEventListener('click', function(e) { e.stopPropagation(); closeMenu(); });
     titleRow.appendChild(closeMenuBtn);
@@ -271,8 +272,8 @@
       o.textContent = lbl;
       return o;
     }
-    soundSelect.appendChild(soundOpt('duck', '小黄鸭 (挤压音)'));
-    soundSelect.appendChild(soundOpt('mute', '静音'));
+    soundSelect.appendChild(soundOpt('duck', petT('小黄鸭 (挤压音)')));
+    soundSelect.appendChild(soundOpt('mute', petT('静音')));
     soundSelect.addEventListener('change', function () { setSoundSet(soundSelect.value); });
 
     var volInput = document.createElement('input');
@@ -300,28 +301,28 @@
     // Quota View Select
     var quotaViewSelect = document.createElement('select');
     quotaViewSelect.className = 'gpet-sound';
-    quotaViewSelect.appendChild(soundOpt('5h', '5小时额度 (常用)'));
-    quotaViewSelect.appendChild(soundOpt('weekly', '每周总额度'));
-    quotaViewSelect.appendChild(soundOpt('alternate', '双额度交替轮播'));
+    quotaViewSelect.appendChild(soundOpt('5h', petT('5小时额度 (常用)')));
+    quotaViewSelect.appendChild(soundOpt('weekly', petT('每周总额度')));
+    quotaViewSelect.appendChild(soundOpt('alternate', petT('双额度交替轮播')));
     quotaViewSelect.addEventListener('change', function () { setQuotaView(quotaViewSelect.value); });
 
     var workStateSelect = document.createElement('select');
     workStateSelect.className = 'gpet-sound';
-    workStateSelect.appendChild(soundOpt('auto', '自动跟随 (工作吹茶/空闲站立)'));
-    workStateSelect.appendChild(soundOpt('typing', '疯狂码字 (打字敲键盘)'));
-    workStateSelect.appendChild(soundOpt('chill', '吹茶品茗 (工作中)'));
-    workStateSelect.appendChild(soundOpt('idle', '端庄站立 (经典待机)'));
-    workStateSelect.appendChild(soundOpt('happy', '跪姿萌爪 (开心元气)'));
-    workStateSelect.appendChild(soundOpt('dragged', '悬空拎起 (呆萌被提)'));
-    workStateSelect.appendChild(soundOpt('fall', '跌坐揉头 (摔倒哭哭)'));
-    workStateSelect.appendChild(soundOpt('pat', '摸头眯眼 (害羞享受)'));
+    workStateSelect.appendChild(soundOpt('auto', petT('自动跟随 (工作吹茶/空闲站立)')));
+    workStateSelect.appendChild(soundOpt('typing', petT('疯狂码字 (打字敲键盘)')));
+    workStateSelect.appendChild(soundOpt('chill', petT('吹茶品茗 (工作中)')));
+    workStateSelect.appendChild(soundOpt('idle', petT('端庄站立 (经典待机)')));
+    workStateSelect.appendChild(soundOpt('happy', petT('跪姿萌爪 (开心元气)')));
+    workStateSelect.appendChild(soundOpt('dragged', petT('悬空拎起 (呆萌被提)')));
+    workStateSelect.appendChild(soundOpt('fall', petT('跌坐揉头 (摔倒哭哭)')));
+    workStateSelect.appendChild(soundOpt('pat', petT('摸头眯眼 (害羞享受)')));
     workStateSelect.addEventListener('change', function () { setWorkStateMode(workStateSelect.value); });
 
     var antigravitySyncSelect = document.createElement('select');
     antigravitySyncSelect.className = 'gpet-sound';
-    antigravitySyncSelect.appendChild(soundOpt('sync_all', '跟随反重力启动和退出'));
-    antigravitySyncSelect.appendChild(soundOpt('sync_start', '仅跟随反重力启动'));
-    antigravitySyncSelect.appendChild(soundOpt('manual', '自己手动启动，自动检测'));
+    antigravitySyncSelect.appendChild(soundOpt('sync_all', petT('跟随反重力启动和退出')));
+    antigravitySyncSelect.appendChild(soundOpt('sync_start', petT('仅跟随反重力启动')));
+    antigravitySyncSelect.appendChild(soundOpt('manual', petT('自己手动启动，自动检测')));
     antigravitySyncSelect.addEventListener('change', function () { setAntigravitySyncMode(antigravitySyncSelect.value); });
 
     var bubbleToggle = document.createElement('input');
@@ -354,27 +355,27 @@
     turnCostCloseInput.step = '1';
     turnCostCloseInput.className = 'gpet-number';
     turnCostCloseInput.value = '5';
-    turnCostCloseInput.title = '填 0 表示不自动关闭';
+    turnCostCloseInput.title = petT('填 0 表示不自动关闭');
     turnCostCloseInput.addEventListener('input', function () { setTurnCostClose(turnCostCloseInput.value); });
 
-    var row1 = menuRow(); row1.appendChild(menuLabel('大小')); row1.appendChild(scaleInput); row1.appendChild(scaleNumber);
-    var row2 = menuRow(); row2.appendChild(menuLabel('音效')); row2.appendChild(soundSelect);
-    var row3 = menuRow(); row3.appendChild(menuLabel('音量')); row3.appendChild(volInput); row3.appendChild(volPct);
-    var row4 = menuRow(); row4.appendChild(menuLabel('配额')); row4.appendChild(quotaViewSelect);
-    var rowWork = menuRow(); rowWork.appendChild(menuLabel('状态')); rowWork.appendChild(workStateSelect);
-    var rowSync = menuRow(); rowSync.appendChild(menuLabel('跟随反重力')); rowSync.appendChild(antigravitySyncSelect);
-    var row5 = menuRow(); row5.appendChild(menuLabel('气泡')); row5.appendChild(bubbleToggle);
-    var rowTyping = menuRow(); rowTyping.appendChild(menuLabel('打字工友')); rowTyping.appendChild(typingToggle);
-    var rowGrav = menuRow(); rowGrav.appendChild(menuLabel('重力下落')); rowGrav.appendChild(gravityToggle);
+    var row1 = menuRow(); row1.appendChild(menuLabel(petT('大小'))); row1.appendChild(scaleInput); row1.appendChild(scaleNumber);
+    var row2 = menuRow(); row2.appendChild(menuLabel(petT('音效'))); row2.appendChild(soundSelect);
+    var row3 = menuRow(); row3.appendChild(menuLabel(petT('音量'))); row3.appendChild(volInput); row3.appendChild(volPct);
+    var row4 = menuRow(); row4.appendChild(menuLabel(petT('配额'))); row4.appendChild(quotaViewSelect);
+    var rowWork = menuRow(); rowWork.appendChild(menuLabel(petT('状态'))); rowWork.appendChild(workStateSelect);
+    var rowSync = menuRow(); rowSync.appendChild(menuLabel(petT('跟随反重力'))); rowSync.appendChild(antigravitySyncSelect);
+    var row5 = menuRow(); row5.appendChild(menuLabel(petT('气泡'))); row5.appendChild(bubbleToggle);
+    var rowTyping = menuRow(); rowTyping.appendChild(menuLabel(petT('打字工友'))); rowTyping.appendChild(typingToggle);
+    var rowGrav = menuRow(); rowGrav.appendChild(menuLabel(petT('重力下落'))); rowGrav.appendChild(gravityToggle);
     var sep1 = document.createElement('div'); sep1.className = 'gpet-menu-sep';
-    var row6 = menuRow(); row6.appendChild(menuLabel('对话消耗')); row6.appendChild(turnCostToggle); row6.appendChild(menuLabel('自动关闭')); row6.appendChild(turnCostCloseInput); row6.appendChild(menuLabel('秒'));
+    var row6 = menuRow(); row6.appendChild(menuLabel(petT('对话消耗'))); row6.appendChild(turnCostToggle); row6.appendChild(menuLabel(petT('自动关闭'))); row6.appendChild(turnCostCloseInput); row6.appendChild(menuLabel(petT('秒')));
 
     var sep2 = document.createElement('div'); sep2.className = 'gpet-menu-sep';
     var row7 = menuRow();
     row7.style.cssText = 'margin-top:10px;display:flex;width:100%;';
     var quitBtn = document.createElement('button');
     quitBtn.type = 'button';
-    quitBtn.textContent = '✕ 退出桌宠';
+    quitBtn.textContent = petT('✕ 退出桌宠');
     quitBtn.style.cssText = 'width:100%;border:1px solid rgba(239,68,68,0.45);background:rgba(239,68,68,0.1);color:#ef4444;font-size:12px;font-weight:700;padding:8px 0;border-radius:8px;cursor:pointer;display:block;text-align:center;box-sizing:border-box;transition:background .15s ease,border-color .15s ease;';
     quitBtn.addEventListener('mouseenter', function () {
       quitBtn.style.background = 'rgba(239,68,68,0.22)';
@@ -483,33 +484,33 @@
     // Interactive Cat Maid & Coder Dialogue Quotes (随着按压次数随机显示)
     var TEXT_QUOTES = [
       // 捏捏互动类 (Squish & touch reactions)
-      '别捏啦，猫耳和肉垫要被你捏扁了喵！(>w<)',
-      '呀！捏我干嘛，再捏我就要吐泡泡了喵~',
-      '呼噜呼噜… 捏得好舒服，猫生圆满了喵~ (≧∇≦)ﾉ',
-      '弹力十足吧！这可是纯天然无添加的猫猫脂肪喵！',
-      'Q 弹 Q 弹~ 再按一下，我就要原地起飞了喵！',
-      '嗷呜！手感是不是超棒？小鱼干准备好了吗喵~',
-      '捏一次消耗 0.1 焦耳，主人快敲代码补充能量喵！',
-      '今天也是被主人宠幸（捏脸）的一天喵~ ✦',
+      petT('别捏啦，猫耳和肉垫要被你捏扁了喵！(>w<)'),
+      petT('呀！捏我干嘛，再捏我就要吐泡泡了喵~'),
+      petT('呼噜呼噜… 捏得好舒服，猫生圆满了喵~ (≧∇≦)ﾉ'),
+      petT('弹力十足吧！这可是纯天然无添加的猫猫脂肪喵！'),
+      petT('Q 弹 Q 弹~ 再按一下，我就要原地起飞了喵！'),
+      petT('嗷呜！手感是不是超棒？小鱼干准备好了吗喵~'),
+      petT('捏一次消耗 0.1 焦耳，主人快敲代码补充能量喵！'),
+      petT('今天也是被主人宠幸（捏脸）的一天喵~ ✦'),
 
       // 陪伴与元气类 (Cheering & companion)
-      '我是你的 Gemini 哈基米！今天也要元气满满写代码喵~ ✦',
-      '有 Bug 别慌，反重力引擎会保佑你的喵~ (=^･ω･^=)',
-      '呼噜呼噜… 摸摸头，代码一遍过，测试全绿喵！',
-      '今天主人敲代码速度好快！哈基米我都快眼花了喵~',
-      '你写的那几千行代码，我一口气就看完了喵~ 厉害吧！',
-      '主人主人辛苦啦~ 记得多喝水休息一下眼睛喵~',
-      '好舒服喵~ 记得多给我备两桶小鱼干！',
-      '休息一下吧，反重力引擎帮你盯好屏幕了喵~',
+      petT('我是你的 Gemini 哈基米！今天也要元气满满写代码喵~ ✦'),
+      petT('有 Bug 别慌，反重力引擎会保佑你的喵~ (=^･ω･^=)'),
+      petT('呼噜呼噜… 摸摸头，代码一遍过，测试全绿喵！'),
+      petT('今天主人敲代码速度好快！哈基米我都快眼花了喵~'),
+      petT('你写的那几千行代码，我一口气就看完了喵~ 厉害吧！'),
+      petT('主人主人辛苦啦~ 记得多喝水休息一下眼睛喵~'),
+      petT('好舒服喵~ 记得多给我备两桶小鱼干！'),
+      petT('休息一下吧，反重力引擎帮你盯好屏幕了喵~'),
 
       // 程序员幽默与反重力彩蛋 (Coder humor & easter eggs)
-      '代码没有 Bug，只是有独特的个性！',
-      '反重力编译中… 正在将咖啡因转化为可用代码！',
-      '✦ 宇宙算力全开！今天的哈基米超凶的！',
-      'Git commit: "又改了一堆玄学代码" (嘘)',
-      '正在向宇宙发射好运光波… 编译一次通过！',
-      '只要我不看报错，报错就相当于不存在喵！',
-      '键盘敲得啪啪响，年终奖金蹭蹭涨喵~'
+      petT('代码没有 Bug，只是有独特的个性！'),
+      petT('反重力编译中… 正在将咖啡因转化为可用代码！'),
+      petT('✦ 宇宙算力全开！今天的哈基米超凶的！'),
+      petT('Git commit: "又改了一堆玄学代码" (嘘)'),
+      petT('正在向宇宙发射好运光波… 编译一次通过！'),
+      petT('只要我不看报错，报错就相当于不存在喵！'),
+      petT('键盘敲得啪啪响，年终奖金蹭蹭涨喵~')
     ];
 
     var lastQuoteIdx = -1;
@@ -565,16 +566,16 @@
     function getCurrentQuotaDisplay() {
       if (!isAntigravityConnected && state.gemini5h === null) {
         return {
-          label: '✦ 纯净桌宠模式',
+          label: petT('✦ 纯净桌宠模式'),
           val: null,
-          hint: '反重力未开启 · 待机陪伴中 ✦'
+          hint: petT('反重力未开启 · 待机陪伴中 ✦')
         };
       }
       var isWeekly = state.quotaView === 'weekly' || (state.quotaView === 'alternate' && state.alternateFlip);
-      var label = isWeekly ? '✦ Gemini 周配额' : '✦ Gemini 5小时配额';
+      var label = isWeekly ? petT('✦ Gemini 周配额') : petT('✦ Gemini 5小时配额');
       var val = isWeekly ? state.geminiWeekly : state.gemini5h;
       var reset = isWeekly ? state.geminiWeeklyReset : state.gemini5hReset;
-      var hint = reset || (isAntigravityConnected ? '反重力全速运转中 ✦' : '离线缓存额度 · 待机中 ✦');
+      var hint = reset || (isAntigravityConnected ? petT('反重力全速运转中 ✦') : petT('离线缓存额度 · 待机中 ✦'));
       return { label: label, val: val, hint: hint };
     }
 
@@ -650,10 +651,10 @@
       pressCount = 2;
 
       var fallQuotes = [
-        singleCenter('A', '呜哇... 屁股摔得好痛痛 QAQ', '#fb7185', true),
-        singleCenter('A', '呜呜呜... 谁把人家扔下来的？！', '#fb7185', true),
-        singleCenter('A', '晕乎乎... 头顶冒小星星了 @o@', '#c084fc', true),
-        singleCenter('A', '哎哟... 下次要接住我嘛~ 哼！', '#38bdf8', true)
+        singleCenter('A', petT('呜哇... 屁股摔得好痛痛 QAQ'), '#fb7185', true),
+        singleCenter('A', petT('呜呜呜... 谁把人家扔下来的？！'), '#fb7185', true),
+        singleCenter('A', petT('晕乎乎... 头顶冒小星星了 @o@'), '#c084fc', true),
+        singleCenter('A', petT('哎哟... 下次要接住我嘛~ 哼！'), '#38bdf8', true)
       ];
       var lines = pickOne(fallQuotes);
 
@@ -695,12 +696,12 @@
       pressCount = 2;
 
       var patQuotes = [
-        singleCenter('A', '呼噜呼噜… 最喜欢主人摸摸啦~ (ฅ^ω^ฅ)', '#f472b6', true),
-        singleCenter('A', '蹭蹭~ 主人的手好暖和呀 ✦', '#f472b6', true),
-        singleCenter('A', '脸颊都要被主人揉圆了啦… > <', '#fb7185', true),
-        singleCenter('A', '摸摸头，今天写代码 Bug 全部退散喵！', '#38bdf8', true),
-        singleCenter('A', '唔姆… 好舒服，猫猫不想努力了喵~ (//∇//)', '#f472b6', true),
-        singleCenter('A', '最喜欢被主人温柔摸头了喵~ 💖', '#f472b6', true)
+        singleCenter('A', petT('呼噜呼噜… 最喜欢主人摸摸啦~ (ฅ^ω^ฅ)'), '#f472b6', true),
+        singleCenter('A', petT('蹭蹭~ 主人的手好暖和呀 ✦'), '#f472b6', true),
+        singleCenter('A', petT('脸颊都要被主人揉圆了啦… > <'), '#fb7185', true),
+        singleCenter('A', petT('摸摸头，今天写代码 Bug 全部退散喵！'), '#38bdf8', true),
+        singleCenter('A', petT('唔姆… 好舒服，猫猫不想努力了喵~ (//∇//)'), '#f472b6', true),
+        singleCenter('A', petT('最喜欢被主人温柔摸头了喵~ 💖'), '#f472b6', true)
       ];
       var lines = pickOne(patQuotes);
 
@@ -782,15 +783,15 @@
       hintEl.textContent = '';
 
       if (isLive) {
-        labelEl.textContent = '✦ 正在思考与敲代码...';
+        labelEl.textContent = petT('✦ 正在思考与敲代码...');
         labelEl.style.color = '#c084fc';
-        amountEl.textContent = '持续工作中喵~ (ฅ^ω^ฅ)';
+        amountEl.textContent = petT('持续工作中喵~ (ฅ^ω^ฅ)');
         amountEl.style.color = '#38bdf8';
         amountEl.style.fontSize = 'calc(var(--gpet-u) * 50)';
         bubbleBox.classList.add('gpet-bubble-open');
         // Keep open while agent is working
       } else {
-        labelEl.textContent = '✦ 主人，本次一共消耗:';
+        labelEl.textContent = petT('✦ 主人，本次一共消耗:');
         labelEl.style.color = '#38bdf8';
         amountEl.style.fontSize = '';
         if (typeof amount === 'number') {
@@ -865,7 +866,7 @@
       labelEl.textContent = info.label;
       var targetVal = info.val;
       if (targetVal === null || targetVal === undefined) {
-        amountEl.textContent = '待机中';
+        amountEl.textContent = petT('待机中');
         amountEl.style.color = '#10b981';
       } else {
         if (shown === null) shown = targetVal;
@@ -1703,10 +1704,10 @@
         // 若悬停在半空（远离任务栏），触发反重力悬停趣味台词
         if (curY < floorY - 60 && bubbleOn && !bubbleShown) {
           var hoverQuotes = [
-            '✦ 反重力引擎启动，悬停就绪喵~',
-            '我就呆在这里看你敲代码喵~ ✦',
-            '浮空守护中… 屏幕视野超棒喵~ (ฅ^ω^ฅ)',
-            '反重力小猫咪随时待命 ✦'
+            petT('✦ 反重力引擎启动，悬停就绪喵~'),
+            petT('我就呆在这里看你敲代码喵~ ✦'),
+            petT('浮空守护中… 屏幕视野超棒喵~ (ฅ^ω^ฅ)'),
+            petT('反重力小猫咪随时待命 ✦')
           ];
           var lines = singleCenter('A', pickOne(hoverQuotes), '#38bdf8', true);
           applyBubbleLines(lines);
@@ -1926,14 +1927,14 @@
     var lastTypingBubbleTime = 0;
 
     var TYPING_QUOTES = [
-      '主人敲键盘好快！我也来帮忙敲两行！啪啪啪~ ✦',
-      '啪啪啪… 正在给主人的代码施加“无 Bug 魔法”喵！(ฅ^ω^ฅ)',
-      '键盘要敲冒烟啦！这就是传说中的手速吗？！(🔥)',
-      'Git push origin master --force… (嘘，开玩笑的喵！)',
-      'Ctrl+C，Ctrl+V… 熟练得让人心疼喵！( >w< )',
-      '呼噜呼噜… 反重力引擎已将咖啡因转化为可用代码！',
-      '⚡ 结对编程模式启动！今天的产出翻倍喵！',
-      '主人尽管敲，报错有反重力引擎顶着喵！'
+      petT('主人敲键盘好快！我也来帮忙敲两行！啪啪啪~ ✦'),
+      petT('啪啪啪… 正在给主人的代码施加“无 Bug 魔法”喵！(ฅ^ω^ฅ)'),
+      petT('键盘要敲冒烟啦！这就是传说中的手速吗？！(🔥)'),
+      petT('Git push origin master --force… (嘘，开玩笑的喵！)'),
+      petT('Ctrl+C，Ctrl+V… 熟练得让人心疼喵！( >w< )'),
+      petT('呼噜呼噜… 反重力引擎已将咖啡因转化为可用代码！'),
+      petT('⚡ 结对编程模式启动！今天的产出翻倍喵！'),
+      petT('主人尽管敲，报错有反重力引擎顶着喵！')
     ];
 
     function spawnTypingSpark() {
@@ -2038,10 +2039,10 @@
         isAntigravityConnected = !!alive;
         if (isAntigravityConnected !== prev) {
           if (isAntigravityConnected) {
-            showCustomSpeechBubble('✦ 反重力已连接！主人今天想写点什么代码喵？', '#2563eb');
+            showCustomSpeechBubble(petT('✦ 反重力已连接！主人今天想写点什么代码喵？'), '#2563eb');
             try { ipcRenderer.send('pet-request-quota'); } catch (_) {}
           } else if (hasShownInitialGreeting) {
-            showCustomSpeechBubble('✦ 反重力已退出，进入待机摸鱼模式~ (ฅ^ω^ฅ)', '#64748b');
+            showCustomSpeechBubble(petT('✦ 反重力已退出，进入待机摸鱼模式~ (ฅ^ω^ฅ)'), '#64748b');
             setAgentWorking(false);
           }
           hasShownInitialGreeting = true;
@@ -2058,7 +2059,7 @@
           void img.offsetWidth;
           img.classList.add('gpet-jelly');
           playRelease();
-          showCustomSpeechBubble('✦ 主人，我在这里喵！(ฅ^ω^ฅ)', '#38bdf8');
+          showCustomSpeechBubble(petT('✦ 主人，我在这里喵！(ฅ^ω^ฅ)'), '#38bdf8');
         } catch (_) {}
       });
       ipcRenderer.on('pet-trigger-motion', function (e, motion) {
@@ -2118,7 +2119,7 @@
       });
       ipcRenderer.on('pet-farewell-exit', function () {
         try {
-          showCustomSpeechBubble('✦ 反重力已退出，桌宠同步退出喵~ 拜拜！', '#ef4444');
+          showCustomSpeechBubble(petT('✦ 反重力已退出，桌宠同步退出喵~ 拜拜！'), '#ef4444');
         } catch (_) {}
       });
       try {

@@ -7,7 +7,7 @@
     <title>UIVF12 抓取引擎 v6.6 - Tools Platform</title>
     <meta name="description" content="UI.Vision 全能抓取引擎，自动化脚本工程中心，脚本云端仓库管理">
     <link rel="stylesheet" href="/css/shared.css?v=20260929-01">
-    <link rel="stylesheet" href="/css/uivf12.css?v=20261005-03">
+    <link rel="stylesheet" href="/css/uivf12.css?v=20261005-04">
     <style>
         .repo-source-panel {
             display: none !important;
@@ -152,8 +152,87 @@
                 <textarea id="jsonInput" placeholder='{"srcTenantId":"...", "answerParamList": [...]}'></textarea>
                 <div id="payloadViewer"></div>
 
-                <label class="panel-label" style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
-                    <span id="responseSampleLabel" data-uiv-i18n="uiv.input.responseSampleLabel">3. 响应示例 Response Sample (JSON):</span>
+                <label class="panel-label response-sample-header-label" style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; position:relative;">
+                    <span class="response-sample-label-wrap" id="responseSampleLabelWrap">
+                        <span id="responseSampleLabel" data-uiv-i18n="uiv.input.responseSampleLabel">3. 响应示例 Response Sample (JSON):</span>
+                        <span class="response-sample-guide-badge" id="responseSampleGuideTrigger" title="鼠标悬停查看支持的格式结构与动态示例（可一键填入测试）" data-uiv-title="uiv.sampleGuide.badgeTitle">
+                            <span class="guide-badge-icon">💡</span>
+                            <span class="guide-badge-text" data-uiv-i18n="uiv.sampleGuide.badgeText">支持格式与动态示例</span>
+                        </span>
+                        <!-- 悬浮解释栏 Popover -->
+                        <div id="responseSampleGuidePopover" class="response-sample-guide-popover" role="tooltip">
+                            <div class="guide-popover-header">
+                                <div class="guide-popover-title">
+                                    <span class="guide-title-icon">💡</span>
+                                    <strong data-uiv-i18n="uiv.sampleGuide.popoverTitle">响应示例支持格式与数据聚焦指南</strong>
+                                </div>
+                                <span class="guide-popover-tag" data-uiv-i18n="uiv.sampleGuide.popoverTag">能力与限制速查</span>
+                            </div>
+                            <div class="guide-popover-desc" data-uiv-i18n="uiv.sampleGuide.popoverDesc">
+                                粘贴接口的真实 JSON 响应示例，工具将自动深度识别其中的<strong>所有数据表与图表组件</strong>。当响应中存在多张表（如大盘概览、区域汇总、代表处明细等）时，可指定关键词或手动选择目标表，精准生成提取逻辑，彻底避免抓错表。
+                            </div>
+
+                            <!-- 格式结构说明卡片 -->
+                            <div class="guide-formats-grid">
+                                <div class="guide-format-card">
+                                    <div class="guide-format-badge badge-datafab">格式 ① DataFab 多组件图表</div>
+                                    <div class="guide-format-pattern"><code>{"data": [{"metadata": [...], "data": [...]}]}</code></div>
+                                    <p class="guide-format-text" data-uiv-i18n="uiv.sampleGuide.descDatafab">自动探测每个组件的字段定义、行数与样本，支持按图表名、代表处或字段关键词精准聚焦提取。</p>
+                                </div>
+                                <div class="guide-format-card">
+                                    <div class="guide-format-badge badge-standard">格式 ② 标准对象数组列表</div>
+                                    <div class="guide-format-pattern"><code>{"data": [{"id": 1, ...}]} / {"list": [...]} / {"rows": [...]}</code></div>
+                                    <p class="guide-format-text" data-uiv-i18n="uiv.sampleGuide.descStandard">自动将首行对象的全部键提取为表头字段，适用于通用 REST API 与微服务业务列表接口。</p>
+                                </div>
+                                <div class="guide-format-card">
+                                    <div class="guide-format-badge badge-nested">格式 ③ 深度嵌套分页对象</div>
+                                    <div class="guide-format-pattern"><code>{"result": {"records": [...], "total": 100}}</code></div>
+                                    <p class="guide-format-text" data-uiv-i18n="uiv.sampleGuide.descNested">自动递归搜索深层数组并映射提取路径，兼容各种嵌套层级和分页包装结构。</p>
+                                </div>
+                            </div>
+
+                            <!-- 能力与限制提示 -->
+                            <div class="guide-capabilities-row">
+                                <div class="guide-cap-item cap-supported">
+                                    <span class="cap-icon">✅</span>
+                                    <div>
+                                        <b data-uiv-i18n="uiv.sampleGuide.capTitle">核心能力：</b>
+                                        <span data-uiv-i18n="uiv.sampleGuide.capList">多表自动探测、字段解析、关键词打分匹配、多表冲突引导与一键选择、汇总行自动融合提取。</span>
+                                    </div>
+                                </div>
+                                <div class="guide-cap-item cap-limit">
+                                    <span class="cap-icon">⚠️</span>
+                                    <div>
+                                        <b data-uiv-i18n="uiv.sampleGuide.limitTitle">使用限制：</b>
+                                        <span data-uiv-i18n="uiv.sampleGuide.limitList">必须为合法 JSON 文本；不支持 HTML 页面代码、二进制流、加密内容或验证码保护接口。</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 动态示例展示与切换 -->
+                            <div class="guide-example-section">
+                                <div class="guide-example-header">
+                                    <span class="guide-example-label" data-uiv-i18n="uiv.sampleGuide.exampleLabel">✨ 动态结构示例（可一键填入测试）：</span>
+                                    <div class="guide-example-tabs">
+                                        <button type="button" class="guide-example-tab active" data-tab="datafab" onclick="UIVWorkbench.switchSampleGuideTab('datafab', event)" data-uiv-i18n="uiv.sampleGuide.tabDatafab">DataFab 多组件(含代表处)</button>
+                                        <button type="button" class="guide-example-tab" data-tab="standard" onclick="UIVWorkbench.switchSampleGuideTab('standard', event)" data-uiv-i18n="uiv.sampleGuide.tabStandard">标准对象数组</button>
+                                        <button type="button" class="guide-example-tab" data-tab="nested" onclick="UIVWorkbench.switchSampleGuideTab('nested', event)" data-uiv-i18n="uiv.sampleGuide.tabNested">嵌套分页结果</button>
+                                    </div>
+                                </div>
+                                <div class="guide-example-code-wrap">
+                                    <pre id="responseSampleGuideCode" class="guide-example-code"></pre>
+                                </div>
+                                <div class="guide-example-actions">
+                                    <button type="button" class="guide-example-fill-btn" onclick="UIVWorkbench.fillSampleFromGuide(event)">
+                                        <span data-uiv-i18n="uiv.sampleGuide.fillBtn">⚡ 一键填入当前示例至响应框</span>
+                                    </button>
+                                    <button type="button" class="guide-example-copy-btn" onclick="UIVWorkbench.copySampleFromGuide(event)">
+                                        <span data-uiv-i18n="uiv.sampleGuide.copyBtn">📋 复制示例 JSON</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </span>
                     <span id="responseSampleHint" style="font-size:12px; color:#475569; font-weight:600;" data-uiv-i18n="uiv.input.responseSampleHint">可选，用于识别多表并聚焦提取</span>
                 </label>
                 <textarea id="responseSampleInput" placeholder='可选：粘贴接口返回的 JSON 响应示例。多表响应时可聚焦提取指定数据（如代表处、明细表等）' data-uiv-placeholder="uiv.input.responseSamplePlaceholder"></textarea>
@@ -167,6 +246,13 @@
                         </div>
                         <span id="responseFocusSummary" class="response-focus-summary">检测到多组数据</span>
                         <button type="button" id="btnClearResponseFocus" class="response-focus-clear-btn" onclick="UIVWorkbench.clearResponseFocus()" title="清除聚焦" data-uiv-title="uiv.focus.clearTitle">✕</button>
+                    </div>
+                    <div id="responseFocusMultiHint" class="response-focus-multi-hint" style="display:none;">
+                        <div class="multi-hint-title">
+                            <span class="multi-hint-icon">⚠️</span>
+                            <span id="responseFocusMultiHintText">关键词命中多个候选表，请点击选择具体提取哪一张表：</span>
+                        </div>
+                        <div id="responseFocusCandidateChips" class="response-focus-candidate-chips"></div>
                     </div>
                     <div class="response-focus-controls">
                         <div class="response-focus-input-wrap">
@@ -657,20 +743,20 @@
     <!-- 共享脚本 -->
     <script src="/js/shared/api.js?v=20260824-01"></script>
     <script src="/js/shared/toast.js?v=20260628-19"></script>
-    <script src="/js/shared/i18n.js?v=20260628-19"></script>
-    <script src="/js/shared/navbar.js?v=20260929-03"></script>
+    <script src="/js/shared/i18n.js?v=20261005-01"></script>
+    <script src="/js/shared/navbar.js?v=20261005-01"></script>
     <!-- UIVF12 模块 -->
-    <script src="/js/uivf12/i18n.js?v=20261005-03"></script>
-    <script src="/js/uivf12/workbench.js?v=20261005-03"></script>
+    <script src="/js/uivf12/i18n.js?v=20261005-04"></script>
+    <script src="/js/uivf12/workbench.js?v=20261005-04"></script>
     <script src="/js/uivf12/netcare-analysis.js?v=20260917-01"></script>
     <script src="/js/uivf12/datafab-analysis.js?v=20260911-03"></script>
     <script src="/js/uivf12/copy.js?v=20260911-02"></script>
     <script src="/js/uivf12/genlog.js?v=20260628-19"></script>
     <script src="/js/uivf12/auth-probe.js?v=20260720-01"></script>
-    <script src="/js/uivf12/generator.js?v=20261005-03"></script>
+    <script src="/js/uivf12/generator.js?v=20261005-04"></script>
     <script src="/js/uivf12/ai-adapter.js?v=20260729-01"></script>
     <script src="/js/uivf12/ai-naming.js?v=20260729-02"></script>
-    <script src="/js/uivf12/save.js?v=20261005-03"></script>
+    <script src="/js/uivf12/save.js?v=20261005-04"></script>
     <script src="/js/uivf12/sidebar.js?v=20260817-01"></script>
     <script src="/js/uivf12/url-assist.js?v=20260729-01"></script>
     <script src="/js/uivf12/analysis.js?v=20260628-19"></script>
