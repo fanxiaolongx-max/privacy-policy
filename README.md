@@ -15,8 +15,6 @@
 | 旅游计时 | `tool-mrrn48dc` | 土耳其海边旅行倒计时页面。 | [打开页面](./tool-mrrn48dc/index.html) |
 | 文档整编 | `tool-msqfmv82` | 一款在浏览器本地运行的 PDF 处理应用，可压缩、合并文件，排序、旋转或删除页面，并支持双页裁切拼接，适合日常文档整理。 | [打开页面](./tool-msqfmv82/index.html) |
 | 文档编辑 | `tool-msqfplq0` | 一款浏览器端PDF编辑应用，可添加文字、图片、遮盖、画笔与高亮标注，调整页面旋转和缩放，并保存工程或导出合成后的PDF。 | [打开页面](./tool-msqfplq0/index.html) |
-| 平台介绍 | `tool-mr88gv9x` | CS质量运营工具平台的能力、流程与应用场景介绍。 | [打开页面](./tool-mr88gv9x/index.html) |
-| 平台全景 | `tool-msh8aro4` | 双语展示平台核心业务模块、自定义及内置 HTML 工具、现场导入扩展与访问方式，支持工具搜索筛选和能力分类浏览。 | [打开页面](./tool-msh8aro4/index.html) |
 
 > 工具页面仅供查看；需要修改业务数据时，请返回 Tools Platform 联系管理员。
 <!-- tools-platform:guide:end -->
