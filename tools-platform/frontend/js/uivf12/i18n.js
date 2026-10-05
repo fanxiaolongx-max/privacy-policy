@@ -865,28 +865,44 @@
         }
     };
 
+    function isRawKey(val) {
+        return typeof val === 'string' && val.startsWith('uiv.');
+    }
+
     function t(key, params = {}) {
-        return window.ToolsI18n ? window.ToolsI18n.t(key, params) : key;
+        if (window.ToolsI18n) {
+            const res = window.ToolsI18n.t(key, params);
+            if (res !== key) return res;
+        }
+        const lang = (window.ToolsI18n && typeof window.ToolsI18n.getLanguage === 'function')
+            ? window.ToolsI18n.getLanguage()
+            : (localStorage.getItem('tools_lang') || 'zh-CN');
+        const dict = dictionaries[lang] || dictionaries['zh-CN'] || {};
+        const fallbackVal = dict[key] || (dictionaries['zh-CN'] && dictionaries['zh-CN'][key]);
+        if (fallbackVal !== undefined && fallbackVal !== null) {
+            return String(fallbackVal).replace(/\{(\w+)\}/g, (_, k) => params[k] ?? `{${k}}`);
+        }
+        return key;
     }
 
     function setText(selector, value) {
         const el = document.querySelector(selector);
-        if (el) el.textContent = value;
+        if (el && !isRawKey(value)) el.textContent = value;
     }
 
     function setHtml(selector, value) {
         const el = document.querySelector(selector);
-        if (el) el.innerHTML = value;
+        if (el && !isRawKey(value)) el.innerHTML = value;
     }
 
     function setPlaceholder(selector, value) {
         const el = document.querySelector(selector);
-        if (el) el.placeholder = value;
+        if (el && !isRawKey(value)) el.placeholder = value;
     }
 
     function setTitle(selector, value) {
         const el = document.querySelector(selector);
-        if (el) el.title = value;
+        if (el && !isRawKey(value)) el.title = value;
     }
 
     function categoryLabel(category) {
@@ -1045,19 +1061,31 @@
         // Generic data attribute internationalization
         document.querySelectorAll('[data-uiv-i18n]').forEach(node => {
             const key = node.getAttribute('data-uiv-i18n');
-            if (key) node.textContent = t(key);
+            if (key) {
+                const val = t(key);
+                if (!isRawKey(val)) node.textContent = val;
+            }
         });
         document.querySelectorAll('[data-uiv-placeholder]').forEach(node => {
             const key = node.getAttribute('data-uiv-placeholder');
-            if (key) node.placeholder = t(key);
+            if (key) {
+                const val = t(key);
+                if (!isRawKey(val)) node.placeholder = val;
+            }
         });
         document.querySelectorAll('[data-uiv-title]').forEach(node => {
             const key = node.getAttribute('data-uiv-title');
-            if (key) node.title = t(key);
+            if (key) {
+                const val = t(key);
+                if (!isRawKey(val)) node.title = val;
+            }
         });
         document.querySelectorAll('[data-uiv-aria-label]').forEach(node => {
             const key = node.getAttribute('data-uiv-aria-label');
-            if (key) node.setAttribute('aria-label', t(key));
+            if (key) {
+                const val = t(key);
+                if (!isRawKey(val)) node.setAttribute('aria-label', val);
+            }
         });
 
         // AI Scraper Adapter modal (#uivAiAdapterOverlay)

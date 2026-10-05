@@ -321,3 +321,13 @@ test('generator without responseFocus defaults to backward compatible component 
     assert.equal(rows.length, 1);
     assert.equal(rows[0].Region, 'Northern Africa', 'Without focusConfig, extractRows must default to component 0 for backward compatibility');
 });
+
+test('uiv modules are cache-busted and i18n protects against raw key overwriting', () => {
+    assert.match(pageSource, /i18n\.js\?v=20261005-01/);
+    assert.match(pageSource, /workbench\.js\?v=20261005-01/);
+    assert.match(pageSource, /generator\.js\?v=20261005-01/);
+    assert.match(pageSource, /save\.js\?v=20261005-01/);
+    assert.match(i18nSource, /function isRawKey/);
+    assert.match(i18nSource, /!isRawKey\(val\)/);
+});
+
