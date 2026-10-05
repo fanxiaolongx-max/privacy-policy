@@ -190,6 +190,7 @@
                 <option value="sv-cfc-monitor" selected>SV/CFC 满意度监控（原内置）</option>
                 <option value="exam-question-bank">题库与答题助手</option>
                 <option value="authorized-media-exporter">授权媒体下载脚本生成器</option>
+                <option value="netcare-rfc-word">NetCare RFC 方案与 AI 审计</option>
                 <option value="chrome-capture-pro">Chrome Capture Pro 屏幕录制与截图增强版</option>
                 <option value="ppo-traffic-autofill">PPO 交通违章表单自动填表器</option>
                 <option value="overseas-salary-calculator">💼 驻外薪资换汇计算器</option>
@@ -275,7 +276,11 @@
 
   <script src="./exam-vault.js?v=20261003-09"></script>
   <script src="./exam-store-guide.js?v=20261003-13"></script>
-  <script src="./packer-core.js?v=20261003-10"></script>
+  <script src="./netcare-language.js?v=20261006-15"></script>
+  <script src="./netcare-artifacts.js?v=20261006-15"></script>
+  <script src="./netcare-backup.js?v=20261006-15"></script>
+  <script src="./netcare-renderer-source.js?v=20261006-15"></script>
+  <script src="./packer-core.js?v=20261006-15"></script>
   <script>
     TPExamStoreGuide.mount(document.getElementById('examStoreGuideActions'));
     const BUILTIN_SCRIPTS = {
@@ -302,6 +307,17 @@
         description: '扫描当前页面已直接暴露的视频地址，并生成可审阅的 ffmpeg 批量下载脚本；不解密或绕过 DRM。',
         matches: '<all_urls>',
         world: 'MAIN',
+        includePopup: true,
+        manualLaunch: true,
+        runAt: 'document_idle'
+      },
+      'netcare-rfc-word': {
+        file: './netcare-rfc-word.js?v=20261006-15',
+        name: 'NetCare RFC 方案与 AI 审计',
+        description: '批量下载 RFC 方案，提取章节与附件并执行 AI 审计；支持审计快照、Excel 和材料 ZIP 导出。',
+        matches: 'https://netcare-ae.gts.huawei.com/p/netcare/index.html*\nhttps://netcare.huawei.com/p/netcare/index.html*\nhttps://netcare-de.gts.huawei.com/p/netcare/index.html*\nhttps://*.kdp.gts.huawei.com/ows1/static/editor/IdpLiteView/PublishLiteView.html*',
+        world: 'MAIN',
+        allFrames: true,
         includePopup: true,
         manualLaunch: true,
         runAt: 'document_idle'
@@ -583,6 +599,10 @@
         document.getElementById('extCode').readOnly = false;
         document.getElementById('extLicense').disabled = false;
         if (applyPreset) applyScriptMetadata(preset);
+        if (scriptId === 'netcare-rfc-word') {
+          document.getElementById('extLicense').checked = false;
+          document.getElementById('extLicense').disabled = true;
+        }
         setActiveScript('builtin', scriptId);
         updatePackageTargetUI();
         await refreshVersionPreview();
@@ -755,7 +775,7 @@
 
     function obfuscateCode(code) {
       if (!window.JavaScriptObfuscator) throw new Error('混淆引擎加载失败，请检查网络后重试或关闭混淆。');
-      return window.JavaScriptObfuscator.obfuscate(code, {
+      const obfuscated = window.JavaScriptObfuscator.obfuscate(code, {
         compact: true,
         controlFlowFlattening: false,
         deadCodeInjection: false,
@@ -771,6 +791,9 @@
         transformObjectKeys: false,
         unicodeEscapeSequence: false
       }).getObfuscatedCode();
+      // Keep the packaging marker after the obfuscator strips source comments.
+      return code.includes('TP_NETCARE_RFC_WORD_V1')
+        ? '/* TP_NETCARE_RFC_WORD_V1 */\n' + obfuscated : obfuscated;
     }
 
     function showLicenseResult(issued) {

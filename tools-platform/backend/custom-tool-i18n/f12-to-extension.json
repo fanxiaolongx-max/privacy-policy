@@ -255,5 +255,8 @@
   "默认混淆代码": "Default code obfuscation",
   "（默认基线）": "(Default baseline)",
   "｜到期：": "｜Expires:",
-  "｜有效月份：": "｜Valid month:"
+  "｜有效月份：": "｜Valid month:",
+  "NetCare RFC 方案与 AI 审计": "NetCare RFC Solutions & AI Audit",
+  "批量并行下载 RFC 方案 Word，并在新页签打开在线方案；扫描全部附件，选择章节文本，按方案文件名打包 ZIP。": "Download RFC Word solutions in parallel and open online solutions in new tabs; collect attachments and selected section text into a ZIP named after the Word file.",
+  "批量下载 RFC 方案，提取章节与附件并执行 AI 审计；支持审计快照、Excel 和材料 ZIP 导出。": "Batch-download RFC solutions, extract sections and attachments, and run AI audits with snapshots, Excel and material ZIP exports."
 }

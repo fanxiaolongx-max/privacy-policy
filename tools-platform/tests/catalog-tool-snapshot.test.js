@@ -54,6 +54,13 @@ test('F12 snapshot carries saved and built-in scripts plus offline packer assets
     assert.equal(saved.code, 'console.log("saved script");');
     assert.equal(saved.matches, 'https://private.example/*');
     assert.ok(data.builtins.find(item => item.id === 'sv-cfc-monitor').code.length > 100);
+    const rfc = data.builtins.find(item => item.id === 'netcare-rfc-word');
+    assert.equal(rfc.world, 'MAIN');
+    assert.equal(rfc.allFrames, true);
+    assert.equal(rfc.manualLaunch, true);
+    assert.equal(rfc.includePopup, true);
+    const rfcPackage = packer.buildPackage({ ...rfc, version: '1.0.0', license: { enabled: false } });
+    assert.equal(rfcPackage.manifest.content_scripts[0].all_frames, true);
     assert.ok(data.builtins.find(item => item.id === 'chrome-capture-pro').isFullExtension);
     assert.ok(data.builtins.find(item => item.id === 'ppo-traffic-autofill').isFullExtension);
     assert.ok(output.files.get('data/chrome-capture-pro.template.zip').length > 100000);

@@ -13,6 +13,7 @@ const BUILTINS = [
     { id: 'sv-cfc-monitor', file: 'default-f12.js', name: 'SV/CFC 满意度监控', description: '监控 SV/CFC 餐厅满意度，分析问卷明细并复核评分。', matches: 'https://w3.huawei.com/*', world: 'MAIN', includePopup: true },
     { id: 'exam-question-bank', file: 'exam-question-bank-assistant.js', name: '题库与答题助手', description: '抓取考试题目、维护本地题库并辅助自动答题。', matches: 'https://w3.huawei.com/*\nhttps://ilearning.huawei.com/*', world: 'ISOLATED', includePopup: true, manualLaunch: true },
     { id: 'authorized-media-exporter', file: 'authorized-media-exporter.js', name: '授权媒体下载脚本生成器', description: '扫描当前页面已直接暴露的视频地址，并生成可审阅的下载脚本。', matches: '<all_urls>', world: 'MAIN', includePopup: true, manualLaunch: true },
+    { id: 'netcare-rfc-word', file: 'netcare-rfc-word.js', name: 'NetCare RFC 方案与 AI 审计', description: '批量下载 RFC 方案，提取章节与附件并执行 AI 审计；支持审计快照、Excel 和材料 ZIP 导出。', matches: 'https://netcare-ae.gts.huawei.com/p/netcare/index.html*\nhttps://netcare.huawei.com/p/netcare/index.html*\nhttps://netcare-de.gts.huawei.com/p/netcare/index.html*\nhttps://*.kdp.gts.huawei.com/ows1/static/editor/IdpLiteView/PublishLiteView.html*', world: 'MAIN', allFrames: true, includePopup: true, manualLaunch: true, runAt: 'document_idle' },
     { id: 'chrome-capture-pro', name: 'Chrome Capture Pro', description: '屏幕录制、截图与标注扩展模板。', matches: '<all_urls>', world: 'MAIN', includePopup: true, isFullExtension: true },
     { id: 'ppo-traffic-autofill', name: 'PPO 交通违章表单自动填表器', description: '在 PPO 交通违章网站辅助填写表单。', matches: '*://www.ppo.gov.eg/*\n*://ppo.gov.eg/*\n*://*.ppo.gov.eg/*', world: 'ISOLATED', includePopup: true, isFullExtension: true },
     { id: 'overseas-salary-calculator', name: '驻外薪资换汇计算器', description: '专为驻外员工打造的薪资换汇与盈亏核算工具，实时获取官方汇率，精准测算 USD → EGP → CNY 汇差得失。', matches: '<all_urls>', world: 'MAIN', includePopup: true, isFullExtension: true }
@@ -32,8 +33,8 @@ function renderHtml(data, pages, options = {}) {
         ? "default-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'unsafe-inline'; connect-src 'self'; img-src data:; object-src 'none'; base-uri 'none'; form-action 'none'"
         : "default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'; style-src 'unsafe-inline'; connect-src 'none'; img-src data:; object-src 'none'; base-uri 'none'; form-action 'none'";
     const scripts = pages
-        ? '<script src="./data/assets/jszip.min.js"></script><script src="./data/assets/exam-vault.js"></script><script src="./data/assets/exam-store-guide.js"></script><script src="./data/assets/packer-core.js"></script><script src="./data/assets/static-packer-runtime.js"></script>'
-        : `<script>${fs.readFileSync(JSZIP_FILE, 'utf8')}</script><script>${fs.readFileSync(path.join(SOURCE_DIR, 'exam-vault.js'), 'utf8')}</script><script>${fs.readFileSync(path.join(SOURCE_DIR, 'exam-store-guide.js'), 'utf8')}</script><script>${fs.readFileSync(path.join(SOURCE_DIR, 'packer-core.js'), 'utf8')}</script><script>${fs.readFileSync(RUNTIME_FILE, 'utf8')}</script>`;
+        ? '<script src="./data/assets/jszip.min.js"></script><script src="./data/assets/exam-vault.js"></script><script src="./data/assets/exam-store-guide.js"></script><script src="./data/assets/netcare-language.js"></script><script src="./data/assets/netcare-artifacts.js"></script><script src="./data/assets/netcare-backup.js"></script><script src="./data/assets/netcare-renderer-source.js"></script><script src="./data/assets/packer-core.js"></script><script src="./data/assets/static-packer-runtime.js"></script>'
+        : `<script>${fs.readFileSync(JSZIP_FILE, 'utf8')}</script><script>${fs.readFileSync(path.join(SOURCE_DIR, 'exam-vault.js'), 'utf8')}</script><script>${fs.readFileSync(path.join(SOURCE_DIR, 'exam-store-guide.js'), 'utf8')}</script><script>${fs.readFileSync(path.join(SOURCE_DIR, 'netcare-language.js'), 'utf8')}</script><script>${fs.readFileSync(path.join(SOURCE_DIR, 'netcare-artifacts.js'), 'utf8')}</script><script>${fs.readFileSync(path.join(SOURCE_DIR, 'netcare-backup.js'), 'utf8')}</script><script>${fs.readFileSync(path.join(SOURCE_DIR, 'netcare-renderer-source.js'), 'utf8')}</script><script>${fs.readFileSync(path.join(SOURCE_DIR, 'packer-core.js'), 'utf8')}</script><script>${fs.readFileSync(RUNTIME_FILE, 'utf8')}</script>`;
     const dataScript = pages
         ? `<script>window.TP_F12_DATA_URL='./data/f12-presets.json';window.TP_F12_TEMPLATE_URL='./data/${TEMPLATE_FILE}';window.TP_F12_PPO_TEMPLATE_URL='./data/${PPO_TEMPLATE_FILE}';window.TP_F12_SALARY_TEMPLATE_URL='./data/${SALARY_TEMPLATE_FILE}';</script>`
         : `<script>window.TP_F12_DATA=${safeJson(data)};</script>`;
@@ -65,6 +66,10 @@ async function buildPagesSnapshot(tenantId, options = {}) {
             ['data/assets/jszip.min.js', fs.readFileSync(JSZIP_FILE)],
             ['data/assets/exam-vault.js', fs.readFileSync(path.join(SOURCE_DIR, 'exam-vault.js'))],
             ['data/assets/exam-store-guide.js', fs.readFileSync(path.join(SOURCE_DIR, 'exam-store-guide.js'))],
+            ['data/assets/netcare-language.js', fs.readFileSync(path.join(SOURCE_DIR, 'netcare-language.js'))],
+            ['data/assets/netcare-artifacts.js', fs.readFileSync(path.join(SOURCE_DIR, 'netcare-artifacts.js'))],
+            ['data/assets/netcare-backup.js', fs.readFileSync(path.join(SOURCE_DIR, 'netcare-backup.js'))],
+            ['data/assets/netcare-renderer-source.js', fs.readFileSync(path.join(SOURCE_DIR, 'netcare-renderer-source.js'))],
             ['data/assets/packer-core.js', fs.readFileSync(path.join(SOURCE_DIR, 'packer-core.js'))],
             ['data/assets/static-packer-runtime.js', fs.readFileSync(RUNTIME_FILE)]
         ])
