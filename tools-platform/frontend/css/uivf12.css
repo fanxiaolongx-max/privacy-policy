@@ -594,15 +594,13 @@ textarea { flex: 1; resize: none; white-space: pre; overflow: auto; line-height:
     45% { box-shadow: 0 0 0 4px rgba(52, 211, 153, 0.2), 0 0 32px rgba(34, 211, 238, 0.38); }
 }
 
-#jsonInput, #payloadViewer {
-    min-height: 100px;
-    max-height: 200px;
-    margin-bottom: 6px;
-}
+#jsonInput, #payloadViewer,
 #responseSampleInput, #responseSampleViewer {
-    min-height: 70px;
-    max-height: 160px;
-    margin-bottom: 6px;
+    flex: 1 1 0;
+    min-height: 80px;
+    margin-bottom: 8px;
+    box-sizing: border-box;
+    width: 100%;
 }
 #payloadViewer, #responseSampleViewer {
     background: #1e1e1e;

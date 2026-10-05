@@ -8,6 +8,7 @@ const workbenchSource = fs.readFileSync(path.join(projectRoot, 'frontend/js/uivf
 const generatorSource = fs.readFileSync(path.join(projectRoot, 'frontend/js/uivf12/generator.js'), 'utf8');
 const i18nSource = fs.readFileSync(path.join(projectRoot, 'frontend/js/uivf12/i18n.js'), 'utf8');
 const pageSource = fs.readFileSync(path.join(projectRoot, 'frontend/pages/uivf12.html'), 'utf8');
+const cssSource = fs.readFileSync(path.join(projectRoot, 'frontend/css/uivf12.css'), 'utf8');
 
 test('uivf12 HTML contains response sample input, focus bar, and choice modal', () => {
     assert.match(pageSource, /id="responseSampleInput"/, 'HTML should contain #responseSampleInput');
@@ -323,11 +324,18 @@ test('generator without responseFocus defaults to backward compatible component 
 });
 
 test('uiv modules are cache-busted and i18n protects against raw key overwriting', () => {
-    assert.match(pageSource, /i18n\.js\?v=20261005-01/);
-    assert.match(pageSource, /workbench\.js\?v=20261005-01/);
-    assert.match(pageSource, /generator\.js\?v=20261005-01/);
-    assert.match(pageSource, /save\.js\?v=20261005-01/);
+    assert.match(pageSource, /i18n\.js\?v=20261005-02/);
+    assert.match(pageSource, /workbench\.js\?v=20261005-02/);
+    assert.match(pageSource, /generator\.js\?v=20261005-02/);
+    assert.match(pageSource, /save\.js\?v=20261005-02/);
+    assert.match(pageSource, /uivf12\.css\?v=20261005-02/);
     assert.match(i18nSource, /function isRawKey/);
     assert.match(i18nSource, /!isRawKey\(val\)/);
+});
+
+test('jsonInput and responseSampleInput evenly split vertical space', () => {
+    assert.match(cssSource, /#jsonInput,\s*#payloadViewer,\s*#responseSampleInput,\s*#responseSampleViewer\s*\{[\s\S]*?flex:\s*1\s+1\s+0;[\s\S]*?min-height:\s*80px;/);
+    assert.doesNotMatch(cssSource, /#jsonInput[^{]*\{[^}]*max-height:\s*200px/);
+    assert.doesNotMatch(cssSource, /#responseSampleInput[^{]*\{[^}]*max-height:\s*160px/);
 });
 
