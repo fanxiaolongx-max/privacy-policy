@@ -63,6 +63,15 @@
       "encrypted": false,
       "fingerprint": "43df4dd69713720355eef4ee38f9d7a0c5e5f228ed7cfc594d61667d5dc237aa",
       "updatedAt": "2026-10-05T06:44:39.937Z"
+    },
+    {
+      "slug": "tool-msh8aro4",
+      "name": "平台全景",
+      "description": "双语展示平台核心业务模块、自定义及内置 HTML 工具、现场导入扩展与访问方式，支持工具搜索筛选和能力分类浏览。",
+      "href": "./tool-msh8aro4/index.html",
+      "encrypted": false,
+      "fingerprint": "a5be5758406816ad49d8dde65d1ce8f5fc89718e74dbfbdd5bd16ece5130f362",
+      "updatedAt": "2026-10-05T06:57:19.873Z"
     }
   ]
 }
