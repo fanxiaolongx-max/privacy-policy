@@ -506,9 +506,7 @@ ${hasNID ? `            currentPayloadStr = currentPayloadStr.replace(/"__NID_PL
                 });
                 current[keys[keys.length - 1]] = nextValue;
             };
-            const focusCompIdx = (focusConfig && typeof focusConfig.componentIndex === 'number' && focusConfig.componentIndex >= 0)
-                ? focusConfig.componentIndex
-                : 0;
+            const focusCompIdx = ${focusCompIdx};
             const adaptedPageSize = adaptedPagination && adaptedPagination.pageSizePath
                 ? Number(getAdapterValue(detailPayload, adaptedPagination.pageSizePath))
                 : NaN;

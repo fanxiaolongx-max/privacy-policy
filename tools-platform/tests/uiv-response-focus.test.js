@@ -213,6 +213,8 @@ test('generator embeds focus logic into extractRows, extractSmartSumData, and su
 
     const consoleScript = mockDOM.consoleOutput.value;
     assert.ok(consoleScript, 'Console script should have been generated');
+    assert.match(consoleScript, /const focusCompIdx = 1;/);
+    assert.doesNotMatch(consoleScript, /const focusCompIdx = \(focusConfig &&/);
 
     const rowsMatch = consoleScript.match(/function extractRows\(obj\)\s*\{[\s\S]*?\n\s{9}\}/)[0];
     const sumMatch = consoleScript.match(/function extractSmartSumData\(resObj\)\s*\{[\s\S]*?\n\s{8}\}/)[0];
@@ -324,11 +326,11 @@ test('generator without responseFocus defaults to backward compatible component 
 });
 
 test('uiv modules are cache-busted and i18n protects against raw key overwriting', () => {
-    assert.match(pageSource, /i18n\.js\?v=20261005-02/);
-    assert.match(pageSource, /workbench\.js\?v=20261005-02/);
-    assert.match(pageSource, /generator\.js\?v=20261005-02/);
-    assert.match(pageSource, /save\.js\?v=20261005-02/);
-    assert.match(pageSource, /uivf12\.css\?v=20261005-02/);
+    assert.match(pageSource, /i18n\.js\?v=20261005-03/);
+    assert.match(pageSource, /workbench\.js\?v=20261005-03/);
+    assert.match(pageSource, /generator\.js\?v=20261005-03/);
+    assert.match(pageSource, /save\.js\?v=20261005-03/);
+    assert.match(pageSource, /uivf12\.css\?v=20261005-03/);
     assert.match(i18nSource, /function isRawKey/);
     assert.match(i18nSource, /!isRawKey\(val\)/);
 });
