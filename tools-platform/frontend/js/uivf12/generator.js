@@ -18,6 +18,12 @@ function generateScript(options = {}) {
         : null;
     const allowNativeSpecialEndpoints = generatorOptions.allowNativeSpecialEndpoints !== false;
     const allowNativeRequestExtensions = generatorOptions.allowNativeRequestExtensions !== false;
+    const focusConfig = generatorOptions.responseFocus !== undefined
+        ? generatorOptions.responseFocus
+        : (window.UIVWorkbench?.getResponseFocusConfig?.() || null);
+    const focusCompIdx = (focusConfig && typeof focusConfig.componentIndex === 'number' && focusConfig.componentIndex >= 0)
+        ? focusConfig.componentIndex
+        : 0;
     window.__uivAiAdapterCurrent = null;
     const errorDiv = document.getElementById('errorMsg');
     errorDiv.innerText = '';
@@ -51,6 +57,14 @@ function generateScript(options = {}) {
     } catch (_) {}
     const platform = ['DATAFAB', 'NETCARE'].includes(requestedProfile) ? requestedProfile : detectedPlatform;
     UIVGenLog.info(UIVT('uiv.generator.targetPlatform', { platform, url: url.substring(0, 60) + (url.length > 60 ? '...' : '') }));
+    if (focusConfig && (focusConfig.keyword || focusConfig.path || focusConfig.componentIndex !== null)) {
+        const focusDetail = [
+            focusConfig.title ? `[${focusConfig.title}]` : '',
+            focusConfig.keyword ? `关键词: '${focusConfig.keyword}'` : '',
+            focusConfig.path ? `路径: ${focusConfig.path}` : ''
+        ].filter(Boolean).join(' ');
+        UIVGenLog.info(UIVT('uiv.focus.activeLog', { detail: focusDetail }));
+    }
     UIVGenLog.section(UIVT('uiv.generator.payloadSection'));
     let payloadClone = JSON.parse(JSON.stringify(parsedPayloadObj));
 
@@ -110,7 +124,16 @@ function generateScript(options = {}) {
     const boardId = window.UIVWorkbench.findKeyDeep(payloadClone, 'boardId') || '';
     const tenantIdStr = window.UIVWorkbench.findKeyDeep(payloadClone, 'srcTenantId') || '';
     let dynamicPageName = window.UIVWorkbench.findKeyDeep(payloadClone, 'pageName') || '';
-    const compId = window.UIVWorkbench.findKeyDeep(payloadClone, 'id') || '';
+    let compId = (focusConfig && focusConfig.componentId) ? focusConfig.componentId : '';
+    if (!compId) {
+        if (focusConfig && typeof focusConfig.componentIndex === 'number' && focusConfig.componentIndex >= 0 &&
+            payloadClone.answerParamList && payloadClone.answerParamList[focusConfig.componentIndex] &&
+            payloadClone.answerParamList[focusConfig.componentIndex].id) {
+            compId = payloadClone.answerParamList[focusConfig.componentIndex].id;
+        } else {
+            compId = window.UIVWorkbench.findKeyDeep(payloadClone, 'id') || '';
+        }
+    }
     const pageIdLiteral = stringLiteral(pageId);
     const boardIdLiteral = stringLiteral(boardId);
     const tenantIdLiteral = stringLiteral(tenantIdStr);
@@ -213,14 +236,33 @@ function generateScript(options = {}) {
         function extractSmartSumData(resObj) {
             if (!resObj) return null;
             const candidates = [];
+            const focusCfg = ${serializeForScript(focusConfig)};
+            let targetIdx = (focusCfg && typeof focusCfg.componentIndex === 'number' && focusCfg.componentIndex >= 0) ? focusCfg.componentIndex : -1;
+            if (targetIdx === -1 && focusCfg && focusCfg.keyword && resObj.data && Array.isArray(resObj.data)) {
+                const kw = String(focusCfg.keyword).trim().toLowerCase();
+                for (let i = 0; i < resObj.data.length; i++) {
+                    const comp = resObj.data[i];
+                    if (!comp) continue;
+                    if (JSON.stringify(comp.metadata || {}).toLowerCase().includes(kw) || JSON.stringify((comp.data && comp.data[0]) || {}).toLowerCase().includes(kw)) {
+                        targetIdx = i;
+                        break;
+                    }
+                }
+            }
+            if (targetIdx >= 0 && resObj.data && Array.isArray(resObj.data) && resObj.data[targetIdx]) {
+                const targetComp = resObj.data[targetIdx];
+                if (targetComp.totalsData && targetComp.totalsData.columns) candidates.push(targetComp.totalsData.columns);
+                if (targetComp.sumData) candidates.push(targetComp.sumData);
+            } else {
+                if (resObj.data && Array.isArray(resObj.data) && resObj.data[0] && resObj.data[0].totalsData && resObj.data[0].totalsData.columns) candidates.push(resObj.data[0].totalsData.columns);
+                if (resObj.data && Array.isArray(resObj.data) && resObj.data[0] && resObj.data[0].sumData) candidates.push(resObj.data[0].sumData);
+            }
             // --- totalsData 系列 ---
             if (resObj.totalsData && resObj.totalsData.columns) candidates.push(resObj.totalsData.columns);
             if (resObj.data && !Array.isArray(resObj.data) && resObj.data.totalsData && resObj.data.totalsData.columns) candidates.push(resObj.data.totalsData.columns);
-            if (resObj.data && Array.isArray(resObj.data) && resObj.data[0] && resObj.data[0].totalsData && resObj.data[0].totalsData.columns) candidates.push(resObj.data[0].totalsData.columns);
             // --- sumData 系列 ---
             if (resObj.sumData) candidates.push(resObj.sumData);
             if (resObj.data && !Array.isArray(resObj.data) && resObj.data.sumData) candidates.push(resObj.data.sumData);
-            if (resObj.data && Array.isArray(resObj.data) && resObj.data[0] && resObj.data[0].sumData) candidates.push(resObj.data[0].sumData);
 
             if (candidates.length === 0) return null;
             if (candidates.length === 1) return candidates[0];
@@ -270,6 +312,65 @@ function generateScript(options = {}) {
                      return adaptedRows;
                  }
              }
+
+             // 🎯 数据聚焦模式 (针对多表或指定关键词/路径)
+             const focusConfig = ${serializeForScript(focusConfig)};
+             if (focusConfig) {
+                 // 1. 如果配置了关键词，优先检查各组件的元数据或行内容
+                 if (focusConfig.keyword) {
+                     const kw = String(focusConfig.keyword).trim().toLowerCase();
+                     if (obj && obj.data && Array.isArray(obj.data)) {
+                         for (let i = 0; i < obj.data.length; i++) {
+                             const comp = obj.data[i];
+                             if (!comp) continue;
+                             let hit = false;
+                             if (Array.isArray(comp.metadata)) {
+                                 for (const m of comp.metadata) {
+                                     if (JSON.stringify(m || {}).toLowerCase().includes(kw)) { hit = true; break; }
+                                 }
+                             }
+                             if (!hit && Array.isArray(comp.data) && comp.data.length > 0) {
+                                 for (let r = 0; r < Math.min(comp.data.length, 5); r++) {
+                                     if (JSON.stringify(comp.data[r] || {}).toLowerCase().includes(kw)) { hit = true; break; }
+                                 }
+                             }
+                             if (hit && Array.isArray(comp.data)) {
+                                 console.log("%c     🎯 [聚焦提取] 命中关键词 '" + kw + "' -> 提取 data[" + i + "].data (共 " + comp.data.length + " 行)", "color: #00b894; font-size: 11px; font-weight: bold;");
+                                 return comp.data;
+                             }
+                         }
+                     }
+                 }
+                 // 2. 如果配置了目标组件索引且在 obj.data 中存在
+                 if (typeof focusConfig.componentIndex === 'number' && focusConfig.componentIndex >= 0 &&
+                     obj && obj.data && Array.isArray(obj.data) && obj.data[focusConfig.componentIndex] &&
+                     Array.isArray(obj.data[focusConfig.componentIndex].data)) {
+                     console.log("%c     🎯 [聚焦提取] 按组件索引提取 -> data[" + focusConfig.componentIndex + "].data (共 " + obj.data[focusConfig.componentIndex].data.length + " 行)", "color: #00b894; font-size: 11px; font-weight: bold;");
+                     return obj.data[focusConfig.componentIndex].data;
+                 }
+                 // 3. 如果配置了具体路径 (例如 data[1].data 或 items.records)
+                 if (focusConfig.path) {
+                     try {
+                         const cleanPath = String(focusConfig.path).replace(/^\\$\\.?/, "").replace(/\\[(\\d+)\\]/g, ".$1");
+                         const keys = cleanPath.split(".").filter(Boolean);
+                         if (!keys.some(k => ["__proto__", "prototype", "constructor"].includes(String(k).toLowerCase()))) {
+                             let target = obj;
+                             for (const k of keys) {
+                                 if (target == null || !Object.prototype.hasOwnProperty.call(Object(target), k)) {
+                                     target = undefined;
+                                     break;
+                                 }
+                                 target = target[k];
+                             }
+                             if (Array.isArray(target)) {
+                                 console.log("%c     🎯 [聚焦提取] 按路径提取成功 -> " + focusConfig.path + " (共 " + target.length + " 行)", "color: #00b894; font-size: 11px; font-weight: bold;");
+                                 return target;
+                             }
+                         }
+                     } catch (_) {}
+                 }
+             }
+
              // Case 1: DataFab answerParamList 标准格式: { data: [{ data: [...], totalsData: {...} }] }
              if (obj && obj.data && Array.isArray(obj.data) && obj.data[0] && Array.isArray(obj.data[0].data)) return obj.data[0].data;
              // Case 2: ADMS/NetCare 嵌套格式: { data: { data: [...], total: N } }
@@ -296,6 +397,12 @@ function generateScript(options = {}) {
                      fields.push({ columnName: obj.displayName, aggType: 'formula' });
                  }
                  Object.values(obj).forEach(scan);
+             }
+             const focusCfg = ${serializeForScript(focusConfig)};
+             let targetIdx = (focusCfg && typeof focusCfg.componentIndex === 'number' && focusCfg.componentIndex >= 0) ? focusCfg.componentIndex : -1;
+             if (targetIdx >= 0 && resObj && resObj.data && Array.isArray(resObj.data) && resObj.data[targetIdx]) {
+                 scan(resObj.data[targetIdx]);
+                 if (fields.length > 0) return fields;
              }
              scan(resObj);
              return fields;
@@ -399,10 +506,13 @@ ${hasNID ? `            currentPayloadStr = currentPayloadStr.replace(/"__NID_PL
                 });
                 current[keys[keys.length - 1]] = nextValue;
             };
+            const focusCompIdx = (focusConfig && typeof focusConfig.componentIndex === 'number' && focusConfig.componentIndex >= 0)
+                ? focusConfig.componentIndex
+                : 0;
             const adaptedPageSize = adaptedPagination && adaptedPagination.pageSizePath
                 ? Number(getAdapterValue(detailPayload, adaptedPagination.pageSizePath))
                 : NaN;
-            let limitVal = parseInt(detailPayload.limit || (detailPayload.answerParamList && detailPayload.answerParamList[0] && detailPayload.answerParamList[0].pageSize) || (Number.isFinite(adaptedPageSize) ? adaptedPageSize : 50), 10);
+            let limitVal = parseInt(detailPayload.limit || (detailPayload.answerParamList && (detailPayload.answerParamList[focusCompIdx] || detailPayload.answerParamList[0]) && (detailPayload.answerParamList[focusCompIdx] || detailPayload.answerParamList[0]).pageSize) || (Number.isFinite(adaptedPageSize) ? adaptedPageSize : 50), 10);
              let allDataResults = []; let globalSumData = null; let aggFields = []; let currentPage = 1; let isFetching = true; let safetyPageCount = 0;
              let adapterCursor = adaptedPagination && adaptedPagination.type === "cursor"
                  ? String(adaptedPagination.start || "")
@@ -411,7 +521,11 @@ ${hasNID ? `            currentPayloadStr = currentPayloadStr.replace(/"__NID_PL
 
             while (isFetching) {
                 if (++safetyPageCount > 500) throw new Error("分页超过 500 页，已触发安全停止；请检查分页参数。");
-${isPagination ? `                if (detailPayload.answerParamList && detailPayload.answerParamList[0]) {
+${isPagination ? `                if (Array.isArray(detailPayload.answerParamList)) {
+                    detailPayload.answerParamList.forEach(param => {
+                        if (param) { param.pageNum = currentPage; param.requestTime = Date.now(); }
+                    });
+                } else if (detailPayload.answerParamList && detailPayload.answerParamList[0]) {
                     detailPayload.answerParamList[0].pageNum = currentPage;
                     detailPayload.answerParamList[0].requestTime = Date.now();
                 }
@@ -460,7 +574,7 @@ ${forceSumData && platform === 'DATAFAB' && compId ? `
             // 始终独立请求 getValueTableSumData，因为它才含有准确的 formula。
             // getAnswers 的 sumData 只含 average，不能作为最终来源。
             console.log("%c     🔄 [权威数据] 强制请求 getValueTableSumData（含 formula 的唯一可信来源）...", "color: #3498db; font-size: 11px; font-weight: bold;");
-            const sumPayload = JSON.parse(JSON.stringify(detailPayload.answerParamList[0]));
+            const sumPayload = JSON.parse(JSON.stringify((detailPayload.answerParamList && (detailPayload.answerParamList[${focusCompIdx}] || detailPayload.answerParamList[0])) || {}));
             sumPayload.pageNum = 1; sumPayload.answerSource = 2;
             if (aggFields.length > 0) console.log("%c     🔬 [aggFields] 检测到 " + aggFields.length + " 个 formulaId 列: " + aggFields.map(f=>f.columnName).join('、'), "color: #fd79a8; font-size: 11px;");
             const sumReqPayload = { "id": ${compIdLiteral}, "srcTenantId": detailPayload.srcTenantId, "behavior": "VIEW", "boardId": ${boardIdLiteral}, "maxRows": 1000, "pageNum": 1, "pageSize": 50, "calStatistic": true, "params": sumPayload.params, "chartType": "table", "answerSource": 2, ...(aggFields.length > 0 ? { aggFields } : {}) };

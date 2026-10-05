@@ -168,13 +168,21 @@ async function saveCurrentScript() {
     const parsedPayloadObj = window.UIVWorkbench.getParsedPayload();
     const rawJson = parsedPayloadObj ? JSON.stringify(parsedPayloadObj, null, 4) : document.getElementById('jsonInput').value.trim();
     const originalFileName = document.getElementById('fileName').value.trim() || UIVT('uiv.save.defaultFile');
+    const responseSample = document.getElementById('responseSampleInput')?.value.trim() || '';
+    const responseFocusKeyword = document.getElementById('responseFocusKeyword')?.value.trim() || '';
+    const responseFocusPath = document.getElementById('responseFocusPath')?.value.trim() || '';
+    const responseFocusConfig = window.UIVWorkbench?.getResponseFocusConfig?.() || null;
     const configOptions = {
         useGlobalVars: document.getElementById('useGlobalVars').checked,
         isPagination: document.getElementById('isPagination').checked,
         forceSumData: document.getElementById('forceSumData').checked,
         autoFetchCPC: document.getElementById('autoFetchCPC').checked,
         autoRuntimeMonth: document.getElementById('autoRuntimeMonth').checked,
-        autoNetCareTriplicate: document.getElementById('autoNetCareTriplicate') ? document.getElementById('autoNetCareTriplicate').checked : false
+        autoNetCareTriplicate: document.getElementById('autoNetCareTriplicate') ? document.getElementById('autoNetCareTriplicate').checked : false,
+        responseSample,
+        responseFocusKeyword,
+        responseFocusPath,
+        responseFocusConfig
     };
 
     const baseName = window.UIVWorkbench.getCurrentTitle() || originalFileName;
@@ -205,14 +213,15 @@ async function saveCurrentScript() {
                     code: codeUIV.split(url).join(newUrl),
                     consoleCode: codeConsole.split(url).join(newUrl),
                     category: r.cat, url: newUrl,
-                    payload: rawJson, originalFileName, configOptions
+                    payload: rawJson, originalFileName, configOptions,
+                    responseSample, responseFocusKeyword, responseFocusPath, responseFocusConfig
                 });
             });
         } else {
-            itemsToSave.push({ name: baseName, code: codeUIV, consoleCode: codeConsole, category: window.UIVWorkbench.autoDetectCategory(url), url, payload: rawJson, originalFileName, configOptions });
+            itemsToSave.push({ name: baseName, code: codeUIV, consoleCode: codeConsole, category: window.UIVWorkbench.autoDetectCategory(url), url, payload: rawJson, originalFileName, configOptions, responseSample, responseFocusKeyword, responseFocusPath, responseFocusConfig });
         }
     } else {
-        itemsToSave.push({ name: baseName, code: codeUIV, consoleCode: codeConsole, category: window.UIVWorkbench.autoDetectCategory(url), url, payload: rawJson, originalFileName, configOptions });
+        itemsToSave.push({ name: baseName, code: codeUIV, consoleCode: codeConsole, category: window.UIVWorkbench.autoDetectCategory(url), url, payload: rawJson, originalFileName, configOptions, responseSample, responseFocusKeyword, responseFocusPath, responseFocusConfig });
     }
     itemsToSave = itemsToSave.map(item => ({ ...item, ...aiAdapterMeta }));
 

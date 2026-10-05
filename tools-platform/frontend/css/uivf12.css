@@ -282,7 +282,7 @@
     flex-direction: column;
     flex: 1;
     box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-    overflow: hidden;
+    overflow: auto;
     min-width: 0;
 }
 .panel-label { font-weight: 600; margin-bottom: 8px; display: block; font-size: 13px; color: #569cd6; }
@@ -594,14 +594,152 @@ textarea { flex: 1; resize: none; white-space: pre; overflow: auto; line-height:
     45% { box-shadow: 0 0 0 4px rgba(52, 211, 153, 0.2), 0 0 32px rgba(34, 211, 238, 0.38); }
 }
 
-/* JSON 高亮预览 */
-#payloadViewer { flex: 1; background: #1e1e1e; border: 1px solid var(--border); border-radius: 6px; padding: 10px; font-family: Consolas, monospace; font-size: 12px; overflow: auto; white-space: pre-wrap; margin-bottom: 14px; display: none; cursor: text; }
+#jsonInput, #payloadViewer {
+    min-height: 100px;
+    max-height: 200px;
+    margin-bottom: 6px;
+}
+#responseSampleInput, #responseSampleViewer {
+    min-height: 70px;
+    max-height: 160px;
+    margin-bottom: 6px;
+}
+#payloadViewer, #responseSampleViewer {
+    background: #1e1e1e;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+    font-family: Consolas, monospace;
+    font-size: 12px;
+    overflow: auto;
+    white-space: pre-wrap;
+    display: none;
+    cursor: text;
+}
 .json-key { color: var(--key); }
 .json-string { color: var(--string); }
 .json-number { color: var(--number); }
 .json-boolean { color: #569cd6; }
 .json-null { color: #569cd6; }
 .json-important { background-color: rgba(215,186,125,0.3); color: #d7ba7d; font-weight: bold; padding: 0 2px; border-radius: 2px; border-bottom: 1px solid #d7ba7d; }
+
+/* ── 响应数据聚焦工具条 ── */
+.response-focus-bar {
+    margin-top: 6px;
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(99, 102, 241, 0.35);
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.85), rgba(15, 23, 42, 0.95));
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.response-focus-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.response-focus-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+}
+.response-focus-summary {
+    font-size: 12px;
+    color: #94a3b8;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.response-focus-clear-btn {
+    border: none;
+    background: transparent;
+    color: #64748b;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+}
+.response-focus-clear-btn:hover {
+    color: #f87171;
+    background: rgba(239, 68, 68, 0.12);
+}
+.response-focus-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.response-focus-input-wrap {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+.response-focus-input-icon {
+    position: absolute;
+    left: 8px;
+    font-size: 12px;
+    pointer-events: none;
+    opacity: 0.7;
+}
+.response-focus-input-wrap input {
+    padding-left: 28px !important;
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+    font-size: 12px !important;
+    height: 32px !important;
+    border-radius: 6px !important;
+    background: rgba(15, 23, 42, 0.8) !important;
+    border-color: #334155 !important;
+}
+.response-focus-input-wrap input:focus {
+    border-color: #6366f1 !important;
+}
+.response-focus-choose-btn {
+    flex-shrink: 0;
+    height: 32px;
+    padding: 0 12px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 6px;
+    border: 1px solid #4338ca;
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.25), rgba(99, 102, 241, 0.2));
+    color: #c7d2fe;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.response-focus-choose-btn:hover {
+    border-color: #818cf8;
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.4), rgba(99, 102, 241, 0.35));
+    color: #ffffff;
+}
+.response-focus-selected-info {
+    font-size: 11px;
+    color: #34d399;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.uiv-ai-choice-item.selected {
+    border-color: #38bdf8 !important;
+    background: rgba(56, 189, 248, 0.15) !important;
+}
 
 /* 选项控制条 */
 .controls {
@@ -2530,11 +2668,44 @@ textarea { flex: 1; resize: none; white-space: pre; overflow: auto; line-height:
 }
 #uiv-page.uiv-light-theme .file-name-ai-suggestions button b { color: #4f46e5; }
 
-#uiv-page.uiv-light-theme #payloadViewer {
+#uiv-page.uiv-light-theme #payloadViewer,
+#uiv-page.uiv-light-theme #responseSampleViewer {
     border-color: #b8c5d7;
     background: #fbfcff;
     color: #172033;
     font-weight: 500;
+}
+
+#uiv-page.uiv-light-theme .response-focus-bar {
+    border-color: #c7d2fe;
+    background: linear-gradient(135deg, #f8faff, #f1f5f9);
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.08);
+}
+#uiv-page.uiv-light-theme .response-focus-summary {
+    color: #475569;
+}
+#uiv-page.uiv-light-theme .response-focus-input-wrap input {
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    color: #1e293b !important;
+}
+#uiv-page.uiv-light-theme .response-focus-choose-btn {
+    border-color: #818cf8;
+    background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+    color: #3730a3;
+}
+#uiv-page.uiv-light-theme .response-focus-choose-btn:hover {
+    background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+    color: #1e1b4b;
+}
+#uiv-page.uiv-light-theme .response-focus-selected-info {
+    background: #ecfdf5;
+    border-color: #a7f3d0;
+    color: #047857;
+}
+#uiv-page.uiv-light-theme .uiv-ai-choice-item.selected {
+    border-color: #2563eb !important;
+    background: #eff6ff !important;
 }
 
 #uiv-page.uiv-light-theme .json-boolean,

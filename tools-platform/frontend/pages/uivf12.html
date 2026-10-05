@@ -152,6 +152,35 @@
                 <textarea id="jsonInput" placeholder='{"srcTenantId":"...", "answerParamList": [...]}'></textarea>
                 <div id="payloadViewer"></div>
 
+                <label class="panel-label" style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+                    <span id="responseSampleLabel" data-uiv-i18n="uiv.input.responseSampleLabel">3. 响应示例 Response Sample (JSON):</span>
+                    <span id="responseSampleHint" style="font-size:12px; color:#475569; font-weight:600;" data-uiv-i18n="uiv.input.responseSampleHint">可选，用于识别多表并聚焦提取</span>
+                </label>
+                <textarea id="responseSampleInput" placeholder='可选：粘贴接口返回的 JSON 响应示例。多表响应时可聚焦提取指定数据（如代表处、明细表等）' data-uiv-placeholder="uiv.input.responseSamplePlaceholder"></textarea>
+                <div id="responseSampleViewer" style="display:none;"></div>
+
+                <div id="responseFocusBar" class="response-focus-bar" style="display:none;">
+                    <div class="response-focus-top">
+                        <div class="response-focus-badge">
+                            <span class="response-focus-badge-icon">🎯</span>
+                            <span data-uiv-i18n="uiv.focus.badge">数据聚焦</span>
+                        </div>
+                        <span id="responseFocusSummary" class="response-focus-summary">检测到多组数据</span>
+                        <button type="button" id="btnClearResponseFocus" class="response-focus-clear-btn" onclick="UIVWorkbench.clearResponseFocus()" title="清除聚焦" data-uiv-title="uiv.focus.clearTitle">✕</button>
+                    </div>
+                    <div class="response-focus-controls">
+                        <div class="response-focus-input-wrap">
+                            <span class="response-focus-input-icon">🔍</span>
+                            <input type="text" id="responseFocusKeyword" placeholder="抓取关键词（可选，如：rep offic、Region）" autocomplete="off" data-uiv-placeholder="uiv.focus.keywordPlaceholder">
+                        </div>
+                        <button type="button" id="btnChooseResponseFocus" class="response-focus-choose-btn" onclick="UIVWorkbench.openFocusChoiceModal()">
+                            <span data-uiv-i18n="uiv.focus.chooseTable">📋 选择数据表</span> (<span id="responseFocusTableCount">0</span>)
+                        </button>
+                    </div>
+                    <input type="hidden" id="responseFocusPath" value="">
+                    <div id="responseFocusSelectedInfo" class="response-focus-selected-info" style="display:none;"></div>
+                </div>
+
                 <div class="input-row file-name-row">
                     <div class="file-name-glow">
                         <input type="text" id="fileName" value="PBI_自动抓取" placeholder="文件名前缀 (例如：PBI_代表处数据)">
@@ -447,6 +476,17 @@
             </div>
             <p data-uiv-i18n="uiv.aiAdapter.choiceSubtitle">响应里多处命中该关键词，请选择要抓取的那一组 JSON 链条。</p>
             <div id="uivAiKeywordChoiceList" class="uiv-ai-choice-list"></div>
+        </div>
+    </div>
+
+    <div id="uivResponseChoiceOverlay" class="uiv-ai-choice-overlay" style="display:none;" onclick="if(event.target===this) UIVWorkbench.closeFocusChoiceModal()">
+        <div class="uiv-ai-choice-dialog">
+            <div class="uiv-ai-choice-header">
+                <h4 id="uivResponseChoiceTitle" data-uiv-i18n="uiv.focus.modalTitle">🎯 选择要抓取的目标数据表</h4>
+                <button onclick="UIVWorkbench.closeFocusChoiceModal()" aria-label="关闭" data-uiv-aria-label="uiv.focus.closeModal">×</button>
+            </div>
+            <p id="uivResponseChoiceSubtitle" data-uiv-i18n="uiv.focus.modalSubtitle">检测到响应中包含多组数据表或数据块，请选择脚本要提取的数据：</p>
+            <div id="uivResponseChoiceList" class="uiv-ai-choice-list"></div>
         </div>
     </div>
 

@@ -48,6 +48,23 @@
             'uiv.urlAssist.matches': '仓库匹配 {count} 个地址',
             'uiv.input.payloadLabel': '2. 请求负载 Payload (JSON):',
             'uiv.input.payloadHint': '粘贴后可点击格式化',
+            'uiv.input.responseSampleLabel': '3. 响应示例 Response Sample (JSON):',
+            'uiv.input.responseSampleHint': '可选，用于识别多表并聚焦提取',
+            'uiv.input.responseSamplePlaceholder': '可选：粘贴接口返回的 JSON 响应示例。多表响应时可聚焦提取指定数据（如代表处、明细表等）',
+            'uiv.focus.badge': '数据聚焦',
+            'uiv.focus.singleTable': '已定位唯一数据表：{name} ({count} 行)',
+            'uiv.focus.multipleTables': '已检测到 {count} 个数据表，可选择或按关键词聚焦',
+            'uiv.focus.keywordMatched': '关键词 "{keyword}" 已匹配：{name} ({path})',
+            'uiv.focus.keywordMultiple': '关键词 "{keyword}" 命中 {count} 个候选表，请点击选择',
+            'uiv.focus.keywordNone': '关键词 "{keyword}" 未直接命中表名，生成时将深度搜索',
+            'uiv.focus.selectedInfo': '已聚焦：{name} (路径: {path}, {count} 行)',
+            'uiv.focus.chooseTable': '📋 选择数据表',
+            'uiv.focus.modalTitle': '🎯 选择要抓取的目标数据表',
+            'uiv.focus.modalSubtitle': '检测到响应中包含多组数据表或数据块，请选择脚本要提取的数据：',
+            'uiv.focus.keywordPlaceholder': '抓取关键词（可选，如：rep offic、Region）',
+            'uiv.focus.clearTitle': '清除数据聚焦',
+            'uiv.focus.closeModal': '关闭',
+            'uiv.focus.activeLog': '🎯 数据聚焦已激活: {detail}',
             'uiv.input.filePlaceholder': '文件名前缀 (例如：PBI_代表处数据)',
             'uiv.input.fileGuideBadge': 'AI 命名',
             'uiv.input.fileGuideTitle': '生成前后均可修改',
@@ -461,6 +478,23 @@
             'uiv.urlAssist.matches': '{count} repository URL matches',
             'uiv.input.payloadLabel': '2. Request Payload (JSON):',
             'uiv.input.payloadHint': 'Paste, then format when ready',
+            'uiv.input.responseSampleLabel': '3. Response Sample (JSON):',
+            'uiv.input.responseSampleHint': 'Optional. Identify multiple tables & focus extraction',
+            'uiv.input.responseSamplePlaceholder': 'Optional: Paste JSON response sample. Focus on a specific table when response contains multiple tables (e.g., Rep Office)',
+            'uiv.focus.badge': 'Data Focus',
+            'uiv.focus.singleTable': 'Located unique table: {name} ({count} rows)',
+            'uiv.focus.multipleTables': 'Detected {count} tables. Select one or focus by keyword',
+            'uiv.focus.keywordMatched': 'Keyword "{keyword}" matched: {name} ({path})',
+            'uiv.focus.keywordMultiple': 'Keyword "{keyword}" matched {count} tables. Click to choose',
+            'uiv.focus.keywordNone': 'Keyword "{keyword}" did not match table names; deep search will be used',
+            'uiv.focus.selectedInfo': 'Focused: {name} (path: {path}, {count} rows)',
+            'uiv.focus.chooseTable': '📋 Select Table',
+            'uiv.focus.modalTitle': '🎯 Select Target Table to Scrape',
+            'uiv.focus.modalSubtitle': 'Multiple tables or data segments were detected in the response. Select the table to extract:',
+            'uiv.focus.keywordPlaceholder': 'Scraping keyword (optional, e.g. rep offic, Region)',
+            'uiv.focus.clearTitle': 'Clear data focus',
+            'uiv.focus.closeModal': 'Close',
+            'uiv.focus.activeLog': '🎯 Data focus active: {detail}',
             'uiv.input.filePlaceholder': 'File prefix, for example: PBI_Office_Data',
             'uiv.input.fileGuideBadge': 'AI Naming',
             'uiv.input.fileGuideTitle': 'Editable before or after generation',
@@ -930,6 +964,18 @@
             hint.textContent = t('uiv.input.payloadHint');
             panelLabels[1].appendChild(hint);
         }
+        if (panelLabels[2]) {
+            const labelSpan = document.getElementById('responseSampleLabel');
+            const hintSpan = document.getElementById('responseSampleHint');
+            if (labelSpan) labelSpan.textContent = t('uiv.input.responseSampleLabel');
+            if (hintSpan) hintSpan.textContent = t('uiv.input.responseSampleHint');
+        }
+        setPlaceholder('#responseSampleInput', t('uiv.input.responseSamplePlaceholder'));
+        setPlaceholder('#responseFocusKeyword', t('uiv.focus.keywordPlaceholder'));
+        setText('#uivResponseChoiceTitle', t('uiv.focus.modalTitle'));
+        setText('#uivResponseChoiceSubtitle', t('uiv.focus.modalSubtitle'));
+        setText('#btnChooseResponseFocus span:first-child', t('uiv.focus.chooseTable'));
+        setTitle('#btnClearResponseFocus', t('uiv.focus.clearTitle'));
         setText('#urlPreset option:nth-child(1)', t('uiv.preset.datafab'));
         setText('#urlPreset option:nth-child(2)', t('uiv.preset.netcareCn'));
         setText('#urlPreset option:nth-child(3)', t('uiv.preset.netcareAe'));
