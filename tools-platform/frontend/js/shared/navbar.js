@@ -391,6 +391,7 @@ function registerNavbarI18n() {
             'nav.customTool': '自定义工具',
             'nav.set.title': '全局设置',
             'nav.set.tab.primary': '顶部菜单',
+            'nav.set.tab.logo': '平台标识',
             'nav.set.tab.categories': '二级分类',
             'nav.set.tab.items': '分类与顺序',
             'nav.set.tab.ai': 'AI 助手',
@@ -409,7 +410,9 @@ function registerNavbarI18n() {
             'nav.set.saveFail': '保存失败: ',
             'nav.set.loaded': '已加载',
             'nav.set.pageConfig': '{page}配置',
+            'nav.page.f12.title': 'F12插件',
             'nav.set.sub.primary': '修改后会自动保存，并立即影响顶部导航。',
+            'nav.set.sub.logo': '修改平台名称、主图标及桌面应用图标。',
             'nav.set.sub.categories': '修改后会自动保存，并立即影响“更多工具”的分类展示。',
             'nav.set.sub.items': '修改后会自动保存，并立即影响“更多工具”的分组与排序。',
             'nav.set.sub.ai': '修改后会自动保存，并立即影响 Dragon Claw 智能体配置。',
@@ -847,6 +850,7 @@ function registerNavbarI18n() {
             'nav.customTool': 'Custom Tool',
             'nav.set.title': 'Global Settings',
             'nav.set.tab.primary': 'Top Menu',
+            'nav.set.tab.logo': 'Platform Identity',
             'nav.set.tab.categories': 'Categories',
             'nav.set.tab.items': 'Items & Order',
             'nav.set.tab.ai': 'AI Assistant',
@@ -865,7 +869,9 @@ function registerNavbarI18n() {
             'nav.set.saveFail': 'Save failed: ',
             'nav.set.loaded': 'Loaded',
             'nav.set.pageConfig': '{page} Config',
+            'nav.page.f12.title': 'F12 Plugins',
             'nav.set.sub.primary': 'Changes are saved automatically and immediately applied to the top navigation.',
+            'nav.set.sub.logo': 'Manage the platform name, logo and desktop app icons.',
             'nav.set.sub.categories': 'Changes are saved automatically and immediately applied to the category display in "More Tools".',
             'nav.set.sub.items': 'Changes are saved automatically and immediately applied to the grouping and ordering in "More Tools".',
             'nav.set.sub.ai': 'Changes are saved automatically and immediately applied to the Dragon Claw Agent configuration.',
@@ -1292,11 +1298,50 @@ function normalizeNavSettings(settings = {}) {
     }) : NAV_DEFAULT_SETTINGS.categories.slice();
 
     return {
+        platformName: typeof settings.platformName === 'string'
+            ? settings.platformName.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 80) || 'Tools Platform'
+            : 'Tools Platform',
         primaryIds: Array.isArray(settings.primaryIds) ? settings.primaryIds.map(String) : NAV_DEFAULT_SETTINGS.primaryIds.slice(),
         categories: cats,
         categoryByItem: settings.categoryByItem && typeof settings.categoryByItem === 'object' ? { ...settings.categoryByItem } : { ...NAV_DEFAULT_SETTINGS.categoryByItem },
+        f12QuickDownloads: Array.isArray(settings.f12QuickDownloads)
+            ? settings.f12QuickDownloads
+                .filter(item => item && typeof item.scriptId === 'string' && /^(builtin|server):[a-zA-Z0-9_-]+$/.test(item.scriptId))
+                .map(item => ({ scriptId: item.scriptId, target: item.target === 'local' ? 'local' : 'store' }))
+            : [],
         itemOrder: Array.isArray(settings.itemOrder) ? settings.itemOrder.map(String) : NAV_DEFAULT_SETTINGS.itemOrder.slice()
     };
+}
+
+let platformTitleOriginal = null;
+let platformTitleApplied = null;
+let platformTitleObserver = null;
+
+function applyPlatformTitle() {
+    if (document.title !== platformTitleApplied) platformTitleOriginal = document.title;
+    const name = navState.settings.platformName || 'Tools Platform';
+    const next = (platformTitleOriginal || '').split('Tools Platform').join(name);
+    platformTitleApplied = next;
+    if (document.title !== next) document.title = next;
+}
+
+function applyPlatformIdentity() {
+    const name = navState.settings.platformName || 'Tools Platform';
+    document.querySelectorAll('#app-navbar .brand-name, [data-platform-name]').forEach(el => {
+        el.textContent = name;
+        el.title = name;
+    });
+    ['navBrandLogo', 'homeHeroLogo'].forEach(id => {
+        const image = document.getElementById(id);
+        if (image) image.alt = name;
+    });
+    applyPlatformTitle();
+    // Business pages can change their titles after loading or switching language.
+    const title = document.querySelector('title');
+    if (title && !platformTitleObserver) {
+        platformTitleObserver = new MutationObserver(applyPlatformTitle);
+        platformTitleObserver.observe(title, { childList: true, characterData: true, subtree: true });
+    }
 }
 
 function getAllNavItems() {
@@ -1519,6 +1564,7 @@ function renderNavItem(item, className) {
 }
 
 function renderNavLinksFromState() {
+    applyPlatformIdentity();
     const primaryEl = document.querySelector('#app-navbar .nav-links');
     const menuEl = document.getElementById('navMoreMenu');
     if (!primaryEl || !menuEl) return;
@@ -1881,7 +1927,7 @@ function renderNavbar() {
     nav.id = 'app-navbar';
     nav.innerHTML = `
         <a href="/" class="nav-brand">
-            <span class="brand-icon">⚡</span>
+            <span class="brand-icon"><img src="/assets/logo.png?v=20261006" alt="Tools Platform" class="brand-logo-img" id="navBrandLogo"></span>
             <span class="brand-name">Tools Platform</span>
         </a>
         <div class="nav-divider"></div>
@@ -2055,6 +2101,7 @@ function scheduleNavSettingsSave() {
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             navState.settings = normalizeNavSettings(await res.json());
             writeNavigationBootstrapCache();
+            window.dispatchEvent(new Event('tools:f12shortcutschange'));
             if (indicator) indicator.textContent = navT('nav.set.saved');
         } catch (e) {
             if (indicator) indicator.textContent = navT('nav.set.saveFail') + e.message;
@@ -2084,6 +2131,7 @@ function renderNavSettingsSidebar() {
     sidebar.innerHTML = `
         <div class="nav-settings-title">${navEscape(navT('nav.set.title'))}</div>
         <button class="nav-settings-tab ${t === 'primary' ? 'active' : ''}" data-tab="primary" onclick="switchNavSettingsTab('primary')">${navEscape(navT('nav.set.tab.primary'))}</button>
+        <button class="nav-settings-tab ${t === 'logo' ? 'active' : ''}" data-tab="logo" onclick="switchNavSettingsTab('logo')">${navEscape(navT('nav.set.tab.logo'))}</button>
         <button class="nav-settings-tab ${t === 'categories' ? 'active' : ''}" data-tab="categories" onclick="switchNavSettingsTab('categories')">${navEscape(navT('nav.set.tab.categories'))}</button>
         <button class="nav-settings-tab ${t === 'items' ? 'active' : ''}" data-tab="items" onclick="switchNavSettingsTab('items')">${navEscape(navT('nav.set.tab.items'))}</button>
         <button class="nav-settings-tab ${t === 'ai' ? 'active' : ''}" data-tab="ai" onclick="switchNavSettingsTab('ai')">${navEscape(navT('nav.set.tab.ai'))}</button>
@@ -2098,6 +2146,8 @@ function renderNavSettingsSidebar() {
         <button class="nav-settings-tab ${t === 'security' ? 'active' : ''}" data-tab="security" onclick="switchNavSettingsTab('security')">${navEscape(navT('nav.set.tab.security'))}</button>
         <div class="nav-settings-title nav-settings-section-title">${navEscape(navT('nav.set.tab.pages'))}</div>
         ${renderPageSettingsTabs()}
+        <div class="nav-settings-section-title" aria-hidden="true"></div>
+        <button class="nav-settings-tab ${t === 'page:f12-extension' ? 'active' : ''}" data-tab="page:f12-extension" onclick="switchNavSettingsTab('page:f12-extension')">🧩 ${navEscape(navT('nav.page.f12.title'))}</button>
     `;
 }
 
@@ -2148,6 +2198,7 @@ window.switchNavSettingsTab = function (tab) {
 };
 
 function getNavSettingsTitle() {
+    if (navState.settingsTab === 'page:f12-extension') return navT('nav.page.f12.title');
     if (navState.settingsTab.startsWith('page:')) {
         const pageId = navState.settingsTab.slice(5);
         const item = NAV_BUILTIN_LINKS.find(link => link.id === pageId);
@@ -2165,10 +2216,12 @@ function getNavSettingsTitle() {
     if (navState.settingsTab === 'customBackup') return navT('nav.set.tab.customBackup');
     if (navState.settingsTab === 'categories') return navT('nav.set.tab.categories');
     if (navState.settingsTab === 'items') return navT('nav.set.tab.items');
+    if (navState.settingsTab === 'logo') return navT('nav.set.tab.logo');
     return navT('nav.set.tab.primary');
 }
 
 function getNavSettingsSubtitle() {
+    if (navState.settingsTab === 'page:f12-extension') return navLocaleText('选择首页快捷下载插件及默认打包用途，修改后自动保存。', 'Choose home download shortcuts and default package targets. Changes save automatically.');
     if (navState.settingsTab.startsWith('page:')) {
         const pageId = navState.settingsTab.slice(5);
         if (pageId === 'report') return navT('nav.set.sub.report');
@@ -2186,6 +2239,7 @@ function getNavSettingsSubtitle() {
     if (navState.settingsTab === 'customBackup') return navT('nav.set.sub.customBackup');
     if (navState.settingsTab === 'categories') return navT('nav.set.sub.categories');
     if (navState.settingsTab === 'items') return navT('nav.set.sub.items');
+    if (navState.settingsTab === 'logo') return navT('nav.set.sub.logo');
     return navT('nav.set.sub.primary');
 }
 
@@ -2215,6 +2269,7 @@ function renderNavSettingsContent() {
     if (navState.settingsTab === 'customBackup') return renderCustomToolBackupSettings(content);
     if (navState.settingsTab === 'categories') return renderCategorySettings(content);
     if (navState.settingsTab === 'items') return renderItemCategorySettings(content);
+    if (navState.settingsTab === 'logo') return renderLogoSettings(content);
     renderPrimarySettings(content);
 }
 
@@ -2443,6 +2498,191 @@ function formatAiUsageNumber(value) {
     if (number >= 1000) return `${(number / 1000).toFixed(number >= 100000 ? 1 : 2)}K`;
     return Math.round(number).toLocaleString();
 }
+
+// ============================================================
+// 🎨 平台图标与品牌管理 (Platform Logo & Branding Settings)
+// ============================================================
+window._selectedLogoFile = null;
+
+function logoUploadError(error) {
+    const messages = {
+        LOGO_FORMAT: navLocaleText('请选择 PNG、JPG 或 WEBP 图片。', 'Choose a PNG, JPG or WEBP image.'),
+        LOGO_SIZE: navLocaleText('图片不能超过 25 MB。', 'The image must be 25 MB or smaller.'),
+        LOGO_DECODE: navLocaleText('无法读取图片，请检查文件是否损坏。', 'Cannot decode the image. Check that the file is valid.'),
+        LOGO_BUSY: navLocaleText('正在处理另一张图标，请稍后重试。', 'Another logo is being processed. Please retry shortly.')
+    };
+    return messages[error.code || error.message] || error.message;
+}
+
+async function renderLogoSettings(content) {
+    const text = navLocaleText;
+    content.innerHTML = `<div class="nav-settings-empty">${text('正在加载平台标识…', 'Loading platform identity…')}</div>`;
+    let statusData;
+    try {
+        const res = await fetch('/api/platform-logo/status', { headers: getAuthHeaderForNav() });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        statusData = await res.json();
+    } catch (error) {
+        content.innerHTML = `<div class="nav-settings-empty">${text('无法读取图标状态：', 'Could not load logo status: ')}${navEscape(error.message)}</div>`;
+        return;
+    }
+    const logoUrl = navEscape(statusData.logoUrl || '/assets/logo.png');
+    const timestamp = statusData.updatedAt ? new Date(statusData.updatedAt).toLocaleString() : text('默认内置', 'Bundled default');
+    const runtime = statusData.storageMode === 'runtime';
+    content.innerHTML = `
+        <div class="logo-settings-container">
+            <div class="logo-settings-card">
+                <h3>✏️ ${text('平台名称', 'Platform name')}</h3>
+                <p>${text('用于当前租户的首页、顶部导航和页面标题，最多 80 个字符。留空恢复默认名称 Tools Platform。', 'Shown on the current tenant’s home page, navigation and page titles. Up to 80 characters; leave blank to restore Tools Platform.')}</p>
+                <form onsubmit="event.preventDefault(); savePlatformName()">
+                    <label for="platformNameInput">${text('显示名称', 'Display name')}</label>
+                    <div class="nav-settings-actions" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:8px">
+                        <input id="platformNameInput" class="nav-settings-input" style="flex:1;min-width:160px" maxlength="80" value="${navEscape(navState.settings.platformName || 'Tools Platform')}" placeholder="Tools Platform" autocomplete="off">
+                        <button type="submit" class="primary" id="platformNameSaveBtn">${text('保存名称', 'Save name')}</button>
+                        <span id="platformNameSaveStatus" role="status" style="font-size:12px"></span>
+                    </div>
+                </form>
+            </div>
+            <div class="logo-ci-banner">
+                <strong>✦ ${text('平台品牌与应用图标', 'Platform branding and app icons')}</strong>
+                <span>${runtime
+                    ? text('新 Logo 保存在本机用户数据目录，页面、浏览器图标及运行中的托盘图标会更新，重启后仍保留。', 'Your logo is saved in local user data. Pages, favicons and the running tray update, and the logo persists after restart.')
+                    : text('上传后生成页面 Logo、浏览器图标及各平台打包图标，可将生成的资源提交到源码仓库用于下次打包。', 'Uploading generates page logos, favicons and packaging assets. Commit the generated assets to your source repository for the next build.')}</span><br>
+                <span>${text('EXE 文件图标、macOS 应用包与安装包图标在重新打包后生效。', 'EXE file icons, macOS application bundles and installer icons change after rebuilding.')}</span>
+            </div>
+            <div class="logo-settings-card">
+                <h3>👁 ${text('实时多场景预览', 'Live previews')}</h3>
+                <p>${text('检查透明边缘、浅色背景和桌面图标的清晰度。', 'Check transparent edges, light backgrounds and desktop icon clarity.')}</p>
+                <div class="logo-preview-grid">
+                    <div class="logo-preview-box dark-bg">
+                        <span class="logo-preview-tag">${text('深色背景', 'Dark background')}</span>
+                        <div class="logo-preview-img-row">
+                            <div style="text-align:center"><img src="${logoUrl}" alt="Logo 24px" class="brand-logo-img" style="width:24px;height:24px;object-fit:contain"><div>24px</div></div>
+                            <div style="text-align:center"><img src="${logoUrl}" alt="Logo 72px" style="width:72px;height:72px;object-fit:contain"><div>72px</div></div>
+                        </div>
+                    </div>
+                    <div class="logo-preview-box light-bg">
+                        <span class="logo-preview-tag">${text('浅色背景', 'Light background')}</span>
+                        <img src="${logoUrl}" alt="Logo" style="width:72px;height:72px;object-fit:contain">
+                    </div>
+                    <div class="logo-preview-box neutral-bg">
+                        <span class="logo-preview-tag">${text('桌面应用图标预览', 'Desktop icon preview')}</span>
+                        <div class="logo-preview-img-row">
+                            <div style="text-align:center"><img src="/assets/icon-windows.png?t=${statusData.updatedAt}" alt="Standard" style="width:48px;height:48px;object-fit:contain"><div>${text('标准版', 'Standard')}</div></div>
+                            <div style="text-align:center"><img src="/assets/icon-windows-portable.png?t=${statusData.updatedAt}" alt="Portable" style="width:48px;height:48px;object-fit:contain"><div>${text('便携版（P 标）', 'Portable (P)')}</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="logo-settings-card">
+                <h3>📤 ${text('上传 Logo 并生成各尺寸', 'Upload a logo and generate all sizes')}</h3>
+                <p>${text('支持 PNG、JPG、JPEG、WEBP，最大 25 MB；建议使用 512×512 或更高分辨率。', 'PNG, JPG, JPEG and WEBP, up to 25 MB; 512×512 or higher is recommended.')}</p>
+                <div class="logo-upload-zone" id="logoDropZone" onclick="document.getElementById('logoFileInput').click()">
+                    <span class="logo-upload-icon">📁</span>
+                    <span class="logo-upload-title" id="logoUploadTitle">${text('点击选择图片，或拖拽到此处', 'Choose an image or drop it here')}</span>
+                    <span class="logo-upload-hint">${text('支持白底和透明底，保留图标比例及透明图片内部白色细节。', 'White or transparent backgrounds; preserves proportions and white details in transparent artwork.')}</span>
+                    <input type="file" id="logoFileInput" accept="image/png,image/jpeg,image/webp" style="display:none" onchange="handleLogoFileSelect(event)">
+                </div>
+                <div class="logo-option-row">
+                    <label class="logo-option-item"><input type="checkbox" id="logoOptCropBottom" checked><span><b>${text('自动裁切下方附加文本（推荐，仅保留核心主体徽标）', 'Auto crop bottom text (recommended: keep main badge only)')}</b></span></label>
+                    <label class="logo-option-item"><input type="checkbox" id="logoOptRemoveBg" checked><span><b>${text('移除外围白色背景', 'Remove outer white background')}</b></span></label>
+                    <label class="logo-option-item"><input type="checkbox" id="logoOptDarkEnhance" checked><span><b>${text('暗色背景边缘微光', 'Subtle edge glow on dark backgrounds')}</b></span></label>
+                </div>
+                <div class="nav-settings-actions" style="margin-top:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+                    <button type="button" class="primary" id="logoUploadSubmitBtn" onclick="submitLogoUpload()" disabled>${text('生成并应用图标', 'Generate and apply icons')}</button>
+                    <span id="logoUploadStatus" role="status" style="font-size:12px">${text('最近更新：', 'Last updated: ')}${navEscape(timestamp)}</span>
+                </div>
+                <div id="logoUploadResultDetail" style="margin-top:12px;font-size:11px;white-space:pre-wrap;display:none"></div>
+            </div>
+        </div>`;
+    const dropZone = document.getElementById('logoDropZone');
+    dropZone.ondragover = event => { event.preventDefault(); dropZone.classList.add('dragover'); };
+    dropZone.ondragleave = () => dropZone.classList.remove('dragover');
+    dropZone.ondrop = event => {
+        event.preventDefault(); dropZone.classList.remove('dragover');
+        if (event.dataTransfer.files?.[0]) handleLogoFileSelect({ target: { files: event.dataTransfer.files } });
+    };
+}
+
+window.savePlatformName = async function () {
+    const input = document.getElementById('platformNameInput');
+    const button = document.getElementById('platformNameSaveBtn');
+    const status = document.getElementById('platformNameSaveStatus');
+    if (!input || !button || button.disabled) return;
+    const platformName = input.value.replace(/[\u0000-\u001f\u007f]/g, '').trim() || 'Tools Platform';
+    button.disabled = true;
+    if (status) status.textContent = navT('nav.set.saving');
+    clearTimeout(navState.saveTimer);
+    try {
+        const response = await fetch('/api/nav-settings', {
+            method: 'PUT', headers: { 'Content-Type': 'application/json', ...getAuthHeaderForNav() },
+            body: JSON.stringify({ ...navState.settings, platformName })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+        navState.settings = normalizeNavSettings(data);
+        writeNavigationBootstrapCache();
+        renderNavLinksFromState();
+        input.value = navState.settings.platformName;
+        if (status) status.textContent = navT('nav.set.saved');
+    } catch (error) {
+        if (status) status.textContent = navT('nav.set.saveFail') + error.message;
+    } finally {
+        button.disabled = false;
+    }
+};
+
+window.handleLogoFileSelect = function (event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    window._selectedLogoFile = file;
+    const title = document.getElementById('logoUploadTitle');
+    if (title) title.textContent = `${navLocaleText('已选择：', 'Selected: ')}${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+    const button = document.getElementById('logoUploadSubmitBtn');
+    if (button) button.disabled = false;
+};
+
+window.submitLogoUpload = async function () {
+    const file = window._selectedLogoFile || document.getElementById('logoFileInput')?.files?.[0];
+    if (!file) {
+        await showNavbarNotice({ title: navLocaleText('选择图片', 'Choose an image'), message: navLocaleText('请先选择 Logo 图片。', 'Select a logo image first.') });
+        return;
+    }
+    const button = document.getElementById('logoUploadSubmitBtn');
+    if (button?.disabled) return;
+    const status = document.getElementById('logoUploadStatus');
+    const detail = document.getElementById('logoUploadResultDetail');
+    const cropBottom = document.getElementById('logoOptCropBottom')?.checked ?? true;
+    const removeBg = document.getElementById('logoOptRemoveBg')?.checked ?? true;
+    const darkEnhance = document.getElementById('logoOptDarkEnhance')?.checked ?? true;
+    if (button) { button.disabled = true; button.textContent = navLocaleText('正在生成…', 'Generating…'); }
+    if (status) status.textContent = navLocaleText('正在处理图片并生成 PNG / ICO / BMP…', 'Processing image and generating PNG / ICO / BMP…');
+    if (detail) { detail.style.display = 'none'; detail.textContent = ''; }
+    try {
+        const prepared = await window.PlatformLogoUpload.prepareFile(file);
+        const body = new FormData();
+        body.append('logo', prepared);
+        body.append('cropBottomText', String(cropBottom));
+        body.append('removeBg', String(removeBg));
+        body.append('darkEnhance', String(darkEnhance));
+        const response = await fetch('/api/platform-logo/upload', { method: 'POST', headers: getAuthHeaderForNav(), body });
+        const data = await response.json().catch(() => { throw new Error(navLocaleText(`服务返回异常（HTTP ${response.status}），请检查后端或代理。`, `Unexpected response (HTTP ${response.status}); check the backend or proxy.`)); });
+        if (!response.ok || !data.ok) { const error = new Error(data.error || `HTTP ${response.status}`); error.code = data.code; throw error; }
+        document.querySelectorAll('.brand-logo-img, .hero-logo-img, #navBrandLogo, #homeHeroLogo').forEach(image => { image.src = data.logoUrl; });
+        const favicon = document.querySelector('link[rel="icon"]');
+        if (favicon) favicon.href = `/favicon.ico?t=${data.updatedAt}`;
+        const content = document.getElementById('navSettingsContent');
+        if (content && navState.settingsTab === 'logo') await renderLogoSettings(content);
+        const updatedStatus = document.getElementById('logoUploadStatus');
+        if (updatedStatus) updatedStatus.textContent = navLocaleText(`已生成 ${data.assetCount} 处图标并应用。`, `Generated and applied ${data.assetCount} icon assets.`);
+    } catch (error) {
+        const message = logoUploadError(error);
+        if (status) status.textContent = navLocaleText('处理失败：', 'Failed: ') + message;
+        await showNavbarNotice({ title: navLocaleText('图标更新失败', 'Logo update failed'), message, tone: 'error' });
+    } finally {
+        if (button) { button.disabled = false; button.textContent = navLocaleText('生成并应用图标', 'Generate and apply icons'); }
+    }
+};
 
 function buildAiUsageChart(series) {
     const rows = Array.isArray(series) ? series : [];
@@ -6012,7 +6252,85 @@ window.restoreGlobalBackupFromUpload = async function (forceCrossTenant = false,
     renderNavSettingsContent();
 };
 
+let f12ShortcutLoader;
+
+async function renderF12PageSettings(content) {
+    const text = navLocaleText;
+    content.innerHTML = `<div class="nav-settings-help">${navEscape(text('正在读取插件列表…', 'Loading plugins…'))}</div>`;
+    try {
+        if (!window.ToolsF12QuickDownloads) {
+            if (!f12ShortcutLoader) f12ShortcutLoader = new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = '/js/shared/f12-quick-downloads.js?v=20261006-01';
+                script.onload = resolve;
+                script.onerror = () => { f12ShortcutLoader = null; script.remove(); reject(new Error(text('无法加载打包服务', 'Unable to load the packager'))); };
+                document.head.append(script);
+            });
+            await f12ShortcutLoader;
+        }
+        const plugins = await window.ToolsF12QuickDownloads.catalog();
+        if (navState.settingsTab !== 'page:f12-extension' || !content.isConnected) return;
+        const name = plugin => text(plugin.name, plugin.nameEn || plugin.name);
+        const render = () => {
+            const shortcuts = navState.settings.f12QuickDownloads;
+            content.innerHTML = `
+                <div class="nav-settings-help">${navEscape(text('在首页知识图谱旁显示一键打包下载按钮。可添加任意数量，按钮会自动换行；除打包用途外，其余使用所选插件的默认参数。下载沿用 F12 打包的管理员权限。', 'Show one-click package downloads beside the knowledge graph on the home page. Add as many as needed; buttons wrap automatically. All other options use the selected plugin defaults. Downloads require the existing F12 administrator permissions.'))}</div>
+                <div class="nav-settings-list">
+                    ${shortcuts.map((item, index) => `
+                        <div class="nav-settings-row" style="display:flex;flex-wrap:wrap;gap:12px;align-items:end">
+                            <label style="flex:1 1 240px;min-width:0;font-size:12px">${navEscape(text('插件', 'Plugin'))}
+                                <select class="nav-settings-select" style="display:block;margin-top:6px;min-width:0" data-plugin="${index}">
+                                    ${plugins.some(plugin => plugin.id === item.scriptId) ? '' : `<option value="${navEscape(item.scriptId)}" selected>${navEscape(text('插件已不可用：', 'Unavailable plugin: ') + item.scriptId)}</option>`}
+                                    ${plugins.map(plugin => `<option value="${navEscape(plugin.id)}" ${plugin.id === item.scriptId ? 'selected' : ''}>${navEscape(name(plugin))} · ${navEscape(plugin.id.startsWith('builtin:') ? text('内置', 'Built-in') : text('脚本库', 'Script library'))}</option>`).join('')}
+                                </select>
+                            </label>
+                            <label style="flex:1 1 195px;min-width:0;font-size:12px">${navEscape(text('默认打包用途', 'Default package target'))}
+                                <select class="nav-settings-select" style="display:block;margin-top:6px;min-width:0" data-target="${index}">
+                                    <option value="store" ${item.target === 'store' ? 'selected' : ''}>${navEscape(text('Edge 插件商店', 'Edge store'))}</option>
+                                    <option value="local" ${item.target === 'local' ? 'selected' : ''}>${navEscape(text('本地安装 / 企业分发', 'Local / enterprise distribution'))}</option>
+                                </select>
+                            </label>
+                            <div class="nav-settings-actions">
+                                <button type="button" data-up="${index}" ${index === 0 ? 'disabled' : ''} aria-label="${navEscape(text('上移', 'Move up'))}" title="${navEscape(text('上移', 'Move up'))}">↑</button>
+                                <button type="button" data-down="${index}" ${index === shortcuts.length - 1 ? 'disabled' : ''} aria-label="${navEscape(text('下移', 'Move down'))}" title="${navEscape(text('下移', 'Move down'))}">↓</button>
+                                <button type="button" data-remove="${index}">${navEscape(text('删除', 'Remove'))}</button>
+                            </div>
+                        </div>`).join('') || `<div class="nav-settings-empty">${navEscape(text('尚未配置快捷下载插件', 'No download shortcuts configured'))}</div>`}
+                </div>
+                <button type="button" class="nav-settings-add" data-add-shortcut style="margin-top:14px" ${plugins.length ? '' : 'disabled'}>＋ ${navEscape(text('添加快捷插件', 'Add plugin shortcut'))}</button>`;
+            content.querySelectorAll('[data-plugin]').forEach(select => select.addEventListener('change', () => {
+                navState.settings.f12QuickDownloads[Number(select.dataset.plugin)].scriptId = select.value;
+                scheduleNavSettingsSave();
+            }));
+            content.querySelectorAll('[data-target]').forEach(select => select.addEventListener('change', () => {
+                navState.settings.f12QuickDownloads[Number(select.dataset.target)].target = select.value;
+                scheduleNavSettingsSave();
+            }));
+            content.querySelectorAll('[data-up], [data-down], [data-remove]').forEach(button => button.addEventListener('click', () => {
+                const current = navState.settings.f12QuickDownloads;
+                if (button.dataset.remove !== undefined) current.splice(Number(button.dataset.remove), 1);
+                else navState.settings.f12QuickDownloads = moveArrayItem(current, Number(button.dataset.up ?? button.dataset.down), button.dataset.up !== undefined ? -1 : 1);
+                render();
+                scheduleNavSettingsSave();
+            }));
+            content.querySelector('[data-add-shortcut]').addEventListener('click', () => {
+                const current = navState.settings.f12QuickDownloads;
+                current.push({ scriptId: plugins.find(plugin => plugin.id === 'builtin:netcare-rfc-word')?.id || plugins[0].id, target: 'store' });
+                render();
+                content.querySelector('[data-plugin="' + (current.length - 1) + '"]')?.focus();
+                scheduleNavSettingsSave();
+            });
+        };
+        render();
+    } catch (error) {
+        if (navState.settingsTab !== 'page:f12-extension' || !content.isConnected) return;
+        content.innerHTML = `<div class="nav-settings-help">${navEscape(text('插件列表读取失败：', 'Unable to load plugins: ') + error.message)}</div><button type="button" class="nav-settings-add" data-retry-shortcuts>${navEscape(text('重试', 'Retry'))}</button>`;
+        content.querySelector('[data-retry-shortcuts]').addEventListener('click', () => renderF12PageSettings(content));
+    }
+}
+
 function renderPageSettings(content, pageId) {
+    if (pageId === 'f12-extension') return renderF12PageSettings(content);
     if (pageId === 'home') return renderHomePageSettings(content);
     if (pageId === 'report') return renderReportPageSettings(content);
     const item = NAV_BUILTIN_LINKS.find(link => link.id === pageId);

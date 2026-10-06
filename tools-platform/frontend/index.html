@@ -5,16 +5,61 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tools Platform - 工具中台</title>
     <meta name="description" content="统一工具平台入口：UIVF12 抓取引擎 & Task SLA 风险监控台">
-    <link rel="stylesheet" href="/css/shared.css?v=20260929-01">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=20261006">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/icon.png?v=20261006">
+    <link rel="apple-touch-icon" href="/assets/icon-mac.png?v=20261006">
+    <link rel="stylesheet" href="/css/shared.css?v=20261006-02">
     <style>
         body { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); min-height: 100vh; }
         .home-content { padding-top: calc(var(--navbar-h) + 60px); max-width: 1100px; margin: 0 auto; padding-left: 24px; padding-right: 24px; }
 
         .hero { text-align: center; margin-bottom: 18px; }
-        .hero-icon { font-size: 56px; margin-bottom: 16px; }
+        .hero-icon { margin-bottom: 16px; display: flex; align-items: center; justify-content: center; }
+        .hero-logo-img {
+            width: 104px;
+            height: 104px;
+            object-fit: contain;
+            filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.4)) drop-shadow(0 8px 16px rgba(0, 0, 0, 0.45));
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s ease;
+        }
+        .hero-logo-img:hover {
+            transform: scale(1.08) translateY(-3px);
+            filter: drop-shadow(0 0 28px rgba(96, 165, 250, 0.6)) drop-shadow(0 12px 24px rgba(0, 0, 0, 0.5));
+        }
         .hero h1 { font-size: 42px; font-weight: 800; background: linear-gradient(90deg, #64ffda, #4a90e2, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 12px; }
         .hero p { font-size: 16px; color: #8892b0; max-width: 600px; margin: 0 auto; line-height: 1.7; }
 
+        .home-recommended-actions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 18px;
+        }
+        .home-recommended-actions .home-graph-entry { margin: 0; }
+        .home-f12-shortcuts { display: contents; }
+        .home-f12-download {
+            max-width: 100%;
+            white-space: normal;
+            text-align: center;
+            min-height: 44px;
+            padding: 9px 16px;
+            border: 1px solid rgba(129, 140, 248, .3);
+            border-radius: 999px;
+            background: linear-gradient(135deg, rgba(30, 41, 76, .8), rgba(43, 33, 79, .7));
+            color: var(--text-primary, #dce6f8);
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 1.5;
+            cursor: pointer;
+            transition: transform .15s, border-color .15s;
+        }
+        .home-f12-download:hover { transform: translateY(-1px); border-color: #818cf8; }
+        .home-f12-download:disabled { opacity: .6; cursor: wait; }
+        .home-f12-download:focus-visible { outline: 2px solid #818cf8; outline-offset: 3px; }
+        [data-theme="light"] .home-f12-download { background: #eef2ff; color: #29365c; border-color: #c7d2fe; }
         .home-graph-entry {
             position: relative;
             isolation: isolate;
@@ -929,10 +974,12 @@
 <body>
     <div class="home-content">
         <div class="hero">
-            <div class="hero-icon">⚡</div>
-            <h1>Tools Platform</h1>
+            <div class="hero-icon">
+                <img src="/assets/logo.png?v=20261006" alt="Tools Platform" class="hero-logo-img" id="homeHeroLogo">
+            </div>
+            <h1 data-platform-name style="overflow-wrap:anywhere">Tools Platform</h1>
             <p>统一工具中台 · 前后端分离架构 · 数据持久化存储<br>让每一个工具都更强大、更稳定、更易扩展</p>
-            <button type="button" class="home-graph-entry" id="homeKnowledgeGraphEntry" data-open-knowledge-graph>
+            <div class="home-recommended-actions"><button type="button" class="home-graph-entry" id="homeKnowledgeGraphEntry" data-open-knowledge-graph>
                 <span class="home-graph-mark" aria-hidden="true">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="2.4"></circle><circle cx="5" cy="6" r="1.7"></circle><circle cx="19" cy="7" r="1.7"></circle><circle cx="6" cy="18" r="1.7"></circle><circle cx="18" cy="18" r="1.7"></circle>
@@ -946,6 +993,7 @@
                 </span>
                 <span class="home-graph-arrow" aria-hidden="true">›</span>
             </button>
+            <div id="homeF12QuickDownloads" class="home-f12-shortcuts"></div></div>
             <nav class="friend-links" aria-label="友情链接">
                 <button type="button" class="friend-links-label" id="friendLinksManageBtn" data-home-i18n="home.links.title">🔗 友情链接</button>
                 <div class="friend-links-list">
@@ -1449,7 +1497,9 @@
     <script src="/js/shared/migration-status.js?v=20260626-01"></script>
     <script src="/js/shared/toast.js?v=20260530-03"></script>
     <script src="/js/shared/i18n.js?v=20261005-01"></script>
-    <script src="/js/shared/navbar.js?v=20261005-01"></script>
+    <script src="/js/shared/f12-quick-downloads.js?v=20261006-01"></script>
+    <script src="/js/shared/platform-logo-upload.js?v=20261006-02"></script>
+    <script src="/js/shared/navbar.js?v=20261006-04"></script>
     <script src="/js/shared/jszip.min.js?v=3.10.1"></script>
     <script>
         const historyState = {

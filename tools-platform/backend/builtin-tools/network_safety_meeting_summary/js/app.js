@@ -1,11 +1,13 @@
 // js/app.js
 import * as store from './store.js?v=20260623-1';
-import * as editor from './editor.js?v=20260623-1';
+import * as editor from './editor.js?v=20261006-1';
 import { createComponentEditor } from './component-editor.js?v=20260623-4';
 import { initContextMenu } from './context-menu.js?v=20260623-1';
-import { defaultSlides } from './default-slides.js?v=20260623-1';
-import { renderSlide, slideToJson } from './slide-factory.js?v=20260623-2';
+import { defaultSlides } from './default-slides.js?v=20261006-1';
+import { renderSlide, slideToJson } from './slide-factory.js?v=20261006-1';
 import { initProjectWorkspace } from './project-workspace.js?v=20260801-02';
+
+import { createVisionSlide } from './vision-template.js?v=20261006-1';
 
 const deck = document.getElementById('deck');
 const deckWrapper = document.getElementById('deckWrapper');
@@ -298,13 +300,12 @@ function saveDeck() {
 
 function loadProjectDeck(html, requestedActiveSlide = 0) {
     componentEditor?.clearSelection();
-    if (html && String(html).trim()) deck.innerHTML = html;
+    deck.innerHTML = String(html || '');
     deck.querySelectorAll('.slide-wrap').forEach(wrap => {
         if (!wrap.querySelector('.slide')) wrap.remove();
     });
     if (!getSlideWraps().length) {
-        const template = document.getElementById('blankSlideTemplate');
-        if (template) deck.appendChild(template.content.firstElementChild.cloneNode(true));
+        deck.appendChild(renderSlide(createVisionSlide()));
     }
     activeSlideIndex = Math.max(0, Math.min(Number(requestedActiveSlide || 0), getSlideWraps().length - 1));
     renumberSlides();
@@ -994,9 +995,7 @@ deck.addEventListener('drop', e => {
 
 
 document.getElementById('addBlankBtn').addEventListener('click', () => {
-    const template = document.getElementById('blankSlideTemplate');
-    if (!template) return;
-    deck.appendChild(template.content.firstElementChild.cloneNode(true));
+    deck.appendChild(renderSlide(createVisionSlide()));
     renumberSlides();
     componentEditor?.refresh();
     setActiveSlide(getSlideWraps().length - 1);

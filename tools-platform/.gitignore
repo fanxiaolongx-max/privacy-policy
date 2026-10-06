@@ -1,5 +1,6 @@
 # Dependencies
 node_modules/
+.venv-logo/
 
 # Runtime data and local databases
 backend/data/*
@@ -54,4 +55,3 @@ frontend/assets/videos/
 *.webm
 *.mov
 *.m4v
-

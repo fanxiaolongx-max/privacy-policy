@@ -51,7 +51,7 @@ function netcareLog(event,snapshotId=''){
   netcareLogQueue=netcareLogQueue.then(async()=>{if(Date.now()<netcareLogRetryAt){netcareLogFailures++;return;}try{return await netcareArtifactRequest({action:'log',order:event.order||'',event,snapshotId});}catch{netcareLogFailures++;netcareLogRetryAt=Date.now()+15000;}});return netcareLogQueue;
 }
 function netcareWireOperations(root,context){
-  const handle=event=>{const el=event.target?.closest?.('button,input,select,textarea,summary,a');if(!el||el.type==='password'||/password|token|secret|key/i.test(el.id||el.name||''))return;if(event.type==='click'&&!el.matches('button,summary,a'))return;const row=el.closest('[data-number]'),data={control:el.id||el.dataset.field||el.tagName.toLowerCase(),label:(el.getAttribute('aria-label')||el.textContent||'').trim().slice(0,200),section:row?.dataset.number};if(event.type==='change'&&el.type!=='file')data.value=el.type==='checkbox'?el.checked:el.value;const c=context();netcareLog({...c,category:event.type==='change'?'configuration':'operation',action:'ui.'+event.type,message:event.type==='change'?'修改设置 / Change setting':'操作控件 / Use control',data},c.snapshotId);};
+  const handle=event=>{const el=event.target?.closest?.('button,input,select,textarea,summary,a');if(!el||/^(cleanCat|materialsCleanup|materialsRetention|protectSnapshot|clearResultCache|storageRefresh|snapSelect)/.test(el.id||'')||el.type==='password'||/password|token|secret|key/i.test(el.id||el.name||''))return;if(event.type==='click'&&!el.matches('button,summary,a'))return;const row=el.closest('[data-number]'),data={control:el.id||el.dataset.field||el.tagName.toLowerCase(),label:(el.getAttribute('aria-label')||el.textContent||'').trim().slice(0,200),section:row?.dataset.number};if(event.type==='change'&&el.type!=='file')data.value=el.type==='checkbox'?el.checked:el.value;const c=context();netcareLog({...c,category:event.type==='change'?'configuration':'operation',action:'ui.'+event.type,message:event.type==='change'?'修改设置 / Change setting':'操作控件 / Use control',data},c.snapshotId);};
   root.addEventListener('click',handle,true);root.addEventListener('change',handle,true);return ()=>{root.removeEventListener('click',handle,true);root.removeEventListener('change',handle,true);};
 }
 async function netcareStoreArtifact(order,name,blob,signal,role){
@@ -102,6 +102,9 @@ function netcareAuditLocalized(value,language='zh',localized){
     return en?'This saved result has no English translation. Run the audit again.':'该历史结果缺少中文译文，请重新审计。';
   }).join('\n');
 }
+function netcareAuditMissingBundles(records,files){
+  return records.filter(record=>record.bundleFilename?!files.some(file=>file.order===record.order&&file.name===record.bundleFilename):!files.some(file=>file.order===record.order&&file.name===record.wordFilename));
+}
 function netcareAuditImageKey(order,name){return order+'\u0000'+name;}
 function netcareAuditScreenshots(record,report){
   const sources=report.sources?.length?report.sources:[report];
@@ -112,12 +115,22 @@ function netcarePngSize(bytes){
   const read=i=>bytes[i]*16777216+bytes[i+1]*65536+bytes[i+2]*256+bytes[i+3],width=read(16),height=read(20);
   if(!width||!height||width>6000||height>30000)throw Error('Invalid screenshot dimensions');return {width,height};
 }
+function netcareAuditNotApplicable(record,report){
+  if(report.notApplicable===true)return true;
+  const sources=report.sources?.length?report.sources:[report];
+  return report.error===true&&sources.length>0&&sources.every(source=>{
+    const item=(record.items||[]).find(i=>i.section===source.section&&i.kind===source.kind&&i.filename===source.filename);
+    return item&&!item.text?.trim()&&(item.notApplicable===true||/^未提取到该章节内容或附件，需人工检查 \/ Missing evidence$/.test(item.error||''));
+  });
+}
 function netcareAuditRows(records,language='zh'){
   const rows=[];
   for(const record of [...records].reverse())for(const report of [...(record.reports||[])].sort((a,b)=>String(a.section).localeCompare(String(b.section),undefined,{numeric:true}))){
+    if(netcareAuditNotApplicable(record,report))continue;
+    const noAttachments=(record.reports||[]).some(r=>r.section===report.section&&r.kind==='attachments'&&netcareAuditNotApplicable(record,r));
     const sources=report.sources?.length?report.sources:[report];
     const text=sources.map(source=>{const item=(record.items||[]).find(i=>i.section===source.section&&i.kind===source.kind&&i.filename===source.filename);return (sources.length>1?'['+source.section+' · '+source.filename+']\n':'')+(item?.text||netcareAuditLocalized(item?.error||'未提取到可展示文本 / No text available',language));}).join('\n\n');
-    rows.push({...report,summary:netcareAuditLocalized(report.summary,language,report.summaryI18n),findings:(report.findingsI18n?.length?report.findingsI18n:report.findings||[]).map(f=>netcareAuditLocalized(typeof f==='string'?f:'',language,typeof f==='object'?f:undefined)),order:record.order,wordFilename:record.wordFilename||'',text,screenshots:netcareAuditScreenshots(record,report)});
+    rows.push({...report,noAttachments,summary:netcareAuditLocalized(report.summary,language,report.summaryI18n),findings:(report.findingsI18n?.length?report.findingsI18n:report.findings||[]).map(f=>netcareAuditLocalized(typeof f==='string'?f:'',language,typeof f==='object'?f:undefined)),order:record.order,wordFilename:record.wordFilename||'',text,screenshots:netcareAuditScreenshots(record,report)});
   }
   return rows;
 }
@@ -345,7 +358,7 @@ function netcareResolveTopics(settings, catalogue) {
 function netcareAuditSectionText(report,language='zh') {
   const label=`${report.section||''} ${report.sectionTitle||''}`.trim();
   const tr=(zh,en)=>language==='en'?en:zh;
-  return [label,...(report.corrections||[]).map(c=>`${tr('预期','Expected')}: ${c.ruleNumber} ${c.ruleTitle}\n${tr('原章节','Original')}: ${c.fromNumber} ${c.fromTitle||tr('未找到','Not found')}\n→ ${tr('纠正为','Corrected')}: ${c.toNumber} ${c.toTitle}`)].join('\n\n');
+  return [label+(report.noAttachments?tr(' · 无附件',' · No attachments'):''),...(report.corrections||[]).map(c=>`${tr('预期','Expected')}: ${c.ruleNumber} ${c.ruleTitle}\n${tr('原章节','Original')}: ${c.fromNumber} ${c.fromTitle||tr('未找到','Not found')}\n→ ${tr('纠正为','Corrected')}: ${c.toNumber} ${c.toTitle}`)].join('\n\n');
 }
 function netcareTopicRule(settings, topic, kind) {
   if(!topic.ruleNumbers)return netcareEffectiveSection(settings,topic.number||topic.section);
@@ -379,10 +392,11 @@ function netcareGroupAuditItems(items,settings) {
     if(!group){const row=settings.sections.find(r=>r.number===number);group={section:number,ruleSection:number,sectionTitle:row?.title||item.sectionTitle||'',corrections:[],kind:item.kind,filename:number+' · '+(item.kind==='text'?'章节汇总 / Section evidence':'附件汇总 / Attachment evidence'),sources:[],parts:[],errors:[]};groups.set(key,group);}
     for(const correction of item.corrections||[])if(!group.corrections.some(c=>JSON.stringify(c)===JSON.stringify(correction)))group.corrections.push(correction);
     group.sources.push({section:item.section,kind:item.kind,filename:item.filename});
+    if(item.notApplicable===true)continue;
     if(item.error||!item.text?.trim())group.errors.push(item.section+' · '+item.filename+': '+(item.error||'文本为空 / Empty text'));
     else group.parts.push('['+item.section+' '+(item.sectionTitle||'')+' · '+item.filename+']\n'+item.text);
   }
-  const result = [...groups.values()].map(({parts,errors,...group})=>({...group,text:parts.join('\n\n'),error:errors.length?errors.join('\n'):undefined}));
+  const result = [...groups.values()].map(({parts,errors,...group})=>({...group,text:parts.join('\n\n'),notApplicable:!parts.length&&!errors.length,error:errors.length?errors.join('\n'):undefined}));
   return result.sort((a,b)=>{
     let cmp=0;
     try{cmp=netcareCompareSectionNumbers(a.section,b.section);}catch{}
@@ -419,6 +433,7 @@ async function netcareRunAudits(items, settings, request, signal, progress,trace
     if (!rule) continue;
     const result={section:item.section,kind:item.kind,filename:item.filename,sources:item.sources,sectionTitle:item.sectionTitle||row.title,corrections:item.corrections||[],rule:netcareRedactText(rule),status:'needs_review'};
     trace('audit.evidence',{section:item.section,sectionTitle:result.sectionTitle,kind:item.kind,rule:result.rule,sources:item.sources,corrections:result.corrections,characters:item.text?.length||0,preview:item.text?.slice(0,600),error:item.error});
+    if(item.notApplicable){reports.push({...result,status:'not_applicable',notApplicable:true,summary:'',findings:[]});continue;}
     if (item.error) {result.summary=item.error;result.error=true;reports.push(result);continue;}
     if (!item.text?.trim() || item.text.length>60000) {result.summary='文本为空或超过60000字符，未提交模型 / Empty text or exceeds 60000 characters';result.error=true;reports.push(result);continue;}
     progress(`${item.section} · ${item.filename}`);
@@ -524,7 +539,7 @@ function mountNetcareCollector() {
   $('filename').oninput = () => { dirtyName = true; };
   const receiveSlot = event => {
     if(event.source===window&&event.origin===location.origin&&event.data?.source==='TP_RFC_CLOSE_RESULT'&&event.data.order===order&&!event.data.ok){status($('status').textContent+'\n自动关闭未完成 / Automatic close failed: '+(event.data.error||'扩展连接失败 / Extension unavailable'));return;}
-    if(event.source===window&&event.origin===location.origin&&event.data?.source==='TP_RFC_AUDIT_PUBLISHED'&&event.data.order===order&&(!event.data.ok||event.data.snapshotError)){$('auditStatus').textContent+='\n主页面汇总失败：'+event.data.error;return;}
+    if(event.source===window&&event.origin===location.origin&&event.data?.source==='TP_RFC_AUDIT_PUBLISHED'&&event.data.order===order&&(!event.data.ok||event.data.snapshotError)){$('auditStatus').textContent+='\n'+(event.data.snapshotError?'快照保存失败：'+event.data.snapshotError:'主页面汇总失败：'+event.data.error);return;}
     if(event.source===window && event.origin===location.origin && event.data?.source==='TP_RFC_AI_RESULT') { aiRequests.get(event.data.id)?.resolve(event.data); return; }
     if (event.source !== window || event.origin !== location.origin || event.data?.source !== 'TP_RFC_READ_SLOT_RESULT') return;
     const slot = slots.get(event.data.id); if (slot) event.data.ok ? slot.resolve() : slot.reject(new Error(event.data.error || '请求节流连接失败'));
@@ -796,7 +811,8 @@ function mountNetcareCollector() {
       for(const item of evidence){const topic=topics.find(t=>t.number===item.section);if(topic){item.ruleSection=netcareTopicRule(settings,topic,item.kind).number;item.sectionTitle=topic.title;item.corrections=topic.correctionsByKind?.[item.kind]||[];}}
       for(const row of settings.sections) for(const kind of ['text','attachments']) if(settings.aiAuditEnabled && row[kind+'Prompt'] && !settings.sections.some(parent=>row.number.startsWith(parent.number+'.')&&parent[kind+'Prompt']) && !evidence.some(item=>(item.ruleSection===row.number||item.section===row.number||item.section.startsWith(row.number+'.')) && item.kind===kind)) {
         const matched=topics.find(t=>netcareTopicRule(settings,t,kind).number===row.number);
-        evidence.push({section:row.number,kind,filename:row.title,corrections:matched?.correctionsByKind?.[kind]||[],error:topics.resolutionIssues?.find(i=>i.number===row.number&&i.kind===kind)?.error||'未提取到该章节内容或附件，需人工检查 / Missing evidence'});
+        const issue=topics.resolutionIssues?.find(i=>i.number===row.number&&i.kind===kind)?.error||matched?.error;
+        evidence.push({section:row.number,kind,filename:row.title,corrections:matched?.correctionsByKind?.[kind]||[],notApplicable:!issue&&!!matched,error:issue||(!matched?'未定位到章节 / Section not located':undefined)});
       }
       let reports=[], cached=true;
       try {netcareCacheAudit(localStorage,order,evidence,[]);}catch(error){cached=false;report.push('暂存 ERROR: '+error.message);}
@@ -804,7 +820,7 @@ function mountNetcareCollector() {
         if(!cached)reports=[{status:'needs_review',summary:'浏览器暂存失败，未自动提交审计',error:true}];
         else reports=await netcareRunAudits(evidence,settings,requestAudit,signal,text=>{status('AI 审计 / Auditing: '+text);$('auditStatus').textContent=text;},(action,data)=>trace(action,'准备审计证据 / Prepare audit evidence',data,'audit'));
         for(const result of reports)trace('audit.result','审计项结论 / Audit check result',{...result},'audit',result.error?'error':result.status==='fail'?'warn':'info');
-        const auditText=reports.map(r=>`${r.section||''} ${r.filename||''} · ${r.status}\n${r.summary}\n${(r.findings||[]).join('\n')}`).join('\n\n');
+        const auditText=reports.filter(r=>!r.notApplicable).map(r=>`${r.section||''} ${r.filename||''} · ${r.status}\n${r.summary}\n${(r.findings||[]).join('\n')}`).join('\n\n');
         $('auditStatus').textContent=auditText || '没有匹配的审计规则 / No audit rules';
         entries.push({name:netcareUniqueFilename('AI审计结果.json',used),blob:new Blob([JSON.stringify({order,at:new Date().toISOString(),reports},null,2)],{type:'application/json'})});
         entries.push({name:netcareUniqueFilename('AI审计结果.txt',used),blob:new Blob(['\ufeff'+auditText],{type:'text/plain;charset=utf-8'})});
@@ -1121,7 +1137,7 @@ function mountNetcareCollector() {
     <textarea id="order" aria-label="RFC 单号列表" rows="3" placeholder="每行一个单号，也支持空格或逗号 / One RFC per line" autocomplete="off"></textarea>
     <div id="routeBanner" class="summary" hidden></div><div id="configSummary" class="summary"></div><select id="plans" aria-label="选择方案" hidden></select><button id="choose" hidden>确认方案 / Confirm</button>
     <div class="actions"><button id="run" class="primary">下载与审计 / Download & audit</button><button id="stop" disabled>停止 / Stop</button></div>
-    <button id="pipOverview" style="width:100%" hidden>方案总览 · Beta / Solution overview · Beta</button><button id="auditResultsButton" style="width:100%">审计结果 / Audit results</button><div id="results" role="status"></div><pre id="log" role="status">输入单号开始下载 / Enter RFC numbers to start</pre><small>Ctrl / ⌘ + Enter 快速启动 · 配置保存在当前浏览器</small>
+    <div style="display:grid;gap:10px;margin:12px 0"><button id="pipOverview" style="width:100%" hidden>方案总览 · Beta / Solution overview · Beta</button><button id="auditResultsButton" style="width:100%">审计结果 / Audit results</button></div><div id="results" role="status"></div><pre id="log" role="status">输入单号开始下载 / Enter RFC numbers to start</pre><small>Ctrl / ⌘ + Enter 快速启动 · 配置保存在当前浏览器</small>
   </section>
   <dialog id="settingsDialog" aria-labelledby="settingsTitle"><div class="settings-shell"><div class="modal-head"><div><h2 id="settingsTitle">工具设置 / Settings</h2><p>下载偏好、章节规则与配置管理 / Preferences, sections & configuration</p></div><button id="settingsClose" class="icon" aria-label="关闭设置 / Close settings">×</button></div>
   <div class="modal-nav" role="tablist" aria-label="设置分类"><button id="generalTab" role="tab" aria-selected="true" aria-controls="generalSettings">常规 / General</button><button id="sectionsTab" role="tab" aria-selected="false" aria-controls="chapterSettings">章节规则 / Sections</button><button id="localRulesTab" role="tab" aria-selected="false" aria-controls="localRulesSettings">本地审计规则 / Local rules</button><button id="storageTab" role="tab" aria-selected="false" aria-controls="storageSettings">存储与快照 / Storage & snapshots</button><button id="logsTab" role="tab" aria-selected="false" aria-controls="pluginLogs">插件日志 / Plugin logs</button><button id="performanceTab" role="tab" aria-selected="false" tabindex="-1">性能监控 / Performance</button><button id="aiTab" role="tab" aria-selected="false" aria-controls="aiSettings">AI 对接 / AI models</button></div>
@@ -1423,6 +1439,18 @@ function mountNetcareCollector() {
   $('auditImageClose').onclick=()=>imageDialog.close();$('auditImage').onclick=()=>{$('auditImage').classList.toggle('actual-size');};
   imageDialog.addEventListener('close',()=>{$('auditImage').removeAttribute('src');$('auditImage').classList.remove('actual-size');});
   auditDialog.addEventListener('close',clearAuditImages);
+  async function refreshAuditMaterialAvailability(){
+    const generation=auditRenderGeneration,snapshotId=activeSnapshot,records=auditRecords.filter(r=>netcareAuditRows([r]).length);
+    $('snapshotSave').disabled=$('auditBundle').disabled=true;
+    if(!records.length)return;
+    try{
+      const files=await netcareArtifactRequest({action:'list',orders:records.map(r=>r.order),snapshotId});
+      if(generation!==auditRenderGeneration||snapshotId!==activeSnapshot)return;
+      const missing=netcareAuditMissingBundles(records,files);
+      $('snapshotSave').disabled=!!snapshotId||!!missing.length||auditExportBusy;$('auditBundle').disabled=!!missing.length||auditExportBusy;
+      if(missing.length)$('auditExportStatus').textContent=tr('审计包缓存缺失：无法保存快照或下载完整材料。请重新提取，或清理结果缓存。','Audit ZIP cache is missing. Saving snapshots and downloading complete materials are unavailable. Extract again or clear the result cache.');
+    }catch(e){if(generation===auditRenderGeneration)$('auditExportStatus').textContent=e.message;}
+  }
   const renderAudits=()=>{
     clearAuditImages();const generation=auditRenderGeneration,snapshotId=activeSnapshot,language=uiLanguage,body=$('auditSummaryBody'),scroll=body.scrollTop;body.replaceChildren();let screenshotFiles;const shotQueue=[];let loadingShots=0;
     const counts={pass:0,fail:0,needs_review:0};
@@ -1435,7 +1463,7 @@ function mountNetcareCollector() {
       const state=['pass','fail'].includes(report.status)?report.status:'needs_review';counts[state]++;const rowEl=append(tbody,'tr','');
       if(!index||rows[index-1].order!==report.order){rowEl.className='group-start';const cell=append(rowEl,'td',report.order,'group-cell');cell.rowSpan=rows.filter(r=>r.order===report.order).length;if(report.wordFilename)append(cell,'p',report.wordFilename,'note');}
       if(!index||rows[index-1].order!==report.order||rows[index-1].section!==report.section){
-        const cell=append(rowEl,'td',`${report.section||'—'} ${report.sectionTitle||''}`,'group-cell');const heading=cell.firstChild;const configured=document.createElement('span');configured.textContent=heading.textContent;configured.setAttribute('data-user-content','');heading.replaceWith(configured);const grouped=rows.filter(r=>r.order===report.order&&r.section===report.section);cell.rowSpan=grouped.length;
+        const cell=append(rowEl,'td',`${report.section||'—'} ${report.sectionTitle||''}`,'group-cell');const heading=cell.firstChild;const configured=document.createElement('span');configured.textContent=heading.textContent;configured.setAttribute('data-user-content','');heading.replaceWith(configured);const grouped=rows.filter(r=>r.order===report.order&&r.section===report.section);cell.rowSpan=grouped.length;if(grouped.some(r=>r.noAttachments)){const badge=append(cell,'p',tr('无附件','No attachments'),'note');badge.style.color='var(--muted)';}
         const corrections=grouped.flatMap(r=>r.corrections||[]).filter((c,i,all)=>all.findIndex(other=>JSON.stringify(other)===JSON.stringify(c))===i);
         for(const correction of corrections){const block=append(cell,'div','','section-correction');block.removeAttribute('data-user-content');append(block,'div',uiLanguage==='en'?'Section correction':'章节纠错','correction-label');const from=append(block,'div',`${correction.fromNumber} ${correction.fromTitle||(uiLanguage==='en'?'Not found':'未找到')}`,'correction-from');from.setAttribute('data-user-content','');const arrow=append(block,'div','↓','correction-arrow');arrow.setAttribute('aria-label','纠正为 / Corrected to');const to=append(block,'div',`${correction.toNumber} ${correction.toTitle}`,'correction-to');to.setAttribute('data-user-content','');}
       }
@@ -1455,16 +1483,17 @@ function mountNetcareCollector() {
     $('auditExcel').disabled=$('auditBundle').disabled=!rows.length||auditExportBusy;
     const orderCount=new Set(rows.map(r=>r.order)).size;
     $('auditCounts').textContent=tr(`${orderCount} 个方案 · ${rows.length} 个审计项 · 通过 ${counts.pass} · 不通过 ${counts.fail} · 需人工核查 ${counts.needs_review}`,`${orderCount} RFCs · ${rows.length} checks · Pass ${counts.pass} · Fail ${counts.fail} · Review ${counts.needs_review}`);
-    $('auditResultsButton').textContent=tr(`审计结果（${orderCount} 个方案 / ${rows.length} 项）`,`Audit results (${orderCount} RFCs / ${rows.length} checks)`);body.scrollTop=scroll;
+    $('auditResultsButton').textContent=tr(`审计结果（${orderCount} 个方案 / ${rows.length} 项）`,`Audit results (${orderCount} RFCs / ${rows.length} checks)`);body.scrollTop=scroll;refreshAuditMaterialAvailability();
   };
   const saveAuditFile=(blob,name)=>{const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);};
-  $('auditExcel').onclick=async()=>{if(auditExportBusy)return;auditExportBusy=true;const records=JSON.parse(JSON.stringify(auditRecords)),language=uiLanguage,snapshotId=activeSnapshot;try{$('auditExcel').disabled=$('auditBundle').disabled=true;const screenshots=netcareAuditRows(records,language).flatMap(r=>r.screenshots),images=new Map(),files=screenshots.length?await netcareArtifactRequest({action:'list',orders:records.map(r=>r.order),snapshotId}):[];for(const shot of screenshots){const key=netcareAuditImageKey(shot.order,shot.name);if(images.has(key))continue;const file=files.find(f=>f.order===shot.order&&f.name===shot.name);if(file){try{images.set(key,await netcareReadArtifact(file,file.order,undefined,snapshotId));}catch{}}}saveAuditFile(await netcareAuditExcel(records,language,images),'NetCare-'+(language==='en'?'Audit-results':'审计结果')+'-'+new Date().toISOString().slice(0,10)+'.xlsx');$('auditExportStatus').textContent=tr('Excel 已导出','Excel exported');}catch(e){$('auditExportStatus').textContent=e.message;}finally{auditExportBusy=false;$('auditExcel').disabled=$('auditBundle').disabled=!netcareAuditRows(auditRecords).length;}};
+  $('auditExcel').onclick=async()=>{if(auditExportBusy)return;auditExportBusy=true;const records=JSON.parse(JSON.stringify(auditRecords)),language=uiLanguage,snapshotId=activeSnapshot;try{$('auditExcel').disabled=$('auditBundle').disabled=true;const screenshots=netcareAuditRows(records,language).flatMap(r=>r.screenshots),images=new Map(),files=screenshots.length?await netcareArtifactRequest({action:'list',orders:records.map(r=>r.order),snapshotId}):[];for(const shot of screenshots){const key=netcareAuditImageKey(shot.order,shot.name);if(images.has(key))continue;const file=files.find(f=>f.order===shot.order&&f.name===shot.name);if(file){try{images.set(key,await netcareReadArtifact(file,file.order,undefined,snapshotId));}catch{}}}saveAuditFile(await netcareAuditExcel(records,language,images),'NetCare-'+(language==='en'?'Audit-results':'审计结果')+'-'+new Date().toISOString().slice(0,10)+'.xlsx');$('auditExportStatus').textContent=tr('Excel 已导出','Excel exported');}catch(e){$('auditExportStatus').textContent=e.message;}finally{auditExportBusy=false;$('auditExcel').disabled=!netcareAuditRows(auditRecords).length;refreshAuditMaterialAvailability();}};
   $('auditBundle').onclick=async()=>{if(auditExportBusy)return;auditExportBusy=true;const snapshot=JSON.parse(JSON.stringify(auditRecords)),language=uiLanguage;try{$('auditExcel').disabled=$('auditBundle').disabled=true;const selectedSnapshot=activeSnapshot,files=await netcareArtifactRequest({action:'list',orders:snapshot.map(r=>r.order),snapshotId:selectedSnapshot});
+    if(netcareAuditMissingBundles(snapshot,files).length)throw Error(tr('审计压缩包已清理或未成功缓存，无法下载完整审计材料。请重新提取，或清理结果缓存。','The audit ZIP is missing; complete audit materials cannot be downloaded. Extract again or clear the result cache.'));
     if(files.reduce((n,f)=>n+f.size,0)>512*1048576)throw Error(tr('单次打包超过512MB，请按历史快照分批下载','This export exceeds 512MB. Download snapshots in smaller batches.'));
     const {entries,missing}=await netcareAuditMaterials(snapshot,files,async file=>{const parts=[];for(let index=0;index<file.count;index++){const data=await netcareArtifactRequest({action:'read',order:file.order,fileId:file.id,index,snapshotId:selectedSnapshot});parts.push(Uint8Array.from(atob(data),c=>c.charCodeAt(0)));}return new Blob(parts);},file=>{$('auditExportStatus').textContent=tr('打包：','Packing: ')+file.order+' · '+file.name;},language);
     saveAuditFile(await createNetcareZip(entries),'NetCare-'+(language==='en'?'Audit-materials':'审计材料')+'-'+new Date().toISOString().slice(0,10)+'.zip');$('auditExportStatus').textContent=missing.length?tr(`ZIP 已保存；${missing.length} 个材料缺失，详见清单`,`ZIP saved; ${missing.length} missing files. See the manifest.`):tr('审计材料 ZIP 已保存','Materials ZIP saved');
-  }catch(e){$('auditExportStatus').textContent=e.message;}finally{auditExportBusy=false;$('auditExcel').disabled=$('auditBundle').disabled=!netcareAuditRows(auditRecords).length;}};
-  const formatBytes=n=>(n/1048576).toFixed(1)+' MB';
+  }catch(e){$('auditExportStatus').textContent=e.message;}finally{auditExportBusy=false;$('auditExcel').disabled=!netcareAuditRows(auditRecords).length;refreshAuditMaterialAvailability();}};
+  const formatBytes=n=>n>=1048576?(n/1048576).toFixed(1)+' MB':n>=1024?(n/1024).toFixed(1)+' KB':Math.round(n||0)+' B';
   const confirmationDialog=$('confirmationDialog');let resolveConfirmation;
   const requestConfirmation=(title,message,danger=false)=>new Promise(resolve=>{if(resolveConfirmation){resolve(false);return;}resolveConfirmation=resolve;$('confirmationTitle').textContent=title;$('confirmationMessage').textContent=message;$('confirmationAccept').classList.toggle('danger',danger);confirmationDialog.returnValue='';confirmationDialog.showModal();$('confirmationCancel').focus();});
   $('confirmationAccept').onclick=()=>confirmationDialog.close('confirmed');$('confirmationCancel').onclick=()=>confirmationDialog.close('cancelled');confirmationDialog.addEventListener('close',()=>{const resolve=resolveConfirmation;resolveConfirmation=null;resolve?.(confirmationDialog.returnValue==='confirmed');});
@@ -1540,10 +1569,11 @@ function mountNetcareCollector() {
   const selectedSnapshots=()=>Array.from($('snapshotRows').querySelectorAll('input:checked')).map(e=>e.value);
   async function refreshHistory(){const history=await netcareArtifactRequest({action:'history'}),select=$('snapshotSelect');select.replaceChildren();const current=document.createElement('option');current.value='';current.textContent=tr(`当前结果 · ${new Set(netcareAuditRows(liveAuditRecords).map(r=>r.order)).size} 个方案 · ${netcareAuditRows(liveAuditRecords).length} 项`,`Current results · ${new Set(netcareAuditRows(liveAuditRecords).map(r=>r.order)).size} RFCs · ${netcareAuditRows(liveAuditRecords).length} checks`);select.append(current);for(const item of history){const option=document.createElement('option');option.value=item.id;option.textContent=new Date(item.created).toLocaleString(uiLanguage==='zh'?'zh-CN':'en-GB')+' · '+tr('历史快照','Snapshot')+' · '+item.orders.length+tr(' 个方案 · ',' RFCs · ')+(item.label||item.orders.join(', '))+' · '+item.checks+tr(' 项',' checks');select.append(option);}select.value=activeSnapshot;return history;}
   $('snapshotSelect').onchange=async()=>{try{const id=$('snapshotSelect').value;if(id){const data=await netcareArtifactRequest({action:'snapshot',snapshotId:id});auditRecords=data.records;activeSnapshot=id;}else{activeSnapshot='';auditRecords=liveAuditRecords;}renderAudits();$('auditExportStatus').textContent=tr('已载入，导出包含本快照材料','Loaded; exports use this snapshot’s files');}catch(e){$('auditExportStatus').textContent=e.message;}};
-  $('snapshotSave').onclick=async()=>{try{if(activeSnapshot)throw Error(tr('当前正在查看历史快照，请先切换当前结果','Switch to current results before saving'));$('snapshotSave').disabled=true;const id=await netcareArtifactRequest({action:'save-snapshot',label:liveAuditRecords.map(r=>r.order).join(', ')});await refreshHistory();$('auditExportStatus').textContent=tr('快照已保存','Snapshot saved');}catch(e){$('auditExportStatus').textContent=e.message;}finally{$('snapshotSave').disabled=false;}};
+  $('snapshotSave').onclick=async()=>{try{if(activeSnapshot)throw Error(tr('当前正在查看历史快照，请先切换当前结果','Switch to current results before saving'));$('snapshotSave').disabled=true;const id=await netcareArtifactRequest({action:'save-snapshot',label:liveAuditRecords.map(r=>r.order).join(', ')});await refreshHistory();$('auditExportStatus').textContent=tr('快照已保存','Snapshot saved');}catch(e){$('auditExportStatus').textContent=e.message==='Audit ZIP is not cached'?tr('审计压缩包已清理或未成功缓存，无法保存完整快照。请重新提取，或在存储设置中清理结果缓存。','The audit ZIP was removed or was not cached. A complete snapshot cannot be saved. Extract again or clear the result cache in Storage settings.'):e.message;}finally{refreshAuditMaterialAvailability();}};
   async function previewCleanup(){const result=await netcareArtifactRequest({action:'cleanup-preview',ids:selectedSnapshots()});$('cleanupPreview').textContent=tr(`已选择 ${result.count} 个快照 · 预计释放 ${formatBytes(result.released)} · 清理后 ${formatBytes(result.remaining)}`,`${result.count} selected · Releases ${formatBytes(result.released)} · Remaining ${formatBytes(result.remaining)}`);return result;}
   function selectedMaterialsCategories(){const cats=[];if($('cleanCatScreenshots')?.checked)cats.push('screenshots');if($('cleanCatAttachments')?.checked)cats.push('attachments');if($('cleanCatTexts')?.checked)cats.push('texts');if($('cleanCatBundles')?.checked)cats.push('bundles');if($('cleanCatLogs')?.checked)cats.push('logs');return cats;}
-  async function updateMaterialsCleanupPreview(){const cats=selectedMaterialsCategories(),days=Number($('materialsRetentionDays')?.value)||0,protect=$('protectSnapshotRefs')?.checked!==false,previewEl=$('materialsCleanupPreview'),executeBtn=$('materialsCleanupExecute');if(!previewEl)return;if(!cats.length){previewEl.textContent=tr('未选择任何清理类别 / No categories selected','No categories selected');if(executeBtn)executeBtn.disabled=true;return {count:0,fileCount:0,logCount:0,released:0,remaining:0};}const result=await netcareArtifactRequest({action:'cleanup-materials-preview',options:{categories:cats,days,protectSnapshots:protect}});previewEl.textContent=tr(`预计清理 ${result.fileCount} 个材料文件${result.logCount?'及 '+result.logCount+' 条未归档日志':''} · 预计释放 ${formatBytes(result.released)} · 清理后剩余约 ${formatBytes(result.remaining)}${protect?'（历史快照受保护）':''}`,`${result.fileCount} files${result.logCount?' & '+result.logCount+' logs':''} to clean · Releases ${formatBytes(result.released)} · Remaining ≈ ${formatBytes(result.remaining)}${protect?' (Snapshots protected)':''}`);if(executeBtn)executeBtn.disabled=result.count===0;return result;}
+  let materialsPreviewGeneration=0;
+  async function updateMaterialsCleanupPreview(){const generation=++materialsPreviewGeneration;const cats=selectedMaterialsCategories(),days=Number($('materialsRetentionDays')?.value)||0,protect=$('protectSnapshotRefs')?.checked!==false,previewEl=$('materialsCleanupPreview'),executeBtn=$('materialsCleanupExecute');if(!previewEl)return;if(!cats.length){previewEl.textContent=tr('未选择任何清理类别 / No categories selected','No categories selected');if(executeBtn)executeBtn.disabled=true;return {count:0,fileCount:0,logCount:0,released:0,remaining:0};}const result=await netcareArtifactRequest({action:'cleanup-materials-preview',options:{categories:cats,days,protectSnapshots:protect}});if(generation!==materialsPreviewGeneration)return null;for(const [category,id] of [['screenshots','cleanCountScreenshots'],['attachments','cleanCountAttachments'],['texts','cleanCountTexts'],['bundles','cleanCountBundles'],['logs','cleanCountLogs']]){const data=result.breakdown?.[category];if(data&&$(id))$(id).textContent=`(${data.count} · ${formatBytes(data.bytes)})`;}previewEl.textContent=tr(`预计清理 ${result.fileCount} 个材料文件${result.logCount?'及 '+result.logCount+' 条未归档日志':''} · 预计释放 ${formatBytes(result.released)} · 清理后剩余约 ${formatBytes(result.remaining)}${protect?'（历史快照受保护）':''}`,`${result.fileCount} files${result.logCount?' & '+result.logCount+' logs':''} to clean · Releases ${formatBytes(result.released)} · Remaining ≈ ${formatBytes(result.remaining)}${protect?' (Snapshots protected)':''}`);if(executeBtn)executeBtn.disabled=result.count===0;return result;}
   async function refreshStorage(){
     const [stats,history]=await Promise.all([netcareArtifactRequest({action:'stats'}),refreshHistory()]);
     $('storageUsage').textContent=tr(`审计存储约 ${formatBytes(stats.used)} / ${formatBytes(stats.capacity)} · ${stats.snapshots} 个快照 · ${stats.files} 个材料 · 配置 ${formatBytes(stats.configurationBytes||0)}`,`Audit storage ≈ ${formatBytes(stats.used)} / ${formatBytes(stats.capacity)} · ${stats.snapshots} snapshots · ${stats.files} files · Config ${formatBytes(stats.configurationBytes||0)}`);
@@ -1551,7 +1581,10 @@ function mountNetcareCollector() {
     $('storageCapacity').value=Math.floor(stats.capacity/1048576);
     $('storageCapacity').max=Math.floor(stats.maximum/1048576);
 
-    const b=stats.breakdown||{};
+    const b=stats.breakdown||{}, resultCache=stats.auditResults||{count:0,checks:0,bytes:0};
+    const totalBytes=stats.used+(stats.configurationBytes||0)+resultCache.bytes;
+    let notice=$('storageResultNotice');if(!notice){notice=document.createElement('p');notice.id='storageResultNotice';notice.className='note';$('storageUsage').after(notice);const clear=document.createElement('button');clear.id='clearResultCache';clear.textContent=tr('清理结果缓存','Clear result cache');notice.after(clear);clear.onclick=async()=>{if(!await requestConfirmation(tr('清理结果缓存','Clear result cache'),tr('删除暂存的审计结果摘要。历史快照和材料保留；正在进行的审计可能产生新结果。继续？','Delete cached audit summaries. Historical snapshots and materials remain. Active audits may publish new results. Continue?'),true))return;clear.disabled=true;try{await netcareArtifactRequest({action:'clear-results'});liveAuditRecords=[];if(!activeSnapshot)auditRecords=[];renderAudits();await refreshStorage();}catch(e){$('storageMessage').textContent=e.message;}finally{clear.disabled=false;}};}
+    notice.textContent=tr(`结果缓存：${resultCache.count} 个方案 · ${resultCache.checks} 个审计项。结果摘要与配置单独存储，不占上述材料库容量。${!stats.snapshots&&resultCache.count?'当前没有历史快照；结果摘要仍可查看，但不能据此恢复已缺失的截图、附件或审计压缩包。请重新提取以保存完整材料和快照。':''}`,`Result cache: ${resultCache.count} RFCs · ${resultCache.checks} checks. Summaries and configuration are stored separately from the material quota.${!stats.snapshots&&resultCache.count?' No historical snapshots exist. Summaries remain viewable, but missing images, attachments and audit ZIPs cannot be recovered from them. Extract again to save complete materials and snapshots.':''}`);
     const categories=[
       {id:'screenshots',color:'#3b82f6',label:tr('方案截图','Screenshots'),data:b.screenshots||{count:0,bytes:0}},
       {id:'attachments',color:'#f59e0b',label:tr('方案附件','Attachments'),data:b.attachments||{count:0,bytes:0}},
@@ -1559,7 +1592,8 @@ function mountNetcareCollector() {
       {id:'bundles',color:'#8b5cf6',label:tr('审计包与Word','Bundles & Word'),data:b.bundles||{count:0,bytes:0}},
       {id:'snapshots',color:'#ec4899',label:tr('历史快照','Snapshots'),data:b.snapshots||{count:history.length,bytes:0}},
       {id:'logs',color:'#06b6d4',label:tr('未归档日志','Log buffer'),data:b.logs||{count:0,bytes:0}},
-      {id:'config',color:'#64748b',label:tr('扩展配置','Configuration'),data:{count:1,bytes:stats.configurationBytes||0}}
+      {id:'results',color:'#6366f1',label:tr('结果缓存','Result cache'),data:resultCache},
+      {id:'config',color:'#64748b',label:tr('扩展配置','Configuration'),data:{count:stats.configurationCount||0,bytes:stats.configurationBytes||0}}
     ];
 
     const bar=$('storageBar');
@@ -1567,13 +1601,13 @@ function mountNetcareCollector() {
       bar.replaceChildren();
       const cap=stats.capacity||500*1048576;
       for(const cat of categories){
-        if(cat.data.bytes>0){
+        if(cat.data.bytes>0&&!['config','results'].includes(cat.id)){
           const pct=Math.min(100,(cat.data.bytes/cap)*100);
           const seg=document.createElement('div');
           seg.className='storage-bar-segment';
           seg.style.width=Math.max(0.3,pct).toFixed(2)+'%';
           seg.style.backgroundColor=cat.color;
-          const pctOfUsed=stats.used>0?((cat.data.bytes/stats.used)*100).toFixed(1):'0';
+          const pctOfUsed=totalBytes>0?((cat.data.bytes/totalBytes)*100).toFixed(1):'0';
           seg.title=`${cat.label}: ${formatBytes(cat.data.bytes)} (${pctOfUsed}%) · ${cat.data.count} ${tr('项','items')}`;
           bar.append(seg);
         }
@@ -1589,7 +1623,7 @@ function mountNetcareCollector() {
         const info=document.createElement('div');info.className='storage-breakdown-info';
         const name=document.createElement('div');name.className='storage-breakdown-name';name.textContent=cat.label;
         const meta=document.createElement('div');meta.className='storage-breakdown-meta';
-        const pctOfUsed=stats.used>0?((cat.data.bytes/stats.used)*100).toFixed(1):'0';
+        const pctOfUsed=totalBytes>0?((cat.data.bytes/totalBytes)*100).toFixed(1):'0';
         meta.textContent=`${formatBytes(cat.data.bytes)} · ${cat.data.count} ${tr('项','items')} (${pctOfUsed}%)`;
         info.append(name,meta);card.append(dot,info);breakdownEl.append(card);
       }
@@ -1612,20 +1646,23 @@ function mountNetcareCollector() {
     }
     await Promise.all([previewCleanup(),updateMaterialsCleanupPreview().catch(e=>$('materialsCleanupStatus').textContent=e.message)]);
   }
-  for(const id of ['cleanCatScreenshots','cleanCatAttachments','cleanCatTexts','cleanCatBundles','cleanCatLogs','protectSnapshotRefs','materialsRetentionDays']){const el=$(id);if(el)el.onchange=()=>updateMaterialsCleanupPreview().catch(e=>$('materialsCleanupStatus').textContent=e.message);}
+  for(const id of ['cleanCatScreenshots','cleanCatAttachments','cleanCatTexts','cleanCatBundles','cleanCatLogs','protectSnapshotRefs','materialsRetentionDays']){const el=$(id);if(el)el.onchange=()=>{$('materialsCleanupStatus').textContent='';updateMaterialsCleanupPreview().catch(e=>$('materialsCleanupStatus').textContent=e.message);};}
   if($('materialsCleanupRefresh'))$('materialsCleanupRefresh').onclick=()=>updateMaterialsCleanupPreview().catch(e=>$('materialsCleanupStatus').textContent=e.message);
   if($('materialsCleanupExecute'))$('materialsCleanupExecute').onclick=async()=>{
     try{
+      await netcareLogQueue;
       const cats=selectedMaterialsCategories(),days=Number($('materialsRetentionDays')?.value)||0,protect=$('protectSnapshotRefs')?.checked!==false;
       const p=await updateMaterialsCleanupPreview();
       if(!p||!p.count)return;
-      const confirmed=await requestConfirmation(tr('确认清理暂存材料与缓存','Confirm cleanup'),tr(`预计将清理 ${p.fileCount} 个材料文件${p.logCount?'及 '+p.logCount+' 条未归档日志':''}，预计释放 ${formatBytes(p.released)} 存储空间。\n${protect?'已保存的历史快照完全受保护，不受影响。':'警告：快照引用的材料也将被清理！'}\n此操作不可撤销，确认继续？`,`Will clean ${p.fileCount} files${p.logCount?' and '+p.logCount+' logs':''}, freeing ≈ ${formatBytes(p.released)}.\n${protect?'Saved snapshots remain protected.':'Warning: Snapshot files will also be removed!'}\nContinue?`),true);
+      const confirmed=await requestConfirmation(tr('确认清理暂存材料与缓存','Confirm cleanup'),tr(`预计将清理 ${p.fileCount} 个材料文件${p.logCount?'及 '+p.logCount+' 条未归档日志':''}，预计释放 ${formatBytes(p.released)} 存储空间。${cats.includes('bundles')?'对应审计包清理后，当前结果摘要也会同步移除。':''}\n${protect?'已保存的历史快照完全受保护，不受影响。':'警告：快照引用的材料也将被清理！'}\n此操作不可撤销，确认继续？`,`Will clean ${p.fileCount} files${p.logCount?' and '+p.logCount+' logs':''}, freeing ≈ ${formatBytes(p.released)}.${cats.includes('bundles')?' Current result summaries will be removed when their audit ZIPs are cleaned.':''}\n${protect?'Saved snapshots remain protected.':'Warning: Snapshot files will also be removed!'}\nContinue?`),true);
       if(!confirmed)return;
+      await netcareLogQueue;
       $('materialsCleanupExecute').disabled=true;$('materialsCleanupStatus').textContent=tr('正在清理…','Cleaning…');
       const res=await netcareArtifactRequest({action:'cleanup-materials',options:{categories:cats,days,protectSnapshots:protect}});
+      if(res.removedResultOrders?.length){const removed=new Set(res.removedResultOrders);liveAuditRecords=liveAuditRecords.filter(r=>!removed.has(r.order));if(!activeSnapshot)auditRecords=liveAuditRecords;renderAudits();}
       $('materialsCleanupStatus').textContent=tr(`清理完成，已释放 ${formatBytes(res.released)} 空间！`,`Cleaned up! Freed ${formatBytes(res.released)}.`);
       await refreshStorage();await refreshLogs(true);
-    }catch(e){$('materialsCleanupStatus').textContent=e.message;}finally{if($('materialsCleanupExecute'))$('materialsCleanupExecute').disabled=false;}
+    }catch(e){$('materialsCleanupStatus').textContent=e.message;}finally{await updateMaterialsCleanupPreview().catch(()=>{});}
   };
   $('storageRefresh').onclick=()=>refreshStorage().catch(e=>$('storageMessage').textContent=e.message);
   $('snapSelectAll').onclick=()=>{$('snapshotRows').querySelectorAll('input').forEach(e=>e.checked=true);previewCleanup().catch(e=>$('storageMessage').textContent=e.message);};

@@ -449,4 +449,15 @@ test('topic-analysis.js provides revert translation button, pre-translate snapsh
     assert.match(script, /clearSyncedCn\(enScope,\s*enKey\)/);
 });
 
+test('topic-analysis.css ensures table cells do not have colored borders when highlighted or modified', () => {
+    // Blocks retain blue/warn/green left indicator bars
+    assert.match(css, /\.topic-block-modified\s*\{\s*border-left:\s*3px solid #3b82f6!important;/);
+    // Table cells override to standard 1px border so cells never receive colored left borders
+    assert.match(css, /td\.topic-block-modified,\s*th\.topic-block-modified\s*\{\s*border-left:\s*1px solid #94a3b8!important;/);
+    assert.match(css, /td\.topic-en-needs-sync,\s*th\.topic-en-needs-sync\s*\{\s*border-left:\s*1px solid #94a3b8!important;/);
+    assert.match(css, /td\.topic-en-synced,\s*th\.topic-en-synced\s*\{\s*border-left:\s*1px solid #94a3b8!important;/);
+    // Dark mode preserves dark table border color #475569
+    assert.match(css, /:root\[data-theme="dark"\]\s+td\.topic-block-modified,\s*:root\[data-theme="dark"\]\s+th\.topic-block-modified\s*\{\s*border-left-color:\s*#475569!important;/);
+});
+
 

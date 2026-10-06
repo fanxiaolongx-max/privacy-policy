@@ -104,6 +104,14 @@ function normalizeSettings(input = {}) {
         .filter(item => item.id && item.name);
 
     return {
+        platformName: typeof input.platformName === 'string'
+            ? input.platformName.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 80) || 'Tools Platform'
+            : 'Tools Platform',
+        f12QuickDownloads: Array.isArray(input.f12QuickDownloads)
+            ? input.f12QuickDownloads
+                .filter(item => item && typeof item.scriptId === 'string' && /^(builtin|server):[a-zA-Z0-9_-]+$/.test(item.scriptId))
+                .map(item => ({ scriptId: item.scriptId, target: item.target === 'local' ? 'local' : 'store' }))
+            : [],
         primaryIds: Array.isArray(input.primaryIds) ? input.primaryIds.map(String) : DEFAULT_SETTINGS.primaryIds.slice(),
         categories: normalizedCategories.length ? normalizedCategories : DEFAULT_SETTINGS.categories.slice(),
         categoryByItem: input.categoryByItem && typeof input.categoryByItem === 'object' && !Array.isArray(input.categoryByItem)
@@ -161,7 +169,7 @@ function mergeDefaultSettingsPreservingCustomTools(currentInput, customToolIds =
         }
     });
 
-    return normalizeSettings({ primaryIds, categories, categoryByItem, itemOrder });
+    return normalizeSettings({ primaryIds, categories, categoryByItem, itemOrder, platformName: current.platformName, f12QuickDownloads: current.f12QuickDownloads });
 }
 
 async function getSettings() {
@@ -169,7 +177,14 @@ async function getSettings() {
 }
 
 async function saveSettings(settings) {
-    const normalized = normalizeSettings(settings);
+    // Older navigation clients must not erase separately configured packaging shortcuts.
+    const input = { ...settings };
+    if (!Object.hasOwn(input, 'f12QuickDownloads') || !Object.hasOwn(input, 'platformName')) {
+        const current = await getSettings();
+        if (!Object.hasOwn(input, 'f12QuickDownloads')) input.f12QuickDownloads = current.f12QuickDownloads;
+        if (!Object.hasOwn(input, 'platformName')) input.platformName = current.platformName;
+    }
+    const normalized = normalizeSettings(input);
     await writeKV('sys', 'nav_settings', normalized);
     return normalized;
 }
@@ -189,6 +204,7 @@ async function restoreDefaultsPreservingCustomTools(customToolIds = []) {
 
 module.exports = {
     DEFAULT_SETTINGS,
+    normalizeSettings,
     mergeDefaultSettingsPreservingCustomTools,
     getSettings,
     saveSettings,

@@ -1,10 +1,15 @@
-const { run, get } = require('./app-db');
+const { run, get, getDatabase } = require('./app-db');
 
-let ready = false;
+// Readiness belongs to a connection: initializing one tenant must not skip another.
+const initializations = new WeakMap();
 async function initKV() {
-    if (ready) return;
-    await run('CREATE TABLE IF NOT EXISTS sys_kv_store (category TEXT, key TEXT, value TEXT, PRIMARY KEY(category, key))');
-    ready = true;
+    const connection = getDatabase();
+    if (!initializations.has(connection)) {
+        const pending = run('CREATE TABLE IF NOT EXISTS sys_kv_store (category TEXT, key TEXT, value TEXT, PRIMARY KEY(category, key))');
+        initializations.set(connection, pending);
+        pending.catch(() => initializations.delete(connection));
+    }
+    await initializations.get(connection);
 }
 
 async function readKV(category, key, defaultVal) {

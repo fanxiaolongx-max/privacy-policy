@@ -4,14 +4,14 @@ const topic={number:'3.4',title:'Test and Verification'},shot={kind:'text',topic
 const region=(text='3.4 Test and Verification')=>({querySelector:()=>({textContent:text}),querySelectorAll:()=>[],getBoundingClientRect:()=>({width:600,height:400}),isConnected:true});
 const doc=articles=>({querySelectorAll:selector=>selector==='article'?articles:[]});
 test('live screenshot retries re-locate changed DOM and report earlier failures',async()=>{
- let tries=0,reads=0;const a=region(),b=region(),d={querySelectorAll:s=>s==='article'?(++reads===1?[a]:[b]):[]},events=[];
+ let tries=0;const a=region(),b=region(),d={querySelectorAll:s=>s==='article'?(tries===0?[a]:[b]):[]},events=[];
  const result=await capture.capture(d,shot,{signal:new AbortController().signal,sleep:async()=>{},attempt:a=>events.push(a),render:async el=>{if(++tries===1){assert.equal(el,a);throw Error('canvas failure');}assert.equal(el,b);return ['png'];}});
  assert.equal(result.method,'live');assert.equal(result.attempts.length,1);assert.equal(result.attempts[0].message,'canvas failure');assert.deepEqual(result.attempts[0].bounds,{width:600,height:400,connected:true});assert.equal(events.at(-1).ok,true);
 });
 test('unrendered chapters activate a unique native directory entry then retry',async()=>{
  let loaded=false,clicked=0;const a=region(),node={textContent:'3.4 Test and Verification',closest:()=>null,getBoundingClientRect:()=>({width:120}),click(){loaded=true;clicked++;}};
  const d={querySelectorAll:s=>s==='article'?(loaded?[a]:[]):[node]};const result=await capture.capture(d,shot,{signal:new AbortController().signal,sleep:async()=>{},render:async el=>{assert.equal(el,a);return ['png'];}});
- assert.equal(clicked,1);assert.equal(result.method,'live');assert.equal(result.attempts[0].code,'REGION_NOT_RENDERED');
+ assert.equal(clicked,1);assert.equal(result.method,'live');assert.equal(result.attempts.length,0);
 });
 test('wrong numbers or titles never pass the original-region locator; ambiguous headings are refused',()=>{
  assert.equal(capture.locate(doc([region('3.3 Test and Verification')]),shot),null);
@@ -57,4 +57,36 @@ test('source edits and details preserve state with a monotonically increasing sn
 test('fallback refuses retained XML whose section heading belongs to another chapter',()=>{
  const parser=global.DOMParser;global.DOMParser=class{parseFromString(){return {querySelector:()=>({querySelector:()=>({textContent:'3.5 Changeback'})})};}};
  try{assert.throws(()=>capture.reconstruct({}, {topic:{...topic,xml:'<article>wrong</article>'},kind:'text'}),e=>e.code==='NATIVE_SECTION_MISMATCH');}finally{if(parser)global.DOMParser=parser;else delete global.DOMParser;}
+});
+test('nested native DIV/P/SPAN directory entries click the unique leaf without confusing siblings',()=>{
+ let clicked=0;const leaf={textContent:'3.4 Test and Verification',closest:()=>null,getBoundingClientRect:()=>({width:30}),click:()=>clicked++};
+ const parent={...leaf,click:()=>assert.fail('parent must not be clicked'),contains:n=>n===leaf};
+ const d={querySelectorAll:selector=>selector.includes('#NavigationTree')?[parent,leaf]:[]};
+ assert.equal(capture.navigate(d,topic),true);assert.equal(clicked,1);
+ const duplicate={...leaf};assert.equal(capture.navigate({querySelectorAll:()=>[parent,leaf,duplicate]},topic),false);assert.equal(clicked,1);
+});
+test('delayed native navigation waits for content and layout to settle instead of capturing an initial shell',async()=>{
+ let polls=0,clicked=0;const a=region();a.innerHTML='loading';
+ const node={textContent:'3.4 Test and Verification',closest:()=>null,getBoundingClientRect:()=>({width:30}),click:()=>clicked++};
+ const d={querySelectorAll:s=>s==='article'?(polls>=2?[a]:[]):[node]};
+ const result=await capture.capture(d,shot,{signal:new AbortController().signal,sleep:async()=>{polls++;if(polls===4)a.innerHTML='complete content';},render:async el=>{assert.equal(el.innerHTML,'complete content');assert.ok(polls>=6);return ['png'];}});
+ assert.equal(result.method,'live');assert.equal(clicked,1);
+});
+test('scroll-triggered virtualization replaces the node before rendering and the new node is captured',async()=>{
+ const a=region(),b=region();let current=a,rendered;
+ a.scrollIntoView=()=>{a.isConnected=false;current=b;};
+ const d={querySelectorAll:s=>s==='article'?[current]:[]};
+ const result=await capture.capture(d,shot,{signal:new AbortController().signal,sleep:async()=>{},render:async el=>{rendered=el;return ['png'];}});
+ assert.equal(result.method,'live');assert.equal(rendered,b);
+});
+test('a node removed during renderer work retries against the current chapter instead of accepting stale evidence',async()=>{
+ const a=region(),b=region();let current=a,calls=0;
+ const d={querySelectorAll:s=>s==='article'?[current]:[]};
+ const result=await capture.capture(d,shot,{signal:new AbortController().signal,sleep:async()=>{},render:async el=>{calls++;if(calls===1){assert.equal(el,a);a.isConnected=false;current=b;}else assert.equal(el,b);return ['png'];}});
+ assert.equal(calls,2);assert.equal(result.method,'live');assert.equal(result.attempts[0].code,'REGION_REPLACED');
+});
+test('unsettled layout has a bounded wait and preserves a detailed failure for each retry',async()=>{
+ const a=region();let polls=0,renders=0;
+ await assert.rejects(capture.capture(doc([a]),shot,{signal:new AbortController().signal,sleep:async()=>{a.innerHTML=String(++polls);},render:async()=>renders++}),e=>e.code==='CAPTURE_FAILED'&&e.attempts.slice(0,3).every(a=>a.code==='REGION_NOT_STABLE'));
+ assert.equal(renders,0);assert.ok(polls<100);
 });

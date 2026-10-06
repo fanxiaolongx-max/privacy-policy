@@ -19,10 +19,27 @@
     const anchor=matches[0];return anchor?.closest('tr')||anchor?.closest('p')||anchor||null;
   }
   function navigate(doc,topic){
-    const nodes=[...doc.querySelectorAll('a,[role=treeitem]')].filter(el=>!el.closest('article')&&el.getBoundingClientRect().width>0),normal=value=>String(value||'').replace(/\s+/g,' ').trim().toLowerCase();
+    const normal=value=>String(value||'').replace(/\s+/g,' ').trim().toLowerCase();
+    // The native directory uses nested DIV/P/SPAN nodes, not links or ARIA tree items.
+    const nodes=[...doc.querySelectorAll('#NavigationTree span,#NavigationTree p,#NavigationTree div,a,[role=treeitem]')].filter(el=>!el.closest('article')&&el.getBoundingClientRect().width>0);
     const numbered=nodes.filter(el=>normal(el.textContent)===normal(topic.number+' '+topic.title));
-    const matches=numbered.length?numbered:nodes.filter(el=>normal(el.textContent)===normal(topic.title));
+    const matches=(numbered.length?numbered:nodes.filter(el=>normal(el.textContent)===normal(topic.title))).filter(el=>!nodes.some(child=>child!==el&&el.contains?.(child)&&normal(child.textContent)===normal(el.textContent)));
     if(matches.length===1){matches[0].click();return true;}return false;
+  }
+  async function ready(doc,shot,signal,sleep){
+    let previous,signature='',stable=0;
+    for(let poll=0;poll<25;poll++){
+      if(signal.aborted)throw fail('STOPPED','已停止 / Stopped');
+      const element=locate(doc,shot),bounds=element?.getBoundingClientRect();
+      const images=element?[...element.querySelectorAll('img')]:[];
+      if(element&&element.isConnected!==false&&bounds.width>0&&bounds.height>0&&images.every(img=>img.complete)){
+        const next=[element.innerHTML||element.textContent||'',Math.round(bounds.width),Math.round(bounds.height)].join('|');
+        stable=element===previous&&next===signature?stable+1:0;previous=element;signature=next;
+        if(stable>=2)return element;
+      }else{previous=null;stable=0;}
+      await sleep(120,signal);
+    }
+    throw fail('REGION_NOT_STABLE','章节未在等待时间内完成挂载或稳定布局 / Section did not mount or settle within the wait period');
   }
   function reconstruct(doc,shot){
     if(!shot.topic.xml)throw fail('NO_NATIVE_XML','章节原始内容未保留，无法兜底 / Native section XML unavailable');
@@ -53,15 +70,23 @@
       if(signal.aborted)throw fail('STOPPED','已停止 / Stopped');
       if(n>1)await sleep(n===2?400:1000,signal);
       let element;
-      try{element=locate(doc,shot);if(!element){const clicked=navigate(doc,shot.topic);throw fail('REGION_NOT_RENDERED',clicked?'已定位目录入口，等待章节渲染 / Native navigation clicked; waiting for section':'未定位到已渲染的原始区域 / Live original region not found');}
+      try{
+        const clicked=navigate(doc,shot.topic);
+        element=locate(doc,shot);
+        if(!element&&!clicked)throw fail('REGION_NOT_RENDERED','未定位到章节目录入口或原始区域 / Native directory and live region not found');
+        // Never retain a node across scroll-driven virtual DOM replacement.
+        element=await ready(doc,shot,signal,sleep);
         try{
-          element.scrollIntoView({block:'center',inline:'center',behavior:'instant'});
-          const scroller=(globalThis.createNetcarePip?.()?.scrollTarget||(d=>d.scrollingElement||d.documentElement))(doc);
+          element.scrollIntoView({block:'start',inline:'nearest',behavior:'instant'});
+          let scroller=element.parentElement;
+          while(scroller&&!(scroller.clientHeight>0&&scroller.scrollHeight>scroller.clientHeight+1))scroller=scroller.parentElement;
           scroller?.dispatchEvent(new Event('scroll',{bubbles:true}));
-          doc.defaultView?.dispatchEvent(new Event('scroll'));
         }catch{}
-        if(doc.defaultView)await sleep(60,signal);
-        const images=await render(element);options.attempt?.({attempt:n,stage:'live',ok:true});return {images,method:'live',attempts};
+        element=await ready(doc,shot,signal,sleep);
+        if(signal.aborted)throw fail('STOPPED','已停止 / Stopped');
+        const images=await render(element);
+        if(element.isConnected===false||locate(doc,shot)!==element)throw fail('REGION_REPLACED','渲染期间章节节点发生替换，重新定位并重试 / Section replaced during rendering; retrying');
+        options.attempt?.({attempt:n,stage:'live',ok:true});return {images,method:'live',attempts};
       }catch(e){if(signal.aborted)throw e;const bounds=element?.getBoundingClientRect();const item={attempt:n,stage:'live',code:e.code||e.name||'RENDER_FAILED',message:String(e.message||e).slice(0,1500),stack:String(e.stack||'').slice(0,2000),articles:doc.querySelectorAll('article').length,bounds:bounds?{width:bounds.width,height:bounds.height,connected:element.isConnected}:null};attempts.push(item);options.attempt?.(item);if(n===1&&typeof options.onStuck==='function'){try{options.onStuck();}catch{}}}
     }
     let fallback;

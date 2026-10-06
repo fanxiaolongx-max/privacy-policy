@@ -298,6 +298,7 @@ app.use((req, res, next) => {
 // Desktop builds keep uploaded media outside app.asar. Preserve the public URL
 // used by the cinema page while serving files from the writable runtime folder.
 app.use('/assets/videos', mediaAssetGuard, express.static(VIDEOS_DIR, { index: false }));
+app.use(require('./models/platform-logo-runtime').createLogoAssetMiddleware());
 app.use(express.static(FRONTEND_DIR, { index: false }));
 app.get('/favicon.ico', (req, res) => {
     res.sendFile(path.join(FRONTEND_DIR, 'assets/icon.ico'));
@@ -402,6 +403,7 @@ app.use('/api/reward-program', require('./routes/reward-program'));
 app.use('/api/slide-design', slideDesignRoutes); // 胶片设计项目与 PPT 素材库
 app.use('/api/surveys', surveysRoutes); // 可配置调查模板与提交记录 API
 app.use('/api/nav-settings', navSettingsRoutes); // 顶部导航全局设置 API
+app.use('/api/platform-logo', require('./routes/platform-logo')); // 平台 LOGO 与多端规格图标管理
 app.use('/api/recent-nav', require('./routes/recent-nav')); // 按租户和账号保存最近使用
 app.use('/api/desktop-pet', require('./routes/desktop-pet'));
 app.use('/api/ai-settings', aiSettingsRoutes); // Dragon Claw 智能体模型配置 API

@@ -18,6 +18,7 @@ const http = require('http');
 // IMPORTANT: Set the data directory to the OS's native user data path BEFORE requiring server.js
 const userDataPath = app.getPath('userData');
 process.env.TOOLS_DATA_DIR = path.join(userDataPath, 'data');
+process.env.TOOLS_BRANDING_DIR = path.join(userDataPath, 'branding');
 if (app.isPackaged) {
     process.env.TOOLS_MEDIA_DIR = path.join(userDataPath, 'media');
 }
@@ -41,17 +42,21 @@ if (process.env.TOOLS_DAILY_LOGS === undefined) {
     process.env.TOOLS_DAILY_LOGS = '0';
 }
 const petManager = require('./desktop-pet/pet-manager');
+const { resolveLogoAsset } = require('./backend/models/platform-logo-runtime');
 require('./backend/models/desktop-language').events.on('change', () => refreshTrayMenu());
 
 function getAppIconPath() {
+    const resolver = typeof resolveLogoAsset === 'function'
+        ? resolveLogoAsset
+        : (name) => path.join(__dirname, 'frontend/assets', name);
     if (process.platform === 'darwin') {
-        return path.join(__dirname, 'frontend/assets/icon-windows.png');
+        return resolver('icon-windows.png');
     }
     if (process.platform !== 'win32') {
-        return path.join(__dirname, 'frontend/assets/icon.ico');
+        return resolver('icon.ico');
     }
     const filename = isPortableWindows ? 'icon-windows-portable.ico' : 'icon-windows.ico';
-    return path.join(__dirname, 'frontend/assets', filename);
+    return resolver(filename);
 }
 
 function getLogDay(date = new Date()) {
@@ -167,6 +172,14 @@ let startupProgressState = {
 let localPort = null;
 let localServerStarted = false;
 let tray = null;
+require('./backend/models/platform-logo-runtime').events.on('change', () => {
+    try {
+        const icon = nativeImage.createFromPath(getAppIconPath());
+        if (tray) tray.setImage(process.platform === 'darwin' ? icon.resize({ width: 18, height: 18 }) : icon);
+        if (process.platform === 'darwin' && app.dock) app.dock.setIcon(icon);
+        if (process.platform !== 'darwin') BrowserWindow.getAllWindows().forEach(window => window.setIcon(icon));
+    } catch (error) { console.warn('[Electron] Could not refresh runtime logo:', error.message); }
+});
 let isQuitting = false;
 let downloadHandlerRegistered = false;
 let updateInfo = null;
@@ -1916,6 +1929,10 @@ function focusPendingAppWindow() {
 
 app.on('second-instance', () => {
     console.log('[Electron] 检测到用户重复运行程序，自动唤起已有界面');
+    if (licenseWindow && !licenseWindow.isDestroyed()) {
+        focusPendingAppWindow();
+        return;
+    }
     if (focusPendingAppWindow()) return;
     openAppPath('/');
 });

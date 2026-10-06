@@ -30,7 +30,8 @@ test('RFC package restricts page injection and permits configured AI API origins
     }
     const html = fs.readFileSync(path.join(dir, 'index.html'), 'utf8');
     assert.match(html, /<option value="netcare-rfc-word">/);
-    assert.match(html, /netcare-rfc-word\.js\?v=/);
+    assert.match(html, /builtin-catalog\.js\?v=/);
+    assert.match(require(path.join(dir, 'builtin-catalog.js'))['netcare-rfc-word'].file, /netcare-rfc-word\.js\?v=/);
 });
 
 function workerHarness(fileBytes = [0x50, 0x4b, 0x03, 0x04, 0x00], parentOrigin = 'https://netcare-ae.gts.huawei.com') {
@@ -636,12 +637,12 @@ test('saved audit and draft test use identical authentication; audit 401 details
     assert.equal(reports[0].status,'needs_review');assert.equal(reports[0].diagnostics.httpStatus,401);assert.match(reports[0].diagnostics.response,/invalid_api_key/);
 });
 
-test('full encrypted backup roundtrips model tokens, rules and retained evidence; bad passwords and tampering fail', async()=>{
+test('configuration backup roundtrips models and rules, excludes evidence, and rejects wrong passwords or tampering', async()=>{
     const backup=require('../backend/builtin-tools/f12-to-extension/netcare-backup')();
     const data={netcareAiModels:[{id:'m1',name:'AI',protocol:'openai',url:'https://model.example/v1',model:'test',key:'sensitive-backup-token'}],netcareAiSelectedModel:'m1',netcareAuditSummaries:[{order:onlineOrder,at:new Date().toISOString(),items:[{text:'sample evidence'}],reports:[]}],netcareExtractionSettings:{sections:[{number:'3.4',textPrompt:'KPI rule'}]}};
-    const text=await backup.encrypt(data,'test-password-2026');assert.ok(!text.includes('sensitive-backup-token'));assert.ok(!text.includes('sample evidence'));assert.ok(!text.includes('KPI rule'));assert.deepEqual(await backup.decrypt(text,'test-password-2026'),data);
+    const text=await backup.encrypt(data,'test-password-2026');assert.ok(!text.includes('sensitive-backup-token'));assert.ok(!text.includes('sample evidence'));assert.ok(!text.includes('KPI rule'));assert.deepEqual(await backup.decrypt(text,'test-password-2026'),backup.configuration(data));assert.equal(JSON.parse(text).version,3);assert.equal(JSON.parse(text).scope,'configuration');
     await assert.rejects(backup.decrypt(text,'wrong-password'),/Wrong password/);const altered=JSON.parse(text);altered.ciphertext='AAAA'+altered.ciphertext.slice(4);await assert.rejects(backup.decrypt(JSON.stringify(altered),'test-password-2026'),/damaged/);
-    assert.equal(backup.allowed('netcareAiModels'),true);assert.equal(backup.allowed('netcareWordName:'+onlineOrder),true);assert.equal(backup.allowed('Cookie'),false);
+    assert.equal(backup.allowed('netcareAiModels'),true);assert.equal(backup.allowed('netcareWordName:'+onlineOrder),false);assert.equal(backup.allowed('Cookie'),false);
     assert.throws(()=>backup.validate({Cookie:'must not import'},()=>true,()=>{}),/fields/);
     const legacy=await backup.decrypt(JSON.stringify({format:'netcare-rfc-settings',version:1,settings:{sections:[]}}),'');assert.deepEqual(legacy,{netcareExtractionSettings:{sections:[]}});
     const pkg=packer.buildPackage({...options,manualLaunch:true});assert.ok(pkg.files['netcare-backup.html']);assert.ok(pkg.files['netcare-renderer.js'].includes('html2canvas'));assert.ok(pkg.manifest.content_scripts.some(c=>c.world==='MAIN'&&c.js.includes('netcare-renderer.js')));
@@ -1216,3 +1217,23 @@ test('plugin log single-line layout and fullscreen toggle mode are present and w
 
 
 
+
+test('confirmed empty attachment checks are omitted while the audited section keeps a localized no-attachment label',async()=>{
+    const ctx={URL,URLSearchParams,Blob,location:new URL('https://unrelated.example'),window:{}};vm.runInNewContext(code,ctx);
+    const settings=ctx.netcareNormalizeSettings({...ctx.netcareDefaultSettings(),aiAuditEnabled:true,sections:[{number:'3.4',title:'Test',text:true,attachments:true,textPrompt:'Check tests',attachmentsPrompt:'Check files'}]});
+    const items=[{section:'3.4',kind:'text',filename:'test.txt',text:'Test content'},{section:'3.4',kind:'attachments',filename:'Test',notApplicable:true}];
+    let calls=0;const reports=await ctx.netcareRunAudits(items,settings,async()=>{calls++;return {ok:true,report:{status:'fail',summary:'缺少指标 / Missing metrics',findings:[]}};},new AbortController().signal,()=>{});
+    assert.equal(calls,1);assert.ok(reports.some(r=>r.notApplicable));
+    const record={order:'RFC',items,reports};const rows=ctx.netcareAuditRows([record]);
+    assert.equal(rows.length,1);assert.equal(rows[0].status,'fail');assert.equal(rows[0].noAttachments,true);
+    assert.match(ctx.netcareAuditSectionText(rows[0],'zh'),/无附件/);assert.match(ctx.netcareAuditSectionText(rows[0],'en'),/No attachments/);
+    ctx.createNetcareZip=async entries=>entries;
+    for(const language of ['zh','en']){const entries=await ctx.netcareAuditExcel([record],language);const sheet=await entries.find(e=>e.name==='xl/worksheets/sheet1.xml').blob.text();assert.match(sheet,language==='zh'?/无附件/:/No attachments/);assert.doesNotMatch(sheet,/Missing evidence|需人工核查|Needs review/);}
+});
+
+test('legacy generic missing-evidence placeholders are hidden but attachment download and section resolution errors remain visible',()=>{
+    const ctx={URL,URLSearchParams,location:new URL('https://unrelated.example'),window:{}};vm.runInNewContext(code,ctx);
+    const make=error=>({order:'RFC',items:[{section:'3.4',kind:'attachments',filename:'Test',error}],reports:[{section:'3.4',kind:'attachments',filename:'summary',sources:[{section:'3.4',kind:'attachments',filename:'Test'}],error:true,status:'needs_review',summary:error}]});
+    assert.equal(ctx.netcareAuditRows([make('未提取到该章节内容或附件，需人工检查 / Missing evidence')]).length,0);
+    for(const error of ['附件下载失败 / Download failed','未定位到章节 / Section not located'])assert.equal(ctx.netcareAuditRows([make(error)]).length,1);
+});

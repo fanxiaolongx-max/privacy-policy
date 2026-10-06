@@ -97,7 +97,7 @@ export function renderSlide(slideData) {
         `;
     } else if (slideData.layout === 'custom') {
         // Free-form HTML layout
-        const customFooter = /(?:huawei-template|ppt-original-page)/.test(String(slideData.html || ''))
+        const customFooter = /(?:huawei-template|ppt-original-page|vision-template)/.test(String(slideData.html || ''))
             ? ''
             : renderFooter();
         section.innerHTML = `

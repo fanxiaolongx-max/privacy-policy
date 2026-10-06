@@ -1,3 +1,6 @@
+import { createVisionSlide } from './vision-template.js?v=20261006-1';
+export const defaultSlides = [createVisionSlide()];
+
 // Huawei-style default deck rebuilt from the uploaded reference template.
 // Every direct `.template-component` is independently selectable, movable,
 // resizable, editable and removable in the component editor.
@@ -33,7 +36,7 @@ const card = (name, icon, title, body) => component(name, 'ht-card', `
 
 const slide = (id, html) => ({ id, layout: 'custom', html: `<div class="huawei-template">${html}</div>` });
 
-export const defaultSlides = [
+export const legacyDefaultSlides = [
     slide('slide-1', `
         ${component('封面主文案', 'ht-cover-copy', `
             <div class="ht-kicker template-editable editable" contenteditable="true">Customer First · Quality First · Responsibility First</div>
