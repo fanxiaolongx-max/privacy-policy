@@ -284,12 +284,12 @@
   <script src="./netcare-artifacts.js?v=20261006-20"></script>
   <script src="./netcare-backup.js?v=20261006-16"></script>
   <script src="./netcare-renderer-source.js?v=20261006-19"></script>
-  <script src="./netcare-pip.js?v=20261006-03"></script>
-  <script src="./netcare-capture.js?v=20261006-03"></script>
+  <script src="./netcare-pip.js?v=20261006-04"></script>
+  <script src="./netcare-capture.js?v=20261006-05"></script>
   <script src="./netcare-controls.js?v=20261006-03"></script>
   <script src="./netcare-monitor.js?v=20261006-03"></script>
-  <script src="./netcare-routing.js?v=20261006-03"></script>
-  <script src="./packer-core.js?v=20261006-03"></script>
+  <script src="./netcare-routing.js?v=20261006-04"></script>
+  <script src="./packer-core.js?v=20261006-05"></script>
   <script>
     // Non-blocking, theme-matched dialogs shared by packaging and License controls.
     let packerDialogQueue=Promise.resolve();
@@ -335,10 +335,10 @@
         runAt: 'document_idle'
       },
       'netcare-rfc-word': {
-        file: './netcare-rfc-word.js?v=20261006-03',
+        file: './netcare-rfc-word.js?v=20261006-05',
         name: 'NetCare RFC 方案与 AI 审计',
         description: '批量下载 RFC 方案，提取章节与附件并执行 AI 审计；支持审计快照、Excel 和材料 ZIP 导出。',
-        matches: 'https://netcare-ae.gts.huawei.com/p/netcare/index.html*\nhttps://netcare.huawei.com/p/netcare/index.html*\nhttps://netcare-de.gts.huawei.com/p/netcare/index.html*\nhttps://*.kdp.gts.huawei.com/ows1/static/editor/IdpLiteView/PublishLiteView.html*',
+        matches: 'https://netcare-ae.gts.huawei.com/p/netcare/index.html*\nhttps://netcare-ae.gts.huawei.com/opcenter/*\nhttps://netcare.huawei.com/p/netcare/index.html*\nhttps://netcare.huawei.com/opcenter/*\nhttps://netcare-de.gts.huawei.com/p/netcare/index.html*\nhttps://netcare-de.gts.huawei.com/opcenter/*\nhttps://*.kdp.gts.huawei.com/ows1/static/editor/IdpLiteView/PublishLiteView.html*',
         world: 'MAIN',
         allFrames: true,
         includePopup: true,

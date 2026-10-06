@@ -728,6 +728,8 @@ test('binary cache rejects invalid snapshot and capacity requests before accessi
     await assert.rejects(cache.saveSnapshot([{order:'bad',reports:[],items:[]}]),/Invalid snapshot/);
     await assert.rejects(cache.configure(10*1024*1024),/safe range/);
     await assert.rejects(cache.cleanup([42]),/Invalid snapshots/);
+    await assert.rejects(cache.cleanupMaterials(null),/Invalid cleanup options/);
+    await assert.rejects(cache.cleanupMaterials({categories:'invalid'}),/Invalid cleanup options/);
 });
 
 test('parent rules cover all descendants with inheritance without changing child drafts', () => {
@@ -863,7 +865,10 @@ test('selected parent audits all text descendants together and groups attachment
     const settings=ctx.netcareNormalizeSettings({...ctx.netcareDefaultSettings(),aiAuditEnabled:true,sections:[{number:'3',title:'Operations',text:true,attachments:true,textPrompt:'Evaluate complete plan',attachmentsPrompt:'Evaluate scripts'},{number:'3.1',title:'Overview'},{number:'3.1.1',title:'Steps',textPrompt:'Hidden child draft'}]});
     const items=[{section:'3',kind:'text',filename:'3.txt',text:'Purpose'},{section:'3.1',kind:'text',filename:'3.1.txt',text:'Preparation'},{section:'3.1.1',kind:'text',filename:'3.1.1.txt',text:'Rollback'},{section:'3.1.1',kind:'attachments',filename:'commands.txt',text:'Commands'}],sent=[];
     const reports=await ctx.netcareRunAudits(items,settings,async item=>{sent.push(item);return{ok:true,report:{status:'pass',summary:'通过 / Pass',findings:[]}};},new AbortController().signal,()=>{});
-    assert.equal(sent.length,2);assert.deepEqual(Array.from(reports,r=>r.section),['3','3']);assert.equal(reports[0].sources.length,3);assert.match(sent[0].text,/Purpose/);assert.match(sent[0].text,/Preparation/);assert.match(sent[0].text,/Rollback/);assert.match(sent[0].text,/3.1.1/);assert.equal(reports[0].rule,'Evaluate complete plan');
+    assert.equal(sent.length,2);assert.equal(sent[0].kind,'text');assert.equal(sent[1].kind,'attachments');assert.deepEqual(Array.from(reports,r=>r.section),['3','3']);assert.equal(reports[0].sources.length,3);assert.match(sent[0].text,/Purpose/);assert.match(sent[0].text,/Preparation/);assert.match(sent[0].text,/Rollback/);assert.match(sent[0].text,/3.1.1/);assert.equal(reports[0].rule,'Evaluate complete plan');
+    const invertedSent=[];
+    await ctx.netcareRunAudits([items[3],items[0]],settings,async item=>{invertedSent.push(item);return{ok:true,report:{status:'pass',summary:'通过 / Pass',findings:[]}};},new AbortController().signal,()=>{});
+    assert.equal(invertedSent.length,2);assert.equal(invertedSent[0].kind,'text');assert.equal(invertedSent[1].kind,'attachments');
     const rows=ctx.netcareAuditRows([{order:'RFC',items,reports}]);assert.equal(rows.length,2);assert.match(rows[0].text,/Preparation/);assert.match(rows[0].text,/Rollback/);
     const failed=await ctx.netcareRunAudits(items,settings,async()=>{throw Error('HTTP 500');},new AbortController().signal,()=>{});assert.ok(failed.every(r=>r.error&&r.status==='needs_review'));
 });
@@ -986,3 +991,228 @@ test('company HTTP endpoints work for both connection tests and saved audits wit
  for(const url of ['ftp://example.com','http://user:pass@example.com','http://example.com?token=x','http://example.com#part']){ctx.model={...model,url};assert.throws(()=>vm.runInNewContext('tpBuildModelRequest(model,"test")',ctx),/endpoint/);}
  assert.ok(pkg.manifest.host_permissions.includes('http://*/*'));
 });
+
+test('local audit rules default preset, validation, and regex evaluation', () => {
+  const ctx = { URL, URLSearchParams, location: new URL('https://unrelated.example'), window: {} }; vm.runInNewContext(code, ctx);
+  const defaults = ctx.netcareDefaultLocalRules();
+  assert.ok(Array.isArray(defaults) && defaults.length >= 6);
+  assert.ok(defaults.some(r => r.sectionNumber === '1.1' && r.pattern.includes('变更目的')));
+  assert.ok(defaults.some(r => r.sectionNumber === '3.5' && r.pattern.includes('回退')));
+
+  const settings = ctx.netcareDefaultSettings();
+  const normalized = ctx.netcareNormalizeSettings(settings);
+  assert.equal(normalized.localRules.length, defaults.length);
+  assert.equal(normalized.localRules[0].passCondition, 'match');
+
+  // Regex validation check
+  assert.throws(() => ctx.netcareNormalizeSettings({
+    ...settings,
+    localRules: [{ id: 'bad', name: 'Bad Regex', pattern: '([a-z' }]
+  }), /正则表达式无效/);
+
+  // Engine evaluation
+  const passItem = { section: '1.1', kind: 'text', text: '本次变更目的为升级交换机核心固件，影响范围已评估。' };
+  const passResult = ctx.netcareEvaluateLocalRule(normalized, passItem);
+  assert.ok(passResult);
+  assert.equal(passResult.status, 'pass');
+  assert.ok(passResult.summary.includes('[本地规则回退]'));
+  assert.equal(passResult.fallback, true);
+
+  const failItem = { section: '1.1', kind: 'text', text: '完全无关的文本内容，没有任何背景。' };
+  const failResult = ctx.netcareEvaluateLocalRule(normalized, failItem);
+  assert.ok(failResult);
+  assert.equal(failResult.status, 'fail');
+  assert.ok(failResult.findings.length > 0);
+
+  // Blacklist condition
+  const customRuleSettings = {
+    ...normalized,
+    localRules: [{ id: 'custom-blacklist', name: '禁含未授权', sectionNumber: '3.3', pattern: '未授权|风险未闭环', passCondition: 'not_match', passSummary: '无敏感项', failSummary: '发现未授权操作', enabled: true }]
+  };
+  const blacklistedItem = { section: '3.3', kind: 'text', text: '配置脚本包含未授权变更命令。' };
+  const blacklistResult = ctx.netcareEvaluateLocalRule(customRuleSettings, blacklistedItem);
+  assert.equal(blacklistResult.status, 'fail');
+  assert.ok(blacklistResult.summary.includes('发现未授权操作'));
+});
+
+test('AI error automatically falls back to local rules in netcareRunAudits', async () => {
+  const ctx = { URL, URLSearchParams, location: new URL('https://unrelated.example'), window: {} }; vm.runInNewContext(code, ctx);
+  const settings = ctx.netcareNormalizeSettings({
+    ...ctx.netcareDefaultSettings(),
+    aiAuditEnabled: true,
+    sections: [{ number: '1.1', title: 'Change Purpose', text: true, textPrompt: 'Check purpose' }]
+  });
+
+  const items = [{ section: '1.1', sectionTitle: 'Change Purpose', kind: 'text', filename: '1.1.txt', text: '变更目的：系统优化升级，影响范围：核心网' }];
+
+  // Simulate AI request failure (e.g. 500 error / network failure)
+  const failedRequest = async () => { throw new Error('AI Model Service 503 Unavailable'); };
+  const reports = await ctx.netcareRunAudits(items, settings, failedRequest, new AbortController().signal, () => {});
+
+  assert.equal(reports.length, 1);
+  const r = reports[0];
+  assert.equal(r.status, 'pass');
+  assert.equal(r.fallback, true);
+  assert.equal(r.model, 'local-rule-fallback');
+  assert.ok(r.diagnostics.fallback);
+  assert.equal(r.diagnostics.aiError, 'AI Model Service 503 Unavailable');
+});
+
+test('settings relay persists localRules and restores them', async () => {
+  const pack = packer.buildPackage({ ...options, manualLaunch: true }), stored = {}, messages = [];
+  let receive;
+  const window = { addEventListener: (_t, fn) => { receive = fn; }, removeEventListener() {}, postMessage: m => messages.push(m) }; window.top = window;
+  const origin = 'https://netcare-de.gts.huawei.com';
+  vm.runInNewContext(pack.files['netcare-online-relay.js'], { window, location: {origin}, chrome: { storage: { local: { set: async data => Object.assign(stored, data), get: async key => ({ [key]: stored[key] }) } } } });
+
+  const customRules = [{ id: 'r1', name: '自定义规则 1', sectionNumber: '1.1', pattern: '目的', passCondition: 'match', enabled: true }];
+  const value = { concurrency: 2, openOnline: false, attachmentsEnabled: true, textEnabled: true, intervalMs: 2000, sections: [{ number: '1.1', title: 'Purpose', attachments: true, text: true }], localRules: customRules };
+
+  receive({ source: window, origin, data: { source: 'TP_RFC_SETTINGS_SET', settings: value } });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(stored.netcareExtractionSettings.localRules.length, 1);
+  assert.equal(stored.netcareExtractionSettings.localRules[0].name, '自定义规则 1');
+
+  receive({ source: window, origin, data: { source: 'TP_RFC_SETTINGS_GET' } });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(messages.at(-1).settings.localRules[0].id, 'r1');
+});
+
+test('materials ZIP creates 方案截图, 方案文本 and 方案附件 subfolders within chapter folders', async () => {
+  const ctx = { URL, URLSearchParams, Blob, TextEncoder, Uint8Array, location: new URL('https://unrelated.example'), window: {} }; vm.runInNewContext(code, ctx);
+  const record = {
+    order: 'NC20261001000381',
+    wordFilename: 'Plan.docx',
+    items: [
+      { section: '3.1', kind: 'text', filename: '3.1.txt', text: 'Preparation details' },
+      { section: '3.2', kind: 'attachments', filename: '3.2-config.txt', text: 'interfaces' }
+    ],
+    reports: [
+      { section: '3.1', kind: 'text', filename: '3.1.txt', status: 'pass', summary: 'OK' },
+      { section: '3.2', kind: 'attachments', filename: '3.2-config.txt', status: 'pass', summary: 'OK' }
+    ],
+    materials: [
+      { name: '3.1.txt', section: '3.1', kind: 'text', role: 'text', folder: '3-Operations' },
+      { name: '3.2-config.txt', section: '3.2', kind: 'attachments', role: 'attachment', folder: '3-Operations' },
+      { name: '3.1-shot.png', section: '3.1', kind: 'text', role: 'screenshot', folder: '3-Operations' }
+    ]
+  };
+
+  const files = [
+    { order: 'NC20261001000381', name: 'Plan.docx' },
+    { order: 'NC20261001000381', name: '3.1.txt' },
+    { order: 'NC20261001000381', name: '3.2-config.txt' },
+    { order: 'NC20261001000381', name: '3.1-shot.png' }
+  ];
+
+  const bundle = await ctx.netcareAuditMaterials([record], files, async () => new Blob(['content']));
+  assert.equal(bundle.missing.length, 0);
+
+  const entryNames = bundle.entries.map(e => e.name);
+  assert.ok(entryNames.includes('NC20261001000381/3-Operations/方案文本/3.1.txt'));
+  assert.ok(entryNames.includes('NC20261001000381/3-Operations/方案附件/3.2-config.txt'));
+  assert.ok(entryNames.includes('NC20261001000381/3-Operations/方案截图/3.1-shot.png'));
+});
+
+test('cache stats provides classified breakdown and cleanupMaterials prunes by category and retention', async () => {
+  const storeData = {
+    files: new Map([
+      ['f1', { id: 'f1', order: 'NC20261001000381', name: '1.1-shot.png', role: 'screenshot', size: 1000, count: 1, ready: true, created: Date.now() - 1000 }],
+      ['f2', { id: 'f2', order: 'NC20261001000381', name: 'data.xlsx', role: 'attachments', size: 2000, count: 1, ready: true, created: Date.now() - 100000000 }],
+      ['f3', { id: 'f3', order: 'NC20261001000381', name: '1.1-content.txt', role: 'text', size: 500, count: 1, ready: true, created: Date.now() - 1000 }],
+      ['f4', { id: 'f4', order: 'NC20261001000381', name: 'NC20261001000381-bundle.zip', role: 'audit-bundle', size: 5000, count: 1, ready: true, created: Date.now() - 1000 }],
+      ['f5', { id: 'f5', order: 'NC20261001000381', name: 'pinned.png', role: 'screenshot', size: 1500, count: 1, ready: true, created: Date.now() - 1000 }]
+    ]),
+    parts: new Map(),
+    snapshots: new Map([
+      ['snap1', { id: 'snap1', created: Date.now(), fileIds: ['f5'], records: [] }]
+    ]),
+    settings: new Map([
+      ['capacity', { id: 'capacity', bytes: 500 * 1024 * 1024 }],
+      ['log-buffer', { id: 'log-buffer', events: [{ id: 'e1', at: Date.now() - 1000, action: 'test' }] }]
+    ]),
+    performance: new Map()
+  };
+  const mockIdb = {
+    open: () => {
+      const req = {
+        result: {
+          transaction: (names, mode) => {
+            const tx = {
+              oncomplete: null,
+              onerror: null,
+              objectStore: name => ({
+                getAll: () => {
+                  const r = { onsuccess: null, result: Array.from(storeData[name].values()) };
+                  setImmediate(() => r.onsuccess?.());
+                  return r;
+                },
+                get: key => {
+                  const r = { onsuccess: null, result: storeData[name].get(key) };
+                  setImmediate(() => r.onsuccess?.());
+                  return r;
+                },
+                put: item => {
+                  storeData[name].set(item.id, item);
+                  const r = { onsuccess: null };
+                  setImmediate(() => r.onsuccess?.());
+                  return r;
+                },
+                delete: key => {
+                  storeData[name].delete(key);
+                  const r = { onsuccess: null };
+                  setImmediate(() => r.onsuccess?.());
+                  return r;
+                }
+              })
+            };
+            setImmediate(() => tx.oncomplete?.());
+            return tx;
+          },
+          close: () => {}
+        },
+        onsuccess: null,
+        onerror: null
+      };
+      setImmediate(() => req.onsuccess?.());
+      return req;
+    }
+  };
+  const cache = require('../backend/builtin-tools/f12-to-extension/netcare-artifacts')(mockIdb);
+  const stats = await cache.stats();
+  assert.equal(stats.breakdown.screenshots.count, 2);
+  assert.equal(stats.breakdown.screenshots.bytes, 2500);
+  assert.equal(stats.breakdown.attachments.count, 1);
+  assert.equal(stats.breakdown.attachments.bytes, 2000);
+  assert.equal(stats.breakdown.texts.count, 1);
+  assert.equal(stats.breakdown.texts.bytes, 500);
+  assert.equal(stats.breakdown.bundles.count, 1);
+  assert.equal(stats.breakdown.bundles.bytes, 5000);
+  assert.equal(stats.breakdown.snapshots.count, 1);
+
+  // Test preview cleanup with protectSnapshots
+  const preview = await cache.cleanupMaterials({ categories: ['screenshots'], protectSnapshots: true });
+  // f5 is in snap1 fileIds, so only f1 is dropped
+  assert.equal(preview.fileCount, 1);
+  assert.equal(preview.released, 1000);
+
+  // Test execute cleanup
+  const executed = await cache.cleanupMaterials({ categories: ['screenshots'], protectSnapshots: true }, true);
+  assert.equal(executed.fileCount, 1);
+  assert.equal(executed.released, 1000);
+  assert.equal(storeData.files.has('f1'), false);
+  assert.equal(storeData.files.has('f5'), true); // protected!
+});
+
+test('plugin log single-line layout and fullscreen toggle mode are present and wired', () => {
+  assert.ok(code.includes('.log-row-line{display:flex;align-items:center;'));
+  assert.ok(code.includes('.log-row-detail{padding:8px 12px 10px 26px;'));
+  assert.ok(code.includes('#settingsDialog.log-fullscreen-mode'));
+  assert.ok(code.includes('logFullscreen'));
+  assert.ok(code.includes('setLogFullscreen'));
+  assert.ok(code.includes('log-fs-btn'));
+  assert.ok(code.includes('log-copy-btn') || code.includes('复制 JSON'));
+});
+
+
+

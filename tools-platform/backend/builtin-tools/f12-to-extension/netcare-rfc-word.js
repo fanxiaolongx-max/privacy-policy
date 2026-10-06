@@ -13,7 +13,7 @@ function parseNetcareRfcOrders(value) {
   return orders;
 }
 
-function netcareNativeOrder(value){try{const u=new URL(value,location.href),found=new Set();for(const q of [u.searchParams,new URLSearchParams(u.hash.split('?').slice(1).join('?'))])for(const [key,order] of q)if(['orderid','order_id','docid','id'].includes(key.toLowerCase())&&/^NC\d{14}$/.test(order))found.add(order);return found.size>1?'!ambiguous':found.size===1?[...found][0]:'';}catch{return '';}}
+function netcareNativeOrder(value){try{const raw=String(value||'');let decoded=raw;for(let i=0;i<3;i++){try{const d=decodeURIComponent(decoded);if(d===decoded)break;decoded=d;}catch{break;}}const u=new URL(raw,typeof location!=='undefined'?location.href:undefined);const queries=[u.searchParams,new URLSearchParams(u.hash.replace(/^#/,'').split('?')[1]||''),new URLSearchParams(decoded.replace(/^[^?]*\?/,''))];const found=new Set();for(const q of queries)for(const [key,val] of q)if(['orderid','order_id','docid','id'].includes(key.toLowerCase())&&/^NC\d{14}$/.test(val))found.add(val);for(const m of (raw+' '+decoded).matchAll(/(?:orderid|order_id|docid|id)=(NC\d{14})/gi))found.add(m[1]);if(found.size>1)return '!ambiguous';if(found.size)return [...found][0];}catch{}return '';}
 
 // Search/authorization uses shared site UI sequentially; independent exports overlap.
 async function executeNetcareRfcBatch(orders, concurrency, signal, prepare, transfer, onResult) {
@@ -156,9 +156,9 @@ async function netcareAuditMaterials(records,files,readFile,progress=()=>{},lang
   for(const record of records){const sources=record.reports.flatMap(r=>r.sources?.length?r.sources:[r]),names=new Set([...sources.map(r=>r.filename),...(record.materials||[]).map(m=>m.name)]),wanted=files.filter(f=>f.order===record.order&&(f.name===record.wordFilename||f.name===record.bundleFilename||!record.wordFilename&&f.name.startsWith(record.order+'_')&&f.name.endsWith('.docx')||names.has(f.name))),added=new Set();
     if(record.bundleFilename&&!wanted.some(f=>f.name===record.bundleFilename))missing.push(record.order+' · '+record.bundleFilename);
     if(!wanted.some(f=>f.name.endsWith('.docx')))missing.push(record.order+' · 方案 Word');
-    for(const report of sources){if(!wanted.some(f=>f.name===report.filename)&&!added.has(report.filename)){added.add(report.filename);const item=record.items.find(i=>i.section===report.section&&i.kind===report.kind&&i.filename===report.filename);if(item?.kind==='text'&&item.text){entries.push({name:record.order+'/'+((record.materials||[]).find(m=>m.name===item.filename)?.folder?netcareSafeFilename(record.materials.find(m=>m.name===item.filename).folder)+'/':'')+netcareSafeFilename(item.filename),blob:new Blob(['\ufeff'+item.text],{type:'text/plain;charset=utf-8'})});reconstructed.push(record.order+' · '+item.filename);}else missing.push(record.order+' · '+report.filename);}}
+    for(const report of sources){if(!wanted.some(f=>f.name===report.filename)&&!added.has(report.filename)){added.add(report.filename);const item=record.items.find(i=>i.section===report.section&&i.kind===report.kind&&i.filename===report.filename);if(item?.kind==='text'&&item.text){const mat=(record.materials||[]).find(m=>m.name===item.filename);const folderPrefix=mat?.folder?netcareSafeFilename(mat.folder)+'/方案文本/':'';entries.push({name:record.order+'/'+folderPrefix+netcareSafeFilename(item.filename),blob:new Blob(['\ufeff'+item.text],{type:'text/plain;charset=utf-8'})});reconstructed.push(record.order+' · '+item.filename);}else missing.push(record.order+' · '+report.filename);}}
     for(const name of new Set(record.reports.flatMap(r=>netcareAuditScreenshots(record,r)).map(m=>m.name)))if(!wanted.some(f=>f.name===name))missing.push(record.order+' · '+name);
-    for(const file of wanted){progress(file);const blob=await readFile(file);if(record.reports.some(r=>netcareAuditScreenshots(record,r).some(m=>m.name===file.name)))images.set(netcareAuditImageKey(record.order,file.name),blob);entries.push({name:record.order+'/'+((record.materials||[]).find(m=>m.name===file.name)?.folder?netcareSafeFilename(record.materials.find(m=>m.name===file.name).folder)+'/':'')+netcareSafeFilename(file.name),blob,role:file.role});}
+    for(const file of wanted){progress(file);const blob=await readFile(file);if(record.reports.some(r=>netcareAuditScreenshots(record,r).some(m=>m.name===file.name)))images.set(netcareAuditImageKey(record.order,file.name),blob);const mat=(record.materials||[]).find(m=>m.name===file.name);const subFolder=mat?.role==='screenshot'?'方案截图':mat?.kind==='attachments'?'方案附件':'方案文本';const folderPrefix=mat?.folder?netcareSafeFilename(mat.folder)+'/'+subFolder+'/':'';entries.push({name:record.order+'/'+folderPrefix+netcareSafeFilename(file.name),blob,role:file.role});}
     entries.push({name:record.order+'/AI审计结果.json',blob:new Blob([JSON.stringify(record,null,2)],{type:'application/json'})});
   }
   if(missing.length)entries.push({name:'缺失材料清单.txt',blob:new Blob(['\ufeff'+missing.join('\n')+'\n旧记录、原方案缺少附件或过期缓存可能缺少原文件，请重新下载并审计相应RFC。'],{type:'text/plain;charset=utf-8'})});
@@ -183,10 +183,21 @@ function netcareTopicCatalogue(groups) {
     return { query, number: p.get('catalognumber'), title: p.get('title') || '', topic: p.get('number') };
   }).filter(item => /^\d+(\.\d+)*$/.test(item.number || '') && item.topic && !seen.has(item.number) && seen.add(item.number));
 }
+function netcareDefaultLocalRules() {
+  return [
+    { id: 'rule-1.1', name: '1.1 变更目的与背景检查 / Change Purpose Check', sectionNumber: '1.1', sectionTitle: 'Change Purpose', kind: 'text', pattern: '(?:变更目的|变更原因|影响范围|Purpose|Objective|Scope)', passCondition: 'match', passSummary: '变更目的已明确 / Change purpose specified', failSummary: '缺少变更目的或影响范围说明 / Missing change purpose or scope', enabled: true },
+    { id: 'rule-1.2', name: '1.2 方案与计划检查 / Change Plan Check', sectionNumber: '1.2', sectionTitle: 'Basic Information and Change Plan', kind: 'text', pattern: '(?:拓扑|Topology|计划|Batch|外设|Peripheral|窗口|Window)', passCondition: 'match', passSummary: '变更计划与环境信息完整 / Change plan complete', failSummary: '缺少变更计划或拓扑外设说明 / Missing change plan or topology', enabled: true },
+    { id: 'rule-3.2', name: '3.2 准备工作与Checklist检查 / Preparation & Checklist', sectionNumber: '3.2', sectionTitle: 'Preparation for Change Implementation', kind: 'all', pattern: '(?:Checklist|检查项|准备工作|健康检查|Health Check|Pre-check|环境确认)', passCondition: 'match', passSummary: '准备工作与Checklist齐全 / Preparation and checklist complete', failSummary: '缺少实施前准备或Checklist检查项 / Missing preparation or checklist', enabled: true },
+    { id: 'rule-3.3', name: '3.3 实施操作步骤检查 / Operation Steps Check', sectionNumber: '3.3', sectionTitle: 'Operation Steps for Change', kind: 'text', pattern: '(?:操作步骤|Step|命令|Command|配置|Configuration|执行脚本|脚本)', passCondition: 'match', passSummary: '包含明确操作步骤与命令 / Contains operation steps and commands', failSummary: '缺少具体操作步骤或执行命令 / Missing operation steps or commands', enabled: true },
+    { id: 'rule-3.4', name: '3.4 测试验证与KPI检查 / Test & Verification Check', sectionNumber: '3.4', sectionTitle: 'Test and Verification', kind: 'text', pattern: '(?:测试|验证|KPI|Verification|Test|指标|业务恢复)', passCondition: 'match', passSummary: '包含测试验证方案或KPI指标 / Contains test verification or KPI', failSummary: '缺少测试验证步骤或业务指标 / Missing test steps or KPIs', enabled: true },
+    { id: 'rule-3.5', name: '3.5 失败回退方案检查 / Changeback Solution Check', sectionNumber: '3.5', sectionTitle: 'Solution for Changeback In the Case of Failure', kind: 'text', pattern: '(?:回退|Changeback|Rollback|应急预案|失败判定|恢复原状)', passCondition: 'match', passSummary: '包含回退方案与应急步骤 / Contains rollback plan and steps', failSummary: '缺少回退步骤或应急预案 / Missing rollback steps', enabled: true }
+  ];
+}
 function netcareDefaultSettings() {
   const template = [["1", "Description of Change and Change Influence"], ["1.1", "Change Purpose"], ["1.2", "Basic Information and Change Plan"], ["1.2.1", "Network Topology"], ["1.2.2", "Change Batches"], ["1.2.3", "Peripherals"], ["1.3", "Change Influence"], ["1.4", "Severity Information"], ["2", "Preparations for Change"], ["2.1", "Composition of Change Team and Responsibility of Team Members"], ["2.1.1", "Change Team of Orange Company"], ["2.1.2", "Huawei On-site Change Team"], ["2.1.3", "Huawei Support & Guarantee Team"], ["2.2", "Remote Access"], ["2.3", "Tool and Software Preparation"], ["2.4", "Check of Equipment Running"], ["2.5", "Change Risks and Countermeasures"], ["2.6", "Confirm Work Before Change"], ["3", "Operation Steps for Change"], ["3.1", "Overall Description of Change Steps"], ["3.2", "Preparation for Change Implementation"], ["3.3", "Operation Steps for Change"], ["3.3.1", "Operation Scripts"], ["3.4", "Test and Verification"], ["3.5", "Solution for Changeback In the Case of Failure"], ["3.5.1", "Definition of Change Failure"], ["3.5.2", "Overall Description of Changeback"], ["3.5.3", "Changeback Steps"], ["3.5.4", "Tests After Changeback"], ["3.5.5", "Changeback Risk Analysis"], ["3.6", "Change of Spare Parts and Emergency Workstation"], ["4", "Work After Change"], ["4.1", "Observation"], ["4.2", "Other work"]];
   return { aiAuditEnabled: false, concurrency: 3, openOnline: true, closeAfterAudit: false, titleFallbackEnabled: false, pipBetaEnabled: false, attachmentsEnabled: false, textEnabled: false, intervalMs: 1500,
-    sections: template.map(([number, title]) => ({ number, title, attachments: number === '3.2', text: ['1.1', '3.2'].includes(number), attachmentsPrompt: '', textPrompt: '' })) };
+    sections: template.map(([number, title]) => ({ number, title, attachments: number === '3.2', text: ['1.1', '3.2'].includes(number), attachmentsPrompt: '', textPrompt: '' })),
+    localRules: netcareDefaultLocalRules() };
 }
 function netcareNormalizeSettings(value) {
   if (!value || !Array.isArray(value.sections) || value.sections.length > 100) throw new Error('章节模板最多 100 项 / Maximum 100 sections');
@@ -202,9 +213,74 @@ function netcareNormalizeSettings(value) {
   });
   if (value.attachmentsEnabled === true && !sections.some(row => row.attachments) || value.textEnabled === true && !sections.some(row => row.text)) throw new Error('请为已开启的提取类型选择至少一个章节 / Select a section');
   if (value.aiAuditEnabled === true && !sections.some(row => row.textPrompt || row.attachmentsPrompt)) throw new Error('开启AI审计需要至少一条章节提示词 / Add an audit rule');
-  return { pipBetaEnabled:value.pipBetaEnabled===true, closeAfterAudit:value.closeAfterAudit===true, titleFallbackEnabled:value.titleFallbackEnabled===true, aiAuditEnabled: value.aiAuditEnabled === true, concurrency: Number.isInteger(value.concurrency) && value.concurrency >= 1 && value.concurrency <= 10 ? value.concurrency : 3, openOnline: value.openOnline !== false, screenshotsEnabled:value.screenshotsEnabled!==false,
-    attachmentsEnabled: value.attachmentsEnabled === true || value.aiAuditEnabled === true && sections.some(row => row.attachmentsPrompt), textEnabled: value.textEnabled === true || value.aiAuditEnabled === true && sections.some(row => row.textPrompt),
-    intervalMs: Math.max(1000, Math.min(30000, Number(value.intervalMs) || 1500)), sections };
+  const aiAuditEnabled = value.aiAuditEnabled === true;
+  const attachmentsEnabled = value.attachmentsEnabled === true || aiAuditEnabled && sections.some(row => row.attachmentsPrompt);
+  const textEnabled = value.textEnabled === true || aiAuditEnabled && sections.some(row => row.textPrompt);
+  const screenshotsEnabled = (attachmentsEnabled || textEnabled) ? value.screenshotsEnabled !== false : false;
+  const closeAfterAudit = aiAuditEnabled && value.closeAfterAudit === true;
+  const localRules = Array.isArray(value.localRules) ? value.localRules.slice(0, 100).map((r, i) => {
+    const id = String(r.id || `local_rule_${i + 1}`).trim();
+    const name = netcareRedactText(String(r.name || `规则 ${i + 1}`).trim().slice(0, 100));
+    const sectionNumber = String(r.sectionNumber || '').trim().slice(0, 40);
+    const sectionTitle = netcareRedactText(String(r.sectionTitle || '').trim().slice(0, 200));
+    const kind = ['text', 'attachments'].includes(r.kind) ? r.kind : 'all';
+    const pattern = String(r.pattern || '').trim().slice(0, 1000);
+    if (pattern) {
+      try { new RegExp(pattern, 'i'); }
+      catch (e) { throw new Error(`本地审计规则【${name}】正则表达式无效: ${e.message}`); }
+    }
+    const passCondition = r.passCondition === 'not_match' ? 'not_match' : 'match';
+    const passSummary = netcareRedactText(String(r.passSummary || '符合要求 / Compliant').trim().slice(0, 500));
+    const failSummary = netcareRedactText(String(r.failSummary || '不符合要求，需人工核查 / Non-compliant').trim().slice(0, 500));
+    const enabled = r.enabled !== false;
+    return { id, name, sectionNumber, sectionTitle, kind, pattern, passCondition, passSummary, failSummary, enabled };
+  }) : netcareDefaultLocalRules();
+  return { pipBetaEnabled:value.pipBetaEnabled===true, closeAfterAudit, titleFallbackEnabled:value.titleFallbackEnabled===true, aiAuditEnabled, concurrency: Number.isInteger(value.concurrency) && value.concurrency >= 1 && value.concurrency <= 10 ? value.concurrency : 3, openOnline: value.openOnline !== false, screenshotsEnabled,
+    attachmentsEnabled, textEnabled,
+    intervalMs: Math.max(1000, Math.min(30000, Number(value.intervalMs) || 1500)), sections, localRules };
+}
+function netcareEvaluateLocalRule(settings, item) {
+  const rules = (settings?.localRules || []).filter(r => r && r.enabled && r.pattern);
+  if (!rules.length) return null;
+  const itemSectionTitle = item.sectionTitle || settings?.sections?.find(s => s.number === item.section || s.number === item.ruleSection)?.title || '';
+  const matches = rules.filter(r => {
+    const ruleKind = ['text', 'attachments'].includes(r.kind) ? r.kind : 'all';
+    if (ruleKind !== 'all' && ruleKind !== item.kind) return false;
+    const numMatch = !r.sectionNumber || item.section === r.sectionNumber || item.ruleSection === r.sectionNumber || (item.section && item.section.startsWith(r.sectionNumber + '.'));
+    if (r.sectionNumber && !numMatch) return false;
+    const titleMatch = !r.sectionTitle || (itemSectionTitle && (itemSectionTitle.toLowerCase().includes(r.sectionTitle.toLowerCase()) || r.sectionTitle.toLowerCase().includes(itemSectionTitle.toLowerCase())));
+    if (r.sectionTitle && !r.sectionNumber && !titleMatch) return false;
+    if (r.sectionTitle && r.sectionNumber && itemSectionTitle && !titleMatch) return false;
+    return numMatch || titleMatch;
+  });
+  if (!matches.length) return null;
+  matches.sort((a, b) => {
+    const aScore = (a.sectionNumber ? 2 : 0) + (a.sectionTitle ? 1 : 0);
+    const bScore = (b.sectionNumber ? 2 : 0) + (b.sectionTitle ? 1 : 0);
+    return bScore - aScore;
+  });
+  const rule = matches[0];
+  let regex;
+  try { regex = new RegExp(rule.pattern, 'i'); }
+  catch { return null; }
+  const text = String(item.text || '');
+  const matched = regex.test(text);
+  const isPass = rule.passCondition === 'not_match' ? !matched : matched;
+  const status = isPass ? 'pass' : 'fail';
+  const summaryZh = `[本地规则回退] ${rule.name}: ${isPass ? (rule.passSummary || '符合要求') : (rule.failSummary || '未满足关键词要求，需人工核查')}`;
+  const summaryEn = `[Local rule fallback] ${rule.name}: ${isPass ? 'Passed local rule' : 'Failed local rule'}`;
+  const findings = isPass ? [] : [summaryZh];
+  const findingsI18n = isPass ? [] : [{ zh: summaryZh, en: summaryEn }];
+  return {
+    status,
+    summary: `${summaryZh} / ${summaryEn}`,
+    summaryI18n: { zh: summaryZh, en: summaryEn },
+    findings,
+    findingsI18n,
+    rule: `[本地规则 / Local rule] ${rule.name} (Regex: ${rule.pattern})`,
+    model: 'local-rule-fallback',
+    fallback: true
+  };
 }
 function netcareExportSettings(settings) {
   return JSON.stringify({ format: 'netcare-rfc-settings', version: 1, settings: netcareNormalizeSettings(settings) }, null, 2);
@@ -306,7 +382,14 @@ function netcareGroupAuditItems(items,settings) {
     if(item.error||!item.text?.trim())group.errors.push(item.section+' · '+item.filename+': '+(item.error||'文本为空 / Empty text'));
     else group.parts.push('['+item.section+' '+(item.sectionTitle||'')+' · '+item.filename+']\n'+item.text);
   }
-  return [...groups.values()].map(({parts,errors,...group})=>({...group,text:parts.join('\n\n'),error:errors.length?errors.join('\n'):undefined}));
+  const result = [...groups.values()].map(({parts,errors,...group})=>({...group,text:parts.join('\n\n'),error:errors.length?errors.join('\n'):undefined}));
+  return result.sort((a,b)=>{
+    let cmp=0;
+    try{cmp=netcareCompareSectionNumbers(a.section,b.section);}catch{}
+    if(cmp!==0)return cmp;
+    const rank=k=>k==='text'?0:1;
+    return rank(a.kind)-rank(b.kind);
+  });
 }
 
 function netcareRedactText(value) {
@@ -340,7 +423,18 @@ async function netcareRunAudits(items, settings, request, signal, progress,trace
     if (!item.text?.trim() || item.text.length>60000) {result.summary='文本为空或超过60000字符，未提交模型 / Empty text or exceeds 60000 characters';result.error=true;reports.push(result);continue;}
     progress(`${item.section} · ${item.filename}`);
     try {const reply=await request(item,signal);if(!reply?.ok){result.diagnostics=reply?.diagnostics;throw new Error(reply?.error||'AI request failed');} Object.assign(result,reply.report,{model:reply.model});}
-    catch(error){if(signal.aborted)throw error;result.summary=error.message;result.error=true;}
+    catch(error){
+      if(signal.aborted)throw error;
+      const fallback=netcareEvaluateLocalRule(settings,item);
+      if(fallback){
+        Object.assign(result,fallback);
+        result.diagnostics={...(result.diagnostics||{}),fallback:true,fallbackRule:fallback.rule,aiError:error.message};
+        trace('audit.fallback','AI 异常，已回退到本地审计规则 / Fallback to local rule on AI error',{section:item.section,rule:fallback.rule,status:fallback.status,aiError:error.message},'audit',fallback.status==='pass'?'info':'warn');
+      } else {
+        result.summary=error.message;
+        result.error=true;
+      }
+    }
     reports.push(result);
   }
   return reports;
@@ -353,7 +447,12 @@ async function netcareCaptureEvidence(element,renderer,signal){
   if(!width||!height||width>6000||height>30000||width*height>24000000)throw Error('区域过大或不可见，截图未保存 / Region exceeds capture limit');
   let canvas;const containers=new Set(element.ownerDocument.querySelectorAll?.('iframe.html2canvas-container')||[]);
   const images=[];
-  try{canvas=await renderer(element,{scale:1,backgroundColor:'#ffffff',logging:false,useCORS:false,allowTaint:false,imageTimeout:5000,removeContainer:true,width,height});
+  try{let timer;
+    const sFn=typeof setTimeout==='function'?setTimeout:(typeof globalThis!=='undefined'&&typeof globalThis.setTimeout==='function'?globalThis.setTimeout:null);
+    const cFn=typeof clearTimeout==='function'?clearTimeout:(typeof globalThis!=='undefined'&&typeof globalThis.clearTimeout==='function'?globalThis.clearTimeout:null);
+    const renderPromise=renderer(element,{scale:1,backgroundColor:'#ffffff',logging:false,useCORS:false,allowTaint:false,imageTimeout:5000,removeContainer:true,width,height});
+    const timeoutPromise=new Promise((_,reject)=>{if(sFn){timer=sFn(()=>reject(Error('截图渲染超时 / Capture render timeout')),12000);signal?.addEventListener?.('abort',()=>{if(cFn&&timer)cFn(timer);reject(Error('已停止 / Stopped'));},{once:true});}});
+    try{canvas=await Promise.race([renderPromise,timeoutPromise]);}finally{if(cFn&&timer)cFn(timer);}
     if(!canvas.width||!canvas.height)throw Error('截图画布为空 / Empty capture canvas');
     for(let y=0;y<canvas.height;y+=1600){if(signal.aborted)throw Error('已停止 / Stopped');const page=element.ownerDocument.createElement('canvas');try{page.width=canvas.width;page.height=Math.min(1600,canvas.height-y);const context=page.getContext('2d');if(!context)throw Error('无法创建截图上下文 / Capture context unavailable');context.drawImage(canvas,0,y,page.width,page.height,0,0,page.width,page.height);const blob=await new Promise(resolve=>page.toBlob(resolve,'image/png'));if(!blob)throw Error('PNG编码失败 / PNG encoding failed');images.push(blob);}finally{page.width=page.height=0;}}
     return images;
@@ -370,10 +469,17 @@ function mountNetcareCollector() {
   host.id = 'netcare-solution-collector';
   const root = host.attachShadow({ mode: 'open' });
   root.innerHTML = `<style>*{box-sizing:border-box}section{font:11px/1.6 system-ui;background:#fff;color:#243149;padding:20px;border:1px solid #dce3ed;border-radius:16px;box-shadow:0 20px 60px #0003;max-height:calc(100vh - 40px);overflow:auto}header{display:flex;align-items:center;justify-content:space-between;font-size:14px;font-weight:650;margin-bottom:16px}header button{font-size:18px;padding:2px 10px;background:transparent!important;color:inherit!important}button,input{font:inherit}button{padding:9px 14px;border:1px solid #cdd8e7;border-radius:7px;background:#f2f6fb;color:#243149;cursor:pointer;margin:10px 5px 12px 0}#zip{background:#176ae6;color:#fff;border-color:#176ae6}button:disabled{opacity:.45;cursor:default}input[type=text]{width:100%;padding:9px 10px;background:transparent;color:inherit;border:1px solid #cdd8e7;border-radius:7px;margin:6px 0 2px}.list{max-height:180px;overflow:auto;border:1px solid #dce3ed;border-radius:8px;padding:10px;margin:8px 0;background:#f7f9fc}.list>div,.list>label{padding:4px 0;border-bottom:1px solid #cdd8e733}label{display:block}input[type=checkbox]{vertical-align:middle;margin-right:7px}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:11px/1.6 system-ui;max-height:145px;overflow:auto;background:#f2f6fb;border-radius:8px;padding:12px;margin:12px 0}details{margin-top:10px}summary{cursor:pointer;font-weight:550}#captureDiagnostics button{display:block;text-align:left;width:100%;margin:5px 0;color:#ae6b25}#captureErrorDialog{font:12px/1.7 system-ui;max-width:min(780px,calc(100vw - 32px));width:780px;max-height:calc(100vh - 32px);overflow:auto;padding:20px;background:#fff;color:#243149;border:1px solid #dce3ed;border-radius:14px}#captureErrorDialog::backdrop{background:#12223f77}#captureErrorDetails{max-height:calc(100vh - 240px)}small{display:block;color:#7b8a9f;margin-top:14px;font-size:10px}@media(prefers-color-scheme:dark){section{background:#182235;color:#e3eaf5;border-color:#314058}button,input[type=text],.list{background:#202d42;color:#e3eaf5;border-color:#314058}pre{background:#111c2d}#captureErrorDialog{background:#182235;color:#e3eaf5;border-color:#314058}}
-</style><section><header><span>方案附件与章节 / Solution bundle</span><button id="close" aria-label="关闭采集浮窗">×</button></header><div>${order}</div><label>方案文件名 / Word filename<input id="filename" type="text" aria-label="方案文件名" placeholder="等待 Word 下载文件名，或手动填写"></label><button id="scan">扫描全部章节 / Scan</button><button id="zip" disabled>下载 ZIP / Download</button><button id="stop" disabled>停止 / Stop</button><details open><summary id="count">附件 / Attachments</summary><div id="files" class="list">尚未扫描 / Not scanned</div></details><details><summary>选择提取章节 / Select sections</summary><label><input id="all" type="checkbox">全部章节 / All sections</label><div id="chapters" class="list"></div></details><pre id="status" role="status">正在等待在线方案加载…</pre><div id="captureDiagnostics" hidden></div><details><summary>AI 审计 / Audit</summary><pre id="auditStatus">未开启 / Disabled</pre></details><small>按原生目录读取全部章节。ZIP 文件名与 Word 一致；扫描/下载错误会列入清单，不提交评审。 / Reads all native sections; errors are listed.</small></section><dialog id="captureErrorDialog"><header><span>截图诊断 / Screenshot diagnostics</span><button id="captureErrorClose">×</button></header><pre id="captureErrorDetails" data-user-content></pre><button id="captureRetry">重新提取并生成新 ZIP / Extract again and create a new ZIP</button></dialog>`;
+</style><section><header><span>方案附件与章节 / Solution bundle</span><button id="close" aria-label="关闭采集浮窗">×</button></header><div>${order}</div><label>方案文件名 / Word filename<input id="filename" type="text" aria-label="方案文件名" placeholder="等待 Word 下载文件名，或手动填写"></label><button id="scan" disabled>扫描全部章节 / Scan</button><button id="zip" disabled>下载 ZIP / Download</button><button id="stop" disabled>停止 / Stop</button><details open><summary id="count">附件 / Attachments</summary><div id="files" class="list">尚未扫描 / Not scanned</div></details><details><summary>选择提取章节 / Select sections</summary><label><input id="all" type="checkbox">全部章节 / All sections</label><div id="chapters" class="list"></div></details><pre id="status" role="status">正在等待在线方案加载…</pre><div id="captureDiagnostics" hidden></div><details><summary>AI 审计 / Audit</summary><pre id="auditStatus">未开启 / Disabled</pre></details><small>按原生目录读取全部章节。ZIP 文件名与 Word 一致；扫描/下载错误会列入清单，不提交评审。 / Reads all native sections; errors are listed.</small></section><dialog id="captureErrorDialog"><header><span>截图诊断 / Screenshot diagnostics</span><button id="captureErrorClose">×</button></header><pre id="captureErrorDetails" data-user-content></pre><button id="captureRetry">重新提取并生成新 ZIP / Extract again and create a new ZIP</button></dialog>`;
   document.body.append(host);
   const $ = id => root.getElementById(id);
-  let controller, topics = [], attachments = [], dirtyName = false, cleanScan = false,lastAutomatic=false;const captureDiagnostics=[];
+  let controller, topics = [], attachments = [], dirtyName = false, cleanScan = false,lastAutomatic=false, taskActive = true;const captureDiagnostics=[];
+  const isTaskRunning = () => !!controller || taskActive;
+  function updateCollectorButtons() {
+    const running = isTaskRunning();
+    $('scan').disabled = running;
+    $('zip').disabled = running || !scanFinished;
+    $('stop').disabled = !controller;
+  }
   const controls=globalThis.createNetcareControls?.().source(root,{redact:netcareRedactText});
   function renderCaptureDiagnostics(){const list=$('captureDiagnostics');list.hidden=!captureDiagnostics.length;list.replaceChildren();for(const item of captureDiagnostics){const button=document.createElement('button');button.className='capture-diagnostic';button.textContent=(item.outcome==='failed'?'截图失败 / Capture failed':'截图已恢复 / Capture recovered')+' · '+item.name;button.onclick=()=>{const tr=(zh,en)=>collectorUiLanguage==='en'?en:zh,text=value=>String(value||'').split(' / ')[collectorUiLanguage==='en'?1:0]||String(value||'');$('captureErrorDetails').textContent=[tr('单号','RFC')+': '+order,tr('截图位置','Capture location')+': '+item.name,tr('时间','Time')+': '+item.at,tr('最终结果','Outcome')+': '+(item.outcome==='failed'?tr('失败','Failed'):item.method==='reconstructed'?tr('内容重建截图（非页面原图）','Reconstructed native content (not a live-page screenshot)'):tr('原始区域截图成功','Live original capture succeeded')),tr('错误码','Error code')+': '+(item.code||'—'),text(item.message),...item.attempts.map(a=>[tr('尝试','Attempt')+' '+a.attempt+' · '+a.stage+' · '+(a.code||'OK'),text(a.message),tr('已渲染章节数','Rendered sections')+': '+(a.articles??'—'),tr('区域尺寸与连接状态','Region size and attachment')+': '+JSON.stringify(a.bounds||null),a.stack||''].filter(Boolean).join('\n')),tr('建议：确认章节已加载和目录名称；刷新方案后重新提取。详情也保存在 ZIP 的截图诊断.json 和插件日志中。','Check section loading and native titles; refresh and extract again. Diagnostics also appear in the ZIP and plugin logs.')].filter(Boolean).join('\n\n');$('captureRetry').disabled=!!controller;$('captureErrorDialog').showModal();};list.append(button);} }
   let collectorUiLanguage='zh';
@@ -385,7 +491,7 @@ function mountNetcareCollector() {
   let generationAt=Date.now(),batchId=0;let settings = netcareDefaultSettings(), settingsReady = false, scanFinished = false, autoAttempted = false;
   const maybeAuto = () => {
     if (settingsReady && scanFinished && !controller && !autoAttempted && (settings.attachmentsEnabled || settings.textEnabled) && $('filename').value.trim()) {
-      autoAttempted = true; download(true);
+      autoAttempted = true; taskActive = true; updateCollectorButtons(); download(true);
     }
   };
   const trace=(action,message,data={},category='extraction',level='info')=>netcareLog({order,generationAt,batchId,category,level,action,message,data});
@@ -442,9 +548,74 @@ function mountNetcareCollector() {
     aiRequests.set(id,{resolve:reply=>finish(resolve,reply)});signal.addEventListener('abort',abort,{once:true});
     if(signal.aborted)return abort(); window.postMessage({source:'TP_RFC_AI_AUDIT',id,order,section:item.section,ruleSection:item.ruleSection,kind:item.kind,filename:item.filename,text:netcareRedactText(item.text)},location.origin);
   });
+  const ensureActiveEnvironment = w => {
+    if (!w || w.__netcareEnvActive) return;
+    try {
+      w.__netcareEnvActive = true;
+      const nativeRaf = w.requestAnimationFrame?.bind(w);
+      if (nativeRaf) {
+        w.requestAnimationFrame = function(cb) {
+          if (w.document?.hidden) return w.setTimeout(() => cb(w.performance?.now?.() || Date.now()), 16);
+          return nativeRaf(cb);
+        };
+      }
+      try {
+        Object.defineProperty(w.document, 'hasFocus', {
+          value: () => true,
+          configurable: true,
+          writable: true
+        });
+      } catch {}
+    } catch {}
+  };
+  const activateTab = (durationMs = 2500, restoreOpener = true) => new Promise(resolve => {
+    const id = crypto.randomUUID();
+    const timer = setTimeout(() => { window.removeEventListener('message', onMsg); resolve(false); }, 4000);
+    const onMsg = e => {
+      if (e.source === window && e.origin === location.origin && e.data?.source === 'TP_RFC_ACTIVATE_RESULT' && e.data.id === id) {
+        clearTimeout(timer);
+        window.removeEventListener('message', onMsg);
+        resolve(e.data.ok === true);
+      }
+    };
+    window.addEventListener('message', onMsg);
+    window.postMessage({ source: 'TP_RFC_ACTIVATE_REQUEST', id, order, durationMs, restoreOpener }, location.origin);
+  });
+  let autoScrollTimer = null, autoScrollPaused = false;
+  const startAutoScroll = w => {
+    if (autoScrollTimer || !w) return;
+    autoScrollPaused = false;
+    autoScrollTimer = setInterval(() => {
+      if (autoScrollPaused) return;
+      try {
+        const doc = w.document;
+        if (!doc) return;
+        const target = (globalThis.createNetcarePip?.()?.scrollTarget || (d => d.scrollingElement || d.documentElement || d.body))(doc);
+        if (!target) return;
+        const maxScroll = Math.max(0, target.scrollHeight - target.clientHeight);
+        if (maxScroll <= 10) return;
+        if (target.scrollTop >= maxScroll - 15) {
+          target.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          target.scrollBy({ top: 35, behavior: 'smooth' });
+        }
+        target.dispatchEvent(new Event('scroll', { bubbles: true }));
+        doc.defaultView?.dispatchEvent(new Event('scroll'));
+      } catch {}
+    }, 350);
+  };
+  const stopAutoScroll = () => {
+    if (autoScrollTimer) {
+      clearInterval(autoScrollTimer);
+      autoScrollTimer = null;
+    }
+  };
   const editor = () => {
     try { const w = document.getElementById('appFrame')?.contentWindow;
-      if (w?.editorApp?.Adapter && w.navigationTree?.FirstLevelTopics?.length) return w;
+      if (w?.editorApp?.Adapter && w.navigationTree?.FirstLevelTopics?.length) {
+        ensureActiveEnvironment(w);
+        return w;
+      }
     } catch {} return null;
   };
   const loadTopic = (w, topic, signal) => new Promise((resolve, reject) => {
@@ -470,11 +641,11 @@ function mountNetcareCollector() {
   };
   async function scan(automatic = false) {
     if (controller) return;
-    const w = editor(); if (!w) { status('方案尚未加载，稍后再扫描 / Wait for solution'); return; }
-    if (!settingsReady) { getName(); status('正在等待默认设置 / Waiting for settings'); return; }
+    const w = editor(); if (!w) { status('方案尚未加载，稍后再扫描 / Wait for solution'); taskActive = false; updateCollectorButtons(); return; }
+    if (!settingsReady) { getName(); status('正在等待默认设置 / Waiting for settings'); taskActive = false; updateCollectorButtons(); return; }
+    startAutoScroll(w);
     controller = new AbortController(); const signal = controller.signal;
-    scanFinished = false;
-    $('scan').disabled = $('zip').disabled = true; $('stop').disabled = false;
+    scanFinished = false; taskActive = true; updateCollectorButtons();
     topics = netcareTopicCatalogue(w.navigationTree.FirstLevelTopics);
     if (automatic && (settings.attachmentsEnabled || settings.textEnabled)) topics = netcareResolveTopics(settings,topics);
     trace('sections.resolved','章节定位完成 / Sections resolved',{automatic,topics:topics.map(t=>({number:t.number,title:t.title,ruleNumbers:t.ruleNumbers,correctionsByKind:t.correctionsByKind})),issues:topics.resolutionIssues});
@@ -511,19 +682,25 @@ function mountNetcareCollector() {
       $('count').textContent = `附件 ${attachments.length} 个 / Attachments`;
       if (!attachments.length) $('files').textContent = '未发现附件 / No attachments found';
       status(`已扫描 ${topics.length} 章，发现 ${attachments.length} 个附件；${errors} 处扫描错误。可勾选章节并下载 ZIP。`);
-      $('zip').disabled = false;
     } catch (error) { status(error.message + '；扫描未完成，需重新扫描。'); }
-    finally { controller = null; $('scan').disabled = false; $('stop').disabled = true; maybeAuto(); }
+    finally {
+      controller = null;
+      const willAuto = settingsReady && scanFinished && !autoAttempted && (settings.attachmentsEnabled || settings.textEnabled) && $('filename').value.trim();
+      if (!willAuto) stopAutoScroll();
+      taskActive = !!willAuto;
+      updateCollectorButtons();
+      maybeAuto();
+    }
   }
   async function download(automatic = false) {
     if (controller) return;
     const filename = $('filename').value.trim();
-    if (!filename) { getName(); status('请先完成 Word 下载，或填写对应 Word 文件名 / Enter Word filename'); return; }
+    if (!filename) { getName(); status('请先完成 Word 下载，或填写对应 Word 文件名 / Enter Word filename'); taskActive = false; updateCollectorButtons(); return; }
     controller = new AbortController(); const signal = controller.signal;
-    $('scan').disabled = $('zip').disabled = true; $('stop').disabled = false;
+    taskActive = true; updateCollectorButtons();
     const selection = automatic ? new Set(settings.textEnabled ? topics.filter(t=>netcareTopicRule(settings,t,'text').text).map(t=>t.number) : []) : new Set(selected);
     if(settings.aiAuditEnabled)topics.filter(t=>netcareTopicRule(settings,t,'text').textPrompt).forEach(t=>selection.add(t.number));
-    const chosen = automatic ? attachments.filter(file => settings.attachmentsEnabled && netcareTopicRule(settings,topics.find(t=>t.number===file.section)||{number:file.section},'attachments').attachments) : attachments;
+    const chosen = automatic ? attachments.filter(file => settings.attachmentsEnabled && netcareTopicRule(settings,topics.find(t=>t.number===file.section)||{number:file.section},'attachments').attachments) : attachments.filter(file => selection.has(file.section));
     const evidence = [], entries = [], used = new Set(), report = [`RFC: ${order}`, `Word: ${filename}`, `扫描完整: ${cleanScan}`, ''];
     report.push(`模式: ${automatic ? '按默认设置自动提取' : '手动全部附件与所选章节'}`);
     if(automatic)for(const topic of topics)for(const number of topic.ruleNumbers||[]){const rule=settings.sections.find(r=>r.number===number);report.push(`章节映射: ${number} ${rule?.title||''} -> ${topic.number} ${topic.title}`);}
@@ -533,9 +710,18 @@ function mountNetcareCollector() {
     let failed = topics.filter(t => t.error).length+(topics.resolutionIssues?.length||0), attachmentSuccess=0;
     try {
       const w = editor(); if (!w) throw new Error('在线编辑器连接失效，请重新加载方案');
+      startAutoScroll(w);
       const files=await netcareArtifactRequest({action:'list',order,orders:[order]}),word=files?.find(f=>f.name===filename);
       if(!word)throw Error('方案 Word 缓存缺失，请从主浮窗重新下载 / Word cache missing; download this RFC again');
       entries.push({name:filename,blob:await netcareReadArtifact(word,order,signal)});
+      for (const topic of topics) {
+        if (topic.error) report.push(`章节 ERROR: ${topic.number} ${topic.title}: ${topic.error}`);
+        if (selection.has(topic.number) && topic.text && !topic.error) {
+          const name = netcareUniqueFilename(netcareSafeFilename(`${topic.number}-${topic.title}.txt`), used);
+          evidence.push({section:topic.number,kind:'text',filename:name,text:topic.text});
+          entries.push({ name,section:topic.number,kind:'text',blob: new Blob(['\ufeff' + topic.text], { type: 'text/plain;charset=utf-8' }) }); report.push(`章节 OK: ${name}`);
+        }
+      }
       // Same native file-state check as clicking an attachment.
       if (chosen.length && chosen.some(file => !blobs.has(file.href))) {
       await throttle(signal);
@@ -577,32 +763,33 @@ function mountNetcareCollector() {
           file.savedName=saved;entries.push({ name: saved, blob,section:file.section,kind:'attachments' });attachmentSuccess++; report.push(`附件 OK: ${file.section} · ${file.name} -> ${saved} (${blob.size} bytes)`);
         } catch (error) { if (signal.aborted) throw error; failed++; report.push(`附件 ERROR: ${file.section} · ${file.name}: ${error.message}`); }
       }
-      for (const topic of topics) {
-        if (topic.error) report.push(`章节 ERROR: ${topic.number} ${topic.title}: ${topic.error}`);
-        if (selection.has(topic.number) && topic.text && !topic.error) {
-          const name = netcareUniqueFilename(netcareSafeFilename(`${topic.number}-${topic.title}.txt`), used);
-          evidence.push({section:topic.number,kind:'text',filename:name,text:topic.text});
-          entries.push({ name,section:topic.number,kind:'text',blob: new Blob(['\ufeff' + topic.text], { type: 'text/plain;charset=utf-8' }) }); report.push(`章节 OK: ${name}`);
-        }
-      }
       if(settings.screenshotsEnabled!==false){
         const shots=[];
         for(const topic of topics.filter(t=>selection.has(t.number)&&!t.error))shots.push({topic,section:topic.number,kind:'text',sourceFilename:evidence.find(e=>e.section===topic.number&&e.kind==='text')?.filename,name:`${topic.number}-${topic.title}-章节原图`});
         for(const file of chosen){const topic=topics.find(t=>t.number===file.section);if(topic)shots.push({topic,file,section:file.section,kind:'attachments',sourceFilename:file.savedName,name:`${file.section}-${file.name}-附件位置`});}
         const engine=globalThis.createNetcareCapture?.();if(!engine)throw Error('截图组件未加载，请更新扩展 / Capture component missing; update extension');
-        for(const shot of shots){
-          if(signal.aborted)throw Error('已停止 / Stopped');status('保存原始区域截图 / Screenshot: '+shot.name);
-          const diagnostic={id:crypto.randomUUID(),at:new Date().toISOString(),order,section:shot.section,name:shot.name,kind:shot.kind,attempts:[]};
-          try{
-            const capture=()=>engine.capture(w.document,shot,{signal,render:element=>netcareCaptureEvidence(element,globalThis.html2canvas,signal),attempt:attempt=>{diagnostic.attempts.push(attempt);trace('capture.attempt','截图尝试 / Capture attempt',{name:shot.name,...attempt},'extraction',attempt.ok?'debug':'warn');}});
-            const component=globalThis.createNetcarePip?.(),result=component?.withRenderLock?await component.withRenderLock(window,capture):await capture();
-            diagnostic.method=result.method;diagnostic.attempts=result.attempts;diagnostic.outcome='ok';
-            const name=result.method==='reconstructed'?shot.name.replace('章节原图','章节内容重建').replace('附件位置','附件区域重建'):shot.name;
-            for(let i=0;i<result.images.length;i++)entries.push({section:shot.section,kind:shot.kind,role:'screenshot',captureMethod:result.method,sourceFilename:shot.sourceFilename,name:netcareUniqueFilename(netcareSafeFilename(name+`-${String(i+1).padStart(3,'0')}.png`),used),blob:result.images[i]});
-            report.push(`截图 ${result.method==='reconstructed'?'FALLBACK（内容重建，非页面原图）':'OK'}: ${name} · ${result.images.length} 张`);
-            if(result.attempts.length)captureDiagnostics.push(JSON.parse(netcareRedactText(JSON.stringify(diagnostic))));
-          }catch(e){if(signal.aborted)throw e;failed++;diagnostic.outcome='failed';diagnostic.code=e.code||e.name;diagnostic.message=e.message;diagnostic.attempts=e.attempts||diagnostic.attempts;captureDiagnostics.push(JSON.parse(netcareRedactText(JSON.stringify(diagnostic))));report.push(`截图 ERROR: ${shot.name}: ${e.message}（详见截图诊断.json）`);trace('capture.failed','截图重试与兜底失败 / Capture retries and fallback failed',diagnostic,'extraction','error');}
-          renderCaptureDiagnostics();
+        if(shots.length && (document.hidden || w.document?.hidden)) {
+          await activateTab(Math.min(10000, Math.max(2500, shots.length * 1500)), true);
+          await new Promise(r => setTimeout(r, 120));
+        }
+        autoScrollPaused = true;
+        try {
+          for(const shot of shots){
+            if(signal.aborted)throw Error('已停止 / Stopped');status('保存原始区域截图 / Screenshot: '+shot.name);
+            const diagnostic={id:crypto.randomUUID(),at:new Date().toISOString(),order,section:shot.section,name:shot.name,kind:shot.kind,attempts:[]};
+            try{
+              const capture=()=>engine.capture(w.document,shot,{signal,onStuck:()=>{activateTab(3500,true);},render:element=>netcareCaptureEvidence(element,globalThis.html2canvas,signal),attempt:attempt=>{diagnostic.attempts.push(attempt);trace('capture.attempt','截图尝试 / Capture attempt',{name:shot.name,...attempt},'extraction',attempt.ok?'debug':'warn');}});
+              const component=globalThis.createNetcarePip?.(),result=component?.withRenderLock?await component.withRenderLock(window,capture):await capture();
+              diagnostic.method=result.method;diagnostic.attempts=result.attempts;diagnostic.outcome='ok';
+              const name=result.method==='reconstructed'?shot.name.replace('章节原图','章节内容重建').replace('附件位置','附件区域重建'):shot.name;
+              for(let i=0;i<result.images.length;i++)entries.push({section:shot.section,kind:shot.kind,role:'screenshot',captureMethod:result.method,sourceFilename:shot.sourceFilename,name:netcareUniqueFilename(netcareSafeFilename(name+`-${String(i+1).padStart(3,'0')}.png`),used),blob:result.images[i]});
+              report.push(`截图 ${result.method==='reconstructed'?'FALLBACK（内容重建，非页面原图）':'OK'}: ${name} · ${result.images.length} 张`);
+              if(result.attempts.length)captureDiagnostics.push(JSON.parse(netcareRedactText(JSON.stringify(diagnostic))));
+            }catch(e){if(signal.aborted)throw e;failed++;diagnostic.outcome='failed';diagnostic.code=e.code||e.name;diagnostic.message=e.message;diagnostic.attempts=e.attempts||diagnostic.attempts;captureDiagnostics.push(JSON.parse(netcareRedactText(JSON.stringify(diagnostic))));report.push(`截图 ERROR: ${shot.name}: ${e.message}（详见截图诊断.json）`);trace('capture.failed','截图重试与兜底失败 / Capture retries and fallback failed',diagnostic,'extraction','error');}
+            renderCaptureDiagnostics();
+          }
+        } finally {
+          autoScrollPaused = false;
         }
         if(captureDiagnostics.length)entries.push({name:netcareUniqueFilename('截图诊断.json',used),blob:new Blob([JSON.stringify(captureDiagnostics,null,2)],{type:'application/json'})});
       }
@@ -626,10 +813,15 @@ function mountNetcareCollector() {
 
       }
       const materials=entries.filter(e=>e.section).map(e=>({name:e.name,section:e.section,kind:e.kind,role:e.role,captureMethod:e.captureMethod,sourceFilename:e.sourceFilename,folder:netcareSectionFolder(settings,topics.find(t=>t.number===e.section)||{number:e.section},e.kind)}));
-      for(const entry of entries.filter(e=>e.section)){try{await netcareStoreArtifact(order,entry.name,entry.blob,signal);}catch(error){failed++;report.push('材料缓存 ERROR: '+entry.name+': '+error.message);}}
+      for(const entry of entries.filter(e=>e.section)){try{await netcareStoreArtifact(order,entry.name,entry.blob,signal,entry.role||entry.kind);}catch(error){failed++;report.push('材料缓存 ERROR: '+entry.name+': '+error.message);}}
       entries.push({ name: netcareUniqueFilename('清单.txt', used), blob: new Blob(['\ufeff' + report.join('\n')], { type: 'text/plain;charset=utf-8' }) });
       if(signal.aborted)throw Error('已停止 / Stopped');status('正在生成 ZIP… / Building ZIP');
-      const zip=await createNetcareZip(entries.map(e=>({...e,name:materials.find(m=>m.name===e.name)?.folder?materials.find(m=>m.name===e.name).folder+'/'+e.name:e.name}))),bundleFilename=netcareSafeFilename(filename.replace(/\.docx$/i,'')+'.zip');
+      const zip=await createNetcareZip(entries.map(e=>{
+        const mat=materials.find(m=>m.name===e.name);
+        if(!mat?.folder)return e;
+        const subFolder=e.role==='screenshot'?'方案截图':e.kind==='attachments'?'方案附件':'方案文本';
+        return {...e,name:mat.folder+'/'+subFolder+'/'+e.name};
+      })),bundleFilename=netcareSafeFilename(filename.replace(/\.docx$/i,'')+'.zip');
       try{await netcareStoreArtifact(order,bundleFilename,zip,signal,'audit-bundle');trace('bundle.cached','最终审计 ZIP 已缓存 / Final audit ZIP cached',{name:bundleFilename,bytes:zip.size,files:entries.length},'storage');}catch(error){failed++;trace('bundle.cache.failed','审计 ZIP 缓存失败 / Audit ZIP cache failed',{error:error.message},'storage','error');}
       await netcareLogQueue;
       const published=new Promise(resolve=>{const timer=setTimeout(()=>{window.removeEventListener('message',ack);resolve(false);},15000);const ack=e=>{if(e.source===window&&e.origin===location.origin&&e.data?.source==='TP_RFC_AUDIT_PUBLISHED'&&e.data.order===order){clearTimeout(timer);window.removeEventListener('message',ack);if(e.data.snapshotError){trace('snapshot.ack.failed','快照保存失败 / Snapshot save failed',{error:e.data.snapshotError},'storage','error');status($('status').textContent+'\n快照保存失败 / Snapshot save failed: '+e.data.snapshotError);}resolve(e.data.ok===true&&!e.data.snapshotError);}};window.addEventListener('message',ack);});
@@ -641,14 +833,25 @@ function mountNetcareCollector() {
       status(`ZIP 已发起保存：${a.download}\n${attachmentSuccess} 个附件成功；${failed} 处提取/缓存错误（详见清单）；${reports.filter(r=>r.error).length} 项审计异常；${entries.length - 1} 个数据文件。`);
       if(settings.closeAfterAudit){const reason=netcareAutoCloseReason({settings,reports,failed,cached,published:await published,aborted:signal.aborted});if(reason)status($('status').textContent+'\n自动关闭已暂停 / Automatic close paused: '+reason);else window.postMessage({source:'TP_RFC_CLOSE_AFTER_AUDIT',order},location.origin);}
     } catch (error) {trace('extraction.failed','提取或打包失败 / Extraction or packaging failed',{error:error.message},'extraction',signal.aborted?'warn':'error');status(error.message); }
-    finally { controller = null; $('scan').disabled = $('zip').disabled = false; $('stop').disabled = true;renderCaptureDiagnostics(); }
+    finally { stopAutoScroll(); controller = null; taskActive = false; updateCollectorButtons(); renderCaptureDiagnostics(); }
   }
-  $('scan').onclick = () => scan(false); $('zip').onclick = () => { autoAttempted = true; download(false); }; $('stop').onclick = () => controller?.abort();
+  $('scan').onclick = () => { if (isTaskRunning()) return; scan(false); };
+  $('zip').onclick = () => { if (isTaskRunning()) return; autoAttempted = true; download(false); };
+  $('stop').onclick = () => { stopAutoScroll(); controller?.abort(); taskActive = false; updateCollectorButtons(); };
   $('all').onchange = () => {
     for (const box of $('chapters').querySelectorAll('input:not(:disabled)')) { box.checked = $('all').checked; box.onchange(); }
   };
-  const timer = setInterval(() => { if (editor() && settingsReady) { clearInterval(timer); scan(true); } }, 1000);
-  const cleanup = () => {trace('collector.closed','关闭采集浮窗 / Close collector',{},'operation');unwireOperations();collectorLanguage?.stop();healthSampler?.stop();controls?.close();controller?.abort(); clearInterval(timer); clearInterval(nameTimer); window.removeEventListener('message', receive); window.removeEventListener('message', receiveSlot); blobs.clear(); host.remove(); };
+  const timer = setInterval(() => {
+    if (editor() && settingsReady) {
+      clearInterval(timer);
+      scan(true);
+    } else if (settingsReady && !settings.attachmentsEnabled && !settings.textEnabled) {
+      clearInterval(timer);
+      taskActive = false;
+      updateCollectorButtons();
+    }
+  }, 1000);
+  const cleanup = () => { stopAutoScroll(); trace('collector.closed','关闭采集浮窗 / Close collector',{},'operation');unwireOperations();collectorLanguage?.stop();healthSampler?.stop();controls?.close();controller?.abort(); clearInterval(timer); clearInterval(nameTimer); window.removeEventListener('message', receive); window.removeEventListener('message', receiveSlot); blobs.clear(); host.remove(); };
   window.__netcareCollectorCleanup = cleanup; $('close').onclick = cleanup;
 }
 
@@ -773,7 +976,7 @@ function mountNetcareCollector() {
           anchor.href = objectURL;
           anchor.download = `${order}_${filename.replace(/[\\/:*?"<>|\u0000-\u001f]/g, '_').replace(/\.docx$/i, '')}.docx`;
           let cached=true;
-          try{await netcareStoreArtifact(order,anchor.download,blob,signal);}catch(error){cached=false;progress('方案缓存失败，将单独保存 Word / Word cache failed; saving Word separately: '+error.message);}
+          try{await netcareStoreArtifact(order,anchor.download,blob,signal,'word');}catch(error){cached=false;progress('方案缓存失败，将单独保存 Word / Word cache failed; saving Word separately: '+error.message);}
           if(signal.aborted)throw Error('已停止 / Stopped');
           if(!message.bundleOnly||!cached){document.body.append(anchor);anchor.click();anchor.remove();}
           setTimeout(() => URL.revokeObjectURL(objectURL), 60000);
@@ -836,11 +1039,79 @@ function mountNetcareCollector() {
     .badge{font-size:10px;color:var(--muted);display:inline-block;background:var(--soft);padding:3px 7px;border-radius:5px;margin-bottom:10px}textarea,input[type=text],input[type=number],select{border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);padding:8px;min-width:0}textarea{display:block;width:100%;resize:vertical;min-height:78px;max-height:160px;font:12px/1.6 ui-monospace,monospace;margin:5px 0 9px}input[type=checkbox]{accent-color:var(--accent);width:14px;height:14px;margin:0;vertical-align:middle}
     .actions{display:flex;gap:7px;margin:11px 0}.primary{background:var(--accent);color:#fff;border-color:var(--accent)}.primary:hover{background:#1d4ed8}.actions .primary{flex:1}.summary{font-size:10px;color:var(--muted);padding:7px 0;border-bottom:1px solid var(--line)}#results{max-height:280px;overflow:auto}pre{font:11px/1.55 system-ui;white-space:pre-wrap;overflow-wrap:anywhere;background:var(--soft);border-radius:7px;padding:9px;margin:10px 0 0;max-height:100px;overflow:auto}.panel small{display:block;color:var(--muted);font-size:10px;margin-top:9px}
     dialog{font:12px/1.5 system-ui,sans-serif;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:16px;padding:0;width:min(1100px,calc(100vw - 40px));max-width:none;height:min(820px,calc(100vh - 48px));max-height:none;box-shadow:0 24px 80px #0004;overflow:hidden}dialog::backdrop{background:#101b3566;backdrop-filter:blur(3px)}.settings-shell{height:100%;display:flex;flex-direction:column}.modal-head{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--line)}.modal-head h2{font-size:18px;margin:0;font-weight:650}.modal-head p{margin:3px 0 0;color:var(--muted);font-size:11px}.modal-nav{display:flex;gap:6px;padding:12px 24px 0}.modal-nav button{border:0;background:transparent;color:var(--muted)}.modal-nav button[aria-selected=true]{background:var(--hover);color:var(--accent);font-weight:600}.modal-body{flex:1;min-height:0;overflow:auto;padding:18px 24px}.modal-footer{display:flex;gap:8px;align-items:center;padding:14px 24px;border-top:1px solid var(--line);background:var(--soft)}#settingsStatus{flex:1;font-size:11px;color:var(--muted)}.settings-card{border:1px solid var(--line);border-radius:10px;padding:17px;margin-bottom:14px}.settings-card h3{font-size:13px;margin:0 0 14px}.field-row{display:grid;grid-template-columns:1fr 150px;gap:20px;align-items:center;padding:11px 0;border-top:1px solid var(--line)}.field-row:first-of-type{border-top:0}.field-row label{font-weight:500}.field-row small,.note{display:block;font-size:11px;color:var(--muted);margin-top:4px}.field-row select,.field-row input[type=number]{width:100%}.switch-row{display:flex;gap:9px;align-items:center;margin:12px 0}.section-toolbar{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px}.section-toolbar strong{font-size:13px}.section-table{border:1px solid var(--line);border-radius:8px;overflow:hidden}.section-grid{display:grid;grid-template-columns:154px minmax(180px,1fr) 38px 38px minmax(130px,1fr) minmax(130px,1fr) 26px;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line)}.section-grid:last-child{border-bottom:0}.section-grid.table-head{background:var(--soft);font-size:10px;color:var(--muted);position:sticky;top:0;z-index:1}.section-grid input[type=text]{width:100%;padding:6px;font-size:11px}.section-grid[data-depth="0"]{background:var(--soft);border-left:3px solid var(--accent)}.section-grid[data-depth="1"]{background:var(--bg);border-left:3px solid var(--line)}.section-grid[data-depth="2"]{background:var(--hover);border-left:3px solid var(--line)}.section-number{position:relative;display:flex;align-items:center;min-width:0;padding-left:calc(var(--depth,0)*18px)}.section-number input{flex:1;min-width:0}.tree-branch{position:absolute;left:0;top:-24px;bottom:-24px;width:calc(var(--depth,0)*18px);pointer-events:none;color:var(--muted)}.tree-branch i{position:absolute;top:0;bottom:0;border-left:1px solid currentColor;opacity:.5}.tree-branch b{position:absolute;top:50%;width:14px;border-top:1px solid currentColor;opacity:.7}.section-grid input[data-field=title]{width:calc(100% - var(--depth,0)*12px);margin-left:calc(var(--depth,0)*12px);padding:6px}.section-number input[data-field=number]{padding:6px}.section-grid textarea:disabled{background:var(--soft);color:var(--muted);opacity:.7;cursor:not-allowed}.section-grid .check-cell{text-align:center}.section-grid textarea{font:11px/1.4 system-ui;margin:0;padding:6px;min-height:56px;max-height:140px;resize:vertical}.section-table{overflow:auto}.section-grid{min-width:750px}#aiFrame{border:0;width:100%;height:610px;border-radius:10px}.section-grid.section-new{animation:section-highlight 1.8s ease-out}@keyframes section-highlight{from{box-shadow:inset 0 0 0 2px var(--accent)}to{box-shadow:inset 0 0 0 2px transparent}}@media(prefers-reduced-motion:reduce){.section-grid.section-new{animation:none;box-shadow:inset 0 0 0 2px var(--accent)}}.section-add{background:var(--soft)}.section-add .config-actions{margin-top:12px}.section-add select{width:100%;margin:7px 0}.section-add p{margin:6px 0;color:var(--muted)}.section-grid .delete{font-size:17px;padding:2px;width:28px;border:0;color:var(--muted)}.config-actions{display:flex;gap:8px;flex-wrap:wrap}.note{margin:10px 0 16px}
+    .local-rule-grid{display:grid;grid-template-columns:46px minmax(130px,1.2fr) minmax(100px,1fr) 68px minmax(140px,1.5fr) 88px 76px;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);font-size:11px}.local-rule-grid:last-child{border-bottom:0}.local-rule-grid.table-head{background:var(--soft);font-size:10px;color:var(--muted);position:sticky;top:0;z-index:1}.local-rule-actions{display:flex;gap:4px}.local-rule-actions button{padding:3px 6px;font-size:10px}
+    .storage-multi-bar{display:flex;width:100%;height:14px;background:var(--line);border-radius:7px;overflow:hidden;margin:8px 0 12px;box-shadow:inset 0 1px 2px rgba(0,0,0,.06)}.storage-bar-segment{height:100%;transition:width .3s ease;min-width:0}.storage-breakdown-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;margin:10px 0 14px}.storage-breakdown-card{display:flex;align-items:center;gap:8px;background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:11px}.storage-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}.storage-breakdown-info{display:flex;flex-direction:column;min-width:0;flex:1}.storage-breakdown-name{font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.storage-breakdown-meta{color:var(--muted);font-size:10px}.materials-clean-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;margin:10px 0}.materials-clean-chip{display:flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid var(--line);border-radius:7px;background:var(--soft);font-size:11px;cursor:pointer}.materials-clean-chip small{color:var(--muted);margin-left:auto}
     .modal-body.chapter-mode{overflow:hidden;display:flex;flex-direction:column}#chapterSettings{flex:1;min-height:0;display:flex;flex-direction:column}#chapterSettings>.section-toolbar,#chapterSettings>.note,#chapterSettings>.switch-row{flex:none}#chapterSettings .section-table{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable}#chapterSettings .section-add{margin:10px;min-width:720px}#chapterSettings .section-grid{min-width:900px}#chapterSettings .table-head{z-index:2}.section-correction{border-top:1px solid var(--line);margin-top:12px;padding-top:10px;font-weight:500}.correction-label{font-size:10px;color:var(--muted);margin-bottom:6px}.correction-from{color:#9e661b}.correction-arrow{color:var(--muted);font-size:18px;line-height:1.4;padding-left:6px}.correction-to{color:#176f9c;font-weight:650}@media(prefers-color-scheme:dark){.correction-from{color:#d6b16a}.correction-to{color:#76c7dc}}
 
     .audit-shots{display:grid;gap:10px;margin-top:12px}.audit-shot{padding:8px;width:100%;display:flex;flex-direction:column;gap:6px;align-items:stretch;text-align:left;overflow:hidden;background:var(--soft)}.audit-shot img{display:block;width:100%;height:150px;object-fit:contain;border-radius:5px;background:#fff}.audit-shot span{font-size:10px;overflow-wrap:anywhere;color:var(--muted)}.audit-shot:hover{border-color:var(--accent)}#auditImageDialog{width:min(1200px,calc(100vw - 32px));height:calc(100vh - 40px);padding:0;background:var(--bg);color:var(--ink)}#auditImageDialog .settings-shell{height:100%}.audit-image-body{flex:1;min-height:0;overflow:auto;padding:16px;display:grid;place-items:center;background:var(--soft)}#auditImage{display:block;max-width:100%;max-height:100%;object-fit:contain;background:#fff;cursor:zoom-in}#auditImage.actual-size{max-width:none;max-height:none;cursor:zoom-out}.audit-image-body:has(.actual-size){display:block}#auditImageName{overflow-wrap:anywhere;max-width:900px}#auditImageDialog::backdrop{background:rgba(0,0,0,.7)}
 
-    #confirmationDialog{width:min(520px,calc(100vw - 32px));height:auto;max-height:calc(100vh - 40px)}#confirmationMessage{white-space:pre-wrap;overflow-wrap:anywhere;padding:8px 24px 20px;line-height:1.8}#confirmationDialog .modal-footer{justify-content:flex-end}#confirmationAccept.danger{background:#b6454c;border-color:#b6454c}.modal-body.log-mode{overflow:hidden;display:flex;flex-direction:column}#pluginLogs:not([hidden]){display:flex;flex-direction:column;flex:1;min-height:0}.log-filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.log-filters label{font-size:10px;color:var(--muted)}.log-filters select,.log-filters input{background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:7px 9px;font:inherit;display:block;width:100%;margin-top:4px;min-width:0}.log-search{grid-column:span 2}.log-advanced{margin-top:8px;flex:none}.log-advanced summary{color:var(--muted);cursor:pointer;font-size:11px}.log-advanced .log-filters{padding-top:8px}.log-advanced[open]{max-height:150px;overflow:auto}.log-filters,.log-actions,.log-pagination{flex:none}.log-actions{margin-top:12px;align-items:center}.log-actions label{display:flex;gap:6px;font-size:11px;align-items:center}#pluginLogStatus{margin:10px 0;flex:none}.plugin-log-list{flex:1;min-height:0;overflow:auto;border:1px solid var(--line);border-radius:9px;background:var(--soft);overscroll-behavior:contain}.log-entry{--log-color:#4076ac;margin:0;padding:12px 14px;border-bottom:1px solid var(--line);border-left:3px solid var(--log-color);background:var(--bg);overflow-wrap:anywhere}.log-entry[data-category=configuration]{--log-color:#8d68b8}.log-entry[data-category=extraction]{--log-color:#318b84}.log-entry[data-category=audit]{--log-color:#5088bb}.log-entry[data-category=storage]{--log-color:#a6803f}.log-entry[data-category=system]{--log-color:#78869c}.log-entry[data-level=error]{border-left-color:#d96570}.log-entry[data-level=warn]{border-left-color:#ba9241}.log-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:10px}.log-badge{color:var(--log-color);border:1px solid currentColor;border-radius:4px;padding:1px 5px}.log-level.error{color:#d96570}.log-level.warn{color:#ba9241}.log-message{margin:6px 0;font-size:12px}.log-entry code{font:10px ui-monospace,monospace;color:var(--muted)}.log-entry details{margin-top:6px}.log-entry pre{max-height:220px}.log-entry button{padding:2px 6px;font-size:10px}.log-entry mark{background:#ffdb78;color:#293145;border-radius:2px}.log-pagination{display:flex;gap:12px;justify-content:center;align-items:center;padding-top:10px;font-size:11px}@media(max-width:650px){.log-filters{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.log-actions{gap:5px}.log-actions button{padding:6px;font-size:10px}.log-filters input,.log-filters select{padding:5px}.log-pagination{padding-top:6px}.log-entry{padding:9px}.modal-nav{flex-wrap:wrap}}@media(prefers-color-scheme:dark){.log-entry{--log-color:#86afe0}.log-entry[data-category=configuration]{--log-color:#b799df}.log-entry[data-category=extraction]{--log-color:#6dc3b8}.log-entry[data-category=audit]{--log-color:#88b8df}.log-entry[data-category=storage]{--log-color:#d0b277}.log-entry[data-category=system]{--log-color:#a4b2c9}}
+    #confirmationDialog{width:min(520px,calc(100vw - 32px));height:auto;max-height:calc(100vh - 40px)}#confirmationMessage{white-space:pre-wrap;overflow-wrap:anywhere;padding:8px 24px 20px;line-height:1.8}#confirmationDialog .modal-footer{justify-content:flex-end}#confirmationAccept.danger{background:#b6454c;border-color:#b6454c}.modal-body.log-mode{overflow:hidden;display:flex;flex-direction:column}#pluginLogs:not([hidden]){display:flex;flex-direction:column;flex:1;min-height:0}.log-filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.log-filters label{font-size:10px;color:var(--muted)}.log-filters select,.log-filters input{background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:7px 9px;font:inherit;display:block;width:100%;margin-top:4px;min-width:0}.log-search{grid-column:span 2}.log-advanced{margin-top:8px;flex:none}.log-advanced summary{color:var(--muted);cursor:pointer;font-size:11px}.log-advanced .log-filters{padding-top:8px}.log-advanced[open]{max-height:150px;overflow:auto}.log-filters,.log-actions,.log-pagination{flex:none}.log-actions{margin-top:10px;align-items:center}.log-actions label{display:flex;gap:6px;font-size:11px;align-items:center}#pluginLogStatus{margin:8px 0;flex:none}
+    .plugin-log-list{flex:1;min-height:0;overflow:auto;border:1px solid var(--line);border-radius:8px;background:var(--soft);overscroll-behavior:contain;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:10.5px;color:var(--ink)}
+    .log-row{border-bottom:1px solid var(--line);border-left:3px solid transparent;background:var(--bg);transition:background .08s}
+    .log-row:hover{background:var(--hover)}
+    .log-row[data-category=configuration]{--log-color:#7c3aed}
+    .log-row[data-category=extraction]{--log-color:#0d9488}
+    .log-row[data-category=audit]{--log-color:#2563eb}
+    .log-row[data-category=storage]{--log-color:#d97706}
+    .log-row[data-category=operation]{--log-color:#0284c7}
+    .log-row[data-category=system]{--log-color:#64748b}
+    .log-row[data-level=error]{border-left-color:#dc2626;background:rgba(220,38,38,0.03)}
+    .log-row[data-level=warn]{border-left-color:#d97706;background:rgba(217,119,6,0.02)}
+    .log-row.is-open{background:rgba(37,99,235,0.04)}
+    .log-row-line{display:flex;align-items:center;gap:7px;padding:3px 8px;min-height:22px;line-height:20px;cursor:pointer;white-space:nowrap;user-select:text}
+    .log-arrow{color:var(--muted);font-size:10px;width:11px;flex:none;text-align:center;transition:transform .12s}
+    .log-row.is-open .log-arrow{transform:rotate(90deg)}
+    .log-time{color:var(--muted);font-size:10px;flex:none}
+    .log-cat{color:var(--log-color);font-weight:600;flex:none}
+    .log-level{flex:none;font-weight:600;font-size:10px;padding:0 3px;border-radius:3px}
+    .log-level.error{color:#dc2626;background:rgba(220,38,38,0.1)}
+    .log-level.warn{color:#d97706;background:rgba(217,119,6,0.1)}
+    .log-level.info{color:#16a34a}
+    .log-level.debug{color:var(--muted)}
+    .log-order{color:#0284c7;font-weight:500;flex:none}
+    .log-order.empty{color:var(--muted);opacity:.5}
+    .log-action{color:#8b5cf6;background:rgba(139,92,246,0.08);padding:0 4px;border-radius:3px;font-size:10px;flex:none}
+    .log-msg{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink)}
+    .log-snap-btn{padding:1px 5px;font-size:9.5px;border-radius:4px;background:var(--soft);color:var(--accent);border:1px solid var(--line);flex:none;cursor:pointer}
+    .log-snap-btn:hover{background:var(--hover);border-color:var(--accent)}
+    .log-row-detail{padding:8px 12px 10px 26px;border-top:1px dashed var(--line);background:var(--soft);overflow:hidden}
+    .log-detail-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:8px}
+    .log-detail-meta{font-size:10px;color:var(--muted)}
+    .log-detail-actions{display:flex;gap:6px}
+    .log-detail-actions button{padding:2px 8px;font-size:10px;border-radius:4px}
+    .log-detail-pre{margin:0;max-height:240px;overflow:auto;padding:8px;background:var(--bg);border:1px solid var(--line);border-radius:6px;font:inherit;font-size:10.5px;line-height:1.45;color:var(--ink);white-space:pre-wrap;overflow-wrap:anywhere}
+    .log-detail-pre mark,.log-msg mark,.log-action mark,.log-order mark{background:#ffdb78;color:#293145;border-radius:2px}
+    .log-pagination{display:flex;gap:12px;justify-content:center;align-items:center;padding-top:10px;font-size:11px}
+    .log-fs-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+    #settingsDialog.log-fullscreen-mode{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;max-width:none!important;max-height:none!important;border-radius:0!important;border:0!important;box-shadow:none!important;margin:0!important;z-index:2147483647!important}
+    #settingsDialog.log-fullscreen-mode .settings-shell{height:100vh!important}
+    #settingsDialog.log-fullscreen-mode .modal-body.log-mode{padding:12px 24px!important}
+    #settingsDialog.log-fullscreen-mode .plugin-log-list{font-size:12.5px!important}
+    #settingsDialog.log-fullscreen-mode .log-row-line{min-height:26px!important;line-height:24px!important;font-size:12px!important;gap:9px!important}
+    #settingsDialog.log-fullscreen-mode .log-time{font-size:11.5px!important}
+    #settingsDialog.log-fullscreen-mode .log-action{font-size:11.5px!important}
+    #settingsDialog.log-fullscreen-mode .log-order{font-size:11.5px!important}
+    #settingsDialog.log-fullscreen-mode .log-detail-pre{font-size:12px!important;max-height:450px!important}
+    @media(max-width:650px){.log-filters{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.log-actions{gap:5px}.log-actions button{padding:6px;font-size:10px}.log-filters input,.log-filters select{padding:5px}.log-pagination{padding-top:6px}.log-row-line{overflow-x:auto}.modal-nav{flex-wrap:wrap}}
+    @media(prefers-color-scheme:dark){
+      .plugin-log-list{background:#0e1726}
+      .log-row[data-category=configuration]{--log-color:#a78bfa}
+      .log-row[data-category=extraction]{--log-color:#2dd4bf}
+      .log-row[data-category=audit]{--log-color:#60a5fa}
+      .log-row[data-category=storage]{--log-color:#fbbf24}
+      .log-row[data-category=operation]{--log-color:#38bdf8}
+      .log-row[data-category=system]{--log-color:#94a3b8}
+      .log-row[data-level=error]{border-left-color:#f87171;background:rgba(248,113,113,0.06)}
+      .log-row[data-level=warn]{border-left-color:#fbbf24;background:rgba(251,191,36,0.05)}
+      .log-level.error{color:#f87171;background:rgba(248,113,113,0.18)}
+      .log-level.warn{color:#fbbf24;background:rgba(251,191,36,0.18)}
+      .log-level.info{color:#4ade80}
+      .log-order{color:#38bdf8}
+      .log-action{color:#c084fc;background:rgba(192,132,252,0.14)}
+      .log-row.is-open{background:rgba(59,130,246,0.08)}
+      .log-row-detail{background:#111c2e}
+      .log-detail-pre{background:#0b1320;border-color:#1e293b}
+    }
     #auditSummaryBody{padding:0 24px 24px;background:var(--bg);scrollbar-gutter:stable}.audit-table thead{position:sticky;top:0;z-index:3;background:var(--soft)}.audit-table thead th{position:static;background:var(--soft);border-bottom:1px solid var(--line)}.audit-table thead::after{content:"";position:absolute;left:0;right:0;bottom:0;border-bottom:1px solid var(--line)}#auditSummaryDialog{width:min(1560px,calc(100vw - 40px));height:calc(100vh - 48px)}.audit-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:12px 24px;border-bottom:1px solid var(--line);background:var(--soft)}.audit-toolbar span{font-size:11px;color:var(--muted)}.audit-table{width:100%;min-width:1000px;border-collapse:separate;border-spacing:0;table-layout:fixed;font-size:11px}.audit-table th{background:var(--soft);text-align:left;font-size:11px;padding:12px;border-top:1px solid var(--line)}.audit-table td{padding:14px 12px;vertical-align:top;border-top:1px solid var(--line);border-right:1px solid var(--line);overflow-wrap:anywhere;line-height:1.65}.audit-table td:first-child{border-left:1px solid var(--line)}.audit-table .group-cell{background:var(--soft);font-weight:600}.audit-table pre{max-height:200px;font-size:11px}.audit-table details{margin:8px 0}.audit-table summary{cursor:pointer}.audit-table .rule-label{font-weight:600;margin:8px 0}.audit-table .kind-label{font-size:10px;color:var(--muted)}.audit-table .group-start td{border-top:2px solid var(--accent)}.audit-rfc{border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px}.audit-rfc>summary{font-weight:650;cursor:pointer}.audit-card{border-top:1px solid var(--line);margin-top:14px;padding-top:14px}.audit-card h4{margin:0 0 6px;font-size:13px}.audit-state{display:inline-block;border-radius:5px;padding:3px 7px;background:var(--soft);font-size:11px;margin-bottom:5px}.audit-state.pass{color:#27a77b}.audit-state.fail{color:#e36d72}.audit-state.needs_review{color:#cd9b34}.audit-card pre{max-height:220px}.audit-card details{margin-top:8px}.audit-card p{margin:5px 0;overflow-wrap:anywhere}
     @media(prefers-color-scheme:dark){:host{--bg:#182235;--soft:#131d2d;--ink:#e3eaf5;--muted:#97a8c0;--line:#314058;--accent:#4386f5;--hover:#24344d;color-scheme:dark}}
     @media(max-height:600px){#settingsDialog:has(.modal-body.log-mode) #settingsStatus{display:none}#settingsDialog:has(.modal-body.log-mode) .modal-footer{flex-wrap:nowrap;justify-content:flex-end}#settingsDialog:has(.modal-body.log-mode) .modal-head p{display:none}.log-advanced[open]{max-height:80px}.log-primary{grid-template-columns:repeat(3,minmax(0,1fr))!important}.log-primary .log-search{grid-column:auto}.modal-nav{flex-wrap:nowrap!important;overflow-x:auto;flex-shrink:0}.modal-nav button{white-space:nowrap;flex:none}.log-actions{margin-top:6px}#pluginLogStatus{margin:5px 0}.modal-body.log-mode{padding-top:10px;padding-bottom:10px}#chapterSettings>.note{display:none}#chapterSettings>.section-toolbar{margin-bottom:6px}#chapterSettings>.switch-row{margin:8px 0}}
@@ -853,11 +1124,11 @@ function mountNetcareCollector() {
     <button id="pipOverview" style="width:100%" hidden>方案总览 · Beta / Solution overview · Beta</button><button id="auditResultsButton" style="width:100%">审计结果 / Audit results</button><div id="results" role="status"></div><pre id="log" role="status">输入单号开始下载 / Enter RFC numbers to start</pre><small>Ctrl / ⌘ + Enter 快速启动 · 配置保存在当前浏览器</small>
   </section>
   <dialog id="settingsDialog" aria-labelledby="settingsTitle"><div class="settings-shell"><div class="modal-head"><div><h2 id="settingsTitle">工具设置 / Settings</h2><p>下载偏好、章节规则与配置管理 / Preferences, sections & configuration</p></div><button id="settingsClose" class="icon" aria-label="关闭设置 / Close settings">×</button></div>
-  <div class="modal-nav" role="tablist" aria-label="设置分类"><button id="generalTab" role="tab" aria-selected="true" aria-controls="generalSettings">常规 / General</button><button id="sectionsTab" role="tab" aria-selected="false" aria-controls="chapterSettings">章节规则 / Sections</button><button id="storageTab" role="tab" aria-selected="false" aria-controls="storageSettings">存储与快照 / Storage & snapshots</button><button id="logsTab" role="tab" aria-selected="false" aria-controls="pluginLogs">插件日志 / Plugin logs</button><button id="performanceTab" role="tab" aria-selected="false" tabindex="-1">性能监控 / Performance</button><button id="aiTab" role="tab" aria-selected="false" aria-controls="aiSettings">AI 对接 / AI models</button></div>
+  <div class="modal-nav" role="tablist" aria-label="设置分类"><button id="generalTab" role="tab" aria-selected="true" aria-controls="generalSettings">常规 / General</button><button id="sectionsTab" role="tab" aria-selected="false" aria-controls="chapterSettings">章节规则 / Sections</button><button id="localRulesTab" role="tab" aria-selected="false" aria-controls="localRulesSettings">本地审计规则 / Local rules</button><button id="storageTab" role="tab" aria-selected="false" aria-controls="storageSettings">存储与快照 / Storage & snapshots</button><button id="logsTab" role="tab" aria-selected="false" aria-controls="pluginLogs">插件日志 / Plugin logs</button><button id="performanceTab" role="tab" aria-selected="false" tabindex="-1">性能监控 / Performance</button><button id="aiTab" role="tab" aria-selected="false" aria-controls="aiSettings">AI 对接 / AI models</button></div>
   <div class="modal-body"><div id="generalSettings" role="tabpanel" aria-labelledby="generalTab"><div class="settings-card"><h3>下载与在线方案 / Download preferences</h3><div class="field-row"><div><label for="concurrency">Word 下载并发数 / Concurrency</label><small>同时处理 1–10 个下载任务 / Process 1–10 downloads at once</small></div><select id="concurrency"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option></select></div><div class="field-row"><div><label for="openOnline">同时在线打开方案 / Open online</label><small>独立开关。只下载 Word 时关闭此项和自动提取。 / Independent switch; disable for Word only.</small></div><input id="openOnline" type="checkbox"></div><div class="field-row"><div><label for="readInterval">采集请求间隔（秒） / Request interval</label><small>多个在线方案页共享间隔，范围 1–30 秒</small></div><input type="number" id="readInterval" min="1" max="30" step="0.5"></div></div>
   <div class="settings-card"><h3>AI 审计 / AI audit</h3><label class="switch-row"><input type="checkbox" id="aiAuditEnabled">开启 AI 审计 / Enable AI audit</label><p class="note">开启后向配置的模型发送有规则的章节文本和 TXT 附件。其它文件标记为需人工检查。先在“AI 对接”保存模型。 / Sends selected evidence to your model.</p></div><div class="settings-card"><h3>自动提取 / Automatic extraction</h3><label class="switch-row"><input type="checkbox" id="autoAttachments">指定章节的附件 / Section attachments</label><label class="switch-row"><input type="checkbox" id="autoText">指定章节的文本 / Section text</label><label class="switch-row"><input type="checkbox" id="screenshotsEnabled">保存原始区域截图（PNG） / Save source screenshots</label><label class="switch-row"><input type="checkbox" id="closeAfterAudit">审计完成后自动关闭在线方案页签 / Close online tabs after audit</label><p class="note">汇总保存并发起 ZIP 下载后关闭；异常或停止时保留页签。 / Closes after saving results and starting ZIP download; keeps tabs on errors or stop.</p><p class="note">开启后在线提取所选章节并打包；AI 审计会自动启用有提示词的必需提取。 / Select sections in the next tab; ZIP follows Word export.</p></div>
   <div class="settings-card"><h3>配置管理 / Configuration</h3><iframe id="backupFrame" title="完整配置备份 / Full configuration backup" style="width:100%;height:230px;border:0"></iframe><div class="config-actions"><button id="importSettings" hidden>导入 JSON / Import</button><button id="exportSettings" hidden>导出 JSON / Export</button><button id="resetSections">恢复默认 / Reset</button></div><input id="importFile" type="file" accept=".json,application/json" hidden><p class="note">导出已保存配置。修改后先保存，再导出完整备份；导入完整备份立即恢复。 / Save changes before backup; import restores immediately.</p></div><div class="settings-card"><h3>测试功能 / Experimental features</h3><label class="switch-row"><input type="checkbox" id="pipBetaEnabled">在线方案画中画总览（Beta） / Online solution previews (Beta)</label><p class="note">默认关闭。在线方案保留在后台页签，主页面定期更新只读预览；点击放大，拖动标题移动，右下角等比缩放。原页面操作可打开原页。 / Off by default. Keeps background tabs and periodically refreshes read-only previews. Click to enlarge, drag headers to move and corners to resize. Open the original tab for native controls.</p></div></div>
-  <div id="chapterSettings" role="tabpanel" aria-labelledby="sectionsTab" hidden><div class="section-toolbar"><strong>章节模板 <span id="sectionCount"></span> / Sections</strong><button id="addSection" aria-expanded="false" aria-controls="sectionAddPanel">＋ 添加章节 / Add</button></div><p class="note">父章节包含全部子章节；子章节继承选择与提示词并锁定，清空父规则后可独立设置。文件名使用实际章节。 / Parents include descendants; inherited selections and rules are locked until the parent rule is cleared.</p><label class="switch-row"><input type="checkbox" id="titleFallbackEnabled">序号缺失或名称不符时按章节名称纠错 / Correct by title when numbers are missing or titles differ</label><p class="note">开启后同时核对编号和完整名称；编号缺失或名称不符时按名称纠错，结果显示纠错前后章节。继承子章节始终限定在所选父章节范围；同名章节无法唯一定位时提示核查。 / Checks numbers and full titles, corrects missing numbers or mismatched titles and shows before/after sections. Inherited children stay within the matched parent; ambiguous titles require review.</p><div class="section-table"><div id="sectionAddPanel" class="settings-card section-add" hidden><h3>选择新章节的位置 / New section location</h3><label for="sectionParent">顶级章节或父章节 / Top level or parent section</label><select id="sectionParent"></select><p id="sectionAddPreview" role="status"></p><p>自动生成同层级的下一个序号，按序插入并定位到名称输入框。 / Generates the next sibling number, inserts in order and focuses its title.</p><div class="config-actions"><button id="confirmSectionAdd" class="primary">添加并定位 / Add & locate</button><button id="cancelSectionAdd">取消 / Cancel</button></div></div><div class="section-grid table-head"><span>序号 / No.</span><span>章节名称 / Title</span><span>附件</span><span>文本</span><span>附件检查提示词 / Attachment rule</span><span>文本检查提示词 / Text rule</span><span></span></div><div id="sectionRows"></div></div></div><div id="storageSettings" role="tabpanel" hidden><div class="settings-card"><h3>插件存储 / Extension storage</h3><p id="storageUsage"></p><progress id="storageMeter" max="1" value="0" style="width:100%"></progress><div class="field-row"><label for="storageCapacity">容量上限（MB） / Capacity (MB)</label><input id="storageCapacity" type="number" min="50" step="50"></div><p class="note">默认500MB，最多使用浏览器配额的一半且不超过2GB；不足时自动清理最旧快照及不再引用的材料。浏览器可能清理扩展数据，请定期下载备份。 / Default 500MB; capped at half the browser quota and 2GB. Oldest snapshots are removed when full. Download backups regularly.</p><button id="storageApply">应用容量 / Apply capacity</button><p id="storageMessage" role="status"></p></div><div class="settings-card"><div class="section-toolbar"><h3>历史快照 / Snapshot history</h3><button id="storageRefresh">刷新 / Refresh</button></div><div class="config-actions"><button id="snapSelectAll">全选 / Select all</button><button id="snapSelectNone">取消选择 / Clear selection</button></div><div id="snapshotRows"></div><p id="cleanupPreview"></p><div class="config-actions"><button id="snapshotBackup" class="primary">下载待清理快照与材料 / Backup selected</button><button id="snapshotDelete">删除所选快照 / Delete selected</button></div><p class="note">清理不会删除已下载到本地的文件；共享材料只在不再被任何快照引用时删除。 / Local downloads are kept. Shared files are removed only when no snapshot references them.</p></div></div><div id="performanceSettings" role="tabpanel" hidden><style>.performance-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.performance-cards article{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--soft)}.performance-cards strong{display:block;font-size:23px;margin:8px 0;color:var(--ink)}.performance-cards small{margin:0}.performance-chart{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:12px}.performance-chart h3{margin:0 0 8px}.performance-plots{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.performance-chart svg{display:block;width:100%;color:var(--muted);height:150px;margin-top:auto}.performance-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px}.performance-toolbar select{padding:6px;max-width:100%;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:7px}.performance-table{overflow:auto;max-height:260px;margin-top:14px}.performance-table table{border-collapse:collapse;width:100%;font-size:11px}.performance-table td,.performance-table th{padding:8px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}.performance-table th{position:sticky;top:0;background:var(--bg)}.metric-stale{opacity:.55}#performanceWarning{background:var(--soft);color:#bc862d;padding:10px;border-radius:8px}@media(max-width:700px){.performance-plots{grid-template-columns:1fr}}@media(max-width:600px){.performance-cards{grid-template-columns:1fr}.performance-cards strong{font-size:20px}}</style><div class="performance-toolbar"><strong>性能监控 / Performance monitor</strong><select id="performanceRange" aria-label="趋势时间范围 / Trend range"><option value="1440">最近24小时 / Last 24 hours</option><option value="360">最近6小时 / Last 6 hours</option><option value="60">最近1小时 / Last hour</option><option value="15">最近15分钟 / Last 15 minutes</option></select><button id="performanceRefresh">刷新 / Refresh</button></div><p class="note">浏览器无法提供插件独立 RAM 或 CPU 利用率。以下为包含网站本身的页面 JS 堆、长任务阻塞占比与响应延迟，仅供判断页面压力；不同页签可能共享内存，因此不累加。 / Independent extension RAM/CPU is unavailable. These page JS heap, long-task occupancy and response-delay references include the website. Tabs may share memory, so values are not summed.</p><div class="performance-cards"><article>主页面 JS 堆 / Main-page JS heap<strong id="performanceHeap">—</strong><small>含网站脚本 / Includes site scripts</small></article><article>最繁忙页面阻塞占比 / Peak page blocking<strong id="performanceBusy">—</strong><small id="performanceCpu"></small></article><article>前台响应延迟 / Foreground response delay<strong id="performanceLag">—</strong><small>后台节流不计入 / Background throttling excluded</small></article></div><p id="performanceWarning" hidden role="status"></p><p id="performanceStatus" class="note" role="status"></p><div class="performance-plots"><div class="performance-chart"><div class="performance-toolbar"><h3>JS 堆内存趋势（MB） / JS heap trend (MB)</h3><select id="performanceMemoryScope" aria-label="内存趋势指标 / Memory metric"><option value="mainHeap">主页面 / Main page</option><option value="otherHeap">其他页面最大值 / Maximum of other pages</option></select></div><svg id="performanceMemoryChart" role="img" aria-label="内存趋势 / Memory trend"></svg></div><div class="performance-chart"><h3>主线程阻塞占比趋势（非 CPU 利用率） / Main-thread blocking trend (not CPU utilization)</h3><svg id="performanceCpuChart" role="img" aria-label="主线程阻塞趋势 / Main-thread blocking trend"></svg></div></div><div class="performance-table"><table><thead><tr><th>页面或单号 / Page or RFC</th><th>站点 / Site</th><th>JS 堆 / JS heap</th><th>阻塞占比 / Blocking</th><th>响应延迟 / Delay</th><th>状态 / Status</th><th>更新时间 / Updated</th></tr></thead><tbody id="performanceSources"></tbody></table></div></div><div id="aiSettings" role="tabpanel" aria-labelledby="aiTab" hidden><iframe id="aiFrame" title="AI 模型配置 / AI model settings"></iframe><p id="aiFrameStatus" class="note">等待扩展模型配置模块连接 / Waiting for extension</p></div><div id="pluginLogs" role="tabpanel" aria-labelledby="logsTab" hidden><div class="log-filters log-primary"><label>日志范围 / Scope<select id="logScope"><option value="all">全部日志 / All logs</option><option value="pending">未关联快照 / Without snapshot</option></select></label><label>RFC 单号 / RFC<input id="logRfc" placeholder="筛选 RFC / Filter RFC"></label><label class="log-search">关键词 / Keyword<input id="logSearch" placeholder="搜索并高亮关键词 / Search and highlight"></label></div><details class="log-advanced"><summary>分类、级别与时间 / Category, level & time</summary><div class="log-filters"><label>日志分类 / Category<select id="logCategory"><option value="">全部分类 / All categories</option><option value="operation">操作 / Operations</option><option value="configuration">配置 / Configuration</option><option value="extraction">提取 / Extraction</option><option value="audit">审计 / Audit</option><option value="storage">存储 / Storage</option><option value="system">系统 / System</option></select></label><label>级别 / Level<select id="logLevel"><option value="">全部级别 / All levels</option><option value="debug">调试 / Debug</option><option value="info">信息 / Info</option><option value="warn">警告 / Warning</option><option value="error">错误 / Error</option></select></label><label>开始时间 / From<input id="logFrom" type="datetime-local"></label><label>结束时间 / To<input id="logTo" type="datetime-local"></label></div></details><div class="config-actions log-actions"><button id="logRefresh">刷新 / Refresh</button><button id="logReset">清除筛选 / Reset filters</button><button id="logExport" class="primary">导出筛选日志 / Export filtered logs</button><label><input id="logLive" type="checkbox" checked>实时刷新 / Live</label></div><p id="pluginLogStatus" class="note" role="status"></p><div id="pluginLogEntries" class="plugin-log-list"></div><div class="log-pagination"><button id="logPrevious">上一页 / Previous</button><span id="logPage"></span><button id="logNext">下一页 / Next</button></div></div></div>
+  <div id="chapterSettings" role="tabpanel" aria-labelledby="sectionsTab" hidden><div class="section-toolbar"><strong>章节模板 <span id="sectionCount"></span> / Sections</strong><button id="addSection" aria-expanded="false" aria-controls="sectionAddPanel">＋ 添加章节 / Add</button></div><p class="note">父章节包含全部子章节；子章节继承选择与提示词并锁定，清空父规则后可独立设置。文件名使用实际章节。 / Parents include descendants; inherited selections and rules are locked until the parent rule is cleared.</p><label class="switch-row"><input type="checkbox" id="titleFallbackEnabled">序号缺失或名称不符时按章节名称纠错 / Correct by title when numbers are missing or titles differ</label><p class="note">开启后同时核对编号和完整名称；编号缺失或名称不符时按名称纠错，结果显示纠错前后章节。继承子章节始终限定在所选父章节范围；同名章节无法唯一定位时提示核查。 / Checks numbers and full titles, corrects missing numbers or mismatched titles and shows before/after sections. Inherited children stay within the matched parent; ambiguous titles require review.</p><div class="section-table"><div id="sectionAddPanel" class="settings-card section-add" hidden><h3>选择新章节的位置 / New section location</h3><label for="sectionParent">顶级章节或父章节 / Top level or parent section</label><select id="sectionParent"></select><p id="sectionAddPreview" role="status"></p><p>自动生成同层级的下一个序号，按序插入并定位到名称输入框。 / Generates the next sibling number, inserts in order and focuses its title.</p><div class="config-actions"><button id="confirmSectionAdd" class="primary">添加并定位 / Add & locate</button><button id="cancelSectionAdd">取消 / Cancel</button></div></div><div class="section-grid table-head"><span>序号 / No.</span><span>章节名称 / Title</span><span>附件</span><span>文本</span><span>附件检查提示词 / Attachment rule</span><span>文本检查提示词 / Text rule</span><span></span></div><div id="sectionRows"></div></div></div><div id="localRulesSettings" role="tabpanel" aria-labelledby="localRulesTab" hidden><div class="section-toolbar"><strong>本地审计规则 <span id="localRuleCount"></span> / Local rules</strong><div class="config-actions"><button id="addLocalRule">＋ 添加规则 / Add</button><button id="resetLocalRules">恢复预制规则 / Reset</button></div></div><p class="note">开启 AI 审计后，若模型遇到异常、网络超时或未配置，将自动回退到匹配的本地规则进行关键词正则判定。支持绑定章节序号和章节名称。 / When AI audit encounters model errors, automatically falls back to matching local regex rules.</p><div id="localRuleFormCard" class="settings-card" hidden><h3 id="localRuleFormTitle">编辑规则 / Edit rule</h3><input type="hidden" id="localRuleId"><div class="field-row"><div><label for="localRuleName">规则名称 / Rule name</label><small>标识审计项，如“1.1 变更目的检查”</small></div><input type="text" id="localRuleName" maxlength="100" placeholder="规则名称 / Rule name"></div><div class="field-row"><div><label for="localRuleSectionNumber">绑定章节序号 / Section number</label><small>精确或前缀匹配，如 1.1；留空匹配全部</small></div><input type="text" id="localRuleSectionNumber" maxlength="40" placeholder="例如：1.1 / e.g. 1.1"></div><div class="field-row"><div><label for="localRuleSectionTitle">绑定章节名称 / Section title</label><small>匹配章节名称关键词；留空匹配全部</small></div><input type="text" id="localRuleSectionTitle" maxlength="200" placeholder="例如：Change Purpose"></div><div class="field-row"><div><label for="localRuleKind">适用类型 / Kind</label><small>限制正文、附件或两者皆可</small></div><select id="localRuleKind"><option value="all">全部（正文与附件） / All</option><option value="text">章节文本 / Text</option><option value="attachments">方案附件 / Attachments</option></select></div><div class="field-row"><div><label for="localRulePattern">自定义正则表达式 / Regex pattern</label><small>关键词匹配正则，如 (?:变更目的|Purpose)</small></div><input type="text" id="localRulePattern" maxlength="1000" placeholder="正则表达式 / Regular expression"></div><div class="field-row"><div><label for="localRuleCondition">判定逻辑 / Condition</label><small>匹配合格或不匹配合格（黑名单）</small></div><select id="localRuleCondition"><option value="match">正则匹配即合格 / Pass if matched</option><option value="not_match">正则不匹配即合格（黑名单） / Pass if not matched</option></select></div><div class="field-row"><div><label for="localRulePassSummary">合格结论 / Pass summary</label><small>满足条件时的审计结论说明</small></div><input type="text" id="localRulePassSummary" maxlength="500" placeholder="变更目的已明确 / Specified"></div><div class="field-row"><div><label for="localRuleFailSummary">不合格结论 / Fail summary</label><small>未满足条件时的审计结论说明</small></div><input type="text" id="localRuleFailSummary" maxlength="500" placeholder="缺少变更目的说明 / Missing"></div><label class="switch-row"><input type="checkbox" id="localRuleEnabled" checked>启用此规则 / Enable rule</label><p id="localRuleFormError" class="note" style="color:#d96570" role="status"></p><div class="config-actions"><button id="saveLocalRule" class="primary">保存规则 / Save</button><button id="cancelLocalRule">取消 / Cancel</button></div></div><div class="section-table"><div class="local-rule-grid table-head"><span>启用</span><span>规则名称 / Name</span><span>绑定章节 / Section</span><span>类型</span><span>正则表达式 / Pattern</span><span>判定逻辑</span><span>操作</span></div><div id="localRuleRows"></div></div></div><div id="storageSettings" role="tabpanel" hidden><div class="settings-card"><h3>插件存储 / Extension storage</h3><p id="storageUsage"></p><div id="storageBar" class="storage-multi-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div><progress id="storageMeter" max="1" value="0" style="width:100%" hidden></progress><div id="storageBreakdown" class="storage-breakdown-grid"></div><div class="field-row"><label for="storageCapacity">容量上限（MB） / Capacity (MB)</label><input id="storageCapacity" type="number" min="50" step="50"></div><p class="note">默认500MB，最多使用浏览器配额的一半且不超过2GB；不足时自动清理最旧快照及不再引用的材料。浏览器可能清理扩展数据，请定期下载备份。 / Default 500MB; capped at half the browser quota and 2GB. Oldest snapshots are removed when full. Download backups regularly.</p><button id="storageApply">应用容量 / Apply capacity</button><p id="storageMessage" role="status"></p></div><div class="settings-card"><div class="section-toolbar"><h3>历史快照 / Snapshot history</h3><button id="storageRefresh">刷新 / Refresh</button></div><div class="config-actions"><button id="snapSelectAll">全选 / Select all</button><button id="snapSelectNone">取消选择 / Clear selection</button></div><div id="snapshotRows"></div><p id="cleanupPreview"></p><div class="config-actions"><button id="snapshotBackup" class="primary">下载待清理快照与材料 / Backup selected</button><button id="snapshotDelete">删除所选快照 / Delete selected</button></div><p class="note">清理不会删除已下载到本地的文件；共享材料只在不再被任何快照引用时删除。 / Local downloads are kept. Shared files are removed only when no snapshot references them.</p></div><div class="settings-card" id="materialsCleanupCard"><div class="section-toolbar"><h3>按类别与保留天数清理材料 / Clean materials by category & retention</h3><button id="materialsCleanupRefresh">刷新预估 / Refresh</button></div><p class="note">即使未保存历史快照，提取的截图、附件、正文文本和未归档日志也会暂存在材料存储中。您可以在此按类别或按天数清理暂存内容，释放存储空间。 / Extracted screenshots, attachments, text and logs sit in storage even without saved snapshots. Clean them here by category or retention days.</p><div class="materials-clean-grid"><label class="materials-clean-chip"><input type="checkbox" id="cleanCatScreenshots" checked> <span class="storage-dot" style="background:#3b82f6"></span> <span>方案截图 / Screenshots</span> <small id="cleanCountScreenshots"></small></label><label class="materials-clean-chip"><input type="checkbox" id="cleanCatAttachments" checked> <span class="storage-dot" style="background:#f59e0b"></span> <span>方案附件 / Attachments</span> <small id="cleanCountAttachments"></small></label><label class="materials-clean-chip"><input type="checkbox" id="cleanCatTexts" checked> <span class="storage-dot" style="background:#10b981"></span> <span>方案文本 / Texts</span> <small id="cleanCountTexts"></small></label><label class="materials-clean-chip"><input type="checkbox" id="cleanCatBundles"> <span class="storage-dot" style="background:#8b5cf6"></span> <span>审计包与Word / Bundles & Word</span> <small id="cleanCountBundles"></small></label><label class="materials-clean-chip"><input type="checkbox" id="cleanCatLogs" checked> <span class="storage-dot" style="background:#06b6d4"></span> <span>未归档日志 / Log buffer</span> <small id="cleanCountLogs"></small></label></div><div class="field-row" style="margin-top:10px"><div><label for="materialsRetentionDays">保留期限 / Retention period</label><small>选择保留最近几天的材料，清理早于该期限的内容</small></div><select id="materialsRetentionDays"><option value="0">清理全部匹配材料（不限天数） / All matching</option><option value="1">仅清理 1 天前的材料 / Older than 1 day</option><option value="3">仅清理 3 天前的材料 / Older than 3 days</option><option value="7">仅清理 7 天前的材料 / Older than 7 days</option><option value="14">仅清理 14 天前的材料 / Older than 14 days</option><option value="30">仅清理 30 天前的材料 / Older than 30 days</option></select></div><label class="switch-row" style="margin:10px 0 6px"><input type="checkbox" id="protectSnapshotRefs" checked><strong>保护历史快照引用的材料 / Protect snapshot files (推荐 / Recommended)</strong></label><p id="materialsCleanupPreview" class="note" style="margin:8px 0;font-weight:600;color:var(--ink)"></p><div class="config-actions"><button id="materialsCleanupExecute" class="primary">执行清理 / Clean up</button></div><p id="materialsCleanupStatus" role="status"></p></div></div><div id="performanceSettings" role="tabpanel" hidden><style>.performance-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.performance-cards article{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--soft)}.performance-cards strong{display:block;font-size:23px;margin:8px 0;color:var(--ink)}.performance-cards small{margin:0}.performance-chart{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:12px}.performance-chart h3{margin:0 0 8px}.performance-plots{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.performance-chart svg{display:block;width:100%;color:var(--muted);height:150px;margin-top:auto}.performance-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px}.performance-toolbar select{padding:6px;max-width:100%;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:7px}.performance-table{overflow:auto;max-height:260px;margin-top:14px}.performance-table table{border-collapse:collapse;width:100%;font-size:11px}.performance-table td,.performance-table th{padding:8px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}.performance-table th{position:sticky;top:0;background:var(--bg)}.metric-stale{opacity:.55}#performanceWarning{background:var(--soft);color:#bc862d;padding:10px;border-radius:8px}@media(max-width:700px){.performance-plots{grid-template-columns:1fr}}@media(max-width:600px){.performance-cards{grid-template-columns:1fr}.performance-cards strong{font-size:20px}}</style><div class="performance-toolbar"><strong>性能监控 / Performance monitor</strong><select id="performanceRange" aria-label="趋势时间范围 / Trend range"><option value="1440">最近24小时 / Last 24 hours</option><option value="360">最近6小时 / Last 6 hours</option><option value="60">最近1小时 / Last hour</option><option value="15">最近15分钟 / Last 15 minutes</option></select><button id="performanceRefresh">刷新 / Refresh</button></div><p class="note">浏览器无法提供插件独立 RAM 或 CPU 利用率。以下为包含网站本身的页面 JS 堆、长任务阻塞占比与响应延迟，仅供判断页面压力；不同页签可能共享内存，因此不累加。 / Independent extension RAM/CPU is unavailable. These page JS heap, long-task occupancy and response-delay references include the website. Tabs may share memory, so values are not summed.</p><div class="performance-cards"><article>主页面 JS 堆 / Main-page JS heap<strong id="performanceHeap">—</strong><small>含网站脚本 / Includes site scripts</small></article><article>最繁忙页面阻塞占比 / Peak page blocking<strong id="performanceBusy">—</strong><small id="performanceCpu"></small></article><article>前台响应延迟 / Foreground response delay<strong id="performanceLag">—</strong><small>后台节流不计入 / Background throttling excluded</small></article></div><p id="performanceWarning" hidden role="status"></p><p id="performanceStatus" class="note" role="status"></p><div class="performance-plots"><div class="performance-chart"><div class="performance-toolbar"><h3>JS 堆内存趋势（MB） / JS heap trend (MB)</h3><select id="performanceMemoryScope" aria-label="内存趋势指标 / Memory metric"><option value="mainHeap">主页面 / Main page</option><option value="otherHeap">其他页面最大值 / Maximum of other pages</option></select></div><svg id="performanceMemoryChart" role="img" aria-label="内存趋势 / Memory trend"></svg></div><div class="performance-chart"><h3>主线程阻塞占比趋势（非 CPU 利用率） / Main-thread blocking trend (not CPU utilization)</h3><svg id="performanceCpuChart" role="img" aria-label="主线程阻塞趋势 / Main-thread blocking trend"></svg></div></div><div class="performance-table"><table><thead><tr><th>页面或单号 / Page or RFC</th><th>站点 / Site</th><th>JS 堆 / JS heap</th><th>阻塞占比 / Blocking</th><th>响应延迟 / Delay</th><th>状态 / Status</th><th>更新时间 / Updated</th></tr></thead><tbody id="performanceSources"></tbody></table></div></div><div id="aiSettings" role="tabpanel" aria-labelledby="aiTab" hidden><iframe id="aiFrame" title="AI 模型配置 / AI model settings"></iframe><p id="aiFrameStatus" class="note">等待扩展模型配置模块连接 / Waiting for extension</p></div><div id="pluginLogs" role="tabpanel" aria-labelledby="logsTab" hidden><div class="log-filters log-primary"><label>日志范围 / Scope<select id="logScope"><option value="all">全部日志 / All logs</option><option value="pending">未关联快照 / Without snapshot</option></select></label><label>RFC 单号 / RFC<input id="logRfc" placeholder="筛选 RFC / Filter RFC"></label><label class="log-search">关键词 / Keyword<input id="logSearch" placeholder="搜索并高亮关键词 / Search and highlight"></label></div><details class="log-advanced"><summary>分类、级别与时间 / Category, level & time</summary><div class="log-filters"><label>日志分类 / Category<select id="logCategory"><option value="">全部分类 / All categories</option><option value="operation">操作 / Operations</option><option value="configuration">配置 / Configuration</option><option value="extraction">提取 / Extraction</option><option value="audit">审计 / Audit</option><option value="storage">存储 / Storage</option><option value="system">系统 / System</option></select></label><label>级别 / Level<select id="logLevel"><option value="">全部级别 / All levels</option><option value="debug">调试 / Debug</option><option value="info">信息 / Info</option><option value="warn">警告 / Warning</option><option value="error">错误 / Error</option></select></label><label>开始时间 / From<input id="logFrom" type="datetime-local"></label><label>结束时间 / To<input id="logTo" type="datetime-local"></label></div></details><div class="config-actions log-actions"><button id="logRefresh">刷新 / Refresh</button><button id="logReset">清除筛选 / Reset filters</button><button id="logExport" class="primary">导出筛选日志 / Export filtered logs</button><button id="logFullscreen" type="button" class="log-fs-btn" title="全屏查看日志 / Fullscreen">⛶ 全屏 / Fullscreen</button><label><input id="logLive" type="checkbox" checked>实时刷新 / Live</label></div><p id="pluginLogStatus" class="note" role="status"></p><div id="pluginLogEntries" class="plugin-log-list"></div><div class="log-pagination"><button id="logPrevious">上一页 / Previous</button><span id="logPage"></span><button id="logNext">下一页 / Next</button></div></div></div>
   <div class="modal-footer"><div id="settingsStatus" role="status"></div><button id="cancelSettings">取消 / Cancel</button><button id="saveSettings" class="primary">保存设置 / Save</button></div></div></dialog><dialog id="auditSummaryDialog" aria-labelledby="auditSummaryTitle"><div class="settings-shell"><div class="modal-head"><div><h2 id="auditSummaryTitle">审计结果 / Audit results</h2><p id="auditCounts">尚无结果 / No results</p></div><button id="auditSummaryClose" class="icon" aria-label="关闭审计汇总 / Close audit results">×</button></div><div class="audit-toolbar"><select id="snapshotSelect" aria-label="历史快照 / Snapshot history"><option value="">当前结果 / Current results</option></select><button id="snapshotSave">保存快照 / Save snapshot</button><button id="auditExcel" class="primary">导出审计 Excel / Export</button><button id="auditBundle">下载审计材料 ZIP / Materials</button><span id="auditExportStatus" role="status"></span></div><div id="auditSummaryBody" class="modal-body"></div></div></dialog><dialog id="auditImageDialog" aria-labelledby="auditImageTitle"><div class="settings-shell"><div class="modal-head"><div><h2 id="auditImageTitle">原始区域截图 / Source screenshot</h2><p id="auditImageName" data-user-content></p><p id="auditImageHint">点击图片切换原图尺寸 / Click image to toggle original size</p></div><button id="auditImageClose" class="icon" aria-label="关闭截图 / Close screenshot">×</button></div><div class="audit-image-body"><img id="auditImage" alt=""></div></div></dialog><dialog id="confirmationDialog" aria-labelledby="confirmationTitle"><div class="modal-head"><h2 id="confirmationTitle"></h2></div><p id="confirmationMessage"></p><div class="modal-footer"><button id="confirmationCancel">取消 / Cancel</button><button id="confirmationAccept" class="primary">确认 / Confirm</button></div></dialog>`;
   document.body.append(host);
   const $ = id => root.getElementById(id);
@@ -880,6 +1151,19 @@ function mountNetcareCollector() {
     $('log').scrollTop = $('log').scrollHeight;
   };
   let extractionSettings = netcareDefaultSettings(), settingsLoaded = false;
+  const updateExtractionUiState = () => {
+    const anyExtraction = $('autoAttachments').checked || $('autoText').checked;
+    $('screenshotsEnabled').disabled = !anyExtraction;
+    if (!anyExtraction) $('screenshotsEnabled').checked = false;
+
+    const aiOn = $('aiAuditEnabled').checked;
+    $('closeAfterAudit').disabled = !aiOn;
+    if (!aiOn) $('closeAfterAudit').checked = false;
+  };
+  $('autoAttachments').onchange = () => { updateExtractionUiState(); refreshSectionInheritance(); };
+  $('autoText').onchange = () => { updateExtractionUiState(); refreshSectionInheritance(); };
+  $('aiAuditEnabled').onchange = () => { updateExtractionUiState(); refreshSectionInheritance(); };
+
   const renderSettings = () => {
     $('pipBetaEnabled').checked=extractionSettings.pipBetaEnabled; $('closeAfterAudit').checked=extractionSettings.closeAfterAudit; $('titleFallbackEnabled').checked=extractionSettings.titleFallbackEnabled;
     $('aiAuditEnabled').checked = extractionSettings.aiAuditEnabled;
@@ -888,12 +1172,19 @@ function mountNetcareCollector() {
     $('screenshotsEnabled').checked=extractionSettings.screenshotsEnabled!==false; $('autoAttachments').checked = extractionSettings.attachmentsEnabled; $('autoText').checked = extractionSettings.textEnabled;
     $('readInterval').value = extractionSettings.intervalMs / 1000; $('sectionRows').replaceChildren();$('sectionAddPanel').hidden=true;$('addSection').setAttribute('aria-expanded','false');focusedSectionNumber='';
     for (const row of extractionSettings.sections) addSectionRow(row);
+    localRulesDraft = (extractionSettings.localRules || netcareDefaultLocalRules()).map(r => ({ ...r }));
+    $('localRuleFormCard').hidden = true;
+    renderLocalRules();
+    updateExtractionUiState();
     refreshSectionInheritance();
   };
   let focusedSectionNumber='';
   function sectionDrafts(){return Array.from($('sectionRows').children,line=>({...line._draft,number:line.querySelector('[data-field=number]').value.trim(),title:line.querySelector('[data-field=title]').value.trim()}));}
   function refreshSectionInheritance(){
     const rows=sectionDrafts(), settings={sections:rows};
+    const autoAttachmentsOn = $('autoAttachments').checked;
+    const autoTextOn = $('autoText').checked;
+    const aiAuditOn = $('aiAuditEnabled').checked;
     Array.from($('sectionRows').children).forEach((line,i)=>{
       const row=rows[i], effective=netcareEffectiveSection(settings,row.number), depth=Math.max(0,row.number.split('.').length-1);
       line.dataset.depth=String(Math.min(depth,2));line.style.setProperty('--depth',Math.min(depth,4));
@@ -901,8 +1192,11 @@ function mountNetcareCollector() {
       for(const kind of ['attachments','text']){
         const box=line.querySelector(`[data-field=${kind}]`),prompt=line.querySelector(`[data-field=${kind}Prompt]`);
         const ancestors=rows.filter(r=>row.number.startsWith(r.number+'.'));
-        prompt.disabled=ancestors.some(r=>r[kind+'Prompt']?.trim());prompt.value=effective[kind+'Prompt'];
-        box.checked=effective[kind];box.disabled=!!effective[kind+'Prompt']||ancestors.some(r=>r[kind]||r[kind+'Prompt']?.trim());
+        const autoKindOn = kind === 'attachments' ? autoAttachmentsOn : autoTextOn;
+        prompt.disabled = !aiAuditOn || ancestors.some(r=>r[kind+'Prompt']?.trim());
+        prompt.value=effective[kind+'Prompt'];
+        box.checked=autoKindOn && effective[kind];
+        box.disabled=!autoKindOn || !!effective[kind+'Prompt']||ancestors.some(r=>r[kind]||r[kind+'Prompt']?.trim());
       }
     });
     $('sectionCount').textContent=`(${$('sectionRows').children.length})`;
@@ -914,7 +1208,170 @@ function mountNetcareCollector() {
     for(const kind of ['attachments','text']){const prompt=document.createElement('textarea');prompt.dataset.field=kind+'Prompt';prompt.setAttribute('aria-label',kind==='text'?'文本检查提示词 / Text rule':'附件检查提示词 / Attachment rule');prompt.placeholder='填写后自动勾选并锁定 / Required when set';prompt.oninput=()=>{line._draft[kind+'Prompt']=prompt.value;refreshSectionInheritance();};line.append(prompt);}
     const remove=document.createElement('button');remove.textContent='×';remove.className='delete';remove.setAttribute('aria-label','删除章节 / Delete section');remove.onclick=()=>{line.remove();refreshSectionInheritance();};line.append(remove);$('sectionRows').append(line);refreshSectionInheritance();return line;
   }
-  const readSettings=()=>netcareNormalizeSettings({pipBetaEnabled:$('pipBetaEnabled').checked,closeAfterAudit:$('closeAfterAudit').checked,titleFallbackEnabled:$('titleFallbackEnabled').checked,screenshotsEnabled:$('screenshotsEnabled').checked,aiAuditEnabled:$('aiAuditEnabled').checked,concurrency:Number($('concurrency').value),openOnline:$('openOnline').checked,attachmentsEnabled:$('autoAttachments').checked,textEnabled:$('autoText').checked,intervalMs:Number($('readInterval').value)*1000,sections:sectionDrafts()});
+  let localRulesDraft = [];
+  function renderLocalRules() {
+    $('localRuleCount').textContent = `(${localRulesDraft.length})`;
+    const container = $('localRuleRows');
+    container.replaceChildren();
+    if (!localRulesDraft.length) {
+      const empty = document.createElement('div');
+      empty.className = 'summary';
+      empty.style.padding = '14px';
+      empty.textContent = '暂无本地审计规则，可点击“恢复预制规则”或“＋ 添加规则” / No local rules. Click "Reset" or "Add".';
+      container.append(empty);
+      return;
+    }
+    localRulesDraft.forEach((rule, index) => {
+      const row = document.createElement('div');
+      row.className = 'local-rule-grid';
+      if (!rule.enabled) row.style.opacity = '0.6';
+      const enableCell = document.createElement('div');
+      enableCell.className = 'check-cell';
+      const toggle = document.createElement('input');
+      toggle.type = 'checkbox';
+      toggle.checked = rule.enabled !== false;
+      toggle.setAttribute('aria-label', '启用状态 / Enabled');
+      toggle.onchange = () => {
+        rule.enabled = toggle.checked;
+        row.style.opacity = rule.enabled ? '1' : '0.6';
+      };
+      enableCell.append(toggle);
+      row.append(enableCell);
+
+      const nameCell = document.createElement('div');
+      nameCell.style.fontWeight = '550';
+      nameCell.textContent = rule.name;
+      nameCell.setAttribute('data-user-content', '');
+      row.append(nameCell);
+
+      const secCell = document.createElement('div');
+      secCell.textContent = [rule.sectionNumber, rule.sectionTitle].filter(Boolean).join(' ') || '全部 / All';
+      secCell.setAttribute('data-user-content', '');
+      row.append(secCell);
+
+      const kindCell = document.createElement('div');
+      kindCell.textContent = rule.kind === 'text' ? '正文 / Text' : rule.kind === 'attachments' ? '附件 / Att' : '全部 / All';
+      row.append(kindCell);
+
+      const patCell = document.createElement('div');
+      const code = document.createElement('code');
+      code.textContent = rule.pattern || '—';
+      code.style.font = '10px ui-monospace,monospace';
+      code.style.overflowWrap = 'anywhere';
+      patCell.append(code);
+      row.append(patCell);
+
+      const condCell = document.createElement('div');
+      condCell.textContent = rule.passCondition === 'not_match' ? '不匹配通过' : '匹配通过';
+      row.append(condCell);
+
+      const actCell = document.createElement('div');
+      actCell.className = 'local-rule-actions';
+      const editBtn = document.createElement('button');
+      editBtn.textContent = '编辑';
+      editBtn.setAttribute('aria-label', '编辑规则 / Edit');
+      editBtn.onclick = () => openLocalRuleForm(index);
+      const delBtn = document.createElement('button');
+      delBtn.textContent = '删除';
+      delBtn.setAttribute('aria-label', '删除规则 / Delete');
+      delBtn.onclick = () => {
+        localRulesDraft.splice(index, 1);
+        renderLocalRules();
+      };
+      actCell.append(editBtn, delBtn);
+      row.append(actCell);
+
+      container.append(row);
+    });
+  }
+
+  let editingRuleIndex = -1;
+  function openLocalRuleForm(index = -1) {
+    editingRuleIndex = index;
+    $('localRuleFormError').textContent = '';
+    const formCard = $('localRuleFormCard');
+    formCard.hidden = false;
+    if (index >= 0) {
+      const rule = localRulesDraft[index];
+      $('localRuleFormTitle').textContent = '编辑规则 / Edit rule';
+      $('localRuleId').value = rule.id || '';
+      $('localRuleName').value = rule.name || '';
+      $('localRuleSectionNumber').value = rule.sectionNumber || '';
+      $('localRuleSectionTitle').value = rule.sectionTitle || '';
+      $('localRuleKind').value = rule.kind || 'all';
+      $('localRulePattern').value = rule.pattern || '';
+      $('localRuleCondition').value = rule.passCondition || 'match';
+      $('localRulePassSummary').value = rule.passSummary || '';
+      $('localRuleFailSummary').value = rule.failSummary || '';
+      $('localRuleEnabled').checked = rule.enabled !== false;
+    } else {
+      $('localRuleFormTitle').textContent = '添加新规则 / Add rule';
+      $('localRuleId').value = 'rule-' + crypto.randomUUID().slice(0, 8);
+      $('localRuleName').value = '';
+      $('localRuleSectionNumber').value = '';
+      $('localRuleSectionTitle').value = '';
+      $('localRuleKind').value = 'all';
+      $('localRulePattern').value = '';
+      $('localRuleCondition').value = 'match';
+      $('localRulePassSummary').value = '符合要求 / Compliant';
+      $('localRuleFailSummary').value = '不符合要求，需人工核查 / Non-compliant';
+      $('localRuleEnabled').checked = true;
+    }
+    formCard.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    $('localRuleName').focus();
+  }
+
+  $('addLocalRule').onclick = () => openLocalRuleForm(-1);
+  $('cancelLocalRule').onclick = () => { $('localRuleFormCard').hidden = true; };
+  $('resetLocalRules').onclick = () => {
+    localRulesDraft = netcareDefaultLocalRules();
+    $('localRuleFormCard').hidden = true;
+    renderLocalRules();
+  };
+
+  $('saveLocalRule').onclick = () => {
+    const name = $('localRuleName').value.trim();
+    if (!name) { $('localRuleFormError').textContent = '请输入规则名称 / Enter rule name'; return; }
+    const pattern = $('localRulePattern').value.trim();
+    if (!pattern) { $('localRuleFormError').textContent = '请输入正则表达式 / Enter regex pattern'; return; }
+    try { new RegExp(pattern, 'i'); }
+    catch (e) { $('localRuleFormError').textContent = `正则表达式无效: ${e.message}`; return; }
+    const ruleObj = {
+      id: $('localRuleId').value || ('rule-' + crypto.randomUUID().slice(0, 8)),
+      name,
+      sectionNumber: $('localRuleSectionNumber').value.trim(),
+      sectionTitle: $('localRuleSectionTitle').value.trim(),
+      kind: $('localRuleKind').value,
+      pattern,
+      passCondition: $('localRuleCondition').value,
+      passSummary: $('localRulePassSummary').value.trim() || '符合要求 / Compliant',
+      failSummary: $('localRuleFailSummary').value.trim() || '不符合要求，需人工核查 / Non-compliant',
+      enabled: $('localRuleEnabled').checked
+    };
+    if (editingRuleIndex >= 0) {
+      localRulesDraft[editingRuleIndex] = ruleObj;
+    } else {
+      if (localRulesDraft.length >= 100) { $('localRuleFormError').textContent = '本地规则最多 100 条 / Max 100 rules'; return; }
+      localRulesDraft.push(ruleObj);
+    }
+    $('localRuleFormCard').hidden = true;
+    renderLocalRules();
+  };
+
+  const readSettings=()=>netcareNormalizeSettings({
+    pipBetaEnabled:$('pipBetaEnabled').checked,
+    closeAfterAudit:$('closeAfterAudit').checked,
+    titleFallbackEnabled:$('titleFallbackEnabled').checked,
+    screenshotsEnabled:$('screenshotsEnabled').checked,
+    aiAuditEnabled:$('aiAuditEnabled').checked,
+    concurrency:Number($('concurrency').value),
+    openOnline:$('openOnline').checked,
+    attachmentsEnabled:$('autoAttachments').checked,
+    textEnabled:$('autoText').checked,
+    intervalMs:Number($('readInterval').value)*1000,
+    sections:sectionDrafts(),
+    localRules:localRulesDraft.slice()
+  });
   const closeSectionAdd=()=>{$('sectionAddPanel').hidden=true;$('addSection').setAttribute('aria-expanded','false');};
   const previewSectionAdd=()=>{const number=netcareNextSectionNumber(sectionDrafts(),$('sectionParent').value);$('sectionAddPreview').textContent=`新章节序号：${number} / New section number: ${number}`;};
   $('addSection').onclick=()=>{
@@ -944,7 +1401,7 @@ function mountNetcareCollector() {
   const auditDialog=$('auditSummaryDialog'); let currentBatch=null,auditRecords=[],liveAuditRecords=[],activeSnapshot='',auditExportBusy=false;
   let routeRun=null;const routeStates=new Map(),launchedRoutes=new Set();
   let uiLanguage='zh';const localization=globalThis.createNetcareLanguage?.(root,uiLanguage);
-  const setLanguage=lang=>{uiLanguage=lang==='en'?'en':'zh';localization?.set(uiLanguage);pip?.setLanguage(uiLanguage);healthView?.language(uiLanguage);$('languageButton').textContent=uiLanguage==='zh'?'EN':'中';updatePreferenceSummary();if(!$('pluginLogs').hidden)refreshLogs(true);};
+  const setLanguage=lang=>{uiLanguage=lang==='en'?'en':'zh';localization?.set(uiLanguage);pip?.setLanguage(uiLanguage);healthView?.language(uiLanguage);$('languageButton').textContent=uiLanguage==='zh'?'EN':'中';updatePreferenceSummary();setLogFullscreen(dialog.classList.contains('log-fullscreen-mode'));if(!$('pluginLogs').hidden)refreshLogs(true);};
   const tr=(zh,en)=>uiLanguage==='en'?en:zh;
   function pipRequest(action,data={}){const id=crypto.randomUUID();return new Promise((resolve,reject)=>{
     const finish=(fn,value)=>{clearTimeout(timer);window.removeEventListener('message',receive);fn(value);};
@@ -1020,20 +1477,64 @@ function mountNetcareCollector() {
   const categoryLabel=value=>({operation:tr('操作','Operations'),configuration:tr('配置','Configuration'),extraction:tr('提取','Extraction'),audit:tr('审计','Audit'),storage:tr('存储','Storage'),system:tr('系统','System')})[value]||value;
   const levelLabel=value=>({debug:tr('调试','Debug'),info:tr('信息','Info'),warn:tr('警告','Warning'),error:tr('错误','Error')})[value]||value;
   const highlight=(node,text,keyword)=>{node.setAttribute('data-user-content','');const value=String(text),needle=keyword.toLowerCase();if(!needle){node.textContent=value;return;}let start=0,index;while((index=value.toLowerCase().indexOf(needle,start))!==-1){node.append(document.createTextNode(value.slice(start,index)));const mark=document.createElement('mark');mark.textContent=value.slice(index,index+keyword.length);node.append(mark);start=index+keyword.length;}node.append(document.createTextNode(value.slice(start)));};
+  function setLogFullscreen(enabled){
+    const isFull=Boolean(enabled);
+    dialog.classList.toggle('log-fullscreen-mode',isFull);
+    const fsBtn=$('logFullscreen');
+    if(fsBtn){
+      fsBtn.classList.toggle('active',isFull);
+      fsBtn.textContent=isFull?tr('🗗 退出全屏 / Exit full','🗗 Exit full'):tr('⛶ 全屏 / Fullscreen','⛶ Fullscreen');
+      fsBtn.title=isFull?tr('退出全屏查看 / Exit fullscreen','Exit fullscreen'):tr('全屏查看日志 / Fullscreen','Fullscreen');
+    }
+  }
   async function refreshLogs(reloadHistory=false){
-    const generation=++logGeneration,list=$('pluginLogEntries'),scroll=list.scrollTop,opened=new Set([...list.querySelectorAll('details[open]')].map(d=>d.dataset.logId));
+    const generation=++logGeneration,list=$('pluginLogEntries'),scroll=list.scrollTop,opened=new Set([...list.querySelectorAll('.log-row.is-open')].map(r=>r.dataset.id));
     try{if(reloadHistory){const history=await netcareArtifactRequest({action:'history'}),scope=$('logScope'),old=scope.value;scope.replaceChildren();for(const [value,label] of [['all',tr('全部日志','All logs')],['pending',tr('未关联快照','Without snapshot')],...history.map(s=>[s.id,new Date(s.created).toLocaleString(uiLanguage==='en'?'en-GB':'zh-CN')+' · '+(s.label||s.orders.join(', '))])]){const option=document.createElement('option');option.value=value;option.textContent=label;option.setAttribute('data-user-content','');scope.append(option);}scope.value=[...scope.options].some(o=>o.value===old)?old:'all';}
       await netcareLogQueue;const filter=logFilters();if(filter.from&&filter.to&&filter.from>filter.to)throw Error(tr('开始时间不能晚于结束时间','Start time must precede end time'));const data=await netcareArtifactRequest({action:'query-logs',filter:{...filter,offset:logOffset,limit:100}});if(generation!==logGeneration)return;logTotal=data.total;if(logOffset>=data.total&&logOffset){logOffset=Math.max(0,Math.floor((data.total-1)/100)*100);return refreshLogs();}list.replaceChildren();
-      const add=(parent,tag,text,className)=>{const el=document.createElement(tag);el.textContent=text;if(className)el.className=className;parent.append(el);return el;};
-      for(const entry of data.entries){const card=add(list,'div','','log-entry');card.dataset.category=entry.category;card.dataset.level=entry.level;const meta=add(card,'div','','log-meta');add(meta,'time',new Date(entry.at).toLocaleString(uiLanguage==='en'?'en-GB':'zh-CN')+'.'+String(entry.at%1000).padStart(3,'0')).dateTime=new Date(entry.at).toISOString();add(meta,'span',categoryLabel(entry.category),'log-badge');add(meta,'span',levelLabel(entry.level),'log-level '+entry.level);highlight(add(meta,'span',''),entry.order||tr('插件操作','Plugin operation'),filter.search);highlight(add(card,'p','','log-message'),entry.message.includes(' / ')?netcareAuditLocalized(entry.message,uiLanguage):entry.message,filter.search);highlight(add(card,'code',''),entry.action,filter.search);
-        if(entry.snapshotIds?.length){const button=add(meta,'button',tr('查看快照','View snapshot'));button.type='button';button.onclick=async()=>{try{activeSnapshot=entry.snapshotIds[0];const s=await netcareArtifactRequest({action:'snapshot',snapshotId:activeSnapshot});auditRecords=s.records;dialog.close();renderAudits();await refreshHistory();auditDialog.showModal();}catch(e){$('pluginLogStatus').textContent=e.message;}};}
-        const details=add(card,'details','');details.dataset.logId=entry.id;details.open=opened.has(entry.id);add(details,'summary',tr('查看详细信息','Details'));highlight(add(details,'pre',''),JSON.stringify({order:entry.order,generationAt:entry.generationAt,batchId:entry.batchId,...entry.data},null,2),filter.search);
+      for(const entry of data.entries){
+        const row=document.createElement('div');row.className='log-row'+(opened.has(entry.id)?' is-open':'');row.dataset.id=entry.id;row.dataset.category=entry.category;row.dataset.level=entry.level;
+        const line=document.createElement('div');line.className='log-row-line';line.title=tr('点击展开/收起详情 / Click to toggle details','Click to toggle details');
+        const arrow=document.createElement('span');arrow.className='log-arrow';arrow.textContent='▶';
+        const d=new Date(entry.at),pad=(n,l=2)=>String(n).padStart(l,'0');
+        const timeEl=document.createElement('time');timeEl.className='log-time';timeEl.textContent=`${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${pad(entry.at%1000,3)}`;timeEl.dateTime=d.toISOString();timeEl.title=d.toISOString();
+        const catEl=document.createElement('span');catEl.className='log-cat';catEl.textContent=`[${categoryLabel(entry.category)}]`;
+        const lvlEl=document.createElement('span');lvlEl.className=`log-level ${entry.level}`;lvlEl.textContent=levelLabel(entry.level);
+        const orderEl=document.createElement('span');orderEl.className='log-order'+(entry.order?'':' empty');highlight(orderEl,entry.order||'—',filter.search);
+        const actEl=document.createElement('code');actEl.className='log-action';highlight(actEl,entry.action||'',filter.search);
+        const localizedMsg=entry.message.includes(' / ')?netcareAuditLocalized(entry.message,uiLanguage):entry.message;
+        const msgEl=document.createElement('span');msgEl.className='log-msg';msgEl.title=localizedMsg;highlight(msgEl,localizedMsg,filter.search);
+        line.append(arrow,timeEl,catEl,lvlEl,orderEl,actEl,msgEl);
+        if(entry.snapshotIds?.length){
+          const snapBtn=document.createElement('button');snapBtn.type='button';snapBtn.className='log-snap-btn';snapBtn.textContent=tr('快照','Snap');snapBtn.title=tr('查看关联快照 / View snapshot','View snapshot');
+          snapBtn.onclick=async e=>{e.stopPropagation();try{activeSnapshot=entry.snapshotIds[0];const s=await netcareArtifactRequest({action:'snapshot',snapshotId:activeSnapshot});auditRecords=s.records;setLogFullscreen(false);dialog.close();renderAudits();await refreshHistory();auditDialog.showModal();}catch(err){$('pluginLogStatus').textContent=err.message;}};
+          line.append(snapBtn);
+        }
+        const detailEl=document.createElement('div');detailEl.className='log-row-detail';detailEl.hidden=!opened.has(entry.id);
+        const toolbar=document.createElement('div');toolbar.className='log-detail-toolbar';
+        const metaEl=document.createElement('span');metaEl.className='log-detail-meta';metaEl.textContent=`ID: ${entry.id} · batchId: ${entry.batchId||'—'}`+(entry.generationAt?` · gen: ${entry.generationAt}`:'');
+        const actionsEl=document.createElement('div');actionsEl.className='log-detail-actions';
+        const copyBtn=document.createElement('button');copyBtn.type='button';copyBtn.textContent=tr('复制 JSON','Copy JSON');
+        const jsonString=JSON.stringify({id:entry.id,at:entry.at,timestamp:d.toISOString(),order:entry.order,category:entry.category,level:entry.level,action:entry.action,message:entry.message,batchId:entry.batchId,generationAt:entry.generationAt,snapshotIds:entry.snapshotIds,...entry.data},null,2);
+        copyBtn.onclick=async e=>{e.stopPropagation();try{await navigator.clipboard.writeText(jsonString);copyBtn.textContent=tr('已复制！','Copied!');setTimeout(()=>{copyBtn.textContent=tr('复制 JSON','Copy JSON');},1800);}catch{copyBtn.textContent=tr('复制失败','Failed');}};
+        actionsEl.append(copyBtn);
+        if(entry.snapshotIds?.length){
+          const viewSnap=document.createElement('button');viewSnap.type='button';viewSnap.textContent=tr('查看快照','View snapshot');
+          viewSnap.onclick=async e=>{e.stopPropagation();try{activeSnapshot=entry.snapshotIds[0];const s=await netcareArtifactRequest({action:'snapshot',snapshotId:activeSnapshot});auditRecords=s.records;setLogFullscreen(false);dialog.close();renderAudits();await refreshHistory();auditDialog.showModal();}catch(err){$('pluginLogStatus').textContent=err.message;}};
+          actionsEl.append(viewSnap);
+        }
+        toolbar.append(metaEl,actionsEl);
+        const pre=document.createElement('pre');pre.className='log-detail-pre';highlight(pre,jsonString,filter.search);
+        detailEl.append(toolbar,pre);
+        line.onclick=e=>{if(e.target.closest('button'))return;const isOpen=row.classList.toggle('is-open');detailEl.hidden=!isOpen;};
+        row.append(line,detailEl);list.append(row);
       }
-      if(!data.entries.length)add(list,'p',tr('没有符合筛选条件的日志','No matching logs'),'note');const removed=(data.dropped||0)+netcareLogFailures;$('pluginLogStatus').textContent=tr(`找到 ${data.total} 条日志${removed?' · '+removed+' 条日志因容量或写入失败未保留':''}`,`${data.total} matching events${removed?' · '+removed+' events not retained due to capacity or write failures':''}`);$('logPage').textContent=(data.total?logOffset+1:0)+'–'+Math.min(logOffset+100,data.total)+' / '+data.total;$('logPrevious').disabled=!logOffset;$('logNext').disabled=logOffset+100>=data.total;list.scrollTop=scroll;
+      if(!data.entries.length){const empty=document.createElement('p');empty.className='note';empty.style.padding='12px';empty.textContent=tr('没有符合筛选条件的日志','No matching logs');list.append(empty);}
+      const removed=(data.dropped||0)+netcareLogFailures;$('pluginLogStatus').textContent=tr(`找到 ${data.total} 条日志${removed?' · '+removed+' 条日志因容量或写入失败未保留':''}`,`${data.total} matching events${removed?' · '+removed+' events not retained due to capacity or write failures':''}`);$('logPage').textContent=(data.total?logOffset+1:0)+'–'+Math.min(logOffset+100,data.total)+' / '+data.total;$('logPrevious').disabled=!logOffset;$('logNext').disabled=logOffset+100>=data.total;list.scrollTop=scroll;
     }catch(e){if(generation===logGeneration)$('pluginLogStatus').textContent=e.message;}
   }
   for(const id of ['logScope','logCategory','logLevel','logFrom','logTo'])$(id).onchange=()=>{logOffset=0;refreshLogs();};for(const id of ['logRfc','logSearch'])$(id).oninput=()=>{clearTimeout(logSearchTimer);logSearchTimer=setTimeout(()=>{logOffset=0;refreshLogs();},250);};
   $('logRefresh').onclick=()=>refreshLogs(true);$('logReset').onclick=()=>{for(const id of ['logRfc','logSearch','logFrom','logTo','logCategory','logLevel'])$(id).value='';$('logScope').value='all';logOffset=0;refreshLogs(true);};$('logPrevious').onclick=()=>{logOffset=Math.max(0,logOffset-100);refreshLogs();};$('logNext').onclick=()=>{logOffset+=100;refreshLogs();};
+  $('logFullscreen').onclick=()=>setLogFullscreen(!dialog.classList.contains('log-fullscreen-mode'));
   $('logExport').onclick=async()=>{if(logBusy)return;logBusy=true;$('logExport').disabled=true;try{await netcareLogQueue;const filter=logFilters();filter.to=Math.min(filter.to||Date.now(),Date.now());if(filter.from&&filter.from>filter.to)throw Error(tr('开始时间不能晚于结束时间','Start time must precede end time'));const chunks=[];let offset=0,total=0,bytes=0;do{const page=await netcareArtifactRequest({action:'query-logs',filter:{...filter,offset,limit:500}});total=page.total;const text=page.entries.map(e=>JSON.stringify({...e,timestamp:new Date(e.at).toISOString()})).join('\n')+'\n';bytes+=new TextEncoder().encode(text).length;if(bytes>100*1048576)throw Error(tr('日志超过100MB，请缩小筛选范围分批导出','Logs exceed 100MB. Narrow the filters and export in batches.'));chunks.push(text);offset+=page.entries.length;if(!page.entries.length)break;}while(offset<total);saveAuditFile(new Blob(chunks,{type:'application/x-ndjson;charset=utf-8'}),'NetCare-'+tr('插件日志','plugin-logs')+'-'+new Date().toISOString().slice(0,10)+'.jsonl');$('pluginLogStatus').textContent=tr(`已导出 ${offset} 条日志`,`Exported ${offset} events`);}catch(e){$('pluginLogStatus').textContent=e.message;}finally{logBusy=false;$('logExport').disabled=false;}};
   const logLiveTimer=setInterval(()=>{if(dialog.open&&!$('pluginLogs').hidden&&$('logLive').checked&&!logBusy)refreshLogs();},4000);
   const selectedSnapshots=()=>Array.from($('snapshotRows').querySelectorAll('input:checked')).map(e=>e.value);
@@ -1041,7 +1542,91 @@ function mountNetcareCollector() {
   $('snapshotSelect').onchange=async()=>{try{const id=$('snapshotSelect').value;if(id){const data=await netcareArtifactRequest({action:'snapshot',snapshotId:id});auditRecords=data.records;activeSnapshot=id;}else{activeSnapshot='';auditRecords=liveAuditRecords;}renderAudits();$('auditExportStatus').textContent=tr('已载入，导出包含本快照材料','Loaded; exports use this snapshot’s files');}catch(e){$('auditExportStatus').textContent=e.message;}};
   $('snapshotSave').onclick=async()=>{try{if(activeSnapshot)throw Error(tr('当前正在查看历史快照，请先切换当前结果','Switch to current results before saving'));$('snapshotSave').disabled=true;const id=await netcareArtifactRequest({action:'save-snapshot',label:liveAuditRecords.map(r=>r.order).join(', ')});await refreshHistory();$('auditExportStatus').textContent=tr('快照已保存','Snapshot saved');}catch(e){$('auditExportStatus').textContent=e.message;}finally{$('snapshotSave').disabled=false;}};
   async function previewCleanup(){const result=await netcareArtifactRequest({action:'cleanup-preview',ids:selectedSnapshots()});$('cleanupPreview').textContent=tr(`已选择 ${result.count} 个快照 · 预计释放 ${formatBytes(result.released)} · 清理后 ${formatBytes(result.remaining)}`,`${result.count} selected · Releases ${formatBytes(result.released)} · Remaining ${formatBytes(result.remaining)}`);return result;}
-  async function refreshStorage(){const [stats,history]=await Promise.all([netcareArtifactRequest({action:'stats'}),refreshHistory()]);$('storageUsage').textContent=tr(`审计存储约 ${formatBytes(stats.used)} / ${formatBytes(stats.capacity)} · ${stats.snapshots} 个快照 · ${stats.files} 个材料 · 配置 ${formatBytes(stats.configurationBytes||0)}`,`Audit storage ≈ ${formatBytes(stats.used)} / ${formatBytes(stats.capacity)} · ${stats.snapshots} snapshots · ${stats.files} files · Config ${formatBytes(stats.configurationBytes||0)}`);$('storageMeter').value=stats.used/stats.capacity;$('storageCapacity').value=Math.floor(stats.capacity/1048576);$('storageCapacity').max=Math.floor(stats.maximum/1048576);const old=new Set(selectedSnapshots());$('snapshotRows').replaceChildren();for(const s of history){const label=document.createElement('label');label.className='field-row';const input=document.createElement('input');input.type='checkbox';input.value=s.id;input.checked=old.has(s.id);input.onchange=()=>previewCleanup().catch(e=>$('storageMessage').textContent=e.message);const title=document.createElement('span');title.textContent=new Date(s.created).toLocaleString(uiLanguage==='zh'?'zh-CN':'en-GB')+' · '+(s.label||s.orders.join(', '))+' · '+s.checks+' '+tr('个审计点',s.checks===1?'check':'checks');label.append(title,input);$('snapshotRows').append(label);}await previewCleanup();}
+  function selectedMaterialsCategories(){const cats=[];if($('cleanCatScreenshots')?.checked)cats.push('screenshots');if($('cleanCatAttachments')?.checked)cats.push('attachments');if($('cleanCatTexts')?.checked)cats.push('texts');if($('cleanCatBundles')?.checked)cats.push('bundles');if($('cleanCatLogs')?.checked)cats.push('logs');return cats;}
+  async function updateMaterialsCleanupPreview(){const cats=selectedMaterialsCategories(),days=Number($('materialsRetentionDays')?.value)||0,protect=$('protectSnapshotRefs')?.checked!==false,previewEl=$('materialsCleanupPreview'),executeBtn=$('materialsCleanupExecute');if(!previewEl)return;if(!cats.length){previewEl.textContent=tr('未选择任何清理类别 / No categories selected','No categories selected');if(executeBtn)executeBtn.disabled=true;return {count:0,fileCount:0,logCount:0,released:0,remaining:0};}const result=await netcareArtifactRequest({action:'cleanup-materials-preview',options:{categories:cats,days,protectSnapshots:protect}});previewEl.textContent=tr(`预计清理 ${result.fileCount} 个材料文件${result.logCount?'及 '+result.logCount+' 条未归档日志':''} · 预计释放 ${formatBytes(result.released)} · 清理后剩余约 ${formatBytes(result.remaining)}${protect?'（历史快照受保护）':''}`,`${result.fileCount} files${result.logCount?' & '+result.logCount+' logs':''} to clean · Releases ${formatBytes(result.released)} · Remaining ≈ ${formatBytes(result.remaining)}${protect?' (Snapshots protected)':''}`);if(executeBtn)executeBtn.disabled=result.count===0;return result;}
+  async function refreshStorage(){
+    const [stats,history]=await Promise.all([netcareArtifactRequest({action:'stats'}),refreshHistory()]);
+    $('storageUsage').textContent=tr(`审计存储约 ${formatBytes(stats.used)} / ${formatBytes(stats.capacity)} · ${stats.snapshots} 个快照 · ${stats.files} 个材料 · 配置 ${formatBytes(stats.configurationBytes||0)}`,`Audit storage ≈ ${formatBytes(stats.used)} / ${formatBytes(stats.capacity)} · ${stats.snapshots} snapshots · ${stats.files} files · Config ${formatBytes(stats.configurationBytes||0)}`);
+    $('storageMeter').value=stats.used/stats.capacity;
+    $('storageCapacity').value=Math.floor(stats.capacity/1048576);
+    $('storageCapacity').max=Math.floor(stats.maximum/1048576);
+
+    const b=stats.breakdown||{};
+    const categories=[
+      {id:'screenshots',color:'#3b82f6',label:tr('方案截图','Screenshots'),data:b.screenshots||{count:0,bytes:0}},
+      {id:'attachments',color:'#f59e0b',label:tr('方案附件','Attachments'),data:b.attachments||{count:0,bytes:0}},
+      {id:'texts',color:'#10b981',label:tr('方案文本','Section texts'),data:b.texts||{count:0,bytes:0}},
+      {id:'bundles',color:'#8b5cf6',label:tr('审计包与Word','Bundles & Word'),data:b.bundles||{count:0,bytes:0}},
+      {id:'snapshots',color:'#ec4899',label:tr('历史快照','Snapshots'),data:b.snapshots||{count:history.length,bytes:0}},
+      {id:'logs',color:'#06b6d4',label:tr('未归档日志','Log buffer'),data:b.logs||{count:0,bytes:0}},
+      {id:'config',color:'#64748b',label:tr('扩展配置','Configuration'),data:{count:1,bytes:stats.configurationBytes||0}}
+    ];
+
+    const bar=$('storageBar');
+    if(bar){
+      bar.replaceChildren();
+      const cap=stats.capacity||500*1048576;
+      for(const cat of categories){
+        if(cat.data.bytes>0){
+          const pct=Math.min(100,(cat.data.bytes/cap)*100);
+          const seg=document.createElement('div');
+          seg.className='storage-bar-segment';
+          seg.style.width=Math.max(0.3,pct).toFixed(2)+'%';
+          seg.style.backgroundColor=cat.color;
+          const pctOfUsed=stats.used>0?((cat.data.bytes/stats.used)*100).toFixed(1):'0';
+          seg.title=`${cat.label}: ${formatBytes(cat.data.bytes)} (${pctOfUsed}%) · ${cat.data.count} ${tr('项','items')}`;
+          bar.append(seg);
+        }
+      }
+    }
+
+    const breakdownEl=$('storageBreakdown');
+    if(breakdownEl){
+      breakdownEl.replaceChildren();
+      for(const cat of categories){
+        const card=document.createElement('div');card.className='storage-breakdown-card';
+        const dot=document.createElement('span');dot.className='storage-dot';dot.style.backgroundColor=cat.color;
+        const info=document.createElement('div');info.className='storage-breakdown-info';
+        const name=document.createElement('div');name.className='storage-breakdown-name';name.textContent=cat.label;
+        const meta=document.createElement('div');meta.className='storage-breakdown-meta';
+        const pctOfUsed=stats.used>0?((cat.data.bytes/stats.used)*100).toFixed(1):'0';
+        meta.textContent=`${formatBytes(cat.data.bytes)} · ${cat.data.count} ${tr('项','items')} (${pctOfUsed}%)`;
+        info.append(name,meta);card.append(dot,info);breakdownEl.append(card);
+      }
+    }
+
+    if($('cleanCountScreenshots'))$('cleanCountScreenshots').textContent=`(${b.screenshots?.count||0} · ${formatBytes(b.screenshots?.bytes||0)})`;
+    if($('cleanCountAttachments'))$('cleanCountAttachments').textContent=`(${b.attachments?.count||0} · ${formatBytes(b.attachments?.bytes||0)})`;
+    if($('cleanCountTexts'))$('cleanCountTexts').textContent=`(${b.texts?.count||0} · ${formatBytes(b.texts?.bytes||0)})`;
+    if($('cleanCountBundles'))$('cleanCountBundles').textContent=`(${b.bundles?.count||0} · ${formatBytes(b.bundles?.bytes||0)})`;
+    if($('cleanCountLogs'))$('cleanCountLogs').textContent=`(${b.logs?.count||0} · ${formatBytes(b.logs?.bytes||0)})`;
+
+    const old=new Set(selectedSnapshots());$('snapshotRows').replaceChildren();
+    for(const s of history){
+      const label=document.createElement('label');label.className='field-row';
+      const input=document.createElement('input');input.type='checkbox';input.value=s.id;input.checked=old.has(s.id);
+      input.onchange=()=>previewCleanup().catch(e=>$('storageMessage').textContent=e.message);
+      const title=document.createElement('span');
+      title.textContent=new Date(s.created).toLocaleString(uiLanguage==='zh'?'zh-CN':'en-GB')+' · '+(s.label||s.orders.join(', '))+' · '+s.checks+' '+tr('个审计点',s.checks===1?'check':'checks');
+      label.append(title,input);$('snapshotRows').append(label);
+    }
+    await Promise.all([previewCleanup(),updateMaterialsCleanupPreview().catch(e=>$('materialsCleanupStatus').textContent=e.message)]);
+  }
+  for(const id of ['cleanCatScreenshots','cleanCatAttachments','cleanCatTexts','cleanCatBundles','cleanCatLogs','protectSnapshotRefs','materialsRetentionDays']){const el=$(id);if(el)el.onchange=()=>updateMaterialsCleanupPreview().catch(e=>$('materialsCleanupStatus').textContent=e.message);}
+  if($('materialsCleanupRefresh'))$('materialsCleanupRefresh').onclick=()=>updateMaterialsCleanupPreview().catch(e=>$('materialsCleanupStatus').textContent=e.message);
+  if($('materialsCleanupExecute'))$('materialsCleanupExecute').onclick=async()=>{
+    try{
+      const cats=selectedMaterialsCategories(),days=Number($('materialsRetentionDays')?.value)||0,protect=$('protectSnapshotRefs')?.checked!==false;
+      const p=await updateMaterialsCleanupPreview();
+      if(!p||!p.count)return;
+      const confirmed=await requestConfirmation(tr('确认清理暂存材料与缓存','Confirm cleanup'),tr(`预计将清理 ${p.fileCount} 个材料文件${p.logCount?'及 '+p.logCount+' 条未归档日志':''}，预计释放 ${formatBytes(p.released)} 存储空间。\n${protect?'已保存的历史快照完全受保护，不受影响。':'警告：快照引用的材料也将被清理！'}\n此操作不可撤销，确认继续？`,`Will clean ${p.fileCount} files${p.logCount?' and '+p.logCount+' logs':''}, freeing ≈ ${formatBytes(p.released)}.\n${protect?'Saved snapshots remain protected.':'Warning: Snapshot files will also be removed!'}\nContinue?`),true);
+      if(!confirmed)return;
+      $('materialsCleanupExecute').disabled=true;$('materialsCleanupStatus').textContent=tr('正在清理…','Cleaning…');
+      const res=await netcareArtifactRequest({action:'cleanup-materials',options:{categories:cats,days,protectSnapshots:protect}});
+      $('materialsCleanupStatus').textContent=tr(`清理完成，已释放 ${formatBytes(res.released)} 空间！`,`Cleaned up! Freed ${formatBytes(res.released)}.`);
+      await refreshStorage();await refreshLogs(true);
+    }catch(e){$('materialsCleanupStatus').textContent=e.message;}finally{if($('materialsCleanupExecute'))$('materialsCleanupExecute').disabled=false;}
+  };
   $('storageRefresh').onclick=()=>refreshStorage().catch(e=>$('storageMessage').textContent=e.message);
   $('snapSelectAll').onclick=()=>{$('snapshotRows').querySelectorAll('input').forEach(e=>e.checked=true);previewCleanup().catch(e=>$('storageMessage').textContent=e.message);};
   $('snapSelectNone').onclick=()=>{$('snapshotRows').querySelectorAll('input').forEach(e=>e.checked=false);previewCleanup().catch(e=>$('storageMessage').textContent=e.message);};
@@ -1049,14 +1634,31 @@ function mountNetcareCollector() {
   $('snapshotDelete').onclick=async()=>{try{const ids=selectedSnapshots(),p=await previewCleanup();if(!p.count)return;if(!await requestConfirmation(tr('删除快照','Delete snapshots'),tr(`删除 ${p.count} 个快照、相关日志及不再引用的材料，预计释放 ${formatBytes(p.released)}？`,`Delete ${p.count} snapshots, their logs and unreferenced files, freeing ${formatBytes(p.released)}?`),true))return;await netcareArtifactRequest({action:'cleanup',ids});if(ids.includes(activeSnapshot)){activeSnapshot='';auditRecords=liveAuditRecords;renderAudits();}await refreshStorage();await refreshLogs(true);}catch(e){$('storageMessage').textContent=e.message;}};
   $('snapshotBackup').onclick=async()=>{const ids=selectedSnapshots(),language=uiLanguage;if(!ids.length)return;$('snapshotBackup').disabled=$('snapshotDelete').disabled=$('storageApply').disabled=true;try{const entries=[];let totalBytes=0;for(const id of ids){const s=await netcareArtifactRequest({action:'snapshot',snapshotId:id}),files=await netcareArtifactRequest({action:'list',orders:s.records.map(r=>r.order),snapshotId:id});totalBytes+=files.reduce((n,f)=>n+f.size,0);if(totalBytes>512*1048576)throw Error(tr('单次备份超过512MB，请减少选择并分批下载','This backup exceeds 512MB. Select fewer snapshots and download in batches.'));const bundle=await netcareAuditMaterials(s.records,files,async f=>{const chunks=[];for(let index=0;index<f.count;index++){const data=await netcareArtifactRequest({action:'read',fileId:f.id,order:f.order,index,snapshotId:id});chunks.push(Uint8Array.from(atob(data),c=>c.charCodeAt(0)));}return new Blob(chunks);},()=>{},language);const prefix=new Date(s.created).toISOString().replace(/[:.]/g,'-')+'_'+id+'/';entries.push({name:prefix+'snapshot.json',blob:new Blob([JSON.stringify(s,null,2)],{type:'application/json'})},{name:prefix+'plugin-logs.jsonl',blob:new Blob([(s.logs||[]).map(e=>JSON.stringify({...e,timestamp:new Date(e.at).toISOString()})).join('\n')],{type:'application/x-ndjson;charset=utf-8'})},...bundle.entries.map(e=>({...e,name:prefix+e.name})));$('storageMessage').textContent=tr(`正在打包 ${entries.length} 个文件`,`Packing ${entries.length} files`);}saveAuditFile(await createNetcareZip(entries),'NetCare-audit-snapshots-'+new Date().toISOString().slice(0,10)+'.zip');$('storageMessage').textContent=tr('备份已发起保存，请在下载记录确认后清理','Backup save initiated. Confirm in downloads before deleting.');}catch(e){$('storageMessage').textContent=e.message;}finally{$('snapshotBackup').disabled=$('snapshotDelete').disabled=$('storageApply').disabled=false;}};
   $('auditResultsButton').onclick=()=>{renderAudits();refreshHistory().catch(e=>$('auditExportStatus').textContent=e.message);auditDialog.showModal();};$('auditSummaryClose').onclick=()=>auditDialog.close();
-  const tabs=[$('generalTab'),$('sectionsTab'),$('storageTab'),$('logsTab'),$('performanceTab'),$('aiTab')], panes=[$('generalSettings'),$('chapterSettings'),$('storageSettings'),$('pluginLogs'),$('performanceSettings'),$('aiSettings')];
-  const showTab = index => {healthView?.show(index===4);if(index===3)refreshLogs(true).catch(e=>$('pluginLogStatus').textContent=e.message);root.querySelector('.modal-body').classList.toggle('log-mode',index===3);sendLogContext();if(index===2)refreshStorage().catch(e=>$('storageMessage').textContent=e.message);root.querySelector('.modal-body').scrollTop=0;root.querySelector('.modal-body').classList.toggle('chapter-mode',index===1);tabs.forEach((tab,i)=>{tab.tabIndex=i===index?0:-1;tab.setAttribute('aria-selected',String(i===index));panes[i].hidden=i!==index;});};
+  const tabs=[$('generalTab'),$('sectionsTab'),$('localRulesTab'),$('storageTab'),$('logsTab'),$('performanceTab'),$('aiTab')], panes=[$('generalSettings'),$('chapterSettings'),$('localRulesSettings'),$('storageSettings'),$('pluginLogs'),$('performanceSettings'),$('aiSettings')];
+  const showTab = index => {
+    healthView?.show(tabs[index] === $('performanceTab'));
+    if (tabs[index] === $('logsTab')) refreshLogs(true).catch(e=>$('pluginLogStatus').textContent=e.message);
+    else setLogFullscreen(false);
+    root.querySelector('.modal-body').classList.toggle('log-mode', tabs[index] === $('logsTab'));
+    sendLogContext();
+    if (tabs[index] === $('storageTab')) refreshStorage().catch(e=>$('storageMessage').textContent=e.message);
+    root.querySelector('.modal-body').scrollTop = 0;
+    root.querySelector('.modal-body').classList.toggle('chapter-mode', tabs[index] === $('sectionsTab'));
+    tabs.forEach((tab,i)=>{tab.tabIndex=i===index?0:-1;tab.setAttribute('aria-selected',String(i===index));panes[i].hidden=i!==index;});
+  };
   tabs.forEach((tab,index)=>{tab.onclick=()=>showTab(index);tab.onkeydown=event=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){event.preventDefault();const next=event.key==='Home'?0:event.key==='End'?tabs.length-1:(index+(event.key==='ArrowLeft'?tabs.length-1:1))%tabs.length;showTab(next);tabs[next].focus();}};});
   $('settingsButton').onclick = () => { renderSettings(); $('settingsStatus').textContent = '修改后保存生效 / Save to apply'; showTab(0); dialog.showModal(); };
-  const cancelSettings = () => { healthView?.show(false);dialog.close(); renderSettings(); };
+  const cancelSettings = () => { setLogFullscreen(false); healthView?.show(false);dialog.close(); renderSettings(); };
   $('settingsClose').onclick = $('cancelSettings').onclick = cancelSettings;
-  dialog.addEventListener('cancel', () => {healthView?.show(false);renderSettings();});
-  dialog.addEventListener('close',()=>healthView?.show(false));
+  dialog.addEventListener('cancel', () => {setLogFullscreen(false);healthView?.show(false);renderSettings();});
+  dialog.addEventListener('close',()=> {setLogFullscreen(false);healthView?.show(false);});
+  dialog.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && dialog.classList.contains('log-fullscreen-mode')) {
+      e.preventDefault();
+      e.stopPropagation();
+      setLogFullscreen(false);
+    }
+  });
   $('exportSettings').onclick = () => {
     try { const blob = new Blob([netcareExportSettings(readSettings())], { type: 'application/json' }), url = URL.createObjectURL(blob), a = document.createElement('a');
       a.href = url; a.download = 'netcare-rfc-settings.json'; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000); $('settingsStatus').textContent = '配置已导出 / Exported';
@@ -1086,18 +1688,18 @@ function mountNetcareCollector() {
     }
     throw new Error(failure);
   };
-  const detail = order => {const nativeOrder=netcareNativeOrder(location.href);if(location.pathname.startsWith('/rfc/network_tuning/')&&(nativeOrder?nativeOrder===order:Array.from(document.querySelectorAll('input')).some(input=>input.value===order)))return {contentDocument:document};return Array.from(document.querySelectorAll('iframe')).find(frame => {
+  const detail = order => {const nativeOrder=netcareNativeOrder(location.href);if((location.pathname.startsWith('/rfc/network_tuning/')||location.pathname.startsWith('/p/rfc/'))&&(nativeOrder?nativeOrder===order:Array.from(document.querySelectorAll('input')).some(input=>input.value===order)))return {contentDocument:document};return Array.from(document.querySelectorAll('iframe')).find(frame => {
     try {
       const u = new URL(frame.src, location.href);
-      return visible(frame) && u.origin === location.origin && u.pathname.includes('/rfc/network_tuning/')
-        && netcareNativeOrder(u.href) === order
+      return visible(frame) && u.origin === location.origin && (u.pathname.includes('/rfc/network_tuning/') || u.pathname.startsWith('/p/rfc/'))
+        && (netcareNativeOrder(u.href) === order || nativeOrder === order)
         && frame.contentDocument?.readyState === 'complete'
-        && Array.from(frame.contentDocument.querySelectorAll('input')).some(input => input.value === order);
+        && (Array.from(frame.contentDocument.querySelectorAll('input')).some(input => input.value === order) || frame.contentDocument.body?.innerText?.includes(order));
     } catch { return false; }
   });
   };
   const rows = new Map(), onlineRequests = new Map();
-  function routeSend(source,id,order,data={}){const requestId=crypto.randomUUID();return new Promise((resolve,reject)=>{const finish=(fn,value)=>{clearTimeout(timer);window.removeEventListener('message',receive);fn(value);};const receive=e=>{if(e.source===window&&e.origin===location.origin&&e.data?.source==='TP_RFC_ROUTE_REPLY'&&e.data.requestId===requestId)e.data.ok?finish(resolve,e.data.data):finish(reject,Error(e.data.error||'跨区域连接失败 / Region connection failed'));};const timer=setTimeout(()=>finish(reject,Error('跨区域连接超时，请更新扩展 / Region connection timed out; update extension')),8000);window.addEventListener('message',receive);window.postMessage({source,id,order,requestId,...data},location.origin);});}
+  function routeSend(source,id,order,data={}){const requestId=crypto.randomUUID();return new Promise((resolve,reject)=>{const finish=(fn,value)=>{clearTimeout(timer);window.removeEventListener('message',receive);fn(value);};const receive=e=>{if(e.source===window&&e.origin===location.origin&&e.data?.source==='TP_RFC_ROUTE_REPLY'&&e.data.requestId===requestId)e.data.ok?finish(resolve,e.data.data):finish(reject,Error(e.data.error||'跨区域连接失败 / Region connection failed'));};const timer=setTimeout(()=>finish(reject,Error('跨区域连接超时，请更新扩展 / Region connection timed out; update extension')),12000);window.addEventListener('message',receive);window.postMessage({source,id,order,requestId,...data},location.origin);});}
   function finishRemote(entry){if(entry.result&&entry.finish){const result=entry.result;entry.finish(result.ok?null:Error(result.error||'跨区域处理失败 / Cross-region workflow failed'),result.value);}}
   function transferRemote(entry,signal){return new Promise((resolve,reject)=>{let timer;const finish=(error,value)=>{clearTimeout(timer);signal.removeEventListener('abort',abort);entry.finish=null;error?reject(error):resolve(value);};const abort=()=>{routeSend('TP_RFC_ROUTE_CANCEL',entry.id,entry.order).catch(()=>{});finish(Error('已停止等待 / Stopped'));};entry.finish=finish;timer=setTimeout(()=>{routeSend('TP_RFC_ROUTE_CANCEL',entry.id,entry.order).catch(()=>{});finish(Error('跨区域导出超时，请检查目标站点登录 / Cross-region export timed out; check target login'));},13*60000);signal.addEventListener('abort',abort,{once:true});if(signal.aborted)abort();else finishRemote(entry);});}
 
@@ -1218,7 +1820,7 @@ function mountNetcareCollector() {
   async function prepare(order, signal) {
     const log = text => update(order, text);
     const id=routeRun?.order===order?routeRun.jobId:crypto.randomUUID(),entry={id,order,assigned:false,result:null};routeStates.set(id,entry);
-    await routeSend('TP_RFC_ROUTE_ARM',id,order,{batchId:currentBatch.started});
+    try{await routeSend('TP_RFC_ROUTE_ARM',id,order,{batchId:currentBatch.started});}catch(err){netcareLog({order,batchId:currentBatch?.started,category:'extraction',action:'route.arm.warning',message:'跨区域预连接未就绪，继续尝试本页检索 / Cross-region route arm deferred; trying local search: '+(err?.message||''),level:'warn'});}
     let frame = detail(order);
     if(routeRun&&!frame)frame=await wait(()=>detail(order)||entry.assigned&&{routeId:id},45000,signal,'目标站点详情未加载，请检查登录 / Target details not loaded; check login');
     if(frame?.routeId)return frame;
@@ -1234,7 +1836,7 @@ function mountNetcareCollector() {
       try{search.click();frame=await wait(()=>detail(order)||entry.assigned&&{routeId:id},45000,signal,'未找到可访问的作业单或目标区域；请检查单号、登录及页面提示');}finally{if(input.isConnected){Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,previous);input.dispatchEvent(new Event('input',{bubbles:true}));}}
       if(frame.routeId)return frame;
     }
-    await routeSend('TP_RFC_ROUTE_LOCAL',id,order);
+    try{await routeSend('TP_RFC_ROUTE_LOCAL',id,order);}catch(_){}
     const doc = frame.contentDocument;
     const buttons = await wait(() => {
       const found = Array.from(doc.querySelectorAll('.v-icon-dolwnload-1')).filter(visible);
@@ -1378,8 +1980,8 @@ function mountNetcareCollector() {
     };
     header.onpointerup = header.onpointercancel = () => { header.onpointermove = null; };
   };
-  const current = Array.from(document.querySelectorAll('iframe')).map(frame => {
-    try { return new URLSearchParams(new URL(frame.src).hash.split('?')[1]).get('orderid'); }
+  const current = (validOrder(netcareNativeOrder(location.href)) ? netcareNativeOrder(location.href) : null) || Array.from(document.querySelectorAll('iframe')).map(frame => {
+    try { return netcareNativeOrder(frame.src) || new URLSearchParams(new URL(frame.src).hash.split('?')[1]).get('orderid'); }
     catch { return null; }
   }).find(validOrder);
   if (current) $('order').value = current;

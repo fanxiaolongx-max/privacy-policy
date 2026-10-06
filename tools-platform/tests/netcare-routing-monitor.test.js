@@ -96,3 +96,68 @@ test('native detail parsing rejects conflicting URL orders and supports mixed-ca
  assert.equal(context.netcareNativeOrder(origins[2]+'/rfc/network_tuning/view.html?Order_ID='+order),order);
  assert.equal(context.netcareNativeOrder(origins[2]+'/rfc/network_tuning/view.html?docId='+order+'#/rfc?orderid=NC20260910100018'),'!ambiguous');
 });
+
+test('routing and online relay support opcenter portal and forward TP_RFC_ROUTE_ARM',async()=>{
+ for(const origin of origins){
+  assert.equal(route.validPage(origin+'/opcenter/ioc/index.html#/'),true);
+ }
+ const relayCode=pkg.files['netcare-online-relay.js'];
+ assert.ok(relayCode,'netcare-online-relay.js must be present in package');
+ const windowListeners=[];
+ let chromeMessageSent=null;
+ const mockWindow={
+  addEventListener(event,fn){if(event==='message')windowListeners.push(fn);},
+  removeEventListener(){},
+  postMessage(data,origin){postedMessages.push({data,origin});}
+ };
+ const postedMessages=[];
+ const context={
+  window:mockWindow,
+  location:new URL(origins[0]+'/opcenter/ioc/index.html#/'),
+  document:{documentElement:{dataset:{}}},
+  chrome:{
+   runtime:{
+    sendMessage:async(msg)=>{chromeMessageSent=msg;return {ok:true,data:{jobId:'job-123'}};},
+    onMessage:{addListener(){},removeListener(){}}
+   },
+   storage:{local:{get:async()=>({}),set:async()=>{}},onChanged:{addListener(){},removeListener(){}}}
+  },
+  URL,URLSearchParams,Promise,Set,Map
+ };
+ mockWindow.top=mockWindow;
+ vm.runInNewContext(relayCode,context);
+ assert.ok(windowListeners.length>0,'window message listener should be registered');
+ const requestId=crypto.randomUUID(),id=crypto.randomUUID();
+ for(const listener of windowListeners){
+  listener({source:mockWindow,origin:origins[0],data:{source:'TP_RFC_ROUTE_ARM',id,order,requestId,batchId:123}});
+ }
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.ok(chromeMessageSent,'chrome.runtime.sendMessage should be called');
+ assert.equal(chromeMessageSent.type,'TP_RFC_ROUTE_ARM');
+ assert.equal(chromeMessageSent.order,order);
+ const reply=postedMessages.find(m=>m.data?.source==='TP_RFC_ROUTE_REPLY');
+ assert.ok(reply,'TP_RFC_ROUTE_REPLY should be posted back to window');
+ assert.equal(reply.data.requestId,requestId);
+ assert.equal(reply.data.ok,true);
+});
+
+test('German station nested SPA hash route is parsed and routed successfully',async()=>{
+ const deUrl=origins[2]+'/p/netcare/index.html#/iframe/iframe-page/%2Fp%2Frfc%2Fnetwork_tuning%2Fdist%2Findex.html%23%2Frfc%2Fbasic-info%3Forderid='+order+'&title='+order+'&title_en='+order;
+ assert.equal(route.validPage(deUrl),true);
+ assert.equal(route.urlOrder(deUrl),order);
+ const context={URL,URLSearchParams,location:new URL('https://example.com'),window:{}};
+ vm.runInNewContext(code,context);
+ assert.equal(context.netcareNativeOrder(deUrl),order);
+
+ const h=harness(),id=crypto.randomUUID();
+ h.tabs.get(1).url=origins[1]+'/p/netcare/index.html#/home';
+ assert.equal((await h.send('TP_RFC_ROUTE_ARM',id)).ok,true);
+ h.tabs.set(2,{id:2,url:deUrl});
+ h.events.created({id:2,openerTabId:1});
+ await h.drain();
+ assert.equal(h.values.netcareRouteJobs[id].currentTabId,2);
+ assert.equal(h.values['netcareRouteTab:2'].rootTabId,1);
+ assert.ok(h.injections.some(i=>i.world==='MAIN'&&i.files.includes('content.js')));
+ assert.ok(h.notifications.some(m=>m.type==='TP_RFC_ROUTE_LAUNCH'&&m.data.order===order));
+});
+

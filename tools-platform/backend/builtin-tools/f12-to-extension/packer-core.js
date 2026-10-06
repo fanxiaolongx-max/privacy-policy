@@ -372,7 +372,7 @@ function netcareAuditRule(settings, number, kind) {
     const cache=tpArtifactFactory(typeof indexedDB==='undefined'?null:indexedDB);globalThis.tpNetcareArtifactCache=cache;
     chrome.storage?.onChanged?.addListener((d,a)=>{if(a==='local')for(const key of ['netcareAiModels','netcareAiSelectedModel','netcareExtractionSettings','f12PopupLanguage'])if(d[key])netcareBackgroundLog({category:'configuration',action:'configuration.saved',message:'配置已保存 / Configuration saved',data:{setting:key,value:d[key].newValue}});if(a==='local'&&d.netcareStorageSettings?.newValue)cache.configure(d.netcareStorageSettings.newValue.bytes).catch(()=>{});});
     chrome.runtime.onMessage.addListener((m,sender,reply)=>{if(m?.type!=='TP_RFC_ARTIFACT_REQUEST'||sender.id!==chrome.runtime.id)return;
-      try{const u=new URL(sender.url),main=sender.frameId===0&&['netcare-ae.gts.huawei.com','netcare.huawei.com','netcare-de.gts.huawei.com'].includes(u.hostname)&&(u.pathname==='/p/netcare/index.html'||u.pathname.startsWith('/rfc/network_tuning/'));
+      try{const u=new URL(sender.url),main=sender.frameId===0&&['netcare-ae.gts.huawei.com','netcare.huawei.com','netcare-de.gts.huawei.com'].includes(u.hostname)&&(u.pathname==='/p/netcare/index.html'||u.pathname.startsWith('/rfc/network_tuning/')||u.pathname.startsWith('/p/rfc/')||u.pathname.startsWith('/opcenter/'));
         const online=/(^|\.)kdp\.gts\.huawei\.com$/.test(u.hostname)&&u.pathname==='/ows1/static/editor/IdpLiteView/OwsPage.html'&&u.searchParams.get('docId')===m.order;
         const config=u.protocol==='chrome-extension:'&&u.hostname===chrome.runtime.id&&['/netcare-ai.html','/netcare-backup.html','/popup.html'].includes(u.pathname);
         const worker=/(^|\.)kdp\.gts\.huawei\.com$/.test(u.hostname)&&u.pathname==='/ows1/static/editor/IdpLiteView/PublishLiteView.html'&&/^NC\d{14}$/.test(u.searchParams.get('id')||'');
@@ -380,10 +380,10 @@ function netcareAuditRule(settings, number, kind) {
         let operation;
         if((main||online&&sender.frameId===0)&&m.action==='metric')operation=(async()=>{const keys=['netcareRouteTab:'+sender.tab.id,'netcareOwnedTab:'+sender.tab.id],d=await chrome.storage.local.get(keys),binding=online?d[keys[1]]:d[keys[0]],rootTabId=online?binding?.openerTabId||sender.tab.id:binding?.rootTabId||sender.tab.id;return cache.metric({tabId:sender.tab.id,rootTabId,role:online?'online':binding?'route':'main',order:online?u.searchParams.get('docId'):binding?.order||'',at:Date.now(),origin:u.origin,...Object.fromEntries(['heap','heapLimit','busy','lag','hidden'].map(k=>[k,m.metric?.[k]]))});})();
         else if(main&&m.action==='metric-history')operation=(async()=>{const key='netcareRouteTab:'+sender.tab.id,d=await chrome.storage.local.get(key),result=await cache.metricHistory(d[key]?.rootTabId||sender.tab.id);result.latest=await Promise.all(result.latest.slice(0,100).map(async p=>{try{const tab=await chrome.tabs.get(p.tabId);return {...p,discarded:tab.discarded===true};}catch{return {...p,closed:true};}}));return result;})();
-        else if((main||online||worker||config)&&m.action==='log'){const event={...m.event};if(!event||typeof event.action!=='string')throw Error('Invalid log');if(online||worker){const order=u.searchParams.get(online?'docId':'id');if(event.order!==order)throw Error('Invalid log RFC');}if(m.snapshotId&&!main&&!config)throw Error('Invalid log scope');operation=cache.log(event,m.snapshotId);if(online&&['collector.ready','sections.resolved','extraction.progress','audit.result','bundle.cached','bundle.cache.failed','bundle.download','extraction.failed'].includes(event.action))chrome.storage.local.get('netcareOwnedTab:'+sender.tab.id).then(d=>{const owner=d['netcareOwnedTab:'+sender.tab.id];if(owner?.openerTabId)chrome.tabs.sendMessage(owner.openerTabId,{type:'TP_RFC_ROUTE_EVENT',data:{kind:'progress',order:event.order,batchId:owner.batchId,origin:u.origin,text:netcareRedactText(event.message||event.action)}}).catch(()=>{});}).catch(()=>{});}else if(main&&m.action==='query-logs')operation=cache.queryLogs(m.filter||{});else if(main&&m.action==='history')operation=cache.history();else if(main&&m.action==='stats')operation=cache.stats().then(async stats=>({...stats,configurationBytes:await chrome.storage.local.getBytesInUse(null)}));else if(main&&m.action==='snapshot')operation=cache.snapshot(m.snapshotId);else if(main&&m.action==='cleanup-preview')operation=cache.cleanup(m.ids);else if(main&&m.action==='cleanup')operation=cache.cleanup(m.ids,true);else if(main&&m.action==='configure')operation=cache.configure(m.bytes).then(()=>chrome.storage.local.set({netcareStorageSettings:{bytes:m.bytes}}));else if(main&&m.action==='save-snapshot')operation=chrome.storage.local.get(['netcareAuditSummaries','netcareCurrentBatch']).then(d=>cache.saveSnapshot(netcareBatchRecords(d.netcareAuditSummaries,d.netcareCurrentBatch),m.label));else if(m.action==='list'&&(main||online&&m.orders?.length===1&&m.orders[0]===m.order)&&Array.isArray(m.orders)&&m.orders.length<=50&&m.orders.every(o=>/^NC\d{14}$/.test(o)))operation=cache.list(m.orders,m.snapshotId);
+        else if((main||online||worker||config)&&m.action==='log'){const event={...m.event};if(!event||typeof event.action!=='string')throw Error('Invalid log');if(online||worker){const order=u.searchParams.get(online?'docId':'id');if(event.order!==order)throw Error('Invalid log RFC');}if(m.snapshotId&&!main&&!config)throw Error('Invalid log scope');operation=cache.log(event,m.snapshotId);if(online&&['collector.ready','sections.resolved','extraction.progress','audit.result','bundle.cached','bundle.cache.failed','bundle.download','extraction.failed'].includes(event.action))chrome.storage.local.get('netcareOwnedTab:'+sender.tab.id).then(d=>{const owner=d['netcareOwnedTab:'+sender.tab.id];if(owner?.openerTabId)chrome.tabs.sendMessage(owner.openerTabId,{type:'TP_RFC_ROUTE_EVENT',data:{kind:'progress',order:event.order,batchId:owner.batchId,origin:u.origin,text:netcareRedactText(event.message||event.action)}}).catch(()=>{});}).catch(()=>{});}else if(main&&m.action==='query-logs')operation=cache.queryLogs(m.filter||{});else if(main&&m.action==='history')operation=cache.history();else if(main&&m.action==='stats')operation=cache.stats().then(async stats=>({...stats,configurationBytes:await chrome.storage.local.getBytesInUse(null)}));else if(main&&m.action==='snapshot')operation=cache.snapshot(m.snapshotId);else if(main&&m.action==='cleanup-preview')operation=cache.cleanup(m.ids);else if(main&&m.action==='cleanup')operation=cache.cleanup(m.ids,true);else if(main&&m.action==='cleanup-materials-preview')operation=cache.cleanupMaterials(m.options);else if(main&&m.action==='cleanup-materials')operation=cache.cleanupMaterials(m.options,true);else if(main&&m.action==='configure')operation=cache.configure(m.bytes).then(()=>chrome.storage.local.set({netcareStorageSettings:{bytes:m.bytes}}));else if(main&&m.action==='save-snapshot')operation=chrome.storage.local.get(['netcareAuditSummaries','netcareCurrentBatch']).then(d=>cache.saveSnapshot(netcareBatchRecords(d.netcareAuditSummaries,d.netcareCurrentBatch),m.label));else if(m.action==='list'&&(main||online&&m.orders?.length===1&&m.orders[0]===m.order)&&Array.isArray(m.orders)&&m.orders.length<=50&&m.orders.every(o=>/^NC\d{14}$/.test(o)))operation=cache.list(m.orders,m.snapshotId);
         else if(m.action==='read'&&(main||online&&!m.snapshotId)&&/^NC\d{14}$/.test(m.order))operation=cache.read(m.fileId,m.index,m.order,m.snapshotId);
-        else if((online||worker)&&/^NC\d{14}$/.test(m.order)){if(m.action==='begin')operation=cache.begin({id:m.fileId,order:m.order,name:m.name,size:m.size,role:m.role==='audit-bundle'?'audit-bundle':undefined});else if(m.action==='part')operation=cache.part(m.fileId,m.index,m.data,m.order);else if(m.action==='finish')operation=cache.finish(m.fileId,m.order);}
-        if(!operation)throw Error('Invalid artifact operation');if(['save-snapshot','snapshot','cleanup','configure'].includes(m.action))operation=Promise.resolve(operation).then(async result=>{const action={'save-snapshot':'snapshot.saved.manual',snapshot:'snapshot.viewed',cleanup:'snapshot.deleted',configure:'storage.configured'}[m.action],message={'save-snapshot':'手动保存审计快照 / Manually saved audit snapshot',snapshot:'查看审计快照 / Viewed audit snapshot',cleanup:'删除快照及相关日志 / Deleted snapshots and associated logs',configure:'修改存储容量 / Changed storage capacity'}[m.action];await netcareBackgroundLog({category:'storage',action,message,data:{snapshotId:m.action==='save-snapshot'?result:m.snapshotId,ids:m.ids,bytes:m.bytes,count:result?.count,released:result?.released}},m.action==='save-snapshot'?result:m.action==='snapshot'?m.snapshotId:undefined);return result;});if(['begin','finish'].includes(m.action))operation=Promise.resolve(operation).then(async result=>{const d=await chrome.storage.local.get(['netcareRunStarted:'+m.order,'netcareCurrentBatch']);await netcareBackgroundLog({order:m.order,generationAt:d['netcareRunStarted:'+m.order]||0,batchId:d.netcareCurrentBatch?.started||0,category:'storage',action:'artifact.'+m.action,message:m.action==='begin'?'开始保存材料 / Begin caching material':'材料保存完成 / Material cached',data:{fileId:m.fileId,name:m.name,size:m.size,role:m.role}});return result;});Promise.resolve(operation).then(data=>reply({ok:true,data}),error=>reply({ok:false,error:String(error.message).slice(0,500)}));return true;
+        else if((online||worker)&&/^NC\d{14}$/.test(m.order)){if(m.action==='begin')operation=cache.begin({id:m.fileId,order:m.order,name:m.name,size:m.size,role:['audit-bundle','screenshot','text','attachments','word'].includes(m.role)?m.role:undefined});else if(m.action==='part')operation=cache.part(m.fileId,m.index,m.data,m.order);else if(m.action==='finish')operation=cache.finish(m.fileId,m.order);}
+        if(!operation)throw Error('Invalid artifact operation');if(['save-snapshot','snapshot','cleanup','configure','cleanup-materials'].includes(m.action))operation=Promise.resolve(operation).then(async result=>{const action={'save-snapshot':'snapshot.saved.manual',snapshot:'snapshot.viewed',cleanup:'snapshot.deleted',configure:'storage.configured','cleanup-materials':'materials.cleaned'}[m.action],message={'save-snapshot':'手动保存审计快照 / Manually saved audit snapshot',snapshot:'查看审计快照 / Viewed audit snapshot',cleanup:'删除快照及相关日志 / Deleted snapshots and associated logs',configure:'修改存储容量 / Changed storage capacity','cleanup-materials':'按类别清理材料 / Cleaned up materials by category'}[m.action];await netcareBackgroundLog({category:'storage',action,message,data:{snapshotId:m.action==='save-snapshot'?result:m.snapshotId,ids:m.ids,options:m.options,bytes:m.bytes,count:result?.count,released:result?.released}},m.action==='save-snapshot'?result:m.action==='snapshot'?m.snapshotId:undefined);return result;});if(['begin','finish'].includes(m.action))operation=Promise.resolve(operation).then(async result=>{const d=await chrome.storage.local.get(['netcareRunStarted:'+m.order,'netcareCurrentBatch']);await netcareBackgroundLog({order:m.order,generationAt:d['netcareRunStarted:'+m.order]||0,batchId:d.netcareCurrentBatch?.started||0,category:'storage',action:'artifact.'+m.action,message:m.action==='begin'?'开始保存材料 / Begin caching material':'材料保存完成 / Material cached',data:{fileId:m.fileId,name:m.name,size:m.size,role:m.role}});return result;});Promise.resolve(operation).then(data=>reply({ok:true,data}),error=>reply({ok:false,error:String(error.message).slice(0,500)}));return true;
       }catch{reply({ok:false,error:'审计材料来源或操作无效'});}
     });
   }
@@ -427,7 +427,8 @@ function netcareAuditRule(settings, number, kind) {
           && (!value.attachmentsEnabled || value.sections.some(row => row.attachments)) && (!value.textEnabled || value.sections.some(row => row.text))
           && value.sections.every(row => typeof row.number === 'string' && /^\d+(\.\d+)*$/.test(row.number) && row.number.length <= 40
             && ['textPrompt','attachmentsPrompt'].every(k=>row[k]==null||typeof row[k]==='string'&&row[k].length<=4000)
-            && typeof row.title === 'string' && row.title.trim() && row.title.length <= 200 && typeof row.attachments === 'boolean' && typeof row.text === 'boolean'); }
+            && typeof row.title === 'string' && row.title.trim() && row.title.length <= 200 && typeof row.attachments === 'boolean' && typeof row.text === 'boolean')
+          && (value.localRules == null || Array.isArray(value.localRules) && value.localRules.length <= 100 && value.localRules.every(r => typeof r === 'object' && r && typeof (r.name || '') === 'string' && (r.name || '').length <= 100)); }
   function netcareBatchRecords(records,batch){
     return (Array.isArray(records)?records:[]).filter(r=>Date.now()-Date.parse(r.restoredAt||r.at)<86400000&&(!batch?.orders?.length||batch.orders.includes(r.order)&&Number(r.generationAt||Date.parse(r.at))>=batch.started));
   }
@@ -445,6 +446,9 @@ function netcareAuditRule(settings, number, kind) {
     language();
     const receive = event => {
       const message = event.data;
+      if(event.source===window&&event.origin===location.origin&&['TP_RFC_ROUTE_ARM','TP_RFC_ROUTE_LOCAL','TP_RFC_ROUTE_CANCEL','TP_RFC_ROUTE_PROGRESS','TP_RFC_ROUTE_RESULT'].includes(message?.source)&&/^[a-f0-9-]{36}$/.test(message.id||'')){
+        chrome.runtime.sendMessage({type:message.source,id:message.id,order:message.order,batchId:message.batchId,text:message.text,ok:message.ok,value:message.value,error:message.error}).then(result=>window.postMessage({source:'TP_RFC_ROUTE_REPLY',requestId:message.requestId,id:message.id,...result},location.origin)).catch(()=>window.postMessage({source:'TP_RFC_ROUTE_REPLY',requestId:message.requestId,id:message.id,ok:false,error:'跨区域连接失效，请重新启动插件 / Restart extension to reconnect regions'},location.origin));return;
+      }
       if(event.source===window&&event.origin===location.origin&&message?.source==='TP_RFC_PIP_REQUEST'&&/^[a-f0-9-]{36}$/.test(message.id||'')){
         Promise.resolve().then(()=>chrome.runtime.sendMessage({type:'TP_RFC_PIP_REQUEST',id:message.id,action:message.action,tabId:message.tabId,order:message.order,delta:message.delta,reset:message.reset,large:message.large,command:message.command})).then(result=>window.postMessage({source:'TP_RFC_PIP_RESULT',id:message.id,...result},location.origin)).catch(()=>window.postMessage({source:'TP_RFC_PIP_RESULT',id:message.id,ok:false,error:'预览连接失效，请重启插件 / Restart extension to reconnect previews'},location.origin));return;
       }
@@ -459,7 +463,19 @@ function netcareAuditRule(settings, number, kind) {
           if (message.source === 'TP_RFC_SETTINGS_SET') {
             if (!netcareValidSettings(message.settings)) throw new Error('Invalid extraction settings');
             const value = { pipBetaEnabled:message.settings.pipBetaEnabled===true, closeAfterAudit:message.settings.closeAfterAudit===true, titleFallbackEnabled:message.settings.titleFallbackEnabled===true, aiAuditEnabled: message.settings.aiAuditEnabled === true, concurrency: message.settings.concurrency ?? 3, openOnline: message.settings.openOnline ?? true, screenshotsEnabled: message.settings.screenshotsEnabled !== false, attachmentsEnabled: message.settings.attachmentsEnabled, textEnabled: message.settings.textEnabled, intervalMs: message.settings.intervalMs,
-              sections: message.settings.sections.map(({ number, title, attachments, text, attachmentsPrompt, textPrompt }) => ({ number, title, attachments, text, attachmentsPrompt: netcareRedactText(attachmentsPrompt || ''), textPrompt: netcareRedactText(textPrompt || '') })) };
+              sections: message.settings.sections.map(({ number, title, attachments, text, attachmentsPrompt, textPrompt }) => ({ number, title, attachments, text, attachmentsPrompt: netcareRedactText(attachmentsPrompt || ''), textPrompt: netcareRedactText(textPrompt || '') })),
+              localRules: Array.isArray(message.settings.localRules) ? message.settings.localRules.slice(0, 100).map(r => ({
+                id: String(r.id || '').slice(0, 60),
+                name: netcareRedactText(String(r.name || '').slice(0, 100)),
+                sectionNumber: String(r.sectionNumber || '').slice(0, 40),
+                sectionTitle: netcareRedactText(String(r.sectionTitle || '').slice(0, 200)),
+                kind: ['text', 'attachments'].includes(r.kind) ? r.kind : 'all',
+                pattern: String(r.pattern || '').slice(0, 1000),
+                passCondition: r.passCondition === 'not_match' ? 'not_match' : 'match',
+                passSummary: netcareRedactText(String(r.passSummary || '').slice(0, 500)),
+                failSummary: netcareRedactText(String(r.failSummary || '').slice(0, 500)),
+                enabled: r.enabled !== false
+              })) : undefined };
             await chrome.storage.local.set({ [key]: value });
             window.postMessage({ source: 'TP_RFC_SETTINGS_RESULT', ok: true, saved: true, aiPageUrl: chrome.runtime?.getURL?.('netcare-ai.html'), backupPageUrl: chrome.runtime?.getURL?.('netcare-backup.html'), settings: value }, location.origin);
           } else {
@@ -498,6 +514,7 @@ function netcareAuditRule(settings, number, kind) {
     window.__tpRfcCollectorBridgeCleanup?.();
     const receive = event => {
       if (event.source !== window || event.origin !== location.origin || event.data?.order !== order) return;
+      if(event.data.source==='TP_RFC_ACTIVATE_REQUEST'){Promise.resolve().then(()=>chrome.runtime.sendMessage({type:'TP_RFC_ACTIVATE_TAB',order,id:event.data.id,durationMs:event.data.durationMs,restoreOpener:event.data.restoreOpener})).then(result=>window.postMessage({source:'TP_RFC_ACTIVATE_RESULT',order,id:event.data.id,ok:result?.ok===true,error:result?.error},location.origin)).catch(()=>window.postMessage({source:'TP_RFC_ACTIVATE_RESULT',order,id:event.data.id,ok:false,error:'扩展连接失败'},location.origin));return;}
       if(event.data.source==='TP_RFC_CLOSE_AFTER_AUDIT'){Promise.resolve().then(()=>chrome.runtime.sendMessage({type:'TP_RFC_CLOSE_AFTER_AUDIT',order})).then(result=>window.postMessage({source:'TP_RFC_CLOSE_RESULT',order,...result},location.origin)).catch(()=>window.postMessage({source:'TP_RFC_CLOSE_RESULT',order,ok:false,error:'扩展关闭连接失败 / Extension close connection failed'},location.origin));return;}
       if(event.data.source==='TP_RFC_AUDIT_PUBLISH'){
         Promise.resolve().then(()=>chrome.runtime.sendMessage({type:'TP_RFC_AUDIT_PUBLISH',order,record:event.data.record}))
@@ -545,7 +562,7 @@ function netcareAuditRule(settings, number, kind) {
       if(message?.type!=='TP_RFC_PIP_REQUEST')return;
       (async()=>{let locked=false;try{
         const source=new URL(sender.url);
-        if(sender.id!==chrome.runtime.id||!sender.tab?.id||sender.frameId!==0||!origins.includes(source.origin)||source.pathname!=='/p/netcare/index.html'||!/^[a-f0-9-]{36}$/.test(message.id||'')||!['list','frame','focus','panel','control'].includes(message.action))throw Error('预览来源无效 / Invalid preview source');
+        if(sender.id!==chrome.runtime.id||!sender.tab?.id||sender.frameId!==0||!origins.includes(source.origin)||!(source.pathname==='/p/netcare/index.html'||source.pathname.startsWith('/rfc/network_tuning/')||source.pathname.startsWith('/p/rfc/')||source.pathname.startsWith('/opcenter/'))||!/^[a-f0-9-]{36}$/.test(message.id||'')||!['list','frame','focus','panel','control'].includes(message.action))throw Error('预览来源无效 / Invalid preview source');
         const saved=await chrome.storage.local.get('netcareExtractionSettings');
         if(saved.netcareExtractionSettings?.pipBetaEnabled!==true)throw Error('Beta 预览未开启 / Beta preview is disabled');
         if(message.action==='list'){
@@ -586,6 +603,21 @@ function netcareAuditRule(settings, number, kind) {
     const origins = ['https://netcare-ae.gts.huawei.com', 'https://netcare.huawei.com', 'https://netcare-de.gts.huawei.com'];
     chrome.runtime.onMessage.addListener((message, sender, reply) => {
       if(message?.type==='TP_RFC_ONLINE_READY'){try{const u=new URL(sender.url);if(sender.id!==chrome.runtime.id||sender.frameId!==0||u.protocol!=='https:'||!/(^|\.)kdp\.gts\.huawei\.com$/.test(u.hostname)||u.pathname!=='/ows1/static/editor/IdpLiteView/OwsPage.html'||u.searchParams.get('docId')!==message.order)throw Error();const pending=opened.get(sender.tab?.id);if(pending){opened.delete(sender.tab.id);chrome.tabs.sendMessage?.(pending.opener,{type:'TP_RFC_ONLINE_CONFIRMED',id:pending.id,order:message.order}).catch(()=>{});}reply({ok:true});}catch{reply({ok:false});}return;}
+      if(message?.type==='TP_RFC_ACTIVATE_TAB'){
+        (async()=>{try{
+          const u=new URL(sender.url),tabId=sender.tab?.id;
+          if(sender.id!==chrome.runtime.id||!tabId||sender.frameId!==0||u.protocol!=='https:'||!/(^|\.)kdp\.gts\.huawei\.com$/.test(u.hostname)||u.pathname!=='/ows1/static/editor/IdpLiteView/OwsPage.html'||u.searchParams.get('docId')!==message.order||!/^NC\d{14}$/.test(message.order))throw Error('Invalid activate source');
+          const key='netcareOwnedTab:'+tabId,data=await chrome.storage.local.get(key);
+          const owner=data[key];
+          if(owner?.order!==message.order)throw Error('该页签不是扩展本次打开的方案 / Tab is not owned');
+          const openerTabId=owner.openerTabId;
+          await chrome.tabs.update(tabId,{active:true});
+          if(message.restoreOpener&&openerTabId){
+            setTimeout(async()=>{try{await chrome.tabs.update(openerTabId,{active:true});}catch{}},Math.max(800,Math.min(12000,Number(message.durationMs)||2000)));
+          }
+          reply({ok:true});
+        }catch(e){reply({ok:false,error:e.message});}})();return true;
+      }
       if(message?.type==='TP_RFC_CLOSE_AFTER_AUDIT'){
         (async()=>{try{
           const u=new URL(sender.url),tabId=sender.tab?.id;
@@ -617,7 +649,7 @@ function netcareAuditRule(settings, number, kind) {
       try {
         const source = new URL(sender.url), url = new URL(message.url);
         if (!sender.tab?.id || sender.frameId !== 0 || !origins.includes(source.origin)
-          || !(source.pathname === '/p/netcare/index.html' || source.pathname.startsWith('/rfc/network_tuning/')) || !/^NC\d{14}$/.test(message.order)
+          || !(source.pathname === '/p/netcare/index.html' || source.pathname.startsWith('/rfc/network_tuning/') || source.pathname.startsWith('/p/rfc/') || source.pathname.startsWith('/opcenter/')) || !/^NC\d{14}$/.test(message.order)
           || url.protocol !== 'https:' || !/(^|\.)kdp\.gts\.huawei\.com$/.test(url.hostname)
           || url.pathname !== '/ows1/static/editor/IdpLiteView/OwsPage.html'
           || url.username || url.password || url.port
@@ -627,7 +659,7 @@ function netcareAuditRule(settings, number, kind) {
         (async()=>{
           const context=await chrome.storage?.local?.get?.(['netcareRunStarted:'+message.order,'netcareCurrentBatch','netcareRouteTab:'+sender.tab.id])||{};
           const routing=context['netcareRouteTab:'+sender.tab.id];
-          if(source.pathname.startsWith('/rfc/network_tuning/')){
+          if(source.pathname.startsWith('/rfc/network_tuning/')||source.pathname.startsWith('/p/rfc/')){
             const explicit=tpRoutingFactory().urlOrder(source.href);
             if(explicit?explicit!==message.order:routing?.order!==message.order)throw Error('Invalid native detail RFC');
           }
@@ -1247,7 +1279,7 @@ initializePopup();`;
       files['netcare-monitor.js']=`globalThis.createNetcareMonitor=(${monitorFactory.toString()});`;
       for(const content of manifest.content_scripts.filter(c=>c.world==='MAIN'))content.js.splice(content.js.length-1,0,'netcare-monitor.js');
       manifest.permissions=unique([...manifest.permissions,'webNavigation']);
-      files['background.js']+=`\nconst tpMonitorFactory=(${monitorFactory.toString()});\nconst tpControlsFactory=(${controlsFactory.toString()});`;
+      files['background.js']+=`\nglobalThis.createNetcareMonitor=globalThis.tpMonitorFactory=(${monitorFactory.toString()});\nconst tpMonitorFactory=globalThis.tpMonitorFactory;\nconst tpControlsFactory=(${controlsFactory.toString()});`;
       const artifactFactory=globalThis.createNetcareArtifacts||(typeof require==='function'?require('./netcare-artifacts.js'):null);
       if(!artifactFactory)throw Error('NetCare artifact component missing; refresh the packer');
       files['background.js']+=`\nconst tpArtifactFactory=(${artifactFactory.toString()});\n${netcareBatchRecords.toString()}\n(${netcareArtifactBackground.toString()})();\n(${netcarePipBackground.toString()})();\nconst tpRoutingFactory=(${routingFactory.toString()});\ntpRoutingFactory().background();`;

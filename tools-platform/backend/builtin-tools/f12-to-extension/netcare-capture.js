@@ -54,8 +54,15 @@
       if(n>1)await sleep(n===2?400:1000,signal);
       let element;
       try{element=locate(doc,shot);if(!element){const clicked=navigate(doc,shot.topic);throw fail('REGION_NOT_RENDERED',clicked?'已定位目录入口，等待章节渲染 / Native navigation clicked; waiting for section':'未定位到已渲染的原始区域 / Live original region not found');}
+        try{
+          element.scrollIntoView({block:'center',inline:'center',behavior:'instant'});
+          const scroller=(globalThis.createNetcarePip?.()?.scrollTarget||(d=>d.scrollingElement||d.documentElement))(doc);
+          scroller?.dispatchEvent(new Event('scroll',{bubbles:true}));
+          doc.defaultView?.dispatchEvent(new Event('scroll'));
+        }catch{}
+        if(doc.defaultView)await sleep(60,signal);
         const images=await render(element);options.attempt?.({attempt:n,stage:'live',ok:true});return {images,method:'live',attempts};
-      }catch(e){if(signal.aborted)throw e;const bounds=element?.getBoundingClientRect();const item={attempt:n,stage:'live',code:e.code||e.name||'RENDER_FAILED',message:String(e.message||e).slice(0,1500),stack:String(e.stack||'').slice(0,2000),articles:doc.querySelectorAll('article').length,bounds:bounds?{width:bounds.width,height:bounds.height,connected:element.isConnected}:null};attempts.push(item);options.attempt?.(item);}
+      }catch(e){if(signal.aborted)throw e;const bounds=element?.getBoundingClientRect();const item={attempt:n,stage:'live',code:e.code||e.name||'RENDER_FAILED',message:String(e.message||e).slice(0,1500),stack:String(e.stack||'').slice(0,2000),articles:doc.querySelectorAll('article').length,bounds:bounds?{width:bounds.width,height:bounds.height,connected:element.isConnected}:null};attempts.push(item);options.attempt?.(item);if(n===1&&typeof options.onStuck==='function'){try{options.onStuck();}catch{}}}
     }
     let fallback;
     try{if(signal.aborted)throw fail('STOPPED','已停止 / Stopped');fallback=reconstruct(doc,shot);const images=await render(fallback.element);return {images,method:'reconstructed',attempts};}
