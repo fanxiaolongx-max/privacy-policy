@@ -1351,6 +1351,13 @@ export function initProjectWorkspace(callbacks) {
         if (openButton) openProject(openButton.dataset.openProject).catch(error => alert(error.message));
     });
     projectNameChip.addEventListener('click', () => { hub.classList.remove('is-hidden'); loadProjects(); });
+    document.getElementById('returnProjectHomeBtn')?.addEventListener('click', () => {
+        // Keep the open deck and finish its pending save while showing the hub.
+        hub.classList.remove('is-hidden');
+        saveNow(false);
+        loadProjects();
+        nameInput.focus();
+    });
     document.getElementById('manualSaveBtn').addEventListener('click', () => saveNow(true));
     importInput.addEventListener('change', () => importPptx(importInput.files[0]));
     addMaterialAssetButton.addEventListener('click', () => materialAssetImportInput.click());

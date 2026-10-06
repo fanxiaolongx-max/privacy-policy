@@ -18,13 +18,36 @@
     if(matches.length>1)throw fail('AMBIGUOUS_ATTACHMENT','附件位置不唯一，已拒绝截图 / Ambiguous attachment location; capture refused');
     const anchor=matches[0];return anchor?.closest('tr')||anchor?.closest('p')||anchor||null;
   }
+  function directoryNodes(doc){
+    // OwsLiteView uses treepanel; older editors use NavigationTree.
+    const nodes=[...doc.querySelectorAll('#treepanel [data-title="title"],#NavigationTree span,#NavigationTree p,#NavigationTree div,a,[role=treeitem]')].filter(el=>!el.closest('article')&&el.getBoundingClientRect().width>0);
+    return nodes.filter(el=>!nodes.some(child=>child!==el&&el.contains?.(child)&&title(child.textContent)===title(el.textContent)));
+  }
+  const numberOf=el=>String(el.textContent||'').trim().match(/^(\d+(?:\.\d+)*)(?=\s|[.、):]|[A-Za-z\u3400-\u9fff])/)?.[1]||'';
+  function directoryTarget(nodes,topic){
+    const numbered=nodes.filter(el=>numberOf(el)===topic.number&&title(el.textContent)===title(topic.title));
+    const matches=numbered.length?numbered:nodes.filter(el=>!numberOf(el)&&title(el.textContent)===title(topic.title));
+    return matches.length===1?matches[0]:null;
+  }
   function navigate(doc,topic){
-    const normal=value=>String(value||'').replace(/\s+/g,' ').trim().toLowerCase();
-    // The native directory uses nested DIV/P/SPAN nodes, not links or ARIA tree items.
-    const nodes=[...doc.querySelectorAll('#NavigationTree span,#NavigationTree p,#NavigationTree div,a,[role=treeitem]')].filter(el=>!el.closest('article')&&el.getBoundingClientRect().width>0);
-    const numbered=nodes.filter(el=>normal(el.textContent)===normal(topic.number+' '+topic.title));
-    const matches=(numbered.length?numbered:nodes.filter(el=>normal(el.textContent)===normal(topic.title))).filter(el=>!nodes.some(child=>child!==el&&el.contains?.(child)&&normal(child.textContent)===normal(el.textContent)));
-    if(matches.length===1){matches[0].click();return true;}return false;
+    const node=directoryTarget(directoryNodes(doc),topic);if(!node)return false;node.click();return true;
+  }
+  async function reveal(doc,topic,signal,sleep,notify){
+    const expanded=new Set();let clicked=false;
+    for(let poll=0;poll<40;poll++){
+      if(signal.aborted)throw fail('STOPPED','已停止 / Stopped');
+      const nodes=directoryNodes(doc),target=directoryTarget(nodes,topic);
+      if(target){target.click();notify?.({action:'target.click',number:topic.number,title:topic.title,clicked:true,message:'已点击目标章节目录 / Clicked target directory entry'});return true;}
+      const parents=nodes.filter(el=>{const n=numberOf(el);return n&&topic.number.startsWith(n+'.')&&!expanded.has(n);});
+      parents.sort((a,b)=>numberOf(b).split('.').length-numberOf(a).split('.').length);
+      const parent=parents[0],number=parent&&numberOf(parent);
+      if(parent&&parents.filter(el=>numberOf(el)===number).length===1){
+        parent.click();expanded.add(number);clicked=true;notify?.({action:'ancestor.click',number,title:String(parent.textContent).trim(),clicked:true,message:'已点击父章节，展开并加载子目录 / Clicked parent to reveal child directory'});
+      }else if(!clicked){notify?.({action:'target.missing',number:topic.number,title:topic.title,clicked:false,entries:nodes.length,message:'未找到唯一目标章节或父章节目录 / Unique target or parent directory not found'});return false;}
+      await sleep(120,signal);
+    }
+    notify?.({action:'target.timeout',number:topic.number,title:topic.title,clicked:false,message:'父章节已点击，但目标子目录未加载 / Parent clicked but target directory did not load'});
+    return false;
   }
   async function ready(doc,shot,signal,sleep){
     let previous,signature='',stable=0;
@@ -71,7 +94,7 @@
       if(n>1)await sleep(n===2?400:1000,signal);
       let element;
       try{
-        const clicked=navigate(doc,shot.topic);
+        const clicked=await reveal(doc,shot.topic,signal,sleep,event=>options.navigation?.({attempt:n,...event}));
         element=locate(doc,shot);
         if(!element&&!clicked)throw fail('REGION_NOT_RENDERED','未定位到章节目录入口或原始区域 / Native directory and live region not found');
         // Never retain a node across scroll-driven virtual DOM replacement.
@@ -87,12 +110,12 @@
         const images=await render(element);
         if(element.isConnected===false||locate(doc,shot)!==element)throw fail('REGION_REPLACED','渲染期间章节节点发生替换，重新定位并重试 / Section replaced during rendering; retrying');
         options.attempt?.({attempt:n,stage:'live',ok:true});return {images,method:'live',attempts};
-      }catch(e){if(signal.aborted)throw e;const bounds=element?.getBoundingClientRect();const item={attempt:n,stage:'live',code:e.code||e.name||'RENDER_FAILED',message:String(e.message||e).slice(0,1500),stack:String(e.stack||'').slice(0,2000),articles:doc.querySelectorAll('article').length,bounds:bounds?{width:bounds.width,height:bounds.height,connected:element.isConnected}:null};attempts.push(item);options.attempt?.(item);if(n===1&&typeof options.onStuck==='function'){try{options.onStuck();}catch{}}}
+      }catch(e){if(signal.aborted)throw e;const bounds=element?.getBoundingClientRect();const item={attempt:n,stage:'live',code:e.code||e.name||'RENDER_FAILED',message:String(e.message||e).slice(0,1500),stack:String(e.stack||'').slice(0,2000),articles:doc.querySelectorAll('article').length,bounds:bounds?{width:bounds.width,height:bounds.height,connected:element.isConnected}:null};attempts.push(item);options.attempt?.(item);if(n===1&&typeof options.onStuck==='function'){try{await options.onStuck();}catch{}}}
     }
     let fallback;
     try{if(signal.aborted)throw fail('STOPPED','已停止 / Stopped');fallback=reconstruct(doc,shot);const images=await render(fallback.element);return {images,method:'reconstructed',attempts};}
     catch(e){if(signal.aborted)throw e;attempts.push({attempt:4,stage:'reconstructed',code:e.code||e.name||'RENDER_FAILED',message:String(e.message||e).slice(0,1500),stack:String(e.stack||'').slice(0,2000)});throw Object.assign(fail('CAPTURE_FAILED','截图重试与兜底均失败 / Capture retries and fallback failed'),{attempts});}
     finally{fallback?.remove();}
   }
-  return {article,locate,navigate,reconstruct,capture};
+  return {article,locate,navigate,reveal,reconstruct,capture};
 });

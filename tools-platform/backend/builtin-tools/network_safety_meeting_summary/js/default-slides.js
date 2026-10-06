@@ -1,4 +1,4 @@
-import { createVisionSlide } from './vision-template.js?v=20261006-1';
+import { createVisionSlide } from './vision-template.js?v=20261006-2';
 export const defaultSlides = [createVisionSlide()];
 
 // Huawei-style default deck rebuilt from the uploaded reference template.

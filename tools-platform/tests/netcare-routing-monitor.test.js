@@ -139,6 +139,10 @@ test('routing and online relay support opcenter portal and forward TP_RFC_ROUTE_
  assert.ok(reply,'TP_RFC_ROUTE_REPLY should be posted back to window');
  assert.equal(reply.data.requestId,requestId);
  assert.equal(reply.data.ok,true);
+ const url=origins[2]+'/p/netcare/index.html?orderid='+order;
+ for(const listener of windowListeners)listener({source:mockWindow,origin:origins[0],data:{source:'TP_RFC_ROUTE_OPEN',id,order,url,requestId:crypto.randomUUID()}});
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(chromeMessageSent.type,'TP_RFC_ROUTE_OPEN');assert.equal(chromeMessageSent.url,url);
 });
 
 test('German station nested SPA hash route is parsed and routed successfully',async()=>{
@@ -161,3 +165,63 @@ test('German station nested SPA hash route is parsed and routed successfully',as
  assert.ok(h.notifications.some(m=>m.type==='TP_RFC_ROUTE_LAUNCH'&&m.data.order===order));
 });
 
+
+test('new cross-region tabs without opener or navigation-target events continue by a unique exact RFC',async()=>{
+ for(const from of origins)for(const to of origins.filter(o=>o!==from)){
+  const h=harness(),id=crypto.randomUUID();h.tabs.get(1).url=from+'/p/netcare/index.html';await h.send('TP_RFC_ROUTE_ARM',id);
+  const url=to+'/p/netcare/index.html#/iframe/iframe-page/%2Fp%2Frfc%2Fnetwork_tuning%2Fdist%2Findex.html%23%2Frfc%2Fbasic-info%3Forderid='+order+'&title='+order;
+  h.tabs.set(2,{id:2,url});h.events.created({id:2});await h.drain();
+  assert.equal(h.values.netcareRouteJobs[id].currentTabId,2);assert.equal(h.values['netcareRouteTab:2'].rootTabId,1);
+  assert.ok(h.notifications.some(m=>m.id===2&&m.type==='TP_RFC_ROUTE_LAUNCH'));
+ }
+});
+test('new source-less about:blank tabs are tracked through delayed target URL updates',async()=>{
+ const h=harness(),id=crypto.randomUUID();await h.send('TP_RFC_ROUTE_ARM',id);
+ h.tabs.set(2,{id:2,url:'about:blank'});h.events.created({id:2});await h.drain();assert.equal(h.injections.length,0);
+ h.tabs.get(2).url=origins[2]+'/p/netcare/index.html?orderid='+order;h.events.updated(2,{url:h.tabs.get(2).url});await h.drain();
+ assert.equal(h.values.netcareRouteJobs[id].currentTabId,2);
+});
+test('source-less fallback refuses old tabs, unknown RFCs, same-region pages, foreign sites, conflicting orders and ambiguous jobs',async()=>{
+ const h=harness(),id=crypto.randomUUID();await h.send('TP_RFC_ROUTE_ARM',id);
+ h.tabs.set(2,{id:2,url:origins[2]+'/p/netcare/index.html?orderid='+order});h.events.updated(2,{status:'complete'});
+ for(const [tabId,url]of [[3,origins[2]+'/p/netcare/index.html'],[4,origins[2]+'/p/netcare/index.html?orderid=NC20260910100018'],[5,origins[0]+'/p/netcare/index.html?orderid='+order],[6,'https://evil.example/?orderid='+order],[7,origins[2]+'/p/netcare/index.html?orderid='+order+'#/?id=NC20260910100018']]){
+  h.tabs.set(tabId,{id:tabId,url});h.events.created({id:tabId});
+ }
+ await h.drain();assert.equal(h.injections.filter(i=>i.files).length,0);
+ const other=harness(),first=crypto.randomUUID(),second=crypto.randomUUID();await other.send('TP_RFC_ROUTE_ARM',first);await other.send('TP_RFC_ROUTE_ARM',second);
+ other.tabs.set(2,{id:2,url:origins[2]+'/p/netcare/index.html?orderid='+order});other.events.created({id:2});await other.drain();
+ assert.equal(other.injections.filter(i=>i.files).length,0);assert.equal(other.values.netcareRouteJobs[first].phase,'searching');assert.equal(other.values.netcareRouteJobs[second].phase,'searching');
+});
+test('source-less fallback does not adopt tabs created before arming or after cancellation',async()=>{
+ const h=harness(),id=crypto.randomUUID();h.tabs.set(2,{id:2,url:origins[2]+'/p/netcare/index.html?orderid='+order});h.events.created({id:2});await h.drain();
+ await h.send('TP_RFC_ROUTE_ARM',id);h.events.updated(2,{status:'complete'});await h.drain();assert.equal(h.injections.length,0);
+ await h.send('TP_RFC_ROUTE_CANCEL',id);h.tabs.set(3,{id:3,url:origins[2]+'/p/netcare/index.html?orderid='+order});h.events.created({id:3});await h.drain();assert.equal(h.injections.length,0);
+});
+
+test('active search forwards only exact native cross-region opens and restores the original opener',()=>{
+ const context={URL,URLSearchParams,location:new URL(origins[0]),window:{}};vm.runInNewContext(code,context);
+ const opened=[],forwarded=[],native=function(...args){opened.push({receiver:this,args});return 'native-window';};
+ const win={location:new URL(origins[0]+'/p/netcare/index.html'),open:native};
+ const restore=context.netcareSearchRedirects(win,order,url=>forwarded.push(url));
+ const target=origins[2]+'/p/netcare/index.html#/iframe/iframe-page/%2Fp%2Frfc%2Fnetwork_tuning%2Fdist%2Findex.html%23%2Frfc%2Fbasic-info%3Forderid='+order;
+ assert.equal(win.open(target,'_blank'),null);assert.equal(win.open(target,'_blank'),null);assert.deepEqual(forwarded,[target]);
+ for(const url of [origins[0]+'/p/netcare/index.html?orderid='+order,origins[2]+'/p/netcare/index.html?orderid=NC20260910100018','https://evil.example/?orderid='+order,'http://netcare-de.gts.huawei.com/p/netcare/index.html?orderid='+order,'https://user:secret@netcare-de.gts.huawei.com/p/netcare/index.html?orderid='+order,origins[2]+'/other?orderid='+order,target+'&docid=NC20260910100018'])assert.equal(win.open(url,'_blank','noopener'),'native-window');
+ assert.equal(opened.length,7);assert.ok(opened.every(item=>item.receiver===win&&item.args[1]==='_blank'&&item.args[2]==='noopener'));
+ restore();assert.equal(win.open,native);
+ const restoreAgain=context.netcareSearchRedirects(win,order,()=>{}),replacement=()=>{};win.open=replacement;restoreAgain();assert.equal(win.open,replacement);
+});
+test('native redirect requests create and launch the exact target tab under the root workflow',async()=>{
+ const h=harness(),id=crypto.randomUUID(),url=origins[2]+'/p/netcare/index.html?orderid='+order;
+ await h.send('TP_RFC_ROUTE_ARM',id);assert.equal((await h.send('TP_RFC_ROUTE_OPEN',id,1,{url})).ok,true);await h.drain();
+ assert.deepEqual(structuredClone(h.created),[{url,active:false,openerTabId:1}]);assert.equal(h.values.netcareRouteJobs[id].currentTabId,101);
+ assert.equal(h.values['netcareRouteTab:101'].rootTabId,1);assert.ok(h.notifications.some(m=>m.id===101&&m.type==='TP_RFC_ROUTE_LAUNCH'));
+ assert.equal((await h.send('TP_RFC_ROUTE_OPEN',id,1,{url})).ok,false);assert.equal(h.created.length,1);
+});
+test('native redirect requests reject foreign owners, invalid destinations, expired and stopped jobs',async()=>{
+ const h=harness(),id=crypto.randomUUID(),url=origins[2]+'/p/netcare/index.html?orderid='+order;
+ await h.send('TP_RFC_ROUTE_ARM',id);h.tabs.set(2,{id:2,url:origins[0]+'/p/netcare/index.html'});
+ assert.equal((await h.send('TP_RFC_ROUTE_OPEN',id,2,{url})).ok,false);
+ for(const target of ['https://example.com/?orderid='+order,origins[0]+'/p/netcare/index.html?orderid='+order,origins[2]+'/p/netcare/index.html?orderid=NC20260910100018',url+'#/?docid=NC20260910100018'])assert.equal((await h.send('TP_RFC_ROUTE_OPEN',id,1,{url:target})).ok,false);
+ h.values.netcareRouteJobs[id].expires=Date.now()-1;assert.equal((await h.send('TP_RFC_ROUTE_OPEN',id,1,{url})).ok,false);
+ await h.send('TP_RFC_ROUTE_ARM',id);await h.send('TP_RFC_ROUTE_CANCEL',id);assert.equal((await h.send('TP_RFC_ROUTE_OPEN',id,1,{url})).ok,false);assert.equal(h.created.length,0);
+});

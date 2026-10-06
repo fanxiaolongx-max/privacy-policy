@@ -396,6 +396,12 @@ export function createComponentEditor({ deck, getScale, onChange, onStatus, onSe
             }
         });
         root.querySelectorAll(COMPONENT_SELECTOR).forEach(element => {
+            // A vision picture wrapper is the editable object. Its backing img
+            // must not appear again as a duplicate layer or intercept selection.
+            if (element.matches('img') && element.closest('.vision-visual')) {
+                element.classList.remove('ppt-element');
+                return;
+            }
             element.classList.add('ppt-element');
             element.dataset.pptElementId ||= createId();
             element.dataset.pptElementType ||= componentName(element);

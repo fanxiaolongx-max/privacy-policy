@@ -15,6 +15,23 @@ function parseNetcareRfcOrders(value) {
 
 function netcareNativeOrder(value){try{const raw=String(value||'');let decoded=raw;for(let i=0;i<3;i++){try{const d=decodeURIComponent(decoded);if(d===decoded)break;decoded=d;}catch{break;}}const u=new URL(raw,typeof location!=='undefined'?location.href:undefined);const queries=[u.searchParams,new URLSearchParams(u.hash.replace(/^#/,'').split('?')[1]||''),new URLSearchParams(decoded.replace(/^[^?]*\?/,''))];const found=new Set();for(const q of queries)for(const [key,val] of q)if(['orderid','order_id','docid','id'].includes(key.toLowerCase())&&/^NC\d{14}$/.test(val))found.add(val);for(const m of (raw+' '+decoded).matchAll(/(?:orderid|order_id|docid|id)=(NC\d{14})/gi))found.add(m[1]);if(found.size>1)return '!ambiguous';if(found.size)return [...found][0];}catch{}return '';}
 
+// Scope native redirects to the active search. The background opens the exact native
+// destination, so asynchronous searches do not depend on browser popup activation.
+function netcareSearchRedirects(win,order,forward){
+  const original=win.open,seen=new Set();
+  const wrapper=function(value,...args){
+    let url;try{url=new URL(String(value||''),win.location.href);}catch{return original.call(this,value,...args);}
+    const allowed=['https://netcare-ae.gts.huawei.com','https://netcare.huawei.com','https://netcare-de.gts.huawei.com'];
+    if(url.protocol==='https:'&&!url.username&&!url.password&&!url.port&&allowed.includes(url.origin)&&url.origin!==win.location.origin
+      &&(url.pathname==='/p/netcare/index.html'||url.pathname.startsWith('/rfc/network_tuning/')||url.pathname.startsWith('/p/rfc/')||url.pathname.startsWith('/opcenter/'))&&netcareNativeOrder(url.href)===order){
+      if(!seen.has(url.href)){seen.add(url.href);forward(url.href);}return null;
+    }
+    return original.call(this,value,...args);
+  };
+  win.open=wrapper;
+  return ()=>{if(win.open===wrapper)win.open=original;};
+}
+
 // Search/authorization uses shared site UI sequentially; independent exports overlap.
 async function executeNetcareRfcBatch(orders, concurrency, signal, prepare, transfer, onResult) {
   const running = new Set(), results = new Array(orders.length);
@@ -496,7 +513,7 @@ function mountNetcareCollector() {
     $('stop').disabled = !controller;
   }
   const controls=globalThis.createNetcareControls?.().source(root,{redact:netcareRedactText});
-  function renderCaptureDiagnostics(){const list=$('captureDiagnostics');list.hidden=!captureDiagnostics.length;list.replaceChildren();for(const item of captureDiagnostics){const button=document.createElement('button');button.className='capture-diagnostic';button.textContent=(item.outcome==='failed'?'截图失败 / Capture failed':'截图已恢复 / Capture recovered')+' · '+item.name;button.onclick=()=>{const tr=(zh,en)=>collectorUiLanguage==='en'?en:zh,text=value=>String(value||'').split(' / ')[collectorUiLanguage==='en'?1:0]||String(value||'');$('captureErrorDetails').textContent=[tr('单号','RFC')+': '+order,tr('截图位置','Capture location')+': '+item.name,tr('时间','Time')+': '+item.at,tr('最终结果','Outcome')+': '+(item.outcome==='failed'?tr('失败','Failed'):item.method==='reconstructed'?tr('内容重建截图（非页面原图）','Reconstructed native content (not a live-page screenshot)'):tr('原始区域截图成功','Live original capture succeeded')),tr('错误码','Error code')+': '+(item.code||'—'),text(item.message),...item.attempts.map(a=>[tr('尝试','Attempt')+' '+a.attempt+' · '+a.stage+' · '+(a.code||'OK'),text(a.message),tr('已渲染章节数','Rendered sections')+': '+(a.articles??'—'),tr('区域尺寸与连接状态','Region size and attachment')+': '+JSON.stringify(a.bounds||null),a.stack||''].filter(Boolean).join('\n')),tr('建议：确认章节已加载和目录名称；刷新方案后重新提取。详情也保存在 ZIP 的截图诊断.json 和插件日志中。','Check section loading and native titles; refresh and extract again. Diagnostics also appear in the ZIP and plugin logs.')].filter(Boolean).join('\n\n');$('captureRetry').disabled=!!controller;$('captureErrorDialog').showModal();};list.append(button);} }
+  function renderCaptureDiagnostics(){const list=$('captureDiagnostics');list.hidden=!captureDiagnostics.length;list.replaceChildren();for(const item of captureDiagnostics){const button=document.createElement('button');button.className='capture-diagnostic';button.textContent=(item.outcome==='failed'?'截图失败 / Capture failed':'截图已恢复 / Capture recovered')+' · '+item.name;button.onclick=()=>{const tr=(zh,en)=>collectorUiLanguage==='en'?en:zh,text=value=>String(value||'').split(' / ')[collectorUiLanguage==='en'?1:0]||String(value||'');$('captureErrorDetails').textContent=[tr('单号','RFC')+': '+order,tr('截图位置','Capture location')+': '+item.name,tr('时间','Time')+': '+item.at,tr('最终结果','Outcome')+': '+(item.outcome==='failed'?tr('失败','Failed'):item.method==='reconstructed'?tr('内容重建截图（非页面原图）','Reconstructed native content (not a live-page screenshot)'):tr('原始区域截图成功','Live original capture succeeded')),tr('错误码','Error code')+': '+(item.code||'—'),text(item.message),...(item.navigations||[]).map(n=>tr('目录定位','Directory navigation')+' · '+n.attempt+' · '+n.action+' · '+n.number+' '+n.title+'\n'+text(n.message)),...item.attempts.map(a=>[tr('尝试','Attempt')+' '+a.attempt+' · '+a.stage+' · '+(a.code||'OK'),text(a.message),tr('已渲染章节数','Rendered sections')+': '+(a.articles??'—'),tr('区域尺寸与连接状态','Region size and attachment')+': '+JSON.stringify(a.bounds||null),a.stack||''].filter(Boolean).join('\n')),tr('建议：确认章节已加载和目录名称；刷新方案后重新提取。详情也保存在 ZIP 的截图诊断.json 和插件日志中。','Check section loading and native titles; refresh and extract again. Diagnostics also appear in the ZIP and plugin logs.')].filter(Boolean).join('\n\n');$('captureRetry').disabled=!!controller;$('captureErrorDialog').showModal();};list.append(button);} }
   let collectorUiLanguage='zh';
   $('captureErrorClose').onclick=()=>$('captureErrorDialog').close();$('captureRetry').onclick=()=>{$('captureErrorDialog').close();download(lastAutomatic);};
 
@@ -791,11 +808,11 @@ function mountNetcareCollector() {
         try {
           for(const shot of shots){
             if(signal.aborted)throw Error('已停止 / Stopped');status('保存原始区域截图 / Screenshot: '+shot.name);
-            const diagnostic={id:crypto.randomUUID(),at:new Date().toISOString(),order,section:shot.section,name:shot.name,kind:shot.kind,attempts:[]};
+            const diagnostic={id:crypto.randomUUID(),at:new Date().toISOString(),order,section:shot.section,name:shot.name,kind:shot.kind,attempts:[],navigations:[]};
             try{
-              const capture=()=>engine.capture(w.document,shot,{signal,onStuck:()=>{activateTab(3500,true);},render:element=>netcareCaptureEvidence(element,globalThis.html2canvas,signal),attempt:attempt=>{diagnostic.attempts.push(attempt);trace('capture.attempt','截图尝试 / Capture attempt',{name:shot.name,...attempt},'extraction',attempt.ok?'debug':'warn');}});
+              const capture=()=>engine.capture(w.document,shot,{signal,onStuck:()=>activateTab(3500,true),navigation:event=>{diagnostic.navigations.push(event);trace('capture.navigation',event.message,{name:shot.name,...event},'extraction',event.clicked?'info':'warn');},render:element=>netcareCaptureEvidence(element,globalThis.html2canvas,signal),attempt:attempt=>{diagnostic.attempts.push(attempt);trace('capture.attempt','截图尝试 / Capture attempt',{name:shot.name,...attempt},'extraction',attempt.ok?'debug':'warn');}});
               const component=globalThis.createNetcarePip?.(),result=component?.withRenderLock?await component.withRenderLock(window,capture):await capture();
-              diagnostic.method=result.method;diagnostic.attempts=result.attempts;diagnostic.outcome='ok';
+              diagnostic.method=result.method;diagnostic.attempts=result.attempts;diagnostic.outcome='ok';trace('capture.result',result.method==='live'?'原始区域截图成功 / Live original capture succeeded':'已使用内容重建兜底 / Reconstructed content fallback used',{name:shot.name,method:result.method,images:result.images.length,navigations:diagnostic.navigations},'extraction',result.method==='live'?'info':'warn');
               const name=result.method==='reconstructed'?shot.name.replace('章节原图','章节内容重建').replace('附件位置','附件区域重建'):shot.name;
               for(let i=0;i<result.images.length;i++)entries.push({section:shot.section,kind:shot.kind,role:'screenshot',captureMethod:result.method,sourceFilename:shot.sourceFilename,name:netcareUniqueFilename(netcareSafeFilename(name+`-${String(i+1).padStart(3,'0')}.png`),used),blob:result.images[i]});
               report.push(`截图 ${result.method==='reconstructed'?'FALLBACK（内容重建，非页面原图）':'OK'}: ${name} · ${result.images.length} 张`);
@@ -1857,7 +1874,8 @@ function mountNetcareCollector() {
   async function prepare(order, signal) {
     const log = text => update(order, text);
     const id=routeRun?.order===order?routeRun.jobId:crypto.randomUUID(),entry={id,order,assigned:false,result:null};routeStates.set(id,entry);
-    try{await routeSend('TP_RFC_ROUTE_ARM',id,order,{batchId:currentBatch.started});}catch(err){netcareLog({order,batchId:currentBatch?.started,category:'extraction',action:'route.arm.warning',message:'跨区域预连接未就绪，继续尝试本页检索 / Cross-region route arm deferred; trying local search: '+(err?.message||''),level:'warn'});}
+    let routeArmed=false;
+    try{await routeSend('TP_RFC_ROUTE_ARM',id,order,{batchId:currentBatch.started});routeArmed=true;}catch(err){netcareLog({order,batchId:currentBatch?.started,category:'extraction',action:'route.arm.warning',message:'跨区域预连接未就绪，继续尝试本页检索 / Cross-region route arm deferred; trying local search: '+(err?.message||''),level:'warn'});}
     let frame = detail(order);
     if(routeRun&&!frame)frame=await wait(()=>detail(order)||entry.assigned&&{routeId:id},45000,signal,'目标站点详情未加载，请检查登录 / Target details not loaded; check login');
     if(frame?.routeId)return frame;
@@ -1870,7 +1888,8 @@ function mountNetcareCollector() {
       Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, order);
       input.dispatchEvent(new Event('input', { bubbles: true }));
       await Promise.resolve();
-      try{search.click();frame=await wait(()=>detail(order)||entry.assigned&&{routeId:id},45000,signal,'未找到可访问的作业单或目标区域；请检查单号、登录及页面提示');}finally{if(input.isConnected){Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,previous);input.dispatchEvent(new Event('input',{bubbles:true}));}}
+      const restoreRedirects=routeArmed?netcareSearchRedirects(window,order,url=>{netcareLog({order,batchId:currentBatch?.started,category:'system',action:'region.redirect.requested',message:'网站请求跨区域跳转 / Native cross-region redirect requested',data:{targetOrigin:new URL(url).origin}});routeSend('TP_RFC_ROUTE_OPEN',id,order,{url}).catch(error=>{entry.result={ok:false,error:error.message};});}):()=>{};
+      try{search.click();frame=await wait(()=>{if(entry.result&&!entry.result.ok)throw Error(entry.result.error);return detail(order)||entry.assigned&&{routeId:id};},45000,signal,'未找到可访问的作业单或目标区域；请检查单号、登录及页面提示');}finally{restoreRedirects();if(input.isConnected){Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,previous);input.dispatchEvent(new Event('input',{bubbles:true}));}}
       if(frame.routeId)return frame;
     }
     try{await routeSend('TP_RFC_ROUTE_LOCAL',id,order);}catch(_){}

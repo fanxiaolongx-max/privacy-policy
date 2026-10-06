@@ -2590,6 +2590,7 @@ async function renderLogoSettings(content) {
                 </div>
                 <div class="nav-settings-actions" style="margin-top:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
                     <button type="button" class="primary" id="logoUploadSubmitBtn" onclick="submitLogoUpload()" disabled>${text('生成并应用图标', 'Generate and apply icons')}</button>
+                    <button type="button" id="logoDownloadBundleBtn" onclick="downloadLogoBundle()" ${statusData.hasLogo ? '' : 'disabled'}>📦 ${text('一键下载全部运营物料资产包 (.zip)', 'Download brand assets bundle (.zip)')}</button>
                     <span id="logoUploadStatus" role="status" style="font-size:12px">${text('最近更新：', 'Last updated: ')}${navEscape(timestamp)}</span>
                 </div>
                 <div id="logoUploadResultDetail" style="margin-top:12px;font-size:11px;white-space:pre-wrap;display:none"></div>
@@ -2675,12 +2676,59 @@ window.submitLogoUpload = async function () {
         if (content && navState.settingsTab === 'logo') await renderLogoSettings(content);
         const updatedStatus = document.getElementById('logoUploadStatus');
         if (updatedStatus) updatedStatus.textContent = navLocaleText(`已生成 ${data.assetCount} 处图标并应用。`, `Generated and applied ${data.assetCount} icon assets.`);
+        const downloadBtn = document.getElementById('logoDownloadBundleBtn');
+        if (downloadBtn) downloadBtn.disabled = false;
     } catch (error) {
         const message = logoUploadError(error);
         if (status) status.textContent = navLocaleText('处理失败：', 'Failed: ') + message;
         await showNavbarNotice({ title: navLocaleText('图标更新失败', 'Logo update failed'), message, tone: 'error' });
     } finally {
         if (button) { button.disabled = false; button.textContent = navLocaleText('生成并应用图标', 'Generate and apply icons'); }
+    }
+};
+
+window.downloadLogoBundle = async function () {
+    const button = document.getElementById('logoDownloadBundleBtn');
+    const status = document.getElementById('logoUploadStatus');
+    const originalText = button ? button.textContent : '';
+    if (button) {
+        button.disabled = true;
+        button.textContent = navLocaleText('正在打包资产…', 'Packaging assets…');
+    }
+    if (status) status.textContent = navLocaleText('正在打包全套运营物料与各端徽标，请稍候…', 'Packaging brand and icon assets, please wait…');
+    try {
+        const response = await fetch('/api/platform-logo/download-bundle', {
+            headers: getAuthHeaderForNav()
+        });
+        if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            throw new Error(data.error || `HTTP ${response.status}`);
+        }
+        const blob = await response.blob();
+        const disposition = response.headers.get('content-disposition') || '';
+        const match = disposition.match(/filename="?([^";]+)"?/i);
+        const filename = match ? match[1] : `brand-assets-${new Date().toISOString().slice(0, 10)}.zip`;
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        if (status) status.textContent = `${navLocaleText('下载完成：', 'Downloaded: ')}${filename} (${(blob.size / 1024).toFixed(1)} KB)`;
+    } catch (error) {
+        await showNavbarNotice({
+            title: navLocaleText('物料包下载失败', 'Download failed'),
+            message: error.message || navLocaleText('无法下载运营物料资产包', 'Could not download brand assets bundle'),
+            tone: 'error'
+        });
+        if (status) status.textContent = navLocaleText('下载失败：', 'Download failed: ') + error.message;
+    } finally {
+        if (button) {
+            button.disabled = false;
+            button.textContent = originalText;
+        }
     }
 };
 

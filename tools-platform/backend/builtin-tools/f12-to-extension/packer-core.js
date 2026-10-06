@@ -201,8 +201,8 @@
     const active = new Set();
     window.addEventListener('message', event => {
       const message = event.data;
-      if(event.source===window&&event.origin===location.origin&&['TP_RFC_ROUTE_ARM','TP_RFC_ROUTE_LOCAL','TP_RFC_ROUTE_CANCEL','TP_RFC_ROUTE_PROGRESS','TP_RFC_ROUTE_RESULT'].includes(message?.source)&&/^[a-f0-9-]{36}$/.test(message.id||'')){
-        chrome.runtime.sendMessage({type:message.source,id:message.id,order:message.order,batchId:message.batchId,text:message.text,ok:message.ok,value:message.value,error:message.error}).then(result=>window.postMessage({source:'TP_RFC_ROUTE_REPLY',requestId:message.requestId,id:message.id,...result},location.origin)).catch(()=>window.postMessage({source:'TP_RFC_ROUTE_REPLY',requestId:message.requestId,id:message.id,ok:false,error:'跨区域连接失效，请重新启动插件 / Restart extension to reconnect regions'},location.origin));return;
+      if(event.source===window&&event.origin===location.origin&&['TP_RFC_ROUTE_ARM','TP_RFC_ROUTE_OPEN','TP_RFC_ROUTE_LOCAL','TP_RFC_ROUTE_CANCEL','TP_RFC_ROUTE_PROGRESS','TP_RFC_ROUTE_RESULT'].includes(message?.source)&&/^[a-f0-9-]{36}$/.test(message.id||'')){
+        chrome.runtime.sendMessage({type:message.source,id:message.id,order:message.order,batchId:message.batchId,url:message.url,text:message.text,ok:message.ok,value:message.value,error:message.error}).then(result=>window.postMessage({source:'TP_RFC_ROUTE_REPLY',requestId:message.requestId,id:message.id,...result},location.origin)).catch(()=>window.postMessage({source:'TP_RFC_ROUTE_REPLY',requestId:message.requestId,id:message.id,ok:false,error:'跨区域连接失效，请重新启动插件 / Restart extension to reconnect regions'},location.origin));return;
       }
       if (event.source !== window || event.origin !== location.origin || message?.source !== 'TP_EXAM_AI_REQUEST') return;
       if (typeof message.id !== 'string' || !/^[a-f0-9-]{36}$/.test(message.id)) return;
@@ -453,8 +453,8 @@ function netcareAuditRule(settings, number, kind) {
     language();
     const receive = event => {
       const message = event.data;
-      if(event.source===window&&event.origin===location.origin&&['TP_RFC_ROUTE_ARM','TP_RFC_ROUTE_LOCAL','TP_RFC_ROUTE_CANCEL','TP_RFC_ROUTE_PROGRESS','TP_RFC_ROUTE_RESULT'].includes(message?.source)&&/^[a-f0-9-]{36}$/.test(message.id||'')){
-        chrome.runtime.sendMessage({type:message.source,id:message.id,order:message.order,batchId:message.batchId,text:message.text,ok:message.ok,value:message.value,error:message.error}).then(result=>window.postMessage({source:'TP_RFC_ROUTE_REPLY',requestId:message.requestId,id:message.id,...result},location.origin)).catch(()=>window.postMessage({source:'TP_RFC_ROUTE_REPLY',requestId:message.requestId,id:message.id,ok:false,error:'跨区域连接失效，请重新启动插件 / Restart extension to reconnect regions'},location.origin));return;
+      if(event.source===window&&event.origin===location.origin&&['TP_RFC_ROUTE_ARM','TP_RFC_ROUTE_OPEN','TP_RFC_ROUTE_LOCAL','TP_RFC_ROUTE_CANCEL','TP_RFC_ROUTE_PROGRESS','TP_RFC_ROUTE_RESULT'].includes(message?.source)&&/^[a-f0-9-]{36}$/.test(message.id||'')){
+        chrome.runtime.sendMessage({type:message.source,id:message.id,order:message.order,batchId:message.batchId,url:message.url,text:message.text,ok:message.ok,value:message.value,error:message.error}).then(result=>window.postMessage({source:'TP_RFC_ROUTE_REPLY',requestId:message.requestId,id:message.id,...result},location.origin)).catch(()=>window.postMessage({source:'TP_RFC_ROUTE_REPLY',requestId:message.requestId,id:message.id,ok:false,error:'跨区域连接失效，请重新启动插件 / Restart extension to reconnect regions'},location.origin));return;
       }
       if(event.source===window&&event.origin===location.origin&&message?.source==='TP_RFC_PIP_REQUEST'&&/^[a-f0-9-]{36}$/.test(message.id||'')){
         Promise.resolve().then(()=>chrome.runtime.sendMessage({type:'TP_RFC_PIP_REQUEST',id:message.id,action:message.action,tabId:message.tabId,order:message.order,delta:message.delta,reset:message.reset,large:message.large,command:message.command})).then(result=>window.postMessage({source:'TP_RFC_PIP_RESULT',id:message.id,...result},location.origin)).catch(()=>window.postMessage({source:'TP_RFC_PIP_RESULT',id:message.id,ok:false,error:'预览连接失效，请重启插件 / Restart extension to reconnect previews'},location.origin));return;

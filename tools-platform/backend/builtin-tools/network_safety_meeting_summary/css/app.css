@@ -269,6 +269,18 @@ body.presentation-mode .presentation-overlay {
 }
 
 .project-hub.is-hidden { display: none; }
+.project-home-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; flex-shrink: 0; min-height: 36px; padding: 0 13px; border: 1px solid #93c5fd; border-radius: 8px; background: #2563eb; color: #fff; font-size: 13px; font-weight: 700; box-shadow: 0 2px 12px #2563eb40; cursor: pointer; white-space: nowrap; }
+.project-home-button:hover { background: #1d4ed8; }
+.project-home-button:focus-visible { outline: 3px solid #bfdbfe; outline-offset: 3px; }
+.editor-topbar { height: auto; min-height: 56px; padding-top: 9px; padding-bottom: 9px; gap: 12px; flex-wrap: wrap; }
+.editor-project-nav { flex-shrink: 0; min-width: 0; flex-wrap: wrap; }
+.editor-actions { flex-wrap: wrap; gap: 8px; }
+.editor-actions > button { flex-shrink: 0; white-space: nowrap; }
+.editor-topbar h1 { white-space: nowrap; }
+.editor-topbar #status { max-width: 160px; }
+.vision-visual[data-component-name="四层能力平台"] img { opacity: .58; }
+.vision-visual[data-component-name="愿景远景"] { overflow: hidden; }
+.vision-visual[data-component-name="愿景远景"] img { opacity: .7; position: absolute; left: 0; top: 24%; width: 100% !important; height: auto !important; transform: translateY(-24%); }
 
 .project-hub::before {
     content: "";

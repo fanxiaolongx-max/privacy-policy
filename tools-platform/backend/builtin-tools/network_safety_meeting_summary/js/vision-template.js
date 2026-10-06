@@ -853,7 +853,7 @@ export function createVisionSlide(id = 'vision-content') {
     const html = visionElements.map((el, index) => {
         const geometry = `position:absolute;left:${el.left*sx}px;top:${el.top*sy}px;width:${el.width*sx}px;height:${el.height*sy}px;z-index:${el.z};`;
         const common = `class="template-component vision-element${el.kind === 'text' ? ' vision-text editable template-editable' : ' vision-visual'}" data-component-name="${escapeHtml(el.name)}" data-vision-kind="${el.kind}" data-vision-id="vision-${index}"`;
-        if (el.kind === 'text') return `<div ${common} contenteditable="true" style="${geometry}font-size:${el.fontSize*sx}px;font-weight:${el.bold ? 700 : 400};color:${el.color};text-align:${el.align || 'left'};line-height:1.2;">${escapeHtml(el.text).replace(/\n/g,'<br>')}</div>`;
+        if (el.kind === 'text') return `<div ${common} contenteditable="true" style="${geometry}font-size:${Math.min(el.fontSize, el.width / Math.max(...el.text.split("\n").map(line => Array.from(line).length)) * 0.96)*sx}px;font-weight:${el.bold ? 700 : 400};color:${el.color};text-align:${el.align || 'left'};line-height:1.2;">${escapeHtml(el.text).replace(/\n/g,'<br>')}</div>`;
         const src = new URL(`../assets/vision/${el.asset}`, import.meta.url).pathname;
         return `<div ${common} style="${geometry}"><img src="${escapeHtml(src)}" alt="${escapeHtml(el.name)}" draggable="false" style="width:100%;height:100%;object-fit:fill;display:block;" /></div>`;
     }).join('');

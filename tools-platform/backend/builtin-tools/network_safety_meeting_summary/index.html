@@ -34,7 +34,7 @@
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 
     <!-- Custom CSS for Slide Content -->
-    <link rel="stylesheet" href="css/app.css?v=20261006-1">
+    <link rel="stylesheet" href="css/app.css?v=20261006-3">
 </head>
 
 <body class="bg-zinc-950 text-zinc-100 font-sans h-screen w-screen overflow-hidden flex flex-col">
@@ -89,8 +89,9 @@
 
     <!-- Premium Top Navigation -->
     <header
-        class="h-14 flex items-center justify-between px-6 bg-zinc-900/80 backdrop-blur-md border-b border-zinc-800 shrink-0 z-50">
-        <div class="flex items-center gap-3">
+        class="editor-topbar flex items-center justify-between px-6 bg-zinc-900/80 backdrop-blur-md border-b border-zinc-800 shrink-0 z-50">
+        <div class="editor-project-nav flex items-center gap-3">
+            <button id="returnProjectHomeBtn" class="project-home-button" type="button" title="返回 PPT 主页，新建或打开项目"><i class="ph ph-house"></i><span>返回主页</span></button>
             <div
                 class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-brand-500/20">
                 <i class="ph-fill ph-presentation-chart text-white text-lg"></i>
@@ -101,7 +102,7 @@
                 class="px-2 py-0.5 rounded text-[10px] font-medium bg-zinc-800 text-zinc-400 border border-zinc-700 ml-2 shadow-sm">自动保存</span>
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="editor-actions flex items-center gap-3">
             <button id="manualSaveBtn"
                 class="h-8 px-3 rounded-md bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 flex items-center gap-2 transition shadow-sm" title="立即保存 (Ctrl+S)">
                 <i class="ph ph-floppy-disk"></i><span class="text-xs font-medium">保存</span>
@@ -180,7 +181,7 @@
 
             <button id="addBlankBtn"
                 class="flex items-center gap-2 h-8 px-3 rounded-md bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-sm font-medium transition-all hover:scale-105 active:scale-95 shadow-sm">
-                <i class="ph ph-plus"></i> 新增空白页
+                <i class="ph ph-plus"></i> 新增内容页
             </button>
 
             <div class="relative group mr-2">
@@ -840,7 +841,7 @@
     </template>
 
     <!-- App Logic -->
-    <script type="module" src="js/app.js?v=20261006-1"></script>
+    <script type="module" src="js/app.js?v=20261006-2"></script>
 </body>
 
 </html>

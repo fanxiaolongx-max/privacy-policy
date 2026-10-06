@@ -1,4 +1,5 @@
 // js/editor.js
+import { addVisionObjects } from './vision-pptx.js?v=20261006-1';
 export function scrubClone(clone) {
     clone.querySelectorAll('[contenteditable]').forEach(el => {
         el.removeAttribute('contenteditable');
@@ -163,6 +164,11 @@ export async function exportPptx(deck, setStatusCallback) {
             renderHost.appendChild(exportSlide);
             
             setStatusCallback(`正在生成页面 ${i + 1}/${slides.length}`);
+
+            if (exportSlide.querySelector('.vision-template')) {
+                await addVisionObjects(pptx.addSlide(), exportSlide);
+                continue;
+            }
             
             const canvas = await html2canvas(exportSlide, {
                 scale: 2,

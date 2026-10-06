@@ -182,6 +182,27 @@ test('upload route enforces admin rights and returns structured errors without o
     assert.equal(result.status, 200); assert.equal(result.body.assetCount, 10);
     const status = await request(app).get('/api/platform-logo/status');
     assert.equal(status.body.storageMode, 'source'); assert.equal(status.body.hasLogo, true); assert.ok(status.body.fileSizes.windows > 0);
+
+    const JSZip = require('jszip');
+    assert.equal((await request(app).get('/api/platform-logo/download-bundle')).status, 403);
+    const binaryParser = (res, cb) => {
+        const chunks = [];
+        res.on('data', chunk => chunks.push(chunk));
+        res.on('end', () => cb(null, Buffer.concat(chunks)));
+    };
+    const bundleRes = await request(app).get('/api/platform-logo/download-bundle').set('x-test-admin', '1').buffer().parse(binaryParser);
+    assert.equal(bundleRes.status, 200);
+    assert.equal(bundleRes.headers['content-type'], 'application/zip');
+    assert.match(bundleRes.headers['content-disposition'], /tools-platform-brand-assets-.*\.zip/);
+    const archive = await JSZip.loadAsync(bundleRes.body);
+    assert.ok(archive.file('logo.png'));
+    assert.ok(archive.file('icon-mac.png'));
+    assert.ok(archive.file('icon-windows.ico'));
+    assert.ok(archive.file('icon-windows-portable.ico'));
+    assert.ok(archive.file('portable-splash.bmp'));
+    assert.ok(archive.file('README.txt'));
+    const readmeContent = await archive.file('README.txt').async('string');
+    assert.match(readmeContent, /Brand & Icon Assets Bundle/);
 });
 
 test('concurrent logo uploads are rejected while the event loop remains responsive', async () => {

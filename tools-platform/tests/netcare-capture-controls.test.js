@@ -90,3 +90,22 @@ test('unsettled layout has a bounded wait and preserves a detailed failure for e
  await assert.rejects(capture.capture(doc([a]),shot,{signal:new AbortController().signal,sleep:async()=>{a.innerHTML=String(++polls);},render:async()=>renders++}),e=>e.code==='CAPTURE_FAILED'&&e.attempts.slice(0,3).every(a=>a.code==='REGION_NOT_STABLE'));
  assert.equal(renders,0);assert.ok(polls<100);
 });
+test('treepanel collapsed ancestors are opened before the exact target and lazy live capture',async()=>{
+ let rootOpened=false,childOpened=false,targetClicked=false,polls=0;const navigation=[];
+ const entry=(text,click)=>({textContent:text,closest:()=>null,getBoundingClientRect:()=>({width:70}),click});
+ const root=entry('3 Operation Steps for Change',()=>rootOpened=true),parent=entry('3.4 Test and Verification',()=>childOpened=true),target=entry('3.4.1 Verification Details',()=>targetClicked=true);
+ const a=region('3.4.1 Verification Details↵');
+ const d={querySelectorAll:selector=>selector==='article'?(targetClicked&&polls>=4?[a]:[]):selector.includes('#treepanel')?[root,...(rootOpened&&polls>=1?[parent]:[]),...(childOpened&&polls>=2?[target]:[])]:[]};
+ const result=await capture.capture(d,{kind:'text',topic:{number:'3.4.1',title:'Verification Details'}},{signal:new AbortController().signal,sleep:async()=>polls++,navigation:event=>navigation.push(event),render:async el=>{assert.equal(el,a);assert.equal(targetClicked,true);return ['png'];}});
+ assert.equal(result.method,'live');assert.deepEqual(navigation.map(n=>n.action),['ancestor.click','ancestor.click','target.click']);assert.deepEqual(navigation.map(n=>n.number),['3','3.4','3.4.1']);
+});
+test('collapsed directory wait is bounded and diagnoses a missing target after the parent click',async()=>{
+ const events=[];let clicks=0,polls=0;
+ const root={textContent:'3 Operation Steps for Change',closest:()=>null,getBoundingClientRect:()=>({width:70}),click:()=>clicks++};
+ const found=await capture.reveal({querySelectorAll:()=>[root]},topic,new AbortController().signal,async()=>polls++,event=>events.push(event));
+ assert.equal(found,false);assert.equal(clicks,1);assert.equal(polls,40);assert.equal(events.at(-1).action,'target.timeout');
+});
+test('a numbered directory entry with the wrong number is not clicked by title fallback',()=>{
+ let clicks=0;const wrong={textContent:'3.3 Test and Verification',closest:()=>null,getBoundingClientRect:()=>({width:30}),click:()=>clicks++};
+ assert.equal(capture.navigate({querySelectorAll:()=>[wrong]},topic),false);assert.equal(clicks,0);
+});

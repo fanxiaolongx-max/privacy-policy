@@ -1,13 +1,13 @@
 // js/app.js
 import * as store from './store.js?v=20260623-1';
-import * as editor from './editor.js?v=20261006-1';
-import { createComponentEditor } from './component-editor.js?v=20260623-4';
+import * as editor from './editor.js?v=20261006-2';
+import { createComponentEditor } from './component-editor.js?v=20261006-2';
 import { initContextMenu } from './context-menu.js?v=20260623-1';
-import { defaultSlides } from './default-slides.js?v=20261006-1';
-import { renderSlide, slideToJson } from './slide-factory.js?v=20261006-1';
-import { initProjectWorkspace } from './project-workspace.js?v=20260801-02';
+import { defaultSlides } from './default-slides.js?v=20261006-2';
+import { renderSlide, slideToJson } from './slide-factory.js?v=20261006-2';
+import { initProjectWorkspace } from './project-workspace.js?v=20261006-2';
 
-import { createVisionSlide } from './vision-template.js?v=20261006-1';
+import { createVisionSlide } from './vision-template.js?v=20261006-2';
 
 const deck = document.getElementById('deck');
 const deckWrapper = document.getElementById('deckWrapper');
