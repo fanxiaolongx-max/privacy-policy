@@ -274,14 +274,37 @@
     </section>
   </div>
 
+  <style>
+    .packer-feedback{width:min(500px,calc(100vw - 32px));max-height:calc(100vh - 40px);padding:24px;border:1px solid #3b4b66;border-radius:16px;background:#182337;color:#e7eef8;box-shadow:0 24px 80px #0006;overflow:auto}
+    .packer-feedback::backdrop{background:#111c3266;backdrop-filter:blur(4px)}.packer-feedback h2{font-size:18px;font-weight:650;margin:0 0 14px}.packer-feedback p{font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8;color:#b9c8dc}.packer-feedback input{width:100%;margin:10px 0;padding:10px 12px;border:1px solid #425575;border-radius:8px;background:#111c2c;color:inherit}.packer-feedback input[hidden]{display:none}.packer-feedback form>div{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}.packer-feedback button{padding:8px 18px;border:1px solid #405575;border-radius:8px;background:#23334c;color:inherit;font:inherit;cursor:pointer}.packer-feedback button.accept{background:#286ef0;border-color:#286ef0;color:white}.packer-feedback button:focus-visible,.packer-feedback input:focus-visible{outline:2px solid #89b5ff;outline-offset:3px}
+  </style>
   <script src="./exam-vault.js?v=20261003-09"></script>
   <script src="./exam-store-guide.js?v=20261003-13"></script>
-  <script src="./netcare-language.js?v=20261006-15"></script>
-  <script src="./netcare-artifacts.js?v=20261006-15"></script>
-  <script src="./netcare-backup.js?v=20261006-15"></script>
-  <script src="./netcare-renderer-source.js?v=20261006-15"></script>
-  <script src="./packer-core.js?v=20261006-15"></script>
+  <script src="./netcare-language.js?v=20261006-16"></script>
+  <script src="./netcare-artifacts.js?v=20261006-20"></script>
+  <script src="./netcare-backup.js?v=20261006-16"></script>
+  <script src="./netcare-renderer-source.js?v=20261006-19"></script>
+  <script src="./netcare-pip.js?v=20261006-03"></script>
+  <script src="./netcare-capture.js?v=20261006-03"></script>
+  <script src="./netcare-controls.js?v=20261006-03"></script>
+  <script src="./netcare-monitor.js?v=20261006-03"></script>
+  <script src="./netcare-routing.js?v=20261006-03"></script>
+  <script src="./packer-core.js?v=20261006-03"></script>
   <script>
+    // Non-blocking, theme-matched dialogs shared by packaging and License controls.
+    let packerDialogQueue=Promise.resolve();
+    function packerDialog(message,mode='alert',value='') {
+      const task=()=>new Promise(resolve=>{
+        const dialog=document.createElement('dialog');dialog.className='packer-feedback';
+        dialog.innerHTML='<form method="dialog"><h2></h2><p></p><input aria-label="输入内容"><div><button type="button" value="cancel">取消</button><button value="ok" class="accept">确定</button></div></form>';
+        dialog.querySelector('h2').textContent=mode==='alert'?'操作提示':mode==='prompt'?'填写信息':'确认操作';dialog.querySelector('p').textContent=message;
+        const input=dialog.querySelector('input');input.hidden=mode!=='prompt';input.value=value;
+        dialog.querySelector('[value=cancel]').hidden=mode==='alert';dialog.querySelector('[value=cancel]').onclick=()=>dialog.close('cancel');
+        dialog.addEventListener('close',()=>{const accepted=dialog.returnValue==='ok',result=mode==='prompt'?(accepted?input.value:null):accepted;dialog.remove();resolve(result);},{once:true});
+        document.body.append(dialog);dialog.showModal();(mode==='prompt'?input:dialog.querySelector(mode==='alert'?'.accept':'[value=cancel]')).focus();
+      });const result=packerDialogQueue.then(task);packerDialogQueue=result.catch(()=>{});return result;
+    }
+    const packerAlert=message=>packerDialog(message),packerConfirm=message=>packerDialog(message,'confirm'),packerPrompt=(message,value='')=>packerDialog(message,'prompt',value);
     TPExamStoreGuide.mount(document.getElementById('examStoreGuideActions'));
     const BUILTIN_SCRIPTS = {
       'sv-cfc-monitor': {
@@ -312,7 +335,7 @@
         runAt: 'document_idle'
       },
       'netcare-rfc-word': {
-        file: './netcare-rfc-word.js?v=20261006-15',
+        file: './netcare-rfc-word.js?v=20261006-03',
         name: 'NetCare RFC 方案与 AI 审计',
         description: '批量下载 RFC 方案，提取章节与附件并执行 AI 审计；支持审计快照、Excel 和材料 ZIP 导出。',
         matches: 'https://netcare-ae.gts.huawei.com/p/netcare/index.html*\nhttps://netcare.huawei.com/p/netcare/index.html*\nhttps://netcare-de.gts.huawei.com/p/netcare/index.html*\nhttps://*.kdp.gts.huawei.com/ows1/static/editor/IdpLiteView/PublishLiteView.html*',
@@ -513,7 +536,7 @@
       if (!apiPath) throw new Error('无效的版本服务操作');
       let legacyVersion = getLegacySavedVersion(name);
       if (activeScriptRef?.kind === 'builtin' && activeScriptRef.id === 'ppo-traffic-autofill') {
-        const sourceVersion = '1.0.13';
+        const sourceVersion = '1.0.18';
         if (!legacyVersion || versionIsEarlier(legacyVersion, sourceVersion)) legacyVersion = sourceVersion;
       }
       if (activeScriptRef?.kind === 'builtin' && activeScriptRef.id === 'overseas-salary-calculator') {
@@ -658,7 +681,7 @@
       try {
         await loadSelectedScript(event.target.value);
       } catch (error) {
-        alert('载入脚本失败: ' + error.message);
+        packerAlert('载入脚本失败: ' + error.message);
       }
     });
 
@@ -679,9 +702,9 @@
       const button = document.getElementById('saveServerScriptBtn');
       const options = collectOptions();
       const name = document.getElementById('extName').value.trim();
-      if (!name) return alert('请先填写扩展名称。');
-      if (!options.matches.trim()) return alert('请先填写至少一个匹配网址。');
-      if (!options.code.trim()) return alert('请先粘贴脚本内容。');
+      if (!name) return packerAlert('请先填写扩展名称。');
+      if (!options.matches.trim()) return packerAlert('请先填写至少一个匹配网址。');
+      if (!options.code.trim()) return packerAlert('请先粘贴脚本内容。');
       const payload = {
         name,
         description: document.getElementById('extDesc').value.trim(),
@@ -706,7 +729,7 @@
         setActiveScript('server', body.script.id);
         setScriptLibraryStatus(`已保存到服务器：${body.script.name}`, 'text-emerald-300');
       } catch (error) {
-        alert('保存服务器脚本失败: ' + error.message);
+        packerAlert('保存服务器脚本失败: ' + error.message);
       } finally {
         button.disabled = false;
         button.textContent = activeScriptRef && activeScriptRef.kind === 'server'
@@ -1012,32 +1035,33 @@
           return;
         }
         if (action === 'revoke') {
-          if (!confirm(`确认立即撤销以下 License？\n\n${licenseIdentity(record)}\n\n撤销后，扩展下次在线校验即会失效；此操作可以恢复。`)) return;
-          const reason = prompt('可填写撤销原因（可留空）：', record.revokeReason || '') ?? '';
+          if (!await packerConfirm(`确认立即撤销以下 License？\n\n${licenseIdentity(record)}\n\n撤销后，扩展下次在线校验即会失效；此操作可以恢复。`)) return;
+          const reason = await packerPrompt('可填写撤销原因（可留空）：', record.revokeReason || '');
+          if(reason===null)return;
           await licenseAdminRequest(`/api/custom-tools/f12-to-extension/licenses/${encodeURIComponent(record.licenseId)}/revoke`, {
             method: 'POST', body: JSON.stringify({ reason })
           });
         } else if (action === 'restore') {
-          if (!confirm(`确认恢复以下 License？\n\n${licenseIdentity(record)}\n\n若密钥本身已过期，恢复状态后仍不会重新生效，需要续期。`)) return;
+          if (!await packerConfirm(`确认恢复以下 License？\n\n${licenseIdentity(record)}\n\n若密钥本身已过期，恢复状态后仍不会重新生效，需要续期。`)) return;
           await licenseAdminRequest(`/api/custom-tools/f12-to-extension/licenses/${encodeURIComponent(record.licenseId)}/restore`, { method: 'POST' });
         } else if (action === 'renew') {
-          if (!confirm(`确认为以下 License 续期并生成一把新密钥？\n\n${licenseIdentity(record)}\n\n旧密钥不会自动撤销。`)) return;
-          const month = prompt('目标月份（YYYY-MM）；留空则自动选择下一有效月份：', '') ?? null;
+          if (!await packerConfirm(`确认为以下 License 续期并生成一把新密钥？\n\n${licenseIdentity(record)}\n\n旧密钥不会自动撤销。`)) return;
+          const month = await packerPrompt('目标月份（YYYY-MM）；留空则自动选择下一有效月份：', '') ?? null;
           if (month === null) return;
           const body = await licenseAdminRequest(`/api/custom-tools/f12-to-extension/licenses/${encodeURIComponent(record.licenseId)}/renew`, {
             method: 'POST', body: JSON.stringify({ month: month.trim() || undefined })
           });
           showLicenseResult(body);
-          alert(`续期成功。\n\n新 License ID：${body.payload.licenseId}\n有效月份：${body.payload.month}\n请复制并提供新密钥。`);
+          packerAlert(`续期成功。\n\n新 License ID：${body.payload.licenseId}\n有效月份：${body.payload.month}\n请复制并提供新密钥。`);
         } else if (action === 'archive') {
-          const typedName = prompt(`归档/清除以下 License 记录：\n\n${licenseIdentity(record)}\n\n归档会让密钥失效，但记录仍可恢复。\n为避免误操作，请完整输入扩展名称确认：`, '');
+          const typedName = await packerPrompt(`归档/清除以下 License 记录：\n\n${licenseIdentity(record)}\n\n归档会让密钥失效，但记录仍可恢复。\n为避免误操作，请完整输入扩展名称确认：`, '');
           if (typedName === null) return;
           if (typedName !== record.productId) throw new Error('输入的扩展名称不一致，已取消归档');
           await licenseAdminRequest(`/api/custom-tools/f12-to-extension/licenses/${encodeURIComponent(record.licenseId)}/archive`, { method: 'POST' });
         }
         await refreshLicenseManager();
       } catch (error) {
-        alert(`License 操作失败：${error.message}`);
+        packerAlert(`License 操作失败：${error.message}`);
       } finally {
         if (action !== 'copy') button.disabled = false;
       }
@@ -1057,7 +1081,7 @@
         const productId = document.getElementById('extName').value.trim() || 'My Extension';
         showLicenseResult(await issueMonthlyLicense(productId, document.getElementById('licenseLabel').value.trim()));
       } catch (error) {
-        alert('License 签发失败: ' + error.message);
+        packerAlert('License 签发失败: ' + error.message);
       } finally {
         button.disabled = false;
         button.textContent = '单独签发本月 License';
@@ -1197,7 +1221,7 @@
           btn.disabled = false;
         }, 3000);
       } catch (err) {
-        alert("打包失败: " + err.message);
+        packerAlert("打包失败: " + err.message);
       } finally {
         if (!packedSuccessfully) btn.disabled = false;
       }
