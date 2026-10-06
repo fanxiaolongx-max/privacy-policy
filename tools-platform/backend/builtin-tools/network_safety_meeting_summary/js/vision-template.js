@@ -2,6 +2,7 @@
 // No signed URLs, account identifiers or runtime state are retained here.
 const SOURCE_WIDTH = 1672;
 const SOURCE_HEIGHT = 941;
+export const VISION_ASSET_VERSION = 'hd-20261007-1';
 export const visionElements = [
   {
     "kind": "image",
@@ -848,13 +849,31 @@ export const visionElements = [
   }
 ];
 const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+// Update only our built-in pictures; preserve user replacements and all geometry.
+export function refreshVisionAssetUrls(root) {
+    const base = new URL('../assets/vision/', import.meta.url);
+    const paths = new Set(visionElements.filter(el => el.kind === 'image').map(el => base.pathname + el.asset));
+    let changed = 0;
+    root.querySelectorAll('.vision-template .vision-visual img').forEach(img => {
+        const src = img.getAttribute('src');
+        if (!src) return;
+        let url;
+        try { url = new URL(src, base); } catch (_) { return; }
+        if (url.origin !== base.origin || !paths.has(url.pathname)) return;
+        if (url.searchParams.get('v') === VISION_ASSET_VERSION) return;
+        url.searchParams.set('v', VISION_ASSET_VERSION);
+        img.setAttribute('src', `${url.pathname}${url.search}${url.hash}`);
+        changed++;
+    });
+    return changed;
+}
 export function createVisionSlide(id = 'vision-content') {
     const sx = 1920 / SOURCE_WIDTH, sy = 1080 / SOURCE_HEIGHT;
     const html = visionElements.map((el, index) => {
         const geometry = `position:absolute;left:${el.left*sx}px;top:${el.top*sy}px;width:${el.width*sx}px;height:${el.height*sy}px;z-index:${el.z};`;
         const common = `class="template-component vision-element${el.kind === 'text' ? ' vision-text editable template-editable' : ' vision-visual'}" data-component-name="${escapeHtml(el.name)}" data-vision-kind="${el.kind}" data-vision-id="vision-${index}"`;
         if (el.kind === 'text') return `<div ${common} contenteditable="true" style="${geometry}font-size:${Math.min(el.fontSize, el.width / Math.max(...el.text.split("\n").map(line => Array.from(line).length)) * 0.96)*sx}px;font-weight:${el.bold ? 700 : 400};color:${el.color};text-align:${el.align || 'left'};line-height:1.2;">${escapeHtml(el.text).replace(/\n/g,'<br>')}</div>`;
-        const src = new URL(`../assets/vision/${el.asset}`, import.meta.url).pathname;
+        const src = new URL(`../assets/vision/${el.asset}`, import.meta.url).pathname + `?v=${VISION_ASSET_VERSION}`;
         return `<div ${common} style="${geometry}"><img src="${escapeHtml(src)}" alt="${escapeHtml(el.name)}" draggable="false" style="width:100%;height:100%;object-fit:fill;display:block;" /></div>`;
     }).join('');
     return {id, layout:'custom', html:`<div class="vision-template" data-template-version="vision-20261006">${html}</div>`};

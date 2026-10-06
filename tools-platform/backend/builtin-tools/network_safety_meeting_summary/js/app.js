@@ -3,11 +3,11 @@ import * as store from './store.js?v=20260623-1';
 import * as editor from './editor.js?v=20261006-2';
 import { createComponentEditor } from './component-editor.js?v=20261006-2';
 import { initContextMenu } from './context-menu.js?v=20260623-1';
-import { defaultSlides } from './default-slides.js?v=20261006-2';
+import { defaultSlides } from './default-slides.js?v=20261007-1';
 import { renderSlide, slideToJson } from './slide-factory.js?v=20261006-2';
 import { initProjectWorkspace } from './project-workspace.js?v=20261006-2';
 
-import { createVisionSlide } from './vision-template.js?v=20261006-2';
+import { createVisionSlide, refreshVisionAssetUrls } from './vision-template.js?v=20261007-1';
 
 const deck = document.getElementById('deck');
 const deckWrapper = document.getElementById('deckWrapper');
@@ -301,6 +301,7 @@ function saveDeck() {
 function loadProjectDeck(html, requestedActiveSlide = 0) {
     componentEditor?.clearSelection();
     deck.innerHTML = String(html || '');
+    refreshVisionAssetUrls(deck);
     deck.querySelectorAll('.slide-wrap').forEach(wrap => {
         if (!wrap.querySelector('.slide')) wrap.remove();
     });
@@ -453,6 +454,7 @@ function bootstrap() {
             });
         }
     }
+    refreshVisionAssetUrls(deck);
     deck.querySelectorAll('.slide-wrap').forEach(wrap => {
         if (!wrap.querySelector('.slide')) wrap.remove();
     });

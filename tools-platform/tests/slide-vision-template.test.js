@@ -43,6 +43,28 @@ test('new project and new content page use vision while saved projects keep thei
     assert.ok(handler.includes('deck.appendChild(renderSlide(createVisionSlide()));'));
 });
 
+test('new and saved vision pictures bypass old caches without changing user replacements', async () => {
+    const {createVisionSlide, refreshVisionAssetUrls, VISION_ASSET_VERSION} = await moduleFrom('vision-template.js');
+    const assetPath = path.join(root, 'assets/vision/MAHXOLuwbZY.png');
+    const encodedAssetPath = pathToFileURL(assetPath).pathname;
+    const picture = src => ({src, getAttribute: function() {return this.src;}, setAttribute: function(key,value) {this.src=value;}});
+    const old = picture(assetPath);
+    const previousVersion = picture(`${assetPath}?v=old&custom=keep#position`);
+    const current = picture(`${assetPath}?v=${VISION_ASSET_VERSION}`);
+    const uploaded = picture('/api/slide-design/assets/user-picture.png');
+    const external = picture('https://example.com'+assetPath);
+    const inline = picture('data:image/png;base64,AAAA');
+    const pictures = [old, previousVersion, current, uploaded, external, inline];
+    assert.equal(refreshVisionAssetUrls({querySelectorAll:()=>pictures}),2);
+    assert.equal(old.src, `${encodedAssetPath}?v=${VISION_ASSET_VERSION}`);
+    assert.equal(previousVersion.src, `${encodedAssetPath}?v=${VISION_ASSET_VERSION}&custom=keep#position`);
+    assert.equal(uploaded.src,'/api/slide-design/assets/user-picture.png');
+    assert.equal(external.src,'https://example.com'+assetPath);
+    assert.equal(inline.src,'data:image/png;base64,AAAA');
+    assert.equal(refreshVisionAssetUrls({querySelectorAll:()=>pictures}),0);
+    assert.equal((createVisionSlide().html.match(new RegExp(`\\?v=${VISION_ASSET_VERSION}`,'g'))||[]).length,41);
+});
+
 test('native export skips hidden parent groups and preserves literal text, style and position', async () => {
     const { addVisionObjects, visibleForExport, rgbHex } = await moduleFrom('vision-pptx.js');
     const style = {opacity:'1',visibility:'visible',display:'block',zIndex:'100',fontFamily:'"PingFang SC", Arial',fontSize:'24px',fontWeight:'700',fontStyle:'normal',textAlign:'center',lineHeight:'28.8px',color:'rgb(48, 72, 91)'};
