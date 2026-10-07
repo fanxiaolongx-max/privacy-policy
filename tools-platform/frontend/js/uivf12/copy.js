@@ -588,6 +588,7 @@ function openTopicFloatingSimulator(origin) {
             onSnapshotImported: archiveImportedTopicSnapshot
         });
         if (!overlay.topicController) throw new Error('专题运行时未能初始化');
+        installFloatingCaptureTheme(root);
         const launcher = root.querySelector(config.launcher); if (launcher) launcher.click();
         const importButton = root.querySelector('.nc-json-import, .df-json-import'); if (importButton) importButton.focus();
     } catch (error) {
@@ -2591,6 +2592,142 @@ function showUiVisionSetupDialog(detail = {}) {
     document.body.appendChild(overlay);
 }
 
+// Self-contained: copied F12 scripts run on the target site without platform assets.
+function installFloatingCaptureTheme(root) {
+    const host = root.host || root;
+    const storageKey = 'uivf12-capture-theme-v1';
+    const actions = root.querySelector('.head-actions');
+    if (!actions) return;
+    const existing = actions.querySelector('.capture-theme');
+    if (existing) return;
+    let theme = document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
+    try {
+        const saved = localStorage.getItem(storageKey);
+        if (saved === 'light' || saved === 'dark') theme = saved;
+    } catch (error) {}
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'fullscreen capture-theme';
+    actions.insertBefore(button, actions.firstChild);
+    const style = document.createElement('style');
+    const scope = root.host ? ':host([data-uiv-capture-theme="light"])' : '[data-uiv-capture-theme="light"]';
+    const rules = [];
+    function rule(selectors, declarations) {
+        rules.push(selectors.split(',').map(selector => scope + ' ' + selector.trim()).join(',') + '{' + declarations + '}');
+    }
+    rules.push('.capture-theme{width:auto!important;min-width:58px;height:28px;padding:0 8px;border:1px solid #475569;border-radius:7px;background:#1e293b;color:#e2e8f0;font-size:10px;font-weight:800;white-space:nowrap;cursor:pointer}.capture-theme:focus-visible{outline:2px solid #38bdf8;outline-offset:2px}');
+    rules.push(scope + '{color-scheme:light;color:#334155' + (root.host ? '' : ';background:#f8fafc') + '}');
+    rule('.panel', 'background:rgba(255,255,255,.98);color:#334155;border-color:#b6dbe5;box-shadow:0 24px 80px rgba(30,41,59,.2);color-scheme:light');
+    rule('.head,.detail-head,.file-tabs,.derived-metrics,.analysis-filters,.nc-toolbar,.nc-status,.nc-card-title,.nc-filter-row,.nc-eos-settings,.nc-option,.nc-card,.nc-sr-kpi,.df-card', 'border-color:#dbe4ee');
+    rule('.title,.section-title,.detail-title,.derived-value,.close-choice-title,.nc-card-title,.nc-top-list b,.nc-eos-brief strong,.nc-change-filter-head strong,.nc-sr-kpi-value,.df-card header strong,.df-kpi strong,.df-operator-row>b,.df-operator-row>strong', 'color:#0f172a');
+    rule('.meta,.metric-meta,.rule-snapshot,.page-info,.empty-detail,.close-choice-text,.derived-label,.derived-sub-label,.metric-target-label,.section-title small,.nc-status,.nc-card-title small,.nc-child,.nc-note,.nc-loading,.nc-empty,.nc-top-empty,.nc-merged-hint,.nc-bu-note,.nc-change-filter-head small,.nc-sr-kpi-label,.nc-sr-kpi-meta,.nc-sr-legend,.nc-sr-section-note,.df-status,.df-card small,.df-empty,.df-loading,.df-pager', 'color:#64748b');
+    rule('.eyebrow,.target-month-hint,.derived-period,.nc-target,.nc-filter-label,.nc-top-customer-title', 'color:#0369a1');
+    rule('.body,.nc-content,.df-content', 'color:#334155');
+    rule('.status,.metric,.file-tab,.analysis-filter,.pager button,.fullscreen,.cancel-choice,.metric-target-item,.derived-sub,.nc-tab,.nc-refresh,.nc-language,.nc-json-button,.nc-plan-step,.nc-plan-preset,.nc-bulk-button,.nc-top-n-step,.nc-bu-chip,.nc-bu-all,.df-tab,.df-language,.df-json,.df-pager button,.df-pager select', 'background:#f1f5f9;color:#334155;border-color:#cbd5e1');
+    rule('.capture-theme,.close', 'color:#334155');
+    rule('.capture-theme', 'background:#f1f5f9;border-color:#cbd5e1');
+    rule('.notice', 'background:#f5f3ff;color:#5b21b6;border-color:#ddd6fe');
+    rule('.notice.running,.status.running', 'background:#ecfeff;color:#155e75;border-color:#a5f3fc');
+    rule('.notice.done,.status.done', 'background:#f0fdf4;color:#166534;border-color:#bbf7d0');
+    rule('.notice.bad,.status.bad', 'background:#fef2f2;color:#991b1b;border-color:#fecaca');
+    rule('.metric:hover,.metric.active,.analysis-filter.active,.nc-tab.active,.nc-bu-all.active,.df-tab.active', 'background:#e0f2fe;color:#075985;border-color:#38bdf8');
+    rule('.metric.has-danger', 'background:#fef2f2;border-color:#fca5a5');
+    rule('.metric.has-warning:not(.has-danger)', 'background:#faf5ff;border-color:#c4b5fd');
+    rule('.metric.has-kpi-warning:not(.has-danger)', 'background:#fff7ed;background-image:none;border-color:#fb923c');
+    rule('.metric-risk,.metric-target-value,.derived-sub-value,.nc-top-list,.nc-readonly-plan', 'color:#334155');
+    rule('.metric-risk .danger,.judgment-danger,.derived-gap,.derived-sub.missing .derived-sub-value,.nc-bad,.nc-error,.nc-sr-kpi.bad .nc-sr-kpi-value,.df-error', 'color:#b91c1c!important');
+    rule('.metric-risk .warning,.judgment-warning', 'color:#7e22ce!important');
+    rule('.metric-risk .info,.judgment-info', 'color:#0369a1!important');
+    rule('.metric-risk .normal,.judgment-normal,.nc-good,.nc-sr-kpi.good .nc-sr-kpi-value', 'color:#15803d!important');
+    rule('.nc-muted,.nc-merged-hint', 'color:#64748b!important');
+    rule('.nc-sr-kpi.warn .nc-sr-kpi-value,.derived-sub-gap', 'color:#b45309');
+    rule('.detail,.derived-metrics,.nc-mode,.df-mode,.nc-card,.nc-sr-kpi,.df-card,.nc-eos-card.nc-eos-fullscreen', 'background:#fff;background-image:none');
+    rule('.target-month-bar,.metric-target-item.current,.rerun-one,.nc-eos-settings,.nc-option,.nc-change-filter,.nc-eos-brief', 'background:#f0f9ff;background-image:none;color:#075985;border-color:#bae6fd');
+    rule('.nc-toolbar,.nc-card-title,.nc-eos-card.nc-eos-fullscreen .nc-card-title,.df-toolbar', 'background:#f8fafc;background-image:none');
+    rule('.target-month-select,.nc-eos-settings input,.nc-eos-settings select,.nc-plan-input,.nc-progress-note,.nc-progress-note:focus,.df-toolbar input,.df-toolbar select', 'background:#fff;color:#0f172a;border-color:#94a3b8');
+    rule('.nc-progress-note::placeholder', 'color:#64748b');
+    rule('.file-tab.active', 'background:#ede9fe;color:#5b21b6;border-color:#a78bfa');
+    rule('.derived-chip', 'background:#f0fdf4;border-color:#bbf7d0');
+    rule('.derived-chip.warn,.derived-sub.warn', 'background:#fff7ed;background-image:none');
+    rule('.derived-sub.missing', 'background:#fef2f2');
+    rule('.data-table th,.nc-table th,.df-table-wrap th', 'background:#eaf2f8;color:#075985');
+    rule('.data-table td,.nc-table td,.df-table-wrap td', 'color:#334155;border-color:#e2e8f0');
+    rule('.data-table th,.nc-table th,.df-table-wrap th', 'border-color:#dbe4ee');
+    rule('.data-table th.column-analysis,.data-table td.column-analysis,.data-table tr.risk-info td', 'background:#ecfeff;color:#155e75');
+    rule('.data-table th.column-association,.data-table td.column-association,.data-table th.column-rule,.data-table td.column-rule,.data-table tr.risk-warning td', 'background:#f5f3ff;color:#5b21b6');
+    rule('.data-table th.column-output,.data-table td.column-output', 'background:#f0fdf4;color:#166534');
+    rule('.data-table tr.risk-danger td', 'background:#fef2f2');
+    rule('.data-table th.sortable:hover', 'color:#075985;filter:none');
+    rule('.close-choice', 'background:rgba(226,232,240,.8)');
+    rule('.close-choice-card', 'background:#fff;border-color:#cbd5e1');
+    rule('.nc-table .nc-total td,.nc-bg-divider td', 'background:#e0f2fe!important;color:#075985!important');
+    rule('.nc-table .nc-bg td,.nc-merged-row td,.nc-customer-divider td', 'background:#f1f5f9!important;color:#334155!important');
+    rule('.nc-merged-row.line td,.nc-line-divider td', 'background:#f8fafc!important;color:#64748b!important');
+    rule('.nc-merged-label', 'color:#0f172a!important');
+    rule('.nc-product-divider td', 'color:#0369a1!important');
+    rule('.nc-eos-sticky-item.bg', 'background:#e0f2fe;color:#075985');
+    rule('.nc-eos-sticky-item.customer,.nc-eos-sticky-item.line,.nc-eos-sticky-item.product', 'background:#f1f5f9;color:#334155');
+    rule('.nc-bu-chip:has(input:checked)', 'background:#dbeafe;color:#1e40af');
+    rule('.nc-plan-preset[data-plan-action="all"],.nc-bulk-button[data-bulk-action="all"]', 'background:#dcfce7;color:#166534');
+    rule('.nc-plan-preset[data-plan-action="clear"],.nc-bulk-button[data-bulk-action="clear"]', 'background:#fee2e2;color:#991b1b');
+    rule('.nc-bulk-button[data-bulk-action="topn"],.nc-top-n-step,.nc-json-button', 'background:#fef3c7;color:#92400e');
+    rule('.nc-bulk-button[data-collapse-action]', 'background:#ede9fe;color:#5b21b6');
+    rule('.nc-collapse-button,.nc-bulk-button[data-collapse-action="expand"],.nc-language', 'background:#e0f2fe;color:#075985');
+    rule('.nc-table-fullscreen-button', 'background:#ede9fe!important;color:#5b21b6!important');
+    rule('.nc-eos-fullscreen .nc-table-fullscreen-button', 'background:#fee2e2!important;color:#991b1b!important');
+    rule('.nc-status.review,.df-status.review', 'background:#fff1f2;color:#9f1239');
+    rule('.nc-sr-chart', 'background:#f8fafc');
+    rule('.nc-sr-chart-title,.nc-sr-chart-value', 'fill:#334155');
+    rule('.nc-sr-chart-axis,.nc-sr-chart-legend', 'fill:#64748b');
+    rule('.nc-sr-severity', 'background:#e2e8f0');
+    rule('.nc-eos-brief-title', 'color:#0f172a');
+    rule('.nc-eos-brief.version strong', 'color:#6d28d9');
+    rule('.nc-eos-brief .nc-brief-focus', 'color:#b45309');
+    rule('.nc-eos-brief .nc-brief-good', 'color:#15803d');
+    rule('.nc-eos-brief .nc-brief-gap', 'color:#b91c1c');
+    rule('.df-kpi,.df-operator-brief', 'background:#f8fafc;background-image:none;border-color:#dbe4ee');
+    rule('.df-kpi>span,.df-insight-row,.df-reason-row,.df-operator-row,.df-operator-brief p', 'color:#334155');
+    rule('.df-summary.good,.df-operator-rate.good', 'background:#f0fdf4;color:#166534');
+    rule('.df-summary.bad,.df-operator-rate.bad,.df-operator-brief.risk', 'background:#fef2f2;background-image:none;color:#991b1b');
+    rule('.df-operator-brief strong', 'color:#1e40af');
+    rule('.df-operator-brief.risk strong', 'color:#991b1b');
+    rule('.df-recent-row td', 'background:#fffbeb!important;color:#92400e!important');
+    rule('.df-control,.df-actions select,.df-actions input[type=number]', 'background:#fff;color:#334155;border-color:#cbd5e1');
+    rule('.df-scope-toggle,.df-legend,.df-rank,.df-summary b,.df-pager b', 'color:#334155');
+    rule('.df-chart-svg text', 'fill:#64748b');
+    rule('.df-chart-svg .df-chart-value', 'fill:#334155');
+    rule('.df-chart-svg .df-target-label', 'fill:#b45309');
+    rule('.df-kpi.good strong,.df-good', 'color:#15803d!important');
+    rule('.df-kpi.bad strong,.df-bad', 'color:#b91c1c!important');
+    rule('.uiv-topic-simulator-float-head', 'background:#f8fafc;border-color:#dbe4ee');
+    rule('.uiv-topic-simulator-float-head strong', 'color:#0f172a');
+    style.textContent = rules.join('\n');
+    root.appendChild(style);
+    function english() {
+        const languageButton = root.querySelector('.nc-language,.df-language');
+        if (languageButton) return languageButton.textContent.trim() === '中';
+        return String(document.documentElement.lang || '').startsWith('en');
+    }
+    function render() {
+        host.setAttribute('data-uiv-capture-theme', theme);
+        host.style.colorScheme = theme;
+        const light = theme === 'light';
+        button.textContent = light ? (english() ? '☾ Dark' : '☾ 暗色') : (english() ? '☀ Light' : '☀ 亮色');
+        button.title = english() ? (light ? 'Switch to dark mode' : 'Switch to light mode') : (light ? '切换为暗色模式' : '切换为亮色模式');
+        button.setAttribute('aria-label', button.title);
+        button.setAttribute('aria-pressed', String(light));
+    }
+    button.addEventListener('click', () => {
+        theme = theme === 'dark' ? 'light' : 'dark';
+        try { localStorage.setItem(storageKey, theme); } catch (error) {}
+        render();
+    });
+    root.addEventListener('click', event => {
+        if (event.target.closest('.nc-language,.df-language')) render();
+    });
+    render();
+}
+
 function wrapMasterScriptWithFloatingLauncher(masterCode, options = {}) {
     const siteName = String(options.siteName || '当前站点');
     const expectedOrigin = String(options.expectedOrigin || '');
@@ -2618,6 +2755,7 @@ function wrapMasterScriptWithFloatingLauncher(masterCode, options = {}) {
     const ruleBundle = ${JSON.stringify(ruleBundle)};
     const installNetCareAnalysisRuntime = ${netCareRuntimeSource || 'null'};
     const installDataFabAnalysisRuntime = ${dataFabRuntimeSource || 'null'};
+    const installFloatingThemeRuntime = ${installFloatingCaptureTheme.toString()};
     const originMatched = !expectedOrigin || window.location.origin === expectedOrigin;
     const capturedFiles = [];
     const taskStates = new Map(taskMeta.map(function (task) { return [task.index, 'pending']; }));
@@ -2745,6 +2883,7 @@ function wrapMasterScriptWithFloatingLauncher(masterCode, options = {}) {
             console.error('[UIVF12] DataFab 专题模块初始化失败', error);
         }
     }
+    installFloatingThemeRuntime(root);
     title.textContent = ${JSON.stringify(siteName)} + ' · 数据抓取浮窗';
     meta.textContent = ${JSON.stringify(`${taskCount} 个仓库脚本 · ${expectedOrigin || '当前站点'}`)};
     ruleSnapshot.textContent = ruleBundle.unavailable

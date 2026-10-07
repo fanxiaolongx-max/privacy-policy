@@ -76,6 +76,17 @@ test('branding updates safe text and titles, preserves page names and handles la
     document.title = 'Standalone report';
     context.applyPlatformTitle();
     assert.equal(document.title, 'Standalone report');
+    document.title = '图特工具平台 - 工具中台';
+    context.applyPlatformTitle();
+    assert.equal(document.title, 'Another - 工具中台');
+});
+
+test('frontend index.html static title does not contain legacy names like EG CS HUB', () => {
+    const html = fs.readFileSync(path.join(__dirname, '../frontend/index.html'), 'utf8');
+    const match = html.match(/<title>([^<]+)<\/title>/);
+    assert.ok(match, 'index.html should have a title tag');
+    assert.ok(!match[1].includes('EG CS HUB'), 'index.html static title must not contain EG CS HUB');
+    assert.ok(match[1].includes('图特工具平台'), 'index.html static title should contain 图特工具平台');
 });
 
 test('failed name saves keep the prior branding and release the save button', async () => {

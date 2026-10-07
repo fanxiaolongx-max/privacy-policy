@@ -1353,6 +1353,10 @@ function applyPlatformTitle() {
         next = next.split('Tools Platform').join(mainName);
     } else if (next.includes('EG CS HUB')) {
         next = next.split('EG CS HUB').join(mainName);
+    } else if (next.includes('图特工具平台')) {
+        next = next.split('图特工具平台').join(mainName);
+    } else if (next.includes('Thoth Platform')) {
+        next = next.split('Thoth Platform').join(mainName);
     }
     platformTitleApplied = next;
     if (document.title !== next) document.title = next;

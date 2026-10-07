@@ -38,5 +38,5 @@ test('simulator assets are cache-busted on the UIVF12 page', () => {
     assert.match(pageSource, /uivf12\.css\?v=(?:20260911-02|20261005-03|20261005-04)/);
     assert.match(pageSource, /netcare-analysis\.js\?v=20260917-01/);
     assert.match(pageSource, /datafab-analysis\.js\?v=20260911-03/);
-    assert.match(pageSource, /copy\.js\?v=20260911-02/);
+    assert.match(pageSource, /copy\.js\?v=20261007-01/);
 });
