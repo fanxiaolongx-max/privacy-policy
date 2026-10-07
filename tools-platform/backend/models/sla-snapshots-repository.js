@@ -70,6 +70,18 @@ async function listSnapshots() {
     return { items, source: 'sqlite' };
 }
 
+async function getLatestSnapshot() {
+    // Schema initialization is tenant-specific, even if another tenant has
+    // already initialized this module in the same server process.
+    await run(`CREATE TABLE IF NOT EXISTS sla_snapshots (
+        id TEXT PRIMARY KEY, timestamp TEXT NOT NULL, payload_json TEXT NOT NULL,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`);
+    const row = await get(`SELECT payload_json FROM sla_snapshots
+        ORDER BY timestamp DESC, id DESC LIMIT 1`);
+    return row ? JSON.parse(row.payload_json) : null;
+}
+
 async function upsertSnapshotInDb(item) {
     await ensureReady();
     await run(
@@ -248,6 +260,7 @@ module.exports = {
     MAX_SNAPSHOTS,
     ensureReady,
     listSnapshots,
+    getLatestSnapshot,
     addSnapshot,
     deleteSnapshot,
     updateSnapshot,

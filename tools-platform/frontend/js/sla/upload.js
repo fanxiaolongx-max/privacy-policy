@@ -738,6 +738,7 @@ async function captureAndUploadSnapshot(fileNames, meta = {}) {
                             title: window.AppState[secId].title,
                             _slaCleanText: row._slaCleanText,
                             _slaDays: row._slaDays,
+                            deadline: row._slaDeadline || null,
                             data: row
                         });
                     }

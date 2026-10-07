@@ -451,6 +451,35 @@
             }
         }
 
+        #loginSloganSmoke {
+            position: absolute;
+            left: 0;
+            top: -120px;
+            width: 100%;
+            height: calc(100% + 240px);
+            pointer-events: none;
+            opacity: .85;
+            /* Four-sided alpha feathering is applied inside the smoke canvas. */
+        }
+        .login-slogan-wrap.slogan-smoke-ready {
+            animation: none;
+            mask: none;
+            -webkit-mask: none;
+            opacity: 1;
+            filter: none;
+            transform: none;
+            will-change: auto;
+        }
+        .slogan-smoke-ready p { position: relative; animation: none; }
+        .slogan-smoke-active p {
+            --line-reveal: var(--slogan-reveal);
+            -webkit-mask-image: linear-gradient(90deg, #000 calc(var(--line-reveal) * 100% - 12%), transparent calc(var(--line-reveal) * 100% + 8%));
+            mask-image: linear-gradient(90deg, #000 calc(var(--line-reveal) * 100% - 12%), transparent calc(var(--line-reveal) * 100% + 8%));
+            filter: blur(calc((1 - var(--slogan-clarity, 0)) * 3px));
+        }
+        .slogan-smoke-active .login-slogan-secondary { --line-reveal: var(--slogan-reveal-secondary); }
+        @media (prefers-reduced-motion: reduce) { #loginSloganSmoke { display: none; } }
+
         .glass-panel.login-success ~ .login-slogan-wrap {
             animation: none !important;
             opacity: 0;
@@ -779,6 +808,7 @@
         </div>
 
         <div class="login-slogan-wrap" id="loginSloganWrap">
+            <canvas id="loginSloganSmoke" aria-hidden="true"></canvas>
             <p class="login-slogan-primary" id="loginSloganPrimary">“以智慧之神图特之羽衡度万象，以数智之枢纽连接经验与效率。”</p>
             <p class="login-slogan-secondary" id="loginSloganSecondary">“By the scales of Thoth, ancient god of wisdom — measuring order, uniting tools, and turning experience into efficiency.”</p>
             <span id="loginSloganText" style="display:none"></span>
@@ -1498,6 +1528,7 @@
         }
         loadPlatformIdentity();
     </script>
+    <script src="/js/shared/login-slogan-smoke.js?v=20261007-02"></script>
     <script src="/js/shared/desktop-license-badge.js?v=20260805-01"></script>
 </body>
 

@@ -8,7 +8,10 @@
     wave: { side: false, eyes: [[.494,.156,.044,.032],[.669,.184,.025,.029]] },
     front: { side: false, eyes: [[.385,.285,.065,.034],[.681,.286,.065,.034]] }
   };
+  var artworkProfiles = new Map();
+  function registerProfile(src, profile) { artworkProfiles.set(src, profile); }
   function profileFor(src, frame) {
+    if (artworkProfiles.has(src)) return artworkProfiles.get(src);
     var match = /\/(idle|walk|think|wave)\.png(?:\?|$)/.exec(src || '');
     if (match) return profiles[match[1]];
     if ((src || '').indexOf('data:image/png') === 0) {
@@ -65,19 +68,19 @@
     }
     function setMirror(value) {
       mirrored = !!value; img.dataset.mirrored = String(mirrored); img.style.scale = mirrored ? '-1 1' : '1 1';
-      img.dataset.facing = profile.side ? (mirrored ? 'left' : 'right') : 'front';
+      img.dataset.facing = profile.side ? (mirrored ? (profile.nativeFacing === 'left' ? 'right' : 'left') : profile.nativeFacing || 'right') : 'front';
     }
     function orient() {
       var rect = img.getBoundingClientRect();
       if (environment) desiredFacing = facing(environment.bounds.x + rect.left + rect.width/2, environment.workArea, desiredFacing);
-      var next = profile.side && desiredFacing === 'left';
+      var next = profile.side && desiredFacing !== (profile.nativeFacing || 'right');
       if (next === mirrored) { img.dataset.facing = profile.side ? desiredFacing : 'front'; return; }
       if (turnTimer) { clearTimeout(turnTimer); turnTimer = null; }
       // Keep direct-facing and blink frames unmirrored immediately. No scale interpolation.
       if (!profile.side || reducedMotion.matches || !active || ui.busy()) { setMirror(next); return; }
       img.classList.add('thoth-turning');
       turnTimer = setTimeout(function () {
-        setMirror(profile.side && desiredFacing === 'left'); img.classList.remove('thoth-turning'); turnTimer = null;
+        setMirror(profile.side && desiredFacing !== (profile.nativeFacing || 'right')); img.classList.remove('thoth-turning'); turnTimer = null;
       }, 85);
     }
     function refreshSource() {
@@ -138,7 +141,7 @@
     window.addEventListener('pagehide',function () { cancelAnimationFrame(raf); observer.disconnect(); if(sizeObserver)sizeObserver.disconnect(); if(turnTimer)clearTimeout(turnTimer); });
     return { apply:apply, receiveEnvironment:receiveEnvironment, isMirrored:function () { return mirrored; }, enabled:function () { return enabled; } };
   }
-  var api = { create:create, facing:facing, ease:ease, gazeTarget:gazeTarget, profileFor:profileFor };
+  var api = { create:create, facing:facing, ease:ease, gazeTarget:gazeTarget, profileFor:profileFor, registerProfile:registerProfile };
   if (typeof module !== 'undefined' && module.exports && !host) module.exports = api;
   if (host) host.ThothPresence = api;
 })(typeof window !== 'undefined' ? window : null);

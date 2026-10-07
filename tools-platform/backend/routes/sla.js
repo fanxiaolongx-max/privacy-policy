@@ -454,6 +454,16 @@ router.patch('/targets/:targetKey', async (req, res) => {
 // ──────────────────────────────────────────────────────────
 
 // GET /api/sla/snapshots
+router.get('/snapshots/latest', async (_req, res) => {
+    try {
+        res.setHeader('Cache-Control', 'no-store');
+        res.json({ snapshot: await snapshotsRepo.getLatestSnapshot() });
+    } catch (err) {
+        console.error('[GET /api/sla/snapshots/latest] failed:', err);
+        res.status(500).json({ error: '读取最新导入快照失败', code: 'SLA_LATEST_SNAPSHOT_FAILED' });
+    }
+});
+
 router.get('/snapshots', async (req, res) => {
     try {
         const { items, source } = await snapshotsRepo.listSnapshots({

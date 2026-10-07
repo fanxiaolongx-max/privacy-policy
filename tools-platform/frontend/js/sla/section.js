@@ -419,6 +419,7 @@ function preprocessData(secId, rawData) {
     state.globalData = rawData.map((row, rowIndex) => {
         let _slaDays = 999999, _slaText = '-', _slaCleanText = '-', _rowClass = '', _alertSeverity = '';
         row._slaRuleMatched = false;
+        delete row._slaDeadline;
         delete row._srDisposition;
         delete row._srStatus;
         delete row._srSeverity;
@@ -434,6 +435,7 @@ function preprocessData(secId, rawData) {
             });
             if (configuredResult) {
                 _slaDays = configuredResult.slaDays;
+                if (configuredResult.deadline) row._slaDeadline = configuredResult.deadline.toISOString();
                 _slaText = configuredResult.text;
                 _slaCleanText = configuredResult.cleanText;
                 _rowClass = configuredResult.rowClass;
@@ -456,6 +458,7 @@ function preprocessData(secId, rawData) {
                     const cd = parseDateForSLA(state, rowIndex, 'task_create_time', ct, 'Checking 建单时间');
                     if (cd) {
                         const dl = new Date(cd); dl.setDate(dl.getDate() + 30);
+                        row._slaDeadline = dl.toISOString();
                         _slaDays = Math.ceil((dl - now) / 86400000);
                         const base = `剩余 ${_slaDays} 天`; _slaText = base; _slaCleanText = base;
                         if (_slaDays <= 10) { _rowClass = 'danger-row'; _slaText = `<span class="badge">Checking紧急</span> ${_slaText}`; _slaCleanText = `Checking紧急 (${base})`; }
@@ -467,6 +470,7 @@ function preprocessData(secId, rawData) {
                 if (ret) {
                     const dl = parseDateForSLA(state, rowIndex, 'rectify_plan_end_time', ret, '整改期望完成时间');
                     if (dl) {
+                        row._slaDeadline = dl.toISOString();
                         _slaDays = Math.ceil((dl - now) / 86400000);
                         const base = `剩余 ${_slaDays} 天`; _slaText = base; _slaCleanText = base;
                         if (_slaDays <= 10) { _rowClass = 'danger-row'; _slaText = `<span class="badge">整改紧急</span> ${_slaText}`; _slaCleanText = `整改紧急 (${base})`; }
@@ -488,6 +492,7 @@ function preprocessData(secId, rawData) {
             });
             if (riskResult) {
                 _slaDays = riskResult.slaDays;
+                if (riskResult.deadline) row._slaDeadline = riskResult.deadline.toISOString();
                 _slaText = riskResult.text;
                 _slaCleanText = riskResult.cleanText;
                 _rowClass = riskResult.rowClass;
@@ -502,6 +507,7 @@ function preprocessData(secId, rawData) {
                     const cd = parseDateForSLA(state, rowIndex, '创建日期-Create Date/create_time', ctStr, '专项风险创建日期');
                     if (cd) {
                         const dl = new Date(cd); dl.setDate(dl.getDate() + 30);
+                        row._slaDeadline = dl.toISOString();
                         _slaDays = Math.ceil((dl - now) / 86400000);
                         const base = `剩余 ${_slaDays} 天`; _slaText = base; _slaCleanText = base;
                         if (_slaDays <= 10) { _rowClass = 'danger-row'; _slaText = `<span class="badge">确认紧急</span> ${_slaText}`; }
@@ -513,6 +519,7 @@ function preprocessData(secId, rawData) {
                 if (ecStr) {
                     const dl = parseDateForSLA(state, rowIndex, '要求完成日期/required_completion_time', ecStr, '专项风险要求完成日期');
                     if (dl) {
+                        row._slaDeadline = dl.toISOString();
                         _slaDays = Math.ceil((dl - now) / 86400000);
                         const base = `剩余 ${_slaDays} 天`; _slaText = base; _slaCleanText = base;
                         if (_slaDays <= 10) { _rowClass = 'danger-row'; _slaText = `<span class="badge">处理紧急</span> ${_slaText}`; }
@@ -530,6 +537,7 @@ function preprocessData(secId, rawData) {
                     if (cd) {
                         const dl = new Date(cd);
                         dl.setDate(dl.getDate() + 30);
+                        row._slaDeadline = dl.toISOString();
                         _slaDays = Math.ceil((dl - now) / 86400000);
                         const base = `剩余 ${_slaDays} 天`;
                         _slaText = base;
@@ -604,6 +612,7 @@ function preprocessData(secId, rawData) {
                 }
             } else if (openDate && expCloseDate) {
                 const effectiveExpCloseDate = susExpCloseDate || expCloseDate;
+                row._slaDeadline = effectiveExpCloseDate.toISOString();
                 const totalMs = effectiveExpCloseDate - openDate;
                 const consumedMs = now - openDate;
                 const remainingMs = effectiveExpCloseDate - now;

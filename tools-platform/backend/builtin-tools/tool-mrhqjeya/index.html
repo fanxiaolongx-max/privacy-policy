@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Executive Horizon - 旗舰版行政日程指挥中心</title>
+    <link rel="stylesheet" href="./assets/sla-reminders.css?v=20261007-03">
     <style>
         /* --- 顶奢智感科技多态色彩系统 --- */
         :root {
@@ -493,12 +494,14 @@
         /* ================= 浮层表单弹窗 ================= */
         .glass-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 100; opacity: 0; transition: opacity 0.3s; }
         .glass-overlay.show { display: flex; opacity: 1; }
-        .panel-modal { background: var(--modal-bg); padding: 32px; border-radius: 20px; width: 100%; max-width: 440px; border: 1px solid var(--border); box-shadow: var(--shadow-lg); transform: scale(0.85) translateY(20px); opacity: 0; transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s; }
+        .panel-modal { background: var(--modal-bg); padding: 32px; border-radius: 20px; width: calc(100% - 32px); max-width: 760px; max-height: calc(100dvh - 40px); overflow-y: auto; box-sizing: border-box; border: 1px solid var(--border); box-shadow: var(--shadow-lg); transform: scale(0.85) translateY(20px); opacity: 0; transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s; }
         .glass-overlay.show .panel-modal { transform: scale(1) translateY(0); opacity: 1; }
         .m-title { font-size: 1.3rem; font-weight: 800; margin-bottom: 20px; }
         .m-group { margin-bottom: 18px; }
         .m-group label { display: block; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; }
         .m-group input, .m-group select { width: 100%; padding: 12px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 10px; color: var(--text-main); font-size: 0.95rem; outline: none; transition: border 0.3s; }
+        .m-group > div { min-width: 0; }
+        #entry-desc { min-height: 190px; line-height: 1.6; }
         .m-group input:focus, .m-group select:focus, textarea:focus { border-color: var(--primary); }
         .m-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
         .b-cancel { background: rgba(255,255,255,0.05); color: var(--text-muted); border: none; padding: 10px 18px; border-radius: 10px; cursor: pointer; font-weight: 600; }
@@ -638,6 +641,7 @@
             <div class="system-control-bar">
                 <div class="sys-toggle-group" style="gap:6px; flex-wrap:wrap;">
                     <div class="mobile-quick-actions">
+                    <button type="button" class="sys-toggle-btn" id="sla-settings-btn" onclick="openSlaReminderSettings()" aria-haspopup="dialog" aria-controls="sla-settings-dialog">⚙️ 提醒设置</button>
                     <button class="sys-toggle-btn" onclick="toggleTheme()" id="theme-btn">☀️ LIGHT</button>
                     <button class="sys-toggle-btn" onclick="toggleLang()" id="lang-btn">EN</button>
                     <button class="sys-toggle-btn" id="import-btn" title="导入Excel日程">📥 导入</button>
@@ -792,7 +796,7 @@
             </div>
             <div class="m-group">
                 <label>议题背景 / 决策要点 📋</label>
-                <textarea id="entry-desc" rows="3" placeholder="议题背景或决策要点说明" style="width:100%;padding:12px;background:var(--input-bg);border:1px solid var(--border);border-radius:10px;color:var(--text-main);font-size:0.9rem;outline:none;resize:vertical;font-family:inherit;transition:border 0.3s;box-sizing:border-box;"></textarea>
+                <textarea id="entry-desc" rows="8" placeholder="议题背景或决策要点说明" style="width:100%;padding:12px;background:var(--input-bg);border:1px solid var(--border);border-radius:10px;color:var(--text-main);font-size:0.9rem;outline:none;resize:vertical;font-family:inherit;transition:border 0.3s;box-sizing:border-box;"></textarea>
             </div>
             <div class="m-actions">
                 <button class="b-del" id="btn-delete" onclick="executeDelete()">放弃排班</button>
@@ -809,7 +813,22 @@
         </div>
     </div>
 
+            <dialog id="sla-settings-dialog" class="sla-settings-dialog" aria-labelledby="sla-reminder-title">
+            <section class="sla-reminder-panel">
+                <div class="sla-reminder-heading"><h3 id="sla-reminder-title">单据智能提醒</h3><button type="button" class="sys-toggle-btn" id="sla-source-refresh" onclick="refreshSlaReminderSource()">刷新快照</button><button type="button" class="sys-toggle-btn" id="sla-settings-close" onclick="closeSlaReminderSettings()">关闭</button></div>
+                <div class="sla-reminder-controls">
+                    <label><input type="checkbox" id="sla-reminder-enabled" checked><span id="sla-enabled-label">自动编排</span></label>
+                    <label><span id="sla-first-label">第一次：提前天数</span><input type="number" id="sla-first-days" min="2" max="90" value="7"></label>
+                    <label><span id="sla-second-label">第二次：提前天数</span><input type="number" id="sla-second-days" min="1" max="89" value="3"></label>
+                    <button type="button" class="sys-toggle-btn" id="sla-policy-save" onclick="applySlaReminderPolicy()">应用规则</button>
+                </div>
+                <p id="sla-source-status" aria-live="polite">正在读取最新导入快照…</p><p id="sla-policy-help"></p>
+            </section>
+        </dialog>
+
     <script src="./assets/lunar.js"></script>
+    <script src="./assets/sla-reminder-engine.js?v=20261007-01"></script>
+    <script src="./assets/sla-reminders.js?v=20261007-02"></script>
     <script>
         // --- 国际化超脑多模字典 ---
         const I18N_DICT = {
@@ -1077,8 +1096,8 @@
 
         function findConflicts() {
             const conflictDates = new Set();
-            for (const [dateStr, events] of Object.entries(STORAGE_CORE)) {
-                const sorted = [...events].sort((a,b) => timeToMin(a.start) - timeToMin(b.start));
+            for (const [dateStr, events] of scheduleEntries()) {
+                const sorted = events.filter(event => event.status !== 'completed' && event.start && event.end).sort((a,b) => timeToMin(a.start) - timeToMin(b.start));
                 for (let i = 0; i < sorted.length; i++) {
                     for (let j = i+1; j < sorted.length; j++) {
                         if (timeToMin(sorted[j].start) < timeToMin(sorted[i].end)) {
@@ -1217,6 +1236,7 @@
             document.getElementById('tab-import').textContent = zh ? '📊 导入数据表' : '📊 Imported data';
             document.getElementById('snapshot-title').textContent = zh ? '备份与恢复' : 'Backup & restore';
             renderHolidayLegend();
+            renderSlaReminderStatus();
             document.getElementById('btn-template').textContent = zh ? '📄 下载导入模板' : '📄 Download template';
             document.getElementById('btn-export-data').textContent = zh ? '⬇ 导出当前数据' : '⬇ Export current data';
             document.getElementById('theme-btn').innerText = currentTheme === 'dark' ? '☀️ LIGHT' : '🌙 DARK';
@@ -1254,6 +1274,7 @@
 
         // --- 三级无缝数据渲染引擎 ---
         function renderCalendarPart(targetContainer = container) {
+            buildSlaReminderSchedule();
             const frag = document.createDocumentFragment();
             const d = I18N_DICT[currentLang];
 
@@ -1392,7 +1413,7 @@
                 const info = JSON.parse(e.dataTransfer.getData('application/json'));
                 if (!info.id || !STORAGE_CORE[info.fromDate]) return;
                 const index = STORAGE_CORE[info.fromDate].findIndex(event => event.id === info.id);
-                if (index < 0) return;
+                if (index < 0 || STORAGE_CORE[info.fromDate][index].slaReminder) return;
                 const [event] = STORAGE_CORE[info.fromDate].splice(index, 1);
                 if (!STORAGE_CORE[cell.dataset.date]) STORAGE_CORE[cell.dataset.date] = [];
                 STORAGE_CORE[cell.dataset.date].push(event);
@@ -1565,7 +1586,9 @@
             const dict = I18N_DICT[currentLang];
             timelineHeadline.innerText = currentLang === 'zh' ? `${m}月${d}日 ${dict.timelineTitle}` : `${dict.timelineTitle} (${m}/${d})`;
                         
-            const rawEvents = getFilteredEvents(dateStr);
+            const allDayEvents = getFilteredEvents(dateStr);
+            const rawEvents = allDayEvents.filter(event => event.start && event.end && event.status !== 'completed');
+            const historyAndBacklog = allDayEvents.filter(event => !event.start || !event.end || event.status === 'completed');
             const dayStart = timeToMin("08:30");
             const dayEnd = timeToMin("18:30");
                         
@@ -1589,28 +1612,31 @@
                 }
             }
 
+            segments.push(...historyAndBacklog.map(event => ({ ...event, real: true })));
             let html = "";
             segments.forEach(seg => {
                 const isFree = !seg.real;
                 const cardAttrs = isFree
                     ? `data-start="${seg.start}" data-end="${seg.end}"`
                     : `data-id="${seg.id || ''}" data-title="${escapeHtml(seg.title || '')}" data-start="${seg.start || ''}" data-end="${seg.end || ''}" data-type="${seg.type || ''}" data-reporter="${escapeHtml(seg.reporter || '')}" data-attendees="${escapeHtml(seg.attendees || '')}" data-notetaker="${escapeHtml(seg.noteTaker || '')}" data-desc="${escapeHtml(seg.description || '')}" data-date="${dateStr || ''}"`;
-                const cardClass = `schedule-meta-card node-${seg.type} ${isFree ? 'is-free' : 'is-real'}`;
+                const cardClass = `schedule-meta-card node-${seg.type} ${isFree ? 'is-free' : 'is-real'} ${seg.status === 'completed' ? 'sla-completed' : ''} ${seg.unplanned ? 'sla-unplanned' : ''}`;
+                const displayTitle = seg.slaReminder ? `${SlaReminderEngine.stageLabel(seg.slaReminder.stage, currentLang)} · ${seg.slaReminder.ticket.category} ${seg.slaReminder.ticket.number}` : seg.title;
                 html += `
                     <div class="axis-node-row">
-                        <div class="axis-time-label">${seg.start}</div>
+                        <div class="axis-time-label">${seg.start || (currentLang === 'zh' ? '待排' : 'Unscheduled')}</div>
                         <div class="axis-anchor-dot"></div>
                         <div class="${cardClass}" ${cardAttrs}>
                             <div class="card-row-head">
-                                <div class="card-main-title">${escapeHtml(seg.title || '')}</div>
-                                <div class="card-time-span">${seg.start} - ${seg.end}</div>
+                                <div class="card-main-title">${escapeHtml(displayTitle || '')}</div>
+                                <div class="card-time-span">${seg.start && seg.end ? `${seg.start} - ${seg.end}` : (currentLang === 'zh' ? '待安排时间' : 'Time not assigned')}</div>
                             </div>
-                            ${seg.reporter || seg.attendees ? `
+                            ${!seg.slaReminder && (seg.reporter || seg.attendees || seg.description) ? `
                             <div class="card-meta-row">
                                 ${seg.reporter ? `<span class="meta-tag">👤 ${escapeHtml(seg.reporter)}</span>` : ''}
                                 ${seg.attendees ? `<span class="meta-tag">🏢 ${escapeHtml(seg.attendees)}</span>` : ''}
-                                ${seg.description ? `<span class="meta-tag" title="${escapeHtml(seg.description)}">📋 详情</span>` : ''}
+                                ${seg.description ? `<button type="button" class="meta-tag detail-trigger" aria-label="${currentLang === 'zh' ? '查看日程详情' : 'View event details'}">📋 ${currentLang === 'zh' ? '详情' : 'Details'}</button>` : ''}
                             </div>` : ''}
+                            ${slaReminderCard(seg, dateStr)}
                             ${isFree ? `<div class="free-add-hint">双击或右键添加日程</div>` : ''}
                         </div>
                     </div>
@@ -1620,14 +1646,19 @@
 
             // 已存在日程双击查看详情
             timelineBox.querySelectorAll('.is-real').forEach(card => {
-                card.draggable = true;
+                card.draggable = !card.dataset.id.startsWith('sla:');
                 card.tabIndex = 0;
                 card.setAttribute('role', 'button');
                 card.setAttribute('aria-label', `${card.dataset.title || ''} ${card.dataset.start || ''}-${card.dataset.end || ''}`);
-                card.addEventListener('dblclick', () => {
+                card.querySelector('.detail-trigger')?.addEventListener('click', e => {
+                    e.stopPropagation();
                     openEditModalFromCard(card);
                 });
-                card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openEditModalFromCard(card); } });
+                card.addEventListener('dblclick', e => {
+                    if (e.target.closest('button')) return;
+                    openEditModalFromCard(card);
+                });
+                card.addEventListener('keydown', e => { if (e.target.closest('button')) return; if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openEditModalFromCard(card); } });
                 card.addEventListener('dragstart', e => {
                     card.classList.add('dragging');
                     e.dataTransfer.setData('application/json', JSON.stringify({ id: card.dataset.id, fromDate: dateStr }));
@@ -1675,7 +1706,8 @@
             document.getElementById("entry-attendees").value = attendees || '';
             document.getElementById("entry-notetaker").value = noteTaker || '';
             document.getElementById("entry-desc").value = description || '';
-            document.getElementById("btn-delete").innerText = d.btnDel;
+            const source = (STORAGE_CORE[selectedDateStr] || []).find(event => event.id === id);
+            document.getElementById("btn-delete").innerText = source?.slaReminder ? (currentLang === 'zh' ? '标记本次已提醒' : 'Mark this reminder sent') : d.btnDel;
             document.getElementById("btn-delete").style.display = "block";
             overlay.style.display = "flex";
             requestAnimationFrame(() => overlay.classList.add('show'));
@@ -1721,7 +1753,10 @@
 
             if(id) {
                 const idx = STORAGE_CORE[selectedDateStr].findIndex(e => e.id === id);
-                if(idx !== -1) STORAGE_CORE[selectedDateStr][idx] = { id, start, end, title, type, reporter, attendees, noteTaker, description };
+                if(idx !== -1) {
+                    const previous = STORAGE_CORE[selectedDateStr][idx];
+                    STORAGE_CORE[selectedDateStr][idx] = { ...previous, id, start, end, title, type, reporter, attendees, noteTaker, description, ...(previous.slaReminder ? { timeLocked: true, unplanned: false } : {}) };
+                }
             } else {
                 STORAGE_CORE[selectedDateStr].push({ id: Date.now().toString(), start, end, title, type, reporter, attendees, noteTaker, description });
             }
@@ -1732,7 +1767,9 @@
         function executeDelete() {
             const id = document.getElementById("entry-id").value;
             if(id && STORAGE_CORE[selectedDateStr]) {
-                STORAGE_CORE[selectedDateStr] = STORAGE_CORE[selectedDateStr].filter(e => e.id !== id);
+                const automatic = STORAGE_CORE[selectedDateStr].find(event => event.id === id && event.slaReminder);
+                if (automatic) { automatic.status = 'reminded'; automatic.remindedAt = new Date().toISOString(); }
+                else STORAGE_CORE[selectedDateStr] = STORAGE_CORE[selectedDateStr].filter(e => e.id !== id);
                 persist();
             }
             closeModal(); renderCalendarPart(); renderTimelineBlock(selectedDateStr);
@@ -1773,7 +1810,7 @@
                     <div class="ctx-item" onclick="openEditModalFromCard(contextCardTarget)">${d.ctxEdit}</div>
                     <div class="ctx-item" onclick="duplicateContextEvent()">📋 ${currentLang === 'zh' ? '复制此事务' : 'Duplicate event'}</div>
                     <div class="ctx-divider"></div>
-                    <div class="ctx-item" style="color:#ef4444;" onclick="triggerDirectDelete('${id}')">${d.ctxDel}</div>
+                    <div class="ctx-item" style="color:#ef4444;" onclick="triggerDirectDelete('${id}')">${cardTarget.dataset.id.startsWith('sla:') ? (currentLang === 'zh' ? '✓ 标记本次已提醒' : '✓ Mark this reminder sent') : d.ctxDel}</div>
                 `;
             } else if (freeCardTarget) {
                 const start = freeCardTarget.getAttribute('data-start');
@@ -1821,6 +1858,8 @@
             const source = (STORAGE_CORE[selectedDateStr] || []).find(event => event.id === contextCardTarget.dataset.id);
             if (!source) return;
             (STORAGE_CORE[selectedDateStr] ||= []).push({ ...source, id: `${Date.now()}-copy`, title: `${source.title} (${currentLang === 'zh' ? '副本' : 'Copy'})` });
+            const copy = STORAGE_CORE[selectedDateStr].at(-1);
+            delete copy.slaReminder; delete copy.status; delete copy.timeLocked; delete copy.unplanned;
             persist('复制日程'); hideContextMenu(); renderCalendarPart(); renderTimelineBlock(selectedDateStr); refreshConflictSummary();
         }
 
@@ -1836,7 +1875,9 @@
 
         function triggerDirectDelete(id) {
             if(STORAGE_CORE[selectedDateStr]) {
-                STORAGE_CORE[selectedDateStr] = STORAGE_CORE[selectedDateStr].filter(e => e.id !== id);
+                const automatic = STORAGE_CORE[selectedDateStr].find(event => event.id === id && event.slaReminder);
+                if (automatic) { automatic.status = 'reminded'; automatic.remindedAt = new Date().toISOString(); }
+                else STORAGE_CORE[selectedDateStr] = STORAGE_CORE[selectedDateStr].filter(e => e.id !== id);
                 persist();
             }
             renderCalendarPart(); 
@@ -1878,8 +1919,8 @@
 
         function collectScheduleConflicts(extraEvents = []) {
             const byDate = {};
-            Object.entries(STORAGE_CORE).forEach(([dateStr, events]) => {
-                byDate[dateStr] = (events || []).map(event => ({ dateStr, ...event }));
+            scheduleEntries().forEach(([dateStr, events]) => {
+                byDate[dateStr] = events.filter(event => event.status !== 'completed' && event.start && event.end).map(event => ({ dateStr, ...event }));
             });
             extraEvents.forEach(event => {
                 if (!byDate[event.dateStr]) byDate[event.dateStr] = [];
@@ -1951,7 +1992,7 @@
                 }
 
                 const existingKeys = new Set();
-                Object.entries(STORAGE_CORE).forEach(([dateStr, events]) => events.forEach(event => existingKeys.add(eventIdentity(dateStr, event))));
+                scheduleEntries().forEach(([dateStr, events]) => events.forEach(event => existingKeys.add(eventIdentity(dateStr, event))));
                 const addedEvents = [];
                 const duplicates = [];
                 let skipped = 0;
@@ -2253,7 +2294,7 @@
 
             // 收集所有日期的日程，按日期排序
             const allEvents = [];
-            for (const [dateStr, events] of Object.entries(STORAGE_CORE)) {
+            for (const [dateStr, events] of scheduleEntries()) {
                 events.filter(ev => eventMatchesFilters(ev, dateStr)).forEach(ev => allEvents.push({ dateStr, ...ev }));
             }
 
@@ -2368,7 +2409,7 @@
         // 导出为 CSV 下载
         function exportImportedData() {
             const rows = [['日期', '开始时间', '结束时间', '会议主题', '性质', '汇报人', '参会人', '纪要人', '议题背景/决策要点']];
-            for (const [dateStr, events] of Object.entries(STORAGE_CORE)) {
+            for (const [dateStr, events] of scheduleEntries()) {
                 events.forEach(ev => {
                     rows.push([
                         dateStr, ev.start || '', ev.end || '',
@@ -2473,7 +2514,7 @@
         function icsTime(dateStr, time) { return `${dateStr.replace(/-/g,'')}T${String(time || '00:00').replace(':','')}00`; }
         function exportICS() {
             const lines = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Tools Platform//Executive Horizon//CN','CALSCALE:GREGORIAN'];
-            Object.entries(STORAGE_CORE).forEach(([dateStr, events]) => events.forEach(event => lines.push(
+            scheduleEntries().forEach(([dateStr, events]) => events.forEach(event => lines.push(
                 'BEGIN:VEVENT', `UID:${icsEscape(event.id)}@tools-platform`, `DTSTART:${icsTime(dateStr,event.start)}`, `DTEND:${icsTime(dateStr,event.end)}`,
                 `SUMMARY:${icsEscape(event.title)}`, `DESCRIPTION:${icsEscape(event.description)}`, `ATTENDEE;CN=${icsEscape(event.attendees)}:mailto:unknown@local`, 'END:VEVENT'
             )));
@@ -2492,7 +2533,7 @@
                 if (!dateStr || !title) return;
                 added.push({dateStr,id:get('UID') || `${Date.now()}-${index}`,start:`${start.slice(9,11)}:${start.slice(11,13)}`,end:`${end.slice(9,11)}:${end.slice(11,13)}`,title,type:'work',reporter:'',attendees:'',noteTaker:'',description:get('DESCRIPTION')});
             });
-            const existing = new Set(); Object.entries(STORAGE_CORE).forEach(([d,es]) => es.forEach(ev => existing.add(eventIdentity(d,ev))));
+            const existing = new Set(); scheduleEntries().forEach(([d,es]) => es.forEach(ev => existing.add(eventIdentity(d,ev))));
             const unique=added.filter(ev => !existing.has(eventIdentity(ev.dateStr,ev)));
             if (!await showImportPreview({added:unique,duplicates:added.filter(ev => !unique.includes(ev)),invalid:0,conflicts:collectScheduleConflicts(unique)})) return;
             unique.forEach(ev => { (STORAGE_CORE[ev.dateStr] ||= []).push(ev); }); persist('ICS 导入前自动备份'); renderCalendarPart(); renderTimelineBlock(selectedDateStr); refreshConflictSummary();
@@ -2552,7 +2593,8 @@
             renderTimelineBlock(selectedDateStr);
             refreshConflictSummary();
         }
-        initializeScheduleApp();
+        timelineBox.addEventListener('click', handleSlaReminderAction);
+        initializeScheduleApp().then(startSlaReminderPolling);
 
         document.addEventListener('keydown', e => {
             if (e.key !== 'Escape') return;

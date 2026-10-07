@@ -15,7 +15,7 @@
 
 侧视的站立、迈步、思考图根据角色在当前显示器工作区的位置朝向屏幕中央；正视的挥手与六帧图不翻转。中央保留 24–64 DIP 的缓冲区，避免中央附近拖动时反复换向。只翻转角色，气泡和菜单文字保持原方向；透明像素点击检测同步处理镜像。支持负坐标的副屏和显示器缩放。
 
-待机优先使用用户提供的正视首帧。`thoth-presence.js` 使用运行时 SVG 滤镜在瞳孔附近做约 1 像素以内的柔和位移，不重绘原图或改动素材文件。附近移动的鼠标可引起短暂注视，约 1.1 秒后逐渐回正；偶尔有轻微随机眼神变化。无摄像头、人脸识别或视线检测。
+待机优先使用用户提供的新正视肖像。新增左右转头、抬头与低头；连续转头帧短暂停留后倒序回正，统一脚底锚点与显示大小。原素材保留，按实际间隙在运行时裁切。`thoth-presence.js` 使用运行时 SVG 滤镜在瞳孔附近做约 1 像素以内的柔和位移，不重绘原图或改动素材文件。附近移动的鼠标可引起短暂注视，约 1.1 秒后逐渐回正；偶尔有轻微随机眼神变化。无摄像头、人脸识别或视线检测。
 
 眨眼半闭/闭眼帧、拖动、按压、摸头、打字和下落期间暂停眼神位移；页面隐藏或系统启用“减少动态效果”时回到静止。设置里的“自然眼神与轻微动效”控制眼神位移，关闭后仍保留朝向中央的功能。桌面坐标与鼠标坐标只在本机 IPC 中用于绘制，不保存或发送给 AI。
 
@@ -39,7 +39,7 @@ IPC 仅允许桌宠/聊天窗口读取目录，聊天窗口读取全文；故事
 
 ```bash
 (cd backend && npm run doctor)
-node --test tests/desktop-pet-presence.test.js tests/desktop-pet-stories.test.js tests/desktop-pet-language.test.js tests/pet-keyboard-hook.test.js
+node --test tests/desktop-pet-artwork.test.js tests/desktop-pet-presence.test.js tests/desktop-pet-stories.test.js tests/desktop-pet-language.test.js tests/pet-keyboard-hook.test.js
 node --test tests/tenant-isolation.test.js tests/tenant-backup-boundaries.test.js
 ```
 

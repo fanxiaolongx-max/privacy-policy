@@ -2355,7 +2355,7 @@
     window.closePet = closePetEntirely;
     window.GeminiPetInstance = {
       showStory: function (id) { return life && life.story(id, true); },
-      triggerRandomMotion: function () { if (life) life.motion(true); },
+      triggerRandomMotion: function (kind) { if (life) life.motion(true, kind); },
       close: closePetEntirely,
       showTurnCost: showCostBubble,
       showBubble: showBubble,

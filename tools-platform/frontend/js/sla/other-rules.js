@@ -195,11 +195,11 @@
         const days = Math.ceil((deadline - (options.now || new Date())) / DAY_MS);
         const base = `剩余 ${days} 天`;
         const level = rule.alertLevels.filter(item => item.enabled).sort((a, b) => a.maxDays - b.maxDays).find(item => days <= item.maxDays);
-        if (!level) return { matched: true, slaDays: days, rowClass: '', alertSeverity: '', text: mode === 'vulnerability' ? `${esc(status)} / ${base}` : base, cleanText: mode === 'vulnerability' ? `${status} / ${base}` : base };
+        if (!level) return { matched: true, deadline, slaDays: days, rowClass: '', alertSeverity: '', text: mode === 'vulnerability' ? `${esc(status)} / ${base}` : base, cleanText: mode === 'vulnerability' ? `${status} / ${base}` : base };
         const label = `${rule.badgePrefix}${level.badgeSuffix}`;
         const style = { label, severity: level.severity, color: level.color };
         const suffix = mode === 'vulnerability' ? `${esc(status)} / ${base}` : base;
-        return { matched: true, slaDays: days, rowClass: rowClass(level.severity), alertSeverity: level.severity === 'none' ? '' : level.severity, text: `${badge(style)} ${suffix}`, cleanText: `${label} (${mode === 'vulnerability' ? `${status}, ` : ''}${base})` };
+        return { matched: true, deadline, slaDays: days, rowClass: rowClass(level.severity), alertSeverity: level.severity === 'none' ? '' : level.severity, text: `${badge(style)} ${suffix}`, cleanText: `${label} (${mode === 'vulnerability' ? `${status}, ` : ''}${base})` };
     }
 
     function containsValue(actual, values) { const text = String(actual || '').toLowerCase(); return values.some(value => text.includes(String(value).toLowerCase())); }
@@ -251,7 +251,7 @@
         const remainingDays = Math.ceil(remaining / DAY_MS);
         const consume = total > 0 ? ((now - open) / total) * 100 : 100;
         const body = `剩余 ${formatDuration(remainingHours)} / 消耗 ${consume.toFixed(0)}%`;
-        const extra = { srMeta: { status, severity: isCritical ? 'critical' : 'normal', disposition: 'active', consumeRate: Number.isFinite(consume) ? +consume.toFixed(2) : null, remainingHours, remainingDays } };
+        const extra = { deadline, srMeta: { status, severity: isCritical ? 'critical' : 'normal', disposition: 'active', consumeRate: Number.isFinite(consume) ? +consume.toFixed(2) : null, remainingHours, remainingDays } };
         if (remaining < 0 || upstreamOverdue) return result(config.alerts.overdue, `已超 ${formatDuration(Math.abs(remainingHours))}`, formatDuration(Math.abs(remainingHours)), remainingDays, extra);
         if (isCritical && (consume > config.thresholds.criticalDangerConsume || remainingHours < config.thresholds.criticalDangerHours)) return result(config.alerts.criticalDanger, body, body, remainingDays, extra);
         if (isCritical && consume > config.thresholds.criticalWarningConsume && remainingHours < config.thresholds.criticalWarningHours) return result(config.alerts.criticalWarning, body, body, remainingDays, extra);
