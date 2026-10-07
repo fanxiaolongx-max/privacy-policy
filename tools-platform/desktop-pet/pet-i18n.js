@@ -155,7 +155,12 @@
     "托特 · 青绿桌面伙伴": "Thoth · Turquoise companion",
     "青绿陶瓷鸟人托特": "Thoth, the turquoise ceramic bird",
     "✦ 托特 · 青绿桌面伙伴": "✦ Thoth · Turquoise companion",
-    "专注陪伴 (全局键盘联动)": "Focused companion (global typing)"
+    "专注陪伴 (全局键盘联动)": "Focused companion (global typing)",
+    "✦ 30 连击！心流渐入佳境，专注力拉满 ✦": "✦ 30 combo! Flow state unlocked, peak focus ✦",
+    "🔥 50 连击！键盘敲出残影了，这就是大神的手速吗？！": "🔥 50 combo! Blazing hands, pure speed!",
+    "⚡ 100 连击突破！反重力编译器超频全开 ⚡": "⚡ 100 combo! Antigravity compiler running at full throttle ⚡",
+    "𓁹 500 连击封神！托特的智慧之羽已被你的手速点燃 🪶✨": "𓁹 500 combo godspeed! Thoth's feather glows with your pace 🪶✨",
+    "✦ 1000 连击破壁！唯有绝对专注与智慧不可阻挡 ✦": "✦ 1000 combo transcendence! Pure wisdom and unstoppable focus ✦"
 };
     const originals = new Map(Object.entries(translations).map(([zh, en]) => [en.trim(), zh]));
     let language = 'zh-CN';

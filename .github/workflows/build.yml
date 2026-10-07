@@ -206,18 +206,37 @@ jobs:
         working-directory: tools-platform
         shell: bash
         run: |
-          for i in 1 2 3; do
-            echo "Starting build attempt $i of 3..."
+          check_timestamp_service() {
+            echo "Checking Apple Timestamp server connectivity..."
+            for attempt in 1 2 3 4 5; do
+              if curl -sI -m 8 http://timestamp.apple.com/ts01 >/dev/null 2>&1; then
+                echo "Apple Timestamp service is reachable."
+                return 0
+              fi
+              echo "Timestamp service check $attempt/5 failed, waiting 5s..."
+              sleep 5
+            done
+            echo "Warning: Apple Timestamp service check timed out, proceeding anyway..."
+            return 0
+          }
+
+          for i in 1 2 3 4; do
+            echo "=========================================="
+            echo "Starting build attempt $i of 4..."
+            echo "=========================================="
+            check_timestamp_service
             if npm run build:mac; then
               echo "Build succeeded on attempt $i."
               break
             fi
-            if [ "$i" -eq 3 ]; then
-              echo "Build failed after 3 attempts."
+            if [ "$i" -eq 4 ]; then
+              echo "Build failed after 4 attempts."
               exit 1
             fi
-            echo "Build attempt $i failed. Retrying in 15s..."
-            sleep 15
+            delay=$((i * 30))
+            echo "Build attempt $i failed. Cleaning dist directory and retrying in ${delay}s..."
+            rm -rf dist/mac dist/*.dmg dist/*.zip dist/latest-mac.yml dist/*.blockmap
+            sleep "$delay"
           done
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -45,11 +45,20 @@
     '@keyframes gpet-breathe{0%,100%{transform:scale(1,1)} 50%{transform:scale(1.018,0.982)}}',
     '.gpet-breathe{animation:gpet-breathe 3.6s ease-in-out infinite !important}',
     '@keyframes gpet-typing-wobble{0%,100%{transform:translateY(0) scale(1,1)} 50%{transform:translateY(2.2px) scale(1.018,0.982)}}',
-    '.gpet-typing-anim{animation:gpet-typing-wobble .28s cubic-bezier(0.35,0,0.25,1) infinite !important}',
-    '.gpet-combo-badge{position:absolute;right:8%;top:32%;background:linear-gradient(135deg,#147d7a,#123743);color:#fff;font-weight:900;font-size:12px;padding:3px 8px;border-radius:12px;box-shadow:0 4px 12px rgba(20,125,122,0.45);pointer-events:none;z-index:90;transform:scale(0.8) translateY(0);opacity:0;transition:transform .12s cubic-bezier(.34,1.56,.64,1),opacity .18s ease;font-style:italic;text-shadow:0 1px 2px rgba(0,0,0,0.3)}',
+    '.gpet-typing-anim{animation:gpet-typing-wobble var(--gpet-typing-dur, .28s) cubic-bezier(0.35,0,0.25,1) infinite !important}',
+    '.gpet-combo-badge{position:absolute;right:6%;top:30%;background:linear-gradient(135deg,#147d7a,#0d323b);color:#fff;font-weight:900;font-size:12px;padding:3px 9px;border-radius:12px;box-shadow:0 4px 12px rgba(20,125,122,0.45);pointer-events:none;z-index:90;transform:scale(0.8) translateY(0);opacity:0;transition:transform .12s cubic-bezier(.34,1.56,.64,1),opacity .18s ease,background .25s ease,box-shadow .25s ease;font-style:italic;text-shadow:0 1px 2px rgba(0,0,0,0.4);border:1px solid rgba(131,216,206,0.35);letter-spacing:.02em;white-space:nowrap}',
     '.gpet-combo-badge.gpet-combo-active{opacity:1;transform:scale(1.08) translateY(-4px)}',
-    '.gpet-combo-badge.gpet-combo-fever{background:linear-gradient(135deg,#f59e0b,#ef4444);box-shadow:0 6px 16px rgba(239,68,68,0.55);animation:gpet-combo-shake .14s infinite alternate}',
-    '@keyframes gpet-combo-shake{0%{transform:scale(1.15) rotate(-3deg)} 100%{transform:scale(1.22) rotate(3deg)}}',
+    '.gpet-combo-badge.gpet-combo-pop{transform:scale(1.24) translateY(-6px) !important}',
+    '.gpet-combo-badge.gpet-combo-t1{background:linear-gradient(135deg,#147d7a,#0d323b);border-color:rgba(131,216,206,0.35);box-shadow:0 4px 12px rgba(20,125,122,0.45)}',
+    '.gpet-combo-badge.gpet-combo-t2{background:linear-gradient(135deg,#0d9488,#bda56e);border-color:rgba(254,240,138,0.7);box-shadow:0 4px 16px rgba(189,165,110,0.6),0 0 10px rgba(13,148,136,0.5);text-shadow:0 0 8px rgba(254,240,138,0.6)}',
+    '.gpet-combo-badge.gpet-combo-t3{background:linear-gradient(135deg,#f59e0b,#ef4444);border-color:rgba(254,202,202,0.8);box-shadow:0 4px 18px rgba(239,68,68,0.65),0 0 20px rgba(245,158,11,0.55);animation:gpet-combo-shake .14s infinite alternate;text-shadow:0 0 10px rgba(254,202,202,0.7)}',
+    '.gpet-combo-badge.gpet-combo-t4{background:linear-gradient(135deg,#8b5cf6,#ec4899 50%,#f59e0b 100%);border-color:rgba(244,114,182,0.85);box-shadow:0 6px 24px rgba(139,92,246,0.8),0 0 28px rgba(236,72,153,0.65);animation:gpet-combo-cosmic .18s infinite alternate;text-shadow:0 0 12px rgba(244,114,182,0.85)}',
+    '.gpet-combo-badge.gpet-combo-t5{background:linear-gradient(135deg,#fbbf24,#f43f5e 50%,#a855f7 100%);border-color:#ffffff;box-shadow:0 6px 30px rgba(251,191,36,0.9),0 0 40px rgba(244,63,94,0.75);animation:gpet-combo-godspeed .12s infinite alternate;font-size:12.5px;letter-spacing:.04em;text-shadow:0 0 14px rgba(255,255,255,0.9)}',
+    '.gpet-combo-badge.gpet-combo-t6{background:linear-gradient(90deg,#ffd700,#ff6b6b,#48dbfb,#1dd1a1,#ffd700);background-size:300% 100%;border-color:#ffffff;box-shadow:0 0 35px rgba(255,215,0,0.95),0 0 60px rgba(72,219,251,0.8);animation:gpet-aurora-shift 2.2s linear infinite,gpet-combo-shake .1s infinite alternate;font-size:13px;letter-spacing:.05em;text-shadow:0 0 16px rgba(255,255,255,1)}',
+    '@keyframes gpet-combo-shake{0%{transform:scale(1.14) translateY(-4px) rotate(-3deg)} 100%{transform:scale(1.22) translateY(-4px) rotate(3deg)}}',
+    '@keyframes gpet-combo-cosmic{0%{transform:scale(1.16) translateY(-4px) rotate(-2deg)} 100%{transform:scale(1.24) translateY(-5px) rotate(2deg)}}',
+    '@keyframes gpet-combo-godspeed{0%{transform:scale(1.20) translateY(-5px) rotate(-3.5deg)} 100%{transform:scale(1.28) translateY(-5px) rotate(3.5deg)}}',
+    '@keyframes gpet-aurora-shift{0%{background-position:0% 50%} 100%{background-position:300% 50%}}',
     '.gpet-img{position:absolute;right:0;bottom:0;width:62%;height:62%;display:block;pointer-events:none;-webkit-user-drag:none;user-select:none;object-fit:contain;filter:drop-shadow(0 6px 16px rgba(15,23,42,0.18));transform-origin:50% 98%;transition:transform .15s cubic-bezier(0.2,0.8,0.4,1)}',
     '.gpet-img.gpet-jelly, .gpet-body.gpet-jelly{animation:gpet-jelly .55s cubic-bezier(0.25,1,0.5,1) forwards !important;transition:none !important}',
     '.gpet-img.gpet-squished, .gpet-body.gpet-squished{transform:scaleX(1.22) scaleY(0.78) !important;transition:transform .08s cubic-bezier(0.2,0,0,1) !important}',
@@ -75,7 +84,7 @@
     '.gpet-label{font-size:calc(var(--gpet-u) * 44);font-weight:700;letter-spacing:.04em;color:#83d8ce;text-shadow:0 0 10px rgba(131,216,206,0.45)}',
     '.gpet-amount{font-size:calc(var(--gpet-u) * 88);font-weight:800;line-height:1.1;color:#ffffff;letter-spacing:-0.01em;text-shadow:0 0 14px rgba(255,255,255,0.35)}',
     '.gpet-period{font-size:calc(var(--gpet-u) * 76);font-weight:800;line-height:1.05}',
-    '.gpet-wrap{white-space:normal;max-width:calc(var(--gpet-u) * 450);line-height:1.32;font-size:calc(var(--gpet-u) * 42);margin:0 auto;word-break:break-word;text-shadow:0 0 8px rgba(255,255,255,0.25)}',
+    '.gpet-wrap{white-space:normal;max-width:calc(var(--gpet-u) * 450);line-height:1.32;font-size:calc(var(--gpet-u) * 42);margin:0 auto;word-break:break-word;text-shadow:0 1px 4px rgba(0,0,0,0.85),0 0 10px rgba(131,216,206,0.35)}',
     '.gpet-hint{font-size:calc(var(--gpet-u) * 38);color:#cbd5e1;letter-spacing:.02em;margin-top:calc(var(--gpet-u) * 10);min-height:calc(var(--gpet-u) * 46);line-height:1.2;font-weight:500;text-shadow:0 0 8px rgba(203,213,225,0.3)}',
     '.gpet-menu{position:fixed;min-width:210px;max-width:calc(100vw - 16px);max-height:calc(100vh - 16px);overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;background:rgba(255,255,255,0.96);backdrop-filter:blur(16px);border:1px solid rgba(20,125,122,0.25);border-radius:12px;padding:10px 12px;opacity:0;transform:scale(.92) translateY(-6px);transition:opacity .18s ease,transform .2s cubic-bezier(.34,1.56,.64,1);pointer-events:none;z-index:100000;box-shadow:0 12px 32px rgba(15,23,42,0.22);color-scheme:light;box-sizing:border-box}',
     '.gpet-menu.gpet-menu-open{opacity:1;transform:scale(1) translateY(0);pointer-events:auto}',
@@ -1939,23 +1948,122 @@
       petT('继续写吧，遇到报错我们一起解决。')
     ];
 
+    function getComboTier(combo) {
+      if (combo >= 1000) return 6;
+      if (combo >= 500) return 5;
+      if (combo >= 100) return 4;
+      if (combo >= 50) return 3;
+      if (combo >= 30) return 2;
+      return 1;
+    }
+
+    function getComboColor(tier) {
+      if (tier === 2) return '#bda56e';
+      if (tier === 3) return '#fef08a';
+      if (tier === 4) return '#f472b6';
+      if (tier === 5) return '#fde047';
+      if (tier === 6) return '#ffffff';
+      return '#83d8ce';
+    }
+
     function spawnTypingSpark() {
       try {
         var spark = document.createElement('div');
         spark.className = 'gpet-heart';
-        var isFire = typingCombo >= 15;
-        spark.textContent = isFire ? (Math.random() > 0.5 ? '🔥' : '⚡') : (Math.random() > 0.5 ? '✦' : '💻');
+        var tier = getComboTier(typingCombo);
+        var symbol = '✦';
+        var size = '17px';
+        var glow = '#83d8ce';
+
+        if (tier === 1) {
+          symbol = pickOne(['✦', '💻', '✧']);
+          size = '17px';
+          glow = '#83d8ce';
+        } else if (tier === 2) {
+          symbol = pickOne(['⚡', '✨', '◇', '💻']);
+          size = '19px';
+          glow = '#bda56e';
+        } else if (tier === 3) {
+          symbol = pickOne(['🔥', '⚡', '✨', '💡']);
+          size = '22px';
+          glow = '#f59e0b';
+        } else if (tier === 4) {
+          symbol = pickOne(['𓅃', '🪶', '🪐', '⚡', '🌟', '✨']);
+          size = '24px';
+          glow = '#ec4899';
+        } else if (tier === 5) {
+          symbol = pickOne(['𓁹', '🪶', '💫', '🔥', '⚡', '👑']);
+          size = '26px';
+          glow = '#fbbf24';
+        } else {
+          symbol = pickOne(['𓅃', '🪶', '👑', '✨', '💫', '💎', '🌟']);
+          size = '28px';
+          glow = '#ffffff';
+        }
+
+        spark.textContent = symbol;
+        spark.style.fontSize = size;
+        spark.style.filter = 'drop-shadow(0 0 10px ' + glow + ')';
         var r = img.getBoundingClientRect();
-        var ox = r.left + r.width * (0.55 + (Math.random() - 0.5) * 0.3);
-        var oy = r.top + r.height * (0.68 + (Math.random() - 0.5) * 0.15);
+        var ox = r.left + r.width * (0.55 + (Math.random() - 0.5) * 0.35);
+        var oy = r.top + r.height * (0.65 + (Math.random() - 0.5) * 0.2);
         spark.style.left = Math.round(ox) + 'px';
         spark.style.top = Math.round(oy) + 'px';
-        spark.style.fontSize = isFire ? '22px' : '17px';
         document.body.appendChild(spark);
         setTimeout(function () {
           if (spark && spark.parentNode) spark.parentNode.removeChild(spark);
         }, 1100);
+
+        if (tier >= 5 && Math.random() > 0.45) {
+          var spark2 = document.createElement('div');
+          spark2.className = 'gpet-heart';
+          spark2.textContent = pickOne(['✨', '✦', '💫']);
+          spark2.style.fontSize = '18px';
+          spark2.style.left = Math.round(ox + (Math.random() - 0.5) * 40) + 'px';
+          spark2.style.top = Math.round(oy + (Math.random() - 0.5) * 30) + 'px';
+          spark2.style.filter = 'drop-shadow(0 0 8px #ffd700)';
+          document.body.appendChild(spark2);
+          setTimeout(function () {
+            if (spark2 && spark2.parentNode) spark2.parentNode.removeChild(spark2);
+          }, 950);
+        }
       } catch (_) {}
+    }
+
+    function showComboMilestoneBubble(combo) {
+      if (!bubbleOn || costBubbleActive || menuOpen) return;
+      if (bubbleTimer) { clearTimeout(bubbleTimer); bubbleTimer = null; }
+      bubbleRandomActive = true;
+      pressCount = 2;
+
+      var text = '';
+      var color = '#83d8ce';
+      if (combo === 30) {
+        text = petT('✦ 30 连击！心流渐入佳境，专注力拉满 ✦');
+        color = '#bda56e';
+      } else if (combo === 50) {
+        text = petT('🔥 50 连击！键盘敲出残影了，这就是大神的手速吗？！');
+        color = '#fef08a';
+      } else if (combo === 100) {
+        text = petT('⚡ 100 连击突破！反重力编译器超频全开 ⚡');
+        color = '#f472b6';
+      } else if (combo === 500) {
+        text = petT('𓁹 500 连击封神！托特的智慧之羽已被你的手速点燃 🪶✨');
+        color = '#fde047';
+      } else if (combo === 1000) {
+        text = petT('✦ 1000 连击破壁！唯有绝对专注与智慧不可阻挡 ✦');
+        color = '#ffffff';
+      }
+
+      var lines = singleCenter('A', text, color, true);
+      if (bubbleShown) {
+        swapBubbleContent(function () { applyBubbleLines(lines); });
+      } else {
+        applyBubbleLines(lines);
+        bubbleShown = true;
+        bubbleBox.classList.add('gpet-bubble-open');
+      }
+      bubbleTimer = setTimeout(hideBubble, 4500);
     }
 
     function showTypingBubble() {
@@ -1968,7 +2076,9 @@
       pressCount = 2;
 
       var text = pickOne(TYPING_QUOTES);
-      var lines = singleCenter('A', text, '#123743', true);
+      var tier = getComboTier(typingCombo);
+      var color = getComboColor(tier);
+      var lines = singleCenter('A', text, color, true);
 
       if (bubbleShown) {
         swapBubbleContent(function () {
@@ -1987,9 +2097,28 @@
       if (!typingOn || (drag && drag.active) || inHappyReaction || gravityAnimId) return;
 
       typingCombo++;
-      comboBadge.textContent = 'Combo x' + typingCombo;
-      comboBadge.classList.add('gpet-combo-active');
-      comboBadge.classList.toggle('gpet-combo-fever', typingCombo >= 15);
+      var tier = getComboTier(typingCombo);
+
+      var badgeText = 'Combo x' + typingCombo;
+      if (tier === 2) badgeText = 'Flow x' + typingCombo + ' ✨';
+      else if (tier === 3) badgeText = 'Fever x' + typingCombo + ' 🔥';
+      else if (tier === 4) badgeText = '⚡ Cosmic x' + typingCombo + ' ⚡';
+      else if (tier === 5) badgeText = '𓁹 GODSPEED x' + typingCombo + ' 𓁹';
+      else if (tier === 6) badgeText = '✦ ' + typingCombo + ' GODLIKE ✦';
+
+      comboBadge.textContent = badgeText;
+      comboBadge.className = 'gpet-combo-badge gpet-combo-active gpet-combo-t' + tier;
+      comboBadge.classList.add('gpet-combo-pop');
+      setTimeout(function () {
+        comboBadge.classList.remove('gpet-combo-pop');
+      }, 90);
+
+      var wobbleDur = '.28s';
+      if (tier === 2) wobbleDur = '.22s';
+      else if (tier === 3) wobbleDur = '.17s';
+      else if (tier === 4) wobbleDur = '.13s';
+      else if (tier >= 5) wobbleDur = '.10s';
+      img.style.setProperty('--gpet-typing-dur', wobbleDur);
 
       if (!inTypingMode && workStateMode !== 'typing') {
         inTypingMode = true;
@@ -1998,11 +2127,14 @@
         img.classList.add('gpet-typing-anim');
       }
 
-      if (typingCombo % 3 === 0 || typingCombo >= 12) {
+      var sparkFreq = tier >= 4 ? 2 : (tier >= 3 ? 3 : 4);
+      if (typingCombo % sparkFreq === 0 || typingCombo >= 50) {
         spawnTypingSpark();
       }
 
-      if (typingCombo === 5 || typingCombo === 12 || typingCombo === 25 || typingCombo === 50) {
+      if (typingCombo === 30 || typingCombo === 50 || typingCombo === 100 || typingCombo === 500 || typingCombo === 1000) {
+        showComboMilestoneBubble(typingCombo);
+      } else if (typingCombo === 5 || typingCombo === 12) {
         showTypingBubble();
       }
 
@@ -2014,9 +2146,9 @@
       if (!inTypingMode) return;
       inTypingMode = false;
       typingCombo = 0;
-      comboBadge.classList.remove('gpet-combo-active');
-      comboBadge.classList.remove('gpet-combo-fever');
+      comboBadge.className = 'gpet-combo-badge';
       img.classList.remove('gpet-typing-anim');
+      img.style.removeProperty('--gpet-typing-dur');
       syncSprite();
       img.classList.add('gpet-breathe');
     }
@@ -2041,10 +2173,10 @@
         isAntigravityConnected = !!alive;
         if (isAntigravityConnected !== prev) {
           if (isAntigravityConnected) {
-            showCustomSpeechBubble(petT('✦ 反重力已连接，今天的灵感从哪里开始？'), '#147d7a');
+            showCustomSpeechBubble(petT('✦ 反重力已连接，今天的灵感从哪里开始？'), '#83d8ce');
             try { ipcRenderer.send('pet-request-quota'); } catch (_) {}
           } else if (hasShownInitialGreeting) {
-            showCustomSpeechBubble(petT('✦ 反重力已退出，托特静静守候'), '#64748b');
+            showCustomSpeechBubble(petT('✦ 反重力已退出，托特静静守候'), '#cbd5e1');
             setAgentWorking(false);
           }
           hasShownInitialGreeting = true;

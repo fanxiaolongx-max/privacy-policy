@@ -175,3 +175,29 @@ test('AI requests use the selected language and preserve previous messages', asy
     assert.equal(payloads[1].messages[0].content, 'Hi');
     assert.equal(payloads[1].messages[1].content, 'Hello!');
 });
+
+test('desktop pet typing combo tiers and speech bubble text colors maintain high contrast', () => {
+    const petJs = read('desktop-pet/gemini-pet.js');
+    // Verify no dark #123743 text is used in speech bubble text
+    assert.doesNotMatch(petJs, /showTypingBubble[\s\S]*?'#123743'/, 'showTypingBubble must not use dark #123743 text');
+    assert.doesNotMatch(petJs, /showCustomSpeechBubble\([^)]*?'#147d7a'\)/, 'Custom speech bubbles must not use dark #147d7a text');
+    assert.doesNotMatch(petJs, /showCustomSpeechBubble\([^)]*?'#64748b'\)/, 'Custom speech bubbles must not use dark #64748b text');
+
+    // Verify combo tier classes and milestone triggers
+    assert.ok(petJs.includes('gpet-combo-t1'));
+    assert.ok(petJs.includes('gpet-combo-t2'));
+    assert.ok(petJs.includes('gpet-combo-t3'));
+    assert.ok(petJs.includes('gpet-combo-t4'));
+    assert.ok(petJs.includes('gpet-combo-t5'));
+    assert.ok(petJs.includes('gpet-combo-t6'));
+    assert.ok(petJs.includes('showComboMilestoneBubble'));
+
+    // Verify i18n has milestone quotes
+    const i18nJs = read('desktop-pet/pet-i18n.js');
+    assert.ok(i18nJs.includes('✦ 30 连击！心流渐入佳境，专注力拉满 ✦'));
+    assert.ok(i18nJs.includes('🔥 50 连击！键盘敲出残影了，这就是大神的手速吗？！'));
+    assert.ok(i18nJs.includes('⚡ 100 连击突破！反重力编译器超频全开 ⚡'));
+    assert.ok(i18nJs.includes('𓁹 500 连击封神！托特的智慧之羽已被你的手速点燃 🪶✨'));
+    assert.ok(i18nJs.includes('✦ 1000 连击破壁！唯有绝对专注与智慧不可阻挡 ✦'));
+});
+
