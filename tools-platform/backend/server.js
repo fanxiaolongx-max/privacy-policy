@@ -347,6 +347,13 @@ app.get('/api/public/videos', (req, res, next) => {
     mediaRoutes(req, res, next);
 });
 
+// 登录页与公共品牌标识 API：提供中英文主名称、副标题与登录标语，无需鉴权即可访问
+app.get('/api/platform-identity', async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    const repo = require('./models/nav-settings-repository');
+    res.json(await repo.getSettings());
+});
+
 app.use('/api', checkAuth); // Protect all /api/* (except login, which is handled inside checkAuth)
 app.use('/api', tenantMiddleware);
 

@@ -334,4 +334,20 @@ test('sub-title is hidden when matching main title and auto-heals accidental Eng
     assert.equal(subNode.style.display, 'none', 'Duplicate sub-title must be hidden in Chinese mode');
 });
 
+test('public platform-identity and logo status endpoints allow unauthenticated access for login page', async () => {
+    const { checkAuth } = require('../backend/middleware/auth');
+    let logoNextCalled = false;
+    const mockReq = { method: 'GET', path: '/platform-logo/status', headers: {} };
+    const mockRes = {
+        status(code) { this.statusCode = code; return this; },
+        json(data) { this.data = data; return this; }
+    };
+    await checkAuth(mockReq, mockRes, () => { logoNextCalled = true; });
+    assert.equal(logoNextCalled, true, 'GET /platform-logo/status should bypass auth');
+
+    // Also verify login.html fetches /api/platform-identity
+    const loginHtml = fs.readFileSync(path.join(__dirname, '../frontend/pages/login.html'), 'utf8');
+    assert.ok(loginHtml.includes('/api/platform-identity'), 'login.html must fetch unauthenticated /api/platform-identity');
+});
+
 

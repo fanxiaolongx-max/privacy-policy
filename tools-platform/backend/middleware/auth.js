@@ -7,6 +7,7 @@ async function checkAuth(req, res, next) {
     // 登录接口无需鉴权 (req.path is relative to /api, so it's /auth/login)
     if (req.path === '/auth/login') return next();
     if (req.method === 'GET' && /^\/uiv\/uivision-runner\/[a-f0-9]{32}$/.test(req.path)) return next();
+    if (req.method === 'GET' && req.path === '/platform-logo/status') return next();
 
     const authHeader = req.headers.authorization;
     const cookieToken = String(req.headers.cookie || '').split(';').map(item => item.trim()).find(item => item.startsWith('tools_token='))?.slice('tools_token='.length);
