@@ -472,8 +472,8 @@
       50% { opacity: 1; }
     }
   </style>
-  <script src="pet-i18n.js?v=20261007-01"></script>
-  <link rel="stylesheet" href="thoth-theme.css?v=20261007-01">
+  <script src="pet-i18n.js?v=20261007-03"></script>
+  <link rel="stylesheet" href="thoth-theme.css?v=20261007-03">
 </head>
 <body>
   <div class="chat-container">
@@ -502,6 +502,12 @@
         <span>💤</span>
         <span>伴侣待命模式 · 平台工具就绪</span>
       </div>
+    </div>
+
+    <div class="story-bar" data-pet-ui>
+      <span id="storyStatus">古埃及故事 · 随时可听</span>
+      <button id="nextStoryBtn" class="chip-btn">听一个故事</button>
+      <button id="offlineStoryBtn" class="chip-btn" hidden>阅读内置全文</button>
     </div>
 
     <!-- 聊天内容区域 -->
@@ -565,6 +571,67 @@
     let messagesHistory = [];
     let isGenerating = false;
     let abortController = null;
+    let activeStory = null;
+    let pendingStory = null;
+    let storyLoadTicket = 0;
+    let chatEpoch = 0;
+    let lastStoryRequest = 0;
+    let storyDeck = [];
+    let storyDeckLanguage = '';
+    const storyStatus = document.getElementById('storyStatus');
+    const offlineStoryBtn = document.getElementById('offlineStoryBtn');
+    function storyLabel(mode) {
+      const english = window.PetI18n.getLanguage() === 'en-US';
+      storyStatus.textContent = activeStory ? activeStory.title + ' · ' + (mode === 'offline' ? (english ? 'Built-in story' : '内置故事') : mode === 'ai' ? (english ? 'AI storytelling' : 'AI 讲述') : (english ? 'Ready to explore' : '可以继续探讨')) : (english ? 'Stories of ancient Egypt' : '古埃及故事 · 随时可听');
+      offlineStoryBtn.hidden = !activeStory;
+    }
+    function offlineText(story, opening, question) {
+      const english = story.language === 'en-US';
+      if (opening) return '**' + story.title + '**\n\n' + story.body + '\n\n' + story.note;
+      if (/史实|真实|真的|来源|证据|true|fact|source|evidence/i.test(question)) {
+        return story.note + '\n\n' + (english ? 'References: ' : '参考资料：') + story.sources.map(s => s.title + ' (' + s.url + ')').join('；');
+      }
+      return (english ? 'The AI service is unavailable. Let me return to the written tale: ' : 'AI 暂时不可用，我先从保存的故事中为你接着讲：') + '\n\n' + story.body.split('\n\n').slice(1).join('\n\n') + '\n\n' + story.note + '\n\n' + (english ? 'When AI is available, we can discuss your question in more detail.' : 'AI 恢复后，我们可以围绕你的问题继续深入探讨。');
+    }
+    async function openStory(request) {
+      if (!request || !request.id || !ipcRenderer) return;
+      if (request.requestId && request.requestId <= lastStoryRequest) return;
+      if (isGenerating) {
+        pendingStory = request; chatEpoch++; if (abortController) abortController.abort(); return;
+      }
+      const ticket = ++storyLoadTicket;
+      try {
+        const story = await ipcRenderer.invoke('pet-get-story', request.id, window.PetI18n.getLanguage());
+        if (ticket !== storyLoadTicket || !story) return;
+        if (isGenerating) { pendingStory = request; return; }
+        if (request.requestId) lastStoryRequest = request.requestId;
+        activeStory = story; storyLabel();
+        const prompt = story.language === 'en-US' ? 'Thoth, tell me the complete story “' + story.title + '” behind this opening: ' + story.hook : '图特，请从你的视角为我讲完《' + story.title + '》这个故事：' + story.hook;
+        await handleSendMessage(prompt, true);
+      } catch (_) {
+        if (ticket === storyLoadTicket) appendMessage(window.PetI18n.getLanguage() === 'en-US' ? 'The local story library is unavailable. Please retry when the platform service is running.' : '本地故事库暂时无法读取，请在平台服务恢复后重试。', 'ai');
+      }
+    }
+    async function randomStory() {
+      if (!ipcRenderer || isGenerating) return;
+      const lang = window.PetI18n.getLanguage();
+      try {
+        if (!storyDeck.length || storyDeckLanguage !== lang) {
+          storyDeck = await ipcRenderer.invoke('pet-get-stories', lang);
+          storyDeckLanguage = lang;
+          for (let i = storyDeck.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1)); [storyDeck[i], storyDeck[j]] = [storyDeck[j], storyDeck[i]];
+          }
+        }
+        const story = storyDeck.pop(); if (story) await openStory({ id: story.id });
+      } catch (_) { storyStatus.textContent = petT('故事库暂时不可用'); }
+    }
+    document.getElementById('nextStoryBtn').addEventListener('click', randomStory);
+    offlineStoryBtn.addEventListener('click', () => {
+      if (!activeStory || isGenerating) return;
+      const text = offlineText(activeStory, true, '');
+      appendMessage(text, 'ai'); messagesHistory.push({ role: 'model', content: text }); storyLabel('offline');
+    });
 
     const chatBody = document.getElementById('chatBody');
     const userInput = document.getElementById('userInput');
@@ -684,16 +751,19 @@
       quotaBar.innerHTML = html;
     }
 
-    async function handleSendMessage(presetText) {
+    async function handleSendMessage(presetText, storyOpening = false) {
       if (isGenerating) return;
       const text = (presetText || userInput.value || '').trim();
       if (!text) return;
 
+      const epoch = chatEpoch;
+      const story = activeStory;
       appendMessage(text, 'user');
       userInput.value = '';
       messagesHistory.push({ role: 'user', content: text });
 
       isGenerating = true;
+      if (ipcRenderer) ipcRenderer.send('pet-chat-generating', true);
       sendBtn.disabled = true;
       typingIndicator.style.display = 'block';
       chatBody.scrollTop = chatBody.scrollHeight;
@@ -707,6 +777,8 @@
       let rawErrorBody = '';
 
       abortController = new AbortController();
+      const controller = abortController;
+      const timeout = setTimeout(() => controller.abort(), 30000);
 
       const systemPrompt = "【角色与性格设定】：你是 Tools Platform 的青绿桌面伙伴「托特」（Thoth），外形是青绿釉面、淡金斑点的陶瓷鸟人。\n" +
         "1. 专业能力：帮助用户理解平台工具、自动化、SLA、告警与数据运维；依据可获得的上下文作答，不清楚时说明，不虚构执行结果。\n" +
@@ -715,7 +787,7 @@
 
       const payloadObj = {
         messages: messagesHistory,
-        context: systemPrompt + (window.PetI18n.getLanguage() === 'en-US' ? '\nReply in English, with a calm, curious guardian personality.' : '\n请使用简体中文回复，保持温和、好奇的守护者性格。'),
+        context: systemPrompt + (story ? '\n【古埃及故事语境】：你以图特神的第一人称讲述，下列资料是已校对的内置故事。区分神话、文学、古代信仰和历史事实，不把虚构的亲历口吻当作史料。首次请求讲完整故事，后续回应具体问题，允许探讨。不要声称金字塔外表全覆黄金等没有依据的说法。\n' + JSON.stringify(story) : '') + (window.PetI18n.getLanguage() === 'en-US' ? '\nReply in English, with a calm, curious guardian personality.' : '\n请使用简体中文回复，保持温和、好奇的守护者性格。'),
         pageTitle: window.PetI18n.getLanguage() === 'en-US' ? 'Thoth desktop companion' : '托特桌面伴侣',
         pagePath: '/desktop-pet',
         uiLanguage: window.PetI18n.getLanguage(),
@@ -759,31 +831,43 @@
             const lines = buffer.split(/\r?\n/);
             buffer = lines.pop() || '';
 
+            if (done && buffer.trim()) { lines.push(buffer); buffer = ''; }
             for (const line of lines) {
+              if (epoch !== chatEpoch) throw new Error('CANCELLED');
               const trimmed = line.trim();
               if (!trimmed) continue;
-              try {
-                const event = JSON.parse(trimmed);
-                if (event.type === 'delta' && event.delta) {
-                  responseText += event.delta;
-                  aiBubble.innerHTML = renderMarkdown(responseText);
-                  chatBody.scrollTop = chatBody.scrollHeight;
-                } else if (event.type === 'error') {
-                  throw new Error(event.error || petT("AI 回复出错"));
-                }
-              } catch (_) {}
+              let event;
+              try { event = JSON.parse(trimmed); } catch (_) { continue; }
+              if (event.type === 'error') throw new Error(event.error || petT('AI 回复出错'));
+              if (event.type === 'delta' && event.delta) {
+                responseText += event.delta;
+                aiBubble.innerHTML = renderMarkdown(responseText);
+                chatBody.scrollTop = chatBody.scrollHeight;
+              }
             }
             if (done) break;
           }
         } else {
           const data = await res.json();
-          responseText = data.reply || data.message || petT("托特收到，准备继续。");
+          responseText = data.reply || "";
           aiBubble.innerHTML = renderMarkdown(responseText);
         }
 
+        if (epoch !== chatEpoch) return;
+        if (!responseText.trim()) throw new Error('EMPTY_AI_REPLY');
         messagesHistory.push({ role: 'model', content: responseText });
+        if (story) storyLabel('ai');
         if (ipcRenderer) ipcRenderer.send('pet-trigger-motion', 'happy');
       } catch (err) {
+        if (epoch !== chatEpoch) return;
+        if (story) {
+          const fallback = offlineText(story, storyOpening, text);
+          aiBubble.innerHTML = renderMarkdown(fallback);
+          messagesHistory.push({ role: 'model', content: fallback });
+          storyLabel('offline');
+          if (ipcRenderer) ipcRenderer.send('pet-trigger-motion', 'chill');
+          return;
+        }
         typingIndicator.style.display = 'none';
 
         const debugId = 'dbg_' + Date.now();
@@ -848,10 +932,14 @@
         `;
         if (ipcRenderer) ipcRenderer.send('pet-trigger-motion', 'chill');
       } finally {
+        clearTimeout(timeout);
+        typingIndicator.style.display = 'none';
+        if (ipcRenderer) ipcRenderer.send('pet-chat-generating', false);
         isGenerating = false;
         sendBtn.disabled = false;
         abortController = null;
         chatBody.scrollTop = chatBody.scrollHeight;
+        if (pendingStory) { const request = pendingStory; pendingStory = null; openStory(request); }
       }
     }
 
@@ -877,6 +965,9 @@
 
     // 新对话
     document.getElementById('newChatBtn').addEventListener('click', () => {
+      chatEpoch++; storyLoadTicket++; pendingStory = null; activeStory = null;
+      if (abortController) abortController.abort();
+      storyLabel();
       messagesHistory = [];
       chatBody.innerHTML = `
         <div class="msg-row ai">
@@ -898,8 +989,11 @@
         if (data && data.port) localPort = data.port;
         if (data && data.token) authToken = data.token;
         if (data && data.quotas) updateQuotaDisplay(data.quotas);
+        return ipcRenderer.invoke('pet-story-ready').then(request => { if (request) openStory(request); });
       }).catch(() => {});
     }
+
+    if (ipcRenderer) ipcRenderer.on('pet-open-story', (_event, request) => openStory(request));
 
     // 接收主进程广播
     if (ipcRenderer) {

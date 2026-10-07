@@ -1,6 +1,16 @@
 // Localized desktop UI. Conversation messages and diagnostic payloads are never translated.
 (function () {
     const translations = {
+    "自然眼神与轻微动效": "Natural gaze and subtle eye motion",
+    "随机眨眼与待机动作": "Random blinking and idle poses",
+    "图特主动讲故事": "Thoth's spontaneous stories",
+    "故事间隔（分钟）": "Story interval (minutes)",
+    "点击听完整故事 ✦": "Click for the full story ✦",
+    "古埃及故事 · 随时可听": "Stories of ancient Egypt · always ready",
+    "听一个故事": "Tell me a story",
+    "阅读内置全文": "Read the built-in story",
+    "故事库暂时不可用": "Story library unavailable",
+
     "✦ 托特桌宠": "✦ Thoth desktop pet",
     "✦ 托特桌宠设置": "✦ Thoth pet settings",
     "托特桌宠设置": "Thoth pet settings",

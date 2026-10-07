@@ -170,8 +170,8 @@
       margin-top: 2px;
     }
   </style>
-  <script src="pet-i18n.js?v=20261007-01"></script>
-  <link rel="stylesheet" href="thoth-theme.css?v=20261007-01">
+  <script src="pet-i18n.js?v=20261007-03"></script>
+  <link rel="stylesheet" href="thoth-theme.css?v=20261007-03">
 </head>
 <body>
   <div class="settings-card">
@@ -211,6 +211,11 @@
         <span>专注陪伴 (全局键盘联动)</span>
       </label>
     </div>
+
+    <div class="menu-row"><label class="check-label"><input type="checkbox" id="randomMotionCheck" class="check-input" checked><span>随机眨眼与待机动作</span></label></div>
+    <div class="menu-row"><label class="check-label"><input type="checkbox" id="proactiveStoriesCheck" class="check-input" checked><span>图特主动讲故事</span></label></div>
+    <div class="menu-row"><label class="check-label"><input type="checkbox" id="eyeGazeCheck" class="check-input" checked><span>自然眼神与轻微动效</span></label></div>
+    <div class="menu-row"><label for="storyInterval">故事间隔（分钟）</label><input id="storyInterval" type="number" min="1" max="30" value="3" class="number-badge" style="width:50px"></div>
 
     <!-- macOS 辅助功能权限提示与授权引导 -->
     <div id="macAccessibilityBox" style="display:none;background:rgba(245,158,11,0.08);border:1px dashed rgba(245,158,11,0.3);border-radius:8px;padding:8px 10px;margin-bottom:8px;">
@@ -259,6 +264,14 @@
     const volBadge = document.getElementById('volBadge');
     const bubbleCheck = document.getElementById('bubbleCheck');
     const typingCheck = document.getElementById('typingCheck');
+    const randomMotionCheck = document.getElementById('randomMotionCheck');
+    const proactiveStoriesCheck = document.getElementById('proactiveStoriesCheck');
+    const storyInterval = document.getElementById('storyInterval');
+    const eyeGazeCheck = document.getElementById('eyeGazeCheck');
+    eyeGazeCheck.addEventListener('change', () => { if (ipcRenderer) ipcRenderer.send('pet-config-changed', { eyeGazeOn: eyeGazeCheck.checked }); });
+    randomMotionCheck.addEventListener('change', () => { if (ipcRenderer) ipcRenderer.send('pet-config-changed', { randomMotionOn: randomMotionCheck.checked }); });
+    proactiveStoriesCheck.addEventListener('change', () => { if (ipcRenderer) ipcRenderer.send('pet-config-changed', { proactiveStoriesOn: proactiveStoriesCheck.checked }); });
+    storyInterval.addEventListener('change', () => { const minutes = Math.max(1, Math.min(30, Number(storyInterval.value) || 3)); storyInterval.value = minutes; if (ipcRenderer) ipcRenderer.send('pet-config-changed', { storyIntervalMinutes: minutes }); });
 
     scaleRange.addEventListener('input', () => {
       const val = parseFloat(scaleRange.value);
@@ -332,6 +345,10 @@
           volBadge.textContent = Math.round(cfg.soundVol * 100) + '%';
         }
         if (typeof cfg.bubbleOn === 'boolean') bubbleCheck.checked = cfg.bubbleOn;
+        if (typeof cfg.eyeGazeOn === 'boolean') eyeGazeCheck.checked = cfg.eyeGazeOn;
+        if (typeof cfg.randomMotionOn === 'boolean') randomMotionCheck.checked = cfg.randomMotionOn;
+        if (typeof cfg.proactiveStoriesOn === 'boolean') proactiveStoriesCheck.checked = cfg.proactiveStoriesOn;
+        if (cfg.storyIntervalMinutes !== undefined) storyInterval.value = cfg.storyIntervalMinutes;
         if (typeof cfg.typingOn === 'boolean') typingCheck.checked = cfg.typingOn;
         checkMacPermission();
       });

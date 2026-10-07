@@ -155,7 +155,7 @@ test('AI requests use the selected language and preserve previous messages', asy
             if (!elements.has(id)) elements.set(id, element());
             return elements.get(id);
         }, createElement: element, querySelectorAll: () => [] },
-        AbortController, navigator: {}, setTimeout,
+        AbortController, navigator: {}, setTimeout, clearTimeout,
         fetch: async (_url, options) => {
             payloads.push(JSON.parse(options.body));
             return { ok: true, headers: { get: () => 'application/json' }, json: async () => ({ reply: 'Hello!' }) };

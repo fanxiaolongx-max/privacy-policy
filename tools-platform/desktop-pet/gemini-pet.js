@@ -36,7 +36,7 @@
 
   var css = [
     '.gpet-root{position:fixed;right:20px;bottom:20px;--gpet-scale:1.2;--gpet-base:calc(260px * var(--gpet-scale));width:var(--gpet-base);height:calc(var(--gpet-base) * 1.385);pointer-events:none;user-select:none;-webkit-user-select:none;z-index:99999;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;transition:left .16s ease,top .16s ease,transform .3s ease}',
-    '.gpet-root.gpet-left{transform:scaleX(-1)}',
+
     '.gpet-root.gpet-scaling, .gpet-root.gpet-scaling *{transition:none !important}',
     '.gpet-root.gpet-dragging{cursor:grabbing;transition:none !important}',
     '.gpet-root.gpet-dragging .gpet-body{transition:none !important;transform:none !important}',
@@ -80,7 +80,7 @@
     '.gpet-text{position:absolute;left:44%;top:36%;transform:translate(-50%,-50%);text-align:center;color:#f8fafc;line-height:1.25;white-space:nowrap;pointer-events:none;opacity:0;visibility:hidden;transition:opacity .16s ease,transform .3s ease;width:68%;max-width:calc(var(--gpet-u) * 530);box-sizing:border-box}',
     '.gpet-bubble.gpet-bubble-open .gpet-text{opacity:1;visibility:visible;transition:opacity .16s ease .36s,transform .3s ease}',
     '.gpet-bubble:not(.gpet-bubble-open) .gpet-text{opacity:0 !important;visibility:hidden !important}',
-    '.gpet-root.gpet-left .gpet-text{transform:translate(-50%,-50%) scaleX(-1)}',
+
     '.gpet-label{font-size:calc(var(--gpet-u) * 44);font-weight:700;letter-spacing:.04em;color:#83d8ce;text-shadow:0 0 10px rgba(131,216,206,0.45)}',
     '.gpet-amount{font-size:calc(var(--gpet-u) * 88);font-weight:800;line-height:1.1;color:#ffffff;letter-spacing:-0.01em;text-shadow:0 0 14px rgba(255,255,255,0.35)}',
     '.gpet-period{font-size:calc(var(--gpet-u) * 76);font-weight:800;line-height:1.05}',
@@ -448,6 +448,9 @@
       message: ''
     };
 
+    var presence = null;
+    var life = null;
+    var selectedStoryHook = null;
     var drag = null;
     var shown = null;
     var animId = null;
@@ -535,7 +538,15 @@
       return singleCenter('A', TEXT_QUOTES[idx], '#e2e8f0', true);
     }
 
+    function clearStoryHook() {
+      selectedStoryHook = null;
+      bubbleBox.removeAttribute("role");
+      bubbleBox.removeAttribute("tabindex");
+      bubbleBox.removeAttribute("aria-label");
+    }
+
     function applyBubbleLines(lines) {
+      clearStoryHook();
       var els = [labelEl, amountEl, hintEl];
       for (var i = 0; i < 3; i++) {
         var el = els[i];
@@ -591,6 +602,7 @@
     }
 
     function restoreBubbleLines(isSwapping) {
+      clearStoryHook();
       if (!isSwapping) {
         if (bubbleSwapTimer) { clearTimeout(bubbleSwapTimer); bubbleSwapTimer = null; }
         textBox.style.transition = '';
@@ -748,6 +760,7 @@
     }
 
     function hideBubble() {
+      clearStoryHook();
       if (costBubbleTimer) { clearTimeout(costBubbleTimer); costBubbleTimer = null; }
       costBubbleActive = false;
       if (bubbleTimer) { clearTimeout(bubbleTimer); bubbleTimer = null; }
@@ -773,11 +786,20 @@
         hideCostBubble();
         return;
       }
-      triggerBubbleOnPress();
+      if (selectedStoryHook && ipcRenderer) {
+        ipcRenderer.send('pet-open-story', selectedStoryHook.id);
+        hideBubble();
+      } else triggerBubbleOnPress();
+    });
+    bubbleBox.addEventListener('keydown', function (event) {
+      if (selectedStoryHook && (event.key === 'Enter' || event.key === ' ')) {
+        event.preventDefault(); bubbleBox.click();
+      }
     });
 
     // Turn Cost Bubble (live working status + full turn token summary)
     function showCostBubble(amount, unit, isLive) {
+      clearStoryHook();
       if (!bubbleOn || !turnCostOn) return;
       if (costBubbleTimer) { clearTimeout(costBubbleTimer); costBubbleTimer = null; }
       if (bubbleTimer) { clearTimeout(bubbleTimer); bubbleTimer = null; }
@@ -1013,16 +1035,17 @@
     function getBaseSprite() {
       if (inTypingMode || workStateMode === 'typing') return IMAGES.typing;
       if (workStateMode === 'chill' || workStateMode === 'working') return IMAGES.chill;
-      if (workStateMode === 'idle') return IMAGES.idle;
+      if (workStateMode === 'idle') return life && life.frontSprite() || IMAGES.idle;
       if (workStateMode === 'happy') return IMAGES.happy;
       if (workStateMode === 'dragged') return IMAGES.dragged;
       if (workStateMode === 'fall') return IMAGES.fall;
       if (workStateMode === 'pat') return IMAGES.pat;
       // 'auto' 模式：根据 Agent 状态自动切换（工作思考，空闲站立）
-      return agentWorking ? IMAGES.chill : IMAGES.idle;
+      return agentWorking ? IMAGES.chill : life && life.frontSprite() || IMAGES.idle;
     }
 
     function syncSprite() {
+      if (life) life.stop(false);
       var targetSrc = getBaseSprite();
       if (drag && drag.active && drag.moved) {
         targetSrc = IMAGES.dragged;
@@ -1033,6 +1056,7 @@
       }
       if (img.dataset.curSrc !== targetSrc) {
         img.dataset.curSrc = targetSrc;
+        img.dataset.blinkFrame = '';
         img.src = targetSrc;
         if (typeof updateHitTestProbe === 'function') {
           updateHitTestProbe(targetSrc);
@@ -1053,6 +1077,7 @@
 
     // Spring animations & Q-elastic squish tactile reaction
     function pressDown() {
+      if (life) life.stop();
       pressing = true;
       img.classList.remove('gpet-breathe');
       img.classList.remove('gpet-jelly');
@@ -1211,6 +1236,10 @@
           turnCostOn: turnCostOn,
           turnCostCloseMs: turnCostCloseMs,
           workStateMode: workStateMode,
+          eyeGazeOn: presence ? presence.enabled() : true,
+          randomMotionOn: life ? life.options.randomMotionOn : true,
+          proactiveStoriesOn: life ? life.options.proactiveStoriesOn : true,
+          storyIntervalMinutes: life ? life.options.storyIntervalMinutes : 3,
           antigravitySyncMode: antigravitySyncMode
         };
         localStorage.setItem('gemini-pet-config', JSON.stringify(cfg));
@@ -1235,6 +1264,8 @@
         var raw = localStorage.getItem('gemini-pet-config');
         if (raw) {
           var c = JSON.parse(raw);
+          if (life) life.apply(c);
+          if (presence) presence.apply(c);
           if (c.scale) setScale(c.scale);
           if (c.soundVol !== undefined) setVol(c.soundVol);
           if (c.soundSet) setSoundSet(c.soundSet);
@@ -1295,11 +1326,16 @@
     var hitCtx = null;
     var hitReady = false;
     var hitAlpha = null;
+    var hitAspect = 2 / 3;
+    var hitProbeVersion = 0;
     function updateHitTestProbe(src) {
       if (!hitCanvas || !hitCtx) return;
+      var version = ++hitProbeVersion;
       var probe = new Image();
       probe.onload = function () {
         try {
+          if (version !== hitProbeVersion) return;
+          hitAspect = probe.naturalWidth / probe.naturalHeight;
           hitCtx.clearRect(0, 0, hitCanvas.width, hitCanvas.height);
           hitCtx.drawImage(probe, 0, 0, hitCanvas.width, hitCanvas.height);
           var imgData = hitCtx.getImageData(0, 0, hitCanvas.width, hitCanvas.height);
@@ -1327,7 +1363,7 @@
 
         var relX = (e.clientX - r.left) / r.width;
         var relY = (e.clientY - r.top) / r.height;
-        if (state.h === 'left') relX = 1 - relX;
+        if (presence && presence.isMirrored()) relX = 1 - relX;
 
         var insideBox = relX >= 0 && relX <= 1 && relY >= 0 && relY <= 1;
         if (!insideBox) return { hit: false, isHead: false };
@@ -1338,7 +1374,7 @@
         var hit = true;
         if (hitCanvas && hitReady && hitAlpha) {
           try {
-            var imgAspect = 764 / 1024;
+            var imgAspect = hitAspect;
             var containerAspect = r.width / r.height;
             var rendW = r.width;
             var rendH = r.height;
@@ -1353,9 +1389,10 @@
               rendW = r.height * imgAspect;
               offX = (r.width - rendW) / 2;
             }
+            if (e.clientX < r.left + offX || e.clientX >= r.left + offX + rendW || e.clientY < r.top + offY || e.clientY >= r.top + offY + rendH) return { hit: false, isHead: false };
             var lx = Math.floor((e.clientX - (r.left + offX)) / rendW * hitCanvas.width);
             var ly = Math.floor((e.clientY - (r.top + offY)) / rendH * hitCanvas.height);
-            if (state.h === 'left') lx = hitCanvas.width - 1 - lx;
+            if (presence && presence.isMirrored()) lx = hitCanvas.width - 1 - lx;
             if (lx >= 0 && ly >= 0 && lx < hitCanvas.width && ly < hitCanvas.height) {
               var idx = (ly * hitCanvas.width + lx) * 4 + 3;
               hit = hitAlpha[idx] > 10;
@@ -1385,6 +1422,7 @@
     }
 
     function startGravityDrop(startX, startY, initVx, initVy) {
+      if (life) life.stop();
       stopGravityDrop();
 
       var curX = startX;
@@ -1744,6 +1782,7 @@
 
     // Headpat Reaction Engine (Hover Petting & Wheel Petting)
     function triggerHeadpatReaction(isWheel) {
+      if (life) life.stop();
       spawnHeartNearHead();
       playRelease();
       if (inHappyReaction && img.src === IMAGES.pat) {
@@ -2094,6 +2133,7 @@
     }
 
     function handleKeyPress() {
+      if (life) life.stop();
       if (!typingOn || (drag && drag.active) || inHappyReaction || gravityAnimId) return;
 
       typingCombo++;
@@ -2199,7 +2239,10 @@
       ipcRenderer.on('pet-trigger-motion', function (e, motion) {
         try {
           if (IMAGES[motion]) {
+            if (life) life.stop(false);
             img.src = IMAGES[motion];
+            img.dataset.curSrc = IMAGES[motion];
+            updateHitTestProbe(IMAGES[motion]);
             if (motion === 'typing') {
               img.classList.add('gpet-typing-anim');
             } else {
@@ -2231,6 +2274,8 @@
       });
       ipcRenderer.on('pet-apply-config', function (e, c) {
         if (!c) return;
+        if (life) life.apply(c);
+        if (presence) presence.apply(c);
         if (c.scale !== undefined && Math.abs(Number(c.scale) - state.scale) > 0.05) {
           setScale(c.scale, true);
         }
@@ -2275,6 +2320,32 @@
     // Initialize
     applySoundSet();
     setupHitTest();
+    if (window.ThothPresence) presence = window.ThothPresence.create({
+      img:img, ipc:ipcRenderer,
+      busy:function () { return !!drag || pressing || inTypingMode || inHappyReaction || !!gravityAnimId || img.classList.contains('gpet-typing-anim'); },
+      onSourceChange:updateHitTestProbe
+    });
+    if (window.ThothLife) life = window.ThothLife.create({
+      img: img, ipc: ipcRenderer,
+      images: { idle: IMAGES.idle, wave: IMAGES.happy, think: IMAGES.chill },
+      busy: function () { return !!drag || inHappyReaction || inTypingMode || pressing || menuOpen || bubbleShown || costBubbleActive || workStateMode !== 'auto' && workStateMode !== 'idle'; },
+      bubblesOn: function () { return bubbleOn; },
+      onFrontReady:function () { syncSprite(); },
+      setSprite: function (src, frame) { img.dataset.blinkFrame = frame === undefined ? '' : frame; img.src = src; img.dataset.curSrc = src; updateHitTestProbe(src); },
+      clearStory: function () { if (selectedStoryHook) hideBubble(); },
+      showStory: function (story) {
+        if (bubbleSwapTimer) { clearTimeout(bubbleSwapTimer); bubbleSwapTimer = null; }
+        if (bubbleTimer) clearTimeout(bubbleTimer);
+        applyBubbleLines([{s:'A', t:story.hook, c:'#a5e7dc', w:true}, {s:'H', t:petT('点击听完整故事 ✦'), c:'#dfc784', w:true}]);
+        selectedStoryHook = story;
+        bubbleBox.setAttribute('role', 'button'); bubbleBox.setAttribute('tabindex', '0');
+        bubbleBox.setAttribute('aria-label', story.hook + ' ' + petT('点击听完整故事 ✦'));
+        bubbleShown = true; bubbleRandomActive = true; pressCount = 2;
+        bubbleBox.classList.add('gpet-bubble-open');
+        textBox.style.opacity = '1';
+        bubbleTimer = setTimeout(hideBubble, 18000);
+      }
+    });
     loadConfig();
     settle();
     updateBaseUnits();
@@ -2283,6 +2354,8 @@
     // Expose API on window for external triggers
     window.closePet = closePetEntirely;
     window.GeminiPetInstance = {
+      showStory: function (id) { return life && life.story(id, true); },
+      triggerRandomMotion: function () { if (life) life.motion(true); },
       close: closePetEntirely,
       showTurnCost: showCostBubble,
       showBubble: showBubble,

@@ -27,7 +27,59 @@ let settingsWin = null;
 let localServerPort = 3030;
 let localBaseUrl = 'http://localhost:3030';
 let quotaPollingTimer = null;
+let presencePollingTimer = null;
 let ipcRegistered = false;
+let storyChatReady = false;
+let pendingStoryRequest = null;
+let storyRequestSequence = 0;
+
+async function requestPetStories(id, language) {
+    const token = await getOrCreateDesktopPetToken();
+    if (!token) throw new Error('PET_STORY_AUTH_UNAVAILABLE');
+    const suffix = id ? '/' + encodeURIComponent(id) : '';
+    const lang = language === 'en-US' ? 'en-US' : 'zh-CN';
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    try {
+        const response = await fetch(localBaseUrl + '/api/desktop-pet/stories' + suffix + '?language=' + lang, {
+            headers: { Authorization: 'Bearer ' + token }, signal: controller.signal
+        });
+        if (!response.ok) throw new Error('PET_STORY_REQUEST_FAILED');
+        const data = await response.json();
+        return id ? data.story : data.stories;
+    } finally { clearTimeout(timeout); }
+}
+
+function openStoryChat(id) {
+    if (typeof id !== 'string' || !/^[a-z0-9-]{1,64}$/.test(id)) return;
+    pendingStoryRequest = { id, requestId: ++storyRequestSequence };
+    const win = createChatWindow();
+    if (petWin && !petWin.isDestroyed()) {
+        const size = win.getSize();
+        win.setBounds(calculateChatBounds(petWin.getBounds(), size[0], size[1]));
+    }
+    // Story clicks always open the window; they never toggle an open chat closed.
+    win.show();
+    win.focus();
+    if (storyChatReady && !win.webContents.isLoading()) {
+        win.webContents.send('pet-open-story', pendingStoryRequest);
+        pendingStoryRequest = null;
+    }
+}
+
+// Screen and cursor coordinates use Electron DIP units and the pet's current monitor.
+function sendPetEnvironment() {
+    if (!petWin || petWin.isDestroyed() || petWin.webContents.isLoading()) return;
+    try {
+        const bounds = petWin.getBounds();
+        const display = screen.getDisplayMatching(bounds) || screen.getPrimaryDisplay();
+        petWin.webContents.send('pet-environment', {
+            bounds, workArea: display.workArea,
+            cursor: typeof screen.getCursorScreenPoint === 'function' ? screen.getCursorScreenPoint() : null,
+            visible: petWin.isVisible()
+        });
+    } catch (_) {}
+}
 
 /**
  * 向桌宠窗口派发全局或本地按键反馈
@@ -77,6 +129,10 @@ const DEFAULT_CONFIG = {
     soundSet: 'duck',
     bubbleOn: true,
     typingOn: true,
+    eyeGazeOn: true,
+    randomMotionOn: true,
+    proactiveStoriesOn: true,
+    storyIntervalMinutes: 3,
     position: null
 };
 
@@ -233,10 +289,15 @@ function createPetWindow() {
         petWin.show();
         petWin.setAlwaysOnTop(true);
         petWin.webContents.send('pet-apply-config', cfg);
+        sendPetEnvironment();
         refreshQuotas();
         syncKeyboardHookState();
     });
 
+    petWin.on('move', sendPetEnvironment);
+    petWin.on('resize', sendPetEnvironment);
+    petWin.on('show', sendPetEnvironment);
+    petWin.on('hide', sendPetEnvironment);
     petWin.on('closed', () => {
         petWin = null;
         stopKeyboardHook();
@@ -253,6 +314,7 @@ function createChatWindow() {
         return chatWin;
     }
 
+    storyChatReady = false;
     const petBounds = petWin && !petWin.isDestroyed()
         ? petWin.getBounds()
         : { x: 800, y: 500, width: 300, height: 400 };
@@ -304,7 +366,11 @@ function createChatWindow() {
 
     chatWin.on('closed', () => {
         chatWin = null;
+        storyChatReady = false;
+        pendingStoryRequest = null;
+        if (petWin && !petWin.isDestroyed()) petWin.webContents.send('pet-chat-generating', false);
     });
+    chatWin.webContents.on('did-start-loading', () => { storyChatReady = false; });
 
     return chatWin;
 }
@@ -318,7 +384,7 @@ function createSettingsWindow() {
     }
 
     const menuW = 280;
-    const menuH = 430;
+    const menuH = 570;
 
     settingsWin = new BrowserWindow({
         width: menuW,
@@ -378,6 +444,33 @@ function registerIpc() {
     if (ipcRegistered) return;
     ipcRegistered = true;
     ipcMain.handle('pet-get-language', () => desktopLanguage.getLanguage());
+    const isPetSender = event => petWin && !petWin.isDestroyed() && event.sender === petWin.webContents;
+    const isChatSender = event => chatWin && !chatWin.isDestroyed() && event.sender === chatWin.webContents;
+    ipcMain.on('pet-request-environment', event => { if (isPetSender(event)) sendPetEnvironment(); });
+    ipcMain.handle('pet-get-stories', (event, language) => {
+        if (!isPetSender(event) && !isChatSender(event)) throw new Error('PET_STORY_WINDOW_REQUIRED');
+        return requestPetStories(null, language || desktopLanguage.getLanguage());
+    });
+    ipcMain.handle('pet-get-story', (event, id, language) => {
+        if (!isChatSender(event)) throw new Error('PET_STORY_WINDOW_REQUIRED');
+        if (typeof id !== 'string' || !/^[a-z0-9-]{1,64}$/.test(id)) throw new Error('INVALID_PET_STORY');
+        return requestPetStories(id, language || desktopLanguage.getLanguage());
+    });
+    ipcMain.on('pet-open-story', (event, id) => {
+        if (isPetSender(event)) openStoryChat(id);
+    });
+    ipcMain.handle('pet-story-ready', event => {
+        if (!isChatSender(event)) throw new Error('PET_STORY_WINDOW_REQUIRED');
+        storyChatReady = true;
+        const request = pendingStoryRequest;
+        pendingStoryRequest = null;
+        return request;
+    });
+    ipcMain.on('pet-chat-generating', (event, active) => {
+        if (isChatSender(event) && petWin && !petWin.isDestroyed()) {
+            petWin.webContents.send('pet-chat-generating', !!active);
+        }
+    });
 
     // 获取前端初始参数 (端口、Token、配额数据)
     ipcMain.handle('pet-get-init-data', async () => {
@@ -426,7 +519,7 @@ function registerIpc() {
             }
 
             const menuW = 280;
-            const menuH = 430;
+            const menuH = 570;
             const primaryDisplay = screen.getPrimaryDisplay();
             const { width: screenW, height: screenH } = primaryDisplay.workArea;
 
@@ -647,6 +740,9 @@ function initDesktopPet({ port = 3030, baseUrl = 'http://localhost:3030' } = {})
 
     console.log('[PetManager] 启动桌面宠物组件...');
     createPetWindow();
+    if (!presencePollingTimer) presencePollingTimer = setInterval(() => {
+        if (isPetVisible()) sendPetEnvironment();
+    }, 250);
 
     // 启动后台静默额度同步探针 (15s 一次，非阻塞)
     if (!quotaPollingTimer) {
@@ -660,6 +756,7 @@ function initDesktopPet({ port = 3030, baseUrl = 'http://localhost:3030' } = {})
 }
 
 function cleanupDesktopPet() {
+    if (presencePollingTimer) { clearInterval(presencePollingTimer); presencePollingTimer = null; }
     stopKeyboardHook();
     if (quotaPollingTimer) {
         clearInterval(quotaPollingTimer);

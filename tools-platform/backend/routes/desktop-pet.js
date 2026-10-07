@@ -1,5 +1,6 @@
 const express = require('express');
 const language = require('../models/desktop-language');
+const stories = require('../models/pet-stories-repository');
 const router = express.Router();
 
 // A logged-in local user may change this machine's UI language, including viewers.
@@ -28,5 +29,19 @@ router.post('/language', (req, res) => {
         return res.status(400).json({ code: 'INVALID_LANGUAGE', error: 'Unsupported language' });
     }
     res.json({ success: true, language: language.getLanguage() });
+});
+router.get('/stories', async (req, res, next) => {
+    try {
+        res.setHeader('Cache-Control', 'no-store');
+        res.json({ success: true, stories: await stories.listStories(req.query.language) });
+    } catch (error) { next(error); }
+});
+router.get('/stories/:id', async (req, res, next) => {
+    try {
+        const story = await stories.getStory(req.params.id, req.query.language);
+        if (!story) return res.status(404).json({ code: 'PET_STORY_NOT_FOUND', error: 'Story not found' });
+        res.setHeader('Cache-Control', 'no-store');
+        res.json({ success: true, story });
+    } catch (error) { next(error); }
 });
 module.exports = router;

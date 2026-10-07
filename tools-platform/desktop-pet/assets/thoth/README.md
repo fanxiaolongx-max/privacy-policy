@@ -15,3 +15,11 @@
 编辑提示词（四次调用仅替换姿态为 standing / waving / walking / chin-resting thoughtful）：
 
 > Use case: background-extraction. Edit target: the attached image. Create a clean transparent PNG cutout for a desktop pet. Remove ONLY the white background, including any white background enclosed between the limbs. Preserve this exact turquoise ceramic bird-headed Egyptian character, its [pose] pose, glossy jade glaze, gold flecks, navy outlines, white highlights and eye whites. Do not redraw, change pose, add objects, text or shadows. Keep the entire figure including all feet, generous small transparent margin, centered on a portrait transparent canvas. The background must have real alpha transparency, not painted white or a checkerboard.
+
+## 眨眼序列
+
+`blink-strip.png` 是用户提供的原始透明 PNG（2172 × 724，六列，每帧 362 × 724），未重绘或生成替代帧。`thoth-life.js` 在运行时通过 canvas 读取六个等宽帧，用于眨眼及双眨眼；其他随机待机动作复用上方四张姿态。拖动、摸头、键盘反馈和聊天生成会中断待机动作。
+
+## 朝向与眼神
+
+侧视的 `idle.png`、`walk.png`、`think.png` 按当前显示器中的位置自动镜像，面向中央；正视的 `wave.png` 和眨眼帧保持原样。待机优先展示正视首帧。瞳孔附近的轻微动态通过运行时 SVG 位移滤镜实现，文件本身不作修改；闭眼帧禁用眼神位移，保持眨眼完整。

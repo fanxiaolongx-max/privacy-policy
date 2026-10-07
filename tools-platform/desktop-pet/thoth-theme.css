@@ -98,3 +98,21 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 @media (prefers-reduced-motion: reduce) {
   .avatar-img, .msg-row, .typing-indicator, .gpet-breathe, .gpet-typing-anim { animation: none !important; }
 }
+
+/* Quiet, short idle gestures; interaction cancels them immediately. */
+.thoth-observe { animation: thoth-observe 2.8s ease-in-out !important; }
+.thoth-dream { animation: thoth-dream 3s ease-in-out !important; }
+.thoth-greet { animation: thoth-greet 2.5s ease-in-out !important; }
+@keyframes thoth-observe { 35% { rotate: -3deg; } 70% { rotate: 3deg; } }
+@keyframes thoth-dream { 50% { translate: 0 -4px; } }
+@keyframes thoth-greet { 30%, 65% { rotate: -2deg; translate: 0 -3px; } }
+.story-bar { display:flex; align-items:center; gap:6px; flex-wrap:wrap; padding:8px 16px; border-bottom:1px solid var(--pet-line); font-size:11px; color:var(--pet-ink); }
+.story-bar .chip-btn { padding:5px 9px; font-size:11px; }
+.story-bar [hidden] { display:none; }
+.story-bar span { flex:1; min-width:120px; }
+@media (prefers-reduced-motion: reduce) { .thoth-observe, .thoth-dream, .thoth-greet { animation:none !important; } }
+
+.gpet-img.thoth-gaze-active { filter:url(#thoth-gaze-filter) drop-shadow(0 6px 16px rgba(15,23,42,.18)); }
+.gpet-img { transition:transform .15s cubic-bezier(.2,.8,.4,1), opacity .12s ease; }
+.gpet-img.thoth-turning { opacity:.72; }
+@media (prefers-reduced-motion:reduce) { .gpet-img { transition:none !important; } }
