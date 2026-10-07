@@ -26,7 +26,7 @@
   },
   "build": {
     "appId": "com.toolsplatform.app",
-    "productName": "Tools Platform",
+    "productName": "Thoth Platform",
     "directories": {
       "output": "dist"
     },

@@ -1,6 +1,6 @@
 (function () {
-  if (window.__geminiHajimiWidget) return;
-  window.__geminiHajimiWidget = true;
+  if (window.__geminiThothWidget) return;
+  window.__geminiThothWidget = true;
 
   var petT = function (text) { return window.PetI18n ? window.PetI18n.t(text) : text; };
   var isElectron = typeof require !== 'undefined';
@@ -18,13 +18,13 @@
   var BUBBLE_MS = 5000;
 
   var IMAGES = {
-    idle: "./assets/idle.png",
-    dragged: "./assets/dragged.png",
-    happy: "./assets/happy.png",
-    chill: "./assets/chill.png",
-    fall: "./assets/fall.png",
-    pat: "./assets/pat.png",
-    typing: "./assets/typing.png"
+    idle: "./assets/thoth/idle.png",
+    dragged: "./assets/thoth/walk.png",
+    happy: "./assets/thoth/wave.png",
+    chill: "./assets/thoth/think.png",
+    fall: "./assets/thoth/walk.png",
+    pat: "./assets/thoth/wave.png",
+    typing: "./assets/thoth/think.png"
   };
 
   var SOUND_DATA = {
@@ -46,7 +46,7 @@
     '.gpet-breathe{animation:gpet-breathe 3.6s ease-in-out infinite !important}',
     '@keyframes gpet-typing-wobble{0%,100%{transform:translateY(0) scale(1,1)} 50%{transform:translateY(2.2px) scale(1.018,0.982)}}',
     '.gpet-typing-anim{animation:gpet-typing-wobble .28s cubic-bezier(0.35,0,0.25,1) infinite !important}',
-    '.gpet-combo-badge{position:absolute;right:8%;top:32%;background:linear-gradient(135deg,#ec4899,#8b5cf6);color:#fff;font-weight:900;font-size:12px;padding:3px 8px;border-radius:12px;box-shadow:0 4px 12px rgba(236,72,153,0.45);pointer-events:none;z-index:90;transform:scale(0.8) translateY(0);opacity:0;transition:transform .12s cubic-bezier(.34,1.56,.64,1),opacity .18s ease;font-style:italic;text-shadow:0 1px 2px rgba(0,0,0,0.3)}',
+    '.gpet-combo-badge{position:absolute;right:8%;top:32%;background:linear-gradient(135deg,#147d7a,#123743);color:#fff;font-weight:900;font-size:12px;padding:3px 8px;border-radius:12px;box-shadow:0 4px 12px rgba(20,125,122,0.45);pointer-events:none;z-index:90;transform:scale(0.8) translateY(0);opacity:0;transition:transform .12s cubic-bezier(.34,1.56,.64,1),opacity .18s ease;font-style:italic;text-shadow:0 1px 2px rgba(0,0,0,0.3)}',
     '.gpet-combo-badge.gpet-combo-active{opacity:1;transform:scale(1.08) translateY(-4px)}',
     '.gpet-combo-badge.gpet-combo-fever{background:linear-gradient(135deg,#f59e0b,#ef4444);box-shadow:0 6px 16px rgba(239,68,68,0.55);animation:gpet-combo-shake .14s infinite alternate}',
     '@keyframes gpet-combo-shake{0%{transform:scale(1.15) rotate(-3deg)} 100%{transform:scale(1.22) rotate(3deg)}}',
@@ -54,10 +54,10 @@
     '.gpet-img.gpet-jelly, .gpet-body.gpet-jelly{animation:gpet-jelly .55s cubic-bezier(0.25,1,0.5,1) forwards !important;transition:none !important}',
     '.gpet-img.gpet-squished, .gpet-body.gpet-squished{transform:scaleX(1.22) scaleY(0.78) !important;transition:transform .08s cubic-bezier(0.2,0,0,1) !important}',
     '@keyframes gpet-heart-float{0%{opacity:0;transform:translateY(0) scale(0.6) rotate(0deg)} 25%{opacity:1;transform:translateY(-16px) scale(1.15) rotate(-10deg)} 75%{opacity:0.9;transform:translateY(-45px) scale(1) rotate(8deg)} 100%{opacity:0;transform:translateY(-68px) scale(0.7) rotate(-5deg)}}',
-    '.gpet-heart{position:absolute;pointer-events:none;font-size:22px;line-height:1;animation:gpet-heart-float 1.1s cubic-bezier(0.2,0.8,0.4,1) forwards;z-index:100;user-select:none;filter:drop-shadow(0 2px 8px rgba(236,72,153,0.45))}',
+    '.gpet-heart{position:absolute;pointer-events:none;font-size:22px;line-height:1;animation:gpet-heart-float 1.1s cubic-bezier(0.2,0.8,0.4,1) forwards;z-index:100;user-select:none;filter:drop-shadow(0 2px 8px rgba(20,125,122,0.45))}',
     '.gpet-bubble{position:absolute;left:0;top:0;width:100%;aspect-ratio:1026/700;pointer-events:none;z-index:1;--gpet-u:calc(var(--gpet-base) / 1026);opacity:0;visibility:hidden;transition:opacity .2s ease,visibility .2s}',
     '.gpet-bubble.gpet-bubble-open{opacity:1;visibility:visible;transition:opacity .2s ease,visibility 0s}',
-    '.gpet-bubble svg{display:block;width:100%;height:100%;pointer-events:none;filter:drop-shadow(0 12px 28px rgba(10,15,35,0.65)) drop-shadow(0 0 16px rgba(56,189,248,0.35))}',
+    '.gpet-bubble svg{display:block;width:100%;height:100%;pointer-events:none;filter:drop-shadow(0 12px 28px rgba(10,15,35,0.65)) drop-shadow(0 0 16px rgba(131,216,206,0.35))}',
     '.gpet-bubble svg path,.gpet-bubble svg ellipse,.gpet-bubble svg circle{pointer-events:none;cursor:pointer}',
     '.gpet-bubble.gpet-bubble-open svg path,.gpet-bubble.gpet-bubble-open svg ellipse,.gpet-bubble.gpet-bubble-open svg circle{pointer-events:visiblePainted}',
     '.gpet-bubble .gpet-bshape,.gpet-bubble .gpet-b1,.gpet-bubble .gpet-b2{opacity:0;transform:scale(.7);transform-box:fill-box;transform-origin:50% 50%;transition:opacity .2s ease,transform .2s ease}',
@@ -72,22 +72,22 @@
     '.gpet-bubble.gpet-bubble-open .gpet-text{opacity:1;visibility:visible;transition:opacity .16s ease .36s,transform .3s ease}',
     '.gpet-bubble:not(.gpet-bubble-open) .gpet-text{opacity:0 !important;visibility:hidden !important}',
     '.gpet-root.gpet-left .gpet-text{transform:translate(-50%,-50%) scaleX(-1)}',
-    '.gpet-label{font-size:calc(var(--gpet-u) * 44);font-weight:700;letter-spacing:.04em;color:#38bdf8;text-shadow:0 0 10px rgba(56,189,248,0.45)}',
+    '.gpet-label{font-size:calc(var(--gpet-u) * 44);font-weight:700;letter-spacing:.04em;color:#83d8ce;text-shadow:0 0 10px rgba(131,216,206,0.45)}',
     '.gpet-amount{font-size:calc(var(--gpet-u) * 88);font-weight:800;line-height:1.1;color:#ffffff;letter-spacing:-0.01em;text-shadow:0 0 14px rgba(255,255,255,0.35)}',
     '.gpet-period{font-size:calc(var(--gpet-u) * 76);font-weight:800;line-height:1.05}',
     '.gpet-wrap{white-space:normal;max-width:calc(var(--gpet-u) * 450);line-height:1.32;font-size:calc(var(--gpet-u) * 42);margin:0 auto;word-break:break-word;text-shadow:0 0 8px rgba(255,255,255,0.25)}',
     '.gpet-hint{font-size:calc(var(--gpet-u) * 38);color:#cbd5e1;letter-spacing:.02em;margin-top:calc(var(--gpet-u) * 10);min-height:calc(var(--gpet-u) * 46);line-height:1.2;font-weight:500;text-shadow:0 0 8px rgba(203,213,225,0.3)}',
-    '.gpet-menu{position:fixed;min-width:210px;max-width:calc(100vw - 16px);max-height:calc(100vh - 16px);overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;background:rgba(255,255,255,0.96);backdrop-filter:blur(16px);border:1px solid rgba(37,99,235,0.25);border-radius:12px;padding:10px 12px;opacity:0;transform:scale(.92) translateY(-6px);transition:opacity .18s ease,transform .2s cubic-bezier(.34,1.56,.64,1);pointer-events:none;z-index:100000;box-shadow:0 12px 32px rgba(15,23,42,0.22);color-scheme:light;box-sizing:border-box}',
+    '.gpet-menu{position:fixed;min-width:210px;max-width:calc(100vw - 16px);max-height:calc(100vh - 16px);overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;background:rgba(255,255,255,0.96);backdrop-filter:blur(16px);border:1px solid rgba(20,125,122,0.25);border-radius:12px;padding:10px 12px;opacity:0;transform:scale(.92) translateY(-6px);transition:opacity .18s ease,transform .2s cubic-bezier(.34,1.56,.64,1);pointer-events:none;z-index:100000;box-shadow:0 12px 32px rgba(15,23,42,0.22);color-scheme:light;box-sizing:border-box}',
     '.gpet-menu.gpet-menu-open{opacity:1;transform:scale(1) translateY(0);pointer-events:auto}',
-    '.gpet-menu-title{font-size:13px;font-weight:700;color:#1e3a8a;margin-bottom:8px;display:flex;align-items:center;gap:6px}',
+    '.gpet-menu-title{font-size:13px;font-weight:700;color:#105d61;margin-bottom:8px;display:flex;align-items:center;gap:6px}',
     '.gpet-menu-row{display:flex;align-items:center;gap:8px;margin:6px 0;color:#1e293b;font-size:12px;flex-wrap:wrap}',
-    '.gpet-range{flex:1;min-width:0;accent-color:#2563eb}',
-    '.gpet-number{width:46px;border:1px solid rgba(37,99,235,0.3);border-radius:6px;padding:2px 4px;font-size:12px;color:#1e293b;background:#fff;box-sizing:border-box;text-align:center}',
+    '.gpet-range{flex:1;min-width:0;accent-color:#147d7a}',
+    '.gpet-number{width:46px;border:1px solid rgba(20,125,122,0.3);border-radius:6px;padding:2px 4px;font-size:12px;color:#1e293b;background:#fff;box-sizing:border-box;text-align:center}',
     '.gpet-number:disabled{opacity:.4;background:rgba(0,0,0,0.06);cursor:not-allowed}',
-    '.gpet-sound{flex:1;border:1px solid rgba(37,99,235,0.3);border-radius:6px;background:rgba(37,99,235,0.06);color:#1e3a8a;font-size:12px;padding:4px 6px;cursor:pointer;font-weight:500}',
-    '.gpet-sound:hover{background:rgba(37,99,235,0.12)}',
-    '.gpet-check{width:16px;height:16px;accent-color:#2563eb;cursor:pointer;flex:0 0 auto}',
-    '.gpet-menu-sep{height:1px;background:rgba(37,99,235,0.15);margin:8px 0}',
+    '.gpet-sound{flex:1;border:1px solid rgba(20,125,122,0.3);border-radius:6px;background:rgba(20,125,122,0.06);color:#105d61;font-size:12px;padding:4px 6px;cursor:pointer;font-weight:500}',
+    '.gpet-sound:hover{background:rgba(20,125,122,0.12)}',
+    '.gpet-check{width:16px;height:16px;accent-color:#147d7a;cursor:pointer;flex:0 0 auto}',
+    '.gpet-menu-sep{height:1px;background:rgba(20,125,122,0.15);margin:8px 0}',
     '.gpet-volpct{width:38px;text-align:right;color:#64748b;font-size:11px}'
   ].join('\n');
 
@@ -101,7 +101,9 @@
 
     var styleEl = document.createElement('style');
     styleEl.textContent = css;
-    (document.head || document.body).appendChild(styleEl);
+    var themeLink = document.querySelector('link[href^="thoth-theme.css"]');
+    if (themeLink) themeLink.parentNode.insertBefore(styleEl, themeLink);
+    else (document.head || document.body).appendChild(styleEl);
 
     var root = document.createElement('div');
     root.className = 'gpet-root';
@@ -111,8 +113,8 @@
 
     var img = document.createElement('img');
     img.className = 'gpet-img gpet-breathe';
-    img.src = IMAGES.chill;
-    img.alt = petT('Gemini 哈基米');
+    img.src = IMAGES.idle;
+    img.alt = petT('青绿陶瓷鸟人托特');
     img.draggable = false;
 
     var bubbleBox = document.createElement('div');
@@ -120,23 +122,23 @@
     bubbleBox.innerHTML = '<svg viewBox="0 0 1026 700" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">' +
       '<defs>' +
       '  <linearGradient id="gpet-star-bg" x1="0%" y1="0%" x2="100%" y2="100%">' +
-      '    <stop offset="0%" stop-color="#0b0f19" stop-opacity="0.94"/>' +
-      '    <stop offset="50%" stop-color="#1e1b4b" stop-opacity="0.92"/>' +
-      '    <stop offset="100%" stop-color="#0f172a" stop-opacity="0.95"/>' +
+      '    <stop offset="0%" stop-color="#092b36" stop-opacity="0.94"/>' +
+      '    <stop offset="50%" stop-color="#13505a" stop-opacity="0.92"/>' +
+      '    <stop offset="100%" stop-color="#0d2f3d" stop-opacity="0.95"/>' +
       '  </linearGradient>' +
       '  <linearGradient id="gpet-star-border" x1="0%" y1="0%" x2="100%" y2="100%">' +
-      '    <stop offset="0%" stop-color="#38bdf8"/>' +
-      '    <stop offset="45%" stop-color="#818cf8"/>' +
-      '    <stop offset="100%" stop-color="#c084fc"/>' +
+      '    <stop offset="0%" stop-color="#83d8ce"/>' +
+      '    <stop offset="45%" stop-color="#bda56e"/>' +
+      '    <stop offset="100%" stop-color="#bda56e"/>' +
       '  </linearGradient>' +
       '</defs>' +
       '<path class="gpet-bshape" fill="url(#gpet-star-bg)" stroke="url(#gpet-star-border)" stroke-width="14" stroke-linejoin="round" stroke-linecap="round" d="M 805,225 C 805,105 660,38 450,38 C 240,38 85,105 85,225 C 85,345 240,418 450,418 C 500,418 545,412 585,398 C 655,412 730,375 770,320 C 795,290 805,258 805,225 Z"/>' +
       '<circle class="gpet-b1" cx="530" cy="468" r="22" fill="url(#gpet-star-bg)" stroke="url(#gpet-star-border)" stroke-width="11"/>' +
       '<circle class="gpet-b2" cx="600" cy="518" r="14" fill="url(#gpet-star-bg)" stroke="url(#gpet-star-border)" stroke-width="9"/>' +
-      '<path d="M 750,90 Q 750,105 765,105 Q 750,105 750,120 Q 750,105 735,105 Q 750,105 750,90 Z" fill="#38bdf8" opacity="0.85"/>' +
-      '<path d="M 140,120 Q 140,132 152,132 Q 140,132 140,144 Q 140,132 128,132 Q 140,132 140,120 Z" fill="#c084fc" opacity="0.75"/>' +
+      '<path d="M 750,90 Q 750,105 765,105 Q 750,105 750,120 Q 750,105 735,105 Q 750,105 750,90 Z" fill="#83d8ce" opacity="0.85"/>' +
+      '<path d="M 140,120 Q 140,132 152,132 Q 140,132 140,144 Q 140,132 128,132 Q 140,132 140,120 Z" fill="#bda56e" opacity="0.75"/>' +
       '<circle cx="730" cy="140" r="3" fill="#ffffff" opacity="0.6"/>' +
-      '<circle cx="165" cy="100" r="2.5" fill="#38bdf8" opacity="0.6"/>' +
+      '<circle cx="165" cy="100" r="2.5" fill="#83d8ce" opacity="0.6"/>' +
       '</svg>';
 
     var textBox = document.createElement('div');
@@ -196,7 +198,7 @@
 
     var titleRow = document.createElement('div');
     titleRow.className = 'gpet-menu-title';
-    titleRow.innerHTML = '<span>✦</span><span style="flex:1">Gemini 哈基米设置</span>';
+    titleRow.innerHTML = '<span>✦</span><span style="flex:1">托特设置</span>';
     var closeMenuBtn = document.createElement('button');
     closeMenuBtn.type = 'button';
     closeMenuBtn.innerHTML = '✕';
@@ -308,14 +310,14 @@
 
     var workStateSelect = document.createElement('select');
     workStateSelect.className = 'gpet-sound';
-    workStateSelect.appendChild(soundOpt('auto', petT('自动跟随 (工作吹茶/空闲站立)')));
-    workStateSelect.appendChild(soundOpt('typing', petT('疯狂码字 (打字敲键盘)')));
-    workStateSelect.appendChild(soundOpt('chill', petT('吹茶品茗 (工作中)')));
-    workStateSelect.appendChild(soundOpt('idle', petT('端庄站立 (经典待机)')));
-    workStateSelect.appendChild(soundOpt('happy', petT('跪姿萌爪 (开心元气)')));
-    workStateSelect.appendChild(soundOpt('dragged', petT('悬空拎起 (呆萌被提)')));
-    workStateSelect.appendChild(soundOpt('fall', petT('跌坐揉头 (摔倒哭哭)')));
-    workStateSelect.appendChild(soundOpt('pat', petT('摸头眯眼 (害羞享受)')));
+    workStateSelect.appendChild(soundOpt('auto', petT('自动跟随 (托腮思考/静静守候)')));
+    workStateSelect.appendChild(soundOpt('typing', petT('专注思考 (键盘联动)')));
+    workStateSelect.appendChild(soundOpt('chill', petT('托腮思考 (工作中)')));
+    workStateSelect.appendChild(soundOpt('idle', petT('静静守候 (待机)')));
+    workStateSelect.appendChild(soundOpt('happy', petT('挥手问候 (互动)')));
+    workStateSelect.appendChild(soundOpt('dragged', petT('迈步出发 (拖动)')));
+    workStateSelect.appendChild(soundOpt('fall', petT('轻盈落地 (下落)')));
+    workStateSelect.appendChild(soundOpt('pat', petT('挥手回应 (摸头)')));
     workStateSelect.addEventListener('change', function () { setWorkStateMode(workStateSelect.value); });
 
     var antigravitySyncSelect = document.createElement('select');
@@ -478,39 +480,39 @@
       var pct = val * 100;
       if (pct <= 20) return '#fb7185';
       if (pct <= 50) return '#fbbf24';
-      return '#38bdf8';
+      return '#83d8ce';
     }
 
-    // Interactive Cat Maid & Coder Dialogue Quotes (随着按压次数随机显示)
+    // Ceramic guardian & coder dialogue (随着按压次数随机显示)
     var TEXT_QUOTES = [
       // 捏捏互动类 (Squish & touch reactions)
-      petT('别捏啦，猫耳和肉垫要被你捏扁了喵！(>w<)'),
-      petT('呀！捏我干嘛，再捏我就要吐泡泡了喵~'),
-      petT('呼噜呼噜… 捏得好舒服，猫生圆满了喵~ (≧∇≦)ﾉ'),
-      petT('弹力十足吧！这可是纯天然无添加的猫猫脂肪喵！'),
-      petT('Q 弹 Q 弹~ 再按一下，我就要原地起飞了喵！'),
-      petT('嗷呜！手感是不是超棒？小鱼干准备好了吗喵~'),
-      petT('捏一次消耗 0.1 焦耳，主人快敲代码补充能量喵！'),
-      petT('今天也是被主人宠幸（捏脸）的一天喵~ ✦'),
+      petT('轻一点，我的青绿釉面可要好好爱护。'),
+      petT('碰一碰，今天的灵感就亮起来了。'),
+      petT('收到你的问候，心情像釉面一样闪闪发亮。'),
+      petT('青绿陶瓷，内置一点点好奇心。'),
+      petT('再碰一下，灵感也许就要起飞了。'),
+      petT('给我一点阳光，我就能陪你很久。'),
+      petT('补充一点灵感，我们继续写代码吧。'),
+      petT('今天也是与你并肩工作的一天 ✦'),
 
       // 陪伴与元气类 (Cheering & companion)
-      petT('我是你的 Gemini 哈基米！今天也要元气满满写代码喵~ ✦'),
-      petT('有 Bug 别慌，反重力引擎会保佑你的喵~ (=^･ω･^=)'),
-      petT('呼噜呼噜… 摸摸头，代码一遍过，测试全绿喵！'),
-      petT('今天主人敲代码速度好快！哈基米我都快眼花了喵~'),
-      petT('你写的那几千行代码，我一口气就看完了喵~ 厉害吧！'),
-      petT('主人主人辛苦啦~ 记得多喝水休息一下眼睛喵~'),
-      petT('好舒服喵~ 记得多给我备两桶小鱼干！'),
-      petT('休息一下吧，反重力引擎帮你盯好屏幕了喵~'),
+      petT('我是托特，今天也陪你把想法变成代码 ✦'),
+      petT('遇到 Bug 别慌，我们一起梳理线索。'),
+      petT('愿今天的代码顺畅，测试全绿 ✦'),
+      petT('你敲代码真快，托特正在努力跟上。'),
+      petT('一行一行，想法正在成为现实。'),
+      petT('辛苦了，记得喝水，也让眼睛休息一下。'),
+      petT('不急，慢慢来，我会一直在这里。'),
+      petT('休息一下吧，回来时我还在这里。'),
 
       // 程序员幽默与反重力彩蛋 (Coder humor & easter eggs)
       petT('代码没有 Bug，只是有独特的个性！'),
       petT('反重力编译中… 正在将咖啡因转化为可用代码！'),
-      petT('✦ 宇宙算力全开！今天的哈基米超凶的！'),
+      petT('✦ 灵感之门开启，托特准备就绪！'),
       petT('Git commit: "又改了一堆玄学代码" (嘘)'),
       petT('正在向宇宙发射好运光波… 编译一次通过！'),
-      petT('只要我不看报错，报错就相当于不存在喵！'),
-      petT('键盘敲得啪啪响，年终奖金蹭蹭涨喵~')
+      petT('报错也是线索，下一步就从这里开始。'),
+      petT('键盘声像细雨，想法正慢慢生长。')
     ];
 
     var lastQuoteIdx = -1;
@@ -589,7 +591,7 @@
       lastHintText = null;
       labelEl.style.display = '';
       labelEl.className = 'gpet-label';
-      labelEl.style.color = '#38bdf8';
+      labelEl.style.color = '#83d8ce';
       amountEl.style.display = '';
       amountEl.className = 'gpet-amount';
       hintEl.style.display = '';
@@ -653,8 +655,8 @@
       var fallQuotes = [
         singleCenter('A', petT('呜哇... 屁股摔得好痛痛 QAQ'), '#fb7185', true),
         singleCenter('A', petT('呜呜呜... 谁把人家扔下来的？！'), '#fb7185', true),
-        singleCenter('A', petT('晕乎乎... 头顶冒小星星了 @o@'), '#c084fc', true),
-        singleCenter('A', petT('哎哟... 下次要接住我嘛~ 哼！'), '#38bdf8', true)
+        singleCenter('A', petT('晕乎乎... 头顶冒小星星了 @o@'), '#bda56e', true),
+        singleCenter('A', petT('哎哟... 下次要接住我嘛~ 哼！'), '#83d8ce', true)
       ];
       var lines = pickOne(fallQuotes);
 
@@ -671,7 +673,7 @@
       bubbleTimer = setTimeout(hideBubble, 4500);
     }
 
-    var heartSymbols = ['💖', '✨', '🌸', '💕', '✦', '🐾'];
+    var heartSymbols = ['✦', '✨', '◇', '✧'];
     function spawnHeartNearHead() {
       try {
         var heart = document.createElement('div');
@@ -696,12 +698,12 @@
       pressCount = 2;
 
       var patQuotes = [
-        singleCenter('A', petT('呼噜呼噜… 最喜欢主人摸摸啦~ (ฅ^ω^ฅ)'), '#f472b6', true),
-        singleCenter('A', petT('蹭蹭~ 主人的手好暖和呀 ✦'), '#f472b6', true),
-        singleCenter('A', petT('脸颊都要被主人揉圆了啦… > <'), '#fb7185', true),
-        singleCenter('A', petT('摸摸头，今天写代码 Bug 全部退散喵！'), '#38bdf8', true),
-        singleCenter('A', petT('唔姆… 好舒服，猫猫不想努力了喵~ (//∇//)'), '#f472b6', true),
-        singleCenter('A', petT('最喜欢被主人温柔摸头了喵~ 💖'), '#f472b6', true)
+        singleCenter('A', petT('谢谢你的摸摸，托特收到啦 ✦'), '#83d8ce', true),
+        singleCenter('A', petT('一点温暖，点亮今天的青绿时光 ✦'), '#83d8ce', true),
+        singleCenter('A', petT('我的釉面今天也闪闪发亮。'), '#fb7185', true),
+        singleCenter('A', petT('摸摸头，愿今天的代码一路顺利 ✦'), '#83d8ce', true),
+        singleCenter('A', petT('这会儿很安静，适合酝酿一个好想法。'), '#83d8ce', true),
+        singleCenter('A', petT('温柔的问候，总会带来新的灵感 ✦'), '#83d8ce', true)
       ];
       var lines = pickOne(patQuotes);
 
@@ -723,7 +725,7 @@
       if (bubbleTimer) { clearTimeout(bubbleTimer); bubbleTimer = null; }
       bubbleRandomActive = true;
       pressCount = 2;
-      var lines = singleCenter('A', text, color || '#38bdf8', true);
+      var lines = singleCenter('A', text, color || '#83d8ce', true);
       if (bubbleShown) {
         swapBubbleContent(function () {
           applyBubbleLines(lines);
@@ -784,15 +786,15 @@
 
       if (isLive) {
         labelEl.textContent = petT('✦ 正在思考与敲代码...');
-        labelEl.style.color = '#c084fc';
-        amountEl.textContent = petT('持续工作中喵~ (ฅ^ω^ฅ)');
-        amountEl.style.color = '#38bdf8';
+        labelEl.style.color = '#bda56e';
+        amountEl.textContent = petT('专注工作中 ✦');
+        amountEl.style.color = '#83d8ce';
         amountEl.style.fontSize = 'calc(var(--gpet-u) * 50)';
         bubbleBox.classList.add('gpet-bubble-open');
         // Keep open while agent is working
       } else {
-        labelEl.textContent = petT('✦ 主人，本次一共消耗:');
-        labelEl.style.color = '#38bdf8';
+        labelEl.textContent = petT('✦ 本次一共消耗:');
+        labelEl.style.color = '#83d8ce';
         amountEl.style.fontSize = '';
         if (typeof amount === 'number') {
           amountEl.textContent = amount.toLocaleString() + ' ' + (unit || 'tokens');
@@ -989,10 +991,10 @@
     }
 
     // Agent Working State & Sprite Management
-    // Rule 1: C (chill: 喝茶吹气) displayed when Agent is working ("我在工作")
+    // Rule 1: C (chill: 托腮思考) displayed when Agent is working ("我在工作")
     // Rule 2: I (idle: 经典端庄站立) displayed when Agent is NOT working ("没工作")
-    // Rule 3: D (dragged: 捧星) displayed when dragging
-    // Rule 4: H (happy: 跪姿抬爪喵喵) displayed when clicked (interaction)
+    // Rule 3: D (dragged: 迈步出发) displayed when dragging
+    // Rule 4: H (happy: 挥手问候) displayed when clicked (interaction)
     function isCurrentlyWorking() {
       if (workStateMode === 'chill' || workStateMode === 'working') return true;
       if (workStateMode === 'idle') return false;
@@ -1007,7 +1009,7 @@
       if (workStateMode === 'dragged') return IMAGES.dragged;
       if (workStateMode === 'fall') return IMAGES.fall;
       if (workStateMode === 'pat') return IMAGES.pat;
-      // 'auto' 模式：根据 Agent 状态自动切换（工作吹茶，空闲站立）
+      // 'auto' 模式：根据 Agent 状态自动切换（工作思考，空闲站立）
       return agentWorking ? IMAGES.chill : IMAGES.idle;
     }
 
@@ -1704,12 +1706,12 @@
         // 若悬停在半空（远离任务栏），触发反重力悬停趣味台词
         if (curY < floorY - 60 && bubbleOn && !bubbleShown) {
           var hoverQuotes = [
-            petT('✦ 反重力引擎启动，悬停就绪喵~'),
-            petT('我就呆在这里看你敲代码喵~ ✦'),
-            petT('浮空守护中… 屏幕视野超棒喵~ (ฅ^ω^ฅ)'),
-            petT('反重力小猫咪随时待命 ✦')
+            petT('✦ 反重力引擎启动，青绿守护就绪'),
+            petT('我在这里，陪你把思路慢慢写下来 ✦'),
+            petT('浮空守候中，今天的视野很开阔 ✦'),
+            petT('青绿守护者随时待命 ✦')
           ];
-          var lines = singleCenter('A', pickOne(hoverQuotes), '#38bdf8', true);
+          var lines = singleCenter('A', pickOne(hoverQuotes), '#83d8ce', true);
           applyBubbleLines(lines);
           bubbleShown = true;
           bubbleBox.classList.add('gpet-bubble-open');
@@ -1927,14 +1929,14 @@
     var lastTypingBubbleTime = 0;
 
     var TYPING_QUOTES = [
-      petT('主人敲键盘好快！我也来帮忙敲两行！啪啪啪~ ✦'),
-      petT('啪啪啪… 正在给主人的代码施加“无 Bug 魔法”喵！(ฅ^ω^ฅ)'),
+      petT('键盘声响起来了，我们一起专注吧 ✦'),
+      petT('托特正在思考，愿下一次测试全绿 ✦'),
       petT('键盘要敲冒烟啦！这就是传说中的手速吗？！(🔥)'),
-      petT('Git push origin master --force… (嘘，开玩笑的喵！)'),
-      petT('Ctrl+C，Ctrl+V… 熟练得让人心疼喵！( >w< )'),
-      petT('呼噜呼噜… 反重力引擎已将咖啡因转化为可用代码！'),
-      petT('⚡ 结对编程模式启动！今天的产出翻倍喵！'),
-      petT('主人尽管敲，报错有反重力引擎顶着喵！')
+      petT('先检查，再提交，让每一步都稳稳落地。'),
+      petT('Ctrl+C，Ctrl+V… 别忘了留一点时间休息。'),
+      petT('反重力引擎正在把灵感转化为代码 ✦'),
+      petT('✦ 结对编程就绪，我们一步一步来。'),
+      petT('继续写吧，遇到报错我们一起解决。')
     ];
 
     function spawnTypingSpark() {
@@ -1966,7 +1968,7 @@
       pressCount = 2;
 
       var text = pickOne(TYPING_QUOTES);
-      var lines = singleCenter('A', text, '#8b5cf6', true);
+      var lines = singleCenter('A', text, '#123743', true);
 
       if (bubbleShown) {
         swapBubbleContent(function () {
@@ -2039,10 +2041,10 @@
         isAntigravityConnected = !!alive;
         if (isAntigravityConnected !== prev) {
           if (isAntigravityConnected) {
-            showCustomSpeechBubble(petT('✦ 反重力已连接！主人今天想写点什么代码喵？'), '#2563eb');
+            showCustomSpeechBubble(petT('✦ 反重力已连接，今天的灵感从哪里开始？'), '#147d7a');
             try { ipcRenderer.send('pet-request-quota'); } catch (_) {}
           } else if (hasShownInitialGreeting) {
-            showCustomSpeechBubble(petT('✦ 反重力已退出，进入待机摸鱼模式~ (ฅ^ω^ฅ)'), '#64748b');
+            showCustomSpeechBubble(petT('✦ 反重力已退出，托特静静守候'), '#64748b');
             setAgentWorking(false);
           }
           hasShownInitialGreeting = true;
@@ -2059,7 +2061,7 @@
           void img.offsetWidth;
           img.classList.add('gpet-jelly');
           playRelease();
-          showCustomSpeechBubble(petT('✦ 主人，我在这里喵！(ฅ^ω^ฅ)'), '#38bdf8');
+          showCustomSpeechBubble(petT('✦ 我在这里，托特随时为你效劳'), '#83d8ce');
         } catch (_) {}
       });
       ipcRenderer.on('pet-trigger-motion', function (e, motion) {
@@ -2119,7 +2121,7 @@
       });
       ipcRenderer.on('pet-farewell-exit', function () {
         try {
-          showCustomSpeechBubble(petT('✦ 反重力已退出，桌宠同步退出喵~ 拜拜！'), '#ef4444');
+          showCustomSpeechBubble(petT('✦ 反重力已退出，托特与你暂别'), '#ef4444');
         } catch (_) {}
       });
       try {
@@ -2170,7 +2172,7 @@
       }
     };
     updateMousePassThrough(false);
-    console.log('✦ Gemini 哈基米 (尺寸调节 & 纯净Gemini配额版) 已就绪！');
+    console.log('✦ 托特 (尺寸调节 & 纯净Gemini配额版) 已就绪！');
   } // end of initWidget
 
   initWidget();

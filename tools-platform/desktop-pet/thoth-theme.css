@@ -1,0 +1,100 @@
+/* Shared ceramic palette for the pet, menu and companion windows. */
+:root {
+  color-scheme: light;
+  --pet-ink: #123743;
+  --pet-muted: #52737a;
+  --pet-accent: #147d7a;
+  --pet-accent-deep: #105d61;
+  --pet-glaze: #83d8ce;
+  --pet-gold: #bda56e;
+  --pet-paper: #f4faf5;
+  --pet-panel: rgba(244, 250, 245, .97);
+  --pet-field: #ffffff;
+  --pet-wash: rgba(131, 216, 206, .14);
+  --pet-line: rgba(20, 125, 122, .3);
+  --pet-shadow: rgba(13, 47, 61, .2);
+}
+.chat-container, .settings-card, .gpet-menu {
+  color: var(--pet-ink);
+  background: radial-gradient(ellipse at 12% 0%, rgba(131, 216, 206, .24), transparent 58%), var(--pet-panel);
+  border: 1px solid var(--pet-line);
+  box-shadow: 0 12px 32px var(--pet-shadow), inset 0 1px 0 rgba(255, 255, 255, .7);
+}
+.chat-header {
+  background: linear-gradient(120deg, var(--pet-wash), transparent);
+  border-bottom: 1px solid var(--pet-gold);
+}
+.chat-header .avatar-wrapper {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #dff5e9, #83d8ce);
+  border: 1px solid var(--pet-gold);
+  box-shadow: 0 3px 10px var(--pet-shadow);
+  overflow: visible;
+}
+.chat-header .avatar-img {
+  width: 38px;
+  height: 40px;
+  object-position: center bottom;
+}
+.header-title, .title-row, .gpet-menu-title { color: var(--pet-accent-deep); }
+.header-subtitle, .tip-text, .gpet-volpct { color: var(--pet-muted); }
+.settings-card { min-height: calc(100% - 16px); height: auto; gap: 7px; border-radius: 18px; }
+.title-row { padding-bottom: 8px; border-bottom: 1px solid var(--pet-gold); }
+.settings-avatar { width: 28px; height: 36px; object-fit: contain; flex-shrink: 0; }
+.msg-row.ai .msg-bubble { background: var(--pet-field); color: var(--pet-ink); border-color: var(--pet-line); }
+.msg-row.user .msg-bubble, .send-btn {
+  background: linear-gradient(135deg, #147d7a, #123743);
+  color: #ffffff;
+}
+.msg-row.user .msg-bubble { border: 1px solid rgba(189, 165, 110, .6); }
+.chat-footer, .chip-btn, .quota-chip, .input-box, .number-badge, .gpet-number, .gpet-sound {
+  background-color: var(--pet-field);
+  color: var(--pet-ink);
+  border-color: var(--pet-line);
+}
+.input-box:focus { background: var(--pet-field); border-color: var(--pet-accent); }
+.input-box::placeholder { color: var(--pet-muted); }
+.check-label, .menu-row, .menu-label, .gpet-menu-row { color: var(--pet-ink); }
+.range-input, .check-input, .gpet-range, .gpet-check { accent-color: var(--pet-accent); }
+.btn-secondary { background: var(--pet-wash); color: var(--pet-accent-deep); border-color: var(--pet-line); }
+.btn-secondary:hover, .chip-btn:hover, .header-btn:hover, .gpet-sound:hover { background: var(--pet-wash); color: var(--pet-accent-deep); }
+.quota-capsule-bar, .quick-chips, .typing-indicator { background: var(--pet-wash); color: var(--pet-accent-deep); border-color: var(--pet-line); }
+.quota-chip.idle { color: var(--pet-muted); border-color: var(--pet-line); }
+.gpet-menu { border-radius: 16px; }
+.gpet-menu-title { border-bottom: 1px solid var(--pet-gold); padding-bottom: 8px; }
+.gpet-menu-sep { background: var(--pet-line); }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--pet-accent);
+  outline-offset: 2px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --pet-ink: #e1f4ed;
+    --pet-muted: #a5c4c4;
+    --pet-accent: #83d8ce;
+    --pet-accent-deep: #a0e4d8;
+    --pet-paper: #0d2b35;
+    --pet-panel: rgba(13, 43, 53, .97);
+    --pet-field: #173c46;
+    --pet-wash: rgba(131, 216, 206, .1);
+    --pet-line: rgba(131, 216, 206, .28);
+    --pet-shadow: rgba(0, 12, 19, .4);
+  }
+  .chat-container, .settings-card, .gpet-menu { box-shadow: 0 12px 32px var(--pet-shadow), inset 0 1px 0 var(--pet-line); }
+  .btn-warning { background: #442e2c; color: #ffd3bb; border-color: #966c50; }
+  .btn-danger { background: #422d35; color: #ffc4ca; border-color: #96616d; }
+  .btn-warning:hover, .btn-danger:hover { background: #543b3c; }
+}
+@media (max-width: 340px) {
+  .chat-header { padding: 9px; gap: 7px; }
+  .header-title { font-size: 12px; }
+  .chat-footer { padding: 8px; gap: 5px; }
+  .send-btn { padding: 0 9px; }
+  .settings-card { padding: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .avatar-img, .msg-row, .typing-indicator, .gpet-breathe, .gpet-typing-anim { animation: none !important; }
+}

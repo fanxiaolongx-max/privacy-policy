@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <title>✦ 哈基米桌宠设置</title>
+  <title>✦ 托特桌宠设置</title>
   <style>
     * {
       box-sizing: border-box;
@@ -25,10 +25,10 @@
       background: rgba(255, 255, 255, 0.92);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(244, 114, 182, 0.35);
+      border: 1px solid rgba(20, 125, 122, 0.35);
       border-radius: 16px;
       padding: 14px 16px;
-      box-shadow: 0 16px 36px rgba(236, 72, 153, 0.15), 0 4px 12px rgba(15, 23, 42, 0.12);
+      box-shadow: 0 16px 36px rgba(20, 125, 122, 0.15), 0 4px 12px rgba(15, 23, 42, 0.12);
       color-scheme: light;
       display: flex;
       flex-direction: column;
@@ -37,7 +37,7 @@
     .title-row {
       font-size: 13px;
       font-weight: 800;
-      color: #be185d;
+      color: #105d61;
       display: flex;
       align-items: center;
       gap: 6px;
@@ -82,17 +82,17 @@
     .range-input {
       flex: 1;
       min-width: 0;
-      accent-color: #ec4899;
+      accent-color: #147d7a;
       cursor: pointer;
     }
     .number-badge {
       width: 42px;
-      border: 1px solid rgba(244, 114, 182, 0.3);
+      border: 1px solid rgba(20, 125, 122, 0.3);
       border-radius: 6px;
       padding: 2px 4px;
       font-size: 11px;
-      color: #be185d;
-      background: rgba(253, 242, 248, 0.8);
+      color: #105d61;
+      background: rgba(230, 244, 235, 0.8);
       text-align: center;
       flex-shrink: 0;
       font-weight: 600;
@@ -110,12 +110,12 @@
     .check-input {
       width: 15px;
       height: 15px;
-      accent-color: #ec4899;
+      accent-color: #147d7a;
       cursor: pointer;
     }
     .divider {
       height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(244, 114, 182, 0.25), transparent);
+      background: linear-gradient(90deg, transparent, rgba(20, 125, 122, 0.25), transparent);
       margin: 6px 0;
     }
     .actions-grid {
@@ -170,14 +170,15 @@
       margin-top: 2px;
     }
   </style>
-  <script src="pet-i18n.js?v=20261005-01"></script>
+  <script src="pet-i18n.js?v=20261007-01"></script>
+  <link rel="stylesheet" href="thoth-theme.css?v=20261007-01">
 </head>
 <body>
   <div class="settings-card">
     <div class="title-row">
       <div class="title-text">
-        <span>🐾</span>
-        <span>哈基米桌宠设置</span>
+        <img class="settings-avatar" src="./assets/thoth/idle.png" alt="青绿陶瓷鸟人托特">
+        <span>托特桌宠设置</span>
       </div>
       <button class="close-btn" id="closeBtn" title="关闭设置">✕</button>
     </div>
@@ -207,7 +208,7 @@
     <div class="menu-row">
       <label class="check-label">
         <input type="checkbox" id="typingCheck" class="check-input" checked>
-        <span>打字与任务起舞动效 (全局敲键盘)</span>
+        <span>专注陪伴 (全局键盘联动)</span>
       </label>
     </div>
 
@@ -218,7 +219,7 @@
         <button id="authMacBtn" type="button" style="background:#f59e0b;color:#fff;border:none;border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;font-weight:700;">去授权</button>
       </div>
       <div style="font-size:10px;color:#94a3b8;margin-top:4px;line-height:1.4;">
-        需要「辅助功能」授权才能在其他应用打字时感知按键喵
+        需要「辅助功能」授权才能在其他应用打字时感知按键
       </div>
     </div>
 

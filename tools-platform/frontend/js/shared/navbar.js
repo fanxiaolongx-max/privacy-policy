@@ -1297,10 +1297,35 @@ function normalizeNavSettings(settings = {}) {
         return cat;
     }) : NAV_DEFAULT_SETTINGS.categories.slice();
 
+    const clean = (val, max = 120) => typeof val === 'string'
+        ? val.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, max)
+        : '';
+
+    const rawName = clean(settings.platformName, 80);
+    const rawHasNonAscii = /[^\x00-\x7F]/.test(rawName);
+    let platformNameZh = clean(settings.platformNameZh, 80);
+    let platformNameEn = clean(settings.platformNameEn, 80);
+
+    if (platformNameZh && platformNameEn && platformNameZh.toLowerCase() === platformNameEn.toLowerCase() && !/[^\x00-\x7F]/.test(platformNameZh) && (platformNameEn.toLowerCase() === 'thoth platform' || platformNameEn.toLowerCase() === 'tools platform' || platformNameEn.toLowerCase() === 'eg cs hub')) {
+        platformNameZh = '图特工具平台';
+    }
+
+    platformNameZh = platformNameZh || (rawHasNonAscii ? rawName : '图特工具平台');
+    platformNameEn = platformNameEn || (!rawHasNonAscii && rawName ? rawName : 'Thoth Platform');
+    const platformSubtitle = clean(settings.platformSubtitle, 120) || '埃及 CS 工具与知识中心';
+    const platformSubtitleEn = clean(settings.platformSubtitleEn, 120) || 'Egypt CS Tools & Knowledge Center';
+    const platformSlogan = clean(settings.platformSlogan, 200) || '“以智慧之神图特之羽衡度万象，以数智之枢纽连接经验与效率。”';
+    const platformSloganEn = clean(settings.platformSloganEn, 200) || '“By the scales of Thoth, ancient god of wisdom — measuring order, uniting tools, and turning experience into efficiency.”';
+    const platformName = rawName || platformNameZh;
+
     return {
-        platformName: typeof settings.platformName === 'string'
-            ? settings.platformName.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 80) || 'Tools Platform'
-            : 'Tools Platform',
+        platformName,
+        platformNameZh,
+        platformNameEn,
+        platformSubtitle,
+        platformSubtitleEn,
+        platformSlogan,
+        platformSloganEn,
         primaryIds: Array.isArray(settings.primaryIds) ? settings.primaryIds.map(String) : NAV_DEFAULT_SETTINGS.primaryIds.slice(),
         categories: cats,
         categoryByItem: settings.categoryByItem && typeof settings.categoryByItem === 'object' ? { ...settings.categoryByItem } : { ...NAV_DEFAULT_SETTINGS.categoryByItem },
@@ -1319,21 +1344,95 @@ let platformTitleObserver = null;
 
 function applyPlatformTitle() {
     if (document.title !== platformTitleApplied) platformTitleOriginal = document.title;
-    const name = navState.settings.platformName || 'Tools Platform';
-    const next = (platformTitleOriginal || '').split('Tools Platform').join(name);
+    const isEn = typeof window !== 'undefined' && window.ToolsI18n?.getLanguage?.() === 'en-US';
+    const mainName = (isEn && navState.settings?.platformNameEn)
+        ? navState.settings.platformNameEn
+        : (navState.settings?.platformNameZh || navState.settings?.platformName || '图特工具平台');
+    let next = platformTitleOriginal || '';
+    if (next.includes('Tools Platform')) {
+        next = next.split('Tools Platform').join(mainName);
+    } else if (next.includes('EG CS HUB')) {
+        next = next.split('EG CS HUB').join(mainName);
+    }
     platformTitleApplied = next;
     if (document.title !== next) document.title = next;
 }
 
 function applyPlatformIdentity() {
-    const name = navState.settings.platformName || 'Tools Platform';
-    document.querySelectorAll('#app-navbar .brand-name, [data-platform-name]').forEach(el => {
-        el.textContent = name;
-        el.title = name;
+    const isEn = typeof window !== 'undefined' && window.ToolsI18n?.getLanguage?.() === 'en-US';
+    const rawName = navState.settings?.platformName || '';
+    const rawHasNonAscii = /[^\x00-\x7F]/.test(rawName);
+
+    let zhName = navState.settings?.platformNameZh;
+    let enName = navState.settings?.platformNameEn;
+
+    if (zhName && enName && zhName.toLowerCase() === enName.toLowerCase() && !/[^\x00-\x7F]/.test(zhName) && (enName.toLowerCase() === 'thoth platform' || enName.toLowerCase() === 'tools platform' || enName.toLowerCase() === 'eg cs hub')) {
+        zhName = '图特工具平台';
+    }
+
+    zhName = zhName || (rawHasNonAscii ? rawName : (navState.settings?.platformName || '图特工具平台'));
+    enName = enName || (!rawHasNonAscii && rawName ? rawName : 'Thoth Platform');
+
+    const zhSub = navState.settings?.platformSubtitle || '埃及 CS 工具与知识中心';
+    const enSub = navState.settings?.platformSubtitleEn || 'Egypt CS Tools & Knowledge Center';
+    const zhSlogan = navState.settings?.platformSlogan || '“以智慧之神图特之羽衡度万象，以数智之枢纽连接经验与效率。”';
+    const enSlogan = navState.settings?.platformSloganEn || '“By the scales of Thoth, ancient god of wisdom — measuring order, uniting tools, and turning experience into efficiency.”';
+
+    const mainName = (isEn && navState.settings?.platformNameEn) ? enName : (navState.settings?.platformNameZh || navState.settings?.platformName || zhName);
+    const secondaryName = (isEn && navState.settings?.platformNameEn) ? zhName : enName;
+    const subtitleText = isEn ? (enSub || zhSub) : (zhSub || enSub);
+    const sloganText = isEn ? (enSlogan || zhSlogan) : (zhSlogan || enSlogan);
+
+    try {
+        if (typeof localStorage !== 'undefined') {
+            localStorage.setItem('tools_platform_name', mainName);
+            localStorage.setItem('tools_platform_identity', JSON.stringify({
+                platformName: navState.settings?.platformName || mainName,
+                platformNameZh: zhName,
+                platformNameEn: enName,
+                platformSubtitle: zhSub,
+                platformSubtitleEn: enSub,
+                platformSlogan: zhSlogan,
+                platformSloganEn: enSlogan
+            }));
+        }
+    } catch (_) {}
+
+    document.querySelectorAll('#app-navbar .brand-name, [data-platform-name], [data-platform-main-title]').forEach(el => {
+        el.textContent = mainName;
+        el.title = mainName;
+    });
+
+    const hasDistinctSecondary = Boolean(
+        secondaryName &&
+        mainName &&
+        secondaryName.trim().toLowerCase() !== mainName.trim().toLowerCase()
+    );
+
+    document.querySelectorAll('[data-platform-sub-title]').forEach(el => {
+        if (typeof el.getAttribute === 'function' && el.getAttribute('data-platform-sub-title') !== null) {
+            if (hasDistinctSecondary) {
+                el.textContent = secondaryName;
+                el.style.display = '';
+            } else {
+                el.textContent = '';
+                el.style.display = 'none';
+            }
+        }
+    });
+    document.querySelectorAll('[data-platform-page-subtitle]').forEach(el => {
+        if (typeof el.getAttribute === 'function' && el.getAttribute('data-platform-page-subtitle') !== null) {
+            el.textContent = subtitleText;
+        }
+    });
+    document.querySelectorAll('[data-platform-slogan]').forEach(el => {
+        if (typeof el.getAttribute === 'function' && el.getAttribute('data-platform-slogan') !== null) {
+            el.textContent = sloganText;
+        }
     });
     ['navBrandLogo', 'homeHeroLogo'].forEach(id => {
         const image = document.getElementById(id);
-        if (image) image.alt = name;
+        if (image) image.alt = mainName;
     });
     applyPlatformTitle();
     // Business pages can change their titles after loading or switching language.
@@ -2532,13 +2631,38 @@ async function renderLogoSettings(content) {
     content.innerHTML = `
         <div class="logo-settings-container">
             <div class="logo-settings-card">
-                <h3>✏️ ${text('平台名称', 'Platform name')}</h3>
-                <p>${text('用于当前租户的首页、顶部导航和页面标题，最多 80 个字符。留空恢复默认名称 Tools Platform。', 'Shown on the current tenant’s home page, navigation and page titles. Up to 80 characters; leave blank to restore Tools Platform.')}</p>
+                <h3>✏️ ${text('平台标识与名称设定', 'Platform identity & names')}</h3>
+                <p>${text('支持配置中英文主名称、副标题与登录页专属标语。在中文界面优先显示中文名称，英文界面自动倒置为主英辅中。保存后自动同步为平台全局默认配置。', 'Configure Chinese and English platform names, subtitle and mystical login slogan. Display order reverses automatically based on current language. Saved values become the system defaults.')}</p>
                 <form onsubmit="event.preventDefault(); savePlatformName()">
-                    <label for="platformNameInput">${text('显示名称', 'Display name')}</label>
-                    <div class="nav-settings-actions" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:8px">
-                        <input id="platformNameInput" class="nav-settings-input" style="flex:1;min-width:160px" maxlength="80" value="${navEscape(navState.settings.platformName || 'Tools Platform')}" placeholder="Tools Platform" autocomplete="off">
-                        <button type="submit" class="primary" id="platformNameSaveBtn">${text('保存名称', 'Save name')}</button>
+                    <input type="hidden" id="platformNameInput" value="${navEscape(navState.settings.platformName || '图特工具平台')}">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:14px;margin-top:12px;">
+                        <div>
+                            <label for="platformNameZhInput" style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px;">🇨🇳 ${text('主名称 (中文)', 'Main Name (Chinese)')}</label>
+                            <input id="platformNameZhInput" class="nav-settings-input" style="width:100%;box-sizing:border-box" maxlength="80" value="${navEscape(navState.settings.platformNameZh || (/[^\x00-\x7F]/.test(navState.settings.platformName || '') ? navState.settings.platformName : '图特工具平台'))}" placeholder="图特工具平台" autocomplete="off" oninput="document.getElementById('platformNameInput').value = this.value">
+                        </div>
+                        <div>
+                            <label for="platformNameEnInput" style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px;">🇬🇧 ${text('主名称 (英文)', 'Main Name (English)')}</label>
+                            <input id="platformNameEnInput" class="nav-settings-input" style="width:100%;box-sizing:border-box" maxlength="80" value="${navEscape(navState.settings.platformNameEn || (!/[^\x00-\x7F]/.test(navState.settings.platformName || '') && navState.settings.platformName ? navState.settings.platformName : 'Thoth Platform'))}" placeholder="Thoth Platform" autocomplete="off">
+                        </div>
+                        <div>
+                            <label for="platformSubtitleInput" style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px;">📑 ${text('页面副标题 (中文)', 'Page Subtitle (Chinese)')}</label>
+                            <input id="platformSubtitleInput" class="nav-settings-input" style="width:100%;box-sizing:border-box" maxlength="120" value="${navEscape(navState.settings.platformSubtitle || '埃及 CS 工具与知识中心')}" placeholder="埃及 CS 工具与知识中心" autocomplete="off">
+                        </div>
+                        <div>
+                            <label for="platformSubtitleEnInput" style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px;">📑 ${text('页面副标题 (英文)', 'Page Subtitle (English)')}</label>
+                            <input id="platformSubtitleEnInput" class="nav-settings-input" style="width:100%;box-sizing:border-box" maxlength="120" value="${navEscape(navState.settings.platformSubtitleEn || 'Egypt CS Tools & Knowledge Center')}" placeholder="Egypt CS Tools & Knowledge Center" autocomplete="off">
+                        </div>
+                        <div style="grid-column: 1 / -1;">
+                            <label for="platformSloganInput" style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px;">✨ ${text('登录页标语 (中文，神秘斜体引用)', 'Login Page Slogan (Chinese, mystical italic quote)')}</label>
+                            <input id="platformSloganInput" class="nav-settings-input" style="width:100%;box-sizing:border-box" maxlength="200" value="${navEscape(navState.settings.platformSlogan || '“以智慧之神图特之羽衡度万象，以数智之枢纽连接经验与效率。”')}" placeholder="“以智慧之神图特之羽衡度万象，以数智之枢纽连接经验与效率。”" autocomplete="off">
+                        </div>
+                        <div style="grid-column: 1 / -1;">
+                            <label for="platformSloganEnInput" style="display:block;font-size:12.5px;font-weight:600;margin-bottom:6px;">✨ ${text('登录页标语 (英文)', 'Login Page Slogan (English)')}</label>
+                            <input id="platformSloganEnInput" class="nav-settings-input" style="width:100%;box-sizing:border-box" maxlength="200" value="${navEscape(navState.settings.platformSloganEn || '“By the scales of Thoth, ancient god of wisdom — measuring order, uniting tools, and turning experience into efficiency.”')}" placeholder="“By the scales of Thoth, ancient god of wisdom — measuring order, uniting tools, and turning experience into efficiency.”" autocomplete="off">
+                        </div>
+                    </div>
+                    <div class="nav-settings-actions" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:14px">
+                        <button type="submit" class="primary" id="platformNameSaveBtn">${text('保存标识设置', 'Save identity settings')}</button>
                         <span id="platformNameSaveStatus" role="status" style="font-size:12px"></span>
                     </div>
                 </form>
@@ -2610,14 +2734,47 @@ window.savePlatformName = async function () {
     const button = document.getElementById('platformNameSaveBtn');
     const status = document.getElementById('platformNameSaveStatus');
     if (!input || !button || button.disabled) return;
-    const platformName = input.value.replace(/[\u0000-\u001f\u007f]/g, '').trim() || 'Tools Platform';
+
+    const zhInput = document.getElementById('platformNameZhInput');
+    const enInput = document.getElementById('platformNameEnInput');
+    const subInput = document.getElementById('platformSubtitleInput');
+    const subEnInput = document.getElementById('platformSubtitleEnInput');
+    const sloganInput = document.getElementById('platformSloganInput');
+    const sloganEnInput = document.getElementById('platformSloganEnInput');
+
+    const clean = (val, max = 120) => typeof val === 'string'
+        ? val.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, max)
+        : '';
+
+    const rawInput = clean(input.value, 80);
+    const platformNameZh = zhInput
+        ? (clean(zhInput.value, 80) || rawInput || '图特工具平台')
+        : (rawInput || '图特工具平台');
+    const platformNameEn = enInput
+        ? (clean(enInput.value, 80) || navState.settings?.platformNameEn || 'Thoth Platform')
+        : (rawInput || 'Thoth Platform');
+    const platformSubtitle = (subInput ? clean(subInput.value, 120) : '') || navState.settings?.platformSubtitle || '埃及 CS 工具与知识中心';
+    const platformSubtitleEn = (subEnInput ? clean(subEnInput.value, 120) : '') || navState.settings?.platformSubtitleEn || 'Egypt CS Tools & Knowledge Center';
+    const platformSlogan = (sloganInput ? clean(sloganInput.value, 200) : '') || navState.settings?.platformSlogan || '“以智慧之神图特之羽衡度万象，以数智之枢纽连接经验与效率。”';
+    const platformSloganEn = (sloganEnInput ? clean(sloganEnInput.value, 200) : '') || navState.settings?.platformSloganEn || '“By the scales of Thoth, ancient god of wisdom — measuring order, uniting tools, and turning experience into efficiency.”';
+    const platformName = rawInput || platformNameZh;
+
     button.disabled = true;
     if (status) status.textContent = navT('nav.set.saving');
     clearTimeout(navState.saveTimer);
     try {
         const response = await fetch('/api/nav-settings', {
             method: 'PUT', headers: { 'Content-Type': 'application/json', ...getAuthHeaderForNav() },
-            body: JSON.stringify({ ...navState.settings, platformName })
+            body: JSON.stringify({
+                ...navState.settings,
+                platformName,
+                platformNameZh,
+                platformNameEn,
+                platformSubtitle,
+                platformSubtitleEn,
+                platformSlogan,
+                platformSloganEn
+            })
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
@@ -2625,6 +2782,12 @@ window.savePlatformName = async function () {
         writeNavigationBootstrapCache();
         renderNavLinksFromState();
         input.value = navState.settings.platformName;
+        if (zhInput) zhInput.value = navState.settings.platformNameZh;
+        if (enInput) enInput.value = navState.settings.platformNameEn;
+        if (subInput) subInput.value = navState.settings.platformSubtitle;
+        if (subEnInput) subEnInput.value = navState.settings.platformSubtitleEn;
+        if (sloganInput) sloganInput.value = navState.settings.platformSlogan;
+        if (sloganEnInput) sloganEnInput.value = navState.settings.platformSloganEn;
         if (status) status.textContent = navT('nav.set.saved');
     } catch (error) {
         if (status) status.textContent = navT('nav.set.saveFail') + error.message;
@@ -7492,6 +7655,8 @@ window.doLogout = async function () {
         if (key && (
             key.startsWith('tools_recent_nav_tools') ||
             key === 'tools_tenant_id' ||
+            key === 'tools_platform_name' ||
+            key === 'tools_platform_identity' ||
             key === 'builtin_tools_sync_snooze_date_v1' ||
             key.startsWith('tools_ai_proactive_alerts_snoozed') ||
             key.startsWith('tools_ai_proactive_alerts_seen')

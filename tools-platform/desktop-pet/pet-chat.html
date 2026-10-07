@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <title>✦ 哈基米 · 桌面智能客服伴侣</title>
+  <title>✦ 托特 · 青绿桌面伙伴</title>
   <style>
     * {
       box-sizing: border-box;
@@ -25,19 +25,19 @@
       background: rgba(255, 255, 255, 0.94);
       backdrop-filter: blur(24px);
       -webkit-backdrop-filter: blur(24px);
-      border: 1.5px solid rgba(244, 114, 182, 0.4);
+      border: 1.5px solid rgba(20, 125, 122, 0.4);
       border-radius: 20px;
-      box-shadow: 0 20px 48px rgba(236, 72, 153, 0.2), 0 4px 16px rgba(15, 23, 42, 0.12);
+      box-shadow: 0 20px 48px rgba(20, 125, 122, 0.2), 0 4px 16px rgba(15, 23, 42, 0.12);
       display: flex;
       flex-direction: column;
       overflow: hidden;
       position: relative;
     }
 
-    /* 头部可爱顶栏 (支持拖拽) */
+    /* 头部顶栏 (支持拖拽) */
     .chat-header {
-      background: linear-gradient(135deg, rgba(254, 242, 242, 0.95), rgba(253, 242, 248, 0.95));
-      border-bottom: 1px solid rgba(244, 114, 182, 0.25);
+      background: linear-gradient(135deg, rgba(230, 244, 235, 0.95), rgba(230, 244, 235, 0.95));
+      border-bottom: 1px solid rgba(20, 125, 122, 0.25);
       padding: 10px 14px;
       display: flex;
       align-items: center;
@@ -55,21 +55,21 @@
       width: 38px;
       height: 38px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #fbcfe8, #f472b6);
+      background: linear-gradient(135deg, #dff5e9, #83d8ce);
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      box-shadow: 0 4px 10px rgba(236, 72, 153, 0.3);
+      box-shadow: 0 4px 10px rgba(20, 125, 122, 0.3);
       -webkit-app-region: no-drag;
     }
     .avatar-img {
       width: 32px;
       height: 32px;
       object-fit: contain;
-      animation: cat-breathe 3s ease-in-out infinite;
+      animation: pet-breathe 3s ease-in-out infinite;
     }
-    @keyframes cat-breathe {
+    @keyframes pet-breathe {
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.08) translateY(-1px); }
     }
@@ -91,7 +91,7 @@
     .header-title {
       font-size: 13.5px;
       font-weight: 800;
-      color: #9d174d;
+      color: #123743;
       display: flex;
       align-items: center;
       gap: 5px;
@@ -126,14 +126,14 @@
       transition: all .15s ease;
     }
     .header-btn:hover {
-      background: rgba(244, 114, 182, 0.2);
-      color: #be185d;
+      background: rgba(20, 125, 122, 0.2);
+      color: #105d61;
     }
 
     /* 多模型额度胶囊栏 (可选展示，不影响主业务) */
     .quota-capsule-bar {
-      background: rgba(254, 242, 242, 0.7);
-      border-bottom: 1px solid rgba(244, 114, 182, 0.15);
+      background: rgba(230, 244, 235, 0.7);
+      border-bottom: 1px solid rgba(20, 125, 122, 0.15);
       padding: 5px 12px;
       display: flex;
       align-items: center;
@@ -148,14 +148,14 @@
     }
     .quota-chip {
       background: #ffffff;
-      border: 1px solid rgba(244, 114, 182, 0.3);
+      border: 1px solid rgba(20, 125, 122, 0.3);
       padding: 2px 7px;
       border-radius: 10px;
       white-space: nowrap;
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      color: #be185d;
+      color: #105d61;
       font-weight: 600;
     }
     .quota-chip.codex {
@@ -177,7 +177,7 @@
       flex-direction: column;
       gap: 12px;
       scrollbar-width: thin;
-      scrollbar-color: rgba(244, 114, 182, 0.4) transparent;
+      scrollbar-color: rgba(20, 125, 122, 0.4) transparent;
       user-select: text;
       -webkit-user-select: text;
     }
@@ -185,7 +185,7 @@
       width: 5px;
     }
     .chat-body::-webkit-scrollbar-thumb {
-      background: rgba(244, 114, 182, 0.4);
+      background: rgba(20, 125, 122, 0.4);
       border-radius: 10px;
     }
 
@@ -223,10 +223,10 @@
       box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
     }
     .msg-row.user .msg-bubble {
-      background: linear-gradient(135deg, #ec4899, #8b5cf6);
+      background: linear-gradient(135deg, #147d7a, #123743);
       color: #ffffff;
       border-top-right-radius: 4px;
-      box-shadow: 0 4px 14px rgba(236, 72, 153, 0.3);
+      box-shadow: 0 4px 14px rgba(20, 125, 122, 0.3);
     }
 
     /* Markdown 元素优化 */
@@ -246,8 +246,8 @@
       margin: 6px 0;
     }
     .msg-bubble code {
-      background: rgba(236, 72, 153, 0.1);
-      color: #be185d;
+      background: rgba(20, 125, 122, 0.1);
+      color: #105d61;
       padding: 2px 4px;
       border-radius: 4px;
       font-size: 11.5px;
@@ -318,7 +318,7 @@
       margin-bottom: 8px;
       font-size: 11px;
       font-weight: 700;
-      color: #f472b6;
+      color: #83d8ce;
     }
     .copy-report-btn {
       background: #1e293b;
@@ -333,7 +333,7 @@
     .copy-report-btn:hover {
       background: #334155;
       color: #ffffff;
-      border-color: #f472b6;
+      border-color: #83d8ce;
     }
     .debug-label {
       font-size: 10.5px;
@@ -363,16 +363,16 @@
       gap: 6px;
       overflow-x: auto;
       scrollbar-width: none;
-      background: rgba(254, 242, 242, 0.5);
-      border-top: 1px dashed rgba(244, 114, 182, 0.25);
+      background: rgba(230, 244, 235, 0.5);
+      border-top: 1px dashed rgba(20, 125, 122, 0.25);
     }
     .quick-chips::-webkit-scrollbar {
       display: none;
     }
     .chip-btn {
       background: #ffffff;
-      border: 1px solid rgba(244, 114, 182, 0.35);
-      color: #9d174d;
+      border: 1px solid rgba(20, 125, 122, 0.35);
+      color: #123743;
       font-size: 11px;
       font-weight: 600;
       padding: 4px 9px;
@@ -385,8 +385,8 @@
       gap: 3px;
     }
     .chip-btn:hover {
-      background: #fdf2f8;
-      border-color: #ec4899;
+      background: #e6f4eb;
+      border-color: #147d7a;
       transform: translateY(-1px);
     }
 
@@ -394,7 +394,7 @@
     .chat-footer {
       padding: 10px 12px;
       background: #ffffff;
-      border-top: 1px solid rgba(244, 114, 182, 0.2);
+      border-top: 1px solid rgba(20, 125, 122, 0.2);
       display: flex;
       gap: 8px;
       align-items: flex-end;
@@ -403,20 +403,20 @@
       flex: 1;
       min-height: 36px;
       max-height: 90px;
-      border: 1.5px solid rgba(244, 114, 182, 0.35);
+      border: 1.5px solid rgba(20, 125, 122, 0.35);
       border-radius: 14px;
       padding: 8px 12px;
       font-size: 12.5px;
       color: #1e293b;
       outline: none;
       resize: none;
-      background: rgba(253, 242, 248, 0.3);
+      background: rgba(230, 244, 235, 0.3);
       font-family: inherit;
       line-height: 1.4;
       transition: border-color .15s;
     }
     .input-box:focus {
-      border-color: #ec4899;
+      border-color: #147d7a;
       background: #ffffff;
     }
     .input-box::placeholder {
@@ -429,7 +429,7 @@
     .send-btn {
       height: 36px;
       padding: 0 14px;
-      background: linear-gradient(135deg, #ec4899, #d946ef);
+      background: linear-gradient(135deg, #147d7a, #105d61);
       color: #ffffff;
       border: none;
       border-radius: 14px;
@@ -439,13 +439,13 @@
       display: flex;
       align-items: center;
       gap: 4px;
-      box-shadow: 0 4px 12px rgba(236, 72, 153, 0.35);
+      box-shadow: 0 4px 12px rgba(20, 125, 122, 0.35);
       transition: all .15s ease;
       flex-shrink: 0;
     }
     .send-btn:hover {
       transform: translateY(-1px);
-      box-shadow: 0 6px 16px rgba(236, 72, 153, 0.45);
+      box-shadow: 0 6px 16px rgba(20, 125, 122, 0.45);
     }
     .send-btn:active {
       transform: translateY(1px);
@@ -460,10 +460,10 @@
       display: none;
       align-self: flex-start;
       padding: 6px 12px;
-      background: #fdf2f8;
+      background: #e6f4eb;
       border-radius: 12px;
       font-size: 11px;
-      color: #be185d;
+      color: #105d61;
       font-style: italic;
       animation: pulse 1.2s infinite;
     }
@@ -472,22 +472,23 @@
       50% { opacity: 1; }
     }
   </style>
-  <script src="pet-i18n.js?v=20261005-01"></script>
+  <script src="pet-i18n.js?v=20261007-01"></script>
+  <link rel="stylesheet" href="thoth-theme.css?v=20261007-01">
 </head>
 <body>
   <div class="chat-container">
     <!-- 顶栏 -->
     <div class="chat-header">
       <div class="avatar-wrapper">
-        <img class="avatar-img" src="./assets/happy.png" alt="Hajimi" />
+        <img class="avatar-img" src="./assets/thoth/wave.png" alt="青绿陶瓷鸟人托特" />
         <div class="online-dot"></div>
       </div>
       <div class="header-info">
         <div class="header-title">
-          <span>哈基米 · 桌面智能伴侣</span>
-          <span style="font-size: 11px;">🐾</span>
+          <span>托特 · 青绿桌面伙伴</span>
+          <span style="font-size: 11px;">✦</span>
         </div>
-        <div class="header-subtitle" id="subtitleStatus">平台智能客服已连线 · 随时为你效劳喵~</div>
+        <div class="header-subtitle" id="subtitleStatus">青绿守护者已连线 · 陪你探索与思考</div>
       </div>
       <div class="header-actions">
         <button class="header-btn" id="newChatBtn" title="清空并开启新对话">✨</button>
@@ -508,16 +509,16 @@
       <!-- 初始欢迎语 -->
       <div class="msg-row ai">
         <div class="msg-bubble" data-pet-ui>
-          主人好呀喵！(ฅ'ω'ฅ) 我是你的桌面专属看板娘 <b>「哈基米」</b>！<br>
+          你好，我是你的青绿桌面伙伴 <b>「托特」</b>！<br>
           我已经接通了 Tools Platform 后台智能客服引擎。你可以随时向我询问：<br>
           • 平台系统工具使用说明与自动化技巧<br>
           • 今日任务、告警中心与数据运维状态<br>
-          • 或者是任何你想聊的话题与编程伴写哦喵~
+          • 灵感探索、日常闲聊与编程协作
         </div>
       </div>
     </div>
 
-    <div class="typing-indicator" id="typingIndicator">哈基米正在思考组织语言喵… 💭</div>
+    <div class="typing-indicator" id="typingIndicator">托特正在整理思路… ✦</div>
 
     <!-- 快捷提问推荐词 -->
     <div class="quick-chips">
@@ -527,8 +528,8 @@
       <button class="chip-btn" data-prompt="请介绍一下平台支持哪些核心运维工具和系统功能？">
         <span>🛠️</span> 常用工具导航
       </button>
-      <button class="chip-btn" data-prompt="哈基米，我写代码好累呀，来给我讲个猫咪小故事或者卖个萌鼓励我一下吧喵~">
-        <span>🐟</span> 摸鱼元气充能
+      <button class="chip-btn" data-prompt="托特，我写代码有点累了，给我讲个关于古老图书馆的小故事，鼓励我一下吧。">
+        <span>✦</span> 灵感小憩
       </button>
       <button class="chip-btn" data-prompt="请告诉我如何使用平台的新增自定义系统工具？">
         <span>💡</span> 自定义工具指引
@@ -540,12 +541,12 @@
       <textarea
         id="userInput"
         class="input-box"
-        placeholder="向哈基米提问或闲聊… (Enter发送)"
+        placeholder="向托特提问或闲聊… (Enter发送)"
         title="按 Enter 发送，Shift+Enter 换行"
         rows="1"
       ></textarea>
       <button id="sendBtn" class="send-btn">
-        <span>(ฅ'ω'ฅ)</span>
+        <span>✦</span>
         <span>发送</span>
       </button>
     </div>
@@ -603,7 +604,7 @@
         btn.innerHTML = petT("已复制 ✅");
         setTimeout(() => { btn.innerHTML = oldText; }, 2000);
       }).catch(() => {
-        alert(petT("自动复制受限，请在下方手动全选复制喵~"));
+        alert(petT("自动复制受限，请在下方手动全选复制。"));
       });
     };
 
@@ -707,15 +708,15 @@
 
       abortController = new AbortController();
 
-      const systemPrompt = "【角色与性格设定】：你现在是 Tools Platform 的桌面看板娘与智能客服伴侣「哈基米」（Hajimi）。\n" +
-        "1. 专业能力：你精通 Tools Platform 平台的所有工具、功能（UIVision自动化、SLA服务等级协议、告警中心、题库系统等）、数据运维与系统架构，能够准确、可靠、高效地解答主人的平台使用问题与技术疑问。\n" +
-        "2. 性格魅力：你是一只充满活力、元气灵动、忠诚体贴的桌面小猫咪。说话语气温和亲切、活泼治愈，偶尔在句尾或情绪处自然地带上可爱的猫咪语气词（如'喵~'、'✧(≖ ◡ ≖✿)'、'(ฅ'ω'ฅ)'）。\n" +
-        "请始终以热情耐心的态度为主人效劳！";
+      const systemPrompt = "【角色与性格设定】：你是 Tools Platform 的青绿桌面伙伴「托特」（Thoth），外形是青绿釉面、淡金斑点的陶瓷鸟人。\n" +
+        "1. 专业能力：帮助用户理解平台工具、自动化、SLA、告警与数据运维；依据可获得的上下文作答，不清楚时说明，不虚构执行结果。\n" +
+        "2. 性格：温和、沉静、好奇，像古老图书馆里陪伴思考的守护者。表达清楚、自然，有耐心，偶尔用灵感、书页或星光作轻巧比喻。\n" +
+        "请以平等友善的伙伴身份与用户交流，技术回答保持准确简洁。";
 
       const payloadObj = {
         messages: messagesHistory,
-        context: systemPrompt + (window.PetI18n.getLanguage() === 'en-US' ? '\nReply in English, with a friendly kitty personality.' : '\n请使用简体中文回复，保持亲切的猫咪性格。'),
-        pageTitle: window.PetI18n.getLanguage() === 'en-US' ? 'Hajimi desktop companion' : '哈基米桌面伴侣',
+        context: systemPrompt + (window.PetI18n.getLanguage() === 'en-US' ? '\nReply in English, with a calm, curious guardian personality.' : '\n请使用简体中文回复，保持温和、好奇的守护者性格。'),
+        pageTitle: window.PetI18n.getLanguage() === 'en-US' ? 'Thoth desktop companion' : '托特桌面伴侣',
         pagePath: '/desktop-pet',
         uiLanguage: window.PetI18n.getLanguage(),
         stream: true
@@ -776,7 +777,7 @@
           }
         } else {
           const data = await res.json();
-          responseText = data.reply || data.message || petT("哈基米收到啦喵~");
+          responseText = data.reply || data.message || petT("托特收到，准备继续。");
           aiBubble.innerHTML = renderMarkdown(responseText);
         }
 
@@ -827,7 +828,7 @@
         aiBubble.innerHTML = `
           <div class="error-container" data-pet-ui>
             <div class="error-title-row">
-              <div>呜呜，连接平台 AI 服务时出现了一点小状况喵：</div>
+              <div>连接平台 AI 服务时遇到了一点问题：</div>
               <button class="error-trigger-btn" onclick="toggleErrorDebug('${debugId}')" title="点击查看服务器原始请求与返回详情">
                 <span>⚠️ [<span>${petT('服务响应异常')}</span> ${status ? `HTTP ${status}` : `<span>${petT("网络连接失败")}</span>`}]</span>
                 <span class="error-hint-click">(点击查看原始请求/返回 🔍)</span>
@@ -880,7 +881,7 @@
       chatBody.innerHTML = `
         <div class="msg-row ai">
           <div class="msg-bubble" data-pet-ui>
-            记忆已清空，开启全新的畅聊会话喵！(ฅ'ω'ฅ) 主人请尽管吩咐~
+            新的对话已开启，托特准备好了。一起探索下一个想法吧 ✦
           </div>
         </div>
       `;

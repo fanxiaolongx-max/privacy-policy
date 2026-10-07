@@ -78,20 +78,20 @@ function renderer() {
 test('pet menus and speech switch in both directions while conversation text stays intact', async () => {
     const runtime = renderer();
     const menu = runtime.text('发送');
-    const speech = runtime.text('✦ 主人，我在这里喵！(ฅ^ω^ฅ)');
+    const speech = runtime.text('✦ 我在这里，托特随时为你效劳');
     const message = runtime.text('发送', true);
-    const welcome = runtime.text('「哈基米」', true, true);
+    const welcome = runtime.text('「托特」', true, true);
     runtime.listeners['pet-language-change']({}, 'en-US');
     assert.equal(menu.nodeValue, 'Send');
     assert.match(speech.nodeValue, /right here/);
     assert.equal(message.nodeValue, '发送');
-    assert.equal(welcome.nodeValue, 'Hajimi');
+    assert.equal(welcome.nodeValue, 'Thoth');
     runtime.resolveInitial('zh-CN');
     await Promise.resolve();
     assert.equal(runtime.window.PetI18n.getLanguage(), 'en-US', 'late initial IPC must not undo a toggle');
     runtime.window.PetI18n.setLanguage('zh-CN');
     assert.equal(menu.nodeValue, '发送');
-    assert.equal(welcome.nodeValue, '「哈基米」');
+    assert.equal(welcome.nodeValue, '「托特」');
     runtime.window.PetI18n.setLanguage('en-US');
     menu.nodeValue = '正常在线'; // newly rendered quota text
     runtime.window.PetI18n.apply();
@@ -100,10 +100,10 @@ test('pet menus and speech switch in both directions while conversation text sta
 
 test('new pet windows initialize to the current desktop language', async () => {
     const runtime = renderer();
-    const title = runtime.text('哈基米桌宠设置');
+    const title = runtime.text('托特桌宠设置');
     runtime.resolveInitial('en-US');
     await Promise.resolve();
-    assert.equal(title.nodeValue, 'Hajimi pet settings');
+    assert.equal(title.nodeValue, 'Thoth pet settings');
     assert.equal(runtime.document.documentElement.lang, 'en-US');
 });
 
@@ -165,9 +165,13 @@ test('AI requests use the selected language and preserve previous messages', asy
     await context.handleSendMessage('Hi');
     assert.equal(payloads[0].uiLanguage, 'en-US');
     assert.match(payloads[0].context, /Reply in English/);
+    assert.match(payloads[0].context, /托特.*Thoth/);
+    assert.match(payloads[0].context, /guardian personality/);
+    assert.doesNotMatch(payloads[0].context, /猫咪|喵|kitty/);
     selected = 'zh-CN';
     await context.handleSendMessage('你好');
     assert.equal(payloads[1].uiLanguage, 'zh-CN');
+    assert.match(payloads[1].context, /守护者性格/);
     assert.equal(payloads[1].messages[0].content, 'Hi');
     assert.equal(payloads[1].messages[1].content, 'Hello!');
 });

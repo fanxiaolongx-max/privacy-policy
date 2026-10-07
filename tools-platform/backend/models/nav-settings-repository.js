@@ -1,7 +1,66 @@
+const path = require('node:path');
+const fs = require('node:fs');
 const { readKV, writeKV } = require('./kv-store');
+const { getTenantId, DEFAULT_TENANT_ID } = require('./tenant-context');
 
+const FALLBACK_PLATFORM_IDENTITY = Object.freeze({
+    platformName: '图特工具平台',
+    platformNameZh: '图特工具平台',
+    platformNameEn: 'Thoth Platform',
+    platformSubtitle: '埃及 CS 工具与知识中心',
+    platformSubtitleEn: 'Egypt CS Tools & Knowledge Center',
+    platformSlogan: '“以智慧之神图特之羽衡度万象，以数智之枢纽连接经验与效率。”',
+    platformSloganEn: '“By the scales of Thoth, ancient god of wisdom — measuring order, uniting tools, and turning experience into efficiency.”'
+});
+
+function getDefaultPlatformIdentity() {
+    try {
+        const file = path.join(__dirname, '../defaults/platform-identity.json');
+        if (fs.existsSync(file)) {
+            const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+            if (data && typeof data === 'object') {
+                const clean = (val, fallback, max = 120) => {
+                    if (typeof val === 'string') {
+                        const trimmed = val.replace(/[\u0000-\u001f\u007f]/g, '').trim();
+                        if (trimmed) return trimmed.slice(0, max);
+                    }
+                    return fallback;
+                };
+                const platformNameZh = clean(data.platformNameZh, clean(data.platformName, FALLBACK_PLATFORM_IDENTITY.platformNameZh, 80), 80);
+                const platformNameEn = clean(data.platformNameEn, FALLBACK_PLATFORM_IDENTITY.platformNameEn, 80);
+                const platformSubtitle = clean(data.platformSubtitle, FALLBACK_PLATFORM_IDENTITY.platformSubtitle, 120);
+                const platformSubtitleEn = clean(data.platformSubtitleEn, FALLBACK_PLATFORM_IDENTITY.platformSubtitleEn, 120);
+                const platformSlogan = clean(data.platformSlogan, FALLBACK_PLATFORM_IDENTITY.platformSlogan, 200);
+                const platformSloganEn = clean(data.platformSloganEn, FALLBACK_PLATFORM_IDENTITY.platformSloganEn, 200);
+                const platformName = clean(data.platformName, platformNameZh, 80);
+                return {
+                    platformName,
+                    platformNameZh,
+                    platformNameEn,
+                    platformSubtitle,
+                    platformSubtitleEn,
+                    platformSlogan,
+                    platformSloganEn
+                };
+            }
+        }
+    } catch (_) {}
+    return { ...FALLBACK_PLATFORM_IDENTITY };
+}
+
+function getDefaultPlatformName() {
+    const identity = getDefaultPlatformIdentity();
+    return identity.platformNameZh || identity.platformName || '图特工具平台';
+}
 
 const DEFAULT_SETTINGS = {
+    get platformName() { return getDefaultPlatformName(); },
+    get platformNameZh() { return getDefaultPlatformIdentity().platformNameZh; },
+    get platformNameEn() { return getDefaultPlatformIdentity().platformNameEn; },
+    get platformSubtitle() { return getDefaultPlatformIdentity().platformSubtitle; },
+    get platformSubtitleEn() { return getDefaultPlatformIdentity().platformSubtitleEn; },
+    get platformSlogan() { return getDefaultPlatformIdentity().platformSlogan; },
+    get platformSloganEn() { return getDefaultPlatformIdentity().platformSloganEn; },
     // 首次安装且尚无 nav_settings 记录时使用；已有用户配置不会被覆盖。
     primaryIds: [
         'home',
@@ -103,10 +162,42 @@ function normalizeSettings(input = {}) {
         })
         .filter(item => item.id && item.name);
 
+    const defaultIdentity = getDefaultPlatformIdentity();
+    const sanitizeText = (val, fallback, maxLen = 120) => {
+        if (typeof val === 'string') {
+            const clean = val.replace(/[\u0000-\u001f\u007f]/g, '').trim();
+            if (clean) return clean.slice(0, maxLen);
+        }
+        return fallback;
+    };
+
+    const rawPlatformName = typeof input.platformName === 'string'
+        ? input.platformName.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 80)
+        : '';
+    const rawHasNonAscii = /[^\x00-\x7F]/.test(rawPlatformName);
+    const defaultZh = rawHasNonAscii ? rawPlatformName : defaultIdentity.platformNameZh;
+    const defaultEn = (!rawHasNonAscii && rawPlatformName) ? rawPlatformName : defaultIdentity.platformNameEn;
+    let platformNameZh = sanitizeText(input.platformNameZh, defaultZh, 80);
+    let platformNameEn = sanitizeText(input.platformNameEn, defaultEn, 80);
+
+    if (platformNameZh && platformNameEn && platformNameZh.toLowerCase() === platformNameEn.toLowerCase() && !/[^\x00-\x7F]/.test(platformNameZh) && (platformNameEn.toLowerCase() === 'thoth platform' || platformNameEn.toLowerCase() === 'tools platform' || platformNameEn.toLowerCase() === 'eg cs hub')) {
+        platformNameZh = defaultIdentity.platformNameZh;
+    }
+
+    const platformSubtitle = sanitizeText(input.platformSubtitle, defaultIdentity.platformSubtitle, 120);
+    const platformSubtitleEn = sanitizeText(input.platformSubtitleEn, defaultIdentity.platformSubtitleEn, 120);
+    const platformSlogan = sanitizeText(input.platformSlogan, defaultIdentity.platformSlogan, 200);
+    const platformSloganEn = sanitizeText(input.platformSloganEn, defaultIdentity.platformSloganEn, 200);
+    const platformName = rawPlatformName || platformNameZh || defaultIdentity.platformName;
+
     return {
-        platformName: typeof input.platformName === 'string'
-            ? input.platformName.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 80) || 'Tools Platform'
-            : 'Tools Platform',
+        platformName,
+        platformNameZh,
+        platformNameEn,
+        platformSubtitle,
+        platformSubtitleEn,
+        platformSlogan,
+        platformSloganEn,
         f12QuickDownloads: Array.isArray(input.f12QuickDownloads)
             ? input.f12QuickDownloads
                 .filter(item => item && typeof item.scriptId === 'string' && /^(builtin|server):[a-zA-Z0-9_-]+$/.test(item.scriptId))
@@ -169,7 +260,20 @@ function mergeDefaultSettingsPreservingCustomTools(currentInput, customToolIds =
         }
     });
 
-    return normalizeSettings({ primaryIds, categories, categoryByItem, itemOrder, platformName: current.platformName, f12QuickDownloads: current.f12QuickDownloads });
+    return normalizeSettings({
+        primaryIds,
+        categories,
+        categoryByItem,
+        itemOrder,
+        platformName: current.platformName,
+        platformNameZh: current.platformNameZh,
+        platformNameEn: current.platformNameEn,
+        platformSubtitle: current.platformSubtitle,
+        platformSubtitleEn: current.platformSubtitleEn,
+        platformSlogan: current.platformSlogan,
+        platformSloganEn: current.platformSloganEn,
+        f12QuickDownloads: current.f12QuickDownloads
+    });
 }
 
 async function getSettings() {
@@ -177,15 +281,38 @@ async function getSettings() {
 }
 
 async function saveSettings(settings) {
-    // Older navigation clients must not erase separately configured packaging shortcuts.
+    // Older navigation clients must not erase separately configured packaging shortcuts or identity properties.
     const input = { ...settings };
-    if (!Object.hasOwn(input, 'f12QuickDownloads') || !Object.hasOwn(input, 'platformName')) {
-        const current = await getSettings();
-        if (!Object.hasOwn(input, 'f12QuickDownloads')) input.f12QuickDownloads = current.f12QuickDownloads;
-        if (!Object.hasOwn(input, 'platformName')) input.platformName = current.platformName;
-    }
+    const current = await getSettings();
+    if (!Object.hasOwn(input, 'f12QuickDownloads')) input.f12QuickDownloads = current.f12QuickDownloads;
+    if (!Object.hasOwn(input, 'platformName')) input.platformName = current.platformName;
+    if (!Object.hasOwn(input, 'platformNameZh')) input.platformNameZh = current.platformNameZh;
+    if (!Object.hasOwn(input, 'platformNameEn')) input.platformNameEn = current.platformNameEn;
+    if (!Object.hasOwn(input, 'platformSubtitle')) input.platformSubtitle = current.platformSubtitle;
+    if (!Object.hasOwn(input, 'platformSubtitleEn')) input.platformSubtitleEn = current.platformSubtitleEn;
+    if (!Object.hasOwn(input, 'platformSlogan')) input.platformSlogan = current.platformSlogan;
+    if (!Object.hasOwn(input, 'platformSloganEn')) input.platformSloganEn = current.platformSloganEn;
+
     const normalized = normalizeSettings(input);
     await writeKV('sys', 'nav_settings', normalized);
+
+    // 在本地源码开发环境（非打包 Electron ASAR，且非只读运行时，且仅限平台默认租户），自动同步新名称到源码版本库
+    try {
+        const file = path.join(__dirname, '../defaults/platform-identity.json');
+        if (getTenantId() === DEFAULT_TENANT_ID && !process.env.TOOLS_DATA_DIR && !process.env.TOOLS_DESKTOP_RUNTIME && fs.existsSync(path.dirname(file))) {
+            const identityPayload = {
+                platformName: normalized.platformName || normalized.platformNameZh,
+                platformNameZh: normalized.platformNameZh,
+                platformNameEn: normalized.platformNameEn,
+                platformSubtitle: normalized.platformSubtitle,
+                platformSubtitleEn: normalized.platformSubtitleEn,
+                platformSlogan: normalized.platformSlogan,
+                platformSloganEn: normalized.platformSloganEn
+            };
+            fs.writeFileSync(file, JSON.stringify(identityPayload, null, 2), 'utf8');
+        }
+    } catch (_) {}
+
     return normalized;
 }
 
@@ -204,6 +331,8 @@ async function restoreDefaultsPreservingCustomTools(customToolIds = []) {
 
 module.exports = {
     DEFAULT_SETTINGS,
+    getDefaultPlatformIdentity,
+    getDefaultPlatformName,
     normalizeSettings,
     mergeDefaultSettingsPreservingCustomTools,
     getSettings,
